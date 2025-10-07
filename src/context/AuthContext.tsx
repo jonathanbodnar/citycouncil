@@ -87,10 +87,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name: fullName,
             user_type: userType,
           },
+          emailRedirectTo: undefined, // Disable email confirmation redirect
         },
       });
 
       if (error) throw error;
+
+      // Auto-sign in the user if signup was successful (bypassing email confirmation)
+      if (data.user && !error) {
+        // Immediately sign in the user
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        // If sign in fails due to unconfirmed email, that's expected
+        if (signInError && !signInError.message.includes('Email not confirmed')) {
+          throw signInError;
+        }
+      }
 
       // Create user profile in our users table
       if (data.user) {

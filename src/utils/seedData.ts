@@ -32,6 +32,18 @@ export const createTestUsers = async () => {
   
   for (const user of testUsers) {
     try {
+      // First check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+
+      if (existingUser) {
+        console.log(`ℹ️ User ${user.email} already exists, skipping...`);
+        continue;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: user.email,
         password: user.password,
@@ -40,6 +52,7 @@ export const createTestUsers = async () => {
             full_name: user.fullName,
             user_type: user.userType,
           },
+          emailRedirectTo: undefined, // Disable email confirmation
         },
       });
 

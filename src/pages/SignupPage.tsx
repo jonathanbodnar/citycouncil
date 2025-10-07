@@ -44,7 +44,7 @@ const SignupPage: React.FC = () => {
 
     try {
       await signUp(formData.email, formData.password, formData.fullName, formData.userType);
-      toast.success('Account created successfully! Please check your email to verify your account.');
+      toast.success('Account created successfully! You can now sign in.');
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
     } finally {
