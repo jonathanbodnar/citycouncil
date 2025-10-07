@@ -22,7 +22,7 @@ const Logo: React.FC<LogoProps> = ({
   return (
     <div className={`flex items-center ${className}`}>
       <img
-        src="https://i.ibb.co/wF7Y2hmY/IMG-5396.png"
+        src="https://s3.us-central-1.wasabisys.com/shoutoutorders/1b9b81e0-4fe1-4eea-b617-af006370240a.png"
         alt="ShoutOut Logo"
         className={`${sizeClasses.height} ${sizeClasses.width} object-contain`}
         onError={(e) => {
