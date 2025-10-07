@@ -6,6 +6,14 @@ import { TalentProfile, TalentCategory } from '../types';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 
+interface TalentWithUser extends TalentProfile {
+  users: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+  };
+}
+
 const TALENT_CATEGORIES = [
   { key: 'politician', label: 'Politicians' },
   { key: 'candidate', label: 'Candidates' },
@@ -28,8 +36,8 @@ const TALENT_CATEGORIES = [
 ];
 
 const HomePage: React.FC = () => {
-  const [talent, setTalent] = useState<TalentProfile[]>([]);
-  const [featuredTalent, setFeaturedTalent] = useState<TalentProfile[]>([]);
+  const [talent, setTalent] = useState<TalentWithUser[]>([]);
+  const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all'>('all');
@@ -65,7 +73,7 @@ const HomePage: React.FC = () => {
       setTalent(talentWithUsers);
 
       // Get available categories
-      const categories = [...new Set(data.map(t => t.category))];
+      const categories = Array.from(new Set(data.map(t => t.category)));
       setAvailableCategories(categories);
     } catch (error) {
       console.error('Error fetching talent:', error);
