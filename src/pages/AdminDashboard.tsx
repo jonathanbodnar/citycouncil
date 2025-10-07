@@ -61,18 +61,15 @@ const AdminDashboard: React.FC = () => {
       const [
         { data: orders },
         { data: users },
-        { data: talent },
-        { data: reviews }
+        { data: talent }
       ] = await Promise.all([
         supabase.from('orders').select('*'),
         supabase.from('users').select('*'),
-        supabase.from('talent_profiles').select('*'),
-        supabase.from('reviews').select('*')
+        supabase.from('talent_profiles').select('*')
       ]);
 
       // Calculate stats
       const totalOrders = orders?.length || 0;
-      const completedOrders = orders?.filter(o => o.status === 'completed') || [];
       const grossGenerated = orders?.reduce((sum, order) => sum + order.amount, 0) || 0;
       const grossEarnings = orders?.reduce((sum, order) => sum + order.admin_fee, 0) || 0;
       const refundedOrders = orders?.filter(o => o.status === 'refunded') || [];

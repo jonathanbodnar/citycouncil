@@ -39,7 +39,6 @@ const OrderPage: React.FC = () => {
   const [talent, setTalent] = useState<TalentWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   
   const {
     register,
@@ -54,7 +53,7 @@ const OrderPage: React.FC = () => {
     if (talentId) {
       fetchTalent();
     }
-  }, [talentId]);
+  }, [talentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTalent = async () => {
     try {
@@ -107,7 +106,7 @@ const OrderPage: React.FC = () => {
       fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + talent.fulfillment_time_hours);
 
       // Create order in database
-      const { data: orderData, error: orderError } = await supabase
+      const { error: orderError } = await supabase
         .from('orders')
         .insert([
           {
@@ -346,13 +345,13 @@ const OrderPage: React.FC = () => {
                 />
                 <label htmlFor="agreedToTerms" className="ml-2 block text-sm text-gray-900">
                   I agree to the{' '}
-                  <a href="#" className="text-primary-600 hover:text-primary-500">
+                  <button type="button" className="text-primary-600 hover:text-primary-500 underline">
                     Terms of Service
-                  </a>{' '}
+                  </button>{' '}
                   and{' '}
-                  <a href="#" className="text-primary-600 hover:text-primary-500">
+                  <button type="button" className="text-primary-600 hover:text-primary-500 underline">
                     Privacy Policy
-                  </a>
+                  </button>
                 </label>
               </div>
               {errors.agreedToTerms && (

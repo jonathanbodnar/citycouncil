@@ -9,8 +9,7 @@ import {
   CheckBadgeIcon 
 } from '@heroicons/react/24/solid';
 import { 
-  StarIcon as StarOutline,
-  HeartIcon as HeartOutline 
+  StarIcon as StarOutline
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, Review, SocialAccount } from '../types';
@@ -43,7 +42,7 @@ const TalentProfilePage: React.FC = () => {
     if (id) {
       fetchTalentProfile();
     }
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTalentProfile = async () => {
     try {
