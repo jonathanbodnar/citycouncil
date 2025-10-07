@@ -8,6 +8,7 @@ import {
   BellIcon 
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import Logo from './Logo';
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -28,9 +29,7 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <div className="text-2xl font-bold text-primary-600">
-              {process.env.REACT_APP_APP_NAME || 'ShoutOut'}
-            </div>
+            <Logo size="md" />
           </Link>
 
           {/* Desktop Navigation */}

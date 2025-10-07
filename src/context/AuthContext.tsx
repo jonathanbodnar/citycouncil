@@ -45,13 +45,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state change:', event, session?.user?.email);
       setSession(session);
       setSupabaseUser(session?.user ?? null);
       
       if (session?.user) {
-        await fetchUserProfile(session.user.id);
+        // Don't await here - call fetchUserProfile without blocking
+        fetchUserProfile(session.user.id);
       } else {
         setUser(null);
         setLoading(false);
@@ -186,26 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      // Manually fetch and set user profile immediately
-      if (data.user) {
-        console.log('Fetching user profile immediately...');
-        try {
-          const { data: userProfile, error: profileError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-
-          if (!profileError && userProfile) {
-            console.log('Setting user profile:', userProfile);
-            setUser(userProfile);
-            setLoading(false);
-          }
-        } catch (profileError) {
-          console.log('Profile fetch failed, will be handled by auth state change');
-        }
-      }
-
+      // The auth state change listener will handle profile fetching
       return data;
     } catch (error) {
       console.error('Sign in error:', error);
