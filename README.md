@@ -1,46 +1,225 @@
-# Getting Started with Create React App
+# ShoutOut - Conservative Talent Video Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A Cameo-style PWA that allows users to order personalized video shoutouts from conservative talent.
 
-## Available Scripts
+## 🚀 Features
 
-In the project directory, you can run:
+### For Users
+- Browse talent by category (Politicians, TV Hosts, Commentators, etc.)
+- Order personalized video shoutouts
+- Corporate ordering options
+- 100% money-back satisfaction guarantee
+- Secure payment processing with Stripe
+- Order tracking and management
+- Review and rating system
 
-### `npm start`
+### For Talent
+- Complete profile management
+- Set pricing and fulfillment times
+- Charity donation options
+- Order management dashboard
+- Video upload and delivery
+- Stripe Connect integration for payouts
+- Social media integration
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### For Admins
+- Complete platform management
+- User and talent management
+- Order analytics and reporting
+- Fee management
+- Featured talent control
+- Help desk management
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 🛠 Tech Stack
 
-### `npm test`
+- **Frontend**: React 18 + TypeScript
+- **Styling**: Tailwind CSS + Headless UI
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Payments**: Stripe + Stripe Connect
+- **Storage**: Wasabi S3 (for videos/images)
+- **Email**: Mailgun
+- **Deployment**: Railway
+- **PWA**: Service Workers + Web App Manifest
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🏗 Project Structure
 
-### `npm run build`
+```
+src/
+├── components/          # Reusable UI components
+│   ├── Header.tsx
+│   ├── Layout.tsx
+│   ├── MobileNavigation.tsx
+│   ├── ProtectedRoute.tsx
+│   ├── TalentCard.tsx
+│   └── FeaturedCarousel.tsx
+├── context/            # React Context providers
+│   └── AuthContext.tsx
+├── pages/              # Page components
+│   ├── HomePage.tsx
+│   ├── LoginPage.tsx
+│   ├── SignupPage.tsx
+│   ├── TalentProfilePage.tsx
+│   ├── OrderPage.tsx
+│   ├── DashboardPage.tsx
+│   └── AdminDashboard.tsx
+├── services/           # External service integrations
+│   └── supabase.ts
+├── types/              # TypeScript type definitions
+│   └── index.ts
+├── utils/              # Utility functions
+│   └── seedData.ts
+└── hooks/              # Custom React hooks
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 📊 Database Schema
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Core Tables
+- `users` - User profiles with role-based access
+- `talent_profiles` - Talent-specific information
+- `user_profiles` - Customer-specific information
+- `orders` - Order management and tracking
+- `reviews` - Rating and review system
+- `charities` - Charity information for donations
+- `notifications` - In-app notification system
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Supporting Tables
+- `social_accounts` - Talent social media links
+- `payment_methods` - User payment information
+- `stripe_connect_accounts` - Talent payout accounts
+- `help_messages` - Customer support system
+- `app_settings` - Global platform settings
 
-### `npm run eject`
+## 🔧 Setup Instructions
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase account
+- Stripe account
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Installation
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+1. **Clone and install dependencies**
+   ```bash
+   cd ShoutOut
+   npm install
+   ```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+2. **Environment Configuration**
+   Copy `env.example` to `.env` and fill in your credentials:
+   ```bash
+   cp env.example .env
+   ```
 
-## Learn More
+3. **Supabase Setup**
+   - Database and schema are already configured
+   - Project ID: `utafetamgwukkbrlezev`
+   - URL: `https://utafetamgwukkbrlezev.supabase.co`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+4. **Start Development Server**
+   ```bash
+   npm start
+   ```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 👥 Test Accounts
+
+The following test accounts are available for development:
+
+### Admin Account
+- **Email**: `admin@shoutout.com`
+- **Password**: `password123`
+- **Access**: Full platform management
+
+### Talent Account
+- **Email**: `tucker@shoutout.com`
+- **Password**: `password123`
+- **Profile**: Tucker Carlson (TV Host)
+- **Pricing**: $299.99
+- **Features**: Featured talent, charity donations (10% to Wounded Warrior Project)
+
+### Customer Accounts
+- **Personal User**
+  - Email: `john@example.com`
+  - Password: `password123`
+  
+- **Corporate User**
+  - Email: `corp@company.com`
+  - Password: `password123`
+  - Company: ACME Corporation
+
+## 🎯 Current Status
+
+### ✅ Completed Features
+- **Project Setup**: React 18 + TypeScript + Tailwind CSS + PWA
+- **Database**: Complete Supabase schema with RLS policies
+- **Authentication**: Role-based access (Admin/Talent/User)
+- **Home Page**: Talent browsing with categories and search
+- **Talent Profiles**: Comprehensive profile pages with reviews, videos, social links
+- **Order System**: Complete order flow with pricing calculations
+- **Admin Dashboard**: Full analytics and management interface
+- **Mobile PWA**: Responsive design with mobile navigation
+- **Test Data**: Complete sample data with users, orders, reviews
+
+### 🚧 Ready for Integration
+- **Stripe Payments**: Order flow ready, needs API keys
+- **Video Storage**: Wasabi S3 integration ready
+- **Email Notifications**: Mailgun integration ready
+
+### 📋 Future Enhancements
+- Real-time notifications
+- Advanced admin tools
+- Mobile app export (React Native/Capacitor)
+- AI-powered help desk
+- Advanced analytics
+
+## 🔐 Security Features
+
+- Row Level Security (RLS) on all database tables
+- Role-based access control
+- Secure authentication with Supabase
+- Payment security with Stripe
+- Input validation and sanitization
+
+## 📱 PWA Features
+
+- Offline capability
+- Push notifications
+- App-like mobile experience
+- Fast loading with service workers
+- Installable on mobile devices
+
+## 🚀 Deployment
+
+The application is configured for deployment on Railway with:
+- Automatic builds from Git
+- Environment variable management
+- SSL certificates
+- Custom domain support
+
+## 📞 Support
+
+For development questions or issues:
+1. Check the test accounts above
+2. Review the database schema in Supabase
+3. Check browser console for errors
+4. Verify environment variables are set
+
+## 🎨 Design System
+
+- **Primary Color**: Blue (#3b82f6)
+- **Secondary Color**: Red (#ef4444)
+- **Typography**: System fonts with Tailwind CSS
+- **Components**: Headless UI for accessibility
+- **Icons**: Heroicons
+- **Responsive**: Mobile-first design
+
+## 🔄 Development Workflow
+
+1. **Feature Development**: Create feature branches
+2. **Testing**: Use provided test accounts
+3. **Database Changes**: Use Supabase migrations
+4. **Styling**: Tailwind CSS utilities
+5. **State Management**: React Context + hooks
+
+The application is now ready for development and testing!
