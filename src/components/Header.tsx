@@ -29,7 +29,7 @@ const Header: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <div className="text-2xl font-bold text-primary-600">
-              ShoutOut
+              {process.env.REACT_APP_APP_NAME || 'ShoutOut'}
             </div>
           </Link>
 

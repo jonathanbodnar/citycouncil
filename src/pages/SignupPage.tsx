@@ -57,7 +57,7 @@ const SignupPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <Link to="/" className="flex justify-center">
-            <div className="text-3xl font-bold text-primary-600">ShoutOut</div>
+            <div className="text-3xl font-bold text-primary-600">{process.env.REACT_APP_APP_NAME || 'ShoutOut'}</div>
           </Link>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account

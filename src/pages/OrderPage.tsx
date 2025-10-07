@@ -87,7 +87,7 @@ const OrderPage: React.FC = () => {
     if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, total: 0 };
 
     const subtotal = talent.pricing;
-    const adminFeePercentage = talent.admin_fee_percentage || 15;
+    const adminFeePercentage = talent.admin_fee_percentage || parseInt(process.env.REACT_APP_ADMIN_FEE_PERCENTAGE || '15');
     const adminFee = subtotal * (adminFeePercentage / 100);
     const charityAmount = talent.charity_percentage 
       ? subtotal * (talent.charity_percentage / 100) 
