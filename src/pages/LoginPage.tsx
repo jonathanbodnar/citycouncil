@@ -17,13 +17,24 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      await signIn(email, password);
-      toast.success('Welcome back!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
-    } finally {
+    // Add a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
       setLoading(false);
+      toast.error('Login is taking too long. Please try again.');
+    }, 10000); // 10 second timeout
+
+    try {
+      console.log('Attempting to sign in with:', email);
+      const result = await signIn(email, password);
+      console.log('Sign in result:', result);
+      clearTimeout(timeout);
+      toast.success('Welcome back!');
+      // Don't set loading to false here - let the auth state change handle it
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      clearTimeout(timeout);
+      toast.error(error.message || 'Failed to sign in');
+      setLoading(false); // Make sure to stop loading on error
     }
   };
 

@@ -46,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session?.user?.email);
       setSession(session);
       setSupabaseUser(session?.user ?? null);
       
@@ -62,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('Fetching user profile for:', userId);
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -69,9 +71,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
+        console.log('User profile not found, creating from auth data...');
         // If user profile doesn't exist, try to create it from auth user data
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
+          console.log('Creating user profile for:', authUser.email);
           const { data: createdUser, error: createError } = await supabase
             .from('users')
             .insert([
@@ -90,16 +94,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw createError;
           }
           
+          console.log('User profile created successfully:', createdUser);
           setUser(createdUser);
         } else {
           throw error;
         }
       } else {
+        console.log('User profile found:', data);
         setUser(data);
       }
     } catch (error) {
       console.error('Error fetching/creating user profile:', error);
+      // Don't throw error, just set loading to false so UI doesn't hang
+      setUser(null);
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
@@ -167,12 +176,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('SignIn function called with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('Auth signIn response:', { data, error });
+
       if (error) throw error;
+
+      // Manually fetch and set user profile immediately
+      if (data.user) {
+        console.log('Fetching user profile immediately...');
+        try {
+          const { data: userProfile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+          if (!profileError && userProfile) {
+            console.log('Setting user profile:', userProfile);
+            setUser(userProfile);
+            setLoading(false);
+          }
+        } catch (profileError) {
+          console.log('Profile fetch failed, will be handled by auth state change');
+        }
+      }
+
       return data;
     } catch (error) {
       console.error('Sign in error:', error);
