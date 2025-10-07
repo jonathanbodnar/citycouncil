@@ -30,7 +30,7 @@ const MobileNavigation: React.FC = () => {
       iconSolid: HomeIconSolid,
     },
     {
-      name: 'Orders',
+      name: user?.user_type === 'talent' ? 'Orders' : 'My Orders',
       href: '/dashboard',
       icon: RectangleStackIcon,
       iconSolid: RectangleStackIconSolid,
@@ -50,7 +50,7 @@ const MobileNavigation: React.FC = () => {
     },
     {
       name: 'Profile',
-      href: '/dashboard',
+      href: '/dashboard?tab=profile',
       icon: UserCircleIcon,
       iconSolid: UserCircleIconSolid,
     },

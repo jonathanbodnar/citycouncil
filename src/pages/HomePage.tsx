@@ -135,21 +135,6 @@ const HomePage: React.FC = () => {
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           Get Personal ShoutOuts from Conservative Voices
         </h1>
-        <p className="text-xl text-gray-600 mb-8">
-          Order personalized video messages from your favorite conservative personalities
-        </p>
-        
-        {/* Search Bar */}
-        <div className="max-w-md mx-auto relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search talent..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
       </div>
 
       {/* Featured Talent Carousel */}
@@ -160,9 +145,38 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* Category Filter */}
+      {/* Category Filter with Search */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Browse by Category</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Browse by Category</h3>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
+              className="p-2 text-gray-600 hover:text-primary-600 rounded-lg hover:bg-gray-100"
+              title="Search talent"
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Expandable Search */}
+        {searchQuery !== '' && (
+          <div className="mb-4">
+            <div className="max-w-md relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search talent..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                value={searchQuery === 'search' ? '' : searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedCategory('all')}
