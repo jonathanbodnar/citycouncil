@@ -10,6 +10,7 @@ import {
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { AdminStats } from '../types';
+import AdminManagementTabs from '../components/AdminManagementTabs';
 
 interface StatsCardProps {
   title: string;
@@ -296,24 +297,8 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
-            <div className="font-medium text-gray-900">Manage Talent</div>
-            <div className="text-sm text-gray-600">Review and approve talent profiles</div>
-          </button>
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
-            <div className="font-medium text-gray-900">Platform Settings</div>
-            <div className="text-sm text-gray-600">Configure fees and global settings</div>
-          </button>
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
-            <div className="font-medium text-gray-900">Help Desk</div>
-            <div className="text-sm text-gray-600">Manage customer support tickets</div>
-          </button>
-        </div>
-      </div>
+      {/* Management Tabs */}
+      <AdminManagementTabs />
     </div>
   );
 };
