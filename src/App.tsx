@@ -12,6 +12,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import SeedDataPage from './pages/SeedDataPage';
 import NotificationsPage from './pages/NotificationsPage';
 import HelpPage from './pages/HelpPage';
+import ReviewPage from './pages/ReviewPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -53,6 +54,11 @@ function App() {
               <Route path="/help" element={
                 <ProtectedRoute>
                   <HelpPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/review/:orderId" element={
+                <ProtectedRoute>
+                  <ReviewPage />
                 </ProtectedRoute>
               } />
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

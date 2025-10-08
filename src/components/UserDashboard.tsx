@@ -17,6 +17,8 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Order, Review } from '../types';
 import ProfilePictureUpload from './ProfilePictureUpload';
+import VideoPlayer from './VideoPlayer';
+import ShareModal from './ShareModal';
 import toast from 'react-hot-toast';
 
 interface OrderWithTalent extends Order {
@@ -44,6 +46,8 @@ const UserDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithTalent[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'orders' | 'reviews' | 'profile'>('orders');
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareOrderData, setShareOrderData] = useState<OrderWithTalent | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -255,14 +259,11 @@ const UserDashboard: React.FC = () => {
                   {order.video_url && (
                     <div className="mb-4">
                       <h4 className="font-medium text-gray-900 mb-2">Your ShoutOut:</h4>
-                      <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                        <div className="text-center">
-                          <PlayIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">Video Ready</p>
-                          <button className="mt-2 bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700">
-                            Watch Video
-                          </button>
-                        </div>
+                      <div className="aspect-video">
+                        <VideoPlayer 
+                          videoUrl={order.video_url}
+                          className="w-full h-full"
+                        />
                       </div>
                     </div>
                   )}
@@ -271,7 +272,13 @@ const UserDashboard: React.FC = () => {
                     <div className="flex space-x-4">
                       {order.status === 'completed' && order.video_url && (
                         <>
-                          <button className="flex items-center space-x-2 text-primary-600 hover:text-primary-700">
+                          <button 
+                            onClick={() => {
+                              setShareOrderData(order);
+                              setShareModalOpen(true);
+                            }}
+                            className="flex items-center space-x-2 text-primary-600 hover:text-primary-700"
+                          >
                             <ShareIcon className="h-4 w-4" />
                             <span>Share</span>
                           </button>
@@ -461,6 +468,24 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Modal */}
+      {shareModalOpen && shareOrderData && (
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => {
+            setShareModalOpen(false);
+            setShareOrderData(null);
+          }}
+          talentName={shareOrderData.talent_profiles.users.full_name}
+          talentSocialHandles={{
+            // We'll need to fetch these from the talent's social accounts
+            twitter: '@TuckerCarlson', // This should be fetched dynamically
+            facebook: 'TuckerCarlsonOfficial',
+          }}
+          videoUrl={shareOrderData.video_url}
+        />
       )}
     </div>
   );
