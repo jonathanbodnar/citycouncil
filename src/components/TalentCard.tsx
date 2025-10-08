@@ -92,8 +92,15 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
 
         {/* Price and Charity */}
         <div className="flex items-center justify-between">
-          <div className="text-lg font-bold text-gray-900">
-            ${talent.pricing}
+          <div>
+            <div className="text-lg font-bold text-gray-900">
+              ${talent.pricing}
+            </div>
+            {talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
+              <div className="text-sm text-gray-600">
+                Corporate: ${talent.corporate_pricing}
+              </div>
+            )}
           </div>
           {talent.charity_percentage && talent.charity_percentage > 0 && (
             <div className="text-xs text-gray-500">

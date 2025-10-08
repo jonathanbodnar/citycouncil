@@ -246,7 +246,15 @@ const TalentProfilePage: React.FC = () => {
                 <div className="text-2xl font-bold text-primary-600">
                   ${talent.pricing}
                 </div>
-                <div className="text-sm text-gray-600">Price</div>
+                <div className="text-sm text-gray-600">Personal</div>
+                {talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
+                  <>
+                    <div className="text-lg font-bold text-gray-700 mt-1">
+                      ${talent.corporate_pricing}
+                    </div>
+                    <div className="text-xs text-gray-500">Corporate</div>
+                  </>
+                )}
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary-600 flex items-center justify-center">
@@ -289,7 +297,7 @@ const TalentProfilePage: React.FC = () => {
               to={user ? `/order/${talent.id}` : '/login'}
               className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center justify-center"
             >
-              Order ShoutOut - ${talent.pricing}
+              Order ShoutOut - Starting at ${talent.pricing}
             </Link>
 
             {/* Trust Indicators */}

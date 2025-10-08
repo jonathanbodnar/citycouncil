@@ -31,6 +31,7 @@ interface ProfileFormData {
   category: string;
   bio: string;
   pricing: number;
+  corporate_pricing: number;
   fulfillment_time_hours: number;
   charity_percentage: number;
   charity_name: string;
@@ -57,6 +58,7 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
       category: talent.category,
       bio: talent.bio,
       pricing: talent.pricing,
+      corporate_pricing: talent.corporate_pricing || talent.pricing * 1.5,
       fulfillment_time_hours: talent.fulfillment_time_hours,
       charity_percentage: talent.charity_percentage || 0,
       charity_name: talent.charity_name || '',
@@ -108,6 +110,7 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
           category: data.category,
           bio: data.bio,
           pricing: data.pricing,
+          corporate_pricing: data.corporate_pricing,
           fulfillment_time_hours: data.fulfillment_time_hours,
           charity_percentage: data.charity_percentage,
           charity_name: data.charity_name,
@@ -250,10 +253,10 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
             </div>
 
             {/* Pricing and Settings */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pricing ($) *
+                  Personal Pricing ($) *
                 </label>
                 <input
                   type="number"
@@ -264,6 +267,22 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
                 {errors.pricing && (
                   <p className="mt-1 text-sm text-red-600">{errors.pricing.message}</p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">For individual customers</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Corporate Pricing ($) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register('corporate_pricing', { required: 'Corporate pricing is required', min: 1 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                {errors.corporate_pricing && (
+                  <p className="mt-1 text-sm text-red-600">{errors.corporate_pricing.message}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">For business customers</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

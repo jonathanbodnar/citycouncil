@@ -23,6 +23,7 @@ export interface TalentProfile {
   category: TalentCategory;
   bio: string;
   pricing: number;
+  corporate_pricing?: number;
   fulfillment_time_hours: number;
   charity_percentage?: number;
   charity_name?: string;

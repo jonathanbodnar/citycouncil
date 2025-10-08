@@ -85,7 +85,12 @@ const OrderPage: React.FC = () => {
   const calculatePricing = () => {
     if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, total: 0 };
 
-    const subtotal = talent.pricing;
+    // Use corporate pricing if it's a business order, otherwise use regular pricing
+    const basePrice = isForBusiness 
+      ? (talent.corporate_pricing || talent.pricing * 1.5) 
+      : talent.pricing;
+    
+    const subtotal = basePrice;
     const adminFeePercentage = talent.admin_fee_percentage || parseInt(process.env.REACT_APP_ADMIN_FEE_PERCENTAGE || '15');
     const adminFee = subtotal * (adminFeePercentage / 100);
     const charityAmount = talent.charity_percentage 
