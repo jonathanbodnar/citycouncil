@@ -35,21 +35,23 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   return (
     <div className="relative rounded-xl overflow-hidden">
       <div className="relative h-64 md:h-80">
-        {/* Desktop Background - Right Half Only */}
+        {/* Desktop Background - Full Width Photo */}
         {currentTalent.users.avatar_url && (
-          <div className="hidden md:block absolute right-0 top-0 w-1/2 h-full">
+          <div className="hidden md:block absolute inset-0">
             <img
               src={currentTalent.users.avatar_url}
               alt={currentTalent.users.full_name}
               className="w-full h-full object-cover"
             />
-            {/* Gradient overlay from left (blue) to transparent */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-600/60 to-transparent"></div>
+            {/* Gradient overlay for smooth fade from solid blue (left) to transparent (right) */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-600/80 via-primary-600/40 to-transparent"></div>
           </div>
         )}
         
-        {/* Desktop Left Half Background */}
-        <div className="hidden md:block absolute left-0 top-0 w-1/2 h-full bg-gradient-to-r from-primary-600 to-primary-700"></div>
+        {/* Desktop Fallback Background */}
+        {!currentTalent.users.avatar_url && (
+          <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-700"></div>
+        )}
         
         {/* Mobile Background with Photo */}
         {currentTalent.users.avatar_url && (
