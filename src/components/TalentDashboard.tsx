@@ -21,6 +21,7 @@ import ProfilePictureUpload from './ProfilePictureUpload';
 import SocialAccountsManager from './SocialAccountsManager';
 import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
+import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
 
 interface OrderWithUser extends Order {
@@ -104,27 +105,29 @@ const TalentDashboard: React.FC = () => {
 
   const handleVideoUpload = async (orderId: string, file: File) => {
     setUploadingVideo(orderId);
+    
     try {
-      // In a real implementation, this would upload to Wasabi S3
-      // For now, we'll simulate the upload and update the order
+      // Upload video to Wasabi S3
+      const uploadResult = await uploadVideoToWasabi(file, orderId);
       
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const videoUrl = `https://example.com/videos/${orderId}.mp4`;
-      
+      if (!uploadResult.success) {
+        toast.error(uploadResult.error || 'Upload failed');
+        return;
+      }
+
+      // Update order with video URL and mark as completed
       const { error } = await supabase
         .from('orders')
         .update({ 
           status: 'completed',
-          video_url: videoUrl 
+          video_url: uploadResult.videoUrl
         })
         .eq('id', orderId);
 
       if (error) throw error;
 
-      toast.success('Video uploaded successfully!');
-      fetchTalentData(); // Refresh data
+      toast.success('Video uploaded and order completed!');
+      fetchTalentData();
     } catch (error) {
       console.error('Error uploading video:', error);
       toast.error('Failed to upload video');
