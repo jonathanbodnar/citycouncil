@@ -34,27 +34,27 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
 
   return (
     <div className="relative bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl overflow-hidden">
-      <div className="relative h-64 md:h-80">
+      <div className="relative h-80 md:h-96">
         {/* Background Image */}
         <div className="absolute inset-0 bg-black bg-opacity-40" />
         
         {/* Content */}
         <div className="relative h-full flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-8 items-center h-full py-8 md:py-0">
               {/* Text Content */}
-              <div className="text-white">
+              <div className="text-white text-center md:text-left order-2 md:order-1">
                 <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-4">
                   ⭐ Featured Talent
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <h2 className="text-2xl md:text-4xl font-bold mb-4">
                   {currentTalent.users.full_name}
                 </h2>
-                <p className="text-lg opacity-90 mb-6 line-clamp-3">
+                <p className="text-base md:text-lg opacity-90 mb-6 line-clamp-2 md:line-clamp-3">
                   {currentTalent.bio}
                 </p>
-                <div className="flex items-center space-x-6 mb-6">
-                  <div className="text-2xl font-bold">
+                <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-2 sm:space-y-0 sm:space-x-6 mb-6">
+                  <div className="text-xl md:text-2xl font-bold">
                     ${currentTalent.pricing}
                   </div>
                   <div className="text-sm opacity-75">
@@ -75,8 +75,8 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
               </div>
 
               {/* Avatar */}
-              <div className="flex justify-center md:justify-end">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
+              <div className="flex justify-center order-1 md:order-2">
+                <div className="w-28 h-28 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
                   {currentTalent.users.avatar_url ? (
                     <img
                       src={currentTalent.users.avatar_url}
@@ -85,7 +85,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                     />
                   ) : (
                     <div className="w-full h-full bg-white flex items-center justify-center">
-                      <span className="text-4xl font-bold text-primary-600">
+                      <span className="text-2xl md:text-4xl font-bold text-primary-600">
                         {currentTalent.users.full_name.charAt(0)}
                       </span>
                     </div>
@@ -101,15 +101,15 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
           <>
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
+              className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-1.5 md:p-2 rounded-full transition-all"
             >
-              <ChevronLeftIcon className="h-6 w-6" />
+              <ChevronLeftIcon className="h-5 w-5 md:h-6 md:w-6" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
+              className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-1.5 md:p-2 rounded-full transition-all"
             >
-              <ChevronRightIcon className="h-6 w-6" />
+              <ChevronRightIcon className="h-5 w-5 md:h-6 md:w-6" />
             </button>
           </>
         )}
@@ -117,12 +117,12 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
 
       {/* Dots Indicator */}
       {talent.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        <div className="absolute bottom-3 md:bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
           {talent.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
+              className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${
                 index === currentIndex
                   ? 'bg-white'
                   : 'bg-white bg-opacity-50'

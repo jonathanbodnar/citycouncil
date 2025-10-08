@@ -565,18 +565,25 @@ const TalentDashboard: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={talentProfile.category}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-                  readOnly
-                />
-              </div>
+
+            {/* Bio Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Bio
+              </label>
+              <textarea
+                rows={4}
+                value={talentProfile.bio}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Tell customers about yourself and what makes your ShoutOuts special..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This appears on your public profile and talent cards
+              </p>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Personal Pricing ($)
@@ -680,18 +687,6 @@ const TalentDashboard: React.FC = () => {
                 }}
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bio
-              </label>
-              <textarea
-                rows={4}
-                value={talentProfile.bio}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-
 
             <div className="pt-6">
               <button className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700">
