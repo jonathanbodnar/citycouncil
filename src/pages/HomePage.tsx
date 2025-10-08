@@ -71,8 +71,11 @@ const HomePage: React.FC = () => {
 
       setTalent(talentWithUsers);
 
-      // Get available categories
-      const categories = Array.from(new Set(data.map(t => t.category)));
+      // Get available categories from both single category and categories array
+      const allCategories = data.flatMap(t => 
+        t.categories && t.categories.length > 0 ? t.categories : [t.category]
+      );
+      const categories = Array.from(new Set(allCategories));
       setAvailableCategories(categories);
     } catch (error) {
       console.error('Error fetching talent:', error);
@@ -115,7 +118,10 @@ const HomePage: React.FC = () => {
       t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.bio.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || 
+      (t.categories && t.categories.length > 0 
+        ? t.categories.includes(selectedCategory) 
+        : t.category === selectedCategory);
     
     return matchesSearch && matchesCategory;
   });

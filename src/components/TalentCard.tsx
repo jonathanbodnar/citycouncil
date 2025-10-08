@@ -66,6 +66,31 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 mb-1">{talent.users.full_name}</h3>
         
+        {/* Categories */}
+        <div className="mb-2">
+          {talent.categories && talent.categories.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {talent.categories.slice(0, 2).map((category) => (
+                <span
+                  key={category}
+                  className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full"
+                >
+                  {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </span>
+              ))}
+              {talent.categories.length > 2 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  +{talent.categories.length - 2} more
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">
+              {talent.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </span>
+          )}
+        </div>
+        
         {/* Rating */}
         <div className="flex items-center mb-2">
           <div className="flex items-center">
