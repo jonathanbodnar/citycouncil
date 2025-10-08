@@ -45,7 +45,7 @@ const Header: React.FC = () => {
                 to="/dashboard" 
                 className="text-gray-700 hover:text-primary-600 font-medium"
               >
-                {user.user_type === 'talent' ? 'My Profile' : 'My Orders'}
+                {user.user_type === 'talent' ? 'Dashboard' : 'My Orders'}
               </Link>
             )}
             {user?.user_type === 'admin' && (
