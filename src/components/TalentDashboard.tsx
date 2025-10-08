@@ -39,7 +39,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'profile'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile'>('orders');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
 
   useEffect(() => {
@@ -199,129 +199,13 @@ const TalentDashboard: React.FC = () => {
         <p className="text-gray-600">Welcome back, {user?.full_name}!</p>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-blue-100">
-              <ClockIcon className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Pending Orders</p>
-              <p className="text-2xl font-bold text-gray-900">{pendingOrders.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-green-100">
-              <CheckCircleIcon className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">{talentProfile.fulfilled_orders}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-yellow-100">
-              <StarIcon className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Rating</p>
-              <p className="text-2xl font-bold text-gray-900">{talentProfile.average_rating.toFixed(1)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-purple-100">
-              <CurrencyDollarIcon className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ${(completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0)).toFixed(0)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Performance Analytics */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Performance Analytics</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-primary-600 mb-2">
-              {((talentProfile.fulfilled_orders / talentProfile.total_orders) * 100).toFixed(1)}%
-            </div>
-            <div className="text-sm text-gray-600">Fulfillment Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-primary-600 mb-2">
-              {talentProfile.average_rating.toFixed(1)}
-            </div>
-            <div className="text-sm text-gray-600">Average Rating</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-primary-600 mb-2">
-              ${((completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0)) / completedOrders.length || 0).toFixed(0)}
-            </div>
-            <div className="text-sm text-gray-600">Avg. Earnings/Order</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-primary-600 mb-2">
-              {reviews.length}
-            </div>
-            <div className="text-sm text-gray-600">Total Reviews</div>
-          </div>
-        </div>
-
-        {/* Recent Reviews Section */}
-        {reviews.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Reviews</h3>
-            <div className="space-y-4">
-              {reviews.slice(0, 3).map((review) => (
-                <div key={review.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900">{review.users.full_name}</span>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <StarSolid
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  {review.comment && (
-                    <p className="text-gray-700 text-sm">{review.comment}</p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-2">
-                    {new Date(review.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Tab Navigation */}
       <div className="mb-8">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {[
               { key: 'orders', label: 'Orders', count: orders.length },
+              { key: 'analytics', label: 'Analytics', count: null },
               { key: 'profile', label: 'Profile Settings', count: null },
             ].map((tab) => (
               <button
@@ -348,6 +232,7 @@ const TalentDashboard: React.FC = () => {
           </nav>
         </div>
       </div>
+
 
       {/* Orders Tab */}
       {activeTab === 'orders' && (
@@ -513,6 +398,128 @@ const TalentDashboard: React.FC = () => {
               <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
               <p className="text-gray-600">Orders will appear here when customers book you!</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Analytics Tab */}
+      {activeTab === 'analytics' && (
+        <div className="space-y-6">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-lg bg-blue-100">
+                  <ClockIcon className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Pending Orders</p>
+                  <p className="text-2xl font-bold text-gray-900">{pendingOrders.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-lg bg-green-100">
+                  <CheckCircleIcon className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Completed</p>
+                  <p className="text-2xl font-bold text-gray-900">{talentProfile.fulfilled_orders}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-lg bg-yellow-100">
+                  <StarIcon className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Rating</p>
+                  <p className="text-2xl font-bold text-gray-900">{talentProfile.average_rating.toFixed(1)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-lg bg-purple-100">
+                  <CurrencyDollarIcon className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Earnings</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${(completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0)).toFixed(0)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Metrics */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Performance Metrics</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary-600 mb-2">
+                  {((talentProfile.fulfilled_orders / talentProfile.total_orders) * 100).toFixed(1)}%
+                </div>
+                <div className="text-sm text-gray-600">Fulfillment Rate</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary-600 mb-2">
+                  {talentProfile.average_rating.toFixed(1)}
+                </div>
+                <div className="text-sm text-gray-600">Average Rating</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary-600 mb-2">
+                  ${((completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0)) / completedOrders.length || 0).toFixed(0)}
+                </div>
+                <div className="text-sm text-gray-600">Avg. Earnings/Order</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary-600 mb-2">
+                  {reviews.length}
+                </div>
+                <div className="text-sm text-gray-600">Total Reviews</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Reviews */}
+          {reviews.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Reviews</h3>
+              <div className="space-y-4">
+                {reviews.slice(0, 5).map((review) => (
+                  <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-gray-900">{review.users.full_name}</span>
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <StarSolid
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p className="text-gray-700 text-sm">{review.comment}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      {new Date(review.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
