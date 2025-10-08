@@ -17,6 +17,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   readonly = false 
 }) => {
   const [editing, setEditing] = useState(false);
+  const [tempCategory, setTempCategory] = useState<TalentCategory>(selectedCategory);
 
   const TALENT_CATEGORIES = [
     { value: 'politician', label: 'Politician', description: 'Current or former elected officials' },
@@ -42,7 +43,13 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   const selectedCategoryData = TALENT_CATEGORIES.find(cat => cat.value === selectedCategory);
 
   const handleCategorySelect = (category: TalentCategory) => {
+    setTempCategory(category);
     onCategoryChange(category);
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setTempCategory(selectedCategory);
     setEditing(false);
   };
 
@@ -82,7 +89,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
           Select Your Category
         </label>
         <button
-          onClick={() => setEditing(false)}
+          onClick={handleCancel}
           className="text-gray-600 hover:text-gray-700"
         >
           <XMarkIcon className="h-5 w-5" />
@@ -95,7 +102,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
             key={category.value}
             onClick={() => handleCategorySelect(category.value as TalentCategory)}
             className={`p-4 border-2 rounded-lg text-left transition-all ${
-              selectedCategory === category.value
+              tempCategory === category.value
                 ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
             }`}
@@ -105,7 +112,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
                 <h4 className="font-medium text-gray-900 mb-1">{category.label}</h4>
                 <p className="text-sm text-gray-600">{category.description}</p>
               </div>
-              {selectedCategory === category.value && (
+              {tempCategory === category.value && (
                 <CheckIcon className="h-5 w-5 text-primary-600 flex-shrink-0" />
               )}
             </div>

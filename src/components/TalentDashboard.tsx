@@ -617,9 +617,22 @@ const TalentDashboard: React.FC = () => {
             <div className="pt-6 border-t border-gray-200">
               <CategorySelector
                 selectedCategory={talentProfile.category}
-                onCategoryChange={(category) => {
-                  // Handle category change
-                  console.log('Category changed to:', category);
+                onCategoryChange={async (category) => {
+                  try {
+                    const { error } = await supabase
+                      .from('talent_profiles')
+                      .update({ category })
+                      .eq('id', talentProfile.id);
+
+                    if (error) throw error;
+                    
+                    // Update local state
+                    setTalentProfile(prev => prev ? { ...prev, category } : null);
+                    toast.success('Category updated successfully!');
+                  } catch (error) {
+                    console.error('Error updating category:', error);
+                    toast.error('Failed to update category');
+                  }
                 }}
               />
             </div>
@@ -634,9 +647,29 @@ const TalentDashboard: React.FC = () => {
               <CharitySelector
                 selectedCharityName={talentProfile.charity_name}
                 charityPercentage={talentProfile.charity_percentage}
-                onCharityChange={(charityName, percentage) => {
-                  // Handle charity change
-                  console.log('Charity changed:', charityName, percentage);
+                onCharityChange={async (charityName, percentage) => {
+                  try {
+                    const { error } = await supabase
+                      .from('talent_profiles')
+                      .update({ 
+                        charity_name: charityName,
+                        charity_percentage: percentage 
+                      })
+                      .eq('id', talentProfile.id);
+
+                    if (error) throw error;
+                    
+                    // Update local state
+                    setTalentProfile(prev => prev ? { 
+                      ...prev, 
+                      charity_name: charityName,
+                      charity_percentage: percentage 
+                    } : null);
+                    toast.success('Charity settings updated successfully!');
+                  } catch (error) {
+                    console.error('Error updating charity settings:', error);
+                    toast.error('Failed to update charity settings');
+                  }
                 }}
               />
             </div>
@@ -652,16 +685,6 @@ const TalentDashboard: React.FC = () => {
               />
             </div>
 
-            {talentProfile.charity_name && (
-              <div className="bg-red-50 p-4 rounded-lg">
-                <div className="flex items-center">
-                  <HeartIcon className="h-5 w-5 text-red-500 mr-2" />
-                  <span className="font-medium text-red-900">
-                    {talentProfile.charity_percentage}% of proceeds go to {talentProfile.charity_name}
-                  </span>
-                </div>
-              </div>
-            )}
 
             <div className="pt-6">
               <button className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700">
