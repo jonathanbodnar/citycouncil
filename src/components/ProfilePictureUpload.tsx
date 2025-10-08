@@ -3,6 +3,7 @@ import {
   CameraIcon,
   UserCircleIcon
 } from '@heroicons/react/24/outline';
+import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -43,34 +44,48 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
       return;
     }
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewUrl(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // Auto-upload immediately (simulate upload process)
     setUploading(true);
+    
     try {
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Generate a mock URL (in production, this would be the actual S3 URL)
-      const avatarUrl = `https://s3.us-central-1.wasabisys.com/shoutoutorders/avatars/${user?.id}-${Date.now()}.jpg`;
-      
-      // Call the parent component's upload completion handler
-      if (onUploadComplete) {
-        await onUploadComplete(avatarUrl);
-      }
+      // Create preview and upload simultaneously
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result as string;
+        setPreviewUrl(dataUrl);
+        
+        try {
+          // Simulate upload delay
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // Update the user's avatar in the database directly
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ avatar_url: dataUrl })
+            .eq('id', user?.id);
 
-      toast.success('Profile picture updated successfully!');
-      setPreviewUrl(null);
+          if (updateError) {
+            throw updateError;
+          }
+
+          // Call the parent component's upload completion handler
+          if (onUploadComplete) {
+            await onUploadComplete(dataUrl);
+          }
+
+          toast.success('Profile picture updated successfully!');
+        } catch (error) {
+          console.error('Error uploading avatar:', error);
+          toast.error('Failed to upload profile picture');
+          setPreviewUrl(null);
+        } finally {
+          setUploading(false);
+        }
+      };
+      
+      reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast.error('Failed to upload profile picture');
-      setPreviewUrl(null);
-    } finally {
+      console.error('Error processing file:', error);
+      toast.error('Failed to process image');
       setUploading(false);
     }
   };

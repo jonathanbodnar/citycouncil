@@ -473,13 +473,11 @@ const TalentDashboard: React.FC = () => {
                 currentAvatarUrl={user?.avatar_url}
                 onUploadComplete={async (url) => {
                   try {
-                    // Update user avatar in database
-                    await updateProfile({ avatar_url: url });
-                    // Refresh talent data to show updated photo
-                    fetchTalentData();
+                    // The ProfilePictureUpload component handles the database update
+                    // Just refresh the local data
+                    await fetchTalentData();
                   } catch (error) {
-                    console.error('Error updating profile photo:', error);
-                    toast.error('Failed to update profile photo');
+                    console.error('Error refreshing data:', error);
                   }
                 }}
                 size="lg"
