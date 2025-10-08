@@ -11,10 +11,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, HelpMessage, AppSettings } from '../types';
+import TalentProfileEditor from './TalentProfileEditor';
 import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
   users: {
+    id: string;
     full_name: string;
     email: string;
     avatar_url?: string;
@@ -27,6 +29,7 @@ const AdminManagementTabs: React.FC = () => {
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -40,6 +43,7 @@ const AdminManagementTabs: React.FC = () => {
           .select(`
             *,
             users!talent_profiles_user_id_fkey (
+              id,
               full_name,
               email,
               avatar_url
@@ -214,7 +218,11 @@ const AdminManagementTabs: React.FC = () => {
                       </button>
 
                       {/* Edit Button */}
-                      <button className="p-2 text-gray-400 hover:text-gray-600">
+                      <button 
+                        onClick={() => setEditingTalent(talentProfile)}
+                        className="p-2 text-gray-400 hover:text-gray-600"
+                        title="Edit Profile"
+                      >
                         <PencilIcon className="h-4 w-4" />
                       </button>
                     </div>
@@ -381,6 +389,18 @@ const AdminManagementTabs: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Talent Profile Editor Modal */}
+      {editingTalent && (
+        <TalentProfileEditor
+          talent={editingTalent}
+          onClose={() => setEditingTalent(null)}
+          onSave={() => {
+            fetchData(); // Refresh the talent list
+            setEditingTalent(null);
+          }}
+        />
       )}
     </div>
   );

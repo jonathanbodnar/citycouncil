@@ -16,6 +16,7 @@ import { HeartIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Order, Review } from '../types';
+import ProfilePictureUpload from './ProfilePictureUpload';
 import toast from 'react-hot-toast';
 
 interface OrderWithTalent extends Order {
@@ -38,7 +39,7 @@ interface ReviewWithTalent extends Review {
 }
 
 const UserDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [orders, setOrders] = useState<OrderWithTalent[]>([]);
   const [reviews, setReviews] = useState<ReviewWithTalent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -373,25 +374,31 @@ const UserDashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">Profile Settings</h2>
-            <button className="flex items-center space-x-2 text-primary-600 hover:text-primary-700">
-              <PencilIcon className="h-4 w-4" />
-              <span>Edit Profile</span>
-            </button>
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center space-x-6">
-              <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center">
-                {user?.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.full_name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <UserCircleIcon className="h-16 w-16 text-primary-600" />
-                )}
+            {/* Profile Photo Upload */}
+            <div className="flex items-center space-x-6 pb-6 border-b border-gray-200">
+              <ProfilePictureUpload
+                currentAvatarUrl={user?.avatar_url}
+                onUploadComplete={(url) => {
+                  // Update user avatar
+                  updateProfile({ avatar_url: url });
+                }}
+                size="lg"
+              />
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Profile Photo</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  Upload your profile picture
+                </p>
+                <p className="text-xs text-gray-500">
+                  Recommended: 400x400px, JPG or PNG format, max 5MB
+                </p>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-6">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">{user?.full_name}</h3>
                 <p className="text-gray-600">{user?.email}</p>

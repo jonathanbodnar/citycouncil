@@ -17,6 +17,7 @@ import { HeartIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Order, Review, TalentProfile } from '../types';
+import ProfilePictureUpload from './ProfilePictureUpload';
 import toast from 'react-hot-toast';
 
 interface OrderWithUser extends Order {
@@ -33,7 +34,7 @@ interface ReviewWithUser extends Review {
 }
 
 const TalentDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
@@ -466,6 +467,27 @@ const TalentDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-6">
+            {/* Profile Photo Section */}
+            <div className="flex items-center space-x-6 pb-6 border-b border-gray-200">
+              <ProfilePictureUpload
+                currentAvatarUrl={user?.avatar_url}
+                onUploadComplete={(url) => {
+                  // Update user avatar
+                  updateProfile({ avatar_url: url });
+                  toast.success('Profile photo updated!');
+                }}
+                size="lg"
+              />
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Profile Photo</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  Upload a professional headshot for your talent profile
+                </p>
+                <p className="text-xs text-gray-500">
+                  Recommended: 400x400px, JPG or PNG format, max 5MB
+                </p>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
