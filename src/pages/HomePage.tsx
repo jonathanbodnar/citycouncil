@@ -140,7 +140,6 @@ const HomePage: React.FC = () => {
       {/* Featured Talent Carousel */}
       {featuredTalent.length > 0 && (
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Talent</h2>
           <FeaturedCarousel talent={featuredTalent} />
         </div>
       )}
