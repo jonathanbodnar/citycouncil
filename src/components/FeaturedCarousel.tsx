@@ -52,62 +52,98 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         <div className="md:hidden absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-800"></div>
         
         {/* Content */}
-        <div className="relative h-full flex items-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-0 items-center h-full py-6 md:py-0">
-              {/* Text Content */}
-              <div className="text-white text-center md:text-left md:pr-8 z-10">
-                <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-4">
+        <div className="relative h-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-full">
+            {/* Mobile Layout */}
+            <div className="md:hidden flex flex-col justify-center items-center h-full py-6 space-y-4">
+              {/* Mobile Avatar */}
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                {currentTalent.users.avatar_url ? (
+                  <img
+                    src={currentTalent.users.avatar_url}
+                    alt={currentTalent.users.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-white flex items-center justify-center">
+                    <span className="text-xl font-bold text-primary-600">
+                      {currentTalent.users.full_name.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Content */}
+              <div className="text-white text-center">
+                <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-3">
                   ⭐ Featured Talent
                 </div>
-                <h2 className="text-2xl md:text-4xl font-bold mb-4">
+                <h2 className="text-2xl font-bold mb-3">
                   {currentTalent.users.full_name}
                 </h2>
-                <p className="text-base md:text-lg opacity-90 mb-6 line-clamp-2 md:line-clamp-3">
+                <p className="text-sm opacity-90 mb-4 line-clamp-2 px-4">
                   {currentTalent.bio}
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-2 sm:space-y-0 sm:space-x-6 mb-6">
-                  <div className="text-xl md:text-2xl font-bold">
+                <div className="flex flex-col items-center space-y-1 mb-4">
+                  <div className="text-xl font-bold">
                     ${currentTalent.pricing}
                   </div>
-                  <div className="text-sm opacity-75">
+                  <div className="text-xs opacity-75">
                     Delivers in {currentTalent.fulfillment_time_hours}h
                   </div>
                   {currentTalent.charity_percentage && (
-                    <div className="text-sm opacity-75">
+                    <div className="text-xs opacity-75">
                       {currentTalent.charity_percentage}% to charity ❤️
                     </div>
                   )}
                 </div>
                 <Link
                   to={`/talent/${currentTalent.id}`}
-                  className="inline-block bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+                  className="inline-block bg-white text-primary-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
                 >
                   Order ShoutOut
                 </Link>
               </div>
+            </div>
 
-              {/* Mobile Avatar Only */}
-              <div className="md:hidden flex justify-center">
-                <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                  {currentTalent.users.avatar_url ? (
-                    <img
-                      src={currentTalent.users.avatar_url}
-                      alt={currentTalent.users.full_name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-white flex items-center justify-center">
-                      <span className="text-2xl font-bold text-primary-600">
-                        {currentTalent.users.full_name.charAt(0)}
-                      </span>
+            {/* Desktop Layout */}
+            <div className="hidden md:flex items-center h-full">
+              <div className="grid grid-cols-2 gap-8 items-center w-full">
+                {/* Desktop Text Content */}
+                <div className="text-white z-10">
+                  <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-4">
+                    ⭐ Featured Talent
+                  </div>
+                  <h2 className="text-4xl font-bold mb-4">
+                    {currentTalent.users.full_name}
+                  </h2>
+                  <p className="text-lg opacity-90 mb-6 line-clamp-3">
+                    {currentTalent.bio}
+                  </p>
+                  <div className="flex items-center space-x-6 mb-6">
+                    <div className="text-2xl font-bold">
+                      ${currentTalent.pricing}
                     </div>
-                  )}
+                    <div className="text-sm opacity-75">
+                      Delivers in {currentTalent.fulfillment_time_hours}h
+                    </div>
+                    {currentTalent.charity_percentage && (
+                      <div className="text-sm opacity-75">
+                        {currentTalent.charity_percentage}% to charity ❤️
+                      </div>
+                    )}
+                  </div>
+                  <Link
+                    to={`/talent/${currentTalent.id}`}
+                    className="inline-block bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+                  >
+                    Order ShoutOut
+                  </Link>
                 </div>
-              </div>
 
-              {/* Desktop - Right side is handled by background image */}
-              <div className="hidden md:block"></div>
+                {/* Desktop - Right side is the background photo */}
+                <div></div>
+              </div>
             </div>
           </div>
         </div>
