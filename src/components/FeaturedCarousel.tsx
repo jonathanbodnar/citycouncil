@@ -35,46 +35,47 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   return (
     <div className="relative rounded-xl overflow-hidden">
       <div className="relative h-64 md:h-80">
-        {/* Desktop Background Image */}
+        {/* Desktop Background - Right Half Only */}
         {currentTalent.users.avatar_url && (
-          <div className="hidden md:block absolute inset-0">
+          <div className="hidden md:block absolute right-0 top-0 w-1/2 h-full">
             <img
               src={currentTalent.users.avatar_url}
               alt={currentTalent.users.full_name}
               className="w-full h-full object-cover"
             />
             {/* Gradient overlay from left (blue) to transparent */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-600/80 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-600/60 to-transparent"></div>
           </div>
         )}
         
-        {/* Mobile Background */}
-        <div className="md:hidden absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-800"></div>
+        {/* Desktop Left Half Background */}
+        <div className="hidden md:block absolute left-0 top-0 w-1/2 h-full bg-gradient-to-r from-primary-600 to-primary-700"></div>
+        
+        {/* Mobile Background with Photo */}
+        {currentTalent.users.avatar_url && (
+          <div className="md:hidden absolute inset-0">
+            <img
+              src={currentTalent.users.avatar_url}
+              alt={currentTalent.users.full_name}
+              className="w-full h-full object-cover"
+            />
+            {/* Blue overlay for mobile */}
+            <div className="absolute inset-0 bg-primary-600/75"></div>
+          </div>
+        )}
+        
+        {/* Mobile Fallback Background */}
+        {!currentTalent.users.avatar_url && (
+          <div className="md:hidden absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-800"></div>
+        )}
         
         {/* Content */}
         <div className="relative h-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-full">
             {/* Mobile Layout */}
-            <div className="md:hidden flex flex-col justify-center items-center h-full py-6 space-y-4">
-              {/* Mobile Avatar */}
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                {currentTalent.users.avatar_url ? (
-                  <img
-                    src={currentTalent.users.avatar_url}
-                    alt={currentTalent.users.full_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-white flex items-center justify-center">
-                    <span className="text-xl font-bold text-primary-600">
-                      {currentTalent.users.full_name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
+            <div className="md:hidden flex flex-col justify-center items-center h-full py-6 space-y-4 text-center">
               {/* Mobile Content */}
-              <div className="text-white text-center">
+              <div className="text-white">
                 <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-3">
                   ⭐ Featured Talent
                 </div>
