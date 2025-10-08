@@ -4,20 +4,21 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { TalentCategory } from '../types';
+import toast from 'react-hot-toast';
 
 interface CategorySelectorProps {
-  selectedCategory: TalentCategory;
-  onCategoryChange: (category: TalentCategory) => void;
+  selectedCategories: TalentCategory[];
+  onCategoryChange: (categories: TalentCategory[]) => void;
   readonly?: boolean;
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({ 
-  selectedCategory, 
+  selectedCategories, 
   onCategoryChange,
   readonly = false 
 }) => {
   const [editing, setEditing] = useState(false);
-  const [tempCategory, setTempCategory] = useState<TalentCategory>(selectedCategory);
+  const [tempCategories, setTempCategories] = useState<TalentCategory[]>(selectedCategories);
 
   const TALENT_CATEGORIES = [
     { value: 'politician', label: 'Politician', description: 'Current or former elected officials' },
@@ -40,16 +41,25 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     { value: 'other', label: 'Other Public Figure', description: 'Other notable conservative personalities' },
   ];
 
-  const selectedCategoryData = TALENT_CATEGORIES.find(cat => cat.value === selectedCategory);
+  const handleCategoryToggle = (category: TalentCategory) => {
+    const newCategories = tempCategories.includes(category)
+      ? tempCategories.filter(c => c !== category)
+      : [...tempCategories, category];
+    
+    setTempCategories(newCategories);
+  };
 
-  const handleCategorySelect = (category: TalentCategory) => {
-    setTempCategory(category);
-    onCategoryChange(category);
+  const handleSave = () => {
+    if (tempCategories.length === 0) {
+      toast.error('Please select at least one category');
+      return;
+    }
+    onCategoryChange(tempCategories);
     setEditing(false);
   };
 
   const handleCancel = () => {
-    setTempCategory(selectedCategory);
+    setTempCategories(selectedCategories);
     setEditing(false);
   };
 
@@ -58,25 +68,37 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="block text-sm font-medium text-gray-700">
-            Category
+            Categories ({selectedCategories.length})
           </label>
           {!readonly && (
             <button
               onClick={() => setEditing(true)}
               className="text-primary-600 hover:text-primary-700 text-sm"
             >
-              Change
+              Edit
             </button>
           )}
         </div>
-        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">{selectedCategoryData?.label}</h4>
-              <p className="text-sm text-gray-600">{selectedCategoryData?.description}</p>
+        <div className="space-y-2">
+          {selectedCategories.map(category => {
+            const categoryData = TALENT_CATEGORIES.find(cat => cat.value === category);
+            return (
+              <div key={category} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{categoryData?.label}</h4>
+                    <p className="text-sm text-gray-600">{categoryData?.description}</p>
+                  </div>
+                  <CheckIcon className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            );
+          })}
+          {selectedCategories.length === 0 && (
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 text-center">
+              <p className="text-gray-500">No categories selected</p>
             </div>
-            <CheckIcon className="h-5 w-5 text-green-600" />
-          </div>
+          )}
         </div>
       </div>
     );
@@ -86,38 +108,54 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     <div>
       <div className="flex items-center justify-between mb-4">
         <label className="block text-sm font-medium text-gray-700">
-          Select Your Category
+          Select Your Categories ({tempCategories.length} selected)
         </label>
-        <button
-          onClick={handleCancel}
-          className="text-gray-600 hover:text-gray-700"
-        >
-          <XMarkIcon className="h-5 w-5" />
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleSave}
+            disabled={tempCategories.length === 0}
+            className="bg-primary-600 text-white px-3 py-1 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          >
+            Save
+          </button>
+          <button
+            onClick={handleCancel}
+            className="text-gray-600 hover:text-gray-700"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
       </div>
       
+      <p className="text-sm text-gray-600 mb-4">
+        Select all categories that describe your expertise. You can choose multiple categories.
+      </p>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
-        {TALENT_CATEGORIES.map((category) => (
-          <button
-            key={category.value}
-            onClick={() => handleCategorySelect(category.value as TalentCategory)}
-            className={`p-4 border-2 rounded-lg text-left transition-all ${
-              tempCategory === category.value
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-1">{category.label}</h4>
-                <p className="text-sm text-gray-600">{category.description}</p>
+        {TALENT_CATEGORIES.map((category) => {
+          const isSelected = tempCategories.includes(category.value as TalentCategory);
+          return (
+            <button
+              key={category.value}
+              onClick={() => handleCategoryToggle(category.value as TalentCategory)}
+              className={`p-4 border-2 rounded-lg text-left transition-all ${
+                isSelected
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">{category.label}</h4>
+                  <p className="text-sm text-gray-600">{category.description}</p>
+                </div>
+                {isSelected && (
+                  <CheckIcon className="h-5 w-5 text-primary-600 flex-shrink-0" />
+                )}
               </div>
-              {tempCategory === category.value && (
-                <CheckIcon className="h-5 w-5 text-primary-600 flex-shrink-0" />
-              )}
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

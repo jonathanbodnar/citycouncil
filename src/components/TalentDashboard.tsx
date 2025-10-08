@@ -616,22 +616,29 @@ const TalentDashboard: React.FC = () => {
             {/* Category Selector */}
             <div className="pt-6 border-t border-gray-200">
               <CategorySelector
-                selectedCategory={talentProfile.category}
-                onCategoryChange={async (category) => {
+                selectedCategories={talentProfile.categories || [talentProfile.category]}
+                onCategoryChange={async (categories) => {
                   try {
                     const { error } = await supabase
                       .from('talent_profiles')
-                      .update({ category })
+                      .update({ 
+                        categories: categories,
+                        category: categories[0] // Keep primary category for backwards compatibility
+                      })
                       .eq('id', talentProfile.id);
 
                     if (error) throw error;
                     
                     // Update local state
-                    setTalentProfile(prev => prev ? { ...prev, category } : null);
-                    toast.success('Category updated successfully!');
+                    setTalentProfile(prev => prev ? { 
+                      ...prev, 
+                      categories: categories,
+                      category: categories[0] 
+                    } : null);
+                    toast.success('Categories updated successfully!');
                   } catch (error) {
-                    console.error('Error updating category:', error);
-                    toast.error('Failed to update category');
+                    console.error('Error updating categories:', error);
+                    toast.error('Failed to update categories');
                   }
                 }}
               />

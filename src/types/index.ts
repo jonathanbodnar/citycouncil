@@ -20,7 +20,8 @@ export interface UserProfile {
 export interface TalentProfile {
   id: string;
   user_id: string;
-  category: TalentCategory;
+  category: TalentCategory; // Keep for backwards compatibility
+  categories?: TalentCategory[]; // New multi-category field
   bio: string;
   pricing: number;
   corporate_pricing?: number;
