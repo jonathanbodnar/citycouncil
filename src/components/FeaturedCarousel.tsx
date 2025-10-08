@@ -35,22 +35,21 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   return (
     <div className="relative rounded-xl overflow-hidden">
       <div className="relative h-64 md:h-80">
-        {/* Desktop Background - Full Width Photo */}
-        {currentTalent.users.avatar_url && (
-          <div className="hidden md:block absolute inset-0">
-            <img
-              src={currentTalent.users.avatar_url}
-              alt={currentTalent.users.full_name}
-              className="w-full h-full object-cover"
-            />
-            {/* Gradient overlay for smooth fade from solid blue (left) to transparent (right) */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-600/80 via-primary-600/40 to-transparent"></div>
-          </div>
-        )}
+        {/* Desktop Background - Blue Base */}
+        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-700"></div>
         
-        {/* Desktop Fallback Background */}
-        {!currentTalent.users.avatar_url && (
-          <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-700"></div>
+        {/* Desktop Photo - Right Half with Gradient Fade */}
+        {currentTalent.users.avatar_url && (
+          <div 
+            className="hidden md:block absolute right-0 top-0 w-1/2 h-full"
+            style={{
+              backgroundImage: `url(${currentTalent.users.avatar_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
+            }}
+          />
         )}
         
         {/* Mobile Background with Photo */}
