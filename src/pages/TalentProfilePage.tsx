@@ -233,7 +233,7 @@ const TalentProfilePage: React.FC = () => {
                   <StarIcon
                     key={i}
                     className={`h-5 w-5 ${
-                      i < Math.floor(talent.average_rating)
+                      i < Math.floor(talent.average_rating || 0)
                         ? 'text-yellow-400'
                         : 'text-gray-300'
                     }`}
@@ -241,7 +241,7 @@ const TalentProfilePage: React.FC = () => {
                 ))}
               </div>
               <span className="ml-2 text-lg font-semibold text-gray-900">
-                {talent.average_rating.toFixed(1)}
+                {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'}
               </span>
               <span className="ml-2 text-gray-600">
                 ({talent.fulfilled_orders} reviews)

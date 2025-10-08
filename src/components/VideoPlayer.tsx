@@ -50,13 +50,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         poster={thumbnailUrl}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onError={() => setVideoError(true)}
+        onError={(e) => {
+          console.error('Video error:', e);
+          console.error('Video URL:', videoUrl);
+          setVideoError(true);
+        }}
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
         controls
         preload="metadata"
       >
         <source src={videoUrl} type="video/mp4" />
+        {/* Support for data URLs */}
+        {videoUrl.startsWith('data:') && (
+          <source src={videoUrl} type={videoUrl.split(';')[0].split(':')[1]} />
+        )}
         <p className="text-white p-4">
           Your browser doesn't support video playback. 
           <a href={videoUrl} className="text-blue-300 underline ml-1">
@@ -101,12 +109,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       {/* Error State */}
       {videoError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="text-center">
+          <div className="text-center p-4">
             <PlayIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
             <p className="text-gray-600">Video temporarily unavailable</p>
-            <p className="text-xs text-gray-500 mt-1">
-              URL: {videoUrl}
-            </p>
+            {videoUrl.startsWith('data:') ? (
+              <p className="text-xs text-gray-500 mt-1">
+                Data URL video ({Math.round(videoUrl.length / 1024)}KB)
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1 break-all">
+                URL: {videoUrl.length > 50 ? videoUrl.substring(0, 50) + '...' : videoUrl}
+              </p>
+            )}
           </div>
         </div>
       )}

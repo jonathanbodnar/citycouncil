@@ -228,23 +228,6 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* Trust Indicators */}
-      <div className="mt-16 bg-gray-100 rounded-lg p-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <div>
-            <div className="text-3xl font-bold text-primary-600 mb-2">100%</div>
-            <div className="text-sm text-gray-600">Money-Back Guarantee</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-primary-600 mb-2">🔒</div>
-            <div className="text-sm text-gray-600">Secure & Private</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-primary-600 mb-2">⚡</div>
-            <div className="text-sm text-gray-600">Fast Delivery</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

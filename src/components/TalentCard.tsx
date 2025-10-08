@@ -98,7 +98,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
               <StarIcon
                 key={i}
                 className={`h-4 w-4 ${
-                  i < Math.floor(talent.average_rating)
+                  i < Math.floor(talent.average_rating || 0)
                     ? 'text-yellow-400'
                     : 'text-gray-300'
                 }`}
@@ -106,7 +106,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             ))}
           </div>
           <span className="ml-2 text-sm text-gray-600">
-            {talent.average_rating.toFixed(1)} ({talent.fulfilled_orders})
+            {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'} ({talent.fulfilled_orders || 0})
           </span>
         </div>
 
