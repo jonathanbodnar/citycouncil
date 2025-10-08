@@ -33,17 +33,30 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   const currentTalent = talent[currentIndex];
 
   return (
-    <div className="relative bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl overflow-hidden">
-      <div className="relative h-80 md:h-96">
-        {/* Background Image */}
-        <div className="absolute inset-0 bg-black bg-opacity-40" />
+    <div className="relative rounded-xl overflow-hidden">
+      <div className="relative h-64 md:h-80">
+        {/* Desktop Background Image */}
+        {currentTalent.users.avatar_url && (
+          <div className="hidden md:block absolute inset-0">
+            <img
+              src={currentTalent.users.avatar_url}
+              alt={currentTalent.users.full_name}
+              className="w-full h-full object-cover"
+            />
+            {/* Gradient overlay from left (blue) to transparent */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-600/80 to-transparent"></div>
+          </div>
+        )}
+        
+        {/* Mobile Background */}
+        <div className="md:hidden absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-800"></div>
         
         {/* Content */}
         <div className="relative h-full flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-8 items-center h-full py-8 md:py-0">
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-0 items-center h-full py-6 md:py-0">
               {/* Text Content */}
-              <div className="text-white text-center md:text-left order-2 md:order-1">
+              <div className="text-white text-center md:text-left md:pr-8 z-10">
                 <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-4">
                   ⭐ Featured Talent
                 </div>
@@ -68,15 +81,15 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 </div>
                 <Link
                   to={`/talent/${currentTalent.id}`}
-                  className="inline-block bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                  className="inline-block bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
                 >
                   Order ShoutOut
                 </Link>
               </div>
 
-              {/* Avatar */}
-              <div className="flex justify-center order-1 md:order-2">
-                <div className="w-28 h-28 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
+              {/* Mobile Avatar Only */}
+              <div className="md:hidden flex justify-center">
+                <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg">
                   {currentTalent.users.avatar_url ? (
                     <img
                       src={currentTalent.users.avatar_url}
@@ -85,13 +98,16 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                     />
                   ) : (
                     <div className="w-full h-full bg-white flex items-center justify-center">
-                      <span className="text-2xl md:text-4xl font-bold text-primary-600">
+                      <span className="text-2xl font-bold text-primary-600">
                         {currentTalent.users.full_name.charAt(0)}
                       </span>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Desktop - Right side is handled by background image */}
+              <div className="hidden md:block"></div>
             </div>
           </div>
         </div>
