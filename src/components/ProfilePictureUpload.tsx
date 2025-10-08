@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { 
   CameraIcon,
-  UserCircleIcon,
-  CheckIcon,
-  XMarkIcon
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -52,19 +50,18 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     };
     reader.readAsDataURL(file);
 
+    // Auto-upload immediately (simulate upload process)
     setUploading(true);
     try {
-      // In a real implementation, this would upload to Wasabi S3
-      // For now, we'll simulate the upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Generate a mock URL (in production, this would be the actual S3 URL)
       const avatarUrl = `https://s3.us-central-1.wasabisys.com/shoutoutorders/avatars/${user?.id}-${Date.now()}.jpg`;
       
-      // Update user avatar in database
-      // This would typically be handled by the parent component
+      // Call the parent component's upload completion handler
       if (onUploadComplete) {
-        onUploadComplete(avatarUrl);
+        await onUploadComplete(avatarUrl);
       }
 
       toast.success('Profile picture updated successfully!');
@@ -121,25 +118,6 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
         )}
       </div>
 
-      {/* Preview Controls */}
-      {previewUrl && !uploading && (
-        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-          <button
-            onClick={() => handleFileSelect({ target: { files: null } } as any)}
-            className="bg-green-600 text-white p-1 rounded-full hover:bg-green-700"
-            title="Confirm upload"
-          >
-            <CheckIcon className="h-4 w-4" />
-          </button>
-          <button
-            onClick={cancelPreview}
-            className="bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
-            title="Cancel"
-          >
-            <XMarkIcon className="h-4 w-4" />
-          </button>
-        </div>
-      )}
     </div>
   );
 };

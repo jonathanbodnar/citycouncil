@@ -381,9 +381,16 @@ const UserDashboard: React.FC = () => {
             <div className="flex items-center space-x-6 pb-6 border-b border-gray-200">
               <ProfilePictureUpload
                 currentAvatarUrl={user?.avatar_url}
-                onUploadComplete={(url) => {
-                  // Update user avatar
-                  updateProfile({ avatar_url: url });
+                onUploadComplete={async (url) => {
+                  try {
+                    // Update user avatar in database
+                    await updateProfile({ avatar_url: url });
+                    // Refresh user data
+                    fetchUserData();
+                  } catch (error) {
+                    console.error('Error updating profile photo:', error);
+                    toast.error('Failed to update profile photo');
+                  }
                 }}
                 size="lg"
               />
