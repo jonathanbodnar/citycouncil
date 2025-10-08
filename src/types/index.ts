@@ -58,6 +58,7 @@ export type TalentCategory =
   | 'other';
 
 export interface SocialAccount {
+  id: string;
   platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'linkedin';
   handle: string;
 }

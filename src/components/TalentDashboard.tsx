@@ -18,6 +18,9 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Order, Review, TalentProfile } from '../types';
 import ProfilePictureUpload from './ProfilePictureUpload';
+import SocialAccountsManager from './SocialAccountsManager';
+import CategorySelector from './CategorySelector';
+import CharitySelector from './CharitySelector';
 import toast from 'react-hot-toast';
 
 interface OrderWithUser extends Order {
@@ -608,16 +611,34 @@ const TalentDashboard: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Charity Donation %
-                </label>
-                <input
-                  type="number"
-                  value={talentProfile.charity_percentage || 0}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
+            </div>
+
+            {/* Category Selector */}
+            <div className="pt-6 border-t border-gray-200">
+              <CategorySelector
+                selectedCategory={talentProfile.category}
+                onCategoryChange={(category) => {
+                  // Handle category change
+                  console.log('Category changed to:', category);
+                }}
+              />
+            </div>
+
+            {/* Social Media Accounts */}
+            <div className="pt-6 border-t border-gray-200">
+              <SocialAccountsManager talentId={talentProfile.id} />
+            </div>
+
+            {/* Charity Settings */}
+            <div className="pt-6 border-t border-gray-200">
+              <CharitySelector
+                selectedCharityName={talentProfile.charity_name}
+                charityPercentage={talentProfile.charity_percentage}
+                onCharityChange={(charityName, percentage) => {
+                  // Handle charity change
+                  console.log('Charity changed:', charityName, percentage);
+                }}
+              />
             </div>
 
             <div>
