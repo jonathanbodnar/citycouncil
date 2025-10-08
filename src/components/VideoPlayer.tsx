@@ -19,7 +19,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [showControls, setShowControls] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [videoError, setVideoError] = useState(false);
 
   const handlePlayPause = () => {
     const video = document.getElementById('video-player') as HTMLVideoElement;
@@ -49,9 +50,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         poster={thumbnailUrl}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onError={() => setVideoError(true)}
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
-        controls={false}
+        controls
         preload="metadata"
       >
         <source src={videoUrl} type="video/mp4" />
@@ -95,6 +97,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           )}
         </button>
       </div>
+
+      {/* Error State */}
+      {videoError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <div className="text-center">
+            <PlayIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+            <p className="text-gray-600">Video temporarily unavailable</p>
+            <p className="text-xs text-gray-500 mt-1">
+              URL: {videoUrl}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Loading State */}
       {!videoUrl && (

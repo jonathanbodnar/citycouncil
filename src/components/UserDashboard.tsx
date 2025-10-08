@@ -57,6 +57,8 @@ const UserDashboard: React.FC = () => {
 
   const fetchUserData = async () => {
     try {
+      console.log('Fetching orders for user:', user?.id, user?.email, user?.user_type);
+      
       // Fetch user orders
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
@@ -73,6 +75,8 @@ const UserDashboard: React.FC = () => {
         `)
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
+
+      console.log('Orders fetched:', ordersData?.length, ordersData);
 
       if (ordersError) throw ordersError;
 

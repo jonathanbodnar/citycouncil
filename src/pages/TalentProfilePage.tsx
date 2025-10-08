@@ -14,6 +14,7 @@ import {
 import { supabase } from '../services/supabase';
 import { TalentProfile, Review, SocialAccount } from '../types';
 import { useAuth } from '../context/AuthContext';
+import VideoPlayer from '../components/VideoPlayer';
 import toast from 'react-hot-toast';
 
 interface TalentWithDetails extends TalentProfile {
@@ -82,6 +83,18 @@ const TalentProfilePage: React.FC = () => {
 
       if (reviewsError) throw reviewsError;
 
+      // Fetch recent videos from completed orders
+      const { data: videosData, error: videosError } = await supabase
+        .from('orders')
+        .select('video_url, created_at')
+        .eq('talent_id', id)
+        .eq('status', 'completed')
+        .not('video_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (videosError) throw videosError;
+
       // Fetch related talent (same category)
       const { data: relatedData, error: relatedError } = await supabase
         .from('talent_profiles')
@@ -103,7 +116,7 @@ const TalentProfilePage: React.FC = () => {
       setTalent({
         ...talentData,
         reviews: reviewsData || [],
-        recent_videos: [], // This would come from video storage
+        recent_videos: videosData?.map(v => v.video_url).filter(Boolean) || [],
       });
 
       setRelatedTalent(relatedData || []);
@@ -335,15 +348,26 @@ const TalentProfilePage: React.FC = () => {
       <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Videos</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Placeholder for recent videos */}
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <PlayIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <div className="text-sm text-gray-600">Sample Video {i}</div>
+          {talent.recent_videos.length > 0 ? (
+            talent.recent_videos.slice(0, 6).map((videoUrl, index) => (
+              <div key={index} className="aspect-video">
+                <VideoPlayer 
+                  videoUrl={videoUrl}
+                  className="w-full h-full"
+                />
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            /* Placeholder for no videos */
+            [1, 2, 3].map((i) => (
+              <div key={i} className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <PlayIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <div className="text-sm text-gray-600">No videos yet</div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
