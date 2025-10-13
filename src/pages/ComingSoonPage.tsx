@@ -14,7 +14,7 @@ const ComingSoonPage: React.FC = () => {
       {/* Header */}
       <header className="px-4 py-6">
         <div className="max-w-7xl mx-auto">
-          <Logo size="lg" />
+          {/* Empty header for spacing */}
         </div>
       </header>
 
@@ -23,9 +23,11 @@ const ComingSoonPage: React.FC = () => {
         <div className="max-w-4xl mx-auto text-center">
           {/* Hero Section */}
           <div className="mb-12">
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              ShoutOut
-              <span className="block text-gray-600">Coming Soon</span>
+            <div className="mb-8 flex justify-center">
+              <Logo size="lg" />
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold text-gray-600 mb-6 leading-tight">
+              Coming Soon
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
               Get personalized video messages from your favorite conservative voices, 
