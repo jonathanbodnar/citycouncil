@@ -47,7 +47,7 @@ const OrderPage: React.FC = () => {
     formState: { errors },
   } = useForm<OrderFormData>();
 
-  const isForBusiness = watch('isForBusiness') === 'true' || watch('isForBusiness') === true;
+  const isForBusiness = watch('isForBusiness') === true;
 
   useEffect(() => {
     if (talentId) {
@@ -197,7 +197,10 @@ const OrderPage: React.FC = () => {
                   <input
                     type="radio"
                     value="false"
-                    {...register('isForBusiness', { required: true })}
+                    {...register('isForBusiness', { 
+                      required: true,
+                      setValueAs: (value) => value === 'true'
+                    })}
                     className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
                   />
                   <div className="ml-3 flex items-center">
@@ -217,7 +220,10 @@ const OrderPage: React.FC = () => {
                   <input
                     type="radio"
                     value="true"
-                    {...register('isForBusiness', { required: true })}
+                    {...register('isForBusiness', { 
+                      required: true,
+                      setValueAs: (value) => value === 'true'
+                    })}
                     className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
                   />
                   <div className="ml-3 flex items-center">
