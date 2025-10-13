@@ -47,7 +47,7 @@ const OrderPage: React.FC = () => {
     formState: { errors },
   } = useForm<OrderFormData>();
 
-  const isForBusiness = watch('isForBusiness');
+  const isForBusiness = watch('isForBusiness') === 'true' || watch('isForBusiness') === true;
 
   useEffect(() => {
     if (talentId) {

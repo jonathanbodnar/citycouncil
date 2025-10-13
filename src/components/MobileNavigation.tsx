@@ -25,7 +25,7 @@ const MobileNavigation: React.FC = () => {
   const navigation = [
     {
       name: 'Home',
-      href: '/',
+      href: '/home',
       icon: HomeIcon,
       iconSolid: HomeIconSolid,
     },

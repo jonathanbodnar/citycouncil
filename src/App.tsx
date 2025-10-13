@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import HomePage from './pages/HomePage';
+import ComingSoonPage from './pages/ComingSoonPage';
 import TalentProfilePage from './pages/TalentProfilePage';
 import OrderPage from './pages/OrderPage';
 import LoginPage from './pages/LoginPage';
@@ -25,11 +26,17 @@ function App() {
         <div className="App">
           <Toaster position="top-right" />
           <Routes>
+            {/* Coming Soon page without layout */}
+            <Route index element={<ComingSoonPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/seed" element={<SeedDataPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            
+            {/* Main app routes with layout */}
             <Route path="/" element={<Layout />}>
-              <Route index element={<HomePage />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/talent/:id" element={<TalentProfilePage />} />
               <Route path="/order/:talentId" element={
                 <ProtectedRoute>
@@ -61,8 +68,6 @@ function App() {
                   <ReviewPage />
                 </ProtectedRoute>
               } />
-              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-              <Route path="/terms-of-service" element={<TermsOfServicePage />} />
             </Route>
           </Routes>
         </div>
