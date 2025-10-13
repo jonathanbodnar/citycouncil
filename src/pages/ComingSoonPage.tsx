@@ -91,19 +91,6 @@ const ComingSoonPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Temporary Access Link */}
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">
-              Already have access? 
-            </p>
-            <Link 
-              to="/home" 
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium underline transition-colors"
-            >
-              Continue to Platform
-              <ArrowRightIcon className="h-4 w-4" />
-            </Link>
-          </div>
         </div>
       </main>
 
