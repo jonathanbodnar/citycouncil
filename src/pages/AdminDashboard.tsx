@@ -261,22 +261,22 @@ const AdminDashboard: React.FC = () => {
                 <div key={talent.id} className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
                     <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                      {talent.users.avatar_url ? (
+                      {(talent.users?.avatar_url || talent.temp_avatar_url) ? (
                         <img
-                          src={talent.users.avatar_url}
-                          alt={talent.users.full_name}
+                          src={talent.users?.avatar_url || talent.temp_avatar_url}
+                          alt={talent.users?.full_name || talent.temp_full_name}
                           className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
                         <span className="text-primary-600 font-medium">
-                          {talent.users.full_name.charAt(0)}
+                          {(talent.users?.full_name || talent.temp_full_name || 'T').charAt(0)}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-gray-900">
-                      {talent.users.full_name}
+                      {talent.users?.full_name || talent.temp_full_name || 'Pending Setup'}
                     </div>
                     <div className="text-sm text-gray-600">
                       ${talent.pricing} • {talent.category}
@@ -287,7 +287,7 @@ const AdminDashboard: React.FC = () => {
                       {talent.total_orders} orders
                     </div>
                     <div className="text-sm text-gray-600">
-                      {talent.average_rating.toFixed(1)} ⭐
+                      {(talent.average_rating || 0).toFixed(1)} ⭐
                     </div>
                   </div>
                 </div>
