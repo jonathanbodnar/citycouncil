@@ -65,13 +65,7 @@ const TalentOnboardingPage: React.FC = () => {
       
       const { data, error } = await supabase
         .from('talent_profiles')
-        .select(`
-          *,
-          users (
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('onboarding_token', token)
         .single();
 
@@ -145,7 +139,7 @@ const TalentOnboardingPage: React.FC = () => {
         password: accountData.password,
         options: {
           data: {
-            full_name: onboardingData?.talent.users?.full_name || 'Talent Member',
+            full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
             user_type: 'talent'
           }
         }
@@ -154,6 +148,21 @@ const TalentOnboardingPage: React.FC = () => {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Create user record in our users table
+        const { error: userError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authData.user.id,
+              email: accountData.email,
+              full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
+              user_type: 'talent',
+              avatar_url: onboardingData?.talent.temp_avatar_url
+            }
+          ]);
+
+        if (userError) throw userError;
+
         // Update talent profile with user ID
         const { error: updateError } = await supabase
           .from('talent_profiles')
@@ -329,6 +338,10 @@ const TalentOnboardingPage: React.FC = () => {
           <div className="bg-blue-50 rounded-lg p-4">
             <h3 className="font-medium text-blue-900 mb-2">Your Profile Details:</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-blue-700 font-medium">Name:</span>
+                <span className="ml-2 text-blue-900">{onboardingData.talent.temp_full_name || 'Not set'}</span>
+              </div>
               <div>
                 <span className="text-blue-700 font-medium">Username:</span>
                 <span className="ml-2 text-blue-900">@{onboardingData.talent.username}</span>
