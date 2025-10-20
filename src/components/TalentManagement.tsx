@@ -182,7 +182,7 @@ const TalentManagement: React.FC = () => {
   };
 
   const deleteTalent = async (talentId: string, talentName: string) => {
-    if (!confirm(`Are you sure you want to delete ${talentName}? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to delete ${talentName}? This action cannot be undone.`)) {
       return;
     }
 
