@@ -88,7 +88,13 @@ const PlatformSettings: React.FC = () => {
           upsert: false
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        // If bucket doesn't exist, provide helpful error
+        if (uploadError.message.includes('Bucket not found')) {
+          throw new Error('Storage bucket "platform-assets" not found. Please create it in Supabase Storage.');
+        }
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: urlData } = supabase.storage
