@@ -2,36 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { 
   UsersIcon,
   Cog6ToothIcon,
-  ChatBubbleLeftRightIcon,
-  CheckIcon,
-  XMarkIcon,
-  StarIcon,
-  PencilIcon,
-  TrashIcon
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
-import { TalentProfile, HelpMessage, AppSettings } from '../types';
-import TalentProfileEditor from './TalentProfileEditor';
+import { HelpMessage } from '../types';
 import TalentManagement from './TalentManagement';
 import PlatformSettings from './PlatformSettings';
 import toast from 'react-hot-toast';
 
-interface TalentWithUser extends TalentProfile {
-  users: {
-    id: string;
-    full_name: string;
-    email: string;
-    avatar_url?: string;
-  };
-}
-
 const AdminManagementTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'talent' | 'settings' | 'helpdesk'>('talent');
-  const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
-  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -39,23 +21,7 @@ const AdminManagementTabs: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      if (activeTab === 'talent') {
-        const { data, error } = await supabase
-          .from('talent_profiles')
-          .select(`
-            *,
-            users!talent_profiles_user_id_fkey (
-              id,
-              full_name,
-              email,
-              avatar_url
-            )
-          `)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setTalent(data || []);
-      } else if (activeTab === 'helpdesk') {
+      if (activeTab === 'helpdesk') {
         const { data, error } = await supabase
           .from('help_messages')
           .select('*')
@@ -63,14 +29,6 @@ const AdminManagementTabs: React.FC = () => {
 
         if (error) throw error;
         setHelpMessages(data || []);
-      } else if (activeTab === 'settings') {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*')
-          .single();
-
-        if (error) throw error;
-        setSettings(data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -80,56 +38,6 @@ const AdminManagementTabs: React.FC = () => {
     }
   };
 
-  const handleToggleFeatured = async (talentId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('talent_profiles')
-        .update({ is_featured: !currentStatus })
-        .eq('id', talentId);
-
-      if (error) throw error;
-
-      toast.success(`Talent ${!currentStatus ? 'featured' : 'unfeatured'} successfully`);
-      fetchData();
-    } catch (error) {
-      console.error('Error updating featured status:', error);
-      toast.error('Failed to update featured status');
-    }
-  };
-
-  const handleToggleActive = async (talentId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('talent_profiles')
-        .update({ is_active: !currentStatus })
-        .eq('id', talentId);
-
-      if (error) throw error;
-
-      toast.success(`Talent ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
-      fetchData();
-    } catch (error) {
-      console.error('Error updating active status:', error);
-      toast.error('Failed to update active status');
-    }
-  };
-
-  const handleUpdateSettings = async (newSettings: Partial<AppSettings>) => {
-    try {
-      const { error } = await supabase
-        .from('app_settings')
-        .update(newSettings)
-        .eq('id', settings?.id);
-
-      if (error) throw error;
-
-      toast.success('Settings updated successfully');
-      fetchData();
-    } catch (error) {
-      console.error('Error updating settings:', error);
-      toast.error('Failed to update settings');
-    }
-  };
 
   return (
     <div className="mt-8">
@@ -244,17 +152,6 @@ const AdminManagementTabs: React.FC = () => {
         </div>
       )}
 
-      {/* Talent Profile Editor Modal */}
-      {editingTalent && (
-        <TalentProfileEditor
-          talent={editingTalent}
-          onClose={() => setEditingTalent(null)}
-          onSave={() => {
-            fetchData(); // Refresh the talent list
-            setEditingTalent(null);
-          }}
-        />
-      )}
     </div>
   );
 };

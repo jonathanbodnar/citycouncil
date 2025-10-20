@@ -7,7 +7,6 @@ import {
   XCircleIcon,
   ClockIcon,
   EyeIcon,
-  PencilIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
@@ -98,7 +97,7 @@ const TalentManagement: React.FC = () => {
       expiryDate.setDate(expiryDate.getDate() + 7); // 7 days from now
 
       // Create talent profile (user will be created during onboarding)
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('talent_profiles')
         .insert([
           {

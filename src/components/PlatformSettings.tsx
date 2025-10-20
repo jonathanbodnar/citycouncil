@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   PhotoIcon, 
-  CloudArrowUpIcon, 
-  CheckCircleIcon,
-  XCircleIcon
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { PlatformSetting } from '../types';
@@ -83,7 +81,7 @@ const PlatformSettings: React.FC = () => {
       const fileExt = logoFile.name.split('.').pop();
       const fileName = `logo-${Date.now()}.${fileExt}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('platform-assets')
         .upload(`logos/${fileName}`, logoFile, {
           cacheControl: '3600',
