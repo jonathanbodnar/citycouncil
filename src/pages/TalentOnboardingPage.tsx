@@ -65,6 +65,14 @@ const TalentOnboardingPage: React.FC = () => {
       
       console.log('Looking for onboarding token:', token);
       
+      // First, let's check if any talent profiles exist at all
+      const { data: allTalents, error: allError } = await supabase
+        .from('talent_profiles')
+        .select('id, username, onboarding_token, onboarding_expires_at')
+        .limit(5);
+      
+      console.log('All talent profiles (first 5):', { allTalents, allError });
+      
       const { data, error } = await supabase
         .from('talent_profiles')
         .select('*')
@@ -75,6 +83,12 @@ const TalentOnboardingPage: React.FC = () => {
 
       if (error) {
         console.error('Database error:', error);
+        
+        // If it's a column doesn't exist error, provide helpful message
+        if (error.message.includes('column') && error.message.includes('onboarding_token')) {
+          console.error('MIGRATION NEEDED: The onboarding_token column does not exist. Please run the database migration scripts.');
+        }
+        
         throw error;
       }
 
