@@ -118,6 +118,11 @@ const PlatformSettings: React.FC = () => {
       fetchSettings();
       setLogoFile(null);
 
+      // Trigger a page refresh to update all Logo components
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
     } catch (error) {
       console.error('Error uploading logo:', error);
       toast.error('Failed to upload logo');

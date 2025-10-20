@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../services/supabase';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -11,6 +12,9 @@ const Logo: React.FC<LogoProps> = ({
   showText = false, 
   className = '' 
 }) => {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const sizes = {
     sm: { height: 'h-8', width: 'w-auto' },
     md: { height: 'h-10', width: 'w-auto' },
@@ -19,20 +23,62 @@ const Logo: React.FC<LogoProps> = ({
 
   const sizeClasses = sizes[size];
 
+  // Default/fallback logo URL
+  const defaultLogoUrl = "https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png";
+
+  useEffect(() => {
+    fetchLogo();
+  }, []);
+
+  const fetchLogo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'platform_logo_url')
+        .single();
+
+      if (error) throw error;
+
+      if (data?.setting_value) {
+        setLogoUrl(data.setting_value);
+      } else {
+        setLogoUrl(defaultLogoUrl);
+      }
+    } catch (error) {
+      console.error('Error fetching logo:', error);
+      setLogoUrl(defaultLogoUrl);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentLogoUrl = logoUrl || defaultLogoUrl;
+
   return (
     <div className={`flex items-center ${className}`}>
-      <img
-        src="https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png"
-        alt="ShoutOut Logo"
-        className={`${sizeClasses.height} ${sizeClasses.width} object-contain`}
-        onError={(e) => {
-          // Fallback to text logo if image fails to load
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          const fallback = target.nextElementSibling as HTMLElement;
-          if (fallback) fallback.style.display = 'block';
-        }}
-      />
+      {loading ? (
+        <div className={`${sizeClasses.height} ${sizeClasses.width} bg-gray-200 animate-pulse rounded`} />
+      ) : (
+        <img
+          src={currentLogoUrl}
+          alt="ShoutOut Logo"
+          className={`${sizeClasses.height} ${sizeClasses.width} object-contain`}
+          onError={(e) => {
+            // Fallback to default logo if custom logo fails to load
+            const target = e.target as HTMLImageElement;
+            if (target.src !== defaultLogoUrl) {
+              target.src = defaultLogoUrl;
+            } else {
+              // If even default fails, show text logo
+              target.style.display = 'none';
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = 'block';
+            }
+          }}
+        />
+      )}
+      
       {/* Fallback text logo (hidden by default) */}
       <div 
         className={`hidden items-center space-x-2`}
