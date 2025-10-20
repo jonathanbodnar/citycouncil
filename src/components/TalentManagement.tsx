@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
+import ImageUpload from './ImageUpload';
 import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
@@ -358,17 +359,12 @@ const TalentManagement: React.FC = () => {
               </div>
               
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Profile Image URL (Optional)
-                </label>
-                <input
-                  type="url"
-                  value={newTalent.avatar_url}
-                  onChange={(e) => setNewTalent({...newTalent, avatar_url: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://example.com/profile-image.jpg"
+                <ImageUpload
+                  currentImageUrl={newTalent.avatar_url}
+                  onImageUploaded={(imageUrl) => setNewTalent({...newTalent, avatar_url: imageUrl})}
+                  uploadPath="talent-avatars"
+                  maxSizeMB={5}
                 />
-                <p className="text-xs text-gray-500 mt-1">URL to profile image (will be used as avatar)</p>
               </div>
               
               <div className="md:col-span-2">
@@ -660,18 +656,14 @@ const TalentManagement: React.FC = () => {
               </div>
               
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Profile Image URL
-                </label>
-                <input
-                  type="url"
-                  value={editingTalent.users?.avatar_url || ''}
-                  onChange={(e) => setEditingTalent({
+                <ImageUpload
+                  currentImageUrl={editingTalent.users?.avatar_url}
+                  onImageUploaded={(imageUrl) => setEditingTalent({
                     ...editingTalent,
-                    users: { ...editingTalent.users!, avatar_url: e.target.value }
+                    users: { ...editingTalent.users!, avatar_url: imageUrl }
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://example.com/profile-image.jpg"
+                  uploadPath="talent-avatars"
+                  maxSizeMB={5}
                 />
               </div>
               
