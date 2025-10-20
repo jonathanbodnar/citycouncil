@@ -194,6 +194,11 @@ const OrderPage: React.FC = () => {
           .eq('id', talent.id);
       }
 
+      // Ensure we have a valid vendor ID before processing payout
+      if (!vendorId) {
+        throw new Error('Failed to create or retrieve vendor ID');
+      }
+
       // Schedule payout (this would typically be done via a background job)
       await fortisPayment.processVendorPayout({
         vendorId,
@@ -216,7 +221,7 @@ const OrderPage: React.FC = () => {
           },
         ]);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing talent payout:', error);
       // Don't fail the order, but log the error for manual processing
       await supabase
@@ -226,7 +231,7 @@ const OrderPage: React.FC = () => {
             talent_id: talent.id,
             order_id: order.id,
             amount: talentAmount,
-            error_message: error.message,
+            error_message: error?.message || 'Unknown payout error',
             created_at: new Date().toISOString(),
           },
         ]);
