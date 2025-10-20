@@ -32,6 +32,7 @@ export interface TalentProfile {
   admin_fee_percentage?: number;
   social_accounts: SocialAccount[];
   payout_details?: StripeConnectAccount;
+  fortis_vendor_id?: string; // Fortis vendor ID for payouts
   total_orders: number;
   fulfilled_orders: number;
   average_rating: number;
@@ -167,4 +168,42 @@ export interface AppSettings {
   featured_talent_limit: number;
   max_fulfillment_hours: number;
   refund_policy_text: string;
+}
+
+export interface Payout {
+  id: string;
+  talent_id: string;
+  order_id: string;
+  amount: number;
+  vendor_id: string;
+  status: 'pending' | 'processed' | 'failed' | 'cancelled';
+  processed_at?: string;
+  created_at: string;
+  updated_at: string;
+  fortis_transaction_id?: string;
+  error_message?: string;
+}
+
+export interface PayoutError {
+  id: string;
+  talent_id: string;
+  order_id: string;
+  amount: number;
+  error_message: string;
+  resolved: boolean;
+  created_at: string;
+  resolved_at?: string;
+}
+
+export interface VendorBankInfo {
+  id: string;
+  talent_id: string;
+  account_holder_name: string;
+  bank_name: string;
+  account_number: string;
+  routing_number: string;
+  account_type: 'checking' | 'savings';
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
 }

@@ -12,6 +12,8 @@ import {
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
 import { useAuth } from '../context/AuthContext';
+import FortisPaymentForm from '../components/FortisPaymentForm';
+import { fortisPayment } from '../services/fortisPayment';
 import toast from 'react-hot-toast';
 
 interface OrderFormData {
@@ -101,8 +103,19 @@ const OrderPage: React.FC = () => {
     return { subtotal, adminFee, charityAmount, total };
   };
 
+  const [showPayment, setShowPayment] = useState(false);
+  const [orderData, setOrderData] = useState<OrderFormData | null>(null);
+
   const onSubmit = async (data: OrderFormData) => {
     if (!talent || !user) return;
+
+    // Store order data and show payment form
+    setOrderData(data);
+    setShowPayment(true);
+  };
+
+  const handlePaymentSuccess = async (paymentResult: any) => {
+    if (!talent || !user || !orderData) return;
 
     setSubmitting(true);
     try {
@@ -110,21 +123,22 @@ const OrderPage: React.FC = () => {
       const fulfillmentDeadline = new Date();
       fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + talent.fulfillment_time_hours);
 
-      // Create order in database
-      const { error: orderError } = await supabase
+      // Create order in database with payment info
+      const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([
           {
             user_id: user.id,
             talent_id: talent.id,
-            request_details: data.requestDetails,
+            request_details: orderData.requestDetails,
             amount: pricing.total,
             admin_fee: pricing.adminFee,
             charity_amount: pricing.charityAmount,
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
-            stripe_payment_intent_id: 'pending', // Will be updated after payment
-            is_corporate: data.isForBusiness,
-            company_name: data.businessName,
+            stripe_payment_intent_id: paymentResult.id || paymentResult.transaction_id,
+            is_corporate: orderData.isForBusiness,
+            company_name: orderData.businessName,
+            status: 'pending'
           },
         ])
         .select()
@@ -132,21 +146,83 @@ const OrderPage: React.FC = () => {
 
       if (orderError) throw orderError;
 
-      // In a real implementation, this would redirect to Stripe Checkout
-      // For now, we'll simulate the payment process
-      toast.success('Order created successfully! Redirecting to payment...');
-      
-      // Simulate payment processing
-      setTimeout(() => {
-        toast.success('Payment successful! Your order has been placed.');
-        navigate('/dashboard');
-      }, 2000);
+      // Process talent payout (admin fee is already deducted)
+      await processTalentPayout(order, pricing.subtotal - pricing.adminFee);
+
+      toast.success('Payment successful! Your order has been placed.');
+      navigate('/dashboard');
 
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Failed to create order. Please try again.');
+      console.error('Error processing order:', error);
+      toast.error('Failed to process order. Please contact support.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    toast.error(error);
+    setSubmitting(false);
+  };
+
+  const processTalentPayout = async (order: any, talentAmount: number) => {
+    try {
+      // Check if talent has vendor setup, if not create one
+      let vendorId = talent.fortis_vendor_id;
+      
+      if (!vendorId) {
+        const vendorResult = await fortisPayment.createVendor({
+          talentId: talent.id,
+          businessName: talent.users.full_name,
+          contactName: talent.users.full_name,
+          email: talent.users.email || `talent${talent.id}@shoutout.com`,
+        });
+        
+        vendorId = vendorResult.id;
+        
+        // Update talent profile with vendor ID
+        await supabase
+          .from('talent_profiles')
+          .update({ fortis_vendor_id: vendorId })
+          .eq('id', talent.id);
+      }
+
+      // Schedule payout (this would typically be done via a background job)
+      await fortisPayment.processVendorPayout({
+        vendorId,
+        amount: talentAmount,
+        description: `ShoutOut payout for order ${order.id}`,
+        orderId: order.id,
+      });
+
+      // Log the payout
+      await supabase
+        .from('payouts')
+        .insert([
+          {
+            talent_id: talent.id,
+            order_id: order.id,
+            amount: talentAmount,
+            vendor_id: vendorId,
+            status: 'processed',
+            processed_at: new Date().toISOString(),
+          },
+        ]);
+
+    } catch (error) {
+      console.error('Error processing talent payout:', error);
+      // Don't fail the order, but log the error for manual processing
+      await supabase
+        .from('payout_errors')
+        .insert([
+          {
+            talent_id: talent.id,
+            order_id: order.id,
+            amount: talentAmount,
+            error_message: error.message,
+            created_at: new Date().toISOString(),
+          },
+        ]);
     }
   };
 
@@ -369,14 +445,36 @@ const OrderPage: React.FC = () => {
                 <p className="mb-4 text-sm text-red-600">{errors.agreedToTerms.message}</p>
               )}
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {submitting ? 'Processing...' : `Continue to Payment - $${pricing.total.toFixed(2)}`}
-              </button>
+              {!showPayment ? (
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {submitting ? 'Processing...' : `Continue to Payment - $${pricing.total.toFixed(2)}`}
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowPayment(false)}
+                    className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  >
+                    ← Back to order details
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Payment Form */}
+            {showPayment && (
+              <FortisPaymentForm
+                amount={pricing.total}
+                onPaymentSuccess={handlePaymentSuccess}
+                onPaymentError={handlePaymentError}
+                loading={submitting}
+              />
+            )}
           </form>
         </div>
 

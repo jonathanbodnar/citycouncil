@@ -11,7 +11,8 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon,
   PlayIcon,
-  CloudArrowUpIcon
+  CloudArrowUpIcon,
+  BanknotesIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
@@ -21,6 +22,7 @@ import ProfilePictureUpload from './ProfilePictureUpload';
 import SocialAccountsManager from './SocialAccountsManager';
 import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
+import PayoutsDashboard from './PayoutsDashboard';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
 
@@ -43,7 +45,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts'>('orders');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
 
   useEffect(() => {
@@ -212,6 +214,7 @@ const TalentDashboard: React.FC = () => {
             {[
               { key: 'orders', label: 'Orders', count: orders.length },
               { key: 'analytics', label: 'Analytics', count: null },
+              { key: 'payouts', label: 'Payouts', count: null, icon: BanknotesIcon },
               { key: 'profile', label: 'Profile Settings', count: null },
             ].map((tab) => (
               <button
@@ -529,6 +532,11 @@ const TalentDashboard: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Payouts Tab */}
+      {activeTab === 'payouts' && (
+        <PayoutsDashboard />
       )}
 
       {/* Profile Tab */}
