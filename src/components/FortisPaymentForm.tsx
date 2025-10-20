@@ -16,7 +16,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   loading = false
 }) => {
   const cardElementRef = useRef<any>(null);
-  const [fortisElements, setFortisElements] = useState<any>(null);
+  const [fortisElements, setFortisElements] = useState<{ elements: any; cardElement: any } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
@@ -73,7 +73,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
     try {
       // Create payment method
-      const { error: paymentError, paymentMethod: pm } = await fortisElements.elements.createPaymentMethod({
+      const { error: paymentError, paymentMethod: pm } = await fortisElements!.elements.createPaymentMethod({
         type: 'card',
         card: cardElementRef.current,
       });
@@ -108,7 +108,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     try {
       setIsLoading(true);
       // Handle Apple Pay
-      const result = await fortisElements.elements.createPaymentMethod({
+      const result = await fortisElements!.elements.createPaymentMethod({
         type: 'apple_pay',
         amount: Math.round(amount * 100),
         currency: 'usd',
@@ -134,7 +134,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     try {
       setIsLoading(true);
       // Handle Google Pay
-      const result = await fortisElements.elements.createPaymentMethod({
+      const result = await fortisElements!.elements.createPaymentMethod({
         type: 'google_pay',
         amount: Math.round(amount * 100),
         currency: 'usd',

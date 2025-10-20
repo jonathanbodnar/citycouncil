@@ -60,7 +60,7 @@ export class FortisPaymentService {
   }
 
   // Initialize Fortis Elements for payment form
-  public initializeElements(containerId: string, options?: any) {
+  public initializeElements(containerId: string, options?: any): Promise<{ elements: any; cardElement: any }> {
     return new Promise((resolve, reject) => {
       // Load Fortis Elements script if not already loaded
       if (!window.FortisElements) {
@@ -81,7 +81,7 @@ export class FortisPaymentService {
     });
   }
 
-  private async createElements(containerId: string, options: any = {}) {
+  private async createElements(containerId: string, options: any = {}): Promise<{ elements: any; cardElement: any }> {
     const elements = window.FortisElements.create({
       companyId: this.config.companyId,
       partnerId: this.config.partnerId,
