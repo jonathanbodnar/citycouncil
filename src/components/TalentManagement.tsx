@@ -99,6 +99,9 @@ const TalentManagement: React.FC = () => {
       const onboardingToken = generateOnboardingToken();
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 7); // 7 days from now
+      
+      console.log('Generated onboarding token:', onboardingToken);
+      console.log('Expiry date:', expiryDate.toISOString());
 
       // Create talent profile without user first (user will be created during onboarding)
       const { error } = await supabase
@@ -131,8 +134,12 @@ const TalentManagement: React.FC = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating talent profile:', error);
+        throw error;
+      }
 
+      console.log('Talent profile created with token:', onboardingToken);
       toast.success('Talent profile created successfully!');
       setShowAddForm(false);
       setNewTalent({

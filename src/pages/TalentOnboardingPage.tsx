@@ -63,13 +63,20 @@ const TalentOnboardingPage: React.FC = () => {
     try {
       setLoading(true);
       
+      console.log('Looking for onboarding token:', token);
+      
       const { data, error } = await supabase
         .from('talent_profiles')
         .select('*')
         .eq('onboarding_token', token)
         .single();
 
-      if (error) throw error;
+      console.log('Onboarding query result:', { data, error });
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
       if (!data) {
         setOnboardingData({
