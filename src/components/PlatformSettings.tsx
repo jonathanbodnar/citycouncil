@@ -106,13 +106,11 @@ const PlatformSettings: React.FC = () => {
       // Update platform setting
       const { error: settingError } = await supabase
         .from('platform_settings')
-        .upsert({
-          setting_key: 'platform_logo_url',
+        .update({
           setting_value: logoUrl,
-          setting_type: 'string',
-          description: 'URL to the platform logo image',
           updated_by: user.id
-        });
+        })
+        .eq('setting_key', 'platform_logo_url');
 
       if (settingError) throw settingError;
 
@@ -132,11 +130,11 @@ const PlatformSettings: React.FC = () => {
     try {
       const { error } = await supabase
         .from('platform_settings')
-        .upsert({
-          setting_key: key,
+        .update({
           setting_value: value,
           updated_by: user?.id
-        });
+        })
+        .eq('setting_key', key);
 
       if (error) throw error;
       
