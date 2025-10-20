@@ -7,6 +7,7 @@ import {
   XCircleIcon,
   ClockIcon,
   EyeIcon,
+  PencilIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
@@ -25,10 +26,12 @@ const TalentManagement: React.FC = () => {
   const [talents, setTalents] = useState<TalentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
   const [newTalent, setNewTalent] = useState({
     full_name: '',
     username: '',
     bio: '',
+    avatar_url: '',
     category: 'other' as TalentCategory,
     pricing: 299.99,
     corporate_pricing: 449.99,
@@ -96,12 +99,28 @@ const TalentManagement: React.FC = () => {
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 7); // 7 days from now
 
-      // Create talent profile (user will be created during onboarding)
+      // Create a placeholder user first (will be updated during onboarding)
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .insert([
+          {
+            email: `${newTalent.username}@temp.shoutout.com`, // Temporary email
+            full_name: newTalent.full_name,
+            user_type: 'talent',
+            avatar_url: newTalent.avatar_url || null
+          }
+        ])
+        .select()
+        .single();
+
+      if (userError) throw userError;
+
+      // Create talent profile
       const { error } = await supabase
         .from('talent_profiles')
         .insert([
           {
-            user_id: null, // Will be set during onboarding
+            user_id: userData.id,
             username: newTalent.username.toLowerCase(),
             bio: newTalent.bio,
             category: newTalent.category,
@@ -118,8 +137,7 @@ const TalentManagement: React.FC = () => {
             is_active: false, // Will be activated after onboarding
             total_orders: 0,
             fulfilled_orders: 0,
-            average_rating: 0,
-            social_accounts: []
+            average_rating: 0
           }
         ])
         .select()
@@ -133,6 +151,7 @@ const TalentManagement: React.FC = () => {
         full_name: '',
         username: '',
         bio: '',
+        avatar_url: '',
         category: 'other' as TalentCategory,
         pricing: 299.99,
         corporate_pricing: 449.99,
@@ -177,6 +196,46 @@ const TalentManagement: React.FC = () => {
     } catch (error) {
       console.error('Error regenerating token:', error);
       toast.error('Failed to regenerate onboarding token');
+    }
+  };
+
+  const updateTalent = async () => {
+    if (!editingTalent) return;
+
+    try {
+      // Update user record
+      if (editingTalent.user_id) {
+        const { error: userError } = await supabase
+          .from('users')
+          .update({
+            full_name: editingTalent.users?.full_name,
+            avatar_url: editingTalent.users?.avatar_url
+          })
+          .eq('id', editingTalent.user_id);
+
+        if (userError) throw userError;
+      }
+
+      // Update talent profile
+      const { error: talentError } = await supabase
+        .from('talent_profiles')
+        .update({
+          username: editingTalent.username?.toLowerCase(),
+          bio: editingTalent.bio,
+          pricing: editingTalent.pricing,
+          corporate_pricing: editingTalent.corporate_pricing
+        })
+        .eq('id', editingTalent.id);
+
+      if (talentError) throw talentError;
+
+      toast.success('Talent profile updated successfully');
+      setEditingTalent(null);
+      fetchTalents();
+
+    } catch (error) {
+      console.error('Error updating talent:', error);
+      toast.error('Failed to update talent profile');
     }
   };
 
@@ -294,9 +353,22 @@ const TalentManagement: React.FC = () => {
                   onChange={(e) => setNewTalent({...newTalent, username: e.target.value.toLowerCase()})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="username"
-                  pattern="[a-zA-Z0-9_-]+"
                 />
                 <p className="text-xs text-gray-500 mt-1">Letters, numbers, hyphens, and underscores only</p>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Image URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={newTalent.avatar_url}
+                  onChange={(e) => setNewTalent({...newTalent, avatar_url: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://example.com/profile-image.jpg"
+                />
+                <p className="text-xs text-gray-500 mt-1">URL to profile image (will be used as avatar)</p>
               </div>
               
               <div className="md:col-span-2">
@@ -511,6 +583,14 @@ const TalentManagement: React.FC = () => {
                     )}
                     
                     <button
+                      onClick={() => setEditingTalent(talent)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit talent"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    
+                    <button
                       onClick={() => window.open(`/talent/${talent.id}`, '_blank')}
                       className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                       title="View profile"
@@ -544,6 +624,116 @@ const TalentManagement: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Talent Modal */}
+      {editingTalent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Edit Talent Profile</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={editingTalent.users?.full_name || ''}
+                  onChange={(e) => setEditingTalent({
+                    ...editingTalent,
+                    users: { ...editingTalent.users!, full_name: e.target.value }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={editingTalent.username || ''}
+                  onChange={(e) => setEditingTalent({...editingTalent, username: e.target.value.toLowerCase()})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Image URL
+                </label>
+                <input
+                  type="url"
+                  value={editingTalent.users?.avatar_url || ''}
+                  onChange={(e) => setEditingTalent({
+                    ...editingTalent,
+                    users: { ...editingTalent.users!, avatar_url: e.target.value }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://example.com/profile-image.jpg"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bio
+                </label>
+                <textarea
+                  rows={3}
+                  value={editingTalent.bio}
+                  onChange={(e) => setEditingTalent({...editingTalent, bio: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Personal Pricing ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editingTalent.pricing}
+                  onChange={(e) => setEditingTalent({...editingTalent, pricing: parseFloat(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Corporate Pricing ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editingTalent.corporate_pricing || editingTalent.pricing * 1.5}
+                  onChange={(e) => setEditingTalent({...editingTalent, corporate_pricing: parseFloat(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingTalent(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => updateTalent()}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
