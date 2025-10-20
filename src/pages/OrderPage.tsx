@@ -13,7 +13,7 @@ import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
 import { useAuth } from '../context/AuthContext';
 import FortisPaymentForm from '../components/FortisPaymentForm';
-import { fortisPayment } from '../services/fortisPayment';
+import { lunarPayService } from '../services/lunarPayService';
 import toast from 'react-hot-toast';
 
 interface OrderFormData {
@@ -178,7 +178,7 @@ const OrderPage: React.FC = () => {
       let vendorId = talent.fortis_vendor_id;
       
       if (!vendorId) {
-        const vendorResult = await fortisPayment.createVendor({
+        const vendorResult = await lunarPayService.createVendor({
           talentId: talent.id,
           businessName: talent.users.full_name,
           contactName: talent.users.full_name,
@@ -199,8 +199,8 @@ const OrderPage: React.FC = () => {
         throw new Error('Failed to create or retrieve vendor ID');
       }
 
-      // Schedule payout (this would typically be done via a background job)
-      await fortisPayment.processVendorPayout({
+      // Schedule payout through LunarPay (this would typically be done via a background job)
+      await lunarPayService.processVendorPayout({
         vendorId,
         amount: talentAmount,
         description: `ShoutOut payout for order ${order.id}`,
@@ -479,9 +479,13 @@ const OrderPage: React.FC = () => {
             </div>
 
             {/* Payment Form */}
-            {showPayment && (
+            {showPayment && orderData && (
               <FortisPaymentForm
                 amount={pricing.total}
+                orderId={`order_${Date.now()}_${talent.id}`}
+                customerEmail={user?.email || ''}
+                customerName={user?.full_name || ''}
+                description={`ShoutOut from ${talent.users.full_name}`}
                 onPaymentSuccess={handlePaymentSuccess}
                 onPaymentError={handlePaymentError}
                 loading={submitting}

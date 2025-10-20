@@ -11,6 +11,7 @@ import {
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Payout, VendorBankInfo } from '../types';
+import { lunarPayService } from '../services/lunarPayService';
 import toast from 'react-hot-toast';
 
 interface PayoutWithOrder extends Payout {

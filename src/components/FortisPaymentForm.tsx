@@ -1,9 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CreditCardIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
-import { fortisPayment } from '../services/fortisPayment';
+import { lunarPayService } from '../services/lunarPayService';
+import { useAuth } from '../context/AuthContext';
 
 interface FortisPaymentFormProps {
   amount: number;
+  orderId: string;
+  customerEmail: string;
+  customerName: string;
+  description: string;
   onPaymentSuccess: (paymentResult: any) => void;
   onPaymentError: (error: string) => void;
   loading?: boolean;
@@ -11,15 +16,21 @@ interface FortisPaymentFormProps {
 
 const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   amount,
+  orderId,
+  customerEmail,
+  customerName,
+  description,
   onPaymentSuccess,
   onPaymentError,
   loading = false
 }) => {
+  const { user } = useAuth();
   const cardElementRef = useRef<any>(null);
   const [fortisElements, setFortisElements] = useState<{ elements: any; cardElement: any } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
+  const [paymentIntention, setPaymentIntention] = useState<any>(null);
 
   useEffect(() => {
     initializeFortis();
@@ -28,21 +39,46 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const initializeFortis = async () => {
     try {
       setIsLoading(true);
-      const { elements, cardElement } = await fortisPayment.initializeElements('fortis-card-element', {
-        // Custom styling to match our form
-        appearance: {
-          theme: 'stripe',
-          variables: {
-            colorPrimary: '#2563eb',
-            colorBackground: '#ffffff',
-            colorText: '#374151',
-            colorDanger: '#ef4444',
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-            spacingUnit: '4px',
-            borderRadius: '8px',
-          },
-        },
+      
+      // Step 1: Request payment intention from LunarPay
+      const intentionResult = await lunarPayService.createPaymentIntention({
+        amount,
+        currency: 'USD',
+        orderId,
+        customerEmail,
+        customerName,
+        description,
+        metadata: {
+          user_id: user?.id,
+        }
       });
+
+      if (!intentionResult.success) {
+        throw new Error(intentionResult.error || 'Failed to create payment intention');
+      }
+
+      setPaymentIntention(intentionResult);
+
+      // Step 2: Initialize Fortis Elements with LunarPay ticket
+      const { elements, cardElement } = await lunarPayService.initializeFortisElements(
+        'fortis-card-element', 
+        intentionResult.ticket,
+        {
+          // Custom styling to match our form
+          appearance: {
+            theme: 'stripe',
+            variables: {
+              colorPrimary: '#2563eb',
+              colorBackground: '#ffffff',
+              colorText: '#374151',
+              colorDanger: '#ef4444',
+              fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+              spacingUnit: '4px',
+              borderRadius: '8px',
+            },
+          },
+        }
+      );
 
       setFortisElements({ elements, cardElement });
       cardElementRef.current = cardElement;
@@ -53,7 +89,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       });
 
     } catch (err) {
-      console.error('Failed to initialize Fortis:', err);
+      console.error('Failed to initialize payment:', err);
       setError('Failed to load payment form. Please refresh the page.');
     } finally {
       setIsLoading(false);
@@ -63,7 +99,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!fortisElements || !cardElementRef.current) {
+    if (!fortisElements || !cardElementRef.current || !paymentIntention) {
       onPaymentError('Payment form not ready');
       return;
     }
@@ -72,7 +108,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     setError(null);
 
     try {
-      // Create payment method
+      // Step 2: Create payment method with Fortis Elements
       const { error: paymentError, paymentMethod: pm } = await fortisElements!.elements.createPaymentMethod({
         type: 'card',
         card: cardElementRef.current,
@@ -82,17 +118,28 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         throw new Error(paymentError.message);
       }
 
-      // Process the payment
-      const paymentResult = await fortisPayment.processPayment({
-        amount,
-        orderId: `order_${Date.now()}`,
-        customerId: 'customer_id', // This should come from user context
-        description: 'ShoutOut Video Order',
-        customerEmail: 'customer@example.com', // This should come from user context
-        customerName: 'Customer Name', // This should come from user context
-      }, pm);
+      // Step 3: Confirm payment through Fortis Elements
+      const { error: confirmError, paymentIntent } = await fortisElements!.elements.confirmPayment({
+        clientSecret: paymentIntention.clientSecret,
+        paymentMethod: pm,
+      });
 
-      onPaymentSuccess(paymentResult);
+      if (confirmError) {
+        throw new Error(confirmError.message);
+      }
+
+      // Step 4: Send payment result back to LunarPay to store
+      const confirmationResult = await lunarPayService.confirmPayment({
+        intentionId: paymentIntention.intentionId,
+        paymentResult: paymentIntent,
+        orderId,
+      });
+
+      if (!confirmationResult.success) {
+        throw new Error(confirmationResult.error || 'Payment confirmation failed');
+      }
+
+      onPaymentSuccess(confirmationResult);
     } catch (err: any) {
       const errorMessage = err.message || 'Payment failed. Please try again.';
       setError(errorMessage);
@@ -103,23 +150,45 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   };
 
   const handleApplePay = async () => {
-    if (!fortisElements) return;
+    if (!fortisElements || !paymentIntention) return;
 
     try {
       setIsLoading(true);
-      // Handle Apple Pay
-      const result = await fortisElements!.elements.createPaymentMethod({
+      
+      // Create Apple Pay payment method
+      const { error: paymentError, paymentMethod } = await fortisElements!.elements.createPaymentMethod({
         type: 'apple_pay',
         amount: Math.round(amount * 100),
         currency: 'usd',
         country: 'US',
       });
 
-      if (result.error) {
-        throw new Error(result.error.message);
+      if (paymentError) {
+        throw new Error(paymentError.message);
       }
 
-      onPaymentSuccess(result);
+      // Confirm payment with Fortis Elements
+      const { error: confirmError, paymentIntent } = await fortisElements!.elements.confirmPayment({
+        clientSecret: paymentIntention.clientSecret,
+        paymentMethod,
+      });
+
+      if (confirmError) {
+        throw new Error(confirmError.message);
+      }
+
+      // Send result back to LunarPay
+      const confirmationResult = await lunarPayService.confirmPayment({
+        intentionId: paymentIntention.intentionId,
+        paymentResult: paymentIntent,
+        orderId,
+      });
+
+      if (!confirmationResult.success) {
+        throw new Error(confirmationResult.error || 'Payment confirmation failed');
+      }
+
+      onPaymentSuccess(confirmationResult);
     } catch (err: any) {
       setError(err.message);
       onPaymentError(err.message);
@@ -129,23 +198,45 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   };
 
   const handleGooglePay = async () => {
-    if (!fortisElements) return;
+    if (!fortisElements || !paymentIntention) return;
 
     try {
       setIsLoading(true);
-      // Handle Google Pay
-      const result = await fortisElements!.elements.createPaymentMethod({
+      
+      // Create Google Pay payment method
+      const { error: paymentError, paymentMethod } = await fortisElements!.elements.createPaymentMethod({
         type: 'google_pay',
         amount: Math.round(amount * 100),
         currency: 'usd',
         country: 'US',
       });
 
-      if (result.error) {
-        throw new Error(result.error.message);
+      if (paymentError) {
+        throw new Error(paymentError.message);
       }
 
-      onPaymentSuccess(result);
+      // Confirm payment with Fortis Elements
+      const { error: confirmError, paymentIntent } = await fortisElements!.elements.confirmPayment({
+        clientSecret: paymentIntention.clientSecret,
+        paymentMethod,
+      });
+
+      if (confirmError) {
+        throw new Error(confirmError.message);
+      }
+
+      // Send result back to LunarPay
+      const confirmationResult = await lunarPayService.confirmPayment({
+        intentionId: paymentIntention.intentionId,
+        paymentResult: paymentIntent,
+        orderId,
+      });
+
+      if (!confirmationResult.success) {
+        throw new Error(confirmationResult.error || 'Payment confirmation failed');
+      }
+
+      onPaymentSuccess(confirmationResult);
     } catch (err: any) {
       setError(err.message);
       onPaymentError(err.message);
