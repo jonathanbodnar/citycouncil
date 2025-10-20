@@ -31,6 +31,7 @@ interface TalentWithUser extends TalentProfile {
     id: string;
     full_name: string;
     avatar_url?: string;
+    email?: string;
   };
 }
 
@@ -66,7 +67,8 @@ const OrderPage: React.FC = () => {
           users!talent_profiles_user_id_fkey (
             id,
             full_name,
-            avatar_url
+            avatar_url,
+            email
           )
         `)
         .eq('id', talentId)
@@ -166,6 +168,11 @@ const OrderPage: React.FC = () => {
   };
 
   const processTalentPayout = async (order: any, talentAmount: number) => {
+    if (!talent) {
+      console.error('Talent not found for payout processing');
+      return;
+    }
+
     try {
       // Check if talent has vendor setup, if not create one
       let vendorId = talent.fortis_vendor_id;
