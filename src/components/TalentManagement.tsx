@@ -100,28 +100,12 @@ const TalentManagement: React.FC = () => {
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 7); // 7 days from now
 
-      // Create a placeholder user first (will be updated during onboarding)
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .insert([
-          {
-            email: `${newTalent.username}@temp.shoutout.com`, // Temporary email
-            full_name: newTalent.full_name,
-            user_type: 'talent',
-            avatar_url: newTalent.avatar_url || null
-          }
-        ])
-        .select()
-        .single();
-
-      if (userError) throw userError;
-
-      // Create talent profile
+      // Create talent profile without user first (user will be created during onboarding)
       const { error } = await supabase
         .from('talent_profiles')
         .insert([
           {
-            user_id: userData.id,
+            // Store talent data for onboarding, user_id will be set later
             username: newTalent.username.toLowerCase(),
             bio: newTalent.bio,
             category: newTalent.category,
@@ -138,7 +122,10 @@ const TalentManagement: React.FC = () => {
             is_active: false, // Will be activated after onboarding
             total_orders: 0,
             fulfilled_orders: 0,
-            average_rating: 0
+            average_rating: 0,
+            // Store admin-provided data for onboarding
+            temp_full_name: newTalent.full_name,
+            temp_avatar_url: newTalent.avatar_url
           }
         ])
         .select()
@@ -534,7 +521,7 @@ const TalentManagement: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-3">
                         <h4 className="text-lg font-medium text-gray-900">
-                          {talent.users?.full_name || 'Pending Setup'}
+                          {talent.users?.full_name || talent.temp_full_name || 'Pending Setup'}
                         </h4>
                         {getStatusBadge(talent)}
                       </div>

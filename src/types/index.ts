@@ -37,6 +37,8 @@ export interface TalentProfile {
   onboarding_token?: string; // Token for onboarding signup
   onboarding_completed?: boolean; // Whether onboarding is complete
   onboarding_expires_at?: string; // When onboarding token expires
+  temp_full_name?: string; // Temporary storage for name before user creation
+  temp_avatar_url?: string; // Temporary storage for avatar before user creation
   total_orders: number;
   fulfilled_orders: number;
   average_rating: number;
