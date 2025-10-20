@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import HomePage from './pages/HomePage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import TalentProfilePage from './pages/TalentProfilePage';
+import TalentOnboardingPage from './pages/TalentOnboardingPage';
 import OrderPage from './pages/OrderPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -31,6 +32,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/seed" element={<SeedDataPage />} />
+            <Route path="/onboard/:token" element={<TalentOnboardingPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-service" element={<TermsOfServicePage />} />
             
@@ -38,6 +40,7 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/talent/:id" element={<TalentProfilePage />} />
+              <Route path="/:username" element={<TalentProfilePage />} />
               <Route path="/order/:talentId" element={
                 <ProtectedRoute>
                   <OrderPage />

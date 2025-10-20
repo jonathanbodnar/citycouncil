@@ -33,22 +33,22 @@ interface TalentWithDetails extends TalentProfile {
 }
 
 const TalentProfilePage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, username } = useParams<{ id?: string; username?: string }>();
   const { user } = useAuth();
   const [talent, setTalent] = useState<TalentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [relatedTalent, setRelatedTalent] = useState<TalentWithDetails[]>([]);
 
   useEffect(() => {
-    if (id) {
+    if (id || username) {
       fetchTalentProfile();
     }
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, username]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTalentProfile = async () => {
     try {
-      // Fetch talent profile with related data
-      const { data: talentData, error: talentError } = await supabase
+      // Fetch talent profile with related data (by ID or username)
+      let query = supabase
         .from('talent_profiles')
         .select(`
           *,
@@ -62,9 +62,15 @@ const TalentProfilePage: React.FC = () => {
             handle
           )
         `)
-        .eq('id', id)
-        .eq('is_active', true)
-        .single();
+        .eq('is_active', true);
+
+      if (id) {
+        query = query.eq('id', id);
+      } else if (username) {
+        query = query.eq('username', username.toLowerCase());
+      }
+
+      const { data: talentData, error: talentError } = await query.single();
 
       if (talentError) throw talentError;
 
@@ -77,7 +83,7 @@ const TalentProfilePage: React.FC = () => {
             full_name
           )
         `)
-        .eq('talent_id', id)
+        .eq('talent_id', talentData.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -87,7 +93,7 @@ const TalentProfilePage: React.FC = () => {
       const { data: videosData, error: videosError } = await supabase
         .from('orders')
         .select('video_url, created_at')
-        .eq('talent_id', id)
+        .eq('talent_id', talentData.id)
         .eq('status', 'completed')
         .not('video_url', 'is', null)
         .order('created_at', { ascending: false })
@@ -108,7 +114,7 @@ const TalentProfilePage: React.FC = () => {
         `)
         .eq('category', talentData.category)
         .eq('is_active', true)
-        .neq('id', id)
+        .neq('id', talentData.id)
         .limit(4);
 
       if (relatedError) throw relatedError;

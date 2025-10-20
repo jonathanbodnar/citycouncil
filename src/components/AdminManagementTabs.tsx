@@ -12,6 +12,8 @@ import {
 import { supabase } from '../services/supabase';
 import { TalentProfile, HelpMessage, AppSettings } from '../types';
 import TalentProfileEditor from './TalentProfileEditor';
+import TalentManagement from './TalentManagement';
+import PlatformSettings from './PlatformSettings';
 import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
@@ -159,161 +161,12 @@ const AdminManagementTabs: React.FC = () => {
 
       {/* Talent Management Tab */}
       {activeTab === 'talent' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Talent Management</h2>
-            <p className="text-sm text-gray-600">Manage talent profiles, featured status, and settings</p>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {talent.map((talentProfile) => (
-                <div key={talentProfile.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                        {talentProfile.users.avatar_url ? (
-                          <img
-                            src={talentProfile.users.avatar_url}
-                            alt={talentProfile.users.full_name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-primary-600 font-medium">
-                            {talentProfile.users.full_name.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{talentProfile.users.full_name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {talentProfile.category} • ${talentProfile.pricing} • {talentProfile.total_orders} orders
-                        </p>
-                        <p className="text-xs text-gray-500">{talentProfile.users.email}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      {/* Featured Toggle */}
-                      <button
-                        onClick={() => handleToggleFeatured(talentProfile.id, talentProfile.is_featured)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          talentProfile.is_featured
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-600 hover:bg-yellow-100 hover:text-yellow-800'
-                        }`}
-                      >
-                        {talentProfile.is_featured ? '⭐ Featured' : 'Feature'}
-                      </button>
-
-                      {/* Active Toggle */}
-                      <button
-                        onClick={() => handleToggleActive(talentProfile.id, talentProfile.is_active)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          talentProfile.is_active
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {talentProfile.is_active ? 'Active' : 'Inactive'}
-                      </button>
-
-                      {/* Edit Button */}
-                      <button 
-                        onClick={() => setEditingTalent(talentProfile)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                        title="Edit Profile"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Fulfillment:</span> {talentProfile.fulfillment_time_hours}h
-                    </div>
-                    <div>
-                      <span className="font-medium">Rating:</span> {talentProfile.average_rating.toFixed(1)} ⭐
-                    </div>
-                    <div>
-                      <span className="font-medium">Charity:</span> {talentProfile.charity_percentage || 0}%
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <TalentManagement />
       )}
 
       {/* Platform Settings Tab */}
-      {activeTab === 'settings' && settings && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Platform Settings</h2>
-            <p className="text-sm text-gray-600">Configure global platform settings and policies</p>
-          </div>
-          <div className="p-6">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Global Admin Fee (%)
-                  </label>
-                  <input
-                    type="number"
-                    value={settings.global_admin_fee_percentage}
-                    onChange={(e) => setSettings({...settings, global_admin_fee_percentage: parseFloat(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Featured Talent Limit
-                  </label>
-                  <input
-                    type="number"
-                    value={settings.featured_talent_limit}
-                    onChange={(e) => setSettings({...settings, featured_talent_limit: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Fulfillment Hours
-                  </label>
-                  <input
-                    type="number"
-                    value={settings.max_fulfillment_hours}
-                    onChange={(e) => setSettings({...settings, max_fulfillment_hours: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Refund Policy Text
-                </label>
-                <textarea
-                  rows={3}
-                  value={settings.refund_policy_text}
-                  onChange={(e) => setSettings({...settings, refund_policy_text: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-
-              <div className="pt-6">
-                <button
-                  onClick={() => handleUpdateSettings(settings)}
-                  className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700"
-                >
-                  Update Settings
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {activeTab === 'settings' && (
+        <PlatformSettings />
       )}
 
       {/* Help Desk Tab */}

@@ -33,6 +33,10 @@ export interface TalentProfile {
   social_accounts: SocialAccount[];
   payout_details?: StripeConnectAccount;
   fortis_vendor_id?: string; // Fortis vendor ID for payouts
+  username?: string; // Unique username for profile URL
+  onboarding_token?: string; // Token for onboarding signup
+  onboarding_completed?: boolean; // Whether onboarding is complete
+  onboarding_expires_at?: string; // When onboarding token expires
   total_orders: number;
   fulfilled_orders: number;
   average_rating: number;
@@ -206,4 +210,26 @@ export interface VendorBankInfo {
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface PlatformSetting {
+  id: string;
+  setting_key: string;
+  setting_value?: string;
+  setting_type: 'string' | 'boolean' | 'number' | 'json' | 'file';
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string;
+}
+
+export interface TalentOnboardingData {
+  token: string;
+  talent: TalentProfile & {
+    users: {
+      full_name: string;
+      avatar_url?: string;
+    };
+  };
+  expired: boolean;
 }
