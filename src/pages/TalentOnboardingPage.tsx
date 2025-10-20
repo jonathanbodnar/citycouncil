@@ -449,7 +449,7 @@ const TalentOnboardingPage: React.FC = () => {
 
                 <CategorySelector
                   selectedCategories={profileData.categories}
-                  onChange={(categories) => setProfileData({...profileData, categories})}
+                  onCategoryChange={(categories) => setProfileData({...profileData, categories})}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -497,10 +497,9 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
 
                 <CharitySelector
+                  selectedCharityName={profileData.charity_name}
                   charityPercentage={profileData.charity_percentage}
-                  charityName={profileData.charity_name}
-                  onCharityPercentageChange={(percentage) => setProfileData({...profileData, charity_percentage: percentage})}
-                  onCharityNameChange={(name) => setProfileData({...profileData, charity_name: name})}
+                  onCharityChange={(charityName, percentage) => setProfileData({...profileData, charity_name: charityName, charity_percentage: percentage})}
                 />
               </div>
               
