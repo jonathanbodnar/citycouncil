@@ -131,7 +131,7 @@ const AdminHelpDesk: React.FC = () => {
         return acc;
       }, {});
 
-      const conversationList = Object.values(grouped).sort((a: ConversationGroup, b: ConversationGroup) => 
+      const conversationList = (Object.values(grouped) as ConversationGroup[]).sort((a, b) => 
         new Date(b.latest_message_time).getTime() - new Date(a.latest_message_time).getTime()
       );
 
