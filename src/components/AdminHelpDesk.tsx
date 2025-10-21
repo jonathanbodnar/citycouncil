@@ -48,7 +48,7 @@ const AdminHelpDesk: React.FC = () => {
   useEffect(() => {
     fetchConversations();
     
-    // Set up real-time subscription
+      // Set up real-time subscription
     const subscription = supabase
       .channel('admin_help_messages')
       .on('postgres_changes', 
@@ -57,7 +57,8 @@ const AdminHelpDesk: React.FC = () => {
           schema: 'public', 
           table: 'help_messages'
         }, 
-        () => {
+        (payload) => {
+          console.log('Admin real-time update:', payload);
           fetchConversations();
           if (selectedConversation) {
             refreshSelectedConversation();

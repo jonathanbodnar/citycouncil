@@ -89,9 +89,9 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
   useEffect(() => {
     if (isOpen && user) {
       fetchMessages();
-      // Set up real-time subscription for new messages
+      // Set up real-time subscription for new messages and updates
       const subscription = supabase
-        .channel('help_messages')
+        .channel(`help_messages_${user.id}`)
         .on('postgres_changes', 
           { 
             event: '*', 
@@ -99,7 +99,8 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
             table: 'help_messages',
             filter: `user_id=eq.${user.id}`
           }, 
-          () => {
+          (payload) => {
+            console.log('Real-time update received:', payload);
             fetchMessages();
           }
         )
