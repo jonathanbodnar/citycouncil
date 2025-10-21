@@ -8,6 +8,7 @@ ALTER TABLE help_messages ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow users to insert help messages" ON help_messages;
 DROP POLICY IF EXISTS "Allow users to view own help messages" ON help_messages;
 DROP POLICY IF EXISTS "Allow admin to update help messages" ON help_messages;
+DROP POLICY IF EXISTS "Allow admin to manage all help messages" ON help_messages;
 
 -- Allow authenticated users to insert their own help messages
 CREATE POLICY "Allow users to insert help messages" ON help_messages

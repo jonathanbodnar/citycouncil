@@ -59,10 +59,14 @@ const AdminHelpDesk: React.FC = () => {
         }, 
         (payload) => {
           console.log('Admin real-time update:', payload);
-          fetchConversations();
-          if (selectedConversation) {
+          
+          // Only refresh selected conversation if it's the updated one
+          if (selectedConversation && payload.new && payload.new.user_id === selectedConversation.user_id) {
             refreshSelectedConversation();
           }
+          
+          // Always refresh conversations list for sidebar updates
+          fetchConversations();
         }
       )
       .subscribe();
@@ -204,7 +208,8 @@ const AdminHelpDesk: React.FC = () => {
 
       setNewMessage('');
       toast.success('Response sent!');
-      fetchConversations();
+      
+      // Don't refresh everything, just the selected conversation
       refreshSelectedConversation();
 
     } catch (error) {
@@ -238,9 +243,10 @@ const AdminHelpDesk: React.FC = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       sendResponse();
     }
   };
