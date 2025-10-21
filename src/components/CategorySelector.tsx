@@ -125,21 +125,23 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Select Your Categories ({tempCategories.length} selected)
         </label>
-        <div className="flex space-x-2">
-          <button
-            onClick={handleSave}
-            disabled={tempCategories.length === 0}
-            className="bg-primary-600 text-white px-3 py-1 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          >
-            Save
-          </button>
-          <button
-            onClick={handleCancel}
-            className="text-gray-600 hover:text-gray-700"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </div>
+        {!autoSave && (
+          <div className="flex space-x-2">
+            <button
+              onClick={handleSave}
+              disabled={tempCategories.length === 0}
+              className="bg-primary-600 text-white px-3 py-1 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="text-gray-600 hover:text-gray-700"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
       
       <p className="text-sm text-gray-600 mb-4">

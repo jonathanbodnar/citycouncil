@@ -538,7 +538,11 @@ const TalentOnboardingPage: React.FC = () => {
 
                 {/* Stats - Bottom Section */}
                 <div className="mt-auto">
-                  <div className="grid grid-cols-4 gap-4 mb-4">
+                  <div className={`grid gap-4 mb-4 ${
+                    onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 
+                      ? 'grid-cols-4' 
+                      : 'grid-cols-3'
+                  }`}>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-blue-600">
                         ${onboardingData.talent.pricing}
@@ -560,14 +564,14 @@ const TalentOnboardingPage: React.FC = () => {
                       <div className="text-sm text-gray-600">Corporate</div>
                     </div>
 
-                  {(onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">
-                        {onboardingData.talent.charity_percentage}%
+                    {(onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">
+                          {onboardingData.talent.charity_percentage}%
+                        </div>
+                        <div className="text-sm text-gray-600">To Charity</div>
                       </div>
-                      <div className="text-sm text-gray-600">To Charity</div>
-                    </div>
-                  )}
+                    )}
                   </div>
 
                   {/* Charity Info */}
