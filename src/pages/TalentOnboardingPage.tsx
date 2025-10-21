@@ -37,6 +37,11 @@ const TalentOnboardingPage: React.FC = () => {
     confirmPassword: ''
   });
 
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: ''
+  });
+
   // Step 2: Profile Details
   const [profileData, setProfileData] = useState({
     bio: '',
@@ -119,6 +124,13 @@ const TalentOnboardingPage: React.FC = () => {
         navigate('/login');
         toast.success('You have already completed onboarding. Please log in.');
         return;
+      }
+
+      // Check if user account already exists (step 1 completed)
+      if (data.user_id) {
+        // User account exists, show login option instead of account creation
+        setCurrentStep(2); // Skip to profile details step
+        toast.info('Welcome back! Please log in to continue your profile setup.');
       }
 
       // Pre-fill profile data
@@ -205,6 +217,35 @@ const TalentOnboardingPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error creating account:', error);
       toast.error(error.message || 'Failed to create account');
+    }
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Sign in existing user
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password,
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Verify this user is associated with the talent profile
+        if (authData.user.id !== onboardingData?.talent.user_id) {
+          toast.error('This email is not associated with this talent profile');
+          return;
+        }
+
+        toast.success('Logged in successfully!');
+        setCurrentStep(2);
+      }
+
+    } catch (error: any) {
+      console.error('Error logging in:', error);
+      toast.error(error.message || 'Failed to log in');
     }
   };
 
@@ -497,7 +538,7 @@ const TalentOnboardingPage: React.FC = () => {
 
         {/* Step Content */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          {currentStep === 1 && (
+          {currentStep === 1 && !onboardingData?.talent.user_id && (
             <form onSubmit={handleStep1Submit}>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Step 1: Create Your Account
@@ -567,6 +608,72 @@ const TalentOnboardingPage: React.FC = () => {
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   Create Account & Continue
+                </button>
+              </div>
+            </form>
+          )}
+
+          {currentStep === 1 && onboardingData?.talent.user_id && (
+            <form onSubmit={handleLoginSubmit}>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Step 1: Welcome Back!
+              </h2>
+              
+              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                <p className="text-blue-800">
+                  You've already created your account. Please log in to continue setting up your profile.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={loginData.email}
+                    onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3"
+                    >
+                      {showPassword ? (
+                        <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Log In & Continue
                 </button>
               </div>
             </form>
