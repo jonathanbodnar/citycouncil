@@ -61,7 +61,7 @@ const AdminHelpDesk: React.FC = () => {
           console.log('Admin real-time update:', payload);
           
           // Only refresh selected conversation if it's the updated one
-          if (selectedConversation && payload.new && payload.new.user_id === selectedConversation.user_id) {
+          if (selectedConversation && payload.new && (payload.new as any)?.user_id === selectedConversation.user_id) {
             refreshSelectedConversation();
           }
           
