@@ -37,6 +37,11 @@ const CharitySelector: React.FC<CharitySelectorProps> = ({
     }
   }, [selectedCharityName, charities]);
 
+  useEffect(() => {
+    // Sync internal percentage state with prop
+    setPercentage(charityPercentage || 0);
+  }, [charityPercentage]);
+
   const fetchCharities = async () => {
     try {
       const { data, error } = await supabase
@@ -66,9 +71,8 @@ const CharitySelector: React.FC<CharitySelectorProps> = ({
   const handlePercentageChange = (newPercentage: number) => {
     setPercentage(newPercentage);
     const charityName = showCustom ? customCharityName : selectedCharityName;
-    if (charityName) {
-      onCharityChange(charityName, newPercentage);
-    }
+    // Always call onCharityChange, even if no charity name is set yet
+    onCharityChange(charityName || '', newPercentage);
   };
 
   const handleCustomCharitySubmit = () => {
