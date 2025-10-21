@@ -517,19 +517,7 @@ const TalentOnboardingPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Rating */}
-                <div className="flex items-center mb-4">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon
-                        key={i}
-                        className="h-5 w-5 text-gray-300"
-                      />
-                    ))}
-                  </div>
-                  <span className="ml-2 text-lg font-semibold text-gray-900">0.0</span>
-                  <span className="ml-2 text-gray-600">(0 reviews)</span>
-                </div>
+                {/* Rating - Hidden during onboarding since talent hasn't received orders yet */}
 
                 {/* Bio */}
                 <p className="text-gray-700 mb-6 leading-relaxed flex-1">
