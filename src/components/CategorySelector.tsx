@@ -10,14 +10,18 @@ interface CategorySelectorProps {
   selectedCategories: TalentCategory[];
   onCategoryChange: (categories: TalentCategory[]) => void;
   readonly?: boolean;
+  autoSave?: boolean; // If true, saves immediately on category change
+  startEditing?: boolean; // If true, starts in editing mode
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({ 
   selectedCategories, 
   onCategoryChange,
-  readonly = false 
+  readonly = false,
+  autoSave = false,
+  startEditing = false
 }) => {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [tempCategories, setTempCategories] = useState<TalentCategory[]>(selectedCategories);
 
   const TALENT_CATEGORIES = [
@@ -47,6 +51,11 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
       : [...tempCategories, category];
     
     setTempCategories(newCategories);
+    
+    // Auto-save if enabled (for real-time preview)
+    if (autoSave) {
+      onCategoryChange(newCategories);
+    }
   };
 
   const handleSave = () => {
