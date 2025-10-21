@@ -25,34 +25,9 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isOpen && user) {
-      fetchMessages();
-      // Set up real-time subscription for new messages
-      const subscription = supabase
-        .channel('help_messages')
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'help_messages',
-            filter: `user_id=eq.${user.id}`
-          }, 
-          () => {
-            fetchMessages();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [isOpen, user?.id]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const fetchMessages = async () => {
     try {
@@ -73,7 +48,7 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || sending) return;
+    if (!newMessage.trim() || sending || !user) return;
 
     try {
       setSending(true);
@@ -102,16 +77,41 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   };
+
+  useEffect(() => {
+    if (isOpen && user) {
+      fetchMessages();
+      // Set up real-time subscription for new messages
+      const subscription = supabase
+        .channel('help_messages')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'help_messages',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          () => {
+            fetchMessages();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [isOpen, user?.id]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Don't show widget if user type not in allowed list
   if (!user || !showForUserTypes.includes(user.user_type as any)) {
