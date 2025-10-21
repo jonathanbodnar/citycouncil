@@ -273,6 +273,19 @@ const TalentOnboardingPage: React.FC = () => {
     }
   };
 
+  const updateAvatarPreview = (avatarUrl: string) => {
+    // Update the onboarding data for live preview
+    if (onboardingData) {
+      setOnboardingData({
+        ...onboardingData,
+        talent: {
+          ...onboardingData.talent,
+          temp_avatar_url: avatarUrl
+        }
+      });
+    }
+  };
+
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -722,7 +735,7 @@ const TalentOnboardingPage: React.FC = () => {
                 <ImageUpload
                   currentImageUrl={onboardingData?.talent.users?.avatar_url || onboardingData?.talent.temp_avatar_url}
                   onImageUploaded={(imageUrl) => {
-                    updateProfilePreview({ temp_avatar_url: imageUrl });
+                    updateAvatarPreview(imageUrl);
                   }}
                   uploadPath="talent-avatars"
                   maxSizeMB={5}
