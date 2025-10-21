@@ -13,6 +13,7 @@ import {
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
 import ImageUpload from './ImageUpload';
+import CategorySelector from './CategorySelector';
 import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
@@ -34,6 +35,7 @@ const TalentManagement: React.FC = () => {
     bio: '',
     avatar_url: '',
     category: 'other' as TalentCategory,
+    categories: [] as TalentCategory[],
     pricing: 299.99,
     corporate_pricing: 449.99,
     fulfillment_time_hours: 48,
@@ -112,6 +114,7 @@ const TalentManagement: React.FC = () => {
             username: newTalent.username.toLowerCase(),
             bio: newTalent.bio,
             category: newTalent.category,
+            categories: newTalent.categories.length > 0 ? newTalent.categories : [newTalent.category],
             pricing: newTalent.pricing,
             corporate_pricing: newTalent.corporate_pricing,
             fulfillment_time_hours: newTalent.fulfillment_time_hours,
@@ -148,6 +151,7 @@ const TalentManagement: React.FC = () => {
         bio: '',
         avatar_url: '',
         category: 'other' as TalentCategory,
+        categories: [] as TalentCategory[],
         pricing: 299.99,
         corporate_pricing: 449.99,
         fulfillment_time_hours: 48,
@@ -375,34 +379,11 @@ const TalentManagement: React.FC = () => {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <select
-                  value={newTalent.category}
-                  onChange={(e) => setNewTalent({...newTalent, category: e.target.value as TalentCategory})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="politician">Politician</option>
-                  <option value="candidate">Candidate</option>
-                  <option value="party-leader">Party Leader</option>
-                  <option value="reporter">Reporter</option>
-                  <option value="tv-host">TV/Radio Host</option>
-                  <option value="commentator">Commentator</option>
-                  <option value="author">Author/Speaker</option>
-                  <option value="comedian">Comedian</option>
-                  <option value="musician">Musician</option>
-                  <option value="actor">Actor</option>
-                  <option value="influencer">Influencer</option>
-                  <option value="activist">Activist</option>
-                  <option value="faith-leader">Faith Leader</option>
-                  <option value="academic">Academic</option>
-                  <option value="military">Military/Veteran</option>
-                  <option value="youth-leader">Youth Leader</option>
-                  <option value="patriotic-entertainer">Patriotic Entertainer</option>
-                  <option value="other">Other</option>
-                </select>
+              <div className="md:col-span-2">
+                <CategorySelector
+                  selectedCategories={newTalent.categories}
+                  onCategoryChange={(categories) => setNewTalent({...newTalent, categories, category: categories[0] || 'other'})}
+                />
               </div>
               
               <div>
