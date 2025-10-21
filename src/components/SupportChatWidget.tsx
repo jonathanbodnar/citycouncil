@@ -23,6 +23,7 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -69,7 +70,7 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
 
       setNewMessage('');
       toast.success('Message sent! Admin will respond soon.');
-      fetchMessages();
+      // No need to fetch - real-time subscription will add the message
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -100,8 +101,34 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
             filter: `user_id=eq.${user.id}`
           }, 
           (payload) => {
-            console.log('Real-time update received:', payload);
-            fetchMessages();
+            console.log('Talent real-time update received:', payload);
+            
+            // Handle different event types for smoother updates
+            if (payload.eventType === 'INSERT') {
+              // Add new message directly to state
+              const newMessage = payload.new as HelpMessage;
+              setMessages(prev => [...prev, newMessage]);
+            } else if (payload.eventType === 'UPDATE') {
+              // Update existing message (admin response)
+              const updatedMessage = payload.new as HelpMessage;
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === updatedMessage.id ? updatedMessage : msg
+                )
+              );
+              
+              // Show notification for new admin responses
+              if (!isOpen && updatedMessage.response) {
+                setHasNewMessage(true);
+                toast.success('💬 Admin replied to your message!', {
+                  duration: 4000,
+                  position: 'bottom-right',
+                });
+              }
+            } else {
+              // Fallback to full refetch for DELETE or other events
+              fetchMessages();
+            }
           }
         )
         .subscribe();
@@ -126,11 +153,23 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
       {/* Chat Button */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+          onClick={() => {
+            setIsOpen(true);
+            setHasNewMessage(false);
+          }}
+          className={`relative text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105 ${
+            hasNewMessage 
+              ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
           title="Need help? Chat with support"
         >
           <ChatBubbleLeftRightIcon className="h-6 w-6" />
+          {hasNewMessage && (
+            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce">
+              !
+            </div>
+          )}
         </button>
       )}
 
@@ -172,8 +211,8 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
 
                   {/* Admin Response */}
                   {message.response && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 max-w-[70%]">
+                    <div className="flex justify-start animate-fade-in">
+                      <div className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 max-w-[70%] border-l-4 border-blue-500">
                         <div className="flex items-center space-x-1 mb-1">
                           <UserCircleIcon className="h-4 w-4 text-blue-600" />
                           <span className="text-xs font-medium text-blue-600">Admin</span>
