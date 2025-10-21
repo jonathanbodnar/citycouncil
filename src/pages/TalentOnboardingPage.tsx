@@ -560,20 +560,18 @@ const TalentOnboardingPage: React.FC = () => {
                       <div className="text-sm text-gray-600">Corporate</div>
                     </div>
 
-                  {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 ? (
+                  {(onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
                     <div className="text-center">
                       <div className="text-2xl font-bold text-red-600">
                         {onboardingData.talent.charity_percentage}%
                       </div>
                       <div className="text-sm text-gray-600">To Charity</div>
                     </div>
-                  ) : (
-                    <div></div>
                   )}
                   </div>
 
                   {/* Charity Info */}
-                  {onboardingData.talent.charity_name && (
+                  {onboardingData.talent.charity_name && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 && (
                     <div className="bg-red-50 rounded-lg p-4">
                       <div className="flex items-center text-red-800">
                         <HeartIcon className="h-5 w-5 mr-2" />
@@ -767,6 +765,7 @@ const TalentOnboardingPage: React.FC = () => {
                   onCategoryChange={(categories) => updateProfilePreview({ categories, category: categories[0] || 'other' })}
                   autoSave={true}
                   startEditing={true}
+                  stayInEditMode={true}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

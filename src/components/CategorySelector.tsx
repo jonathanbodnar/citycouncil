@@ -12,6 +12,7 @@ interface CategorySelectorProps {
   readonly?: boolean;
   autoSave?: boolean; // If true, saves immediately on category change
   startEditing?: boolean; // If true, starts in editing mode
+  stayInEditMode?: boolean; // If true, doesn't exit editing mode after save
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({ 
@@ -19,7 +20,8 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   onCategoryChange,
   readonly = false,
   autoSave = false,
-  startEditing = false
+  startEditing = false,
+  stayInEditMode = false
 }) => {
   const [editing, setEditing] = useState(startEditing);
   const [tempCategories, setTempCategories] = useState<TalentCategory[]>(selectedCategories);
@@ -64,7 +66,11 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
       return;
     }
     onCategoryChange(tempCategories);
-    setEditing(false);
+    
+    // Only exit editing mode if not configured to stay in edit mode
+    if (!stayInEditMode) {
+      setEditing(false);
+    }
   };
 
   const handleCancel = () => {
