@@ -49,6 +49,7 @@ const AdminHelpDesk: React.FC = () => {
     fetchConversations();
     
       // Set up real-time subscription
+    console.log('Setting up admin real-time subscription');
     const subscription = supabase
       .channel('admin_help_messages')
       .on('postgres_changes', 
@@ -59,17 +60,22 @@ const AdminHelpDesk: React.FC = () => {
         }, 
         (payload) => {
           console.log('Admin real-time update:', payload);
+          console.log('Event type:', payload.eventType, 'Selected conversation:', selectedConversation);
           
           // Only refresh selected conversation if it's the updated one
           if (selectedConversation && payload.new && (payload.new as any)?.user_id === selectedConversation.user_id) {
+            console.log('Refreshing selected conversation');
             refreshSelectedConversation();
           }
           
           // Always refresh conversations list for sidebar updates
+          console.log('Refreshing conversations list');
           fetchConversations();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Admin chat subscription status:', status);
+      });
 
     return () => {
       subscription.unsubscribe();

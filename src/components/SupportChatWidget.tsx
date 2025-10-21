@@ -91,6 +91,7 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
     if (isOpen && user) {
       fetchMessages();
       // Set up real-time subscription for new messages and updates
+      console.log('Setting up real-time subscription for user:', user.id);
       const subscription = supabase
         .channel(`help_messages_${user.id}`)
         .on('postgres_changes', 
@@ -104,13 +105,23 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
             console.log('Talent real-time update received:', payload);
             
             // Handle different event types for smoother updates
+            console.log('Payload event type:', payload.eventType, 'Payload:', payload);
+            
             if (payload.eventType === 'INSERT') {
               // Add new message directly to state
               const newMessage = payload.new as HelpMessage;
-              setMessages(prev => [...prev, newMessage]);
+              console.log('Adding new message to talent chat:', newMessage);
+              setMessages(prev => {
+                // Avoid duplicates
+                if (prev.find(msg => msg.id === newMessage.id)) {
+                  return prev;
+                }
+                return [...prev, newMessage];
+              });
             } else if (payload.eventType === 'UPDATE') {
               // Update existing message (admin response)
               const updatedMessage = payload.new as HelpMessage;
+              console.log('Updating message in talent chat:', updatedMessage);
               setMessages(prev => 
                 prev.map(msg => 
                   msg.id === updatedMessage.id ? updatedMessage : msg
@@ -127,13 +138,17 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
               }
             } else {
               // Fallback to full refetch for DELETE or other events
+              console.log('Falling back to fetchMessages for event:', payload.eventType);
               fetchMessages();
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Talent chat subscription status:', status);
+        });
 
       return () => {
+        console.log('Unsubscribing talent chat subscription');
         subscription.unsubscribe();
       };
     }
