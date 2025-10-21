@@ -19,6 +19,7 @@ import { TalentOnboardingData, TalentCategory } from '../types';
 import Logo from '../components/Logo';
 import CategorySelector from '../components/CategorySelector';
 import CharitySelector from '../components/CharitySelector';
+import ImageUpload from '../components/ImageUpload';
 import toast from 'react-hot-toast';
 
 const TalentOnboardingPage: React.FC = () => {
@@ -256,11 +257,28 @@ const TalentOnboardingPage: React.FC = () => {
     }
   };
 
+  const updateProfilePreview = (updates: Partial<typeof profileData>) => {
+    // Update the profile data state
+    setProfileData(prev => ({ ...prev, ...updates }));
+    
+    // Update the onboarding data for live preview
+    if (onboardingData) {
+      setOnboardingData({
+        ...onboardingData,
+        talent: {
+          ...onboardingData.talent,
+          ...updates
+        }
+      });
+    }
+  };
+
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const { error } = await supabase
+      // Update talent profile
+      const { error: talentError } = await supabase
         .from('talent_profiles')
         .update({
           bio: profileData.bio,
@@ -271,11 +289,24 @@ const TalentOnboardingPage: React.FC = () => {
           fulfillment_time_hours: profileData.fulfillment_time_hours,
           charity_percentage: profileData.charity_percentage,
           charity_name: profileData.charity_name,
-          social_accounts: profileData.social_accounts
+          social_accounts: profileData.social_accounts,
+          temp_avatar_url: onboardingData?.talent.temp_avatar_url // Save uploaded image
         })
         .eq('id', onboardingData?.talent.id);
 
-      if (error) throw error;
+      if (talentError) throw talentError;
+
+      // Update user avatar if image was uploaded and user exists
+      if (onboardingData?.talent.user_id && onboardingData?.talent.temp_avatar_url) {
+        const { error: userError } = await supabase
+          .from('users')
+          .update({
+            avatar_url: onboardingData.talent.temp_avatar_url
+          })
+          .eq('id', onboardingData.talent.user_id);
+
+        if (userError) console.error('Error updating user avatar:', userError);
+      }
 
       toast.success('Profile updated successfully!');
       setCurrentStep(3);
@@ -688,6 +719,15 @@ const TalentOnboardingPage: React.FC = () => {
               </h2>
               
               <div className="space-y-6">
+                <ImageUpload
+                  currentImageUrl={onboardingData?.talent.users?.avatar_url || onboardingData?.talent.temp_avatar_url}
+                  onImageUploaded={(imageUrl) => {
+                    updateProfilePreview({ temp_avatar_url: imageUrl });
+                  }}
+                  uploadPath="talent-avatars"
+                  maxSizeMB={5}
+                />
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Bio / Description *
@@ -696,7 +736,7 @@ const TalentOnboardingPage: React.FC = () => {
                     required
                     rows={4}
                     value={profileData.bio}
-                    onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                    onChange={(e) => updateProfilePreview({ bio: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Tell people about yourself..."
                   />
@@ -704,7 +744,7 @@ const TalentOnboardingPage: React.FC = () => {
 
                 <CategorySelector
                   selectedCategories={profileData.categories}
-                  onCategoryChange={(categories) => setProfileData({...profileData, categories})}
+                  onCategoryChange={(categories) => updateProfilePreview({ categories, category: categories[0] || 'other' })}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -717,7 +757,7 @@ const TalentOnboardingPage: React.FC = () => {
                       min="0"
                       step="0.01"
                       value={profileData.pricing}
-                      onChange={(e) => setProfileData({...profileData, pricing: parseFloat(e.target.value)})}
+                      onChange={(e) => updateProfilePreview({ pricing: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -731,7 +771,7 @@ const TalentOnboardingPage: React.FC = () => {
                       min="0"
                       step="0.01"
                       value={profileData.corporate_pricing}
-                      onChange={(e) => setProfileData({...profileData, corporate_pricing: parseFloat(e.target.value)})}
+                      onChange={(e) => updateProfilePreview({ corporate_pricing: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -745,7 +785,7 @@ const TalentOnboardingPage: React.FC = () => {
                       min="1"
                       max="168"
                       value={profileData.fulfillment_time_hours}
-                      onChange={(e) => setProfileData({...profileData, fulfillment_time_hours: parseInt(e.target.value)})}
+                      onChange={(e) => updateProfilePreview({ fulfillment_time_hours: parseInt(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -754,7 +794,7 @@ const TalentOnboardingPage: React.FC = () => {
                 <CharitySelector
                   selectedCharityName={profileData.charity_name}
                   charityPercentage={profileData.charity_percentage}
-                  onCharityChange={(charityName, percentage) => setProfileData({...profileData, charity_name: charityName, charity_percentage: percentage})}
+                  onCharityChange={(charityName, percentage) => updateProfilePreview({ charity_name: charityName, charity_percentage: percentage })}
                 />
               </div>
               
