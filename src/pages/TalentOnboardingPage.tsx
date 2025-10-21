@@ -8,6 +8,12 @@ import {
   EyeSlashIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import {
+  StarIcon,
+  HeartIcon,
+  CheckBadgeIcon,
+  ShareIcon
+} from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import { TalentOnboardingData, TalentCategory } from '../types';
 import Logo from '../components/Logo';
@@ -356,29 +362,135 @@ const TalentOnboardingPage: React.FC = () => {
             You've been invited to join as a talent member. Let's get your profile set up.
           </p>
           
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="font-medium text-blue-900 mb-2">Your Profile Details:</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-blue-700 font-medium">Name:</span>
-                <span className="ml-2 text-blue-900">{onboardingData.talent.temp_full_name || 'Not set'}</span>
+          {/* Profile Preview Card */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+            <div className="relative">
+              {/* Profile Image */}
+              <div className="aspect-square bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative">
+                {onboardingData.talent.temp_avatar_url ? (
+                  <img
+                    src={onboardingData.talent.temp_avatar_url}
+                    alt={onboardingData.talent.temp_full_name || 'Profile'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-6xl font-bold text-white">
+                    {(onboardingData.talent.temp_full_name || 'T').charAt(0)}
+                  </div>
+                )}
+                
+                {/* Status Badge */}
+                <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  Available
+                </div>
+
+                {/* Charity Badge */}
+                {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
+                  <div className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm">
+                    <HeartIcon className="h-6 w-6 text-red-500" />
+                  </div>
+                )}
               </div>
-              <div>
-                <span className="text-blue-700 font-medium">Username:</span>
-                <span className="ml-2 text-blue-900">@{onboardingData.talent.username}</span>
+            </div>
+
+            {/* Profile Info */}
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    {onboardingData.talent.temp_full_name || 'Talent Member'}
+                  </h2>
+                  <div className="flex items-center space-x-4 mb-4">
+                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
+                      {onboardingData.talent.category.replace('-', ' ')}
+                    </span>
+                    <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
+                    <span className="text-sm text-gray-600">Verified</span>
+                  </div>
+                </div>
+                
+                <button className="p-2 text-gray-400 hover:text-gray-600">
+                  <ShareIcon className="h-6 w-6" />
+                </button>
               </div>
-              <div>
-                <span className="text-blue-700 font-medium">Profile URL:</span>
-                <span className="ml-2 text-blue-900">shoutout.us/{onboardingData.talent.username}</span>
+
+              {/* Rating */}
+              <div className="flex items-center mb-4">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon
+                      key={i}
+                      className="h-5 w-5 text-gray-300"
+                    />
+                  ))}
+                </div>
+                <span className="ml-2 text-lg font-semibold text-gray-900">0.0</span>
+                <span className="ml-2 text-gray-600">(0 reviews)</span>
               </div>
-              <div>
-                <span className="text-blue-700 font-medium">Category:</span>
-                <span className="ml-2 text-blue-900 capitalize">{onboardingData.talent.category.replace('-', ' ')}</span>
+
+              {/* Bio */}
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                {onboardingData.talent.bio || 'Profile bio will be added during setup.'}
+              </p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    ${onboardingData.talent.pricing}
+                  </div>
+                  <div className="text-sm text-gray-600">Personal</div>
+                  {onboardingData.talent.corporate_pricing && (
+                    <>
+                      <div className="text-lg font-bold text-gray-700 mt-1">
+                        ${onboardingData.talent.corporate_pricing}
+                      </div>
+                      <div className="text-xs text-gray-500">Corporate</div>
+                    </>
+                  )}
+                </div>
+
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {onboardingData.talent.fulfillment_time_hours}h
+                  </div>
+                  <div className="text-sm text-gray-600">Delivery</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">0</div>
+                  <div className="text-sm text-gray-600">Orders</div>
+                </div>
+
+                {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">
+                      {onboardingData.talent.charity_percentage}%
+                    </div>
+                    <div className="text-sm text-gray-600">To Charity</div>
+                  </div>
+                )}
               </div>
-              <div>
-                <span className="text-blue-700 font-medium">Pricing:</span>
-                <span className="ml-2 text-blue-900">${onboardingData.talent.pricing}</span>
-              </div>
+
+              {/* Charity Info */}
+              {onboardingData.talent.charity_name && (
+                <div className="bg-red-50 rounded-lg p-4 mb-4">
+                  <div className="flex items-center text-red-800">
+                    <HeartIcon className="h-5 w-5 mr-2" />
+                    <span className="text-sm font-medium">
+                      {onboardingData.talent.charity_percentage}% of proceeds go to {onboardingData.talent.charity_name}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Order Button (disabled during onboarding) */}
+              <button
+                disabled
+                className="w-full bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-semibold cursor-not-allowed"
+              >
+                Complete Setup to Enable Orders
+              </button>
             </div>
           </div>
         </div>
