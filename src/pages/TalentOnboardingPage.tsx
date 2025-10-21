@@ -410,11 +410,21 @@ const TalentOnboardingPage: React.FC = () => {
             You've been invited to join as a talent member. Let's get your profile set up.
           </p>
           
+          {/* Complete Setup Button */}
+          <div className="mb-6">
+            <button
+              disabled
+              className="w-full bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-semibold cursor-not-allowed"
+            >
+              Complete Setup to Enable Orders
+            </button>
+          </div>
+          
           {/* Profile Preview Card */}
           <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-            <div className="md:flex">
+            <div className="flex">
               {/* Profile Image - Left Side */}
-              <div className="md:w-1/3">
+              <div className="w-1/3">
                 <div className="aspect-square bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative">
                   {(onboardingData.talent.users?.avatar_url || onboardingData.talent.temp_avatar_url) ? (
                     <img
@@ -443,7 +453,7 @@ const TalentOnboardingPage: React.FC = () => {
               </div>
 
               {/* Profile Info - Right Side */}
-              <div className="md:w-2/3 p-6">
+              <div className="w-2/3 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -457,10 +467,6 @@ const TalentOnboardingPage: React.FC = () => {
                       <span className="text-sm text-gray-600">Verified</span>
                     </div>
                   </div>
-                  
-                  <button className="p-2 text-gray-400 hover:text-gray-600">
-                    <ShareIcon className="h-6 w-6" />
-                  </button>
                 </div>
 
                 {/* Rating */}
@@ -483,20 +489,12 @@ const TalentOnboardingPage: React.FC = () => {
                 </p>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-4 gap-4 mb-6">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">
                       ${onboardingData.talent.pricing}
                     </div>
                     <div className="text-sm text-gray-600">Personal</div>
-                    {onboardingData.talent.corporate_pricing && (
-                      <>
-                        <div className="text-lg font-bold text-gray-700 mt-1">
-                          ${onboardingData.talent.corporate_pricing}
-                        </div>
-                        <div className="text-xs text-gray-500">Corporate</div>
-                      </>
-                    )}
                   </div>
 
                   <div className="text-center">
@@ -507,8 +505,10 @@ const TalentOnboardingPage: React.FC = () => {
                   </div>
 
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">0</div>
-                    <div className="text-sm text-gray-600">Orders</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      ${onboardingData.talent.corporate_pricing || onboardingData.talent.pricing * 1.5}
+                    </div>
+                    <div className="text-sm text-gray-600">Corporate</div>
                   </div>
 
                   {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
@@ -523,7 +523,7 @@ const TalentOnboardingPage: React.FC = () => {
 
                 {/* Charity Info */}
                 {onboardingData.talent.charity_name && (
-                  <div className="bg-red-50 rounded-lg p-4 mb-4">
+                  <div className="bg-red-50 rounded-lg p-4">
                     <div className="flex items-center text-red-800">
                       <HeartIcon className="h-5 w-5 mr-2" />
                       <span className="text-sm font-medium">
@@ -532,14 +532,6 @@ const TalentOnboardingPage: React.FC = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Order Button (disabled during onboarding) */}
-                <button
-                  disabled
-                  className="w-full bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-semibold cursor-not-allowed"
-                >
-                  Complete Setup to Enable Orders
-                </button>
               </div>
             </div>
           </div>
