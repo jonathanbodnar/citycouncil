@@ -281,7 +281,11 @@ const TalentOnboardingPage: React.FC = () => {
         ...onboardingData,
         talent: {
           ...onboardingData.talent,
-          temp_avatar_url: avatarUrl
+          temp_avatar_url: avatarUrl,
+          users: {
+            ...onboardingData.talent.users,
+            avatar_url: avatarUrl
+          }
         }
       });
     }
@@ -808,7 +812,9 @@ const TalentOnboardingPage: React.FC = () => {
                 <CharitySelector
                   selectedCharityName={profileData.charity_name}
                   charityPercentage={profileData.charity_percentage}
-                  onCharityChange={(charityName, percentage) => updateProfilePreview({ charity_name: charityName, charity_percentage: percentage })}
+                  onCharityChange={(charityName, percentage) => {
+                    updateProfilePreview({ charity_name: charityName, charity_percentage: percentage });
+                  }}
                 />
               </div>
               

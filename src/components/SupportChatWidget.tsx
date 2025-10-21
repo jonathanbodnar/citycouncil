@@ -25,13 +25,8 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Don't show widget if user type not in allowed list
-  if (!user || !showForUserTypes.includes(user.user_type as any)) {
-    return null;
-  }
-
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && user) {
       fetchMessages();
       // Set up real-time subscription for new messages
       const subscription = supabase
@@ -53,11 +48,16 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
         subscription.unsubscribe();
       };
     }
-  }, [isOpen, user.id]);
+  }, [isOpen, user?.id]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Don't show widget if user type not in allowed list
+  if (!user || !showForUserTypes.includes(user.user_type as any)) {
+    return null;
+  }
 
   const fetchMessages = async () => {
     try {
