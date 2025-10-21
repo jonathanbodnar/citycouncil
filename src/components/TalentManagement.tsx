@@ -8,7 +8,8 @@ import {
   ClockIcon,
   EyeIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
@@ -26,6 +27,8 @@ interface TalentWithUser extends TalentProfile {
 
 const TalentManagement: React.FC = () => {
   const [talents, setTalents] = useState<TalentWithUser[]>([]);
+  const [filteredTalents, setFilteredTalents] = useState<TalentWithUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
@@ -48,6 +51,23 @@ const TalentManagement: React.FC = () => {
     fetchTalents();
   }, []);
 
+  useEffect(() => {
+    // Filter talents based on search query
+    if (!searchQuery.trim()) {
+      setFilteredTalents(talents);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = talents.filter(talent => 
+        (talent.users?.full_name?.toLowerCase().includes(query)) ||
+        (talent.temp_full_name?.toLowerCase().includes(query)) ||
+        (talent.username?.toLowerCase().includes(query)) ||
+        (talent.bio?.toLowerCase().includes(query)) ||
+        (talent.category?.toLowerCase().includes(query))
+      );
+      setFilteredTalents(filtered);
+    }
+  }, [talents, searchQuery]);
+
   const fetchTalents = async () => {
     try {
       setLoading(true);
@@ -65,6 +85,7 @@ const TalentManagement: React.FC = () => {
 
       if (error) throw error;
       setTalents(data || []);
+      setFilteredTalents(data || []);
     } catch (error) {
       console.error('Error fetching talents:', error);
       toast.error('Failed to load talent profiles');
@@ -309,15 +330,28 @@ const TalentManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Talent Management</h2>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <PlusIcon className="h-4 w-4" />
-          Add New Talent
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Search Bar */}
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search talent..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+            />
+          </div>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add New Talent
+          </button>
+        </div>
       </div>
 
       {/* Add Talent Form Modal */}
@@ -481,14 +515,14 @@ const TalentManagement: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <UserGroupIcon className="h-5 w-5" />
-              Talent Profiles ({talents.length})
+              Talent Profiles ({filteredTalents.length}{searchQuery ? ` of ${talents.length}` : ''})
             </h3>
           </div>
         </div>
         
-        {talents.length > 0 ? (
+        {filteredTalents.length > 0 ? (
           <div className="divide-y divide-gray-200">
-            {talents.map((talent) => (
+            {filteredTalents.map((talent) => (
               <div key={talent.id} className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
