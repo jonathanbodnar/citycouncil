@@ -86,7 +86,14 @@ const TalentOnboardingPage: React.FC = () => {
       
       const { data, error } = await supabase
         .from('talent_profiles')
-        .select('*')
+        .select(`
+          *,
+          users (
+            full_name,
+            avatar_url,
+            email
+          )
+        `)
         .eq('onboarding_token', token)
         .single();
 
@@ -130,7 +137,7 @@ const TalentOnboardingPage: React.FC = () => {
       if (data.user_id) {
         // User account exists, show login option instead of account creation
         setCurrentStep(2); // Skip to profile details step
-        toast.info('Welcome back! Please log in to continue your profile setup.');
+        toast.success('Welcome back! Please log in to continue your profile setup.');
       }
 
       // Pre-fill profile data
@@ -405,133 +412,135 @@ const TalentOnboardingPage: React.FC = () => {
           
           {/* Profile Preview Card */}
           <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-            <div className="relative">
-              {/* Profile Image */}
-              <div className="aspect-square bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative">
-                {onboardingData.talent.temp_avatar_url ? (
-                  <img
-                    src={onboardingData.talent.temp_avatar_url}
-                    alt={onboardingData.talent.temp_full_name || 'Profile'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-6xl font-bold text-white">
-                    {(onboardingData.talent.temp_full_name || 'T').charAt(0)}
-                  </div>
-                )}
-                
-                {/* Status Badge */}
-                <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  Available
-                </div>
-
-                {/* Charity Badge */}
-                {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
-                  <div className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm">
-                    <HeartIcon className="h-6 w-6 text-red-500" />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Profile Info */}
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {onboardingData.talent.temp_full_name || 'Talent Member'}
-                  </h2>
-                  <div className="flex items-center space-x-4 mb-4">
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
-                      {onboardingData.talent.category.replace('-', ' ')}
-                    </span>
-                    <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm text-gray-600">Verified</span>
-                  </div>
-                </div>
-                
-                <button className="p-2 text-gray-400 hover:text-gray-600">
-                  <ShareIcon className="h-6 w-6" />
-                </button>
-              </div>
-
-              {/* Rating */}
-              <div className="flex items-center mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <StarIcon
-                      key={i}
-                      className="h-5 w-5 text-gray-300"
+            <div className="md:flex">
+              {/* Profile Image - Left Side */}
+              <div className="md:w-1/3">
+                <div className="aspect-square bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative">
+                  {(onboardingData.talent.users?.avatar_url || onboardingData.talent.temp_avatar_url) ? (
+                    <img
+                      src={onboardingData.talent.users?.avatar_url || onboardingData.talent.temp_avatar_url}
+                      alt={onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'Profile'}
+                      className="w-full h-full object-cover"
                     />
-                  ))}
+                  ) : (
+                    <div className="text-6xl font-bold text-white">
+                      {(onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'T').charAt(0)}
+                    </div>
+                  )}
+                  
+                  {/* Status Badge */}
+                  <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    Available
+                  </div>
+
+                  {/* Charity Badge */}
+                  {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
+                    <div className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm">
+                      <HeartIcon className="h-6 w-6 text-red-500" />
+                    </div>
+                  )}
                 </div>
-                <span className="ml-2 text-lg font-semibold text-gray-900">0.0</span>
-                <span className="ml-2 text-gray-600">(0 reviews)</span>
               </div>
 
-              {/* Bio */}
-              <p className="text-gray-700 mb-6 leading-relaxed">
-                {onboardingData.talent.bio || 'Profile bio will be added during setup.'}
-              </p>
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    ${onboardingData.talent.pricing}
+              {/* Profile Info - Right Side */}
+              <div className="md:w-2/3 p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                      {onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'Talent Member'}
+                    </h2>
+                    <div className="flex items-center space-x-4 mb-4">
+                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
+                        {onboardingData.talent.category.replace('-', ' ')}
+                      </span>
+                      <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
+                      <span className="text-sm text-gray-600">Verified</span>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600">Personal</div>
-                  {onboardingData.talent.corporate_pricing && (
-                    <>
-                      <div className="text-lg font-bold text-gray-700 mt-1">
-                        ${onboardingData.talent.corporate_pricing}
+                  
+                  <button className="p-2 text-gray-400 hover:text-gray-600">
+                    <ShareIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                {/* Rating */}
+                <div className="flex items-center mb-4">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <StarIcon
+                        key={i}
+                        className="h-5 w-5 text-gray-300"
+                      />
+                    ))}
+                  </div>
+                  <span className="ml-2 text-lg font-semibold text-gray-900">0.0</span>
+                  <span className="ml-2 text-gray-600">(0 reviews)</span>
+                </div>
+
+                {/* Bio */}
+                <p className="text-gray-700 mb-6 leading-relaxed">
+                  {onboardingData.talent.bio || 'Profile bio will be added during setup.'}
+                </p>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ${onboardingData.talent.pricing}
+                    </div>
+                    <div className="text-sm text-gray-600">Personal</div>
+                    {onboardingData.talent.corporate_pricing && (
+                      <>
+                        <div className="text-lg font-bold text-gray-700 mt-1">
+                          ${onboardingData.talent.corporate_pricing}
+                        </div>
+                        <div className="text-xs text-gray-500">Corporate</div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {onboardingData.talent.fulfillment_time_hours}h
+                    </div>
+                    <div className="text-sm text-gray-600">Delivery</div>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">0</div>
+                    <div className="text-sm text-gray-600">Orders</div>
+                  </div>
+
+                  {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600">
+                        {onboardingData.talent.charity_percentage}%
                       </div>
-                      <div className="text-xs text-gray-500">Corporate</div>
-                    </>
+                      <div className="text-sm text-gray-600">To Charity</div>
+                    </div>
                   )}
                 </div>
 
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {onboardingData.talent.fulfillment_time_hours}h
-                  </div>
-                  <div className="text-sm text-gray-600">Delivery</div>
-                </div>
-
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">0</div>
-                  <div className="text-sm text-gray-600">Orders</div>
-                </div>
-
-                {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">
-                      {onboardingData.talent.charity_percentage}%
+                {/* Charity Info */}
+                {onboardingData.talent.charity_name && (
+                  <div className="bg-red-50 rounded-lg p-4 mb-4">
+                    <div className="flex items-center text-red-800">
+                      <HeartIcon className="h-5 w-5 mr-2" />
+                      <span className="text-sm font-medium">
+                        {onboardingData.talent.charity_percentage}% of proceeds go to {onboardingData.talent.charity_name}
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-600">To Charity</div>
                   </div>
                 )}
+
+                {/* Order Button (disabled during onboarding) */}
+                <button
+                  disabled
+                  className="w-full bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-semibold cursor-not-allowed"
+                >
+                  Complete Setup to Enable Orders
+                </button>
               </div>
-
-              {/* Charity Info */}
-              {onboardingData.talent.charity_name && (
-                <div className="bg-red-50 rounded-lg p-4 mb-4">
-                  <div className="flex items-center text-red-800">
-                    <HeartIcon className="h-5 w-5 mr-2" />
-                    <span className="text-sm font-medium">
-                      {onboardingData.talent.charity_percentage}% of proceeds go to {onboardingData.talent.charity_name}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Order Button (disabled during onboarding) */}
-              <button
-                disabled
-                className="w-full bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-semibold cursor-not-allowed"
-              >
-                Complete Setup to Enable Orders
-              </button>
             </div>
           </div>
         </div>
