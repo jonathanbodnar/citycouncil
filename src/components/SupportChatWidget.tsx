@@ -30,6 +30,8 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
   };
 
   const fetchMessages = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       const { data, error } = await supabase
