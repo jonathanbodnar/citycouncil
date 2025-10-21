@@ -288,7 +288,7 @@ const TalentProfilePage: React.FC = () => {
                 </div>
                 <div className="text-sm text-gray-600">Orders</div>
               </div>
-              {talent.charity_percentage && (
+              {talent.charity_percentage && talent.charity_percentage > 0 && (
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-500 flex items-center justify-center">
                     <HeartIcon className="h-6 w-6 mr-1" />
