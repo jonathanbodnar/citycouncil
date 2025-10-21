@@ -20,6 +20,7 @@ import Logo from '../components/Logo';
 import CategorySelector from '../components/CategorySelector';
 import CharitySelector from '../components/CharitySelector';
 import ImageUpload from '../components/ImageUpload';
+import SupportChatWidget from '../components/SupportChatWidget';
 import toast from 'react-hot-toast';
 
 const TalentOnboardingPage: React.FC = () => {
@@ -936,6 +937,9 @@ const TalentOnboardingPage: React.FC = () => {
           )}
         </div>
       </div>
+      
+      {/* Support Chat Widget for Talent */}
+      <SupportChatWidget showForUserTypes={['talent']} />
     </div>
   );
 };

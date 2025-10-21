@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import MobileNavigation from './MobileNavigation';
 import Footer from './Footer';
+import SupportChatWidget from './SupportChatWidget';
 
 const Layout: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const Layout: React.FC = () => {
       </main>
       <Footer />
       <MobileNavigation />
+      <SupportChatWidget showForUserTypes={['talent']} />
     </div>
   );
 };
