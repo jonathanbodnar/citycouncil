@@ -323,7 +323,7 @@ const TalentManagement: React.FC = () => {
       console.log('SUCCESS: Talent profile update completed, rows affected:', count);
 
       // Now verify the data was actually saved
-      const { data: verifyData, error: verifyError } = await supabase
+      const { data: verificationData, error: verifyError } = await supabase
         .from('talent_profiles')
         .select(`
           *,
@@ -336,12 +336,12 @@ const TalentManagement: React.FC = () => {
         .eq('id', editingTalent.id)
         .single();
 
-      if (verifyData) {
-        console.log('VERIFICATION: Data actually in database:', verifyData);
-        console.log('VERIFICATION: temp_full_name:', verifyData.temp_full_name);
-        console.log('VERIFICATION: temp_avatar_url:', verifyData.temp_avatar_url);
-        console.log('VERIFICATION: users.full_name:', verifyData.users?.full_name);
-        console.log('VERIFICATION: users.avatar_url:', verifyData.users?.avatar_url);
+      if (verificationData) {
+        console.log('VERIFICATION: Data actually in database:', verificationData);
+        console.log('VERIFICATION: temp_full_name:', verificationData.temp_full_name);
+        console.log('VERIFICATION: temp_avatar_url:', verificationData.temp_avatar_url);
+        console.log('VERIFICATION: users.full_name:', verificationData.users?.full_name);
+        console.log('VERIFICATION: users.avatar_url:', verificationData.users?.avatar_url);
       } else {
         console.error('VERIFICATION FAILED: Could not retrieve updated data');
       }
