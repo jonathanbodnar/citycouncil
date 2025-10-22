@@ -48,6 +48,7 @@ const TalentOnboardingPage: React.FC = () => {
   // Step 2: Profile Details
   const [profileData, setProfileData] = useState({
     bio: '',
+    position: '',
     category: 'other' as TalentCategory,
     categories: [] as TalentCategory[],
     pricing: 299.99,
@@ -172,6 +173,7 @@ const TalentOnboardingPage: React.FC = () => {
       // Pre-fill profile data
       setProfileData({
         bio: data.bio || '',
+        position: data.position || '',
         category: data.category || 'other',
         categories: data.categories || [],
         pricing: data.pricing || 299.99,
@@ -333,6 +335,7 @@ const TalentOnboardingPage: React.FC = () => {
         .from('talent_profiles')
         .update({
           bio: profileData.bio,
+          position: profileData.position || null,
           category: profileData.category,
           categories: profileData.categories,
           pricing: profileData.pricing,
@@ -580,6 +583,12 @@ const TalentOnboardingPage: React.FC = () => {
               <div className="w-3/5 p-6 flex flex-col">
                 {/* Header Section */}
                 <div className="mb-4">
+                  {/* Position Title */}
+                  {onboardingData.talent.position && (
+                    <p className="text-sm font-medium text-gray-600 mb-1 uppercase tracking-wide">
+                      {onboardingData.talent.position}
+                    </p>
+                  )}
                   <h2 className="text-3xl font-bold text-gray-900 mb-2">
                     {onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'Talent Member'}
                   </h2>
@@ -827,6 +836,22 @@ const TalentOnboardingPage: React.FC = () => {
                   uploadPath="talent-avatars"
                   maxSizeMB={5}
                 />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Position <span className="text-gray-500">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.position}
+                    onChange={(e) => updateProfilePreview({ position: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., Congressman, Judge, Senator, Pastor"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Title that appears above your name on your profile
+                  </p>
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

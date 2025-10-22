@@ -32,7 +32,15 @@ interface DecryptedBankInfo extends BankAccountInfo {
 export class BankAccountService {
   
   // Get encrypted bank account info for display (masked numbers)
-  public async getBankAccountForDisplay(talentId: string): Promise<BankAccountInfo & {
+  public async getBankAccountForDisplay(talentId: string): Promise<{
+    id: string;
+    talent_id: string;
+    account_holder_name: string;
+    bank_name: string;
+    account_type: 'checking' | 'savings';
+    is_verified: boolean;
+    created_at: string;
+    updated_at: string;
     account_number_masked: string;
     routing_number_masked: string;
   } | null> {

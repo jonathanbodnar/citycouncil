@@ -23,6 +23,7 @@ export interface TalentProfile {
   category: TalentCategory; // Keep for backwards compatibility
   categories?: TalentCategory[]; // New multi-category field
   bio: string;
+  position?: string; // Optional title like "Congressman", "Judge", "Senator"
   pricing: number;
   corporate_pricing?: number;
   fulfillment_time_hours: number;

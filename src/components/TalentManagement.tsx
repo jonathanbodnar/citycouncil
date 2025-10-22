@@ -34,6 +34,7 @@ const TalentManagement: React.FC = () => {
   const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
   const [newTalent, setNewTalent] = useState({
     full_name: '',
+    position: '',
     username: '',
     bio: '',
     avatar_url: '',
@@ -137,6 +138,7 @@ const TalentManagement: React.FC = () => {
             // Store talent data for onboarding, user_id will be set later
             username: newTalent.username.toLowerCase(),
             bio: newTalent.bio,
+            position: newTalent.position || null,
             category: newTalent.category,
             categories: newTalent.categories.length > 0 ? newTalent.categories : [newTalent.category],
             pricing: newTalent.pricing,
@@ -172,6 +174,7 @@ const TalentManagement: React.FC = () => {
       setAdminDonateProceeds(false);
       setNewTalent({
         full_name: '',
+        position: '',
         username: '',
         bio: '',
         avatar_url: '',
@@ -246,6 +249,7 @@ const TalentManagement: React.FC = () => {
         .update({
           username: editingTalent.username?.toLowerCase(),
           bio: editingTalent.bio,
+          position: editingTalent.position || null,
           category: editingTalent.category,
           categories: editingTalent.categories,
           pricing: editingTalent.pricing,
@@ -407,6 +411,22 @@ const TalentManagement: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter full name"
                 />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Position <span className="text-gray-500">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newTalent.position}
+                  onChange={(e) => setNewTalent({...newTalent, position: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Congressman, Judge, Senator"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Title that appears above their name on profiles
+                </p>
               </div>
               
               <div>
@@ -792,6 +812,22 @@ const TalentManagement: React.FC = () => {
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Position <span className="text-gray-500">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editingTalent.position || ''}
+                  onChange={(e) => setEditingTalent({...editingTalent, position: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Congressman, Judge, Senator"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Title that appears above their name on profiles
+                </p>
               </div>
               
               <div>

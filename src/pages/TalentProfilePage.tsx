@@ -215,6 +215,12 @@ const TalentProfilePage: React.FC = () => {
           <div className="md:w-2/3 p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
+                {/* Position Title */}
+                {talent.position && (
+                  <p className="text-sm font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                    {talent.position}
+                  </p>
+                )}
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   {talent.users.full_name}
                 </h1>

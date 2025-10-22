@@ -64,6 +64,12 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
 
       {/* Content */}
       <div className="p-4">
+        {/* Position Title */}
+        {talent.position && (
+          <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">
+            {talent.position}
+          </p>
+        )}
         <h3 className="font-semibold text-gray-900 mb-1">{talent.users.full_name}</h3>
         
         {/* Categories */}
