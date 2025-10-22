@@ -50,6 +50,9 @@ const TalentManagement: React.FC = () => {
   
   // Charity donation toggle for admin creation
   const [adminDonateProceeds, setAdminDonateProceeds] = useState(false);
+  
+  // Charity donation toggle for admin editing
+  const [editDonateProceeds, setEditDonateProceeds] = useState(false);
 
   useEffect(() => {
     fetchTalents();
@@ -237,6 +240,12 @@ const TalentManagement: React.FC = () => {
     try {
       // Update user record
       if (editingTalent.user_id) {
+        console.log('Updating user record:', {
+          userId: editingTalent.user_id,
+          fullName: editingTalent.users?.full_name,
+          avatarUrl: editingTalent.users?.avatar_url || editingTalent.temp_avatar_url
+        });
+        
         const { error: userError } = await supabase
           .from('users')
           .update({
@@ -245,7 +254,12 @@ const TalentManagement: React.FC = () => {
           })
           .eq('id', editingTalent.user_id);
 
-        if (userError) throw userError;
+        if (userError) {
+          console.error('Error updating user record:', userError);
+          throw userError;
+        } else {
+          console.log('User record updated successfully');
+        }
       }
 
       // Prepare update data
@@ -261,7 +275,7 @@ const TalentManagement: React.FC = () => {
         charity_name: editingTalent.charity_name,
         admin_fee_percentage: editingTalent.admin_fee_percentage,
         temp_avatar_url: editingTalent.temp_avatar_url,
-        temp_full_name: editingTalent.temp_full_name
+        temp_full_name: editingTalent.users?.full_name || editingTalent.temp_full_name
       };
 
       // Add position field if it exists (after migration)
@@ -270,12 +284,22 @@ const TalentManagement: React.FC = () => {
       }
 
       // Update talent profile - COMPLETE UPDATE
+      console.log('Updating talent profile:', {
+        talentId: editingTalent.id,
+        updateData: updateData
+      });
+      
       const { error: talentError } = await supabase
         .from('talent_profiles')
         .update(updateData)
         .eq('id', editingTalent.id);
 
-      if (talentError) throw talentError;
+      if (talentError) {
+        console.error('Error updating talent profile:', talentError);
+        throw talentError;
+      } else {
+        console.log('Talent profile updated successfully');
+      }
 
       toast.success('Talent profile updated successfully');
       setEditingTalent(null);
@@ -762,7 +786,10 @@ const TalentManagement: React.FC = () => {
                     </button>
                     
                     <button
-                      onClick={() => setEditingTalent(talent)}
+                      onClick={() => {
+                        setEditingTalent(talent);
+                        setEditDonateProceeds(talent.charity_percentage > 0 && talent.charity_name);
+                      }}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Edit talent"
                     >
@@ -856,10 +883,11 @@ const TalentManagement: React.FC = () => {
               
               <div className="md:col-span-2">
                 <ImageUpload
-                  currentImageUrl={editingTalent.users?.avatar_url}
+                  currentImageUrl={editingTalent.users?.avatar_url || editingTalent.temp_avatar_url}
                   onImageUploaded={(imageUrl) => setEditingTalent({
                     ...editingTalent,
-                    users: { ...editingTalent.users!, avatar_url: imageUrl }
+                    users: { ...editingTalent.users!, avatar_url: imageUrl },
+                    temp_avatar_url: imageUrl
                   })}
                   uploadPath="talent-avatars"
                   maxSizeMB={5}
@@ -950,45 +978,92 @@ const TalentManagement: React.FC = () => {
             
             {/* Charity Settings */}
             <div className="mb-6">
-              <h4 className="text-md font-medium text-gray-900 mb-3">Charity Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Charity Name
-                  </label>
-                  <select
-                    value={editingTalent.charity_name || ''}
-                    onChange={(e) => setEditingTalent({...editingTalent, charity_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">No charity selected</option>
-                    <option value="American Red Cross">American Red Cross</option>
-                    <option value="St. Jude Children's Research Hospital">St. Jude Children's Research Hospital</option>
-                    <option value="Wounded Warrior Project">Wounded Warrior Project</option>
-                    <option value="Doctors Without Borders">Doctors Without Borders</option>
-                    <option value="Habitat for Humanity">Habitat for Humanity</option>
-                    <option value="United Way">United Way</option>
-                    <option value="Salvation Army">Salvation Army</option>
-                    <option value="Make-A-Wish Foundation">Make-A-Wish Foundation</option>
-                    <option value="American Cancer Society">American Cancer Society</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <h4 className="text-md font-medium text-gray-900 mb-1">Charity Settings</h4>
+                  <p className="text-xs text-gray-500">
+                    Enable charity donations for this talent
+                  </p>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Charity Percentage (%)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="50"
-                    value={editingTalent.charity_percentage || 0}
-                    onChange={(e) => setEditingTalent({...editingTalent, charity_percentage: parseFloat(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newDonateState = !editDonateProceeds;
+                      setEditDonateProceeds(newDonateState);
+                      if (!newDonateState) {
+                        setEditingTalent({...editingTalent, charity_name: '', charity_percentage: 0});
+                      } else {
+                        setEditingTalent({...editingTalent, charity_percentage: 5});
+                      }
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      editDonateProceeds ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        editDonateProceeds ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="ml-3 text-sm font-medium text-gray-700">
+                    {editDonateProceeds ? 'Enabled' : 'Disabled'}
+                  </span>
                 </div>
               </div>
+
+              {/* Charity Fields - Only show when enabled */}
+              {editDonateProceeds && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Charity Name *
+                    </label>
+                    <select
+                      value={editingTalent.charity_name || ''}
+                      onChange={(e) => setEditingTalent({...editingTalent, charity_name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required={editDonateProceeds}
+                    >
+                      <option value="">Select a charity</option>
+                      <option value="American Red Cross">American Red Cross</option>
+                      <option value="St. Jude Children's Research Hospital">St. Jude Children's Research Hospital</option>
+                      <option value="Wounded Warrior Project">Wounded Warrior Project</option>
+                      <option value="Doctors Without Borders">Doctors Without Borders</option>
+                      <option value="Habitat for Humanity">Habitat for Humanity</option>
+                      <option value="United Way">United Way</option>
+                      <option value="Salvation Army">Salvation Army</option>
+                      <option value="Make-A-Wish Foundation">Make-A-Wish Foundation</option>
+                      <option value="American Cancer Society">American Cancer Society</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Charity Percentage * (Min 5%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="5"
+                        max="50"
+                        value={editingTalent.charity_percentage || 5}
+                        onChange={(e) => {
+                          const value = Math.max(5, Math.min(50, parseInt(e.target.value) || 5));
+                          setEditingTalent({...editingTalent, charity_percentage: value});
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required={editDonateProceeds}
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className="text-gray-500">%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex gap-3">
