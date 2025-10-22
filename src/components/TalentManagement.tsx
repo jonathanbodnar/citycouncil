@@ -299,20 +299,57 @@ const TalentManagement: React.FC = () => {
         updateData: updateData
       });
       
-      const { error: talentError } = await supabase
+      const { data: updatedData, error: talentError } = await supabase
         .from('talent_profiles')
         .update(updateData)
-        .eq('id', editingTalent.id);
+        .eq('id', editingTalent.id)
+        .select(`
+          *,
+          users (
+            full_name,
+            avatar_url,
+            email
+          )
+        `)
+        .single();
 
       if (talentError) {
         console.error('Error updating talent profile:', talentError);
         throw talentError;
       } else {
         console.log('Talent profile updated successfully');
+        console.log('Updated talent data:', updatedData);
       }
 
+      // Immediately update the local state to reflect changes
+      const updatedTalents = talents.map(t => 
+        t.id === editingTalent.id ? { ...t, ...updateData, users: editingTalent.users } : t
+      );
+      setTalents(updatedTalents);
+      setFilteredTalents(updatedTalents);
+      
       toast.success('Talent profile updated successfully');
       setEditingTalent(null);
+      
+      // Verify the update actually worked by querying the specific talent
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('talent_profiles')
+        .select(`
+          *,
+          users (
+            full_name,
+            avatar_url,
+            email
+          )
+        `)
+        .eq('id', editingTalent.id)
+        .single();
+      
+      if (verifyData) {
+        console.log('VERIFICATION: Talent data after update:', verifyData);
+        console.log('VERIFICATION: Name in DB:', verifyData.users?.full_name || verifyData.temp_full_name);
+        console.log('VERIFICATION: Image in DB:', verifyData.users?.avatar_url || verifyData.temp_avatar_url);
+      }
       
       // Force refresh the talents list to show updated data
       console.log('Forcing talent list refresh after update');
