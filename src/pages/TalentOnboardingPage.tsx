@@ -15,10 +15,12 @@ import {
   ShareIcon
 } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
+import { bankEncryption } from '../services/encryption';
 import { TalentOnboardingData, TalentCategory } from '../types';
 import Logo from '../components/Logo';
 import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
+import SecureBankInput from '../components/SecureBankInput';
 import SupportChatWidget from '../components/SupportChatWidget';
 import toast from 'react-hot-toast';
 
@@ -380,16 +382,34 @@ const TalentOnboardingPage: React.FC = () => {
     e.preventDefault();
     
     try {
-      // Save bank information
+      // Encrypt sensitive bank account information
+      console.log('Encrypting bank account information...');
+      const { encryptedAccount, encryptedRouting } = await bankEncryption.encryptBankInfo(
+        payoutData.account_number,
+        payoutData.routing_number
+      );
+
+      // Save encrypted bank information
       const { error: bankError } = await supabase
         .from('vendor_bank_info')
         .insert([{
           talent_id: onboardingData?.talent.id,
-          ...payoutData,
+          account_holder_name: payoutData.account_holder_name,
+          bank_name: payoutData.bank_name,
+          account_type: payoutData.account_type,
+          // Store encrypted data
+          account_number_encrypted: encryptedAccount.encrypted,
+          account_number_iv: encryptedAccount.iv,
+          routing_number_encrypted: encryptedRouting.encrypted,
+          routing_number_iv: encryptedRouting.iv,
+          // Store masked versions for display
+          account_number_masked: bankEncryption.maskAccountNumber(payoutData.account_number),
+          routing_number_masked: bankEncryption.maskRoutingNumber(payoutData.routing_number),
           is_verified: false
         }]);
 
       if (bankError) throw bankError;
+      console.log('Bank information encrypted and saved successfully');
 
       // Final avatar sync before completion
       if (onboardingData?.talent.user_id && onboardingData?.talent.temp_avatar_url) {
@@ -1027,34 +1047,26 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Account Number *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={payoutData.account_number}
-                      onChange={(e) => setPayoutData({...payoutData, account_number: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Bank account number"
-                    />
-                  </div>
+                  <SecureBankInput
+                    label="Account Number"
+                    type="account"
+                    value={payoutData.account_number}
+                    onChange={(value) => setPayoutData({...payoutData, account_number: value})}
+                    placeholder="Enter account number"
+                    required={true}
+                    maxLength={17}
+                  />
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Routing Number *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      pattern="[0-9]{9}"
-                      value={payoutData.routing_number}
-                      onChange={(e) => setPayoutData({...payoutData, routing_number: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="9-digit routing number"
-                    />
-                  </div>
+                  <SecureBankInput
+                    label="Routing Number"
+                    type="routing"
+                    value={payoutData.routing_number}
+                    onChange={(value) => setPayoutData({...payoutData, routing_number: value})}
+                    placeholder="9-digit routing number"
+                    required={true}
+                    pattern="[0-9]{9}"
+                    maxLength={9}
+                  />
                 </div>
                 
                 <div>
