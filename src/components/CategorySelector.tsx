@@ -87,6 +87,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
           </label>
           {!readonly && (
             <button
+              type="button"
               onClick={() => setEditing(true)}
               className="text-primary-600 hover:text-primary-700 text-sm"
             >
@@ -128,6 +129,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         {!autoSave && (
           <div className="flex space-x-2">
             <button
+              type="button"
               onClick={handleSave}
               disabled={tempCategories.length === 0}
               className="bg-primary-600 text-white px-3 py-1 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
@@ -135,6 +137,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
               Save
             </button>
             <button
+              type="button"
               onClick={handleCancel}
               className="text-gray-600 hover:text-gray-700"
             >
@@ -154,6 +157,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
           return (
             <button
               key={category.value}
+              type="button"
               onClick={() => handleCategoryToggle(category.value as TalentCategory)}
               className={`p-4 border-2 rounded-lg text-left transition-all ${
                 isSelected
