@@ -775,12 +775,14 @@ const TalentOnboardingPage: React.FC = () => {
                       <div className="text-sm text-gray-600">Delivery</div>
                     </div>
 
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        ${onboardingData.talent.corporate_pricing || Math.round(onboardingData.talent.pricing * 1.5)}
+                    {onboardingData.talent.allow_corporate_pricing && (
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                          ${onboardingData.talent.corporate_pricing || Math.round(onboardingData.talent.pricing * 1.5)}
+                        </div>
+                        <div className="text-sm text-gray-600">Corporate</div>
                       </div>
-                      <div className="text-sm text-gray-600">Corporate</div>
-                    </div>
+                    )}
 
                     {(donateProceeds && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
                       <div className="text-center">
@@ -1021,19 +1023,21 @@ const TalentOnboardingPage: React.FC = () => {
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Corporate Pricing ($)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={profileData.corporate_pricing}
-                      onChange={(e) => updateProfilePreview({ corporate_pricing: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                  {onboardingData.talent.allow_corporate_pricing && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Corporate Pricing ($)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={profileData.corporate_pricing}
+                        onChange={(e) => updateProfilePreview({ corporate_pricing: parseFloat(e.target.value) })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

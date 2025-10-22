@@ -43,6 +43,7 @@ const TalentManagement: React.FC = () => {
     pricing: 299.99,
     corporate_pricing: 449.99,
     fulfillment_time_hours: 48,
+    allow_corporate_pricing: false,
     charity_percentage: 5,
     charity_name: '',
     admin_fee_percentage: 15
@@ -150,6 +151,7 @@ const TalentManagement: React.FC = () => {
         categories: newTalent.categories.length > 0 ? newTalent.categories : [newTalent.category],
         pricing: newTalent.pricing,
         corporate_pricing: newTalent.corporate_pricing,
+        allow_corporate_pricing: newTalent.allow_corporate_pricing,
         fulfillment_time_hours: newTalent.fulfillment_time_hours,
         charity_percentage: newTalent.charity_percentage,
         charity_name: newTalent.charity_name,
@@ -199,6 +201,7 @@ const TalentManagement: React.FC = () => {
         pricing: 299.99,
         corporate_pricing: 449.99,
         fulfillment_time_hours: 48,
+        allow_corporate_pricing: false,
         charity_percentage: 5,
         charity_name: '',
         admin_fee_percentage: 15
@@ -255,6 +258,7 @@ const TalentManagement: React.FC = () => {
         categories: editingTalent.categories,
         pricing: editingTalent.pricing,
         corporate_pricing: editingTalent.corporate_pricing,
+        allow_corporate_pricing: editingTalent.allow_corporate_pricing,
         fulfillment_time_hours: editingTalent.fulfillment_time_hours,
         charity_percentage: editingTalent.charity_percentage,
         charity_name: editingTalent.charity_name,
@@ -361,7 +365,7 @@ const TalentManagement: React.FC = () => {
     }
   };
 
-  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured', value: boolean) => {
+  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing', value: boolean) => {
     try {
       const { error } = await supabase
         .from('talent_profiles')
@@ -372,7 +376,9 @@ const TalentManagement: React.FC = () => {
 
       const action = field === 'is_active' 
         ? (value ? 'activated' : 'deactivated')
-        : (value ? 'featured' : 'unfeatured');
+        : field === 'is_featured'
+        ? (value ? 'featured' : 'unfeatured')
+        : (value ? 'corporate pricing enabled' : 'corporate pricing disabled');
       
       toast.success(`Talent ${action} successfully`);
       fetchTalents();
@@ -603,6 +609,22 @@ const TalentManagement: React.FC = () => {
                   onChange={(e) => setNewTalent({...newTalent, corporate_pricing: parseFloat(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+              
+              <div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="allow_corporate_pricing"
+                    checked={newTalent.allow_corporate_pricing}
+                    onChange={(e) => setNewTalent({...newTalent, allow_corporate_pricing: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="allow_corporate_pricing" className="ml-2 block text-sm font-medium text-gray-700">
+                    Allow Corporate Pricing
+                  </label>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">Enable business/corporate pricing option for this talent</p>
               </div>
               
               <div>
@@ -839,6 +861,18 @@ const TalentManagement: React.FC = () => {
                     </button>
                     
                     <button
+                      onClick={() => toggleTalentStatus(talent.id, 'allow_corporate_pricing', !talent.allow_corporate_pricing)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        talent.allow_corporate_pricing 
+                          ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      title={talent.allow_corporate_pricing ? 'Disable corporate pricing' : 'Enable corporate pricing'}
+                    >
+                      <span className="text-lg">{talent.allow_corporate_pricing ? '🏢' : '👤'}</span>
+                    </button>
+                    
+                    <button
                       onClick={() => {
                         setEditingTalent(talent);
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
@@ -997,6 +1031,22 @@ const TalentManagement: React.FC = () => {
                   onChange={(e) => setEditingTalent({...editingTalent, corporate_pricing: parseFloat(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+              
+              <div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="edit_allow_corporate_pricing"
+                    checked={editingTalent.allow_corporate_pricing || false}
+                    onChange={(e) => setEditingTalent({...editingTalent, allow_corporate_pricing: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="edit_allow_corporate_pricing" className="ml-2 block text-sm font-medium text-gray-700">
+                    Allow Corporate Pricing
+                  </label>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">Enable business/corporate pricing option for this talent</p>
               </div>
               
               <div>

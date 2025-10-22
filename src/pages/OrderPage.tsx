@@ -324,28 +324,30 @@ const OrderPage: React.FC = () => {
                   </div>
                 </label>
 
-                <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    value="true"
-                    {...register('isForBusiness', { 
-                      required: true,
-                      setValueAs: (value) => value === 'true'
-                    })}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                  />
-                  <div className="ml-3 flex items-center">
-                    <BuildingOfficeIcon className="h-6 w-6 text-gray-400 mr-3" />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        Business ShoutOut
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        For corporate events, promotions, or team building
+                {talent.allow_corporate_pricing && (
+                  <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      value="true"
+                      {...register('isForBusiness', { 
+                        required: true,
+                        setValueAs: (value) => value === 'true'
+                      })}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                    />
+                    <div className="ml-3 flex items-center">
+                      <BuildingOfficeIcon className="h-6 w-6 text-gray-400 mr-3" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          Business ShoutOut
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          For corporate events, promotions, or team building
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </label>
+                  </label>
+                )}
               </div>
               {errors.isForBusiness && (
                 <p className="mt-2 text-sm text-red-600">Please select an order type</p>

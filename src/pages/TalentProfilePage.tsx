@@ -271,7 +271,7 @@ const TalentProfilePage: React.FC = () => {
                 <div className="flex-1">
                   <div className="text-xl font-bold text-primary-600">${talent.pricing}</div>
                   <div className="text-xs text-gray-600">Personal</div>
-                  {talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
+                  {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
                     <div className="text-sm font-semibold text-gray-700">${talent.corporate_pricing} Corp</div>
                   )}
                 </div>
