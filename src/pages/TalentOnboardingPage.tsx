@@ -327,17 +327,32 @@ const TalentOnboardingPage: React.FC = () => {
         
         console.log('Database update payload:', dbUpdate);
         
-        const { error } = await supabase
+        const { data: saveResult, error, count } = await supabase
           .from('talent_profiles')
           .update(dbUpdate)
-          .eq('id', onboardingData.talent.id);
+          .eq('id', onboardingData.talent.id)
+          .select('*')
+          .single();
+          
+        console.log('Database save result:', { data: saveResult, error, count });
           
         if (error) {
-          console.error('Error saving profile preview update:', error);
+          console.error('FAILED: Profile preview update error:', error);
           console.error('Update payload that failed:', dbUpdate);
+          console.error('Talent ID:', onboardingData.talent.id);
         } else {
-          console.log('Profile preview saved to database successfully');
+          console.log('SUCCESS: Profile preview saved to database');
           console.log('Saved fields:', Object.keys(dbUpdate));
+          console.log('Returned data:', saveResult);
+          
+          // Verify the data was actually saved by checking specific fields
+          if (saveResult) {
+            console.log('VERIFICATION: Saved bio:', saveResult.bio);
+            console.log('VERIFICATION: Saved pricing:', saveResult.pricing);
+            console.log('VERIFICATION: Saved delivery time:', saveResult.fulfillment_time_hours);
+            console.log('VERIFICATION: Saved charity %:', saveResult.charity_percentage);
+            console.log('VERIFICATION: Saved charity name:', saveResult.charity_name);
+          }
         }
       } catch (error) {
         console.error('Failed to save profile preview:', error);
