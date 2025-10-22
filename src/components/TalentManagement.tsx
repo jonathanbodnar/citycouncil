@@ -299,10 +299,32 @@ const TalentManagement: React.FC = () => {
         updateData: updateData
       });
       
-      const { data: updatedData, error: talentError } = await supabase
+      // Try a simpler update first to isolate the issue
+      console.log('Attempting talent profile update...');
+      const { data: updatedData, error: talentError, count } = await supabase
         .from('talent_profiles')
         .update(updateData)
-        .eq('id', editingTalent.id)
+        .eq('id', editingTalent.id);
+
+      console.log('Update result:', { data: updatedData, error: talentError, count });
+
+      if (talentError) {
+        console.error('FAILED: Talent profile update error:', talentError);
+        toast.error(`Database error: ${talentError.message}`);
+        throw talentError;
+      }
+
+      if (count === 0) {
+        console.error('FAILED: No rows were updated - talent ID might not exist');
+        toast.error('No talent was updated - ID not found');
+        throw new Error('No rows updated');
+      }
+
+      console.log('SUCCESS: Talent profile update completed, rows affected:', count);
+
+      // Now verify the data was actually saved
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('talent_profiles')
         .select(`
           *,
           users (
@@ -311,14 +333,17 @@ const TalentManagement: React.FC = () => {
             email
           )
         `)
+        .eq('id', editingTalent.id)
         .single();
 
-      if (talentError) {
-        console.error('Error updating talent profile:', talentError);
-        throw talentError;
+      if (verifyData) {
+        console.log('VERIFICATION: Data actually in database:', verifyData);
+        console.log('VERIFICATION: temp_full_name:', verifyData.temp_full_name);
+        console.log('VERIFICATION: temp_avatar_url:', verifyData.temp_avatar_url);
+        console.log('VERIFICATION: users.full_name:', verifyData.users?.full_name);
+        console.log('VERIFICATION: users.avatar_url:', verifyData.users?.avatar_url);
       } else {
-        console.log('Talent profile updated successfully');
-        console.log('Updated talent data:', updatedData);
+        console.error('VERIFICATION FAILED: Could not retrieve updated data');
       }
 
       // Immediately update the local state to reflect changes
