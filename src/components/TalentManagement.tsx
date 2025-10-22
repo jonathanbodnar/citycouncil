@@ -259,8 +259,8 @@ const TalentManagement: React.FC = () => {
         charity_percentage: editingTalent.charity_percentage,
         charity_name: editingTalent.charity_name,
         admin_fee_percentage: editingTalent.admin_fee_percentage,
-        temp_avatar_url: editingTalent.users?.avatar_url || editingTalent.temp_avatar_url,
-        temp_full_name: editingTalent.users?.full_name || editingTalent.temp_full_name
+        temp_avatar_url: editingTalent.temp_avatar_url,
+        temp_full_name: editingTalent.temp_full_name
       };
 
       // Add position field if it exists (after migration)
@@ -274,48 +274,28 @@ const TalentManagement: React.FC = () => {
         updateData: updateData
       });
       
-      // Capture the exact form values to ensure consistency
-      const finalFullName = editingTalent.users?.full_name;
-      const finalAvatarUrl = editingTalent.users?.avatar_url || editingTalent.temp_avatar_url;
-      
-      console.log('CAPTURED form values:', {
-        finalFullName,
-        originalUserFullName: editingTalent.users?.full_name,
-        finalAvatarUrl: finalAvatarUrl ? 'IMAGE_SET' : 'NO_IMAGE'
-      });
-      
-      // Update both user and temp fields with EXACT same values
-      updateData.temp_full_name = finalFullName;
-      updateData.temp_avatar_url = finalAvatarUrl;
-      
-      // Update user record FIRST to ensure it has the correct data
-      if (editingTalent.user_id && editingTalent.users && finalFullName) {
-        console.log('UPDATING user record FIRST with exact form data:', {
+      // FORCE USER TABLE TO MATCH TEMP FIELDS (TEMP IS SOURCE OF TRUTH)
+      if (editingTalent.user_id && editingTalent.temp_full_name) {
+        console.log('FORCING user table to match temp fields:', {
           userId: editingTalent.user_id,
-          fullName: finalFullName,
-          avatarUrl: finalAvatarUrl ? 'IMAGE_SET' : 'NO_IMAGE'
+          tempName: editingTalent.temp_full_name,
+          tempImage: editingTalent.temp_avatar_url ? 'IMAGE_SET' : 'NO_IMAGE'
         });
         
-        const { error: syncUserError } = await supabase
+        const { error: userError } = await supabase
           .from('users')
           .update({
-            full_name: finalFullName,
-            avatar_url: finalAvatarUrl
+            full_name: editingTalent.temp_full_name,
+            avatar_url: editingTalent.temp_avatar_url
           })
           .eq('id', editingTalent.user_id);
 
-        if (syncUserError) {
-          console.error('FAILED: User record sync error:', syncUserError);
-          throw syncUserError;
+        if (userError) {
+          console.error('FAILED: User table sync:', userError);
         } else {
-          console.log('SUCCESS: User record updated with exact form data');
+          console.log('SUCCESS: User table synced to temp fields');
         }
       }
-      
-      console.log('FORCED temp field updates:', {
-        temp_full_name: updateData.temp_full_name,
-        temp_avatar_url: updateData.temp_avatar_url ? 'IMAGE_SET' : 'NO_IMAGE'
-      });
 
       // Try a simpler update first to isolate the issue
       console.log('Attempting talent profile update...');
@@ -920,8 +900,7 @@ const TalentManagement: React.FC = () => {
                   value={editingTalent.temp_full_name || editingTalent.users?.full_name || ''}
                   onChange={(e) => setEditingTalent({
                     ...editingTalent,
-                    temp_full_name: e.target.value,
-                    users: { ...editingTalent.users!, full_name: e.target.value }
+                    temp_full_name: e.target.value
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -960,7 +939,6 @@ const TalentManagement: React.FC = () => {
                   currentImageUrl={editingTalent.users?.avatar_url || editingTalent.temp_avatar_url}
                   onImageUploaded={(imageUrl) => setEditingTalent({
                     ...editingTalent,
-                    users: { ...editingTalent.users!, avatar_url: imageUrl },
                     temp_avatar_url: imageUrl
                   })}
                   uploadPath="talent-avatars"

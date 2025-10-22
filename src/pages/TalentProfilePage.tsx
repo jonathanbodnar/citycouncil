@@ -182,7 +182,7 @@ const TalentProfilePage: React.FC = () => {
         <div className="md:flex">
           {/* Avatar */}
           <div className="md:w-1/3">
-            <div className="aspect-square bg-gray-100 relative">
+            <div className="h-full min-h-[400px] bg-gray-100 relative">
               {(talent.temp_avatar_url || talent.users.avatar_url) ? (
                 <img
                   src={talent.temp_avatar_url || talent.users.avatar_url}
@@ -203,7 +203,7 @@ const TalentProfilePage: React.FC = () => {
               </div>
 
               {/* Charity Badge */}
-              {talent.charity_percentage && talent.charity_percentage > 0 && (
+              {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
                 <div className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm">
                   <HeartIcon className="h-6 w-6 text-red-500" />
                 </div>
@@ -265,48 +265,44 @@ const TalentProfilePage: React.FC = () => {
               {talent.bio}
             </p>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary-600">
-                  ${talent.pricing}
+            {/* Stats - Clean One Line Layout */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between text-center">
+                <div className="flex-1">
+                  <div className="text-xl font-bold text-primary-600">${talent.pricing}</div>
+                  <div className="text-xs text-gray-600">Personal</div>
+                  {talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
+                    <div className="text-sm font-semibold text-gray-700">${talent.corporate_pricing} Corp</div>
+                  )}
                 </div>
-                <div className="text-sm text-gray-600">Personal</div>
-                {talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
-                  <>
-                    <div className="text-lg font-bold text-gray-700 mt-1">
-                      ${talent.corporate_pricing}
+                
+                <div className="flex-1 border-l border-gray-200">
+                  <div className="text-xl font-bold text-primary-600 flex items-center justify-center">
+                    <ClockIcon className="h-5 w-5 mr-1" />
+                    {talent.fulfillment_time_hours}h
+                  </div>
+                  <div className="text-xs text-gray-600">Delivery</div>
+                </div>
+                
+                <div className="flex-1 border-l border-gray-200">
+                  <div className="text-xl font-bold text-primary-600">{talent.total_orders}</div>
+                  <div className="text-xs text-gray-600">Orders</div>
+                </div>
+                
+                {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
+                  <div className="flex-1 border-l border-gray-200">
+                    <div className="text-xl font-bold text-red-500 flex items-center justify-center">
+                      <HeartIcon className="h-5 w-5 mr-1" />
+                      {talent.charity_percentage}%
                     </div>
-                    <div className="text-xs text-gray-500">Corporate</div>
-                  </>
+                    <div className="text-xs text-gray-600">To Charity</div>
+                  </div>
                 )}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary-600 flex items-center justify-center">
-                  <ClockIcon className="h-6 w-6 mr-1" />
-                  {talent.fulfillment_time_hours}h
-                </div>
-                <div className="text-sm text-gray-600">Delivery</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary-600">
-                  {talent.total_orders}
-                </div>
-                <div className="text-sm text-gray-600">Orders</div>
-              </div>
-              {talent.charity_percentage && talent.charity_percentage > 0 && (
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-500 flex items-center justify-center">
-                    <HeartIcon className="h-6 w-6 mr-1" />
-                    {talent.charity_percentage}%
-                  </div>
-                  <div className="text-sm text-gray-600">To Charity</div>
-                </div>
-              )}
             </div>
 
             {/* Charity Info */}
-            {talent.charity_name && (
+            {talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0 && (
               <div className="bg-red-50 p-4 rounded-lg mb-6">
                 <div className="flex items-center">
                   <HeartIcon className="h-5 w-5 text-red-500 mr-2" />
