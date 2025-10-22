@@ -299,14 +299,25 @@ const TalentManagement: React.FC = () => {
         updateData: updateData
       });
       
+      // Force update temp fields to match user changes
+      updateData.temp_full_name = editingTalent.users?.full_name;
+      updateData.temp_avatar_url = editingTalent.users?.avatar_url || editingTalent.temp_avatar_url;
+      
+      console.log('FORCED temp field updates:', {
+        temp_full_name: updateData.temp_full_name,
+        temp_avatar_url: updateData.temp_avatar_url ? 'IMAGE_SET' : 'NO_IMAGE'
+      });
+
       // Try a simpler update first to isolate the issue
       console.log('Attempting talent profile update...');
-      const { data: updatedData, error: talentError, count } = await supabase
+      const { data: updatedData, error: talentError } = await supabase
         .from('talent_profiles')
         .update(updateData)
-        .eq('id', editingTalent.id);
+        .eq('id', editingTalent.id)
+        .select('*')
+        .single();
 
-      console.log('Update result:', { data: updatedData, error: talentError, count });
+      console.log('Update result:', { data: updatedData, error: talentError });
 
       if (talentError) {
         console.error('FAILED: Talent profile update error:', talentError);
@@ -314,13 +325,7 @@ const TalentManagement: React.FC = () => {
         throw talentError;
       }
 
-      if (count === 0) {
-        console.error('FAILED: No rows were updated - talent ID might not exist');
-        toast.error('No talent was updated - ID not found');
-        throw new Error('No rows updated');
-      }
-
-      console.log('SUCCESS: Talent profile update completed, rows affected:', count);
+      console.log('SUCCESS: Talent profile update completed');
 
       // Now verify the data was actually saved
       const { data: verificationData, error: verifyError } = await supabase
