@@ -54,17 +54,25 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       });
 
       if (!intentionResult.success) {
-        throw new Error(intentionResult.error || 'Failed to create payment intention');
+        console.error('LunarPay transaction intention failed:', intentionResult.error);
+        throw new Error(`Payment setup failed: ${intentionResult.error || 'Unable to connect to payment processor'}`);
       }
+      
+      console.log('LunarPay transaction intention successful:', {
+        intentionId: intentionResult.intentionId,
+        hasClientSecret: !!intentionResult.clientSecret
+      });
 
       setPaymentIntention(intentionResult);
 
       // Step 2: Initialize Fortis Commerce.js with client_token
+      console.log('Initializing Fortis Commerce.js with client_token...');
       const { elements } = await lunarPayService.initializeFortisCommerce(
         'fortis-card-element', 
         intentionResult.clientSecret // This is the client_token from LunarPay
       );
 
+      console.log('Fortis Commerce.js initialized successfully');
       setFortisElements({ elements, cardElement: null });
       cardElementRef.current = elements;
 

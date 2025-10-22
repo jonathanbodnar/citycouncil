@@ -48,7 +48,11 @@ const OrderPage: React.FC = () => {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<OrderFormData>();
+  } = useForm<OrderFormData>({
+    defaultValues: {
+      isForBusiness: false // Default to personal order
+    }
+  });
 
   const isForBusiness = watch('isForBusiness') === true;
 
@@ -93,6 +97,13 @@ const OrderPage: React.FC = () => {
     const basePrice = isForBusiness 
       ? (talent.corporate_pricing || talent.pricing * 1.5) 
       : talent.pricing;
+      
+    console.log('Pricing calculation:', {
+      isForBusiness,
+      personalPrice: talent.pricing,
+      corporatePrice: talent.corporate_pricing,
+      basePrice
+    });
     
     const subtotal = basePrice;
     const adminFeePercentage = talent.admin_fee_percentage || parseInt(process.env.REACT_APP_ADMIN_FEE_PERCENTAGE || '15');
@@ -285,6 +296,7 @@ const OrderPage: React.FC = () => {
                   <input
                     type="radio"
                     value="false"
+                    defaultChecked={true}
                     {...register('isForBusiness', { 
                       required: true,
                       setValueAs: (value) => value === 'true'
