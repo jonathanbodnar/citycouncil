@@ -170,18 +170,26 @@ const TalentOnboardingPage: React.FC = () => {
         toast.success('Welcome back! Please log in to continue your profile setup.');
       }
 
-      // Pre-fill profile data
+      // Pre-fill profile data (use actual saved values, not fallbacks)
       setProfileData({
         bio: data.bio || '',
         position: data.position || '',
         category: data.category || 'other',
         categories: data.categories || [],
-        pricing: data.pricing || 299.99,
-        corporate_pricing: data.corporate_pricing || 449.99,
-        fulfillment_time_hours: data.fulfillment_time_hours || 48,
-        charity_percentage: data.charity_percentage || 5,
+        pricing: data.pricing ?? 299.99, // Use nullish coalescing to preserve 0 values
+        corporate_pricing: data.corporate_pricing ?? 449.99,
+        fulfillment_time_hours: data.fulfillment_time_hours ?? 48,
+        charity_percentage: data.charity_percentage ?? 5,
         charity_name: data.charity_name || '',
         social_accounts: data.social_accounts || []
+      });
+      
+      console.log('LOADED profile data from database:', {
+        bio: data.bio,
+        pricing: data.pricing,
+        fulfillment_time_hours: data.fulfillment_time_hours,
+        charity_percentage: data.charity_percentage,
+        charity_name: data.charity_name
       });
       
       // Set charity donation toggle based on existing data
