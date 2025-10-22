@@ -357,7 +357,7 @@ export class LunarPayService {
 declare global {
   interface Window {
     Commerce: {
-      elements: (clientToken: string) => any;
+      elements: new (clientToken: string) => any;
     };
   }
 }
