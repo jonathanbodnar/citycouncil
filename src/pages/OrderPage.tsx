@@ -145,8 +145,19 @@ const OrderPage: React.FC = () => {
     setSubmitting(true);
     try {
       const pricing = calculatePricing();
-      const fulfillmentDeadline = new Date();
-      fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + talent.fulfillment_time_hours);
+      
+      // For corporate orders, don't set deadline until approved
+      // For personal orders, set deadline immediately
+      let fulfillmentDeadline: Date;
+      if (orderData.isForBusiness) {
+        // Corporate orders: deadline will be set when approved
+        fulfillmentDeadline = new Date();
+        fulfillmentDeadline.setFullYear(2099); // Far future placeholder
+      } else {
+        // Personal orders: deadline starts immediately
+        fulfillmentDeadline = new Date();
+        fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + talent.fulfillment_time_hours);
+      }
 
       // Create order in database with payment info
       const { data: order, error: orderError } = await supabase

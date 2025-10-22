@@ -379,7 +379,13 @@ const UserDashboard: React.FC = () => {
                     </div>
                     <div className="text-sm text-gray-500">
                       {order.status === 'pending' && (
-                        <span>Due: {new Date(order.fulfillment_deadline).toLocaleDateString()}</span>
+                        <>
+                          {order.is_corporate_order && order.approval_status === 'pending' ? (
+                            <span>⏳ Awaiting talent approval - no deadline set yet</span>
+                          ) : (
+                            <span>Due: {new Date(order.fulfillment_deadline).toLocaleDateString()}</span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

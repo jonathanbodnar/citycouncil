@@ -177,12 +177,18 @@ const TalentDashboard: React.FC = () => {
   const handleApproveOrder = async (orderId: string) => {
     try {
       const now = new Date().toISOString();
+      
+      // Calculate fulfillment deadline from approval time
+      const fulfillmentDeadline = new Date();
+      fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + (talentProfile?.fulfillment_time_hours || 48));
+      
       const { error } = await supabase
         .from('orders')
         .update({ 
           approval_status: 'approved',
           approved_at: now,
-          status: 'in_progress'
+          status: 'in_progress',
+          fulfillment_deadline: fulfillmentDeadline.toISOString()
         })
         .eq('id', orderId);
 
@@ -320,7 +326,7 @@ const TalentDashboard: React.FC = () => {
                           </p>
                           {order.is_corporate_order && order.approval_status === 'pending' ? (
                             <p className="text-sm text-orange-700 font-medium">
-                              ⏳ Awaiting your approval
+                              ⏳ Awaiting your approval - timer will start when approved
                             </p>
                           ) : (
                             <p className="text-sm text-yellow-700">
