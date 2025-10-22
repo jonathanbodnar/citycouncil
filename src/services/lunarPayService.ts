@@ -61,55 +61,10 @@ export class LunarPayService {
     };
   }
 
-  // Step 1: Create Fortis ticket intention for Elements integration
-  public async createTicketIntention(request: PaymentIntentionRequest): Promise<PaymentIntentionResponse> {
-    try {
-      const response = await fetch(`${this.config.apiUrl}/customer/apiv1/pay/create_fortis_ticket_intention/${this.config.merchantId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
-        },
-        body: JSON.stringify({
-          amount: Math.round(request.amount * 100), // Convert to cents
-          currency: request.currency || 'USD',
-          order_id: request.orderId,
-          customer_email: request.customerEmail,
-          customer_name: request.customerName,
-          description: request.description,
-          metadata: request.metadata,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Payment intention failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      return {
-        success: true,
-        ticket: data.ticket,
-        clientSecret: data.client_secret,
-        intentionId: data.intention_id,
-      };
-
-    } catch (error) {
-      console.error('LunarPay payment intention error:', error);
-      return {
-        success: false,
-        ticket: '',
-        clientSecret: '',
-        intentionId: '',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-  }
-
-  // Step 1 Alternative: Create transaction intention for payment processing
+  // Step 1: Create Fortis transaction intention for Commerce.js Elements
   public async createTransactionIntention(request: PaymentIntentionRequest): Promise<PaymentIntentionResponse> {
     try {
+      console.log('Creating Fortis transaction intention for merchant 299');
       const response = await fetch(`${this.config.apiUrl}/customer/apiv1/pay/create_fortis_transaction_intention/${this.config.merchantId}`, {
         method: 'POST',
         headers: {
@@ -133,11 +88,12 @@ export class LunarPayService {
       }
 
       const data = await response.json();
+      console.log('Transaction intention response:', data);
       
       return {
         success: true,
-        ticket: data.ticket,
-        clientSecret: data.client_secret,
+        ticket: data.client_token, // Use client_token for Commerce.js
+        clientSecret: data.client_token,
         intentionId: data.intention_id,
       };
 
@@ -152,6 +108,7 @@ export class LunarPayService {
       };
     }
   }
+
 
   // Step 3: Send payment result back to LunarPay to complete payment
   public async confirmPayment(request: PaymentConfirmationRequest): Promise<PaymentConfirmationResponse> {
@@ -226,64 +183,65 @@ export class LunarPayService {
     }
   }
 
-  // Initialize Fortis Elements with LunarPay ticket (hosted on our platform)
-  public initializeFortisElements(containerId: string, ticket: string, options?: any): Promise<{ elements: any; cardElement: any }> {
+  // Initialize Fortis Commerce.js Elements with client_token (hosted on our platform)
+  public initializeFortisCommerce(containerId: string, clientToken: string, options?: any): Promise<{ elements: any }> {
     return new Promise((resolve, reject) => {
-      // Load Fortis Elements script if not already loaded
-      if (!window.FortisElements) {
+      // Load Fortis Commerce.js script if not already loaded
+      if (!window.Commerce) {
         const script = document.createElement('script');
         script.src = this.config.environment === 'production'
-          ? 'https://js.fortis.tech/elements.js'
-          : 'https://js.sandbox.fortis.tech/elements.js';
+          ? 'https://js.fortis.tech/commercejs-v1.0.0.min.js'
+          : 'https://js.sandbox.fortis.tech/commercejs-v1.0.0.min.js';
         
         script.onload = () => {
-          this.createElements(containerId, ticket, options).then(resolve).catch(reject);
+          this.createCommerceElements(containerId, clientToken, options).then(resolve).catch(reject);
         };
         
-        script.onerror = () => reject(new Error('Failed to load Fortis Elements'));
+        script.onerror = () => reject(new Error('Failed to load Fortis Commerce.js'));
         document.head.appendChild(script);
       } else {
-        this.createElements(containerId, ticket, options).then(resolve).catch(reject);
+        this.createCommerceElements(containerId, clientToken, options).then(resolve).catch(reject);
       }
     });
   }
 
-  private async createElements(containerId: string, ticket: string, options: any = {}): Promise<{ elements: any; cardElement: any }> {
-    const elements = window.FortisElements.create({
-      // Use the ticket from LunarPay instead of direct API credentials
-      ticket: ticket,
-      environment: this.config.environment,
-      ...options
-    });
-
-    const cardElement = elements.create('card', {
-      style: {
-        base: {
-          fontSize: '16px',
-          color: '#374151',
+  private async createCommerceElements(containerId: string, clientToken: string, options: any = {}): Promise<{ elements: any }> {
+    console.log('Creating Commerce.js elements with client_token:', clientToken);
+    
+    const elements = new window.Commerce.elements(clientToken);
+    
+    const elementConfig = {
+      container: `#${containerId}`,
+      theme: 'default',
+      environment: 'sandbox', // Always sandbox for testing
+      view: 'default',
+      language: 'en-us',
+      defaultCountry: 'US',
+      floatingLabels: true,
+      showReceipt: true,
+      showSubmitButton: true,
+      showValidationAnimation: true,
+      hideAgreementCheckbox: false,
+      hideTotal: false,
+      digitalWallets: ['ApplePay', 'GooglePay'],
+      appearance: {
+        variables: {
+          colorPrimary: '#3B82F6', // Blue theme to match ShoutOut
+          colorBackground: '#FFFFFF',
+          colorText: '#374151',
+          colorDanger: '#EF4444',
           fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-          '::placeholder': {
-            color: '#9CA3AF',
-          },
-        },
-        invalid: {
-          color: '#EF4444',
-        },
+          spacingUnit: '4px',
+          borderRadius: '8px'
+        }
       },
-      hidePostalCode: false,
-      // Enable Apple Pay and Google Pay
-      paymentMethods: {
-        applePay: {
-          enabled: true,
-        },
-        googlePay: {
-          enabled: true,
-        },
-      },
-    });
+      ...options
+    };
 
-    cardElement.mount(`#${containerId}`);
-    return { elements, cardElement };
+    console.log('Commerce.js element config:', elementConfig);
+    elements.create(elementConfig);
+    
+    return { elements };
   }
 
   // Vendor/Talent management through LunarPay
@@ -395,10 +353,12 @@ export class LunarPayService {
   }
 }
 
-// Global type declarations for Fortis Elements
+// Global type declarations for Fortis Commerce.js
 declare global {
   interface Window {
-    FortisElements: any;
+    Commerce: {
+      elements: (clientToken: string) => any;
+    };
   }
 }
 

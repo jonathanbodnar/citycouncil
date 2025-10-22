@@ -40,8 +40,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     try {
       setIsLoading(true);
       
-      // Step 1: Create ticket intention from LunarPay for Fortis Elements
-      const intentionResult = await lunarPayService.createTicketIntention({
+      // Step 1: Create transaction intention from LunarPay for Fortis Commerce.js
+      const intentionResult = await lunarPayService.createTransactionIntention({
         amount,
         currency: 'USD',
         orderId,
@@ -59,34 +59,16 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       setPaymentIntention(intentionResult);
 
-      // Step 2: Initialize Fortis Elements with LunarPay ticket
-      const { elements, cardElement } = await lunarPayService.initializeFortisElements(
+      // Step 2: Initialize Fortis Commerce.js with client_token
+      const { elements } = await lunarPayService.initializeFortisCommerce(
         'fortis-card-element', 
-        intentionResult.ticket,
-        {
-          // Custom styling to match our form
-          appearance: {
-            theme: 'stripe',
-            variables: {
-              colorPrimary: '#2563eb',
-              colorBackground: '#ffffff',
-              colorText: '#374151',
-              colorDanger: '#ef4444',
-              fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-              spacingUnit: '4px',
-              borderRadius: '8px',
-            },
-          },
-        }
+        intentionResult.clientSecret // This is the client_token from LunarPay
       );
 
-      setFortisElements({ elements, cardElement });
-      cardElementRef.current = cardElement;
+      setFortisElements({ elements, cardElement: null });
+      cardElementRef.current = elements;
 
-      // Listen for changes
-      cardElement.on('change', ({ error }: any) => {
-        setError(error ? error.message : null);
-      });
+      // Commerce.js handles validation and events internally
 
     } catch (err) {
       console.error('Failed to initialize payment:', err);
@@ -98,55 +80,10 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
-    if (!fortisElements || !cardElementRef.current || !paymentIntention) {
-      onPaymentError('Payment form not ready');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Step 2: Create payment method with Fortis Elements
-      const { error: paymentError, paymentMethod: pm } = await fortisElements!.elements.createPaymentMethod({
-        type: 'card',
-        card: cardElementRef.current,
-      });
-
-      if (paymentError) {
-        throw new Error(paymentError.message);
-      }
-
-      // Step 3: Confirm payment through Fortis Elements
-      const { error: confirmError, paymentIntent } = await fortisElements!.elements.confirmPayment({
-        clientSecret: paymentIntention.clientSecret,
-        paymentMethod: pm,
-      });
-
-      if (confirmError) {
-        throw new Error(confirmError.message);
-      }
-
-      // Step 4: Send payment result back to LunarPay to store
-      const confirmationResult = await lunarPayService.confirmPayment({
-        intentionId: paymentIntention.intentionId,
-        paymentResult: paymentIntent,
-        orderId,
-      });
-
-      if (!confirmationResult.success) {
-        throw new Error(confirmationResult.error || 'Payment confirmation failed');
-      }
-
-      onPaymentSuccess(confirmationResult);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Payment failed. Please try again.';
-      setError(errorMessage);
-      onPaymentError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // Commerce.js handles payment processing automatically through the iframe
+    // Payment success/error will be handled through Commerce.js events
+    console.log('Commerce.js will handle payment processing automatically');
   };
 
   const handleApplePay = async () => {
@@ -305,18 +242,16 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         </div>
       </div>
 
-      {/* Card Payment Form */}
+      {/* Fortis Commerce.js Payment Form */}
       {paymentMethod === 'card' && (
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
+        <div className="space-y-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Card Information
+              Payment Information
             </label>
-            <div 
-              id="fortis-card-element"
-              className="p-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
-              style={{ minHeight: '40px' }}
-            />
+            <p className="text-sm text-gray-600 mb-4">
+              Complete your payment securely. Your card information is encrypted and never stored on our servers.
+            </p>
           </div>
 
           {error && (
@@ -325,14 +260,20 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading || isLoading}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading || isLoading ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
-          </button>
-        </form>
+          {/* Commerce.js iframe container - handles everything */}
+          <div 
+            id="fortis-card-element"
+            className="border border-gray-300 rounded-lg overflow-hidden"
+            style={{ minHeight: '400px' }}
+          />
+          
+          {isLoading && (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-sm text-gray-600">Loading payment form...</span>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Apple Pay */}

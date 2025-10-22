@@ -1,55 +1,73 @@
-# ShoutOut Payment Flow with LunarPay Integration
+# ShoutOut Payment Flow with LunarPay + Fortis Commerce.js Integration
 
 ## Overview
-ShoutOut integrates with LunarPay as a payment orchestration layer, which handles Fortis payment processing and vendor payouts. Card forms are hosted on our platform using Fortis Elements, NOT redirected to LunarPay.
+ShoutOut integrates with LunarPay as a payment orchestration layer, which handles Fortis payment processing through Commerce.js iframe. Card forms are hosted on our platform using Fortis Commerce.js, NOT redirected to LunarPay.
 
 ## Test Configuration
 - **Environment**: https://devapp.lunarpay.com
 - **Test Merchant ID**: 299
 - **Production Merchant ID**: (To be provided after testing)
+- **Fortis Script**: https://js.sandbox.fortis.tech/commercejs-v1.0.0.min.js (SANDBOX ONLY)
 
 ## Payment Flow
 
-### Step 1: Payment Initiation
+### Step 1: Transaction Intention
 When a user wants to make a payment on ShoutOut:
 
-1. **Create Customer** (if needed):
-   ```
-   POST https://devapp.lunarpay.com/customer/create
-   ```
-
-2. **Create Ticket Intention** (for card tokenization):
-   ```
-   POST https://devapp.lunarpay.com/customer/apiv1/pay/create_fortis_ticket_intention/299
-   ```
-   OR
-
-   **Create Transaction Intention** (for direct payment):
+1. **Create Transaction Intention**:
    ```
    POST https://devapp.lunarpay.com/customer/apiv1/pay/create_fortis_transaction_intention/299
    ```
+   - This endpoint handles API keys for merchant 299
+   - Returns `client_token` needed for Commerce.js iframe
 
-### Step 2: Fortis Elements Integration
-3. **Initialize Fortis Elements** on our platform:
-   - Use the `ticket` returned from Step 1
-   - Load Fortis Elements script: `https://js.sandbox.fortis.tech/elements.js`
-   - Create card element and mount it in our payment form
-   - Handle Apple Pay and Google Pay integration
+### Step 2: Fortis Commerce.js Integration
+2. **Initialize Commerce.js iframe** on our platform:
+   - Load Commerce.js script: `https://js.sandbox.fortis.tech/commercejs-v1.0.0.min.js`
+   - Use `client_token` from Step 1
+   - Create iframe with full payment processing capability
+   - Supports Card, Apple Pay, and Google Pay automatically
 
 ### Step 3: Payment Processing
-4. **Process Payment** through Fortis Elements:
-   - User enters card details in our hosted form
-   - Fortis Elements handles secure card processing
-   - Elements returns payment result
+3. **Commerce.js handles everything**:
+   - User interacts with Commerce.js iframe on our platform
+   - Iframe includes card form, Apple Pay, Google Pay buttons
+   - Fortis processes payment securely within iframe
+   - Payment result handled automatically by Commerce.js
 
-### Step 4: Payment Confirmation
-5. **Send Result to LunarPay**:
-   ```
-   POST https://devapp.lunarpay.com/customer/apiv1/pay/payment_link/[intention_id]
-   ```
-   - Send Fortis Elements payment result
-   - LunarPay updates payment status in dashboard
-   - LunarPay handles transaction storage and reporting
+### Step 4: Payment Completion
+4. **Automatic result handling**:
+   - Commerce.js processes payment and shows receipt
+   - Payment status updated automatically in LunarPay dashboard
+   - Transaction stored and tracked through LunarPay system
+   - Success/error events handled by Commerce.js callbacks
+
+## Commerce.js Configuration
+
+### Script Loading
+```html
+<script src="https://js.sandbox.fortis.tech/commercejs-v1.0.0.min.js"></script>
+```
+
+### Element Creation
+```javascript
+var elements = new Commerce.elements('{{client_token}}');
+elements.create({
+  container: '#payment',
+  theme: 'default',
+  environment: 'sandbox',
+  view: 'default',
+  language: 'en-us',
+  defaultCountry: 'US',
+  floatingLabels: true,
+  showReceipt: true,
+  showSubmitButton: true,
+  showValidationAnimation: true,
+  hideAgreementCheckbox: false,
+  hideTotal: false,
+  digitalWallets: ['ApplePay', 'GooglePay']
+});
+```
 
 ## Vendor Payout Flow
 
