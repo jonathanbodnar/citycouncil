@@ -290,7 +290,7 @@ const TalentOnboardingPage: React.FC = () => {
     }
   };
 
-  const updateProfilePreview = (updates: Partial<typeof profileData>) => {
+  const updateProfilePreview = async (updates: Partial<typeof profileData>) => {
     console.log('updateProfilePreview called with:', updates);
     
     // Update the profile data state
@@ -306,10 +306,27 @@ const TalentOnboardingPage: React.FC = () => {
           ...updates
         }
       });
+      
+      // ALSO SAVE TO DATABASE IMMEDIATELY (like admin edits)
+      try {
+        console.log('SAVING to database immediately:', updates);
+        const { error } = await supabase
+          .from('talent_profiles')
+          .update(updates)
+          .eq('id', onboardingData.talent.id);
+          
+        if (error) {
+          console.error('Error saving profile preview update:', error);
+        } else {
+          console.log('Profile preview saved to database successfully');
+        }
+      } catch (error) {
+        console.error('Failed to save profile preview:', error);
+      }
     }
   };
 
-  const updateAvatarPreview = (avatarUrl: string) => {
+  const updateAvatarPreview = async (avatarUrl: string) => {
     console.log('updateAvatarPreview called with:', avatarUrl);
     
     // Update the onboarding data for live preview
@@ -326,6 +343,23 @@ const TalentOnboardingPage: React.FC = () => {
           }
         }
       });
+      
+      // ALSO SAVE TO DATABASE IMMEDIATELY
+      try {
+        console.log('SAVING avatar to database immediately:', avatarUrl);
+        const { error } = await supabase
+          .from('talent_profiles')
+          .update({ temp_avatar_url: avatarUrl })
+          .eq('id', onboardingData.talent.id);
+          
+        if (error) {
+          console.error('Error saving avatar update:', error);
+        } else {
+          console.log('Avatar saved to database successfully');
+        }
+      } catch (error) {
+        console.error('Failed to save avatar:', error);
+      }
     }
   };
 
