@@ -12,6 +12,8 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Payout, VendorBankInfo } from '../types';
 import { lunarPayService } from '../services/lunarPayService';
+import { bankAccountService } from '../services/bankAccountService';
+import SecureBankInput from './SecureBankInput';
 import toast from 'react-hot-toast';
 
 interface PayoutWithOrder extends Payout {
@@ -73,12 +75,8 @@ const PayoutsDashboard: React.FC = () => {
 
       if (payoutsError) throw payoutsError;
 
-      // Fetch bank info
-      const { data: bankData } = await supabase
-        .from('vendor_bank_info')
-        .select('*')
-        .eq('talent_id', talentProfile.id)
-        .single();
+      // Fetch bank info (masked for display)
+      const bankData = await bankAccountService.getBankAccountForDisplay(talentProfile.id);
 
       setPayouts(payoutsData || []);
       setBankInfo(bankData);
@@ -104,19 +102,16 @@ const PayoutsDashboard: React.FC = () => {
 
       if (!talentProfile) throw new Error('Talent profile not found');
 
-      const { error } = await supabase
-        .from('vendor_bank_info')
-        .upsert([
-          {
-            talent_id: talentProfile.id,
-            ...bankFormData,
-            is_verified: false, // Will be verified by admin
-          }
-        ]);
+      // Use secure bank account service with encryption
+      await bankAccountService.updateBankAccount(talentProfile.id, {
+        account_holder_name: bankFormData.account_holder_name,
+        bank_name: bankFormData.bank_name,
+        account_number: bankFormData.account_number,
+        routing_number: bankFormData.routing_number,
+        account_type: bankFormData.account_type
+      });
 
-      if (error) throw error;
-
-      toast.success('Bank information saved successfully');
+      toast.success('Bank information encrypted and saved securely');
       setShowBankForm(false);
       fetchPayoutData();
 
@@ -282,7 +277,7 @@ const PayoutsDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Account Number</p>
-                <p className="font-medium">****{bankInfo.account_number.slice(-4)}</p>
+                <p className="font-medium font-mono">{bankInfo.account_number_masked || `****${bankInfo.account_number?.slice(-4) || ''}`}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Status</p>
@@ -348,31 +343,26 @@ const PayoutsDashboard: React.FC = () => {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={bankFormData.account_number}
-                  onChange={(e) => setBankFormData({...bankFormData, account_number: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              <SecureBankInput
+                label="Account Number"
+                type="account"
+                value={bankFormData.account_number}
+                onChange={(value) => setBankFormData({...bankFormData, account_number: value})}
+                placeholder="Enter account number"
+                required={true}
+                maxLength={17}
+              />
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Routing Number
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={bankFormData.routing_number}
-                  onChange={(e) => setBankFormData({...bankFormData, routing_number: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              <SecureBankInput
+                label="Routing Number"
+                type="routing"
+                value={bankFormData.routing_number}
+                onChange={(value) => setBankFormData({...bankFormData, routing_number: value})}
+                placeholder="9-digit routing number"
+                required={true}
+                pattern="[0-9]{9}"
+                maxLength={9}
+              />
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

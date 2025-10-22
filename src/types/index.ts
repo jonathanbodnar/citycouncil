@@ -206,12 +206,24 @@ export interface VendorBankInfo {
   talent_id: string;
   account_holder_name: string;
   bank_name: string;
-  account_number: string;
-  routing_number: string;
   account_type: 'checking' | 'savings';
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+  
+  // Encrypted fields (for secure storage)
+  account_number_encrypted?: string;
+  account_number_iv?: string;
+  routing_number_encrypted?: string;
+  routing_number_iv?: string;
+  
+  // Masked fields (for display)
+  account_number_masked?: string;
+  routing_number_masked?: string;
+  
+  // Legacy fields (deprecated, nullable)
+  account_number?: string;
+  routing_number?: string;
 }
 
 export interface PlatformSetting {
