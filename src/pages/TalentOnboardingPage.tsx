@@ -18,7 +18,6 @@ import { supabase } from '../services/supabase';
 import { TalentOnboardingData, TalentCategory } from '../types';
 import Logo from '../components/Logo';
 import CategorySelector from '../components/CategorySelector';
-import CharitySelector from '../components/CharitySelector';
 import ImageUpload from '../components/ImageUpload';
 import SupportChatWidget from '../components/SupportChatWidget';
 import toast from 'react-hot-toast';
@@ -52,10 +51,13 @@ const TalentOnboardingPage: React.FC = () => {
     pricing: 299.99,
     corporate_pricing: 449.99,
     fulfillment_time_hours: 48,
-    charity_percentage: 10,
+    charity_percentage: 5, // Default minimum when enabled
     charity_name: '',
     social_accounts: []
   });
+  
+  // Charity donation toggle
+  const [donateProceeds, setDonateProceeds] = useState(false);
 
   // Step 3: Payout Details
   const [payoutData, setPayoutData] = useState({
@@ -150,10 +152,13 @@ const TalentOnboardingPage: React.FC = () => {
         pricing: data.pricing || 299.99,
         corporate_pricing: data.corporate_pricing || 449.99,
         fulfillment_time_hours: data.fulfillment_time_hours || 48,
-        charity_percentage: data.charity_percentage || 10,
+        charity_percentage: data.charity_percentage || 5,
         charity_name: data.charity_name || '',
         social_accounts: data.social_accounts || []
       });
+      
+      // Set charity donation toggle based on existing data
+      setDonateProceeds(data.charity_percentage > 0 && data.charity_name);
 
     } catch (error) {
       console.error('Error fetching onboarding data:', error);
@@ -493,7 +498,7 @@ const TalentOnboardingPage: React.FC = () => {
                   </div>
 
                   {/* Charity Badge */}
-                  {onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
+                  {donateProceeds && onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
                     <div className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm">
                       <HeartIcon className="h-6 w-6 text-red-500" />
                     </div>
@@ -527,7 +532,7 @@ const TalentOnboardingPage: React.FC = () => {
                 {/* Stats - Bottom Section */}
                 <div className="mt-auto">
                   <div className={`grid gap-4 mb-4 ${
-                    onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 
+                    donateProceeds && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 
                       ? 'grid-cols-4' 
                       : 'grid-cols-3'
                   }`}>
@@ -552,7 +557,7 @@ const TalentOnboardingPage: React.FC = () => {
                       <div className="text-sm text-gray-600">Corporate</div>
                     </div>
 
-                    {(onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
+                    {(donateProceeds && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
                       <div className="text-center">
                         <div className="text-2xl font-bold text-red-600">
                           {onboardingData.talent.charity_percentage}%
@@ -563,7 +568,7 @@ const TalentOnboardingPage: React.FC = () => {
                   </div>
 
                   {/* Charity Info */}
-                  {onboardingData.talent.charity_name && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 && (
+                  {donateProceeds && onboardingData.talent.charity_name && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 && (
                     <div className="bg-red-50 rounded-lg p-4">
                       <div className="flex items-center text-red-800">
                         <HeartIcon className="h-5 w-5 mr-2" />
@@ -804,13 +809,103 @@ const TalentOnboardingPage: React.FC = () => {
                   </div>
                 </div>
 
-                <CharitySelector
-                  selectedCharityName={profileData.charity_name}
-                  charityPercentage={profileData.charity_percentage}
-                  onCharityChange={(charityName, percentage) => {
-                    updateProfilePreview({ charity_name: charityName, charity_percentage: percentage });
-                  }}
-                />
+                {/* Charity Donation Toggle */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Donate proceeds to charity?
+                      </label>
+                      <p className="text-xs text-gray-500">
+                        Choose to donate a percentage of your earnings to charity
+                      </p>
+                    </div>
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newDonateState = !donateProceeds;
+                          setDonateProceeds(newDonateState);
+                          if (!newDonateState) {
+                            // Reset charity data when disabled
+                            updateProfilePreview({ charity_name: '', charity_percentage: 0 });
+                          } else {
+                            // Set minimum 5% when enabled
+                            updateProfilePreview({ charity_percentage: 5 });
+                          }
+                        }}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          donateProceeds ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            donateProceeds ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <span className="ml-3 text-sm font-medium text-gray-700">
+                        {donateProceeds ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Charity Fields - Only show when donation is enabled */}
+                  {donateProceeds && (
+                    <div className="space-y-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Charity Name *
+                        </label>
+                        <select
+                          value={profileData.charity_name}
+                          onChange={(e) => updateProfilePreview({ charity_name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required={donateProceeds}
+                        >
+                          <option value="">Select a charity</option>
+                          <option value="American Red Cross">American Red Cross</option>
+                          <option value="St. Jude Children's Research Hospital">St. Jude Children's Research Hospital</option>
+                          <option value="Wounded Warrior Project">Wounded Warrior Project</option>
+                          <option value="Doctors Without Borders">Doctors Without Borders</option>
+                          <option value="Habitat for Humanity">Habitat for Humanity</option>
+                          <option value="United Way">United Way</option>
+                          <option value="Salvation Army">Salvation Army</option>
+                          <option value="Make-A-Wish Foundation">Make-A-Wish Foundation</option>
+                          <option value="American Cancer Society">American Cancer Society</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Donation Percentage * (Minimum 5%)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="5"
+                            max="50"
+                            value={profileData.charity_percentage}
+                            onChange={(e) => {
+                              const value = Math.max(5, Math.min(50, parseInt(e.target.value) || 5));
+                              updateProfilePreview({ charity_percentage: value });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="5"
+                            required={donateProceeds}
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                            <span className="text-gray-500">%</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Choose between 5% and 50% of your earnings to donate
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="mt-6 flex gap-3">
