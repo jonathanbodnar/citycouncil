@@ -512,7 +512,7 @@ const TalentManagement: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fulfillment Time (hours)
+                  Average Delivery Time (hours)
                 </label>
                 <input
                   type="number"
@@ -522,6 +522,9 @@ const TalentManagement: React.FC = () => {
                   onChange={(e) => setNewTalent({...newTalent, fulfillment_time_hours: parseInt(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  How long it typically takes to fulfill orders
+                </p>
               </div>
               
               <div>
@@ -742,7 +745,7 @@ const TalentManagement: React.FC = () => {
                           title="Copy onboarding link"
                         >
                           <LinkIcon className="h-4 w-4" />
-                          Copy Link
+                          Onboarding Link
                         </button>
                         
                         <button
@@ -788,7 +791,7 @@ const TalentManagement: React.FC = () => {
                     <button
                       onClick={() => {
                         setEditingTalent(talent);
-                        setEditDonateProceeds(talent.charity_percentage > 0 && talent.charity_name);
+                        setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
                       }}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Edit talent"
@@ -949,7 +952,7 @@ const TalentManagement: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fulfillment Time (hours)
+                  Average Delivery Time (hours)
                 </label>
                 <input
                   type="number"
@@ -959,6 +962,9 @@ const TalentManagement: React.FC = () => {
                   onChange={(e) => setEditingTalent({...editingTalent, fulfillment_time_hours: parseInt(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  How long it typically takes to fulfill orders
+                </p>
               </div>
               
               <div>
