@@ -321,6 +321,11 @@ const TalentOnboardingPage: React.FC = () => {
 
       // Update user avatar if image was uploaded and user exists
       if (onboardingData?.talent.user_id && onboardingData?.talent.temp_avatar_url) {
+        console.log('Updating user avatar:', {
+          userId: onboardingData.talent.user_id,
+          avatarUrl: onboardingData.talent.temp_avatar_url
+        });
+        
         const { error: userError } = await supabase
           .from('users')
           .update({
@@ -328,7 +333,12 @@ const TalentOnboardingPage: React.FC = () => {
           })
           .eq('id', onboardingData.talent.user_id);
 
-        if (userError) console.error('Error updating user avatar:', userError);
+        if (userError) {
+          console.error('Error updating user avatar:', userError);
+          toast.error('Failed to update profile image');
+        } else {
+          console.log('User avatar updated successfully');
+        }
       }
 
       toast.success('Profile updated successfully!');
@@ -354,6 +364,20 @@ const TalentOnboardingPage: React.FC = () => {
         }]);
 
       if (bankError) throw bankError;
+
+      // Final avatar sync before completion
+      if (onboardingData?.talent.user_id && onboardingData?.talent.temp_avatar_url) {
+        const { error: finalAvatarError } = await supabase
+          .from('users')
+          .update({
+            avatar_url: onboardingData.talent.temp_avatar_url
+          })
+          .eq('id', onboardingData.talent.user_id);
+
+        if (finalAvatarError) {
+          console.error('Error in final avatar sync:', finalAvatarError);
+        }
+      }
 
       // Mark onboarding as completed and activate profile
       const { error: completeError } = await supabase
@@ -480,9 +504,9 @@ const TalentOnboardingPage: React.FC = () => {
               {/* Profile Image - Left Side (40% width, full height) */}
               <div className="w-2/5">
                 <div className="h-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative">
-                  {(onboardingData.talent.users?.avatar_url || onboardingData.talent.temp_avatar_url) ? (
+                  {(onboardingData.talent.temp_avatar_url || onboardingData.talent.users?.avatar_url) ? (
                     <img
-                      src={onboardingData.talent.users?.avatar_url || onboardingData.talent.temp_avatar_url}
+                      src={onboardingData.talent.temp_avatar_url || onboardingData.talent.users?.avatar_url}
                       alt={onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'Profile'}
                       className="w-full h-full object-cover"
                     />
@@ -750,7 +774,7 @@ const TalentOnboardingPage: React.FC = () => {
               
               <div className="space-y-6">
                 <ImageUpload
-                  currentImageUrl={onboardingData?.talent.users?.avatar_url || onboardingData?.talent.temp_avatar_url}
+                  currentImageUrl={onboardingData?.talent.temp_avatar_url || onboardingData?.talent.users?.avatar_url}
                   onImageUploaded={(imageUrl) => {
                     updateAvatarPreview(imageUrl);
                   }}
