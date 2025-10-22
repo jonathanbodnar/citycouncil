@@ -40,8 +40,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     try {
       setIsLoading(true);
       
-      // Step 1: Request payment intention from LunarPay
-      const intentionResult = await lunarPayService.createPaymentIntention({
+      // Step 1: Create ticket intention from LunarPay for Fortis Elements
+      const intentionResult = await lunarPayService.createTicketIntention({
         amount,
         currency: 'USD',
         orderId,

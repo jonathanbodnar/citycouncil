@@ -1,12 +1,14 @@
 // LunarPay Service Integration
-// Handles payment processing through LunarPay backend instead of direct Fortis API
+// Handles payment processing through LunarPay backend with Fortis Elements hosted on our platform
 // Documentation: https://app.lunarpay.com/api-docs/
+// Test Environment: https://devapp.lunarpay.com
+// Test Merchant ID: 299
 
 interface LunarPayConfig {
   apiUrl: string;
   apiKey: string;
   merchantId: string;
-  environment: 'sandbox' | 'production';
+  environment: 'development' | 'production';
 }
 
 interface PaymentIntentionRequest {
@@ -52,34 +54,30 @@ export class LunarPayService {
 
   constructor() {
     this.config = {
-      apiUrl: process.env.REACT_APP_LUNARPAY_API_URL || 'https://api.lunarpay.com',
+      apiUrl: process.env.REACT_APP_LUNARPAY_API_URL || 'https://devapp.lunarpay.com',
       apiKey: process.env.REACT_APP_LUNARPAY_API_KEY || '',
-      merchantId: process.env.REACT_APP_LUNARPAY_MERCHANT_ID || '862763',
-      environment: (process.env.REACT_APP_LUNARPAY_ENV as 'sandbox' | 'production') || 'sandbox'
+      merchantId: process.env.REACT_APP_LUNARPAY_MERCHANT_ID || '299', // Test merchant ID
+      environment: (process.env.REACT_APP_LUNARPAY_ENV as 'development' | 'production') || 'development'
     };
   }
 
-  // Step 1: Request payment intention/ticket from LunarPay
-  public async createPaymentIntention(request: PaymentIntentionRequest): Promise<PaymentIntentionResponse> {
+  // Step 1: Create Fortis ticket intention for Elements integration
+  public async createTicketIntention(request: PaymentIntentionRequest): Promise<PaymentIntentionResponse> {
     try {
-      const response = await fetch(`${this.config.apiUrl}/v1/payments/intentions`, {
+      const response = await fetch(`${this.config.apiUrl}/customer/apiv1/pay/create_fortis_ticket_intention/${this.config.merchantId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.config.apiKey}`,
-          'X-Merchant-Id': this.config.merchantId,
         },
         body: JSON.stringify({
           amount: Math.round(request.amount * 100), // Convert to cents
           currency: request.currency || 'USD',
           order_id: request.orderId,
-          customer: {
-            email: request.customerEmail,
-            name: request.customerName,
-          },
+          customer_email: request.customerEmail,
+          customer_name: request.customerName,
           description: request.description,
           metadata: request.metadata,
-          payment_methods: ['card', 'apple_pay', 'google_pay'],
         }),
       });
 
@@ -109,18 +107,63 @@ export class LunarPayService {
     }
   }
 
-  // Step 3: Send payment result back to LunarPay to store
-  public async confirmPayment(request: PaymentConfirmationRequest): Promise<PaymentConfirmationResponse> {
+  // Step 1 Alternative: Create transaction intention for payment processing
+  public async createTransactionIntention(request: PaymentIntentionRequest): Promise<PaymentIntentionResponse> {
     try {
-      const response = await fetch(`${this.config.apiUrl}/v1/payments/confirm`, {
+      const response = await fetch(`${this.config.apiUrl}/customer/apiv1/pay/create_fortis_transaction_intention/${this.config.merchantId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.config.apiKey}`,
-          'X-Merchant-Id': this.config.merchantId,
         },
         body: JSON.stringify({
-          intention_id: request.intentionId,
+          amount: Math.round(request.amount * 100), // Convert to cents
+          currency: request.currency || 'USD',
+          order_id: request.orderId,
+          customer_email: request.customerEmail,
+          customer_name: request.customerName,
+          description: request.description,
+          metadata: request.metadata,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Transaction intention failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      return {
+        success: true,
+        ticket: data.ticket,
+        clientSecret: data.client_secret,
+        intentionId: data.intention_id,
+      };
+
+    } catch (error) {
+      console.error('LunarPay transaction intention error:', error);
+      return {
+        success: false,
+        ticket: '',
+        clientSecret: '',
+        intentionId: '',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  // Step 3: Send payment result back to LunarPay to complete payment
+  public async confirmPayment(request: PaymentConfirmationRequest): Promise<PaymentConfirmationResponse> {
+    try {
+      // Use payment link confirmation endpoint
+      const response = await fetch(`${this.config.apiUrl}/customer/apiv1/pay/payment_link/${request.intentionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
           payment_result: request.paymentResult,
           order_id: request.orderId,
         }),
@@ -150,7 +193,40 @@ export class LunarPayService {
     }
   }
 
-  // Initialize Fortis Elements with LunarPay ticket
+  // Create customer using LunarPay API
+  public async createCustomer(customerData: {
+    email: string;
+    name: string;
+    phone?: string;
+    address?: any;
+  }) {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/customer/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          email: customerData.email,
+          name: customerData.name,
+          phone: customerData.phone,
+          address: customerData.address,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Customer creation failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('LunarPay customer creation error:', error);
+      throw error;
+    }
+  }
+
+  // Initialize Fortis Elements with LunarPay ticket (hosted on our platform)
   public initializeFortisElements(containerId: string, ticket: string, options?: any): Promise<{ elements: any; cardElement: any }> {
     return new Promise((resolve, reject) => {
       // Load Fortis Elements script if not already loaded
