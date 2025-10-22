@@ -319,6 +319,12 @@ const TalentOnboardingPage: React.FC = () => {
       try {
         console.log('SAVING to database immediately:', updates);
         
+        // Check authentication and permissions
+        const { data: { user } } = await supabase.auth.getUser();
+        console.log('Current authenticated user:', user?.id);
+        console.log('Talent user_id:', onboardingData.talent.user_id);
+        console.log('User IDs match:', user?.id === onboardingData.talent.user_id);
+        
         // Prepare the update with proper field mapping
         const dbUpdate: any = { ...updates };
         
