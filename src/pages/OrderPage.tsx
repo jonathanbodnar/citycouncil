@@ -55,7 +55,7 @@ const OrderPage: React.FC = () => {
   });
 
   const watchedValue = watch('isForBusiness');
-  const isForBusiness = watchedValue === true || watchedValue === 'true';
+  const isForBusiness = watchedValue === true || (typeof watchedValue === 'string' && watchedValue === 'true');
   
   // Debug pricing updates
   useEffect(() => {
