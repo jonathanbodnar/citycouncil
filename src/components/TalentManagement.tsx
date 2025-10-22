@@ -769,10 +769,10 @@ const TalentManagement: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      {(talent.users?.avatar_url || talent.temp_avatar_url) ? (
+                      {(talent.temp_avatar_url || talent.users?.avatar_url) ? (
                         <img
-                          src={talent.users?.avatar_url || talent.temp_avatar_url}
-                          alt={talent.users?.full_name || talent.temp_full_name || 'Talent'}
+                          src={talent.temp_avatar_url || talent.users?.avatar_url}
+                          alt={talent.temp_full_name || talent.users?.full_name || 'Talent'}
                           className="h-12 w-12 rounded-full object-cover"
                         />
                       ) : (
@@ -785,7 +785,7 @@ const TalentManagement: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-3">
                         <h4 className="text-lg font-medium text-gray-900">
-                          {talent.users?.full_name || talent.temp_full_name || 'Pending Setup'}
+                          {talent.temp_full_name || talent.users?.full_name || 'Pending Setup'}
                         </h4>
                         {getStatusBadge(talent)}
                       </div>
