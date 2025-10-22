@@ -334,7 +334,18 @@ const TalentOnboardingPage: React.FC = () => {
         if (updates.position !== undefined) dbUpdate.position = updates.position;
         
         console.log('Database update payload:', dbUpdate);
+        console.log('Talent ID for update:', onboardingData.talent.id);
         
+        // Try a simple single field update first
+        const { data: testResult, error: testError } = await supabase
+          .from('talent_profiles')
+          .update({ bio: updates.bio || onboardingData.talent.bio })
+          .eq('id', onboardingData.talent.id)
+          .select('id, bio');
+          
+        console.log('Simple bio update test:', { data: testResult, error: testError });
+        
+        // If that works, try the full update
         const { error } = await supabase
           .from('talent_profiles')
           .update(dbUpdate)
