@@ -936,7 +936,7 @@ const TalentManagement: React.FC = () => {
               
               <div className="md:col-span-2">
                 <ImageUpload
-                  currentImageUrl={editingTalent.users?.avatar_url || editingTalent.temp_avatar_url}
+                  currentImageUrl={editingTalent.temp_avatar_url || editingTalent.users?.avatar_url}
                   onImageUploaded={(imageUrl) => setEditingTalent({
                     ...editingTalent,
                     temp_avatar_url: imageUrl

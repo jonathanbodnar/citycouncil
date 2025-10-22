@@ -39,11 +39,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-700"></div>
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
-        {currentTalent.users.avatar_url && (
+        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) && (
           <div 
             className="hidden md:block absolute right-0 top-0 w-1/2 h-full"
             style={{
-              backgroundImage: `url(${currentTalent.users.avatar_url})`,
+              backgroundImage: `url(${currentTalent.temp_avatar_url || currentTalent.users.avatar_url})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
@@ -53,11 +53,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         )}
         
         {/* Mobile Background with Photo */}
-        {currentTalent.users.avatar_url && (
+        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) && (
           <div className="md:hidden absolute inset-0">
             <img
-              src={currentTalent.users.avatar_url}
-              alt={currentTalent.users.full_name}
+              src={currentTalent.temp_avatar_url || currentTalent.users.avatar_url}
+              alt={currentTalent.temp_full_name || currentTalent.users.full_name}
               className="w-full h-full object-cover"
             />
             {/* Blue overlay for mobile */}
@@ -81,7 +81,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   ⭐ Featured Talent
                 </div>
                 <h2 className="text-2xl font-bold mb-3">
-                  {currentTalent.users.full_name}
+                  {currentTalent.temp_full_name || currentTalent.users.full_name}
                 </h2>
                 <p className="text-sm opacity-90 mb-4 line-clamp-2 px-4">
                   {currentTalent.bio}
@@ -117,7 +117,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                     ⭐ Featured Talent
                   </div>
                   <h2 className="text-4xl font-bold mb-4">
-                    {currentTalent.users.full_name}
+                    {currentTalent.temp_full_name || currentTalent.users.full_name}
                   </h2>
                   <p className="text-lg opacity-90 mb-6 line-clamp-3">
                     {currentTalent.bio}
