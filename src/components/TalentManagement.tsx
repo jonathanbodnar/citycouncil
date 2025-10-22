@@ -130,36 +130,41 @@ const TalentManagement: React.FC = () => {
       console.log('Generated onboarding token:', onboardingToken);
       console.log('Expiry date:', expiryDate.toISOString());
 
+      // Prepare insert data
+      const insertData: any = {
+        // Store talent data for onboarding, user_id will be set later
+        username: newTalent.username.toLowerCase(),
+        bio: newTalent.bio,
+        category: newTalent.category,
+        categories: newTalent.categories.length > 0 ? newTalent.categories : [newTalent.category],
+        pricing: newTalent.pricing,
+        corporate_pricing: newTalent.corporate_pricing,
+        fulfillment_time_hours: newTalent.fulfillment_time_hours,
+        charity_percentage: newTalent.charity_percentage,
+        charity_name: newTalent.charity_name,
+        admin_fee_percentage: newTalent.admin_fee_percentage,
+        onboarding_token: onboardingToken,
+        onboarding_completed: false,
+        onboarding_expires_at: expiryDate.toISOString(),
+        is_featured: false,
+        is_active: true, // Admin-created talent is active immediately
+        total_orders: 0,
+        fulfilled_orders: 0,
+        average_rating: 0,
+        // Store admin-provided data for onboarding
+        temp_full_name: newTalent.full_name,
+        temp_avatar_url: newTalent.avatar_url
+      };
+
+      // Add position field if it's provided (after migration)
+      if (newTalent.position) {
+        insertData.position = newTalent.position;
+      }
+
       // Create talent profile without user first (user will be created during onboarding)
       const { error } = await supabase
         .from('talent_profiles')
-        .insert([
-          {
-            // Store talent data for onboarding, user_id will be set later
-            username: newTalent.username.toLowerCase(),
-            bio: newTalent.bio,
-            position: newTalent.position || null,
-            category: newTalent.category,
-            categories: newTalent.categories.length > 0 ? newTalent.categories : [newTalent.category],
-            pricing: newTalent.pricing,
-            corporate_pricing: newTalent.corporate_pricing,
-            fulfillment_time_hours: newTalent.fulfillment_time_hours,
-            charity_percentage: newTalent.charity_percentage,
-            charity_name: newTalent.charity_name,
-            admin_fee_percentage: newTalent.admin_fee_percentage,
-            onboarding_token: onboardingToken,
-            onboarding_completed: false,
-            onboarding_expires_at: expiryDate.toISOString(),
-            is_featured: false,
-            is_active: true, // Admin-created talent is active immediately
-            total_orders: 0,
-            fulfilled_orders: 0,
-            average_rating: 0,
-            // Store admin-provided data for onboarding
-            temp_full_name: newTalent.full_name,
-            temp_avatar_url: newTalent.avatar_url
-          }
-        ])
+        .insert([insertData])
         .select()
         .single();
 
@@ -243,24 +248,31 @@ const TalentManagement: React.FC = () => {
         if (userError) throw userError;
       }
 
+      // Prepare update data
+      const updateData: any = {
+        username: editingTalent.username?.toLowerCase(),
+        bio: editingTalent.bio,
+        category: editingTalent.category,
+        categories: editingTalent.categories,
+        pricing: editingTalent.pricing,
+        corporate_pricing: editingTalent.corporate_pricing,
+        fulfillment_time_hours: editingTalent.fulfillment_time_hours,
+        charity_percentage: editingTalent.charity_percentage,
+        charity_name: editingTalent.charity_name,
+        admin_fee_percentage: editingTalent.admin_fee_percentage,
+        temp_avatar_url: editingTalent.temp_avatar_url,
+        temp_full_name: editingTalent.temp_full_name
+      };
+
+      // Add position field if it exists (after migration)
+      if (editingTalent.position !== undefined) {
+        updateData.position = editingTalent.position || null;
+      }
+
       // Update talent profile - COMPLETE UPDATE
       const { error: talentError } = await supabase
         .from('talent_profiles')
-        .update({
-          username: editingTalent.username?.toLowerCase(),
-          bio: editingTalent.bio,
-          position: editingTalent.position || null,
-          category: editingTalent.category,
-          categories: editingTalent.categories,
-          pricing: editingTalent.pricing,
-          corporate_pricing: editingTalent.corporate_pricing,
-          fulfillment_time_hours: editingTalent.fulfillment_time_hours,
-          charity_percentage: editingTalent.charity_percentage,
-          charity_name: editingTalent.charity_name,
-          admin_fee_percentage: editingTalent.admin_fee_percentage,
-          temp_avatar_url: editingTalent.temp_avatar_url,
-          temp_full_name: editingTalent.temp_full_name
-        })
+        .update(updateData)
         .eq('id', editingTalent.id);
 
       if (talentError) throw talentError;

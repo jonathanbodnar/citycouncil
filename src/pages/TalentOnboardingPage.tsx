@@ -330,22 +330,29 @@ const TalentOnboardingPage: React.FC = () => {
     e.preventDefault();
     
     try {
+      // Prepare update data
+      const updateData: any = {
+        bio: profileData.bio,
+        category: profileData.category,
+        categories: profileData.categories,
+        pricing: profileData.pricing,
+        corporate_pricing: profileData.corporate_pricing,
+        fulfillment_time_hours: profileData.fulfillment_time_hours,
+        charity_percentage: profileData.charity_percentage,
+        charity_name: profileData.charity_name,
+        social_accounts: profileData.social_accounts,
+        temp_avatar_url: onboardingData?.talent.temp_avatar_url // Save uploaded image
+      };
+
+      // Add position field if it's provided (after migration)
+      if (profileData.position !== undefined) {
+        updateData.position = profileData.position || null;
+      }
+
       // Update talent profile
       const { error: talentError } = await supabase
         .from('talent_profiles')
-        .update({
-          bio: profileData.bio,
-          position: profileData.position || null,
-          category: profileData.category,
-          categories: profileData.categories,
-          pricing: profileData.pricing,
-          corporate_pricing: profileData.corporate_pricing,
-          fulfillment_time_hours: profileData.fulfillment_time_hours,
-          charity_percentage: profileData.charity_percentage,
-          charity_name: profileData.charity_name,
-          social_accounts: profileData.social_accounts,
-          temp_avatar_url: onboardingData?.talent.temp_avatar_url // Save uploaded image
-        })
+        .update(updateData)
         .eq('id', onboardingData?.talent.id);
 
       if (talentError) throw talentError;
