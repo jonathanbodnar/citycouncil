@@ -814,7 +814,7 @@ const TalentManagement: React.FC = () => {
                         <button
                           onClick={() => copyOnboardingLink(talent.onboarding_token!)}
                           className="flex items-center gap-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Copy onboarding link"
+                          title="Copy onboarding link to clipboard"
                         >
                           <LinkIcon className="h-4 w-4" />
                           Onboarding Link
@@ -823,7 +823,7 @@ const TalentManagement: React.FC = () => {
                         <button
                           onClick={() => regenerateOnboardingToken(talent.id)}
                           className="flex items-center gap-1 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                          title="Generate new token"
+                          title="Generate new onboarding token (expires old link)"
                         >
                           <ClockIcon className="h-4 w-4" />
                           Renew
@@ -839,7 +839,7 @@ const TalentManagement: React.FC = () => {
                           ? 'text-green-600 bg-green-50 hover:bg-green-100' 
                           : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
                       }`}
-                      title={talent.is_active ? 'Mark as inactive' : 'Mark as live'}
+                      title={talent.is_active ? 'Deactivate talent (hide from public)' : 'Activate talent (show on homepage)'}
                     >
                       {talent.is_active ? (
                         <CheckCircleIcon className="h-4 w-4" />
@@ -855,7 +855,7 @@ const TalentManagement: React.FC = () => {
                           ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100' 
                           : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
                       }`}
-                      title={talent.is_featured ? 'Remove from featured' : 'Mark as featured'}
+                      title={talent.is_featured ? 'Remove from featured carousel' : 'Add to featured carousel on homepage'}
                     >
                       <span className="text-lg">{talent.is_featured ? '⭐' : '☆'}</span>
                     </button>
@@ -867,7 +867,7 @@ const TalentManagement: React.FC = () => {
                           ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
                           : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
                       }`}
-                      title={talent.allow_corporate_pricing ? 'Disable corporate pricing' : 'Enable corporate pricing'}
+                      title={talent.allow_corporate_pricing ? 'Disable business pricing option' : 'Enable business pricing option for orders'}
                     >
                       <span className="text-lg">{talent.allow_corporate_pricing ? '🏢' : '👤'}</span>
                     </button>
@@ -878,7 +878,7 @@ const TalentManagement: React.FC = () => {
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
                       }}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit talent"
+                      title="Edit talent profile and settings"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </button>
@@ -886,7 +886,7 @@ const TalentManagement: React.FC = () => {
                     <button
                       onClick={() => window.open(`/talent/${talent.id}`, '_blank')}
                       className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                      title="View profile"
+                      title="View public talent profile (opens in new tab)"
                     >
                       <EyeIcon className="h-4 w-4" />
                     </button>
@@ -894,7 +894,7 @@ const TalentManagement: React.FC = () => {
                     <button
                       onClick={() => deleteTalent(talent.id, talent.users?.full_name || talent.username || 'talent')}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete talent"
+                      title="Permanently delete talent profile"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
