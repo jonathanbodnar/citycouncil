@@ -335,14 +335,12 @@ const TalentOnboardingPage: React.FC = () => {
         
         console.log('Database update payload:', dbUpdate);
         
-        const { data: saveResult, error, count } = await supabase
+        const { error } = await supabase
           .from('talent_profiles')
           .update(dbUpdate)
-          .eq('id', onboardingData.talent.id)
-          .select('*')
-          .single();
+          .eq('id', onboardingData.talent.id);
           
-        console.log('Database save result:', { data: saveResult, error, count });
+        console.log('Database save result:', { error });
           
         if (error) {
           console.error('FAILED: Profile preview update error:', error);
@@ -351,15 +349,16 @@ const TalentOnboardingPage: React.FC = () => {
         } else {
           console.log('SUCCESS: Profile preview saved to database');
           console.log('Saved fields:', Object.keys(dbUpdate));
-          console.log('Returned data:', saveResult);
           
-          // Verify the data was actually saved by checking specific fields
-          if (saveResult) {
-            console.log('VERIFICATION: Saved bio:', saveResult.bio);
-            console.log('VERIFICATION: Saved pricing:', saveResult.pricing);
-            console.log('VERIFICATION: Saved delivery time:', saveResult.fulfillment_time_hours);
-            console.log('VERIFICATION: Saved charity %:', saveResult.charity_percentage);
-            console.log('VERIFICATION: Saved charity name:', saveResult.charity_name);
+          // Verify the data was actually saved by querying it back
+          const { data: verifyData } = await supabase
+            .from('talent_profiles')
+            .select('bio, pricing, fulfillment_time_hours, charity_percentage, charity_name, temp_avatar_url')
+            .eq('id', onboardingData.talent.id)
+            .single();
+            
+          if (verifyData) {
+            console.log('VERIFICATION: Current data in database:', verifyData);
           }
         }
       } catch (error) {
