@@ -229,21 +229,29 @@ const TalentManagement: React.FC = () => {
           .from('users')
           .update({
             full_name: editingTalent.users?.full_name,
-            avatar_url: editingTalent.users?.avatar_url
+            avatar_url: editingTalent.users?.avatar_url || editingTalent.temp_avatar_url
           })
           .eq('id', editingTalent.user_id);
 
         if (userError) throw userError;
       }
 
-      // Update talent profile
+      // Update talent profile - COMPLETE UPDATE
       const { error: talentError } = await supabase
         .from('talent_profiles')
         .update({
           username: editingTalent.username?.toLowerCase(),
           bio: editingTalent.bio,
+          category: editingTalent.category,
+          categories: editingTalent.categories,
           pricing: editingTalent.pricing,
-          corporate_pricing: editingTalent.corporate_pricing
+          corporate_pricing: editingTalent.corporate_pricing,
+          fulfillment_time_hours: editingTalent.fulfillment_time_hours,
+          charity_percentage: editingTalent.charity_percentage,
+          charity_name: editingTalent.charity_name,
+          admin_fee_percentage: editingTalent.admin_fee_percentage,
+          temp_avatar_url: editingTalent.temp_avatar_url,
+          temp_full_name: editingTalent.temp_full_name
         })
         .eq('id', editingTalent.id);
 

@@ -114,6 +114,29 @@ const TalentOnboardingPage: React.FC = () => {
         throw error;
       }
 
+      // Sync avatar URLs if needed - ensure temp_avatar_url takes priority
+      if (data && data.temp_avatar_url && data.user_id && 
+          data.users?.avatar_url !== data.temp_avatar_url) {
+        
+        console.log('Syncing temp_avatar_url to users.avatar_url:', {
+          temp_avatar_url: data.temp_avatar_url,
+          current_users_avatar_url: data.users?.avatar_url
+        });
+        
+        const { error: syncError } = await supabase
+          .from('users')
+          .update({ avatar_url: data.temp_avatar_url })
+          .eq('id', data.user_id);
+          
+        if (!syncError && data.users) {
+          // Update the data object to reflect the sync
+          data.users.avatar_url = data.temp_avatar_url;
+          console.log('Avatar sync successful');
+        } else if (syncError) {
+          console.error('Avatar sync failed:', syncError);
+        }
+      }
+
       if (!data) {
         setOnboardingData({
           token: token!,
@@ -280,8 +303,11 @@ const TalentOnboardingPage: React.FC = () => {
   };
 
   const updateAvatarPreview = (avatarUrl: string) => {
+    console.log('updateAvatarPreview called with:', avatarUrl);
+    
     // Update the onboarding data for live preview
     if (onboardingData) {
+      console.log('Updating onboarding data with new avatar URL');
       setOnboardingData({
         ...onboardingData,
         talent: {
