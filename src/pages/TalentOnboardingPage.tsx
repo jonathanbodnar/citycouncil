@@ -563,12 +563,12 @@ const TalentOnboardingPage: React.FC = () => {
                   {(onboardingData.talent.temp_avatar_url || onboardingData.talent.users?.avatar_url) ? (
                     <img
                       src={onboardingData.talent.temp_avatar_url || onboardingData.talent.users?.avatar_url}
-                      alt={onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'Profile'}
+                      alt={onboardingData.talent.temp_full_name || onboardingData.talent.users?.full_name || 'Profile'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="text-6xl font-bold text-white">
-                      {(onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'T').charAt(0)}
+                      {(onboardingData.talent.temp_full_name || onboardingData.talent.users?.full_name || 'T').charAt(0)}
                     </div>
                   )}
                   
@@ -597,7 +597,7 @@ const TalentOnboardingPage: React.FC = () => {
                     </p>
                   )}
                   <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    {onboardingData.talent.users?.full_name || onboardingData.talent.temp_full_name || 'Talent Member'}
+                    {onboardingData.talent.temp_full_name || onboardingData.talent.users?.full_name || 'Talent Member'}
                   </h2>
                   <div className="flex items-center space-x-4 mb-4">
                     <div className="flex flex-wrap gap-2">
