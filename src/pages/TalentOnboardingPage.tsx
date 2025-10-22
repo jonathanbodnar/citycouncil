@@ -310,15 +310,34 @@ const TalentOnboardingPage: React.FC = () => {
       // ALSO SAVE TO DATABASE IMMEDIATELY (like admin edits)
       try {
         console.log('SAVING to database immediately:', updates);
+        
+        // Prepare the update with proper field mapping
+        const dbUpdate: any = { ...updates };
+        
+        // Ensure temp fields are also updated for consistency
+        if (updates.bio) dbUpdate.bio = updates.bio;
+        if (updates.pricing) dbUpdate.pricing = updates.pricing;
+        if (updates.corporate_pricing) dbUpdate.corporate_pricing = updates.corporate_pricing;
+        if (updates.fulfillment_time_hours) dbUpdate.fulfillment_time_hours = updates.fulfillment_time_hours;
+        if (updates.charity_percentage !== undefined) dbUpdate.charity_percentage = updates.charity_percentage;
+        if (updates.charity_name !== undefined) dbUpdate.charity_name = updates.charity_name;
+        if (updates.categories) dbUpdate.categories = updates.categories;
+        if (updates.category) dbUpdate.category = updates.category;
+        if (updates.position !== undefined) dbUpdate.position = updates.position;
+        
+        console.log('Database update payload:', dbUpdate);
+        
         const { error } = await supabase
           .from('talent_profiles')
-          .update(updates)
+          .update(dbUpdate)
           .eq('id', onboardingData.talent.id);
           
         if (error) {
           console.error('Error saving profile preview update:', error);
+          console.error('Update payload that failed:', dbUpdate);
         } else {
           console.log('Profile preview saved to database successfully');
+          console.log('Saved fields:', Object.keys(dbUpdate));
         }
       } catch (error) {
         console.error('Failed to save profile preview:', error);
