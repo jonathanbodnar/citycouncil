@@ -477,7 +477,7 @@ const TalentOnboardingPage: React.FC = () => {
         .from('talent_profiles')
         .update({
           onboarding_completed: true,
-          is_active: true,
+          is_active: true, // Activate talent when onboarding completes
           onboarding_token: null,
           onboarding_expires_at: null
         })

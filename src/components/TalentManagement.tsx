@@ -158,7 +158,7 @@ const TalentManagement: React.FC = () => {
         onboarding_completed: false,
         onboarding_expires_at: expiryDate.toISOString(),
         is_featured: false,
-        is_active: true, // Admin-created talent is active immediately
+        is_active: false, // Default to inactive until onboarding complete
         total_orders: 0,
         fulfilled_orders: 0,
         average_rating: 0,
