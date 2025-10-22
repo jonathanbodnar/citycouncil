@@ -55,6 +55,12 @@ const OrderPage: React.FC = () => {
   });
 
   const isForBusiness = watch('isForBusiness') === true;
+  
+  // Debug pricing updates
+  useEffect(() => {
+    console.log('isForBusiness changed:', isForBusiness);
+    console.log('Watch value:', watch('isForBusiness'));
+  }, [isForBusiness, watch]);
 
   useEffect(() => {
     if (talentId) {

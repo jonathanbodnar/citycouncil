@@ -65,11 +65,15 @@ export class LunarPayService {
   public async createTransactionIntention(request: PaymentIntentionRequest): Promise<PaymentIntentionResponse> {
     try {
       console.log('Creating Fortis transaction intention for merchant 299');
+      console.log('API URL:', `${this.config.apiUrl}/customer/apiv1/pay/create_fortis_transaction_intention/${this.config.merchantId}`);
+      console.log('API Key present:', !!this.config.apiKey);
+      
       const response = await fetch(`${this.config.apiUrl}/customer/apiv1/pay/create_fortis_transaction_intention/${this.config.merchantId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.config.apiKey}`,
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           amount: Math.round(request.amount * 100), // Convert to cents
