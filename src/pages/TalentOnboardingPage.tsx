@@ -165,9 +165,18 @@ const TalentOnboardingPage: React.FC = () => {
 
       // Check if user account already exists (step 1 completed)
       if (data.user_id) {
-        // User account exists, show login option instead of account creation
-        setCurrentStep(2); // Skip to profile details step
-        toast.success('Welcome back! Please log in to continue your profile setup.');
+        // User account exists, but they need to authenticate first
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user && user.id === data.user_id) {
+          // User is already authenticated, go to Step 2
+          setCurrentStep(2);
+          toast.success('Welcome back! Continue your profile setup.');
+        } else {
+          // User exists but not authenticated, show login
+          setCurrentStep(1); // Stay on Step 1 but show login form
+          toast.info('Please log in to continue your profile setup.');
+        }
       }
 
       // Pre-fill profile data (use actual saved values, not fallbacks)
@@ -288,6 +297,12 @@ const TalentOnboardingPage: React.FC = () => {
           return;
         }
 
+        console.log('LOGIN SUCCESS: User authenticated for onboarding:', {
+          userId: authData.user.id,
+          talentUserId: onboardingData?.talent.user_id,
+          email: authData.user.email
+        });
+        
         toast.success('Logged in successfully!');
         setCurrentStep(2);
       }
