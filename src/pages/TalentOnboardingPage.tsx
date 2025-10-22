@@ -324,6 +324,20 @@ const TalentOnboardingPage: React.FC = () => {
         console.log('Current authenticated user:', user?.id);
         console.log('Talent user_id:', onboardingData.talent.user_id);
         console.log('User IDs match:', user?.id === onboardingData.talent.user_id);
+        console.log('User email:', user?.email);
+        console.log('User type from metadata:', user?.user_metadata?.user_type);
+        
+        if (!user) {
+          console.error('PROBLEM: No authenticated user found!');
+          return;
+        }
+        
+        if (user.id !== onboardingData.talent.user_id) {
+          console.error('PROBLEM: User ID mismatch - cannot update talent profile!');
+          console.error('Auth user ID:', user.id);
+          console.error('Talent user_id:', onboardingData.talent.user_id);
+          return;
+        }
         
         // Prepare the update with proper field mapping
         const dbUpdate: any = { ...updates };
