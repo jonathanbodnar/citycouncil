@@ -40,6 +40,16 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     try {
       setIsLoading(true);
       
+      // Check if LunarPay API key is available
+      const hasApiKey = process.env.REACT_APP_LUNARPAY_API_KEY;
+      
+      if (!hasApiKey) {
+        console.warn('LunarPay API key not found. Using test mode.');
+        setError('Payment system is in test mode. Please add REACT_APP_LUNARPAY_API_KEY to environment variables.');
+        setIsLoading(false);
+        return;
+      }
+      
       // Step 1: Create transaction intention from LunarPay for Fortis Commerce.js
       const intentionResult = await lunarPayService.createTransactionIntention({
         amount,
