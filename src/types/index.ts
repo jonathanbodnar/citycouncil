@@ -82,12 +82,20 @@ export interface Order {
   admin_fee: number;
   charity_amount?: number;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded';
+  approval_status: 'pending' | 'approved' | 'rejected';
+  is_corporate_order: boolean;
+  event_description?: string;
+  event_audience?: string;
+  video_setting_request?: string;
+  approved_at?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
   video_url?: string;
   fulfillment_deadline: string;
   created_at: string;
   updated_at: string;
   stripe_payment_intent_id: string;
-  is_corporate: boolean;
+  is_corporate: boolean; // Legacy field, keeping for backwards compatibility
   company_name?: string;
 }
 

@@ -23,6 +23,10 @@ interface OrderFormData {
   businessName?: string;
   occasion?: string;
   specialInstructions?: string;
+  // Corporate-specific fields
+  eventDescription?: string;
+  eventAudience?: string;
+  videoSettingRequest?: string;
   agreedToTerms: boolean;
 }
 
@@ -158,7 +162,13 @@ const OrderPage: React.FC = () => {
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
             stripe_payment_intent_id: paymentResult.id || paymentResult.transaction_id,
             is_corporate: orderData.isForBusiness,
+            is_corporate_order: orderData.isForBusiness,
             company_name: orderData.businessName,
+            event_description: orderData.eventDescription,
+            event_audience: orderData.eventAudience,
+            video_setting_request: orderData.videoSettingRequest,
+            approval_status: orderData.isForBusiness ? 'pending' : 'approved',
+            approved_at: orderData.isForBusiness ? null : new Date().toISOString(),
             status: 'pending'
           },
         ])
@@ -379,6 +389,49 @@ const OrderPage: React.FC = () => {
                       <p className="mt-1 text-sm text-red-600">{errors.businessName.message}</p>
                     )}
                   </div>
+                )}
+
+                {isForBusiness && (
+                  <>
+                    <div>
+                      <label htmlFor="eventDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                        Event Description (Optional)
+                      </label>
+                      <textarea
+                        id="eventDescription"
+                        {...register('eventDescription')}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Describe the event or occasion (e.g., company retreat, product launch, team celebration)"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="eventAudience" className="block text-sm font-medium text-gray-700 mb-2">
+                        Target Audience (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        id="eventAudience"
+                        {...register('eventAudience')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Who will see this video? (e.g., employees, customers, investors)"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="videoSettingRequest" className="block text-sm font-medium text-gray-700 mb-2">
+                        Setting Request (Optional)
+                      </label>
+                      <textarea
+                        id="videoSettingRequest"
+                        {...register('videoSettingRequest')}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Any specific setting or environment requests? (e.g., office background, outdoor setting, formal attire)"
+                      />
+                    </div>
+                  </>
                 )}
 
                 <div>
