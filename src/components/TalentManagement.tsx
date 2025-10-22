@@ -246,31 +246,6 @@ const TalentManagement: React.FC = () => {
     if (!editingTalent) return;
 
     try {
-      // Update user record if it exists
-      if (editingTalent.user_id && editingTalent.users) {
-        console.log('Updating user record:', {
-          userId: editingTalent.user_id,
-          fullName: editingTalent.users.full_name,
-          avatarUrl: editingTalent.users.avatar_url || editingTalent.temp_avatar_url
-        });
-        
-        const { error: userError } = await supabase
-          .from('users')
-          .update({
-            full_name: editingTalent.users.full_name,
-            avatar_url: editingTalent.users.avatar_url || editingTalent.temp_avatar_url
-          })
-          .eq('id', editingTalent.user_id);
-
-        if (userError) {
-          console.error('Error updating user record:', userError);
-          // Don't throw - continue with talent profile update
-        } else {
-          console.log('User record updated successfully');
-        }
-      } else {
-        console.log('No user record to update - talent has not completed onboarding yet');
-      }
 
       // Prepare update data
       const updateData: any = {
@@ -299,9 +274,35 @@ const TalentManagement: React.FC = () => {
         updateData: updateData
       });
       
-      // Force update temp fields to match user changes
-      updateData.temp_full_name = editingTalent.users?.full_name;
-      updateData.temp_avatar_url = editingTalent.users?.avatar_url || editingTalent.temp_avatar_url;
+      // Ensure consistency between user and temp fields
+      const finalFullName = editingTalent.users?.full_name;
+      const finalAvatarUrl = editingTalent.users?.avatar_url || editingTalent.temp_avatar_url;
+      
+      updateData.temp_full_name = finalFullName;
+      updateData.temp_avatar_url = finalAvatarUrl;
+      
+      // Also update the user record with the same data to ensure consistency
+      if (editingTalent.user_id && editingTalent.users) {
+        console.log('SYNCING user record with final data:', {
+          userId: editingTalent.user_id,
+          fullName: finalFullName,
+          avatarUrl: finalAvatarUrl ? 'IMAGE_SET' : 'NO_IMAGE'
+        });
+        
+        const { error: syncUserError } = await supabase
+          .from('users')
+          .update({
+            full_name: finalFullName,
+            avatar_url: finalAvatarUrl
+          })
+          .eq('id', editingTalent.user_id);
+
+        if (syncUserError) {
+          console.error('Error syncing user record:', syncUserError);
+        } else {
+          console.log('User record synced successfully');
+        }
+      }
       
       console.log('FORCED temp field updates:', {
         temp_full_name: updateData.temp_full_name,
