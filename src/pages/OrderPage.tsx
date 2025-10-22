@@ -54,13 +54,15 @@ const OrderPage: React.FC = () => {
     }
   });
 
-  const isForBusiness = watch('isForBusiness') === true;
+  const watchedValue = watch('isForBusiness');
+  const isForBusiness = watchedValue === true || watchedValue === 'true';
   
   // Debug pricing updates
   useEffect(() => {
     console.log('isForBusiness changed:', isForBusiness);
-    console.log('Watch value:', watch('isForBusiness'));
-  }, [isForBusiness, watch]);
+    console.log('Watch value:', watchedValue);
+    console.log('Watch type:', typeof watchedValue);
+  }, [isForBusiness, watchedValue]);
 
   useEffect(() => {
     if (talentId) {
