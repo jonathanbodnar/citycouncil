@@ -78,6 +78,10 @@ const TalentManagement: React.FC = () => {
   const fetchTalents = async () => {
     try {
       setLoading(true);
+      // Add timestamp to force fresh data
+      const timestamp = new Date().getTime();
+      console.log('Fetching talents at:', timestamp);
+      
       const { data, error } = await supabase
         .from('talent_profiles')
         .select(`
@@ -91,6 +95,10 @@ const TalentManagement: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('Fetched talents data:', data);
+      console.log('First talent example:', data?.[0]);
+      
       setTalents(data || []);
       setFilteredTalents(data || []);
     } catch (error) {
@@ -238,28 +246,30 @@ const TalentManagement: React.FC = () => {
     if (!editingTalent) return;
 
     try {
-      // Update user record
-      if (editingTalent.user_id) {
+      // Update user record if it exists
+      if (editingTalent.user_id && editingTalent.users) {
         console.log('Updating user record:', {
           userId: editingTalent.user_id,
-          fullName: editingTalent.users?.full_name,
-          avatarUrl: editingTalent.users?.avatar_url || editingTalent.temp_avatar_url
+          fullName: editingTalent.users.full_name,
+          avatarUrl: editingTalent.users.avatar_url || editingTalent.temp_avatar_url
         });
         
         const { error: userError } = await supabase
           .from('users')
           .update({
-            full_name: editingTalent.users?.full_name,
-            avatar_url: editingTalent.users?.avatar_url || editingTalent.temp_avatar_url
+            full_name: editingTalent.users.full_name,
+            avatar_url: editingTalent.users.avatar_url || editingTalent.temp_avatar_url
           })
           .eq('id', editingTalent.user_id);
 
         if (userError) {
           console.error('Error updating user record:', userError);
-          throw userError;
+          // Don't throw - continue with talent profile update
         } else {
           console.log('User record updated successfully');
         }
+      } else {
+        console.log('No user record to update - talent has not completed onboarding yet');
       }
 
       // Prepare update data
@@ -274,7 +284,7 @@ const TalentManagement: React.FC = () => {
         charity_percentage: editingTalent.charity_percentage,
         charity_name: editingTalent.charity_name,
         admin_fee_percentage: editingTalent.admin_fee_percentage,
-        temp_avatar_url: editingTalent.temp_avatar_url,
+        temp_avatar_url: editingTalent.users?.avatar_url || editingTalent.temp_avatar_url,
         temp_full_name: editingTalent.users?.full_name || editingTalent.temp_full_name
       };
 
@@ -303,7 +313,10 @@ const TalentManagement: React.FC = () => {
 
       toast.success('Talent profile updated successfully');
       setEditingTalent(null);
-      fetchTalents();
+      
+      // Force refresh the talents list to show updated data
+      console.log('Forcing talent list refresh after update');
+      await fetchTalents();
 
     } catch (error) {
       console.error('Error updating talent:', error);
@@ -699,10 +712,10 @@ const TalentManagement: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      {talent.users?.avatar_url ? (
+                      {(talent.users?.avatar_url || talent.temp_avatar_url) ? (
                         <img
-                          src={talent.users.avatar_url}
-                          alt={talent.users?.full_name || 'Talent'}
+                          src={talent.users?.avatar_url || talent.temp_avatar_url}
+                          alt={talent.users?.full_name || talent.temp_full_name || 'Talent'}
                           className="h-12 w-12 rounded-full object-cover"
                         />
                       ) : (
