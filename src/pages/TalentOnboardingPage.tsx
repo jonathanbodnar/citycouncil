@@ -291,11 +291,14 @@ const TalentOnboardingPage: React.FC = () => {
   };
 
   const updateProfilePreview = (updates: Partial<typeof profileData>) => {
+    console.log('updateProfilePreview called with:', updates);
+    
     // Update the profile data state
     setProfileData(prev => ({ ...prev, ...updates }));
     
     // Update the onboarding data for live preview
     if (onboardingData) {
+      console.log('Updating onboarding data with updates:', updates);
       setOnboardingData({
         ...onboardingData,
         talent: {
@@ -979,7 +982,13 @@ const TalentOnboardingPage: React.FC = () => {
                         </label>
                         <select
                           value={profileData.charity_name}
-                          onChange={(e) => updateProfilePreview({ charity_name: e.target.value })}
+                          onChange={(e) => {
+                            updateProfilePreview({ charity_name: e.target.value });
+                            // Ensure donateProceeds stays true when charity name is selected
+                            if (e.target.value && !donateProceeds) {
+                              setDonateProceeds(true);
+                            }
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           required={donateProceeds}
                         >
@@ -1010,6 +1019,10 @@ const TalentOnboardingPage: React.FC = () => {
                             onChange={(e) => {
                               const value = Math.max(5, Math.min(50, parseInt(e.target.value) || 5));
                               updateProfilePreview({ charity_percentage: value });
+                              // Ensure donateProceeds is true when percentage is set
+                              if (value > 0 && !donateProceeds) {
+                                setDonateProceeds(true);
+                              }
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="5"
