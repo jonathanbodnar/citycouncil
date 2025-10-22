@@ -447,28 +447,29 @@ const OrderPage: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="occasion" className="block text-sm font-medium text-gray-700 mb-2">
-                    Occasion (Optional)
-                  </label>
-                  <select
-                    id="occasion"
-                    {...register('occasion')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="">Select an occasion</option>
-                    <option value="birthday">Birthday</option>
-                    <option value="anniversary">Anniversary</option>
-                    <option value="graduation">Graduation</option>
-                    <option value="promotion">Job Promotion</option>
-                    <option value="retirement">Retirement</option>
-                    <option value="wedding">Wedding</option>
-                    <option value="holiday">Holiday</option>
-                    <option value="encouragement">Encouragement</option>
-                    <option value="business">Business Event</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
+                {!isForBusiness && (
+                  <div>
+                    <label htmlFor="occasion" className="block text-sm font-medium text-gray-700 mb-2">
+                      Occasion (Optional)
+                    </label>
+                    <select
+                      id="occasion"
+                      {...register('occasion')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">Select an occasion</option>
+                      <option value="birthday">Birthday</option>
+                      <option value="anniversary">Anniversary</option>
+                      <option value="graduation">Graduation</option>
+                      <option value="promotion">Job Promotion</option>
+                      <option value="retirement">Retirement</option>
+                      <option value="wedding">Wedding</option>
+                      <option value="holiday">Holiday</option>
+                      <option value="encouragement">Encouragement</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label htmlFor="requestDetails" className="block text-sm font-medium text-gray-700 mb-2">

@@ -119,6 +119,19 @@ const UserDashboard: React.FC = () => {
     }
   };
 
+  const getApprovalStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-orange-100 text-orange-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const getOrderStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -132,6 +145,19 @@ const UserDashboard: React.FC = () => {
         return <XCircleIcon className="h-5 w-5 text-red-600" />;
       default:
         return <ClockIcon className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  const getApprovalStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <CheckCircleIcon className="h-4 w-4 text-green-600" />;
+      case 'pending':
+        return <ClockIcon className="h-4 w-4 text-orange-600" />;
+      case 'rejected':
+        return <XCircleIcon className="h-4 w-4 text-red-600" />;
+      default:
+        return <ClockIcon className="h-4 w-4 text-gray-600" />;
     }
   };
 
@@ -246,6 +272,15 @@ const UserDashboard: React.FC = () => {
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOrderStatusColor(order.status)}`}>
                         {order.status.replace('_', ' ')}
                       </span>
+                      {order.is_corporate_order && order.approval_status && (
+                        <>
+                          {getApprovalStatusIcon(order.approval_status)}
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getApprovalStatusColor(order.approval_status)}`}>
+                            {order.approval_status === 'pending' ? 'Awaiting Approval' : 
+                             order.approval_status === 'approved' ? 'Approved' : 'Rejected'}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -255,6 +290,47 @@ const UserDashboard: React.FC = () => {
                       {order.request_details}
                     </p>
                   </div>
+
+                  {order.is_corporate_order && (
+                    <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-900 mb-3 flex items-center">
+                        <span className="mr-2">🏢</span>
+                        Business Order Details
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        {order.company_name && (
+                          <div>
+                            <span className="font-medium text-blue-800">Company:</span>
+                            <span className="ml-2 text-blue-700">{order.company_name}</span>
+                          </div>
+                        )}
+                        {order.event_description && (
+                          <div>
+                            <span className="font-medium text-blue-800">Event:</span>
+                            <span className="ml-2 text-blue-700">{order.event_description}</span>
+                          </div>
+                        )}
+                        {order.event_audience && (
+                          <div>
+                            <span className="font-medium text-blue-800">Audience:</span>
+                            <span className="ml-2 text-blue-700">{order.event_audience}</span>
+                          </div>
+                        )}
+                        {order.video_setting_request && (
+                          <div>
+                            <span className="font-medium text-blue-800">Setting Request:</span>
+                            <span className="ml-2 text-blue-700">{order.video_setting_request}</span>
+                          </div>
+                        )}
+                        {order.approval_status === 'rejected' && order.rejection_reason && (
+                          <div className="mt-3 pt-3 border-t border-blue-200">
+                            <span className="font-medium text-red-800">Rejection Reason:</span>
+                            <p className="ml-2 text-red-700 mt-1">{order.rejection_reason}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {order.video_url && (
                     <div className="mb-4">

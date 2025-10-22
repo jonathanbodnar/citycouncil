@@ -47,6 +47,8 @@ const TalentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts'>('orders');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
+  const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -172,6 +174,50 @@ const TalentDashboard: React.FC = () => {
     }
   };
 
+  const handleApproveOrder = async (orderId: string) => {
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          approval_status: 'approved',
+          approved_at: now,
+          status: 'in_progress'
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast.success('Corporate order approved! Timer has started.');
+      fetchTalentData();
+    } catch (error) {
+      console.error('Error approving order:', error);
+      toast.error('Failed to approve order');
+    }
+  };
+
+  const handleRejectOrder = async (orderId: string, reason: string) => {
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          approval_status: 'rejected',
+          rejected_at: now,
+          rejection_reason: reason
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast.success('Corporate order rejected.');
+      fetchTalentData();
+    } catch (error) {
+      console.error('Error rejecting order:', error);
+      toast.error('Failed to reject order');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -261,26 +307,95 @@ const TalentDashboard: React.FC = () => {
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900">{order.users.full_name}</h4>
+                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {order.users.full_name}
+                            {order.is_corporate_order && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                🏢 Business
+                              </span>
+                            )}
+                          </h4>
                           <p className="text-sm text-gray-600">
                             ${order.amount.toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                           </p>
-                          <p className="text-sm text-yellow-700">
-                            Due: {new Date(order.fulfillment_deadline).toLocaleDateString()}
-                          </p>
+                          {order.is_corporate_order && order.approval_status === 'pending' ? (
+                            <p className="text-sm text-orange-700 font-medium">
+                              ⏳ Awaiting your approval
+                            </p>
+                          ) : (
+                            <p className="text-sm text-yellow-700">
+                              Due: {new Date(order.fulfillment_deadline).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleAcceptOrder(order.id)}
-                        className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
-                      >
-                        Accept Order
-                      </button>
+                      <div className="flex gap-2">
+                        {order.is_corporate_order && order.approval_status === 'pending' ? (
+                          <>
+                            <button
+                              onClick={() => handleApproveOrder(order.id)}
+                              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
+                            >
+                              <CheckCircleIcon className="h-4 w-4" />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => setRejectingOrderId(order.id)}
+                              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center gap-2"
+                            >
+                              <XCircleIcon className="h-4 w-4" />
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleAcceptOrder(order.id)}
+                            className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
+                          >
+                            Accept Order
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="bg-white p-4 rounded-md">
+                    
+                    <div className="bg-white p-4 rounded-md mb-4">
                       <h5 className="font-medium text-gray-900 mb-2">Request:</h5>
                       <p className="text-gray-700">{order.request_details}</p>
                     </div>
+
+                    {order.is_corporate_order && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                        <h5 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                          🏢 Business Order Context
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          {order.company_name && (
+                            <div>
+                              <span className="font-medium text-blue-800">Company:</span>
+                              <p className="text-blue-700">{order.company_name}</p>
+                            </div>
+                          )}
+                          {order.event_description && (
+                            <div>
+                              <span className="font-medium text-blue-800">Event:</span>
+                              <p className="text-blue-700">{order.event_description}</p>
+                            </div>
+                          )}
+                          {order.event_audience && (
+                            <div>
+                              <span className="font-medium text-blue-800">Audience:</span>
+                              <p className="text-blue-700">{order.event_audience}</p>
+                            </div>
+                          )}
+                          {order.video_setting_request && (
+                            <div className="md:col-span-2">
+                              <span className="font-medium text-blue-800">Setting Request:</span>
+                              <p className="text-blue-700">{order.video_setting_request}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -702,6 +817,52 @@ const TalentDashboard: React.FC = () => {
             <div className="pt-6">
               <button className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700">
                 Update Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Reason Modal */}
+      {rejectingOrderId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Reject Corporate Order
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide a reason for rejecting this business order. This will be shown to the customer.
+            </p>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              rows={4}
+              placeholder="Enter rejection reason..."
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  if (rejectionReason.trim()) {
+                    handleRejectOrder(rejectingOrderId, rejectionReason.trim());
+                    setRejectingOrderId(null);
+                    setRejectionReason('');
+                  } else {
+                    toast.error('Please provide a rejection reason');
+                  }
+                }}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+              >
+                Reject Order
+              </button>
+              <button
+                onClick={() => {
+                  setRejectingOrderId(null);
+                  setRejectionReason('');
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+              >
+                Cancel
               </button>
             </div>
           </div>
