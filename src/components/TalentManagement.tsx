@@ -274,16 +274,23 @@ const TalentManagement: React.FC = () => {
         updateData: updateData
       });
       
-      // Ensure consistency between user and temp fields
+      // Capture the exact form values to ensure consistency
       const finalFullName = editingTalent.users?.full_name;
       const finalAvatarUrl = editingTalent.users?.avatar_url || editingTalent.temp_avatar_url;
       
+      console.log('CAPTURED form values:', {
+        finalFullName,
+        originalUserFullName: editingTalent.users?.full_name,
+        finalAvatarUrl: finalAvatarUrl ? 'IMAGE_SET' : 'NO_IMAGE'
+      });
+      
+      // Update both user and temp fields with EXACT same values
       updateData.temp_full_name = finalFullName;
       updateData.temp_avatar_url = finalAvatarUrl;
       
-      // Also update the user record with the same data to ensure consistency
-      if (editingTalent.user_id && editingTalent.users) {
-        console.log('SYNCING user record with final data:', {
+      // Update user record FIRST to ensure it has the correct data
+      if (editingTalent.user_id && editingTalent.users && finalFullName) {
+        console.log('UPDATING user record FIRST with exact form data:', {
           userId: editingTalent.user_id,
           fullName: finalFullName,
           avatarUrl: finalAvatarUrl ? 'IMAGE_SET' : 'NO_IMAGE'
@@ -298,9 +305,10 @@ const TalentManagement: React.FC = () => {
           .eq('id', editingTalent.user_id);
 
         if (syncUserError) {
-          console.error('Error syncing user record:', syncUserError);
+          console.error('FAILED: User record sync error:', syncUserError);
+          throw syncUserError;
         } else {
-          console.log('User record synced successfully');
+          console.log('SUCCESS: User record updated with exact form data');
         }
       }
       
