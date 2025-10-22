@@ -175,7 +175,7 @@ const TalentOnboardingPage: React.FC = () => {
         } else {
           // User exists but not authenticated, show login
           setCurrentStep(1); // Stay on Step 1 but show login form
-          toast.info('Please log in to continue your profile setup.');
+          toast.success('Please log in to continue your profile setup.');
         }
       }
 
