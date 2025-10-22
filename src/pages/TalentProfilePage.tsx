@@ -183,16 +183,16 @@ const TalentProfilePage: React.FC = () => {
           {/* Avatar */}
           <div className="md:w-1/3">
             <div className="aspect-square bg-gray-100 relative">
-              {talent.users.avatar_url ? (
+              {(talent.temp_avatar_url || talent.users.avatar_url) ? (
                 <img
-                  src={talent.users.avatar_url}
-                  alt={talent.users.full_name}
+                  src={talent.temp_avatar_url || talent.users.avatar_url}
+                  alt={talent.temp_full_name || talent.users.full_name}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-primary-100">
                   <span className="text-6xl font-bold text-primary-600">
-                    {talent.users.full_name.charAt(0)}
+                    {(talent.temp_full_name || talent.users.full_name).charAt(0)}
                   </span>
                 </div>
               )}
@@ -222,7 +222,7 @@ const TalentProfilePage: React.FC = () => {
                   </p>
                 )}
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {talent.users.full_name}
+                  {talent.temp_full_name || talent.users.full_name}
                 </h1>
                 <div className="flex items-center space-x-4 mb-4">
                   <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -338,7 +338,7 @@ const TalentProfilePage: React.FC = () => {
       {/* Social Media Links */}
       {talent.social_accounts.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Follow {talent.users.full_name}</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Follow {talent.temp_full_name || talent.users.full_name}</h2>
           <div className="flex flex-wrap gap-4">
             {talent.social_accounts.map((account) => (
               <a

@@ -35,16 +35,16 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
     >
       {/* Avatar */}
       <div className="aspect-square bg-gray-100 relative">
-        {talent.users.avatar_url ? (
+        {(talent.temp_avatar_url || talent.users.avatar_url) ? (
           <img
-            src={talent.users.avatar_url}
-            alt={talent.users.full_name}
+            src={talent.temp_avatar_url || talent.users.avatar_url}
+            alt={talent.temp_full_name || talent.users.full_name}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-primary-100">
             <span className="text-2xl font-bold text-primary-600">
-              {talent.users.full_name.charAt(0)}
+              {(talent.temp_full_name || talent.users.full_name).charAt(0)}
             </span>
           </div>
         )}
@@ -70,7 +70,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             {talent.position}
           </p>
         )}
-        <h3 className="font-semibold text-gray-900 mb-1">{talent.users.full_name}</h3>
+        <h3 className="font-semibold text-gray-900 mb-1">{talent.temp_full_name || talent.users.full_name}</h3>
         
         {/* Categories */}
         <div className="mb-2">

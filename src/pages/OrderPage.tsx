@@ -266,7 +266,7 @@ const OrderPage: React.FC = () => {
           Order a ShoutOut
         </h1>
         <p className="text-gray-600">
-          Get a personalized video message from {talent.users.full_name}
+          Get a personalized video message from {talent.temp_full_name || talent.users.full_name}
         </p>
       </div>
 
@@ -500,23 +500,23 @@ const OrderPage: React.FC = () => {
             {/* Talent Info */}
             <div className="flex items-center mb-6">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-primary-100 flex-shrink-0">
-                {talent.users.avatar_url ? (
+                {(talent.temp_avatar_url || talent.users.avatar_url) ? (
                   <img
-                    src={talent.users.avatar_url}
-                    alt={talent.users.full_name}
+                    src={talent.temp_avatar_url || talent.users.avatar_url}
+                    alt={talent.temp_full_name || talent.users.full_name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="text-xl font-bold text-primary-600">
-                      {talent.users.full_name.charAt(0)}
+                      {(talent.temp_full_name || talent.users.full_name).charAt(0)}
                     </span>
                   </div>
                 )}
               </div>
               <div className="ml-4">
                 <h3 className="font-semibold text-gray-900">
-                  {talent.users.full_name}
+                  {talent.temp_full_name || talent.users.full_name}
                 </h3>
                 <div className="flex items-center text-sm text-gray-600">
                   <ClockIcon className="h-4 w-4 mr-1" />
