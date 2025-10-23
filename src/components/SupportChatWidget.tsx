@@ -172,10 +172,10 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
             setIsOpen(true);
             setHasNewMessage(false);
           }}
-          className={`relative text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105 ${
+          className={`relative text-white p-4 rounded-2xl shadow-modern-lg transition-all duration-300 hover:scale-110 glow-blue ${
             hasNewMessage 
-              ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
-              : 'bg-blue-600 hover:bg-blue-700'
+              ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 animate-pulse' 
+              : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
           }`}
           title="Need help? Chat with support"
         >
@@ -190,9 +190,9 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="bg-white rounded-lg shadow-2xl border border-gray-200 w-80 h-96 flex flex-col">
+        <div className="glass-strong rounded-2xl shadow-modern-xl border border-white/30 w-80 h-96 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <ChatBubbleLeftRightIcon className="h-5 w-5" />
               <h3 className="font-semibold">Support Chat</h3>

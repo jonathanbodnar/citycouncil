@@ -33,10 +33,10 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   const currentTalent = talent[currentIndex];
 
   return (
-    <div className="relative rounded-xl overflow-hidden">
-      <div className="relative h-64 md:h-80">
-        {/* Desktop Background - Blue Base */}
-        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-700"></div>
+    <div className="relative rounded-3xl overflow-hidden shadow-modern-xl">
+      <div className="relative h-72 md:h-96">
+        {/* Desktop Background - Modern Gradient */}
+        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
         {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) && (
@@ -60,14 +60,14 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
               alt={currentTalent.temp_full_name || currentTalent.users.full_name}
               className="w-full h-full object-cover"
             />
-            {/* Blue overlay for mobile */}
-            <div className="absolute inset-0 bg-primary-600/75"></div>
+            {/* Modern gradient overlay for mobile */}
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-600/60 to-red-600/40"></div>
           </div>
         )}
         
         {/* Mobile Fallback Background */}
         {!currentTalent.users.avatar_url && (
-          <div className="md:hidden absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-800"></div>
+          <div className="md:hidden absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
         )}
         
         {/* Content */}

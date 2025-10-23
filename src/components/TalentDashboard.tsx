@@ -240,7 +240,7 @@ const TalentDashboard: React.FC = () => {
         <p className="text-gray-600 mb-4">Set up your talent profile to start receiving orders!</p>
         <Link
           to="/profile/setup"
-          className="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700"
+          className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern hover:shadow-modern-lg transition-all duration-300"
         >
           Setup Profile
         </Link>
@@ -304,7 +304,7 @@ const TalentDashboard: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Orders</h3>
               <div className="space-y-4">
                 {pendingOrders.map((order) => (
-                  <div key={order.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div key={order.id} className="glass glow-blue rounded-2xl p-6 border border-white/30 hover:glass-strong transition-all duration-300">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
@@ -340,14 +340,14 @@ const TalentDashboard: React.FC = () => {
                           <>
                             <button
                               onClick={() => handleApproveOrder(order.id)}
-                              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
+                              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl font-medium hover:from-green-700 hover:to-green-800 shadow-modern transition-all duration-300 flex items-center gap-2"
                             >
                               <CheckCircleIcon className="h-4 w-4" />
                               Approve
                             </button>
                             <button
                               onClick={() => setRejectingOrderId(order.id)}
-                              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center gap-2"
+                              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center gap-2"
                             >
                               <XCircleIcon className="h-4 w-4" />
                               Reject
@@ -356,7 +356,7 @@ const TalentDashboard: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => handleAcceptOrder(order.id)}
-                            className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
+                            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern transition-all duration-300"
                           >
                             Accept Order
                           </button>
@@ -370,7 +370,7 @@ const TalentDashboard: React.FC = () => {
                     </div>
 
                     {order.is_corporate_order && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                      <div className="glass-subtle border border-blue-200/30 rounded-xl p-4 glow-blue">
                         <h5 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
                           🏢 Business Order Context
                         </h5>
@@ -414,7 +414,7 @@ const TalentDashboard: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">In Progress</h3>
               <div className="space-y-4">
                 {inProgressOrders.map((order) => (
-                  <div key={order.id} className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div key={order.id} className="glass glow-blue rounded-2xl p-6 border border-white/30 hover:glass-strong transition-all duration-300">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
@@ -470,7 +470,7 @@ const TalentDashboard: React.FC = () => {
                 {completedOrders.map((order) => {
                   const orderReview = reviews.find(r => r.order_id === order.id);
                   return (
-                    <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div key={order.id} className="glass border border-white/30 rounded-2xl p-6 hover:glass-strong transition-all duration-300">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
@@ -538,7 +538,7 @@ const TalentDashboard: React.FC = () => {
         <div className="space-y-6">
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="glass rounded-2xl shadow-modern p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-lg bg-blue-100">
                   <ClockIcon className="h-6 w-6 text-blue-600" />
@@ -550,7 +550,7 @@ const TalentDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="glass rounded-2xl shadow-modern p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-lg bg-green-100">
                   <CheckCircleIcon className="h-6 w-6 text-green-600" />
@@ -562,7 +562,7 @@ const TalentDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="glass rounded-2xl shadow-modern p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-lg bg-yellow-100">
                   <StarIcon className="h-6 w-6 text-yellow-600" />
@@ -574,7 +574,7 @@ const TalentDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="glass rounded-2xl shadow-modern p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-lg bg-purple-100">
                   <CurrencyDollarIcon className="h-6 w-6 text-purple-600" />
@@ -590,7 +590,7 @@ const TalentDashboard: React.FC = () => {
           </div>
 
           {/* Performance Metrics */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="glass rounded-2xl shadow-modern border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Performance Metrics</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -623,7 +623,7 @@ const TalentDashboard: React.FC = () => {
 
           {/* Recent Reviews */}
           {reviews.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="glass rounded-2xl shadow-modern border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Reviews</h3>
               <div className="space-y-4">
                 {reviews.slice(0, 5).map((review) => (
@@ -662,7 +662,7 @@ const TalentDashboard: React.FC = () => {
 
       {/* Profile Tab */}
       {activeTab === 'profile' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="glass rounded-2xl shadow-modern border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">Talent Profile</h2>
             <button className="flex items-center space-x-2 text-primary-600 hover:text-primary-700">
@@ -821,7 +821,7 @@ const TalentDashboard: React.FC = () => {
             </div>
 
             <div className="pt-6">
-              <button className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700">
+              <button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern hover:shadow-modern-lg transition-all duration-300">
                 Update Profile
               </button>
             </div>
