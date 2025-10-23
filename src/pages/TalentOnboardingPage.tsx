@@ -6,7 +6,8 @@ import {
   CreditCardIcon, 
   EyeIcon, 
   EyeSlashIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import {
   StarIcon,
@@ -16,6 +17,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import { bankEncryption } from '../services/encryption';
+import { uploadVideoToWasabi } from '../services/videoUpload';
 import { TalentOnboardingData, TalentCategory } from '../types';
 import Logo from '../components/Logo';
 import CategorySelector from '../components/CategorySelector';
@@ -70,6 +72,11 @@ const TalentOnboardingPage: React.FC = () => {
     routing_number: '',
     account_type: 'checking' as 'checking' | 'savings'
   });
+
+  // Step 4: Welcome Video
+  const [welcomeVideoFile, setWelcomeVideoFile] = useState<File | null>(null);
+  const [welcomeVideoUrl, setWelcomeVideoUrl] = useState('');
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -559,10 +566,39 @@ const TalentOnboardingPage: React.FC = () => {
         }
       }
 
-      // Mark onboarding as completed and activate profile
-      const { error: completeError } = await supabase
+      toast.success('Payout information saved! Now let\'s create your welcome video.');
+      setCurrentStep(4);
+
+    } catch (error: any) {
+      console.error('Error completing onboarding:', error);
+      toast.error(error.message || 'Failed to complete onboarding');
+    }
+  };
+
+  const handleStep4Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      let finalVideoUrl = welcomeVideoUrl;
+      
+      // Upload video if file is selected
+      if (welcomeVideoFile) {
+        setUploadingVideo(true);
+        console.log('Uploading welcome video to Wasabi...');
+        
+        finalVideoUrl = await uploadVideoToWasabi(
+          welcomeVideoFile, 
+          `welcome-videos/${onboardingData?.talent.id}-welcome-${Date.now()}.mp4`
+        );
+        
+        console.log('Welcome video uploaded successfully:', finalVideoUrl);
+      }
+
+      // Save welcome video URL and complete onboarding
+      const { error: videoError } = await supabase
         .from('talent_profiles')
         .update({
+          welcome_video_url: finalVideoUrl,
           onboarding_completed: true,
           is_active: true, // Activate talent when onboarding completes
           onboarding_token: null,
@@ -570,14 +606,16 @@ const TalentOnboardingPage: React.FC = () => {
         })
         .eq('id', onboardingData?.talent.id);
 
-      if (completeError) throw completeError;
+      if (videoError) throw videoError;
 
-      toast.success('Onboarding completed! Welcome to ShoutOut!');
+      toast.success('Welcome video uploaded! Onboarding completed - Welcome to ShoutOut!');
       navigate('/dashboard');
 
     } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-      toast.error(error.message || 'Failed to complete onboarding');
+      console.error('Error uploading welcome video:', error);
+      toast.error(error.message || 'Failed to upload welcome video');
+    } finally {
+      setUploadingVideo(false);
     }
   };
 
@@ -613,7 +651,8 @@ const TalentOnboardingPage: React.FC = () => {
   const steps = [
     { number: 1, title: 'Account Setup', icon: UserIcon },
     { number: 2, title: 'Profile Details', icon: UserIcon },
-    { number: 3, title: 'Payout Setup', icon: CreditCardIcon }
+    { number: 3, title: 'Payout Setup', icon: CreditCardIcon },
+    { number: 4, title: 'Welcome Video', icon: VideoCameraIcon }
   ];
 
   return (
@@ -1280,7 +1319,119 @@ const TalentOnboardingPage: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
-                  Complete Setup
+                  Continue to Welcome Video
+                </button>
+              </div>
+            </form>
+          )}
+
+          {currentStep === 4 && (
+            <form onSubmit={handleStep4Submit}>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Step 4: Welcome Video
+              </h2>
+              
+              <div className="glass-strong rounded-2xl p-6 mb-6 border border-white/30">
+                <div className="text-center mb-6">
+                  <VideoCameraIcon className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Record Your Welcome Video
+                  </h3>
+                  <p className="text-gray-600">
+                    Create a 30-60 second introduction video to welcome potential customers
+                  </p>
+                </div>
+
+                {/* Script Template */}
+                <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    📝 Script Template
+                  </h4>
+                  <div className="text-sm text-blue-800 space-y-2">
+                    <p><strong>Opening:</strong> "Hi! I'm [Your Name]..."</p>
+                    <p><strong>Introduction:</strong> "[Brief description of who you are - Former Fox News host, Political commentator, etc.]"</p>
+                    <p><strong>Service:</strong> "I'm now on ShoutOut where you can order a personalized video from me for any occasion you're looking for..."</p>
+                    <p><strong>Personal Touch:</strong> "[Add your own spin - mention what makes your videos special]"</p>
+                    <p><strong>Closing:</strong> "Find me on ShoutOut!"</p>
+                  </div>
+                </div>
+
+                {/* Recording Tips */}
+                <div className="bg-green-50 rounded-xl p-4 mb-6 border border-green-200">
+                  <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                    🎥 Recording Tips
+                  </h4>
+                  <ul className="text-sm text-green-800 space-y-1">
+                    <li>• Record in good lighting (natural light works best)</li>
+                    <li>• Ensure clear audio (avoid background noise)</li>
+                    <li>• Look directly at the camera</li>
+                    <li>• Speak clearly and with enthusiasm</li>
+                    <li>• Keep it between 30-60 seconds</li>
+                    <li>• Be authentic and show your personality!</li>
+                  </ul>
+                </div>
+
+                {/* Video Upload */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload Welcome Video *
+                    </label>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setWelcomeVideoFile(file);
+                          // Create preview URL
+                          const url = URL.createObjectURL(file);
+                          setWelcomeVideoUrl(url);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                    <p className="mt-1 text-sm text-gray-500">
+                      Supported formats: MP4, MOV, AVI. Max size: 100MB
+                    </p>
+                  </div>
+
+                  {/* Video Preview */}
+                  {welcomeVideoUrl && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Video Preview
+                      </label>
+                      <div className="relative rounded-xl overflow-hidden bg-gray-100 max-w-md mx-auto">
+                        <video
+                          src={welcomeVideoUrl}
+                          controls
+                          className="w-full h-auto"
+                          style={{ maxHeight: '300px' }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(3)}
+                  className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={!welcomeVideoFile || uploadingVideo}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-red-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-red-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingVideo ? 'Uploading...' : 'Complete Onboarding'}
                 </button>
               </div>
             </form>
