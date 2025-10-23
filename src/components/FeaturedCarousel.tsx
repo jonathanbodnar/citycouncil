@@ -101,7 +101,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 </div>
                 <Link
                   to={`/talent/${currentTalent.id}`}
-                  className="inline-block bg-gradient-to-r from-red-600 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-red-700 hover:to-blue-700 transition-all duration-300 shadow-modern-lg border border-white/20"
+                  className="inline-block bg-gradient-to-r from-red-600 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-red-700 hover:to-blue-700 transition-all duration-300 shadow-modern-lg"
                 >
                   Order ShoutOut
                 </Link>
@@ -137,7 +137,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   </div>
                   <Link
                     to={`/talent/${currentTalent.id}`}
-                    className="inline-block bg-gradient-to-r from-red-600 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-red-700 hover:to-blue-700 transition-all duration-300 shadow-modern-lg border border-white/20 hover:scale-105"
+                    className="inline-block bg-gradient-to-r from-red-600 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-red-700 hover:to-blue-700 transition-all duration-300 shadow-modern-lg hover:scale-105"
                   >
                     Order ShoutOut
                   </Link>
