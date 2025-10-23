@@ -204,28 +204,49 @@ const TalentProfilePage: React.FC = () => {
                 {demand.level}
               </div>
 
-              {/* Charity Badge */}
-              {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
-                <div className="absolute top-3 right-3 md:top-4 md:right-4 p-2 md:p-3 glass-strong rounded-xl md:rounded-2xl shadow-modern border border-white/40 glow-red animate-glow-pulse">
-                  <HeartIcon className="h-5 w-5 md:h-6 md:w-6 text-red-600" />
-                </div>
-              )}
             </div>
           </div>
 
           {/* Profile Info */}
           <div className="md:w-2/3 p-6">
             <div className="flex items-start justify-between mb-4">
-              <div>
+              <div className="flex-1">
                 {/* Position Title */}
                 {talent.position && (
                   <p className="text-sm font-medium text-gray-600 mb-2 uppercase tracking-wide">
                     {talent.position}
                   </p>
                 )}
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {talent.temp_full_name || talent.users.full_name}
-                </h1>
+                
+                {/* Name and Reviews - Desktop Side by Side */}
+                <div className="md:flex md:items-center md:justify-between mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2 md:mb-0">
+                    {talent.temp_full_name || talent.users.full_name}
+                  </h1>
+                  
+                  {/* Rating - Right side on desktop */}
+                  <div className="flex items-center">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          className={`h-5 w-5 ${
+                            i < Math.floor(talent.average_rating || 0)
+                              ? 'text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="ml-2 text-lg font-semibold text-gray-900">
+                      {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'}
+                    </span>
+                    <span className="ml-2 text-gray-600">
+                      ({talent.reviews.length} reviews)
+                    </span>
+                  </div>
+                </div>
+                
                 <div className="flex items-center flex-wrap gap-3 mb-4">
                   {/* Categories */}
                   {talent.categories && talent.categories.length > 0 ? (
@@ -257,28 +278,6 @@ const TalentProfilePage: React.FC = () => {
               >
                 <ShareIcon className="h-6 w-6" />
               </button>
-            </div>
-
-            {/* Rating */}
-            <div className="flex items-center mb-4">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <StarIcon
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < Math.floor(talent.average_rating || 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="ml-2 text-lg font-semibold text-gray-900">
-                {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'}
-              </span>
-              <span className="ml-2 text-gray-600">
-                ({talent.reviews.length} reviews)
-              </span>
             </div>
 
             {/* Bio */}
