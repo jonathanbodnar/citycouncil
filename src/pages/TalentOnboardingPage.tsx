@@ -742,8 +742,12 @@ const TalentOnboardingPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm text-gray-600">Verified</span>
+                    {onboardingData.talent.is_verified && (
+                      <div className="flex items-center gap-1">
+                        <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
+                        <span className="text-sm text-gray-600">Verified</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

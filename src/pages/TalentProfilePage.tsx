@@ -228,8 +228,12 @@ const TalentProfilePage: React.FC = () => {
                   <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">
                     {getCategoryLabel(talent.category)}
                   </span>
-                  <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
-                  <span className="text-sm text-gray-600">Verified</span>
+                  {talent.is_verified && (
+                    <div className="flex items-center gap-1">
+                      <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
+                      <span className="text-sm text-gray-600">Verified</span>
+                    </div>
+                  )}
                 </div>
               </div>
               

@@ -25,6 +25,7 @@ export interface TalentProfile {
   bio: string;
   position?: string; // Optional title like "Congressman", "Judge", "Senator"
   allow_corporate_pricing?: boolean;
+  is_verified?: boolean;
   pricing: number;
   corporate_pricing?: number;
   fulfillment_time_hours: number;

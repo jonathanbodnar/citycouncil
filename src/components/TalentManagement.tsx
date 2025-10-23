@@ -44,6 +44,7 @@ const TalentManagement: React.FC = () => {
     corporate_pricing: 449.99,
     fulfillment_time_hours: 48,
     allow_corporate_pricing: false,
+    is_verified: false,
     charity_percentage: 5,
     charity_name: '',
     admin_fee_percentage: 15
@@ -152,6 +153,7 @@ const TalentManagement: React.FC = () => {
         pricing: newTalent.pricing,
         corporate_pricing: newTalent.corporate_pricing,
         allow_corporate_pricing: newTalent.allow_corporate_pricing,
+        is_verified: newTalent.is_verified,
         fulfillment_time_hours: newTalent.fulfillment_time_hours,
         charity_percentage: newTalent.charity_percentage,
         charity_name: newTalent.charity_name,
@@ -202,6 +204,7 @@ const TalentManagement: React.FC = () => {
         corporate_pricing: 449.99,
         fulfillment_time_hours: 48,
         allow_corporate_pricing: false,
+        is_verified: false,
         charity_percentage: 5,
         charity_name: '',
         admin_fee_percentage: 15
@@ -259,6 +262,7 @@ const TalentManagement: React.FC = () => {
         pricing: editingTalent.pricing,
         corporate_pricing: editingTalent.corporate_pricing,
         allow_corporate_pricing: editingTalent.allow_corporate_pricing,
+        is_verified: editingTalent.is_verified,
         fulfillment_time_hours: editingTalent.fulfillment_time_hours,
         charity_percentage: editingTalent.charity_percentage,
         charity_name: editingTalent.charity_name,
@@ -365,7 +369,7 @@ const TalentManagement: React.FC = () => {
     }
   };
 
-  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing', value: boolean) => {
+  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing' | 'is_verified', value: boolean) => {
     try {
       const { error } = await supabase
         .from('talent_profiles')
@@ -378,7 +382,9 @@ const TalentManagement: React.FC = () => {
         ? (value ? 'activated' : 'deactivated')
         : field === 'is_featured'
         ? (value ? 'featured' : 'unfeatured')
-        : (value ? 'corporate pricing enabled' : 'corporate pricing disabled');
+        : field === 'allow_corporate_pricing'
+        ? (value ? 'corporate pricing enabled' : 'corporate pricing disabled')
+        : (value ? 'verified' : 'unverified');
       
       toast.success(`Talent ${action} successfully`);
       fetchTalents();
@@ -628,6 +634,22 @@ const TalentManagement: React.FC = () => {
               </div>
               
               <div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_verified"
+                    checked={newTalent.is_verified}
+                    onChange={(e) => setNewTalent({...newTalent, is_verified: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="is_verified" className="ml-2 block text-sm font-medium text-gray-700">
+                    Verified Talent
+                  </label>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">Show verification badge on talent profile</p>
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Admin Fee (%)
                 </label>
@@ -873,6 +895,18 @@ const TalentManagement: React.FC = () => {
                     </button>
                     
                     <button
+                      onClick={() => toggleTalentStatus(talent.id, 'is_verified', !talent.is_verified)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        talent.is_verified 
+                          ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      title={talent.is_verified ? 'Remove verification badge' : 'Add verification badge'}
+                    >
+                      <span className="text-lg">{talent.is_verified ? '✅' : '⚪'}</span>
+                    </button>
+                    
+                    <button
                       onClick={() => {
                         setEditingTalent(talent);
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
@@ -1047,6 +1081,22 @@ const TalentManagement: React.FC = () => {
                   </label>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">Enable business/corporate pricing option for this talent</p>
+              </div>
+              
+              <div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="edit_is_verified"
+                    checked={editingTalent.is_verified || false}
+                    onChange={(e) => setEditingTalent({...editingTalent, is_verified: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="edit_is_verified" className="ml-2 block text-sm font-medium text-gray-700">
+                    Verified Talent
+                  </label>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">Show verification badge on talent profile</p>
               </div>
               
               <div>
