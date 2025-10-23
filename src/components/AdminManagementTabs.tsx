@@ -5,7 +5,8 @@ import {
   ChatBubbleLeftRightIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
-  StarIcon
+  StarIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { HelpMessage, AdminStats } from '../types';
@@ -69,28 +70,68 @@ const AdminManagementTabs: React.FC = () => {
           `)
         ]);
 
-        // Calculate stats
+        // Calculate comprehensive stats
         const totalOrders = orders?.length || 0;
+        const completedOrders = orders?.filter(o => o.status === 'completed') || [];
+        const pendingOrders = orders?.filter(o => o.status === 'pending') || [];
+        const inProgressOrders = orders?.filter(o => o.status === 'in_progress') || [];
+        const corporateOrders = orders?.filter(o => o.is_corporate_order) || [];
+        const pendingApprovalOrders = orders?.filter(o => o.approval_status === 'pending') || [];
+        
         const grossGenerated = orders?.reduce((sum, order) => sum + order.amount, 0) || 0;
         const grossEarnings = orders?.reduce((sum, order) => sum + order.admin_fee, 0) || 0;
         const refundedOrders = orders?.filter(o => o.status === 'refunded') || [];
         const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0);
+        
         const totalUsers = users?.filter(u => u.user_type === 'user').length || 0;
+        const activeTalent = talent?.filter(t => t.is_active).length || 0;
+        const verifiedTalent = talent?.filter(t => t.is_verified).length || 0;
         const usersWithOrders = new Set(orders?.map(o => o.user_id)).size;
         const totalTalent = talent?.length || 0;
         const avgOrdersPerTalent = totalTalent > 0 ? totalOrders / totalTalent : 0;
         const avgOrdersPerUser = totalUsers > 0 ? totalOrders / totalUsers : 0;
+        
+        // Calculate completion rate
+        const completionRate = totalOrders > 0 ? (completedOrders.length / totalOrders) * 100 : 0;
+
+        // Calculate average delivery time for completed orders with videos
+        let avgDeliveryTimeHours = 0;
+        
+        if (completedOrders.length > 0) {
+          const deliveryTimes = completedOrders
+            .map(order => {
+              const createdAt = new Date(order.created_at);
+              const approvedAt = order.approved_at ? new Date(order.approved_at) : createdAt;
+              const completedAt = new Date(order.updated_at); // Assuming updated_at reflects completion
+              
+              // Calculate hours from approval/creation to completion
+              return (completedAt.getTime() - approvedAt.getTime()) / (1000 * 60 * 60);
+            })
+            .filter(time => time > 0); // Filter out invalid times
+            
+          avgDeliveryTimeHours = deliveryTimes.length > 0 
+            ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length 
+            : 0;
+        }
 
         setStats({
           total_orders: totalOrders,
+          completed_orders: completedOrders.length,
+          pending_orders: pendingOrders.length,
+          corporate_orders: corporateOrders.length,
+          pending_approval_orders: pendingApprovalOrders.length,
+          completion_rate: completionRate,
           gross_generated: grossGenerated,
           gross_earnings: grossEarnings,
           amount_refunded: amountRefunded,
           total_users: totalUsers,
           total_users_with_orders: usersWithOrders,
           total_talent: totalTalent,
+          active_talent: activeTalent,
+          verified_talent: verifiedTalent,
           avg_orders_per_talent: avgOrdersPerTalent,
-          avg_orders_per_user: avgOrdersPerUser
+          avg_orders_per_user: avgOrdersPerUser,
+          avg_delivery_time_hours: avgDeliveryTimeHours
         });
 
         // Fetch recent orders
@@ -108,7 +149,7 @@ const AdminManagementTabs: React.FC = () => {
 
         setRecentOrders(recentOrdersData || []);
 
-        // Fetch top talent
+        // Fetch top talent with delivery time calculations
         const { data: topTalentData } = await supabase
           .from('talent_profiles')
           .select(`
@@ -118,7 +159,39 @@ const AdminManagementTabs: React.FC = () => {
           .order('total_orders', { ascending: false })
           .limit(5);
 
-        setTopTalent(topTalentData || []);
+        // Calculate individual delivery times for each talent
+        const topTalentWithStats = await Promise.all(
+          (topTalentData || []).map(async (talent) => {
+            const { data: talentOrders } = await supabase
+              .from('orders')
+              .select('created_at, updated_at, approved_at, status')
+              .eq('talent_id', talent.id)
+              .eq('status', 'completed');
+
+            let avgDeliveryTime = 0;
+            if (talentOrders && talentOrders.length > 0) {
+              const deliveryTimes = talentOrders
+                .map(order => {
+                  const createdAt = new Date(order.created_at);
+                  const approvedAt = order.approved_at ? new Date(order.approved_at) : createdAt;
+                  const completedAt = new Date(order.updated_at);
+                  return (completedAt.getTime() - approvedAt.getTime()) / (1000 * 60 * 60);
+                })
+                .filter(time => time > 0);
+                
+              avgDeliveryTime = deliveryTimes.length > 0 
+                ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length 
+                : 0;
+            }
+
+            return {
+              ...talent,
+              avg_delivery_time_hours: avgDeliveryTime
+            };
+          })
+        );
+
+        setTopTalent(topTalentWithStats);
 
       } else if (activeTab === 'helpdesk') {
         const { data, error } = await supabase
@@ -172,7 +245,7 @@ const AdminManagementTabs: React.FC = () => {
         <div className="space-y-8">
           {/* Stats Grid */}
           {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <StatsCard
                 title="Total Orders"
                 value={stats.total_orders.toLocaleString()}
@@ -198,22 +271,40 @@ const AdminManagementTabs: React.FC = () => {
                 color="text-orange-600"
               />
               <StatsCard
-                title="Active Talent"
-                value={stats.total_talent.toLocaleString()}
+                title="Completed Orders"
+                value={stats.completed_orders.toLocaleString()}
                 icon={StarIcon}
+                color="text-green-600"
+              />
+              <StatsCard
+                title="Pending Orders"
+                value={stats.pending_orders.toLocaleString()}
+                icon={ClockIcon}
                 color="text-yellow-600"
               />
               <StatsCard
-                title="Users with Orders"
-                value={stats.total_users_with_orders.toLocaleString()}
-                icon={UsersIcon}
-                color="text-indigo-600"
+                title="Corporate Orders"
+                value={stats.corporate_orders.toLocaleString()}
+                icon={ChartBarIcon}
+                color="text-blue-600"
               />
               <StatsCard
-                title="Avg Orders/Talent"
-                value={stats.avg_orders_per_talent.toFixed(1)}
+                title="Completion Rate"
+                value={`${stats.completion_rate.toFixed(1)}%`}
                 icon={ChartBarIcon}
-                color="text-pink-600"
+                color="text-emerald-600"
+              />
+              <StatsCard
+                title="Active Talent"
+                value={`${stats.active_talent}/${stats.total_talent}`}
+                icon={StarIcon}
+                color="text-orange-600"
+              />
+              <StatsCard
+                title="Verified Talent"
+                value={stats.verified_talent.toLocaleString()}
+                icon={UsersIcon}
+                color="text-indigo-600"
               />
               <StatsCard
                 title="Amount Refunded"
@@ -221,6 +312,20 @@ const AdminManagementTabs: React.FC = () => {
                 icon={CurrencyDollarIcon}
                 color="text-red-600"
               />
+              <StatsCard
+                title="Avg Delivery Time"
+                value={`${stats.avg_delivery_time_hours.toFixed(1)}h`}
+                icon={ClockIcon}
+                color="text-teal-600"
+              />
+              {stats.pending_approval_orders > 0 && (
+                <StatsCard
+                  title="Pending Approval"
+                  value={stats.pending_approval_orders.toLocaleString()}
+                  icon={ClockIcon}
+                  color="text-orange-600"
+                />
+              )}
             </div>
           )}
 
@@ -298,8 +403,15 @@ const AdminManagementTabs: React.FC = () => {
                         <div className="font-semibold text-gray-900">
                           {talent.total_orders} orders
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {(talent.average_rating || 0).toFixed(1)} ⭐
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div>{(talent.average_rating || 0).toFixed(1)} ⭐</div>
+                          <div className="flex items-center justify-end gap-1">
+                            <ClockIcon className="h-3 w-3" />
+                            {talent.avg_delivery_time_hours 
+                              ? `${talent.avg_delivery_time_hours.toFixed(1)}h avg`
+                              : 'No data'
+                            }
+                          </div>
                         </div>
                       </div>
                     </div>

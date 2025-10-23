@@ -157,14 +157,22 @@ export interface Notification {
 
 export interface AdminStats {
   total_orders: number;
+  completed_orders: number;
+  pending_orders: number;
+  corporate_orders: number;
+  pending_approval_orders: number;
+  completion_rate: number;
   gross_generated: number;
   gross_earnings: number;
   amount_refunded: number;
   total_users: number;
   total_users_with_orders: number;
   total_talent: number;
+  active_talent: number;
+  verified_talent: number;
   avg_orders_per_talent: number;
   avg_orders_per_user: number;
+  avg_delivery_time_hours: number;
 }
 
 export interface HelpMessage {
