@@ -315,7 +315,7 @@ const OrderPage: React.FC = () => {
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Step 1: Order Type */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="glass rounded-2xl shadow-modern p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Order Type
               </h2>
@@ -376,7 +376,7 @@ const OrderPage: React.FC = () => {
             </div>
 
             {/* Step 2: Order Details */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="glass rounded-2xl shadow-modern p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Order Details
               </h2>
@@ -521,7 +521,7 @@ const OrderPage: React.FC = () => {
             </div>
 
             {/* Terms and Submit */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="glass rounded-2xl shadow-modern p-6">
               <div className="flex items-center mb-4">
                 <input
                   id="agreedToTerms"
@@ -548,7 +548,7 @@ const OrderPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-blue-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-modern hover:shadow-modern-lg glow-blue"
                 >
                   {submitting ? 'Processing...' : `Continue to Payment - $${pricing.total.toFixed(2)}`}
                 </button>
@@ -583,7 +583,7 @@ const OrderPage: React.FC = () => {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
+          <div className="glass rounded-2xl shadow-modern p-6 sticky top-8">
             {/* Talent Info */}
             <div className="flex items-center mb-6">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-primary-100 flex-shrink-0">

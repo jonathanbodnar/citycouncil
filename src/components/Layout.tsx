@@ -7,7 +7,7 @@ import SupportChatWidget from './SupportChatWidget';
 
 const Layout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Header />
       <main className="pb-16 md:pb-0">
         <Outlet />

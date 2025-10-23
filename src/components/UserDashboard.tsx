@@ -238,7 +238,7 @@ const UserDashboard: React.FC = () => {
         <div className="space-y-6">
           {orders.length > 0 ? (
             orders.map((order) => (
-              <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div key={order.id} className="glass rounded-2xl shadow-modern border border-white/20 overflow-hidden hover:glass-strong transition-all duration-300">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-4">
@@ -413,7 +413,7 @@ const UserDashboard: React.FC = () => {
         <div className="space-y-6">
           {reviews.length > 0 ? (
             reviews.map((review) => (
-              <div key={review.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div key={review.id} className="glass rounded-2xl shadow-modern border border-white/20 p-6 hover:glass-strong transition-all duration-300">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
@@ -460,7 +460,7 @@ const UserDashboard: React.FC = () => {
 
       {/* Profile Tab */}
       {activeTab === 'profile' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="glass rounded-2xl shadow-modern border border-white/20 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">Profile Settings</h2>
           </div>

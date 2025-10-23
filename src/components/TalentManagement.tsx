@@ -776,8 +776,8 @@ const TalentManagement: React.FC = () => {
       )}
 
       {/* Talents List */}
-      <div className="bg-white rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="glass rounded-2xl shadow-modern">
+        <div className="px-6 py-4 border-b border-white/20">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <UserGroupIcon className="h-5 w-5" />
@@ -787,9 +787,9 @@ const TalentManagement: React.FC = () => {
         </div>
         
         {filteredTalents.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div className="space-y-4 p-6">
             {filteredTalents.map((talent) => (
-              <div key={talent.id} className="p-6">
+              <div key={talent.id} className="glass-subtle rounded-2xl p-6 border border-white/30 hover:glass transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
