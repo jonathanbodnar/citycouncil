@@ -200,14 +200,14 @@ const TalentProfilePage: React.FC = () => {
               )}
               
               {/* Demand Badge */}
-              <div className={`absolute top-4 left-4 px-4 py-2 rounded-2xl text-sm font-bold glass-strong border border-white/40 ${demand.color}`}>
+              <div className={`absolute top-3 left-3 md:top-4 md:left-4 px-3 md:px-4 py-1 md:py-2 rounded-xl md:rounded-2xl text-xs md:text-sm font-bold glass-strong border border-white/40 ${demand.color}`}>
                 {demand.level}
               </div>
 
               {/* Charity Badge */}
               {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
-                <div className="absolute top-4 right-4 p-3 glass-strong rounded-2xl shadow-modern border border-white/40 glow-red animate-glow-pulse">
-                  <HeartIcon className="h-6 w-6 text-red-600" />
+                <div className="absolute top-3 right-3 md:top-4 md:right-4 p-2 md:p-3 glass-strong rounded-xl md:rounded-2xl shadow-modern border border-white/40 glow-red animate-glow-pulse">
+                  <HeartIcon className="h-5 w-5 md:h-6 md:w-6 text-red-600" />
                 </div>
               )}
             </div>
