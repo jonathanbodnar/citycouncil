@@ -524,8 +524,8 @@ const TalentOnboardingPage: React.FC = () => {
     console.log('Step 3 form submitted!');
     console.log('Payout data:', payoutData);
     
-    // Validate required fields
-    if (!payoutData.account_holder_name || !payoutData.bank_name || !payoutData.account_number || !payoutData.routing_number) {
+    // Validate required fields (temporarily exclude routing number)
+    if (!payoutData.account_holder_name || !payoutData.bank_name || !payoutData.account_number) {
       toast.error('Please fill in all required fields');
       console.log('Missing required fields:', {
         account_holder_name: !!payoutData.account_holder_name,
@@ -536,8 +536,8 @@ const TalentOnboardingPage: React.FC = () => {
       return;
     }
 
-    // Validate routing number format (9 digits)
-    if (payoutData.routing_number.length !== 9) {
+    // Validate routing number format if provided
+    if (payoutData.routing_number && payoutData.routing_number.length !== 9) {
       toast.error('Routing number must be exactly 9 digits');
       console.log('Invalid routing number length:', payoutData.routing_number.length);
       return;
@@ -1254,7 +1254,15 @@ const TalentOnboardingPage: React.FC = () => {
           )}
 
           {currentStep === 3 && (
-            <form onSubmit={handleStep3Submit}>
+            <form 
+              onSubmit={(e) => {
+                console.log('Form onSubmit triggered');
+                handleStep3Submit(e);
+              }}
+              onInvalid={(e) => {
+                console.log('Form validation failed:', e);
+              }}
+            >
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Step 3: Payout Information
               </h2>
@@ -1305,7 +1313,7 @@ const TalentOnboardingPage: React.FC = () => {
                     value={payoutData.routing_number}
                     onChange={(value) => setPayoutData({...payoutData, routing_number: value})}
                     placeholder="9-digit routing number"
-                    required={true}
+                    required={false}
                     maxLength={9}
                   />
                 </div>
@@ -1342,6 +1350,10 @@ const TalentOnboardingPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
+                  onClick={(e) => {
+                    console.log('Button clicked!');
+                    console.log('Form data at click:', payoutData);
+                  }}
                   className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   Continue to Welcome Video
