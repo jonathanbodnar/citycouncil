@@ -535,6 +535,13 @@ const TalentOnboardingPage: React.FC = () => {
       });
       return;
     }
+
+    // Validate routing number format (9 digits)
+    if (payoutData.routing_number.length !== 9) {
+      toast.error('Routing number must be exactly 9 digits');
+      console.log('Invalid routing number length:', payoutData.routing_number.length);
+      return;
+    }
     
     try {
       // Encrypt sensitive bank account information
@@ -1299,7 +1306,6 @@ const TalentOnboardingPage: React.FC = () => {
                     onChange={(value) => setPayoutData({...payoutData, routing_number: value})}
                     placeholder="9-digit routing number"
                     required={true}
-                    pattern="[0-9]{9}"
                     maxLength={9}
                   />
                 </div>
