@@ -226,10 +226,21 @@ const TalentProfilePage: React.FC = () => {
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   {talent.temp_full_name || talent.users.full_name}
                 </h1>
-                <div className="flex items-center space-x-4 mb-4">
-                  <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-modern">
-                    {getCategoryLabel(talent.category)}
-                  </span>
+                <div className="flex items-center flex-wrap gap-3 mb-4">
+                  {/* Categories */}
+                  {talent.categories && talent.categories.length > 0 ? (
+                    talent.categories.map((category, index) => (
+                      <span key={index} className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-modern">
+                        {getCategoryLabel(category)}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-modern">
+                      {getCategoryLabel(talent.category)}
+                    </span>
+                  )}
+                  
+                  {/* Verified Badge */}
                   {talent.is_verified && (
                     <div className="flex items-center gap-1">
                       <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
