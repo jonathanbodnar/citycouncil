@@ -26,11 +26,11 @@ const StatsCard: React.FC<StatsCardProps> = ({
   title, 
   value, 
   icon: Icon, 
-  color = 'text-primary-600' 
+  color = 'text-blue-600' 
 }) => (
-  <div className="bg-white rounded-lg shadow-sm p-6">
+  <div className="glass rounded-2xl p-6 hover:glass-strong transition-all duration-300 shadow-modern hover:shadow-modern-lg group">
     <div className="flex items-center">
-      <div className={`p-3 rounded-lg bg-gray-100`}>
+      <div className={`p-3 rounded-xl bg-gradient-to-br from-white/80 to-white/40 border border-white/30 group-hover:scale-110 transition-transform duration-300`}>
         <Icon className={`h-6 w-6 ${color}`} />
       </div>
       <div className="ml-4">
@@ -331,8 +331,8 @@ const AdminManagementTabs: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Recent Orders */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
+            <div className="glass rounded-2xl shadow-modern">
+              <div className="p-6 border-b border-white/20">
                 <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
               </div>
               <div className="p-6">
@@ -368,8 +368,8 @@ const AdminManagementTabs: React.FC = () => {
             </div>
 
             {/* Top Talent */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
+            <div className="glass rounded-2xl shadow-modern">
+              <div className="p-6 border-b border-white/20">
                 <h2 className="text-lg font-semibold text-gray-900">Top Talent</h2>
               </div>
               <div className="p-6">

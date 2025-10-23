@@ -135,12 +135,17 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Hero Section */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Get Personal ShoutOuts from Conservative Voices
-        </h1>
+      <div className="text-center mb-12">
+        <div className="glass glow-blue rounded-3xl p-8 mb-8 animate-float">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent mb-6">
+            Get Personal ShoutOuts from Conservative Voices
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Connect with your favorite political figures, commentators, and conservative leaders
+          </p>
+        </div>
       </div>
 
       {/* Featured Talent Carousel */}
@@ -157,7 +162,7 @@ const HomePage: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
-              className="p-2 text-gray-600 hover:text-primary-600 rounded-lg hover:bg-gray-100"
+              className="p-2 text-gray-600 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200"
               title="Search talent"
             >
               <MagnifyingGlassIcon className="h-5 w-5" />

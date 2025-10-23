@@ -31,46 +31,48 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   return (
     <Link
       to={`/talent/${talent.id}`}
-      className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
+      className="glass hover:glass-strong rounded-3xl shadow-modern hover:shadow-modern-lg transition-all duration-300 overflow-hidden group hover:scale-[1.02] glow-blue"
     >
       {/* Avatar */}
-      <div className="aspect-square bg-gray-100 relative">
+      <div className="aspect-square bg-gradient-to-br from-blue-50 to-red-50 relative overflow-hidden">
         {(talent.temp_avatar_url || talent.users.avatar_url) ? (
           <img
             src={talent.temp_avatar_url || talent.users.avatar_url}
             alt={talent.temp_full_name || talent.users.full_name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-primary-100">
-            <span className="text-2xl font-bold text-primary-600">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-red-100">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
               {(talent.temp_full_name || talent.users.full_name).charAt(0)}
             </span>
           </div>
         )}
         
         {/* Demand Indicator */}
-        <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${demandColors[demandLevel]}`}>
+        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium glass-strong ${demandColors[demandLevel]} border border-white/30`}>
           {demandText[demandLevel]}
         </div>
 
         {/* Charity Indicator */}
         {talent.charity_percentage && talent.charity_percentage > 0 && (
-          <div className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm">
-            <HeartIcon className="h-4 w-4 text-red-500" />
+          <div className="absolute top-3 right-3 p-2 glass-strong rounded-full glow-red animate-glow-pulse">
+            <HeartIcon className="h-4 w-4 text-red-600" />
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-6">
         {/* Position Title */}
         {talent.position && (
-          <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">
+          <p className="text-xs font-medium text-blue-600 mb-2 uppercase tracking-wider">
             {talent.position}
           </p>
         )}
-        <h3 className="font-semibold text-gray-900 mb-1">{talent.temp_full_name || talent.users.full_name}</h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+          {talent.temp_full_name || talent.users.full_name}
+        </h3>
         
         {/* Categories */}
         <div className="mb-2">
@@ -79,19 +81,19 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
               {talent.categories.slice(0, 2).map((category) => (
                 <span
                   key={category}
-                  className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full"
+                  className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-full font-medium"
                 >
                   {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
               ))}
               {talent.categories.length > 2 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                <span className="px-3 py-1 glass-strong text-gray-600 text-xs rounded-full font-medium border border-white/30">
                   +{talent.categories.length - 2} more
                 </span>
               )}
             </div>
           ) : (
-            <span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">
+            <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-full font-medium">
               {talent.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </span>
           )}
@@ -124,18 +126,19 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         {/* Price and Charity */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold text-gray-900">
+            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
               ${talent.pricing}
             </div>
-            {talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
-              <div className="text-sm text-gray-600">
-                Corporate: ${talent.corporate_pricing}
+            {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
+              <div className="text-sm text-blue-600 font-medium">
+                Corp: ${talent.corporate_pricing}
               </div>
             )}
           </div>
           {talent.charity_percentage && talent.charity_percentage > 0 && (
-            <div className="text-xs text-gray-500">
-              {talent.charity_percentage}% to charity
+            <div className="flex items-center gap-1 text-xs text-red-600 font-medium">
+              <HeartIcon className="h-3 w-3" />
+              {talent.charity_percentage}%
             </div>
           )}
         </div>
