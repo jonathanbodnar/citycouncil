@@ -15,6 +15,7 @@ import { supabase } from '../services/supabase';
 import { TalentProfile, Review, SocialAccount } from '../types';
 import { useAuth } from '../context/AuthContext';
 import VideoPlayer from '../components/VideoPlayer';
+import ShareModal from '../components/ShareModal';
 import toast from 'react-hot-toast';
 
 interface TalentWithDetails extends TalentProfile {
@@ -38,6 +39,7 @@ const TalentProfilePage: React.FC = () => {
   const [talent, setTalent] = useState<TalentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [relatedTalent, setRelatedTalent] = useState<TalentWithDetails[]>([]);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   useEffect(() => {
     if (id || username) {
@@ -237,7 +239,11 @@ const TalentProfilePage: React.FC = () => {
                 </div>
               </div>
               
-              <button className="p-2 text-gray-400 hover:text-gray-600">
+              <button 
+                onClick={() => setShareModalOpen(true)}
+                className="p-2 text-gray-400 hover:text-gray-600"
+                title="Share talent profile"
+              >
                 <ShareIcon className="h-6 w-6" />
               </button>
             </div>
@@ -472,6 +478,22 @@ const TalentProfilePage: React.FC = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Share Modal */}
+      {shareModalOpen && talent && (
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          talentName={talent.temp_full_name || talent.users.full_name}
+          talentSocialHandles={{
+            twitter: talent.social_accounts?.find(acc => acc.platform === 'twitter')?.handle,
+            facebook: talent.social_accounts?.find(acc => acc.platform === 'facebook')?.handle,
+            instagram: talent.social_accounts?.find(acc => acc.platform === 'instagram')?.handle,
+            tiktok: talent.social_accounts?.find(acc => acc.platform === 'tiktok')?.handle,
+            linkedin: talent.social_accounts?.find(acc => acc.platform === 'linkedin')?.handle,
+          }}
+        />
       )}
     </div>
   );
