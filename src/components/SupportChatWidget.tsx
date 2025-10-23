@@ -214,30 +214,54 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
             ) : messages.length > 0 ? (
               messages.map((message) => (
                 <div key={message.id} className="space-y-2">
-                  {/* User Message */}
-                  <div className="flex justify-end">
-                    <div className="bg-blue-600 text-white rounded-lg px-3 py-2 max-w-[70%]">
-                      <p className="text-sm">{message.message}</p>
-                      <p className="text-xs text-blue-100 mt-1">
-                        {new Date(message.created_at).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Admin Response */}
-                  {message.response && (
-                    <div className="flex justify-start animate-fade-in">
+                  {/* Check if this is an admin-initiated message */}
+                  {message.message.startsWith('Admin:') || message.message === '[Admin initiated conversation]' ? (
+                    /* Admin Message */
+                    <div className="flex justify-start">
                       <div className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 max-w-[70%] border-l-4 border-blue-500">
                         <div className="flex items-center space-x-1 mb-1">
                           <UserCircleIcon className="h-4 w-4 text-blue-600" />
                           <span className="text-xs font-medium text-blue-600">Admin</span>
                         </div>
-                        <p className="text-sm">{message.response}</p>
+                        <p className="text-sm">
+                          {message.message.startsWith('Admin:') 
+                            ? message.message.replace('Admin:', '').trim()
+                            : message.response || 'Message sent'
+                          }
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {message.updated_at ? new Date(message.updated_at).toLocaleTimeString() : ''}
+                          {new Date(message.created_at).toLocaleTimeString()}
                         </p>
                       </div>
                     </div>
+                  ) : (
+                    <>
+                      {/* User Message */}
+                      <div className="flex justify-end">
+                        <div className="bg-blue-600 text-white rounded-lg px-3 py-2 max-w-[70%]">
+                          <p className="text-sm">{message.message}</p>
+                          <p className="text-xs text-blue-100 mt-1">
+                            {new Date(message.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Admin Response */}
+                      {message.response && (
+                        <div className="flex justify-start animate-fade-in">
+                          <div className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 max-w-[70%] border-l-4 border-blue-500">
+                            <div className="flex items-center space-x-1 mb-1">
+                              <UserCircleIcon className="h-4 w-4 text-blue-600" />
+                              <span className="text-xs font-medium text-blue-600">Admin</span>
+                            </div>
+                            <p className="text-sm">{message.response}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {message.updated_at ? new Date(message.updated_at).toLocaleTimeString() : ''}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))

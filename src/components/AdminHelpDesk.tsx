@@ -44,6 +44,7 @@ const AdminHelpDesk: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastUpdateRef = useRef<number>(0);
 
   useEffect(() => {
     fetchConversations();
@@ -62,15 +63,26 @@ const AdminHelpDesk: React.FC = () => {
           console.log('Admin real-time update:', payload);
           console.log('Event type:', payload.eventType, 'Selected conversation:', selectedConversation);
           
-          // Only refresh selected conversation if it's the updated one
-          if (selectedConversation && payload.new && (payload.new as any)?.user_id === selectedConversation.user_id) {
-            console.log('Refreshing selected conversation');
-            refreshSelectedConversation();
+          // Throttle updates to prevent excessive refreshes (max once per second)
+          const now = Date.now();
+          if (now - lastUpdateRef.current < 1000) {
+            console.log('Throttling real-time update');
+            return;
           }
+          lastUpdateRef.current = now;
           
-          // Always refresh conversations list for sidebar updates
-          console.log('Refreshing conversations list');
-          fetchConversations();
+          // Use requestAnimationFrame for smooth updates
+          requestAnimationFrame(() => {
+            // Only refresh selected conversation if it's the updated one
+            if (selectedConversation && payload.new && (payload.new as any)?.user_id === selectedConversation.user_id) {
+              console.log('Refreshing selected conversation');
+              refreshSelectedConversation();
+            }
+            
+            // Refresh conversations list
+            console.log('Refreshing conversations list');
+            fetchConversations();
+          });
         }
       )
       .subscribe((status) => {
@@ -196,27 +208,33 @@ const AdminHelpDesk: React.FC = () => {
 
         if (error) throw error;
       } else {
-        // Create new admin message
-        const { error } = await supabase
+        // Create a placeholder user message and immediately respond to it
+        const { data: newUserMessage, error: insertError } = await supabase
           .from('help_messages')
           .insert([
             {
               user_id: selectedConversation.user_id,
-              message: `Admin: ${newMessage.trim()}`,
-              response: null,
+              message: '[Admin initiated conversation]',
+              response: newMessage.trim(),
               is_resolved: false,
-              is_human_takeover: true
+              is_human_takeover: true,
+              updated_at: new Date().toISOString()
             }
-          ]);
+          ])
+          .select()
+          .single();
 
-        if (error) throw error;
+        if (insertError) throw insertError;
       }
 
       setNewMessage('');
       toast.success('Response sent!');
       
       // Don't refresh everything, just the selected conversation
-      refreshSelectedConversation();
+      // Small delay to ensure database update is complete
+      setTimeout(() => {
+        refreshSelectedConversation();
+      }, 100);
 
     } catch (error) {
       console.error('Error sending response:', error);
