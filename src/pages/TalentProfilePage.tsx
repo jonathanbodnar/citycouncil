@@ -323,7 +323,7 @@ const TalentProfilePage: React.FC = () => {
 
             {/* Charity Info */}
             {talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0 && (
-              <div className="glass-strong p-4 rounded-2xl mb-4 border border-white/30">
+              <div className="glass-strong px-6 py-4 rounded-2xl mb-4 border border-white/30 -mx-6">
                 <div className="flex items-center">
                   <HeartIcon className="h-5 w-5 text-red-600 mr-3" />
                   <span className="font-bold text-red-800">
