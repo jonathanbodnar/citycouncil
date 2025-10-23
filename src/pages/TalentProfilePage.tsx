@@ -286,7 +286,7 @@ const TalentProfilePage: React.FC = () => {
             </p>
 
             {/* Stats - Clean Glass Layout */}
-            <div className="glass-strong rounded-2xl p-4 mb-4 border border-white/30">
+            <div className="glass-strong rounded-2xl px-6 py-4 mb-4 border border-white/30 -mx-6">
               <div className="flex items-center justify-between text-center">
                 <div className="flex-1">
                   <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">${talent.pricing}</div>
