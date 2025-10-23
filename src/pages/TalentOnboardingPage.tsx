@@ -521,6 +521,20 @@ const TalentOnboardingPage: React.FC = () => {
 
   const handleStep3Submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Step 3 form submitted!');
+    console.log('Payout data:', payoutData);
+    
+    // Validate required fields
+    if (!payoutData.account_holder_name || !payoutData.bank_name || !payoutData.account_number || !payoutData.routing_number) {
+      toast.error('Please fill in all required fields');
+      console.log('Missing required fields:', {
+        account_holder_name: !!payoutData.account_holder_name,
+        bank_name: !!payoutData.bank_name,
+        account_number: !!payoutData.account_number,
+        routing_number: !!payoutData.routing_number
+      });
+      return;
+    }
     
     try {
       // Encrypt sensitive bank account information
