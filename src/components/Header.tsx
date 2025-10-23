@@ -88,7 +88,7 @@ const Header: React.FC = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right glass-strong rounded-2xl shadow-modern ring-1 ring-white/20 focus:outline-none z-50">
+                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right glass-strong rounded-2xl shadow-modern ring-1 ring-white/20 focus:outline-none z-[100]">
                       <div className="py-1">
                         <Menu.Item>
                           {({ active }) => (

@@ -112,7 +112,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
             <div className="hidden md:flex items-center h-full">
               <div className="grid grid-cols-2 gap-8 items-center w-full">
                 {/* Desktop Text Content */}
-                <div className="text-white z-10 pr-16">
+                <div className="text-white z-10 ml-16 pr-16">
                   <div className="inline-block px-4 py-2 glass-strong text-yellow-600 text-sm font-bold rounded-2xl mb-4 border border-white/40 glow-purple">
                     ⭐ Featured Talent
                   </div>
