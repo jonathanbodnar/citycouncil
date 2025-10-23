@@ -586,11 +586,16 @@ const TalentOnboardingPage: React.FC = () => {
         setUploadingVideo(true);
         console.log('Uploading welcome video to Wasabi...');
         
-        finalVideoUrl = await uploadVideoToWasabi(
+        const uploadResult = await uploadVideoToWasabi(
           welcomeVideoFile, 
           `welcome-videos/${onboardingData?.talent.id}-welcome-${Date.now()}.mp4`
         );
         
+        if (!uploadResult.success || !uploadResult.videoUrl) {
+          throw new Error(uploadResult.error || 'Failed to upload video');
+        }
+        
+        finalVideoUrl = uploadResult.videoUrl;
         console.log('Welcome video uploaded successfully:', finalVideoUrl);
       }
 
