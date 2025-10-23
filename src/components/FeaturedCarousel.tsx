@@ -77,7 +77,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
             <div className="md:hidden flex flex-col justify-center items-center h-full py-6 space-y-4 text-center">
               {/* Mobile Content */}
               <div className="text-white">
-                <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-3">
+                <div className="inline-block px-4 py-2 glass-strong text-yellow-600 text-sm font-bold rounded-2xl mb-4 border border-white/40 glow-purple">
                   ⭐ Featured Talent
                 </div>
                 <h2 className="text-2xl font-bold mb-3">
@@ -101,7 +101,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 </div>
                 <Link
                   to={`/talent/${currentTalent.id}`}
-                  className="inline-block bg-white text-primary-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+                  className="inline-block glass-strong text-blue-600 px-8 py-4 rounded-2xl font-bold hover:glass transition-all duration-300 shadow-modern-lg border border-white/40 glow-blue"
                 >
                   Order ShoutOut
                 </Link>
@@ -113,7 +113,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
               <div className="grid grid-cols-2 gap-8 items-center w-full">
                 {/* Desktop Text Content */}
                 <div className="text-white z-10">
-                  <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-semibold rounded-full mb-4">
+                  <div className="inline-block px-4 py-2 glass-strong text-yellow-600 text-sm font-bold rounded-2xl mb-4 border border-white/40 glow-purple">
                     ⭐ Featured Talent
                   </div>
                   <h2 className="text-4xl font-bold mb-4">
@@ -137,7 +137,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   </div>
                   <Link
                     to={`/talent/${currentTalent.id}`}
-                    className="inline-block bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+                    className="inline-block glass-strong text-blue-600 px-8 py-4 rounded-2xl font-bold hover:glass transition-all duration-300 shadow-modern-lg border border-white/40 glow-blue hover:scale-105"
                   >
                     Order ShoutOut
                   </Link>

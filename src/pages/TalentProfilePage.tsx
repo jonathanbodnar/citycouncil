@@ -180,7 +180,7 @@ const TalentProfilePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 overflow-hidden mb-8">
         <div className="md:flex">
           {/* Avatar */}
           <div className="md:w-1/3">
@@ -200,14 +200,14 @@ const TalentProfilePage: React.FC = () => {
               )}
               
               {/* Demand Badge */}
-              <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium ${demand.color}`}>
+              <div className={`absolute top-4 left-4 px-4 py-2 rounded-2xl text-sm font-bold glass-strong border border-white/40 ${demand.color}`}>
                 {demand.level}
               </div>
 
               {/* Charity Badge */}
               {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
-                <div className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm">
-                  <HeartIcon className="h-6 w-6 text-red-500" />
+                <div className="absolute top-4 right-4 p-3 glass-strong rounded-2xl shadow-modern border border-white/40 glow-red animate-glow-pulse">
+                  <HeartIcon className="h-6 w-6 text-red-600" />
                 </div>
               )}
             </div>
@@ -227,7 +227,7 @@ const TalentProfilePage: React.FC = () => {
                   {talent.temp_full_name || talent.users.full_name}
                 </h1>
                 <div className="flex items-center space-x-4 mb-4">
-                  <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-modern">
                     {getCategoryLabel(talent.category)}
                   </span>
                   {talent.is_verified && (
@@ -275,18 +275,18 @@ const TalentProfilePage: React.FC = () => {
               {talent.bio}
             </p>
 
-            {/* Stats - Clean One Line Layout */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            {/* Stats - Modern Glass Layout */}
+            <div className="glass rounded-2xl p-6 mb-6 glow-blue border border-white/30">
               <div className="flex items-center justify-between text-center">
                 <div className="flex-1">
-                  <div className="text-xl font-bold text-primary-600">${talent.pricing}</div>
-                  <div className="text-xs text-gray-600">Personal</div>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">${talent.pricing}</div>
+                  <div className="text-xs text-gray-600 font-medium">Personal</div>
                   {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
-                    <div className="text-sm font-semibold text-gray-700">${talent.corporate_pricing} Corp</div>
+                    <div className="text-sm font-semibold text-blue-600">${talent.corporate_pricing} Corp</div>
                   )}
                 </div>
                 
-                <div className="flex-1 border-l border-gray-200">
+                <div className="flex-1 border-l border-white/30">
                   <div className="text-xl font-bold text-primary-600 flex items-center justify-center">
                     <ClockIcon className="h-5 w-5 mr-1" />
                     {talent.fulfillment_time_hours}h
@@ -294,18 +294,18 @@ const TalentProfilePage: React.FC = () => {
                   <div className="text-xs text-gray-600">Delivery</div>
                 </div>
                 
-                <div className="flex-1 border-l border-gray-200">
-                  <div className="text-xl font-bold text-primary-600">{talent.total_orders}</div>
-                  <div className="text-xs text-gray-600">Orders</div>
+                <div className="flex-1 border-l border-white/30">
+                  <div className="text-xl font-bold text-blue-600">{talent.total_orders}</div>
+                  <div className="text-xs text-gray-600 font-medium">Orders</div>
                 </div>
                 
                 {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
-                  <div className="flex-1 border-l border-gray-200">
-                    <div className="text-xl font-bold text-red-500 flex items-center justify-center">
+                  <div className="flex-1 border-l border-white/30">
+                    <div className="text-xl font-bold text-red-600 flex items-center justify-center">
                       <HeartIcon className="h-5 w-5 mr-1" />
                       {talent.charity_percentage}%
                     </div>
-                    <div className="text-xs text-gray-600">To Charity</div>
+                    <div className="text-xs text-gray-600 font-medium">To Charity</div>
                   </div>
                 )}
               </div>
@@ -313,10 +313,10 @@ const TalentProfilePage: React.FC = () => {
 
             {/* Charity Info */}
             {talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0 && (
-              <div className="bg-red-50 p-4 rounded-lg mb-6">
+              <div className="glass-subtle glow-red p-6 rounded-2xl mb-6 border border-white/30">
                 <div className="flex items-center">
-                  <HeartIcon className="h-5 w-5 text-red-500 mr-2" />
-                  <span className="font-medium text-red-900">
+                  <HeartIcon className="h-5 w-5 text-red-600 mr-3" />
+                  <span className="font-bold text-red-800">
                     {talent.charity_percentage}% of proceeds go to {talent.charity_name}
                   </span>
                 </div>
@@ -326,7 +326,7 @@ const TalentProfilePage: React.FC = () => {
             {/* CTA Button */}
             <Link
               to={user ? `/order/${talent.id}` : '/login'}
-              className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center justify-center"
+              className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-blue-700 hover:to-red-700 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl glow-blue hover:scale-[1.02]"
             >
               Order ShoutOut - Starting at ${talent.pricing}
             </Link>
@@ -343,7 +343,7 @@ const TalentProfilePage: React.FC = () => {
 
       {/* Social Media Links */}
       {talent.social_accounts.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Follow {talent.temp_full_name || talent.users.full_name}</h2>
           <div className="flex flex-wrap gap-4">
             {talent.social_accounts.map((account) => (
@@ -363,7 +363,7 @@ const TalentProfilePage: React.FC = () => {
       )}
 
       {/* Recent Videos Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Videos</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {talent.recent_videos.length > 0 ? (
@@ -390,7 +390,7 @@ const TalentProfilePage: React.FC = () => {
       </div>
 
       {/* Reviews Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Reviews ({talent.reviews.length})
         </h2>
@@ -444,7 +444,7 @@ const TalentProfilePage: React.FC = () => {
 
       {/* Related Talent */}
       {relatedTalent.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             More {getCategoryLabel(talent.category)}s
           </h2>
