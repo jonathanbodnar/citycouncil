@@ -173,6 +173,7 @@ export interface AdminStats {
   total_talent: number;
   active_talent: number;
   verified_talent: number;
+  promotion_participants: number;
   avg_orders_per_talent: number;
   avg_orders_per_user: number;
   avg_delivery_time_hours: number;

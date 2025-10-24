@@ -907,6 +907,12 @@ const TalentManagement: React.FC = () => {
                       <span className="text-lg">{talent.is_verified ? '✅' : '⚪'}</span>
                     </button>
                     
+                    {talent.is_participating_in_promotion && (
+                      <div className="p-2 bg-purple-50 rounded-lg" title="Participating in promotion program">
+                        <span className="text-lg">🎁</span>
+                      </div>
+                    )}
+                    
                     <button
                       onClick={() => {
                         setEditingTalent(talent);

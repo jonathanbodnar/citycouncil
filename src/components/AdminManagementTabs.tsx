@@ -86,6 +86,7 @@ const AdminManagementTabs: React.FC = () => {
         const totalUsers = users?.filter(u => u.user_type === 'user').length || 0;
         const activeTalent = talent?.filter(t => t.is_active).length || 0;
         const verifiedTalent = talent?.filter(t => t.is_verified).length || 0;
+        const promotionParticipants = talent?.filter(t => t.is_participating_in_promotion).length || 0;
         const usersWithOrders = new Set(orders?.map(o => o.user_id)).size;
         const totalTalent = talent?.length || 0;
         const avgOrdersPerTalent = totalTalent > 0 ? totalOrders / totalTalent : 0;
@@ -129,6 +130,7 @@ const AdminManagementTabs: React.FC = () => {
           total_talent: totalTalent,
           active_talent: activeTalent,
           verified_talent: verifiedTalent,
+          promotion_participants: promotionParticipants,
           avg_orders_per_talent: avgOrdersPerTalent,
           avg_orders_per_user: avgOrdersPerUser,
           avg_delivery_time_hours: avgDeliveryTimeHours
@@ -305,6 +307,12 @@ const AdminManagementTabs: React.FC = () => {
                 value={stats.verified_talent.toLocaleString()}
                 icon={UsersIcon}
                 color="text-indigo-600"
+              />
+              <StatsCard
+                title="Promotion Program"
+                value={stats.promotion_participants.toLocaleString()}
+                icon={StarIcon}
+                color="text-purple-600"
               />
               <StatsCard
                 title="Amount Refunded"
