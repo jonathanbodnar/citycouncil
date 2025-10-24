@@ -157,12 +157,11 @@ const TalentOnboardingPage: React.FC = () => {
         return;
       }
 
-      const expired = data.onboarding_expires_at && new Date(data.onboarding_expires_at) < new Date();
-      
+      // Onboarding links never expire
       setOnboardingData({
         token: token!,
         talent: data,
-        expired: expired || false
+        expired: false
       });
 
       if (data.onboarding_completed) {
