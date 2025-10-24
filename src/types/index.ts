@@ -27,6 +27,8 @@ export interface TalentProfile {
   allow_corporate_pricing?: boolean;
   is_verified?: boolean;
   promo_video_url?: string;
+  is_participating_in_promotion?: boolean;
+  promotion_claimed_at?: string;
   pricing: number;
   corporate_pricing?: number;
   fulfillment_time_hours: number;

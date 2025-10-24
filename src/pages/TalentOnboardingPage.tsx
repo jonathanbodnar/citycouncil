@@ -88,19 +88,11 @@ const TalentOnboardingPage: React.FC = () => {
 
   // Load existing bank info and restore step progress when onboarding data loads
   useEffect(() => {
-    if (!onboardingData?.talent?.id) return;
+    if (!onboardingData || !onboardingData.talent) return;
     
-    loadExistingBankInfo();
-    // Restore step progress based on completion status
-    if (!onboardingData.talent.user_id) {
-      setCurrentStep(1); // No account yet
-    } else if (!onboardingData.talent.bio || !onboardingData.talent.pricing) {
-      setCurrentStep(2); // Account created, profile incomplete
-    } else {
-      // Check if bank info exists
-      checkBankInfoAndSetStep();
-    }
-  }, [onboardingData?.talent?.id]);
+    // Don't auto-load bank info or change steps - let user navigate manually
+    // This prevents crashes when onboarding data is loading
+  }, [onboardingData]);
 
   const loadExistingBankInfo = async () => {
     if (!onboardingData?.talent?.id) return;
@@ -1510,37 +1502,7 @@ const TalentOnboardingPage: React.FC = () => {
                 {/* Video Upload */}
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Upload Promo Video *
-                    </label>
-                    <input
-                      type="file"
-                      id="welcome-video-upload"
-                      accept="video/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setWelcomeVideoFile(file);
-                          // Create preview URL
-                          const url = URL.createObjectURL(file);
-                          setWelcomeVideoUrl(url);
-                        }
-                      }}
-                      className="hidden"
-                      required
-                    />
-                    <label
-                      htmlFor="welcome-video-upload"
-                      className="flex items-center justify-center gap-2 glass-strong hover:glass border border-white/30 rounded-2xl px-6 py-4 cursor-pointer transition-all duration-300 hover:shadow-modern"
-                    >
-                      <VideoCameraIcon className="h-5 w-5 text-blue-600" />
-                      <span className="font-medium text-gray-700">
-                        {welcomeVideoFile ? welcomeVideoFile.name : 'Choose Video File'}
-                      </span>
-                    </label>
-                    <p className="mt-2 text-sm text-gray-500 text-center">
-                      Supported formats: MP4, MOV, AVI • Max size: 100MB
-                    </p>
+again
                   </div>
 
                   {/* Video Preview */}

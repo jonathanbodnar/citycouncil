@@ -45,7 +45,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion'>('orders');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -267,6 +267,7 @@ const TalentDashboard: React.FC = () => {
               { key: 'orders', label: 'Orders', count: orders.length },
               { key: 'analytics', label: 'Analytics', count: null },
               { key: 'payouts', label: 'Payouts', count: null, icon: BanknotesIcon },
+              { key: 'promotion', label: 'Promotion 🎁', count: null },
               { key: 'profile', label: 'Profile Settings', count: null },
             ].map((tab) => (
               <button
