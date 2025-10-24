@@ -17,6 +17,7 @@ import HelpPage from './pages/HelpPage';
 import ReviewPage from './pages/ReviewPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
+import EmailTestPage from './pages/EmailTestPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -32,6 +33,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/seed" element={<SeedDataPage />} />
+            <Route path="/email-test" element={<EmailTestPage />} />
             <Route path="/onboard/:token" element={<TalentOnboardingPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-service" element={<TermsOfServicePage />} />
