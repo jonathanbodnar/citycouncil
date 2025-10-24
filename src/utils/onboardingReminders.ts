@@ -35,7 +35,8 @@ export const sendOnboardingReminders = async () => {
     console.log(`Found ${incompleteTalents.length} talent(s) with incomplete onboarding`);
 
     for (const talent of incompleteTalents) {
-      if (!talent.users?.email) continue;
+      const user = Array.isArray(talent.users) ? talent.users[0] : talent.users;
+      if (!user?.email) continue;
 
       // Determine current step based on what's completed
       let currentStep = 1;
@@ -53,7 +54,7 @@ export const sendOnboardingReminders = async () => {
 
       // Only send if they haven't completed all steps
       if (currentStep < 4 || !talent.onboarding_completed) {
-        const accountCreatedAt = new Date(talent.users.created_at);
+        const accountCreatedAt = new Date(user.created_at);
         const daysSinceStart = Math.floor((Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
 
         // Send reminders on day 1, 3, 7, 14, 30
@@ -62,13 +63,13 @@ export const sendOnboardingReminders = async () => {
           const onboardingLink = `${window.location.origin}/onboard/${talent.onboarding_token}`;
           
           await emailService.sendOnboardingReminder(
-            talent.users.email,
-            talent.users.full_name || talent.temp_full_name || 'there',
+            user.email,
+            user.full_name || talent.temp_full_name || 'there',
             onboardingLink,
             currentStep
           );
           
-          console.log(`Sent onboarding reminder to ${talent.users.email} (Day ${daysSinceStart}, Step ${currentStep})`);
+          console.log(`Sent onboarding reminder to ${user.email} (Day ${daysSinceStart}, Step ${currentStep})`);
         }
       }
     }

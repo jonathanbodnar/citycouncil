@@ -18,7 +18,7 @@ class EmailService {
     this.apiUrl = `https://api.mailgun.net/v3/${this.domain}/messages`;
   }
 
-  async sendEmail({ to, subject, html, from = 'ShoutOut <noreply@shoutout.us>' }: EmailParams): Promise<boolean> {
+  async sendEmail({ to, subject, html, from = 'ShoutOut <noreply@mail.shoutout.us>' }: EmailParams): Promise<boolean> {
     try {
       if (!this.apiKey || !this.domain) {
         console.warn('Mailgun not configured. Email would be sent:', { to, subject });
