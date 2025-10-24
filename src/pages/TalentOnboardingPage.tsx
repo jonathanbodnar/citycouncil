@@ -72,8 +72,6 @@ const TalentOnboardingPage: React.FC = () => {
     routing_number: '',
     account_type: 'checking' as 'checking' | 'savings'
   });
-  const [existingBankInfo, setExistingBankInfo] = useState<any>(null);
-  const [loadingBankInfo, setLoadingBankInfo] = useState(false);
 
   // Step 4: Promo Video
   const [welcomeVideoFile, setWelcomeVideoFile] = useState<File | null>(null);
@@ -86,55 +84,6 @@ const TalentOnboardingPage: React.FC = () => {
     }
   }, [token]);
 
-  // Load existing bank info and restore step progress when onboarding data loads
-  useEffect(() => {
-    if (!onboardingData || !onboardingData.talent) return;
-    
-    // Don't auto-load bank info or change steps - let user navigate manually
-    // This prevents crashes when onboarding data is loading
-  }, [onboardingData]);
-
-  const loadExistingBankInfo = async () => {
-    if (!onboardingData?.talent?.id) return;
-    
-    setLoadingBankInfo(true);
-    try {
-      const { data, error } = await supabase
-        .from('vendor_bank_info')
-        .select('*')
-        .eq('talent_id', onboardingData.talent.id)
-        .single();
-      
-      if (!error && data) {
-        setExistingBankInfo(data);
-        setCurrentStep(4); // If bank info exists, go to Step 4
-      } else {
-        setCurrentStep(3); // No bank info, need to complete Step 3
-      }
-    } catch (error) {
-      console.log('No existing bank info found');
-      setCurrentStep(3);
-    } finally {
-      setLoadingBankInfo(false);
-    }
-  };
-
-  const checkBankInfoAndSetStep = async () => {
-    if (!onboardingData?.talent?.id) return;
-    
-    const { data } = await supabase
-      .from('vendor_bank_info')
-      .select('*')
-      .eq('talent_id', onboardingData.talent.id)
-      .single();
-    
-    if (data) {
-      setExistingBankInfo(data);
-      setCurrentStep(4);
-    } else {
-      setCurrentStep(3);
-    }
-  };
 
   const fetchOnboardingData = async () => {
     try {
@@ -1308,56 +1257,10 @@ const TalentOnboardingPage: React.FC = () => {
           )}
 
           {currentStep === 3 && (
-            <div>
+            <form onSubmit={handleStep3Submit}>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Step 3: Payout Information
               </h2>
-              
-              {existingBankInfo ? (
-                /* Show saved bank account info */
-                <div className="space-y-4">
-                  <div className="glass-strong rounded-2xl p-6 border border-white/30">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-2">Saved Bank Account</h3>
-                        <div className="space-y-2 text-sm">
-                          <p><span className="font-medium">Account Holder:</span> {existingBankInfo.account_holder_name}</p>
-                          <p><span className="font-medium">Bank:</span> {existingBankInfo.bank_name}</p>
-                          <p><span className="font-medium">Account:</span> {existingBankInfo.account_number_masked}</p>
-                          <p><span className="font-medium">Routing:</span> {existingBankInfo.routing_number_masked}</p>
-                          <p><span className="font-medium">Type:</span> {existingBankInfo.account_type}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setExistingBankInfo(null)}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(2)}
-                      className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(4)}
-                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                    >
-                      Continue
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Show bank account form */
-                <form onSubmit={handleStep3Submit}>
               
               
               <div className="space-y-4">
@@ -1449,8 +1352,6 @@ const TalentOnboardingPage: React.FC = () => {
                 </button>
               </div>
             </form>
-              )}
-            </div>
           )}
 
           {currentStep === 4 && (
