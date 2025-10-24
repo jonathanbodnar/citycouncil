@@ -27,6 +27,30 @@ class EmailService {
     `;
   }
 
+  // Email footer with address and unsubscribe
+  private getEmailFooter(unsubscribeUrl?: string): string {
+    return `
+      <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e5e7eb; text-align: center;">
+        <div style="color: #6b7280; font-size: 13px; line-height: 1.6;">
+          <p style="margin: 5px 0;"><strong>ShoutOut</strong></p>
+          <p style="margin: 5px 0;">163 Town Pl, Fairview, TX 75069</p>
+          <p style="margin: 5px 0;">
+            <a href="https://shoutout.us" style="color: #2563eb; text-decoration: none;">shoutout.us</a> • 
+            <a href="mailto:hello@shoutout.us" style="color: #2563eb; text-decoration: none;">hello@shoutout.us</a>
+          </p>
+          ${unsubscribeUrl ? `
+          <p style="margin: 15px 0 5px 0;">
+            <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline; font-size: 12px;">Unsubscribe from these emails</a>
+          </p>
+          ` : ''}
+          <p style="margin: 15px 0 5px 0; color: #9ca3af; font-size: 11px;">
+            You're receiving this email because you have an account with ShoutOut or placed an order with our platform.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
   async sendEmail({ to, subject, html, from = 'ShoutOut <noreply@mail.shoutout.us>' }: EmailParams): Promise<boolean> {
     try {
       if (!this.supabaseUrl) {
@@ -107,6 +131,7 @@ class EmailService {
         <p style="color: #666; font-size: 12px; margin-top: 30px;">
           Your onboarding link never expires. Complete your setup whenever you're ready!
         </p>
+        ${this.getEmailFooter('https://shoutout.us/settings/notifications')}
       </div>
     `;
 
@@ -139,6 +164,7 @@ class EmailService {
           <li>Share at least one ShoutOut video on Instagram</li>
         </ul>
         <p>Keep up the great work!</p>
+        ${this.getEmailFooter('https://shoutout.us/settings/notifications')}
       </div>
     `;
 
@@ -171,6 +197,7 @@ class EmailService {
         <a href="https://shoutout.us/dashboard" style="background: linear-gradient(to right, #2563eb, #dc2626); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; display: inline-block; font-weight: bold;">
           View Order Details
         </a>
+        ${this.getEmailFooter('https://shoutout.us/settings/notifications')}
       </div>
     `;
 
@@ -197,6 +224,7 @@ class EmailService {
         <a href="https://shoutout.us/dashboard" style="background: linear-gradient(to right, #dc2626, #2563eb); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; display: inline-block; font-weight: bold;">
           Complete Order Now
         </a>
+        ${this.getEmailFooter('https://shoutout.us/settings/notifications')}
       </div>
     `;
 
@@ -266,6 +294,7 @@ class EmailService {
         <p style="color: #666; font-size: 12px; margin-top: 30px;">
           You'll receive another email when your ShoutOut is ready!
         </p>
+        ${this.getEmailFooter()}
       </div>
     `;
 
@@ -305,6 +334,7 @@ class EmailService {
         <a href="https://shoutout.us/dashboard" style="background: #f3f4f6; color: #374151; padding: 12px 24px; text-decoration: none; border-radius: 10px; display: inline-block; margin-top: 20px;">
           View in Dashboard
         </a>
+        ${this.getEmailFooter()}
       </div>
     `;
 
