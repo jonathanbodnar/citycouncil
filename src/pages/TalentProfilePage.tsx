@@ -40,6 +40,7 @@ const TalentProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [relatedTalent, setRelatedTalent] = useState<TalentWithDetails[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
 
   useEffect(() => {
     if (id || username) {
@@ -182,21 +183,49 @@ const TalentProfilePage: React.FC = () => {
       {/* Hero Section */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 overflow-hidden mb-8">
         <div className="md:flex">
-          {/* Avatar */}
+          {/* Avatar / Promo Video */}
           <div className="md:w-1/3">
-            <div className="h-full min-h-[400px] bg-gray-100 relative">
-              {(talent.temp_avatar_url || talent.users.avatar_url) ? (
-                <img
-                  src={talent.temp_avatar_url || talent.users.avatar_url}
-                  alt={talent.temp_full_name || talent.users.full_name}
+            <div className="h-full min-h-[400px] bg-gray-100 relative group">
+              {playingPromoVideo && talent.promo_video_url ? (
+                /* Playing Promo Video */
+                <video
+                  src={talent.promo_video_url}
+                  autoPlay
+                  controls
+                  onEnded={() => setPlayingPromoVideo(false)}
                   className="w-full h-full object-cover"
-                />
+                >
+                  Your browser does not support the video tag.
+                </video>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-primary-100">
-                  <span className="text-6xl font-bold text-primary-600">
-                    {(talent.temp_full_name || talent.users.full_name).charAt(0)}
-                  </span>
-                </div>
+                <>
+                  {/* Profile Image */}
+                  {(talent.temp_avatar_url || talent.users.avatar_url) ? (
+                    <img
+                      src={talent.temp_avatar_url || talent.users.avatar_url}
+                      alt={talent.temp_full_name || talent.users.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-primary-100">
+                      <span className="text-6xl font-bold text-primary-600">
+                        {(talent.temp_full_name || talent.users.full_name).charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Play Button Overlay - Only show if promo video exists */}
+                  {talent.promo_video_url && (
+                    <button
+                      onClick={() => setPlayingPromoVideo(true)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    >
+                      <div className="glass-strong p-6 rounded-full border border-white/40 glow-blue">
+                        <PlayIcon className="h-12 w-12 text-white" />
+                      </div>
+                    </button>
+                  )}
+                </>
               )}
               
               {/* Demand Badge */}

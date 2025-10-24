@@ -75,7 +75,7 @@ const TalentOnboardingPage: React.FC = () => {
   const [existingBankInfo, setExistingBankInfo] = useState<any>(null);
   const [loadingBankInfo, setLoadingBankInfo] = useState(false);
 
-  // Step 4: Welcome Video
+  // Step 4: Promo Video
   const [welcomeVideoFile, setWelcomeVideoFile] = useState<File | null>(null);
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState('');
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -686,7 +686,7 @@ const TalentOnboardingPage: React.FC = () => {
       const { error: videoError } = await supabase
         .from('talent_profiles')
         .update({
-          welcome_video_url: finalVideoUrl,
+          promo_video_url: finalVideoUrl,
           onboarding_completed: true,
           is_active: true, // Activate talent when onboarding completes
           onboarding_token: null,
@@ -740,7 +740,7 @@ const TalentOnboardingPage: React.FC = () => {
     { number: 1, title: 'Account Setup', icon: UserIcon },
     { number: 2, title: 'Profile Details', icon: UserIcon },
     { number: 3, title: 'Payout Setup', icon: CreditCardIcon },
-    { number: 4, title: 'Welcome Video', icon: VideoCameraIcon }
+    { number: 4, title: 'Promo Video', icon: VideoCameraIcon }
   ];
 
   return (
@@ -1453,7 +1453,7 @@ const TalentOnboardingPage: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
-                  Continue to Welcome Video
+                  Continue to Promo Video
                 </button>
               </div>
             </form>
@@ -1464,14 +1464,14 @@ const TalentOnboardingPage: React.FC = () => {
           {currentStep === 4 && (
             <form onSubmit={handleStep4Submit}>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Step 4: Welcome Video
+                Step 4: Promo Video
               </h2>
               
               <div className="glass-strong rounded-2xl p-6 mb-6 border border-white/30">
                 <div className="text-center mb-6">
                   <VideoCameraIcon className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Record Your Welcome Video
+                    Record Your Promo Video
                   </h3>
                   <p className="text-gray-600">
                     Create a 30-60 second introduction video to welcome potential customers
@@ -1511,7 +1511,7 @@ const TalentOnboardingPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Upload Welcome Video *
+                      Upload Promo Video *
                     </label>
                     <input
                       type="file"
