@@ -88,22 +88,22 @@ const TalentOnboardingPage: React.FC = () => {
 
   // Load existing bank info and restore step progress when onboarding data loads
   useEffect(() => {
-    if (onboardingData?.talent.id) {
-      loadExistingBankInfo();
-      // Restore step progress based on completion status
-      if (!onboardingData.talent.user_id) {
-        setCurrentStep(1); // No account yet
-      } else if (!onboardingData.talent.bio || !onboardingData.talent.pricing) {
-        setCurrentStep(2); // Account created, profile incomplete
-      } else {
-        // Check if bank info exists
-        checkBankInfoAndSetStep();
-      }
+    if (!onboardingData?.talent?.id) return;
+    
+    loadExistingBankInfo();
+    // Restore step progress based on completion status
+    if (!onboardingData.talent.user_id) {
+      setCurrentStep(1); // No account yet
+    } else if (!onboardingData.talent.bio || !onboardingData.talent.pricing) {
+      setCurrentStep(2); // Account created, profile incomplete
+    } else {
+      // Check if bank info exists
+      checkBankInfoAndSetStep();
     }
-  }, [onboardingData?.talent.id]);
+  }, [onboardingData?.talent?.id]);
 
   const loadExistingBankInfo = async () => {
-    if (!onboardingData?.talent.id) return;
+    if (!onboardingData?.talent?.id) return;
     
     setLoadingBankInfo(true);
     try {
@@ -128,7 +128,7 @@ const TalentOnboardingPage: React.FC = () => {
   };
 
   const checkBankInfoAndSetStep = async () => {
-    if (!onboardingData?.talent.id) return;
+    if (!onboardingData?.talent?.id) return;
     
     const { data } = await supabase
       .from('vendor_bank_info')
