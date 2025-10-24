@@ -16,6 +16,17 @@ class EmailService {
     this.supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
   }
 
+  // Email logo header
+  private getEmailHeader(): string {
+    return `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+          <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#2563eb">ShoutOut</text>
+        </svg>
+      </div>
+    `;
+  }
+
   async sendEmail({ to, subject, html, from = 'ShoutOut <noreply@mail.shoutout.us>' }: EmailParams): Promise<boolean> {
     try {
       if (!this.supabaseUrl) {
@@ -71,7 +82,8 @@ class EmailService {
     };
 
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        ${this.getEmailHeader()}
         <h1 style="color: #2563eb;">👋 Complete Your ShoutOut Setup</h1>
         <p>Hi ${fullName},</p>
         <p>You're almost ready to start earning with ShoutOut! You have ${4 - currentStep + 1} step${4 - currentStep > 0 ? 's' : ''} remaining.</p>
@@ -107,7 +119,8 @@ class EmailService {
 
   async sendPromotionClaimed(email: string, fullName: string): Promise<boolean> {
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        ${this.getEmailHeader()}
         <h1 style="color: #7c3aed;">🎁 Promotion Package Claimed!</h1>
         <p>Hi ${fullName},</p>
         <p>Congratulations! You're now part of the ShoutOut Promotion Program.</p>
@@ -143,7 +156,8 @@ class EmailService {
     deadline: string;
   }): Promise<boolean> {
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        ${this.getEmailHeader()}
         <h1 style="color: #2563eb;">🎬 New ShoutOut Order!</h1>
         <p>Hi ${talentName},</p>
         <p>You have a new order request!</p>
@@ -172,7 +186,8 @@ class EmailService {
     hoursLeft: number;
   }): Promise<boolean> {
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        ${this.getEmailHeader()}
         <h1 style="color: #dc2626;">⏰ Order Deadline Approaching!</h1>
         <p>Hi ${talentName},</p>
         <p><strong>Reminder:</strong> You have less than ${orderDetails.hoursLeft} hours left to complete your order for ${orderDetails.userName}.</p>
@@ -203,7 +218,8 @@ class EmailService {
     estimatedDelivery: string;
   }): Promise<boolean> {
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        ${this.getEmailHeader()}
         <h1 style="color: #2563eb;">🎉 Order Confirmed!</h1>
         <p>Hi ${userName},</p>
         <p>Thank you for your order! Here's your receipt:</p>
@@ -265,7 +281,8 @@ class EmailService {
     videoUrl: string;
   }): Promise<boolean> {
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        ${this.getEmailHeader()}
         <h1 style="color: #22c55e;">✨ Your ShoutOut is Ready!</h1>
         <p>Hi ${userName},</p>
         <p>Great news! ${orderDetails.talentName} has completed your personalized ShoutOut video!</p>
