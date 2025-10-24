@@ -31,6 +31,8 @@ const TalentManagement: React.FC = () => {
   const [filteredTalents, setFilteredTalents] = useState<TalentWithUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const talentsPerPage = 10;
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
   const [newTalent, setNewTalent] = useState({
@@ -789,7 +791,9 @@ const TalentManagement: React.FC = () => {
         
         {filteredTalents.length > 0 ? (
           <div className="space-y-4 p-6">
-            {filteredTalents.map((talent) => (
+            {filteredTalents
+              .slice((currentPage - 1) * talentsPerPage, currentPage * talentsPerPage)
+              .map((talent) => (
               <div key={talent.id} className="glass-subtle rounded-2xl p-6 border border-white/30 hover:glass transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -841,15 +845,6 @@ const TalentManagement: React.FC = () => {
                         >
                           <LinkIcon className="h-4 w-4" />
                           Onboarding Link
-                        </button>
-                        
-                        <button
-                          onClick={() => regenerateOnboardingToken(talent.id)}
-                          className="flex items-center gap-1 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                          title="Generate new onboarding token (expires old link)"
-                        >
-                          <ClockIcon className="h-4 w-4" />
-                          Renew
                         </button>
                       </>
                     )}
