@@ -661,6 +661,177 @@ const TalentDashboard: React.FC = () => {
         <PayoutsDashboard />
       )}
 
+      {/* Promotion Tab */}
+      {activeTab === 'promotion' && (
+        <div className="space-y-6">
+          {/* Onboarding Bonus */}
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-8">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-3">
+                🎉 Onboarding Bonus
+              </h2>
+              <p className="text-gray-600 text-lg">Get rewarded for starting strong!</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="glass rounded-2xl p-6 border border-white/30 text-center">
+                <div className="text-5xl font-bold text-green-600 mb-2">$250</div>
+                <div className="text-sm text-gray-600">Bonus Payment</div>
+                <p className="text-xs text-gray-500 mt-2">After 10 orders in 30 days</p>
+              </div>
+              <div className="glass rounded-2xl p-6 border border-white/30 text-center">
+                <div className="text-5xl font-bold text-blue-600 mb-2">0%</div>
+                <div className="text-sm text-gray-600">Platform Fees</div>
+                <p className="text-xs text-gray-500 mt-2">On your first 10 orders</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p className="text-sm text-blue-800 text-center">
+                <strong>How it works:</strong> Complete 10 orders within your first 30 days and we'll pay you an extra $250 bonus, plus you keep 100% of your earnings (no platform fees) on those first 10 orders!
+              </p>
+            </div>
+          </div>
+
+          {/* ShoutOut Promotion Package */}
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-8">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-blue-600 bg-clip-text text-transparent mb-3">
+                ShoutOut Promotion Package
+              </h2>
+              <div className="inline-block glass rounded-2xl px-6 py-3 border border-white/30">
+                <span className="text-2xl font-bold text-green-600">$0</span>
+                <span className="text-gray-600 ml-2">/ month</span>
+              </div>
+            </div>
+
+            {/* What You Get */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">💎 What You Get:</h3>
+              <div className="glass rounded-2xl p-6 border border-white/30">
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">📢</div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-lg text-gray-900 mb-2">$200/month in Ad Spend</h4>
+                    <p className="text-gray-600">
+                      We'll dedicate $200 per month promoting YOUR ShoutOut profile through Rumble and Meta ads. 
+                      Get more visibility and orders without spending a dime!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* How to Get It */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">✅ How to Qualify:</h3>
+              <div className="space-y-4">
+                <div className="glass rounded-2xl p-4 border border-white/30">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">🔗</div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">Add Link to Your Social Bio</h4>
+                      <p className="text-sm text-gray-600">Add your ShoutOut profile link to your Instagram/X bio (or linktree)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-2xl p-4 border border-white/30">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">📱</div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-2">Post Promo Video Twice Monthly</h4>
+                      <p className="text-sm text-gray-600 mb-2">Post your ShoutOut promo video to your stories 2x per month</p>
+                      <div className="flex gap-2 text-sm">
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText('@shoutoutforus');
+                            toast.success('Copied @shoutoutforus!');
+                          }}
+                          className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30"
+                        >
+                          📋 @shoutoutforus (Instagram)
+                        </button>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText('@shoutoutforus');
+                            toast.success('Copied @shoutoutforus!');
+                          }}
+                          className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30"
+                        >
+                          📋 @shoutoutforus (X)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-2xl p-4 border border-white/30">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">🎬</div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">Post at Least One ShoutOut Video</h4>
+                      <p className="text-sm text-gray-600 mb-2">Share at least one of your completed ShoutOut videos on Instagram</p>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText('@shoutoutforus');
+                          toast.success('Copied @shoutoutforus!');
+                        }}
+                        className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
+                      >
+                        📋 Tag @shoutoutforus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Claim Button */}
+            {!talentProfile?.is_participating_in_promotion ? (
+              <button
+                onClick={async () => {
+                  try {
+                    const { error } = await supabase
+                      .from('talent_profiles')
+                      .update({
+                        is_participating_in_promotion: true,
+                        promotion_claimed_at: new Date().toISOString()
+                      })
+                      .eq('id', talentProfile?.id);
+
+                    if (error) throw error;
+
+                    toast.success('🎉 Promotion Package Claimed! Welcome to the program!');
+                    // Refresh talent data
+                    fetchTalentData();
+                  } catch (error) {
+                    console.error('Error claiming promotion:', error);
+                    toast.error('Failed to claim promotion package');
+                  }
+                }}
+                className="w-full bg-gradient-to-r from-red-600 to-blue-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-red-700 hover:to-blue-700 transition-all duration-300 shadow-modern-lg hover:shadow-modern-xl glow-blue hover:scale-[1.02]"
+              >
+                🎁 Claim Promotion Package
+              </button>
+            ) : (
+              <div className="glass-strong rounded-2xl p-6 border border-green-500/30 bg-green-50/50">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">✅</div>
+                  <h3 className="text-xl font-bold text-green-800 mb-2">You're In the Promotion Program!</h3>
+                  <p className="text-green-700">
+                    Claimed on {new Date(talentProfile.promotion_claimed_at!).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm text-green-600 mt-2">
+                    Keep posting and tagging us to maintain your $200/month ad spend!
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Profile Tab */}
       {activeTab === 'profile' && (
         <div className="glass rounded-2xl shadow-modern border border-gray-200 p-6">
