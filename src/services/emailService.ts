@@ -8,53 +8,48 @@ interface EmailParams {
 }
 
 class EmailService {
-  private apiKey: string;
-  private domain: string;
-  private apiUrl: string;
+  private supabaseUrl: string;
+  private supabaseAnonKey: string;
 
   constructor() {
-    this.apiKey = process.env.REACT_APP_MAILGUN_API_KEY || '';
-    this.domain = process.env.REACT_APP_MAILGUN_DOMAIN || '';
-    this.apiUrl = `https://api.mailgun.net/v3/${this.domain}/messages`;
+    this.supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
+    this.supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
   }
 
   async sendEmail({ to, subject, html, from = 'ShoutOut <noreply@mail.shoutout.us>' }: EmailParams): Promise<boolean> {
     try {
-      console.log('Mailgun Config Check:', {
-        apiKey: this.apiKey ? '✅ Set' : '❌ Missing',
-        domain: this.domain || '❌ Missing',
-        apiUrl: this.apiUrl
-      });
-
-      if (!this.apiKey || !this.domain) {
-        console.warn('Mailgun not configured. Email would be sent:', { to, subject });
-        console.warn('IMPORTANT: Mailgun emails must be sent from backend, not frontend!');
-        console.warn('Consider setting up a backend API endpoint for email sending.');
+      if (!this.supabaseUrl) {
+        console.error('Supabase URL not configured');
         return false;
       }
 
-      const formData = new FormData();
-      formData.append('from', from);
-      formData.append('to', to);
-      formData.append('subject', subject);
-      formData.append('html', html);
+      console.log('Sending email via Supabase Edge Function:', { to, subject });
 
-      const response = await fetch(this.apiUrl, {
+      // Call Supabase Edge Function for email sending
+      const response = await fetch(`${this.supabaseUrl}/functions/v1/send-email`, {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${btoa(`api:${this.apiKey}`)}`,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.supabaseAnonKey}`,
         },
-        body: formData
+        body: JSON.stringify({
+          to,
+          subject,
+          html,
+          from
+        })
       });
 
-      if (!response.ok) {
-        throw new Error(`Mailgun API error: ${response.statusText}`);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Email sending failed');
       }
 
-      console.log('Email sent successfully to:', to);
+      console.log('Email sent successfully via edge function:', result);
       return true;
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('Error sending email via edge function:', error);
       return false;
     }
   }
