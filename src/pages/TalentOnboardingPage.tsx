@@ -787,7 +787,7 @@ const TalentOnboardingPage: React.FC = () => {
         </div>
 
         {/* Welcome Message */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div className={`bg-white rounded-lg shadow-sm p-6 mb-8 ${currentStep === 4 ? 'hidden' : ''}`}>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Welcome to ShoutOut!
           </h1>
@@ -1510,11 +1510,12 @@ const TalentOnboardingPage: React.FC = () => {
                 {/* Video Upload */}
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       Upload Welcome Video *
                     </label>
                     <input
                       type="file"
+                      id="welcome-video-upload"
                       accept="video/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
@@ -1525,11 +1526,20 @@ const TalentOnboardingPage: React.FC = () => {
                           setWelcomeVideoUrl(url);
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="hidden"
                       required
                     />
-                    <p className="mt-1 text-sm text-gray-500">
-                      Supported formats: MP4, MOV, AVI. Max size: 100MB
+                    <label
+                      htmlFor="welcome-video-upload"
+                      className="flex items-center justify-center gap-2 glass-strong hover:glass border border-white/30 rounded-2xl px-6 py-4 cursor-pointer transition-all duration-300 hover:shadow-modern"
+                    >
+                      <VideoCameraIcon className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium text-gray-700">
+                        {welcomeVideoFile ? welcomeVideoFile.name : 'Choose Video File'}
+                      </span>
+                    </label>
+                    <p className="mt-2 text-sm text-gray-500 text-center">
+                      Supported formats: MP4, MOV, AVI • Max size: 100MB
                     </p>
                   </div>
 
