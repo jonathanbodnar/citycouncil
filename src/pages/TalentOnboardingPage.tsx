@@ -72,6 +72,8 @@ const TalentOnboardingPage: React.FC = () => {
     routing_number: '',
     account_type: 'checking' as 'checking' | 'savings'
   });
+  const [existingBankInfo, setExistingBankInfo] = useState<any>(null);
+  const [loadingBankInfo, setLoadingBankInfo] = useState(false);
 
   // Step 4: Welcome Video
   const [welcomeVideoFile, setWelcomeVideoFile] = useState<File | null>(null);
@@ -83,6 +85,64 @@ const TalentOnboardingPage: React.FC = () => {
       fetchOnboardingData();
     }
   }, [token]);
+
+  // Load existing bank info and restore step progress when onboarding data loads
+  useEffect(() => {
+    if (onboardingData?.talent.id) {
+      loadExistingBankInfo();
+      // Restore step progress based on completion status
+      if (!onboardingData.talent.user_id) {
+        setCurrentStep(1); // No account yet
+      } else if (!onboardingData.talent.bio || !onboardingData.talent.pricing) {
+        setCurrentStep(2); // Account created, profile incomplete
+      } else {
+        // Check if bank info exists
+        checkBankInfoAndSetStep();
+      }
+    }
+  }, [onboardingData?.talent.id]);
+
+  const loadExistingBankInfo = async () => {
+    if (!onboardingData?.talent.id) return;
+    
+    setLoadingBankInfo(true);
+    try {
+      const { data, error } = await supabase
+        .from('vendor_bank_info')
+        .select('*')
+        .eq('talent_id', onboardingData.talent.id)
+        .single();
+      
+      if (!error && data) {
+        setExistingBankInfo(data);
+        setCurrentStep(4); // If bank info exists, go to Step 4
+      } else {
+        setCurrentStep(3); // No bank info, need to complete Step 3
+      }
+    } catch (error) {
+      console.log('No existing bank info found');
+      setCurrentStep(3);
+    } finally {
+      setLoadingBankInfo(false);
+    }
+  };
+
+  const checkBankInfoAndSetStep = async () => {
+    if (!onboardingData?.talent.id) return;
+    
+    const { data } = await supabase
+      .from('vendor_bank_info')
+      .select('*')
+      .eq('talent_id', onboardingData.talent.id)
+      .single();
+    
+    if (data) {
+      setExistingBankInfo(data);
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(3);
+    }
+  };
 
   const fetchOnboardingData = async () => {
     try {
@@ -551,10 +611,10 @@ const TalentOnboardingPage: React.FC = () => {
         payoutData.routing_number
       );
 
-      // Save encrypted bank information
+      // Save encrypted bank information (upsert to handle existing records)
       const { error: bankError } = await supabase
         .from('vendor_bank_info')
-        .insert([{
+        .upsert({
           talent_id: onboardingData?.talent.id,
           account_holder_name: payoutData.account_holder_name,
           bank_name: payoutData.bank_name,
@@ -568,7 +628,9 @@ const TalentOnboardingPage: React.FC = () => {
           account_number_masked: bankEncryption.maskAccountNumber(payoutData.account_number),
           routing_number_masked: bankEncryption.maskRoutingNumber(payoutData.routing_number),
           is_verified: false
-        }]);
+        }, {
+          onConflict: 'talent_id'
+        });
 
       if (bankError) throw bankError;
       console.log('Bank information encrypted and saved successfully');
@@ -1254,18 +1316,57 @@ const TalentOnboardingPage: React.FC = () => {
           )}
 
           {currentStep === 3 && (
-            <form 
-              onSubmit={(e) => {
-                console.log('Form onSubmit triggered');
-                handleStep3Submit(e);
-              }}
-              onInvalid={(e) => {
-                console.log('Form validation failed:', e);
-              }}
-            >
+            <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Step 3: Payout Information
               </h2>
+              
+              {existingBankInfo ? (
+                /* Show saved bank account info */
+                <div className="space-y-4">
+                  <div className="glass-strong rounded-2xl p-6 border border-white/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Saved Bank Account</h3>
+                        <div className="space-y-2 text-sm">
+                          <p><span className="font-medium">Account Holder:</span> {existingBankInfo.account_holder_name}</p>
+                          <p><span className="font-medium">Bank:</span> {existingBankInfo.bank_name}</p>
+                          <p><span className="font-medium">Account:</span> {existingBankInfo.account_number_masked}</p>
+                          <p><span className="font-medium">Routing:</span> {existingBankInfo.routing_number_masked}</p>
+                          <p><span className="font-medium">Type:</span> {existingBankInfo.account_type}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExistingBankInfo(null)}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(2)}
+                      className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(4)}
+                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Show bank account form */
+                <form onSubmit={handleStep3Submit}>
+              
               
               <div className="space-y-4">
                 <div>
@@ -1350,16 +1451,14 @@ const TalentOnboardingPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  onClick={(e) => {
-                    console.log('Button clicked!');
-                    console.log('Form data at click:', payoutData);
-                  }}
                   className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   Continue to Welcome Video
                 </button>
               </div>
             </form>
+              )}
+            </div>
           )}
 
           {currentStep === 4 && (
