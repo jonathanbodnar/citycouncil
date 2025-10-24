@@ -24,6 +24,8 @@ import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
 import PayoutsDashboard from './PayoutsDashboard';
 import { uploadVideoToWasabi } from '../services/videoUpload';
+import { emailService } from '../services/emailService';
+import { notificationService } from '../services/notificationService';
 import toast from 'react-hot-toast';
 
 interface OrderWithUser extends Order {
@@ -129,6 +131,42 @@ const TalentDashboard: React.FC = () => {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Send delivery notifications
+      try {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('user_id, users!orders_user_id_fkey (email, full_name)')
+          .eq('id', orderId)
+          .single();
+
+        if (orderData) {
+          const userData = (orderData as any).users;
+          
+          // Email user that ShoutOut is ready
+          if (userData?.email && uploadResult.videoUrl) {
+            await emailService.sendOrderDelivered(
+              userData.email,
+              userData.full_name,
+              {
+                talentName: user?.full_name || 'Your talent',
+                videoUrl: uploadResult.videoUrl
+              }
+            );
+          }
+
+          // In-app notification for user
+          if ((orderData as any).user_id) {
+            await notificationService.notifyOrderDelivered(
+              (orderData as any).user_id,
+              orderId,
+              user?.full_name || 'Your talent'
+            );
+          }
+        }
+      } catch (notifError) {
+        console.error('Error sending delivery notifications:', notifError);
+      }
 
       toast.success('Video uploaded and order completed!');
       fetchTalentData();
@@ -801,6 +839,16 @@ const TalentDashboard: React.FC = () => {
                       .eq('id', talentProfile?.id);
 
                     if (error) throw error;
+
+                    // Send email notification
+                    if (user?.email && user?.full_name) {
+                      await emailService.sendPromotionClaimed(user.email, user.full_name);
+                    }
+
+                    // Create in-app notification
+                    if (user?.id) {
+                      await notificationService.notifyPromotionClaimed(user.id);
+                    }
 
                     toast.success('🎉 Promotion Package Claimed! Welcome to the program!');
                     // Refresh talent data

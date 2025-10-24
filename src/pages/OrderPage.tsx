@@ -14,6 +14,8 @@ import { TalentProfile } from '../types';
 import { useAuth } from '../context/AuthContext';
 import FortisPaymentForm from '../components/FortisPaymentForm';
 import { lunarPayService } from '../services/lunarPayService';
+import { emailService } from '../services/emailService';
+import { notificationService } from '../services/notificationService';
 import toast from 'react-hot-toast';
 
 interface OrderFormData {
@@ -187,6 +189,59 @@ const OrderPage: React.FC = () => {
         .single();
 
       if (orderError) throw orderError;
+
+      // Send notifications and emails
+      try {
+        // Notify talent of new order (email + in-app)
+        if (talent.users?.email && talent.users?.full_name) {
+          await emailService.sendNewOrderNotification(
+            talent.users.email,
+            talent.users.full_name,
+            {
+              userName: user.full_name,
+              amount: pricing.total,
+              requestDetails: orderData.requestDetails,
+              deadline: new Date(fulfillmentDeadline).toLocaleDateString()
+            }
+          );
+        }
+
+        if (talent.user_id) {
+          await notificationService.notifyNewOrder(
+            talent.user_id,
+            order.id,
+            user.full_name,
+            pricing.total
+          );
+        }
+
+        // Send user order confirmation email with receipt
+        if (user.email) {
+          await emailService.sendOrderConfirmation(
+            user.email,
+            user.full_name,
+            {
+              talentName: talent.temp_full_name || talent.users.full_name,
+              amount: pricing.subtotal,
+              adminFee: pricing.adminFee,
+              charityAmount: pricing.charityAmount,
+              total: pricing.total,
+              requestDetails: orderData.requestDetails,
+              estimatedDelivery: new Date(fulfillmentDeadline).toLocaleDateString()
+            }
+          );
+        }
+
+        // Create in-app notification for user
+        await notificationService.notifyOrderConfirmed(
+          user.id,
+          order.id,
+          talent.temp_full_name || talent.users.full_name
+        );
+      } catch (notifError) {
+        console.error('Error sending notifications:', notifError);
+        // Don't fail the order if notifications fail
+      }
 
       // Process talent payout (admin fee is already deducted)
       await processTalentPayout(order, pricing.subtotal - pricing.adminFee);
