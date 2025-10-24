@@ -744,7 +744,7 @@ const TalentOnboardingPage: React.FC = () => {
           </div>
           
           {/* Profile Preview Card */}
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+          <div className={`bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 ${currentStep === 4 ? 'hidden' : ''}`}>
             <div className="flex min-h-[400px]">
               {/* Profile Image - Left Side (40% width, full height) */}
               <div className="w-2/5">
