@@ -26,7 +26,7 @@ class EmailService {
       console.log('Sending email via Supabase Edge Function:', { to, subject });
 
       // Call Supabase Edge Function for email sending
-      const response = await fetch(`${this.supabaseUrl}/functions/v1/send-email`, {
+      const response = await fetch(`${this.supabaseUrl}/functions/v1/send-mailgun`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
