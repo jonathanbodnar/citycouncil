@@ -20,8 +20,16 @@ class EmailService {
 
   async sendEmail({ to, subject, html, from = 'ShoutOut <noreply@mail.shoutout.us>' }: EmailParams): Promise<boolean> {
     try {
+      console.log('Mailgun Config Check:', {
+        apiKey: this.apiKey ? '✅ Set' : '❌ Missing',
+        domain: this.domain || '❌ Missing',
+        apiUrl: this.apiUrl
+      });
+
       if (!this.apiKey || !this.domain) {
         console.warn('Mailgun not configured. Email would be sent:', { to, subject });
+        console.warn('IMPORTANT: Mailgun emails must be sent from backend, not frontend!');
+        console.warn('Consider setting up a backend API endpoint for email sending.');
         return false;
       }
 
