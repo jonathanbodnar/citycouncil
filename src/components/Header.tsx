@@ -69,12 +69,12 @@ const Header: React.FC = () => {
                 </button>
 
                 {/* User Dropdown */}
-                <Menu as="div" className="relative">
-                  <Menu.Button className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100">
-                    <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                      <UserCircleIcon className="h-6 w-6 text-primary-600" />
+                <Menu as="div" className="relative z-[10000]">
+                  <Menu.Button className="flex items-center space-x-2 p-2 rounded-xl hover:bg-white/10 transition-all duration-200">
+                    <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
+                      <UserCircleIcon className="h-6 w-6 text-white" />
                     </div>
-                    <span className="hidden md:block text-sm font-medium text-gray-700">
+                    <span className="hidden md:block text-sm font-medium text-white">
                       {user.full_name}
                     </span>
                   </Menu.Button>

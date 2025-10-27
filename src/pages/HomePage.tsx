@@ -179,10 +179,10 @@ const HomePage: React.FC = () => {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
               selectedCategory === 'all'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'glass-strong text-white shadow-lg border-white/30'
+                : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
             }`}
           >
             All Categories
@@ -193,10 +193,10 @@ const HomePage: React.FC = () => {
               <button
                 key={category.key}
                 onClick={() => setSelectedCategory(category.key as TalentCategory)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   selectedCategory === category.key
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'glass-strong text-white shadow-lg border-white/30'
+                    : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
                 }`}
               >
                 {category.label}
