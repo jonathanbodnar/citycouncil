@@ -16,7 +16,7 @@ const EmailTestPage: React.FC = () => {
         subject: '✅ Mailgun Test Email from ShoutOut',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #2563eb;">🎉 Mailgun Configuration Test</h1>
+            <h1 style="color: #111827;">🎉 Mailgun Configuration Test</h1>
             <p>This is a test email sent from:</p>
             <div style="background: #eff6ff; padding: 15px; border-radius: 10px; margin: 20px 0;">
               <p><strong>From:</strong> ShoutOut &lt;noreply@mail.shoutout.us&gt;</p>
