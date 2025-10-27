@@ -88,15 +88,15 @@ const Header: React.FC = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right glass-strong rounded-2xl shadow-modern ring-1 ring-white/20 focus:outline-none z-[100]">
+                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right glass-strong rounded-2xl shadow-modern-xl ring-1 ring-white/20 focus:outline-none z-[9999]" style={{ background: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(25px)' }}>
                       <div className="py-1">
                         <Menu.Item>
                           {({ active }) => (
                             <Link
                               to="/dashboard"
                               className={`${
-                                active ? 'bg-gray-100' : ''
-                              } flex items-center px-4 py-2 text-sm text-gray-700`}
+                                active ? 'bg-white/10' : ''
+                              } flex items-center px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors`}
                             >
                               <UserCircleIcon className="mr-3 h-5 w-5" />
                               Profile

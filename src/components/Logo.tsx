@@ -93,7 +93,7 @@ const Logo: React.FC<LogoProps> = ({
             <path d="M12 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2s2-.9 2-2V4c0-1.1-.9-2-2-2zm6.5 9c0 1.93-.63 3.71-1.68 5.15l1.42 1.42C19.45 15.84 20.5 13.52 20.5 11s-1.05-4.84-2.26-6.57l-1.42 1.42C18.37 7.29 18.5 9.07 18.5 11zm-2-5.15l-1.42 1.42C15.63 7.71 16 9.27 16 11s-.37 3.29-.92 3.73l1.42 1.42c.9-1.05 1.5-2.38 1.5-3.85s-.6-2.8-1.5-3.85zM3.5 9v6h3l3.5 2.5V6.5L6.5 9h-3z"/>
           </svg>
         </div>
-        <div className="text-2xl font-bold text-primary-600">
+        <div className="text-2xl font-bold text-white">
           {process.env.REACT_APP_APP_NAME || 'ShoutOut'}
         </div>
       </div>
