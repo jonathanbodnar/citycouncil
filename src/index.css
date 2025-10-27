@@ -162,3 +162,36 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.8);
 }
+
+/* Navy Blue Brand Color */
+.bg-navy {
+  background-color: #111827;
+}
+
+.text-navy {
+  color: #111827;
+}
+
+.border-navy {
+  border-color: #111827;
+}
+
+.from-navy-600 {
+  --tw-gradient-from: #111827;
+}
+
+.to-navy-600 {
+  --tw-gradient-to: #111827;
+}
+
+.hover\:bg-navy-700:hover {
+  background-color: #0f172a;
+}
+
+.hover\:from-navy-700:hover {
+  --tw-gradient-from: #0f172a;
+}
+
+.hover\:to-navy-700:hover {
+  --tw-gradient-to: #0f172a;
+}
