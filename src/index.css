@@ -190,6 +190,21 @@ body {
   background: rgba(156, 163, 175, 0.8);
 }
 
+/* Dark Theme Text Overrides */
+.text-gray-900,
+.text-gray-800,
+.text-gray-700 {
+  color: #ffffff !important;
+}
+
+.text-gray-600 {
+  color: #d1d5db !important;
+}
+
+.text-gray-500 {
+  color: #9ca3af !important;
+}
+
 /* Navy Blue Brand Color */
 .bg-navy {
   background-color: #111827;
