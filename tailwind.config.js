@@ -7,16 +7,28 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#111827',  // Navy blue
+          700: '#0f172a',  // Darker navy
+          800: '#0c1220',
+          900: '#020617',
+        },
+        blue: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#111827',  // Navy blue - this overrides default Tailwind blue-600
+          700: '#0f172a',
+          800: '#0c1220',
+          900: '#020617',
         },
         secondary: {
           50: '#fef2f2',
