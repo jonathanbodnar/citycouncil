@@ -30,6 +30,18 @@ module.exports = {
           800: '#0c1220',
           900: '#020617',
         },
+        gray: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#d1d5db',  // Light gray for dark backgrounds
+          700: '#e5e7eb',  // Lighter
+          800: '#f3f4f6',  // Even lighter
+          900: '#ffffff',  // White - for text on dark backgrounds
+        },
         secondary: {
           50: '#fef2f2',
           100: '#fee2e2',
