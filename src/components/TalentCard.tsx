@@ -31,7 +31,10 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   return (
     <Link
       to={`/talent/${talent.id}`}
-      className="glass hover:glass-strong rounded-3xl shadow-modern hover:shadow-modern-lg transition-all duration-300 overflow-hidden group hover:scale-[1.02] glow-blue"
+      className="glass hover:glass-strong rounded-3xl shadow-modern hover:shadow-modern-lg transition-all duration-300 overflow-hidden group hover:scale-[1.02]"
+      style={{
+        boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
+      }}
     >
       {/* Avatar */}
       <div className="aspect-square bg-gradient-to-br from-blue-50 to-red-50 relative overflow-hidden">
@@ -70,7 +73,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             {talent.position}
           </p>
         )}
-        <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+        <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-200">
           {talent.temp_full_name || talent.users.full_name}
         </h3>
         
@@ -81,7 +84,10 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
               {talent.categories.slice(0, 2).map((category) => (
                 <span
                   key={category}
-                  className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-full font-medium"
+                  className="px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs rounded-full font-medium shadow-lg"
+                  style={{
+                    boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)'
+                  }}
                 >
                   {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
@@ -119,7 +125,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         </div>
 
         {/* Bio Preview */}
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+        <p className="text-sm text-gray-300 mb-3 line-clamp-2">
           {talent.bio}
         </p>
 
