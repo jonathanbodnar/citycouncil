@@ -33,7 +33,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   const currentTalent = talent[currentIndex];
 
   return (
-    <div className="relative rounded-3xl overflow-hidden shadow-modern-xl">
+    <div className="relative rounded-3xl overflow-hidden shadow-modern-xl z-0">
       <div className="relative h-72 md:h-96">
         {/* Desktop Background - Modern Gradient */}
         <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>

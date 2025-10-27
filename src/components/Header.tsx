@@ -24,7 +24,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="glass border-b border-white/10 backdrop-blur-xl">
+    <header className="glass border-b border-white/10 backdrop-blur-xl relative z-[10001]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
