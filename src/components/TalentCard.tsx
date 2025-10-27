@@ -132,17 +132,17 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         {/* Price and Charity */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
+            <div className="text-3xl font-bold text-white">
               ${talent.pricing}
             </div>
             {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
-              <div className="text-sm text-blue-600 font-medium">
+              <div className="text-sm text-gray-400 font-medium">
                 Corp: ${talent.corporate_pricing}
               </div>
             )}
           </div>
           {talent.charity_percentage && talent.charity_percentage > 0 && (
-            <div className="flex items-center gap-1 text-xs text-red-600 font-medium">
+            <div className="flex items-center gap-1 text-xs text-red-400 font-medium">
               <HeartIcon className="h-3 w-3" />
               {talent.charity_percentage}%
             </div>
