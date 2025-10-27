@@ -29,7 +29,7 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/home" className="flex items-center">
-            <Logo size="md" />
+            <Logo size="md" theme="dark" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -95,8 +95,8 @@ const Header: React.FC = () => {
                             <Link
                               to="/dashboard"
                               className={`${
-                                active ? 'bg-white/10' : ''
-                              } flex items-center px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors`}
+                                active ? 'bg-white/5' : ''
+                              } flex items-center px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors`}
                             >
                               <UserCircleIcon className="mr-3 h-5 w-5" />
                               Profile

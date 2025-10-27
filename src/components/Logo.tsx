@@ -5,11 +5,13 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   className?: string;
+  theme?: 'light' | 'dark';
 }
 
 const Logo: React.FC<LogoProps> = ({ 
   size = 'md', 
-  showText = false, 
+  showText = false,
+  theme = 'light', 
   className = '' 
 }) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -63,7 +65,7 @@ const Logo: React.FC<LogoProps> = ({
         <img
           src={currentLogoUrl}
           alt="ShoutOut Logo"
-          className={`${sizeClasses.height} ${sizeClasses.width} object-contain`}
+          className={`${sizeClasses.height} ${sizeClasses.width} object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
           onError={(e) => {
             // Fallback to default logo if custom logo fails to load
             const target = e.target as HTMLImageElement;
