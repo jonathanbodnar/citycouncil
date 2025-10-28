@@ -76,12 +76,9 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           )}
         </div>
         
-        <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-200">
+        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors duration-200">
           {talent.temp_full_name || talent.users.full_name}
         </h3>
-        
-        {/* Spacer to push content to bottom */}
-        <div className="flex-grow"></div>
         
         {/* Categories */}
         <div className="mb-2">
@@ -107,6 +104,9 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             </span>
           )}
         </div>
+        
+        {/* Spacer - pushes rating/bio/price to bottom */}
+        <div className="flex-grow min-h-[20px]"></div>
         
         {/* Rating */}
         <div className="flex items-center mb-2">
