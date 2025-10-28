@@ -340,7 +340,7 @@ const TalentDashboard: React.FC = () => {
           {/* Pending Orders */}
           {pendingOrders.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Orders</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Pending Orders</h3>
               <div className="space-y-4">
                 {pendingOrders.map((order) => (
                   <div key={order.id} className="glass glow-blue rounded-2xl p-6 border border-white/30 hover:glass-strong transition-all duration-300">
@@ -352,23 +352,23 @@ const TalentDashboard: React.FC = () => {
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <h4 className="font-semibold text-white flex items-center gap-2">
                             {order.users.full_name}
                             {order.is_corporate_order && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              <span className="text-xs glass-strong text-blue-400 px-2 py-1 rounded-full border border-blue-500/30">
                                 🏢 Business
                               </span>
                             )}
                           </h4>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-300">
                             ${order.amount.toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                           </p>
                           {order.is_corporate_order && order.approval_status === 'pending' ? (
-                            <p className="text-sm text-orange-700 font-medium">
+                            <p className="text-sm text-orange-400 font-medium">
                               ⏳ Awaiting your approval - timer will start when approved
                             </p>
                           ) : (
-                            <p className="text-sm text-yellow-700">
+                            <p className="text-sm text-yellow-400">
                               Due: {new Date(order.fulfillment_deadline).toLocaleDateString()}
                             </p>
                           )}
@@ -403,9 +403,9 @@ const TalentDashboard: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="bg-white p-4 rounded-md mb-4">
-                      <h5 className="font-medium text-gray-900 mb-2">Request:</h5>
-                      <p className="text-gray-700">{order.request_details}</p>
+                    <div className="glass-strong p-4 rounded-md mb-4 border border-white/20">
+                      <h5 className="font-medium text-white mb-2">Request:</h5>
+                      <p className="text-gray-300">{order.request_details}</p>
                     </div>
 
                     {order.is_corporate_order && (
@@ -462,8 +462,8 @@ const TalentDashboard: React.FC = () => {
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900">{order.users.full_name}</h4>
-                          <p className="text-sm text-gray-600">
+                          <h4 className="font-semibold text-white">{order.users.full_name}</h4>
+                          <p className="text-sm text-gray-300">
                             ${order.amount.toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -491,9 +491,9 @@ const TalentDashboard: React.FC = () => {
                         </label>
                       </div>
                     </div>
-                    <div className="bg-white p-4 rounded-md">
-                      <h5 className="font-medium text-gray-900 mb-2">Request:</h5>
-                      <p className="text-gray-700">{order.request_details}</p>
+                    <div className="glass-strong p-4 rounded-md border border-white/20">
+                      <h5 className="font-medium text-white mb-2">Request:</h5>
+                      <p className="text-gray-300">{order.request_details}</p>
                     </div>
                   </div>
                 ))}
@@ -504,7 +504,7 @@ const TalentDashboard: React.FC = () => {
           {/* Completed Orders */}
           {completedOrders.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Completed Orders</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Completed Orders</h3>
               <div className="space-y-4">
                 {completedOrders.map((order) => {
                   const orderReview = reviews.find(r => r.order_id === order.id);
@@ -518,42 +518,42 @@ const TalentDashboard: React.FC = () => {
                             </span>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-gray-900">{order.users.full_name}</h4>
-                            <p className="text-sm text-gray-600">
+                            <h4 className="font-semibold text-white">{order.users.full_name}</h4>
+                            <p className="text-sm text-gray-300">
                               ${order.amount.toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                          <span className="text-green-800 text-sm font-medium">Completed</span>
+                          <CheckCircleIcon className="h-5 w-5 text-green-400" />
+                          <span className="text-green-400 text-sm font-medium">Completed</span>
                         </div>
                       </div>
 
                       {orderReview && (
-                        <div className="bg-green-50 p-4 rounded-md mb-4">
+                        <div className="glass-strong p-4 rounded-md mb-4 border border-green-500/30">
                           <div className="flex items-center justify-between mb-2">
-                            <h5 className="font-medium text-gray-900">Customer Review:</h5>
+                            <h5 className="font-medium text-white">Customer Review:</h5>
                             <div className="flex">
                               {[...Array(5)].map((_, i) => (
                                 <StarSolid
                                   key={i}
                                   className={`h-4 w-4 ${
-                                    i < orderReview.rating ? 'text-yellow-400' : 'text-gray-300'
+                                    i < orderReview.rating ? 'text-yellow-400' : 'text-gray-500'
                                   }`}
                                 />
                               ))}
                             </div>
                           </div>
                           {orderReview.comment && (
-                            <p className="text-gray-700">{orderReview.comment}</p>
+                            <p className="text-gray-300">{orderReview.comment}</p>
                           )}
                         </div>
                       )}
 
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        <h5 className="font-medium text-gray-900 mb-2">Request:</h5>
-                        <p className="text-gray-700">{order.request_details}</p>
+                      <div className="glass-strong p-4 rounded-md border border-white/20">
+                        <h5 className="font-medium text-white mb-2">Request:</h5>
+                        <p className="text-gray-300">{order.request_details}</p>
                       </div>
                     </div>
                   );
