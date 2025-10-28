@@ -280,7 +280,7 @@ const TalentProfilePage: React.FC = () => {
                   {/* Categories */}
                   {talent.categories && talent.categories.length > 0 ? (
                     talent.categories.map((category, index) => (
-                      <span key={index} className="glass border border-white/20 text-white px-4 py-2 rounded-full text-sm font-bold">
+                      <span key={index} className="glass-light border border-white/20 text-white px-4 py-2 rounded-full text-sm font-bold">
                         {getCategoryLabel(category)}
                       </span>
                     ))
