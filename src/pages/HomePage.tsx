@@ -64,10 +64,21 @@ const HomePage: React.FC = () => {
 
       if (error) throw error;
 
-      const talentWithUsers = data.map(profile => ({
-        ...profile,
-        user: profile.users,
-      }));
+      // Map profiles - use temp fields if users data is missing (for incomplete onboarding)
+      const talentWithUsers = data.map(profile => {
+        // If no users data, create a synthetic user object from temp fields
+        if (!profile.users) {
+          return {
+            ...profile,
+            users: {
+              id: profile.user_id || '',
+              full_name: profile.temp_full_name || 'Unknown',
+              avatar_url: profile.temp_avatar_url || null,
+            },
+          };
+        }
+        return profile;
+      });
 
       setTalent(talentWithUsers);
 
@@ -104,21 +115,23 @@ const HomePage: React.FC = () => {
 
       console.log('Featured talent raw data:', data);
 
-      // Filter out any profiles without valid user data
-      const featuredWithUsers = (data || [])
-        .filter(profile => {
-          const hasValidUser = profile.users && profile.users.id;
-          if (!hasValidUser) {
-            console.warn('Skipping featured talent without valid user:', profile.id);
-          }
-          return hasValidUser;
-        })
-        .map(profile => ({
-          ...profile,
-          user: profile.users,
-        }));
+      // Map profiles - use temp fields if users data is missing (for incomplete onboarding)
+      const featuredWithUsers = (data || []).map(profile => {
+        // If no users data, create a synthetic user object from temp fields
+        if (!profile.users) {
+          return {
+            ...profile,
+            users: {
+              id: profile.user_id || '',
+              full_name: profile.temp_full_name || 'Unknown',
+              avatar_url: profile.temp_avatar_url || null,
+            },
+          };
+        }
+        return profile;
+      });
 
-      console.log('Featured talent after filtering:', featuredWithUsers);
+      console.log('Featured talent after mapping:', featuredWithUsers);
       setFeaturedTalent(featuredWithUsers);
     } catch (error) {
       console.error('Error fetching featured talent:', error);
