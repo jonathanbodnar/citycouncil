@@ -711,7 +711,7 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
                 <div className="ml-3">
                   <p className={`text-sm font-medium ${
-                    currentStep >= step.number ? 'text-blue-600' : 'text-gray-500'
+                    currentStep >= step.number ? 'text-white' : 'text-gray-400'
                   }`}>
                     {step.title}
                   </p>
@@ -1171,7 +1171,7 @@ const TalentOnboardingPage: React.FC = () => {
 
                   {/* Charity Fields - Only show when donation is enabled */}
                   {donateProceeds && (
-                    <div className="space-y-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div className="space-y-4 p-4 glass border border-white/20 rounded-lg">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Charity Name *
