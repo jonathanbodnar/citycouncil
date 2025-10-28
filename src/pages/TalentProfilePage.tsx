@@ -318,7 +318,7 @@ const TalentProfilePage: React.FC = () => {
             <div className="glass-strong rounded-2xl px-6 py-4 mb-4 border border-white/30">
               <div className="flex items-center justify-between text-center">
                 <div className="flex-1">
-                  <div className="text-2xl font-bold" style={{ color: '#412f53' }}>${talent.pricing}</div>
+                  <div className="text-2xl font-bold text-gray-900">${talent.pricing}</div>
                   <div className="text-xs text-gray-600 font-medium">Personal</div>
                   {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
                     <div className="text-sm font-semibold text-gray-400">${talent.corporate_pricing} Corp</div>
@@ -326,7 +326,7 @@ const TalentProfilePage: React.FC = () => {
                 </div>
                 
                 <div className="flex-1 border-l border-white/30">
-                  <div className="text-xl font-bold flex items-center justify-center" style={{ color: '#412f53' }}>
+                  <div className="text-xl font-bold flex items-center justify-center text-gray-900">
                     <ClockIcon className="h-5 w-5 mr-1" />
                     {talent.fulfillment_time_hours}h
                   </div>

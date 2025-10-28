@@ -700,8 +700,8 @@ const TalentOnboardingPage: React.FC = () => {
               <div key={step.number} className="flex items-center">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
                   currentStep >= step.number
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'border-gray-300 text-gray-500'
+                    ? 'glass-strong border-white/30 text-white'
+                    : 'border-white/20 text-gray-400'
                 }`}>
                   {currentStep > step.number ? (
                     <CheckCircleIcon className="w-6 h-6" />
@@ -718,7 +718,7 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
                 {index < steps.length - 1 && (
                   <div className={`flex-1 h-0.5 mx-4 ${
-                    currentStep > step.number ? 'bg-blue-600' : 'bg-gray-300'
+                    currentStep > step.number ? 'bg-white/30' : 'bg-white/10'
                   }`} />
                 )}
               </div>
