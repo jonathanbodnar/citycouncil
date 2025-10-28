@@ -280,12 +280,12 @@ const TalentProfilePage: React.FC = () => {
                   {/* Categories */}
                   {talent.categories && talent.categories.length > 0 ? (
                     talent.categories.map((category, index) => (
-                      <span key={index} className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-modern">
+                      <span key={index} className="glass border border-white/20 text-white px-4 py-2 rounded-full text-sm font-bold">
                         {getCategoryLabel(category)}
                       </span>
                     ))
                   ) : (
-                    <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-modern">
+                    <span className="glass border border-white/20 text-white px-4 py-2 rounded-full text-sm font-bold">
                       {getCategoryLabel(talent.category)}
                     </span>
                   )}
@@ -315,7 +315,7 @@ const TalentProfilePage: React.FC = () => {
             </p>
 
             {/* Stats - Clean Glass Layout */}
-            <div className="glass-strong rounded-2xl px-6 py-4 mb-4 border border-white/30 -mx-6">
+            <div className="glass-strong rounded-2xl px-6 py-4 mb-4 border border-white/30">
               <div className="flex items-center justify-between text-center">
                 <div className="flex-1">
                   <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">${talent.pricing}</div>
@@ -352,7 +352,7 @@ const TalentProfilePage: React.FC = () => {
 
             {/* Charity Info */}
             {talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0 && (
-              <div className="glass-strong px-6 py-4 rounded-2xl mb-4 border border-white/30 -mx-6">
+              <div className="mb-4">
                 <div className="flex items-center">
                   <HeartIcon className="h-5 w-5 text-red-600 mr-3" />
                   <span className="font-bold text-red-800">
