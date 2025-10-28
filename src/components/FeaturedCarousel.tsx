@@ -98,11 +98,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   <div className="text-xs opacity-75">
                     Delivers in {currentTalent.fulfillment_time_hours}h
                   </div>
-                  {currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0 && (
+                  {(currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0) ? (
                     <div className="text-xs opacity-75">
                       {currentTalent.charity_percentage}% to charity ❤️
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 <Link
                   to={`/talent/${currentTalent.id}`}
@@ -134,11 +134,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                     <div className="text-sm opacity-75">
                       Delivers in {currentTalent.fulfillment_time_hours}h
                     </div>
-                    {currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0 && (
+                    {(currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0) ? (
                       <div className="text-sm opacity-75">
                         {currentTalent.charity_percentage}% to charity ❤️
                       </div>
-                    )}
+                    ) : null}
                   </div>
                   <Link
                     to={`/talent/${currentTalent.id}`}

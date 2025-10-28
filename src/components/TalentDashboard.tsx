@@ -783,21 +783,21 @@ const TalentDashboard: React.FC = () => {
                       <div className="flex gap-2 text-sm">
                         <button 
                           onClick={() => {
-                            navigator.clipboard.writeText('@shoutoutforus');
-                            toast.success('Copied @shoutoutforus!');
+                            navigator.clipboard.writeText('Shoutoutvoice');
+                            toast.success('Copied Shoutoutvoice!');
                           }}
                           className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30"
                         >
-                          📋 @shoutoutforus (Instagram)
+                          📋 Shoutoutvoice (Instagram)
                         </button>
                         <button 
                           onClick={() => {
-                            navigator.clipboard.writeText('@shoutoutforus');
-                            toast.success('Copied @shoutoutforus!');
+                            navigator.clipboard.writeText('Shoutoutvoice');
+                            toast.success('Copied Shoutoutvoice!');
                           }}
                           className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30"
                         >
-                          📋 @shoutoutforus (X)
+                          📋 Shoutoutvoice (X)
                         </button>
                       </div>
                     </div>
@@ -812,12 +812,12 @@ const TalentDashboard: React.FC = () => {
                       <p className="text-sm text-gray-600 mb-2">Share at least one of your completed ShoutOut videos on Instagram</p>
                       <button 
                         onClick={() => {
-                          navigator.clipboard.writeText('@shoutoutforus');
-                          toast.success('Copied @shoutoutforus!');
+                          navigator.clipboard.writeText('Shoutoutvoice');
+                          toast.success('Copied Shoutoutvoice!');
                         }}
                         className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
                       >
-                        📋 Tag @shoutoutforus
+                        📋 Tag Shoutoutvoice
                       </button>
                     </div>
                   </div>

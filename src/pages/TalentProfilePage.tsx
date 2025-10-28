@@ -362,7 +362,7 @@ const TalentProfilePage: React.FC = () => {
                   <div className="text-xs text-gray-600 font-medium">Orders</div>
                 </div>
                 
-                {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
+                {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) ? (
                   <div className="flex-1 border-l border-white/30">
                     <div className="text-xl font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
                       <HeartIcon className="h-5 w-5 mr-1" />
@@ -370,12 +370,12 @@ const TalentProfilePage: React.FC = () => {
                     </div>
                     <div className="text-xs text-gray-600 font-medium">To Charity</div>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
 
             {/* Charity Info */}
-            {talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0 && (
+            {(talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0) ? (
               <div className="mb-4">
                 <div className="flex items-center">
                   <HeartIcon className="h-5 w-5 text-purple-400 mr-3" />
@@ -384,7 +384,7 @@ const TalentProfilePage: React.FC = () => {
                   </span>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* CTA Button */}
             <Link

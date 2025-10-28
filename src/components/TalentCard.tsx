@@ -58,11 +58,11 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         </div>
 
         {/* Charity Indicator */}
-        {talent.charity_percentage && talent.charity_percentage > 0 && (
+        {(talent.charity_percentage && talent.charity_percentage > 0) ? (
           <div className="absolute top-3 right-3 p-2 glass-strong rounded-full glow-red animate-glow-pulse">
             <HeartIcon className="h-4 w-4 text-red-600" />
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Content */}
@@ -141,12 +141,12 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
               </div>
             )}
           </div>
-          {talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name && (
+          {(talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name) ? (
             <div className="flex items-center gap-1 text-xs text-red-400 font-medium">
               <HeartIcon className="h-3 w-3" />
               {talent.charity_percentage}%
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </Link>
