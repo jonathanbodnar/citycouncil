@@ -77,6 +77,15 @@ const TalentProfilePage: React.FC = () => {
 
       if (talentError) throw talentError;
 
+      // Handle incomplete profiles - create synthetic user object if needed
+      if (!talentData.users) {
+        talentData.users = {
+          id: talentData.user_id || '',
+          full_name: talentData.temp_full_name || 'Unknown',
+          avatar_url: talentData.temp_avatar_url || null,
+        };
+      }
+
       // Fetch reviews
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('reviews')
@@ -122,13 +131,28 @@ const TalentProfilePage: React.FC = () => {
 
       if (relatedError) throw relatedError;
 
+      // Handle incomplete profiles in related talent
+      const relatedWithUsers = (relatedData || []).map(profile => {
+        if (!profile.users) {
+          return {
+            ...profile,
+            users: {
+              id: profile.user_id || '',
+              full_name: profile.temp_full_name || 'Unknown',
+              avatar_url: profile.temp_avatar_url || null,
+            },
+          };
+        }
+        return profile;
+      });
+
       setTalent({
         ...talentData,
         reviews: reviewsData || [],
         recent_videos: videosData?.map(v => v.video_url).filter(Boolean) || [],
       });
 
-      setRelatedTalent(relatedData || []);
+      setRelatedTalent(relatedWithUsers);
     } catch (error) {
       console.error('Error fetching talent profile:', error);
       toast.error('Failed to load talent profile');
