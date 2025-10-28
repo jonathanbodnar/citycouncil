@@ -16,6 +16,7 @@ import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
 import ImageUpload from './ImageUpload';
 import CategorySelector from './CategorySelector';
+import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
@@ -35,6 +36,7 @@ const TalentManagement: React.FC = () => {
   const talentsPerPage = 10;
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [newTalent, setNewTalent] = useState({
     full_name: '',
     position: '',
