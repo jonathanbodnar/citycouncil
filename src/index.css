@@ -257,7 +257,9 @@ select:focus {
 
 /* Force all divs with white/gray backgrounds to be transparent */
 div[class*="bg-white"],
-div[class*="bg-gray"] {
+div[class*="bg-gray"],
+div[class*="bg-primary-50"],
+button[class*="bg-primary-50"] {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
