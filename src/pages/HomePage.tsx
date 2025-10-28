@@ -102,14 +102,23 @@ const HomePage: React.FC = () => {
 
       if (error) throw error;
 
+      console.log('Featured talent raw data:', data);
+
       // Filter out any profiles without valid user data
       const featuredWithUsers = (data || [])
-        .filter(profile => profile.users && profile.users.id)
+        .filter(profile => {
+          const hasValidUser = profile.users && profile.users.id;
+          if (!hasValidUser) {
+            console.warn('Skipping featured talent without valid user:', profile.id);
+          }
+          return hasValidUser;
+        })
         .map(profile => ({
           ...profile,
           user: profile.users,
         }));
 
+      console.log('Featured talent after filtering:', featuredWithUsers);
       setFeaturedTalent(featuredWithUsers);
     } catch (error) {
       console.error('Error fetching featured talent:', error);
