@@ -193,7 +193,8 @@ body {
 /* Dark Theme Text Overrides */
 .text-gray-900,
 .text-gray-800,
-.text-gray-700 {
+.text-gray-700,
+h1, h2, h3, h4, h5, h6 {
   color: #ffffff !important;
 }
 
@@ -203,6 +204,12 @@ body {
 
 .text-gray-500 {
   color: #9ca3af !important;
+}
+
+/* Step titles and headings */
+.text-xl.font-semibold,
+.text-2xl.font-bold {
+  color: #91a2c1 !important;
 }
 
 /* Dark Theme Form Inputs */

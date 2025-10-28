@@ -66,16 +66,22 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
       </div>
 
       {/* Content */}
-      <div className="p-6">
-        {/* Position Title */}
-        {talent.position && (
-          <p className="text-xs font-medium text-blue-600 mb-2 uppercase tracking-wider">
-            {talent.position}
-          </p>
-        )}
+      <div className="p-6 flex flex-col h-full">
+        {/* Position Title - Reserve space even if empty */}
+        <div className="h-5 mb-2">
+          {talent.position && (
+            <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">
+              {talent.position}
+            </p>
+          )}
+        </div>
+        
         <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-200">
           {talent.temp_full_name || talent.users.full_name}
         </h3>
+        
+        {/* Spacer to push content to bottom */}
+        <div className="flex-grow"></div>
         
         {/* Categories */}
         <div className="mb-2">
