@@ -215,9 +215,9 @@ h1, h2, h3, h4, h5, h6 {
   color: #9ca3af !important;
 }
 
-/* Step titles and headings */
-.text-xl.font-semibold,
-.text-2xl.font-bold {
+/* Step titles and headings - but NOT stats numbers */
+.text-xl.font-semibold:not([style*="color"]),
+.text-2xl.font-bold:not([style*="color"]) {
   color: #91a2c1 !important;
 }
 
