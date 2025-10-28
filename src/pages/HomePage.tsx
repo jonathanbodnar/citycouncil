@@ -102,10 +102,13 @@ const HomePage: React.FC = () => {
 
       if (error) throw error;
 
-      const featuredWithUsers = data.map(profile => ({
-        ...profile,
-        user: profile.users,
-      }));
+      // Filter out any profiles without valid user data
+      const featuredWithUsers = (data || [])
+        .filter(profile => profile.users && profile.users.id)
+        .map(profile => ({
+          ...profile,
+          user: profile.users,
+        }));
 
       setFeaturedTalent(featuredWithUsers);
     } catch (error) {

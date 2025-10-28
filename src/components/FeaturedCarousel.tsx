@@ -31,6 +31,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   if (talent.length === 0) return null;
 
   const currentTalent = talent[currentIndex];
+  
+  // Safety check - if current talent doesn't have proper data, skip to next
+  if (!currentTalent || !currentTalent.users) {
+    return null;
+  }
 
   return (
     <div className="relative rounded-3xl overflow-hidden shadow-modern-xl z-0">
