@@ -80,26 +80,26 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           {talent.temp_full_name || talent.users.full_name}
         </h3>
         
-        {/* Categories */}
-        <div className="mb-3">
+        {/* Categories - Max 1 line */}
+        <div className="mb-3 flex items-center gap-2">
           {talent.categories && talent.categories.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
+            <>
               {talent.categories.slice(0, 2).map((category) => (
                 <span
                   key={category}
-                  className="px-3 py-1 glass-light border border-white/20 text-white text-xs rounded-full font-medium"
+                  className="px-3 py-1 glass-light border border-white/20 text-white text-xs rounded-full font-medium whitespace-nowrap"
                 >
                   {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
               ))}
               {talent.categories.length > 2 && (
-                <span className="px-3 py-1 glass-light border border-white/20 text-white/60 text-xs rounded-full font-medium">
-                  +{talent.categories.length - 2} more
+                <span className="w-7 h-7 rounded-full glass-light border border-white/20 text-white/60 text-xs font-medium flex items-center justify-center">
+                  +{talent.categories.length - 2}
                 </span>
               )}
-            </div>
+            </>
           ) : (
-            <span className="px-3 py-1 glass-light border border-white/20 text-white text-xs rounded-full font-medium">
+            <span className="px-3 py-1 glass-light border border-white/20 text-white text-xs rounded-full font-medium whitespace-nowrap">
               {talent.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </span>
           )}
