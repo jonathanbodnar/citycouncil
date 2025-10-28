@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
 import { 
@@ -12,6 +12,7 @@ import Logo from './Logo';
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -63,10 +64,29 @@ const Header: React.FC = () => {
             {user ? (
               <>
                 {/* Notifications */}
-                <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-                  <BellIcon className="h-6 w-6" />
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
-                </button>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="p-2 text-white hover:text-gray-300 relative transition-colors"
+                  >
+                    <BellIcon className="h-6 w-6" />
+                    <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                  </button>
+
+                  {/* Notification Dropdown */}
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-2 w-80 glass-strong rounded-2xl shadow-modern-xl border border-white/30 z-[10000] overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(30px)' }}>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-white mb-3">Notifications</h3>
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          <p className="text-sm text-gray-300 text-center py-8">
+                            No notifications yet
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* User Dropdown */}
                 <Menu as="div" className="relative z-[10000]">
