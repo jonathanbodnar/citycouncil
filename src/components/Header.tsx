@@ -80,7 +80,7 @@ const Header: React.FC = () => {
                         <h3 className="font-semibold text-white mb-3">Notifications</h3>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           <p className="text-sm text-gray-300 text-center py-8">
-                            No notifications yet
+                            No new notifications
                           </p>
                         </div>
                       </div>
