@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+// Dark theme update - gray-900 is white
 module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
