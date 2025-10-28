@@ -1371,25 +1371,25 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
 
                 {/* Script Template */}
-                <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                    📝 Script Template
+                <div className="glass border border-white/20 rounded-xl p-4 mb-6">
+                  <h4 className="font-semibold text-white mb-3">
+                    Script Template
                   </h4>
-                  <div className="text-sm text-blue-800 space-y-2">
-                    <p><strong>Opening:</strong> "Hi! I'm [Your Name]..."</p>
-                    <p><strong>Introduction:</strong> "[Brief description of who you are - Former Fox News host, Political commentator, etc.]"</p>
-                    <p><strong>Service:</strong> "I'm now on ShoutOut where you can order a personalized video from me for any occasion you're looking for..."</p>
-                    <p><strong>Personal Touch:</strong> "[Add your own spin - mention what makes your videos special]"</p>
-                    <p><strong>Closing:</strong> "Find me on ShoutOut!"</p>
+                  <div className="text-sm text-gray-300 space-y-2">
+                    <p className="text-white"><strong>Opening:</strong> "Hi! I'm [Your Name]..."</p>
+                    <p className="text-white"><strong>Introduction:</strong> "[Brief description of who you are - Former Fox News host, Political commentator, etc.]"</p>
+                    <p className="text-white"><strong>Service:</strong> "I'm now on ShoutOut where you can order a personalized video from me for any occasion you're looking for..."</p>
+                    <p className="text-white"><strong>Personal Touch:</strong> "[Add your own spin - mention what makes your videos special]"</p>
+                    <p className="text-white"><strong>Closing:</strong> "Find me on ShoutOut!"</p>
                   </div>
                 </div>
 
                 {/* Recording Tips */}
-                <div className="bg-green-50 rounded-xl p-4 mb-6 border border-green-200">
-                  <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
-                    🎥 Recording Tips
+                <div className="glass border border-white/20 rounded-xl p-4 mb-6">
+                  <h4 className="font-semibold text-white mb-3">
+                    Recording Tips
                   </h4>
-                  <ul className="text-sm text-green-800 space-y-1">
+                  <ul className="text-sm text-gray-300 space-y-1">
                     <li>• Record in good lighting (natural light works best)</li>
                     <li>• Ensure clear audio (avoid background noise)</li>
                     <li>• Look directly at the camera</li>
@@ -1402,7 +1402,36 @@ const TalentOnboardingPage: React.FC = () => {
                 {/* Video Upload */}
                 <div className="space-y-4">
                   <div>
-again
+                    <label className="block text-sm font-medium text-white mb-3">
+                      Upload Promo Video *
+                    </label>
+                    <input
+                      type="file"
+                      id="promo-video-upload"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setWelcomeVideoFile(file);
+                          const url = URL.createObjectURL(file);
+                          setWelcomeVideoUrl(url);
+                        }
+                      }}
+                      className="hidden"
+                      required
+                    />
+                    <label
+                      htmlFor="promo-video-upload"
+                      className="flex items-center justify-center gap-2 glass-strong hover:glass border border-white/30 rounded-2xl px-6 py-4 cursor-pointer transition-all duration-300 hover:shadow-modern"
+                    >
+                      <VideoCameraIcon className="h-5 w-5 text-white" />
+                      <span className="font-medium text-white">
+                        {welcomeVideoFile ? welcomeVideoFile.name : 'Choose Video File'}
+                      </span>
+                    </label>
+                    <p className="mt-2 text-sm text-gray-400 text-center">
+                      Supported formats: MP4, MOV, AVI • Max size: 100MB
+                    </p>
                   </div>
 
                   {/* Video Preview */}
