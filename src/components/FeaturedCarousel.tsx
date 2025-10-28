@@ -50,7 +50,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
             style={{
               backgroundImage: `url(${currentTalent.temp_avatar_url || currentTalent.users.avatar_url})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              backgroundPosition: 'top center',
               maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
               WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
             }}
@@ -63,7 +63,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
             <img
               src={currentTalent.temp_avatar_url || currentTalent.users.avatar_url}
               alt={currentTalent.temp_full_name || currentTalent.users.full_name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
             {/* Modern gradient overlay for mobile */}
             <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-600/60 to-red-600/40"></div>
