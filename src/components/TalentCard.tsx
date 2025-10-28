@@ -119,8 +119,8 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
               />
             ))}
           </div>
-          <span className="ml-2 text-sm text-gray-600">
-            {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'} ({talent.fulfilled_orders || 0})
+          <span className="ml-2 text-sm text-gray-400">
+            {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'} ({talent.fulfilled_orders || 0} reviews)
           </span>
         </div>
 
