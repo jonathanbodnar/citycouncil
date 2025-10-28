@@ -770,18 +770,18 @@ const TalentDashboard: React.FC = () => {
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-1">Add Link to Your Social Bio</h4>
                       <p className="text-sm text-gray-600 mb-2">Add your ShoutOut profile link to your Instagram/X bio (or linktree)</p>
-                      {talentProfile?.username && (
-                        <button 
-                          onClick={() => {
-                            const profileUrl = `https://shoutout.us/${talentProfile.username}`;
-                            navigator.clipboard.writeText(profileUrl);
-                            toast.success('Profile URL copied!');
-                          }}
-                          className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
-                        >
-                          📋 Copy Profile Link
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => {
+                          const profileUrl = talentProfile?.username 
+                            ? `https://shoutout.us/${talentProfile.username}`
+                            : `https://shoutout.us/talent/${talentProfile?.id}`;
+                          navigator.clipboard.writeText(profileUrl);
+                          toast.success('Profile URL copied!');
+                        }}
+                        className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
+                      >
+                        📋 Copy Profile Link
+                      </button>
                     </div>
                   </div>
                 </div>
