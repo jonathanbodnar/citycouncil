@@ -9,6 +9,7 @@ import TalentOnboardingPage from './pages/TalentOnboardingPage';
 import OrderPage from './pages/OrderPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboard from './pages/AdminDashboard';
 import SeedDataPage from './pages/SeedDataPage';
@@ -32,6 +33,7 @@ function App() {
             <Route index element={<ComingSoonPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/seed" element={<SeedDataPage />} />
             <Route path="/email-test" element={<EmailTestPage />} />
             <Route path="/onboard/:token" element={<TalentOnboardingPage />} />

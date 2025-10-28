@@ -3,11 +3,15 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
+import { supabase } from '../services/supabase';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const { user, signIn } = useAuth();
 
   if (user) {
@@ -36,6 +40,28 @@ const LoginPage: React.FC = () => {
       clearTimeout(timeout);
       toast.error(error.message || 'Failed to sign in');
       setLoading(false); // Make sure to stop loading on error
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast.success('Password reset email sent! Check your inbox.');
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast.error(error.message || 'Failed to send reset email');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -109,7 +135,11 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div className="text-sm">
-              <button type="button" className="font-medium text-primary-600 hover:text-primary-500">
+              <button 
+                type="button" 
+                onClick={() => setShowForgotPassword(true)}
+                className="font-medium text-primary-600 hover:text-primary-500"
+              >
                 Forgot your password?
               </button>
             </div>
@@ -143,6 +173,55 @@ const LoginPage: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="glass-strong rounded-2xl p-8 max-w-md w-full border border-white/30 shadow-modern-xl">
+            <h3 className="text-2xl font-bold text-white mb-2">Reset Password</h3>
+            <p className="text-gray-300 mb-6">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            
+            <form onSubmit={handleForgotPassword}>
+              <div className="mb-4">
+                <label htmlFor="reset-email" className="block text-sm font-medium text-white mb-2">
+                  Email address
+                </label>
+                <input
+                  id="reset-email"
+                  type="email"
+                  required
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full px-4 py-3 glass-strong border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetEmail('');
+                  }}
+                  className="flex-1 px-4 py-3 glass border border-white/30 rounded-xl text-white font-medium hover:glass-strong transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-modern"
+                >
+                  {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
