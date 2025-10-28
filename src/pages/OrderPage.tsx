@@ -382,7 +382,6 @@ const OrderPage: React.FC = () => {
                     value="false"
                     defaultChecked={true}
                     {...register('isForBusiness', { 
-                      required: true,
                       setValueAs: (value) => value === 'true'
                     })}
                     className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
@@ -406,7 +405,6 @@ const OrderPage: React.FC = () => {
                       type="radio"
                       value="true"
                       {...register('isForBusiness', { 
-                        required: true,
                         setValueAs: (value) => value === 'true'
                       })}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
