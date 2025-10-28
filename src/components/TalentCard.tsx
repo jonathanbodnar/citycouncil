@@ -66,7 +66,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
       </div>
 
       {/* Content */}
-      <div className="p-6 flex flex-col h-full">
+      <div className="p-6">
         {/* Position Title - Reserve space even if empty */}
         <div className="h-5 mb-2">
           {talent.position && (
@@ -76,12 +76,12 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           )}
         </div>
         
-        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors duration-200">
+        <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-200">
           {talent.temp_full_name || talent.users.full_name}
         </h3>
         
         {/* Categories */}
-        <div className="mb-2">
+        <div className="mb-3">
           {talent.categories && talent.categories.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {talent.categories.slice(0, 2).map((category) => (
@@ -93,7 +93,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
                 </span>
               ))}
               {talent.categories.length > 2 && (
-                <span className="px-3 py-1 glass-strong text-gray-600 text-xs rounded-full font-medium border border-white/30">
+                <span className="px-3 py-1 glass border border-white/20 text-white/60 text-xs rounded-full font-medium">
                   +{talent.categories.length - 2} more
                 </span>
               )}
@@ -104,9 +104,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             </span>
           )}
         </div>
-        
-        {/* Spacer - pushes rating/bio/price to bottom */}
-        <div className="flex-grow min-h-[20px]"></div>
         
         {/* Rating */}
         <div className="flex items-center mb-2">
