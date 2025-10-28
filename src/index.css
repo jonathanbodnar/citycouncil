@@ -252,6 +252,33 @@ select:focus {
   background: rgba(255, 255, 255, 0.08) !important;
 }
 
+/* Dark Theme Links and Buttons */
+a {
+  color: #60a5fa !important;
+}
+
+a:hover {
+  color: #93c5fd !important;
+}
+
+button:not(.bg-gradient-to-r):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]) {
+  color: #ffffff !important;
+}
+
+/* Tab text - force visible */
+.border-b-2 {
+  color: #ffffff !important;
+}
+
+/* Active tab text */
+.text-primary-600 {
+  color: #60a5fa !important;
+}
+
+.border-primary-500 {
+  border-color: #60a5fa !important;
+}
+
 /* Navy Blue Brand Color */
 .bg-navy {
   background-color: #111827;
