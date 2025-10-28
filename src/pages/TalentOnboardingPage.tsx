@@ -684,11 +684,11 @@ const TalentOnboardingPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="glass border-b border-white/10">
         <div className="max-w-3xl mx-auto px-4 py-6">
-          <Logo size="md" />
+          <Logo size="md" theme="dark" />
         </div>
       </header>
 

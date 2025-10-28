@@ -311,8 +311,8 @@ const PayoutsDashboard: React.FC = () => {
 
       {/* Bank Form Modal */}
       {showBankForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="glass-strong rounded-2xl p-8 w-full max-w-md border border-white/30 shadow-modern-xl" style={{ background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(30px)' }}>
             <h3 className="text-lg font-semibold mb-4">
               {bankInfo ? 'Update' : 'Add'} Bank Information
             </h3>
