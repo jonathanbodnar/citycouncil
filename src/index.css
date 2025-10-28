@@ -288,6 +288,12 @@ a:hover {
   color: #9791c1 !important;
 }
 
+/* Exception for links that are styled as buttons */
+a.text-white,
+a[style*="backgroundColor"] {
+  color: #ffffff !important;
+}
+
 button:not(.bg-gradient-to-r):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]) {
   color: #ffffff !important;
 }

@@ -17,9 +17,9 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
   
   const demandColors = {
-    high: 'bg-red-100 text-red-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    low: 'bg-green-100 text-green-800',
+    high: 'bg-red-500/20 text-red-400',
+    medium: 'bg-yellow-500/20 text-yellow-400',
+    low: 'bg-green-500/20 text-green-400',
   };
 
   const demandText = {
@@ -141,7 +141,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
               </div>
             )}
           </div>
-          {talent.charity_percentage && talent.charity_percentage > 0 && (
+          {talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name && (
             <div className="flex items-center gap-1 text-xs text-red-400 font-medium">
               <HeartIcon className="h-3 w-3" />
               {talent.charity_percentage}%
