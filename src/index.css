@@ -285,7 +285,7 @@ a {
 }
 
 a:hover {
-  color: #93c5fd !important;
+  color: #9791c1 !important;
 }
 
 button:not(.bg-gradient-to-r):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]) {
