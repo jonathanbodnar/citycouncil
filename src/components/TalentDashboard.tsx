@@ -769,7 +769,19 @@ const TalentDashboard: React.FC = () => {
                     <div className="text-2xl">🔗</div>
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-1">Add Link to Your Social Bio</h4>
-                      <p className="text-sm text-gray-600">Add your ShoutOut profile link to your Instagram/X bio (or linktree)</p>
+                      <p className="text-sm text-gray-600 mb-2">Add your ShoutOut profile link to your Instagram/X bio (or linktree)</p>
+                      {talentProfile?.username && (
+                        <button 
+                          onClick={() => {
+                            const profileUrl = `https://shoutout.us/${talentProfile.username}`;
+                            navigator.clipboard.writeText(profileUrl);
+                            toast.success('Profile URL copied!');
+                          }}
+                          className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
+                        >
+                          📋 Copy Profile Link
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -863,14 +875,14 @@ const TalentDashboard: React.FC = () => {
                 🎁 Claim Promotion Package
               </button>
             ) : (
-              <div className="glass-strong rounded-2xl p-6 border border-green-500/30 bg-green-50/50">
+              <div className="glass-strong rounded-2xl p-6 border border-green-500/30">
                 <div className="text-center">
                   <div className="text-4xl mb-3">✅</div>
-                  <h3 className="text-xl font-bold text-green-800 mb-2">You're In the Promotion Program!</h3>
-                  <p className="text-green-700">
+                  <h3 className="text-xl font-bold text-white mb-2">You're In the Promotion Program!</h3>
+                  <p className="text-green-400">
                     Claimed on {new Date(talentProfile.promotion_claimed_at!).toLocaleDateString()}
                   </p>
-                  <p className="text-sm text-green-600 mt-2">
+                  <p className="text-sm text-green-300 mt-2">
                     Keep posting and tagging us to maintain your $200/month ad spend!
                   </p>
                 </div>
