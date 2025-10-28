@@ -87,19 +87,19 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
               {talent.categories.slice(0, 2).map((category) => (
                 <span
                   key={category}
-                  className="px-3 py-1 glass border border-white/20 text-white text-xs rounded-full font-medium"
+                  className="px-3 py-1 glass-light border border-white/20 text-white text-xs rounded-full font-medium"
                 >
                   {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
               ))}
               {talent.categories.length > 2 && (
-                <span className="px-3 py-1 glass border border-white/20 text-white/60 text-xs rounded-full font-medium">
+                <span className="px-3 py-1 glass-light border border-white/20 text-white/60 text-xs rounded-full font-medium">
                   +{talent.categories.length - 2} more
                 </span>
               )}
             </div>
           ) : (
-            <span className="px-3 py-1 glass border border-white/20 text-white text-xs rounded-full font-medium">
+            <span className="px-3 py-1 glass-light border border-white/20 text-white text-xs rounded-full font-medium">
               {talent.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </span>
           )}

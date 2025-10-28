@@ -71,6 +71,15 @@
   box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.3);
 }
 
+/* Glass variant for small elements (no heavy shadow) */
+.glass-light {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: none;
+}
+
 /* Gradient glows */
 .glow-red {
   position: relative;
