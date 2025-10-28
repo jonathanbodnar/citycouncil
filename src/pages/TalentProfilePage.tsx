@@ -365,7 +365,8 @@ const TalentProfilePage: React.FC = () => {
             {/* CTA Button */}
             <Link
               to={user ? `/order/${talent.id}` : '/login'}
-              className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-blue-700 hover:to-red-700 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl glow-blue hover:scale-[1.02]"
+              className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl border border-white/20 hover:scale-[1.02]"
+              style={{ backgroundColor: '#b93030' }}
             >
               Order ShoutOut - Starting at ${talent.pricing}
             </Link>
