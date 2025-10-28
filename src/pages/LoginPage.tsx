@@ -61,14 +61,23 @@ const LoginPage: React.FC = () => {
 
       console.log('Reset password response:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
 
-      toast.success('Password reset email sent! Check your inbox (and spam folder).');
+      // Supabase will send email even if account doesn't exist (for security)
+      // but won't throw an error
+      toast.success('If an account exists with this email, you will receive a password reset link. Check your inbox (and spam folder).');
       setShowForgotPassword(false);
       setResetEmail('');
     } catch (error: any) {
       console.error('Password reset error:', error);
-      toast.error(error.message || 'Failed to send reset email');
+      if (error.message?.includes('redirect')) {
+        toast.error('Configuration error. Please contact support.');
+      } else {
+        toast.error(error.message || 'Failed to send reset email. Please try again.');
+      }
     } finally {
       setResetLoading(false);
     }
