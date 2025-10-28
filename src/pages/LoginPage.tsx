@@ -55,9 +55,16 @@ const LoginPage: React.FC = () => {
       console.log('Sending password reset to:', resetEmail);
       console.log('Redirect URL:', redirectUrl);
 
-      const { data, error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout - email service may be unavailable')), 10000)
+      );
+
+      const resetPromise = supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: redirectUrl,
       });
+
+      const { data, error } = await Promise.race([resetPromise, timeoutPromise]) as any;
 
       console.log('Reset password response:', { data, error });
 
@@ -73,7 +80,9 @@ const LoginPage: React.FC = () => {
       setResetEmail('');
     } catch (error: any) {
       console.error('Password reset error:', error);
-      if (error.message?.includes('redirect')) {
+      if (error.message?.includes('timeout')) {
+        toast.error('Email service is currently unavailable. Please try again later or contact support.');
+      } else if (error.message?.includes('redirect')) {
         toast.error('Configuration error. Please contact support.');
       } else {
         toast.error(error.message || 'Failed to send reset email. Please try again.');
