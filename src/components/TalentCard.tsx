@@ -137,7 +137,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             </div>
             {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
               <div className="text-sm text-gray-400 font-medium">
-                Corp: ${talent.corporate_pricing}
+                Corporate: ${talent.corporate_pricing}
               </div>
             )}
           </div>
