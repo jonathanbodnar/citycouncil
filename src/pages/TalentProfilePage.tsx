@@ -340,7 +340,7 @@ const TalentProfilePage: React.FC = () => {
                 
                 {talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name && (
                   <div className="flex-1 border-l border-white/30">
-                    <div className="text-xl font-bold text-red-600 flex items-center justify-center">
+                    <div className="text-xl font-bold text-purple-400 flex items-center justify-center">
                       <HeartIcon className="h-5 w-5 mr-1" />
                       {talent.charity_percentage}%
                     </div>
@@ -354,8 +354,8 @@ const TalentProfilePage: React.FC = () => {
             {talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0 && (
               <div className="mb-4">
                 <div className="flex items-center">
-                  <HeartIcon className="h-5 w-5 text-red-600 mr-3" />
-                  <span className="font-bold text-red-800">
+                  <HeartIcon className="h-5 w-5 text-purple-400 mr-3" />
+                  <span className="font-bold text-purple-300">
                     {talent.charity_percentage}% of proceeds go to {talent.charity_name}
                   </span>
                 </div>
