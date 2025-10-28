@@ -179,10 +179,10 @@ const TalentProfilePage: React.FC = () => {
   const demand = getDemandLevel(talent.total_orders);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Simplified Hero Section */}
-      <div className="glass rounded-3xl shadow-modern-xl border border-white/20 overflow-hidden mb-12">
-        <div className="p-8 md:p-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Hero Section */}
+      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 overflow-hidden mb-8">
+        <div className="md:flex">
           {/* Avatar / Promo Video */}
           <div className="md:w-1/3">
             <div className="h-full min-h-[400px] bg-gray-100 relative group">
