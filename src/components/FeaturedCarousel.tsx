@@ -44,7 +44,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
-        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) && (
+        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) ? (
           <div 
             className="hidden md:block absolute right-0 top-0 w-1/2 h-full"
             style={{
@@ -55,10 +55,25 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
               WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
             }}
           />
+        ) : (
+          /* Desktop Fallback - Show initials */
+          <div className="hidden md:flex absolute right-0 top-0 w-1/2 h-full items-center justify-center">
+            <span 
+              className="text-9xl font-bold opacity-20"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
+              {(currentTalent.temp_full_name || currentTalent.users.full_name).charAt(0)}
+            </span>
+          </div>
         )}
         
-        {/* Mobile Background with Photo */}
-        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) && (
+        {/* Mobile Background with Photo or Gradient */}
+        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) ? (
           <div className="md:hidden absolute inset-0">
             <img
               src={currentTalent.temp_avatar_url || currentTalent.users.avatar_url}
@@ -68,10 +83,8 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
             {/* Modern gradient overlay for mobile */}
             <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-600/60 to-red-600/40"></div>
           </div>
-        )}
-        
-        {/* Mobile Fallback Background */}
-        {!currentTalent.users.avatar_url && (
+        ) : (
+          /* Mobile Fallback - Pure gradient */
           <div className="md:hidden absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
         )}
         
