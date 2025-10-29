@@ -81,11 +81,14 @@ const LandingPromoVideos: React.FC = () => {
     setUploading(true);
 
     try {
+      // Generate a unique ID for the promo video
+      const promoVideoId = `promo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       // Upload video to Wasabi
-      const uploadResult = await uploadVideoToWasabi(newVideo.file);
+      const uploadResult = await uploadVideoToWasabi(newVideo.file, promoVideoId);
       
       if (!uploadResult.success || !uploadResult.videoUrl) {
-        throw new Error('Failed to upload video');
+        throw new Error(uploadResult.error || 'Failed to upload video');
       }
 
       // Get the max display order
