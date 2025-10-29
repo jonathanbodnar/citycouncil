@@ -89,7 +89,7 @@ const PromotionalVideosManagement: React.FC = () => {
 
       if (data.warning) {
         console.warn(data.warning);
-        toast.warning(data.warning, { id: 'watermark' });
+        toast.error(data.warning, { id: 'watermark' });
       } else {
         toast.success('Watermark applied!', { id: 'watermark' });
       }
