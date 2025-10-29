@@ -25,6 +25,7 @@ const LandingPromoVideos: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string>('');
 
   useEffect(() => {
     fetchVideos();
@@ -49,13 +50,19 @@ const LandingPromoVideos: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+    const files = e.target.files;
+    console.log('handleFileChange called, files:', files);
+    
+    if (files && files.length > 0) {
+      const file = files[0];
+      console.log('File object:', file);
       
       // Validate file type
       if (!file.type.startsWith('video/')) {
         toast.error('Please select a video file');
         e.target.value = ''; // Reset input
+        setSelectedFile(null);
+        setFileName('');
         return;
       }
 
@@ -63,12 +70,20 @@ const LandingPromoVideos: React.FC = () => {
       if (file.size > 100 * 1024 * 1024) {
         toast.error('Video file must be less than 100MB');
         e.target.value = ''; // Reset input
+        setSelectedFile(null);
+        setFileName('');
         return;
       }
 
-      console.log('File selected:', file.name, file.size, file.type);
+      console.log('File validated, setting state:', file.name);
       setSelectedFile(file);
+      setFileName(file.name);
       toast.success(`Selected: ${file.name}`);
+      console.log('State should be updated now');
+    } else {
+      console.log('No file selected');
+      setSelectedFile(null);
+      setFileName('');
     }
   };
 
@@ -109,6 +124,7 @@ const LandingPromoVideos: React.FC = () => {
 
       toast.success('Promo video uploaded successfully!');
       setSelectedFile(null);
+      setFileName('');
       
       // Reset file input
       const fileInput = document.getElementById('video-file-input') as HTMLInputElement;
@@ -230,8 +246,13 @@ const LandingPromoVideos: React.FC = () => {
           </div>
 
           <button
+            type="button"
             onClick={() => {
-              console.log('Upload clicked! selectedFile:', selectedFile);
+              console.log('Upload button clicked!');
+              console.log('selectedFile:', selectedFile);
+              console.log('fileName:', fileName);
+              console.log('uploading:', uploading);
+              console.log('disabled?', uploading || !selectedFile);
               handleUpload();
             }}
             disabled={uploading || !selectedFile}
