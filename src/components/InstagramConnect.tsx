@@ -19,7 +19,7 @@ const InstagramConnect: React.FC<InstagramConnectProps> = ({
   // Instagram OAuth config (read from env, never hardcoded)
   const INSTAGRAM_APP_ID = '2022129608361218'; // Main Meta App ID
   const REDIRECT_URI = `${window.location.origin}/instagram/callback`;
-  const SCOPE = 'instagram_basic,pages_show_list'; // Graph API scopes for business accounts
+  const SCOPE = 'pages_show_list,instagram_basic,instagram_manage_insights,pages_read_engagement'; // Full permissions for Instagram Business API
 
   useEffect(() => {
     // Listen for OAuth callback messages
