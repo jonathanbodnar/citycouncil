@@ -20,32 +20,34 @@ export const uploadVideoToWasabi = async (
       return { success: false, error: 'Video must be less than 100MB' };
     }
 
-    // In a real implementation, this would use AWS SDK or similar to upload to Wasabi
-    // For now, we'll simulate the upload process and return a data URL for immediate use
+    // Upload to Supabase Storage instead of base64
+    const { supabase } = await import('./supabase');
     
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        
-        // Simulate upload delay
-        setTimeout(() => {
-          // In production, this would be the actual Wasabi S3 URL
-          const wasabiUrl = `https://s3.us-central-1.wasabisys.com/shoutoutorders/videos/${orderId}-${Date.now()}.mp4`;
-          
-          resolve({
-            success: true,
-            videoUrl: dataUrl // Use data URL for immediate preview (in prod: wasabiUrl)
-          });
-        }, 2000);
-      };
-      
-      reader.onerror = () => {
-        resolve({ success: false, error: 'Failed to process video file' });
-      };
-      
-      reader.readAsDataURL(file);
-    });
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${orderId}-${Date.now()}.${fileExt}`;
+    const filePath = `videos/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('shoutout-videos')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase Storage upload error:', error);
+      return { success: false, error: 'Upload failed: ' + error.message };
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('shoutout-videos')
+      .getPublicUrl(filePath);
+
+    return {
+      success: true,
+      videoUrl: publicUrl
+    };
 
   } catch (error) {
     console.error('Video upload error:', error);

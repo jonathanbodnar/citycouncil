@@ -21,32 +21,34 @@ export const uploadImageToWasabi = async (
       return { success: false, error: 'Image must be less than 5MB' };
     }
 
-    // In a real implementation, this would use AWS SDK to upload to Wasabi
-    // For now, we'll simulate the upload process and return a data URL for immediate use
+    // Upload to Supabase Storage instead of base64
+    const { supabase } = await import('./supabase');
     
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        
-        // Simulate upload delay
-        setTimeout(() => {
-          // In production, this would be the actual Wasabi S3 URL
-          const wasabiUrl = `https://s3.us-central-1.wasabisys.com/shoutout-assets/${uploadPath}/${Date.now()}-${file.name}`;
-          
-          resolve({
-            success: true,
-            imageUrl: dataUrl // Use data URL for immediate preview (in prod: wasabiUrl)
-          });
-        }, 1500);
-      };
-      
-      reader.onerror = () => {
-        resolve({ success: false, error: 'Failed to process image file' });
-      };
-      
-      reader.readAsDataURL(file);
-    });
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `${uploadPath}/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('shoutout-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase Storage upload error:', error);
+      return { success: false, error: 'Upload failed: ' + error.message };
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('shoutout-images')
+      .getPublicUrl(filePath);
+
+    return {
+      success: true,
+      imageUrl: publicUrl
+    };
 
   } catch (error) {
     console.error('Image upload error:', error);
