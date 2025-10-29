@@ -1,6 +1,9 @@
 -- Create daily cron job for Instagram tracking
 -- Run this in Supabase SQL Editor after deploying the instagram-tracker edge function
 
+-- First, enable the pg_cron extension if not already enabled
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
 -- Schedule the Instagram tracker to run daily at 2 AM UTC
 SELECT cron.schedule(
   'instagram-daily-tracking',
