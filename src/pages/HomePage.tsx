@@ -49,6 +49,7 @@ const HomePage: React.FC = () => {
 
   const fetchTalent = async () => {
     try {
+      console.log('Fetching talent...');
       const { data, error } = await supabase
         .from('talent_profiles')
         .select(`
@@ -62,7 +63,19 @@ const HomePage: React.FC = () => {
         .eq('is_active', true)
         .order('total_orders', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching talent:', error);
+        throw error;
+      }
+
+      console.log('Talent data fetched:', data?.length, 'profiles');
+
+      // Handle null data
+      if (!data || data.length === 0) {
+        setTalent([]);
+        setAvailableCategories([]);
+        return;
+      }
 
       // Map profiles - use temp fields if users data is missing (for incomplete onboarding)
       const talentWithUsers = data.map(profile => {
@@ -97,6 +110,7 @@ const HomePage: React.FC = () => {
 
   const fetchFeaturedTalent = async () => {
     try {
+      console.log('Fetching featured talent...');
       const { data, error } = await supabase
         .from('talent_profiles')
         .select(`
@@ -112,6 +126,12 @@ const HomePage: React.FC = () => {
         .limit(5);
 
       if (error) throw error;
+
+      // Handle null data
+      if (!data || data.length === 0) {
+        setFeaturedTalent([]);
+        return;
+      }
 
       console.log('Featured talent raw data:', data);
 
