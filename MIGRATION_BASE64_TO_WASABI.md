@@ -34,16 +34,77 @@ SET video_url = NULL
 WHERE video_url LIKE 'data:%';
 ```
 
-### Option 2: Migrate Existing Base64 to Wasabi (Preserve Data)
+### Option 2: Migrate Existing Base64 to Wasabi (Preserve Data) - AUTOMATED SCRIPT
 
-If you need to keep existing images/videos, you'll need to:
+If you need to keep existing images/videos, we have a ready-to-run migration script!
 
-1. **Extract base64 data**
-2. **Convert to files**
-3. **Upload to Wasabi**
-4. **Update database with new URLs**
+**Quick Start:**
 
-This requires a migration script. Here's a Node.js example:
+1. **Install dependencies** (if not already installed):
+```bash
+npm install dotenv
+```
+
+2. **Set environment variables** (choose one method):
+
+**Method A: Use existing .env file**
+Your `.env` file should already have these (or add them):
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+REACT_APP_WASABI_ACCESS_KEY_ID=your-wasabi-key
+REACT_APP_WASABI_SECRET_ACCESS_KEY=your-wasabi-secret
+```
+
+**Method B: Set inline**
+```bash
+SUPABASE_URL=your-url SUPABASE_SERVICE_ROLE_KEY=your-key REACT_APP_WASABI_ACCESS_KEY_ID=your-wasabi-key REACT_APP_WASABI_SECRET_ACCESS_KEY=your-wasabi-secret node migrate-base64-to-wasabi.js
+```
+
+3. **Run the migration**:
+```bash
+node migrate-base64-to-wasabi.js
+```
+
+The script will:
+- ✅ Find all base64-encoded images/videos
+- ✅ Upload them to Wasabi S3
+- ✅ Update database with new URLs
+- ✅ Show progress and statistics
+- ✅ Handle errors gracefully
+
+**Sample Output:**
+```
+╔════════════════════════════════════════════════════╗
+║  Base64 to Wasabi Migration Script                ║
+╚════════════════════════════════════════════════════╝
+
+📹 Migrating talent promo videos...
+
+Found 3 promo videos to migrate
+
+Processing: Jonathan Bodnar
+  📦 Uploading promo-abc123-1234567890.mp4 (8.50MB) to shoutoutorders...
+  ✅ Migrated successfully: https://s3.us-central-1.wasabisys.com/shoutoutorders/videos/promo-abc123-1234567890.mp4
+
+...
+
+╔════════════════════════════════════════════════════╗
+║  Migration Complete                                ║
+╚════════════════════════════════════════════════════╝
+
+📊 Summary:
+   Total items:     12
+   ✅ Successful:   12
+   ❌ Failed:       0
+   ⏱️  Duration:     45.32s
+
+🎉 All items migrated successfully!
+```
+
+---
+
+### Manual Migration Example (if you prefer to customize):
 
 ```javascript
 // migration-script.js
