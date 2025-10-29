@@ -11,9 +11,13 @@ export const uploadVideoToWasabi = async (
   orderId: string
 ): Promise<UploadResponse> => {
   try {
-    // Validate file
-    if (!file.type.startsWith('video/')) {
-      return { success: false, error: 'Please select a video file' };
+    // Validate file - check MIME type OR file extension
+    const validExtensions = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.m4v'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    const isVideo = file.type.startsWith('video/') || validExtensions.includes(fileExtension);
+    
+    if (!isVideo) {
+      return { success: false, error: 'Please select a video file (MP4, MOV, WEBM, etc.)' };
     }
 
     if (file.size > 100 * 1024 * 1024) { // 100MB limit

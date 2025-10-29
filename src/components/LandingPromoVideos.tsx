@@ -85,10 +85,17 @@ const LandingPromoVideos: React.FC = () => {
       }
 
       console.log('✅ File validated! Setting state:', file.name);
-      setSelectedFile(file);
+      
+      // Force state update by setting both values in sequence
       setFileName(file.name);
+      
+      // Use a small delay to ensure state update
+      setTimeout(() => {
+        setSelectedFile(file);
+        console.log('State updated - selectedFile and fileName set');
+      }, 0);
+      
       toast.success(`Selected: ${file.name}`);
-      console.log('State updated - selectedFile and fileName set');
     } else {
       console.log('No file selected');
       setSelectedFile(null);
@@ -261,10 +268,10 @@ const LandingPromoVideos: React.FC = () => {
               console.log('selectedFile:', selectedFile);
               console.log('fileName:', fileName);
               console.log('uploading:', uploading);
-              console.log('disabled?', uploading || !selectedFile);
+              console.log('disabled?', uploading || !fileName);
               handleUpload();
             }}
-            disabled={uploading || !selectedFile}
+            disabled={uploading || !fileName}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading ? (
