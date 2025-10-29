@@ -55,16 +55,20 @@ const LandingPromoVideos: React.FC = () => {
       // Validate file type
       if (!file.type.startsWith('video/')) {
         toast.error('Please select a video file');
+        e.target.value = ''; // Reset input
         return;
       }
 
       // Validate file size (max 100MB)
       if (file.size > 100 * 1024 * 1024) {
         toast.error('Video file must be less than 100MB');
+        e.target.value = ''; // Reset input
         return;
       }
 
+      console.log('File selected:', file.name, file.size, file.type);
       setSelectedFile(file);
+      toast.success(`Selected: ${file.name}`);
     }
   };
 
@@ -226,7 +230,10 @@ const LandingPromoVideos: React.FC = () => {
           </div>
 
           <button
-            onClick={handleUpload}
+            onClick={() => {
+              console.log('Upload clicked! selectedFile:', selectedFile);
+              handleUpload();
+            }}
             disabled={uploading || !selectedFile}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
