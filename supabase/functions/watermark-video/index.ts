@@ -1,0 +1,110 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const { videoUrl, orderId, talentName } = await req.json()
+
+    if (!videoUrl) {
+      throw new Error('videoUrl is required')
+    }
+
+    console.log('Watermarking video:', videoUrl)
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // For now, we'll use Cloudinary as the watermarking service
+    // This is more reliable than running FFmpeg in edge functions
+    const cloudinaryCloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME')
+    const cloudinaryApiKey = Deno.env.get('CLOUDINARY_API_KEY')
+    const cloudinaryApiSecret = Deno.env.get('CLOUDINARY_API_SECRET')
+
+    if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
+      // If Cloudinary not configured, return original URL with warning
+      console.warn('Cloudinary not configured, returning original video')
+      return new Response(
+        JSON.stringify({ 
+          watermarkedUrl: videoUrl,
+          warning: 'Watermarking not configured - returning original video'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    // Upload to Cloudinary with watermark transformation
+    const uploadFormData = new FormData()
+    
+    // Fetch the video file
+    const videoResponse = await fetch(videoUrl)
+    const videoBlob = await videoResponse.blob()
+    
+    uploadFormData.append('file', videoBlob)
+    uploadFormData.append('upload_preset', 'shoutout_watermarked') // You'll need to create this preset
+    uploadFormData.append('transformation', JSON.stringify({
+      overlay: 'shoutout_logo', // Upload your logo to Cloudinary with this public_id
+      gravity: 'north_west',
+      x: 20,
+      y: 20,
+      width: 150,
+      opacity: 60,
+      flags: 'layer_apply'
+    }))
+
+    const cloudinaryResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/video/upload`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${btoa(`${cloudinaryApiKey}:${cloudinaryApiSecret}`)}`
+        },
+        body: uploadFormData
+      }
+    )
+
+    if (!cloudinaryResponse.ok) {
+      const error = await cloudinaryResponse.text()
+      console.error('Cloudinary error:', error)
+      throw new Error('Failed to watermark video via Cloudinary')
+    }
+
+    const cloudinaryData = await cloudinaryResponse.json()
+    const watermarkedUrl = cloudinaryData.secure_url
+
+    console.log('Watermarked video created:', watermarkedUrl)
+
+    return new Response(
+      JSON.stringify({ watermarkedUrl }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
+
+  } catch (error) {
+    console.error('Error watermarking video:', error)
+    return new Response(
+      JSON.stringify({ 
+        error: error.message || 'Failed to watermark video'
+      }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
+  }
+})
+

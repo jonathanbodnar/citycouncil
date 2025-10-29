@@ -71,9 +71,32 @@ const PromotionalVideosManagement: React.FC = () => {
   const handleDownloadWithWatermark = async (videoUrl: string, talentName: string, orderId: string) => {
     setDownloadingVideo(orderId);
     try {
-      // For now, we'll download the original video
-      // Watermarking will be implemented next
-      const response = await fetch(videoUrl);
+      toast.loading('Adding watermark...', { id: 'watermark' });
+
+      // Call watermark edge function
+      const { data, error } = await supabase.functions.invoke('watermark-video', {
+        body: { 
+          videoUrl,
+          orderId,
+          talentName
+        }
+      });
+
+      if (error) {
+        console.error('Watermark error:', error);
+        throw error;
+      }
+
+      if (data.warning) {
+        console.warn(data.warning);
+        toast.warning(data.warning, { id: 'watermark' });
+      } else {
+        toast.success('Watermark applied!', { id: 'watermark' });
+      }
+
+      // Download the watermarked video
+      toast.loading('Downloading video...', { id: 'download' });
+      const response = await fetch(data.watermarkedUrl);
       const blob = await response.blob();
       
       const url = window.URL.createObjectURL(blob);
@@ -85,10 +108,27 @@ const PromotionalVideosManagement: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      toast.success('Video downloaded! (Watermarking coming next)');
+      toast.success('Video downloaded!', { id: 'download' });
     } catch (error) {
       console.error('Error downloading video:', error);
-      toast.error('Failed to download video');
+      toast.error('Failed to download video. Trying direct download...');
+      
+      // Fallback: direct download without watermark
+      try {
+        const response = await fetch(videoUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `shoutout-${talentName.replace(/\s+/g, '-')}-${orderId}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Video downloaded (without watermark)');
+      } catch (fallbackError) {
+        toast.error('Failed to download video');
+      }
     } finally {
       setDownloadingVideo(null);
     }

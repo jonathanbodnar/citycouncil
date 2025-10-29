@@ -76,7 +76,9 @@ const SocialMediaTracking: React.FC = () => {
       // Combine data
       const combinedData: SocialMediaData[] = (talents || []).map(talent => {
         const talentId = talent.id;
-        const talentName = talent.users?.full_name || talent.temp_full_name || 'Unknown';
+        // Handle users being an array (from Supabase join)
+        const user = Array.isArray(talent.users) ? talent.users[0] : talent.users;
+        const talentName = user?.full_name || talent.temp_full_name || 'Unknown';
 
         // Get bio tracking
         const instagramBio = bioData?.find(b => b.talent_id === talentId && b.platform === 'instagram');
