@@ -9,6 +9,7 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
+import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 
 const ComingSoonPage: React.FC = () => {
@@ -83,15 +84,11 @@ const ComingSoonPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex flex-col">
+    <div className="min-h-screen bg-transparent flex flex-col">
       {/* Header */}
-      <header className="px-4 py-6">
+      <header className="glass border-b border-white/10 backdrop-blur-xl px-4 py-6">
         <div className="max-w-7xl mx-auto flex justify-center">
-          <svg className="h-16 w-auto" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <text x="10" y="35" fontFamily="Arial, sans-serif" fontSize="32" fontWeight="bold" fill="white">
-              ShoutOut
-            </text>
-          </svg>
+          <Logo size="lg" theme="dark" />
         </div>
       </header>
 
@@ -234,9 +231,9 @@ const ComingSoonPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="px-4 py-6 border-t border-white/10">
+      <footer className="glass border-t border-white/10 backdrop-blur-xl px-4 py-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center text-gray-400">
+          <div className="flex flex-col sm:flex-row justify-between items-center text-gray-300">
             <p>&copy; 2024 ShoutOut. All rights reserved.</p>
             <div className="flex gap-6 mt-4 sm:mt-0">
               <Link to="/privacy-policy" className="hover:text-white transition-colors">
