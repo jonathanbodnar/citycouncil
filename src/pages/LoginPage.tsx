@@ -181,23 +181,6 @@ const LoginPage: React.FC = () => {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Test Accounts</span>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2 text-sm text-gray-600">
-              <div>Admin: admin@shoutout.com / password123</div>
-              <div>Talent: tucker@shoutout.com / password123</div>
-              <div>User: john@example.com / password123</div>
-            </div>
-          </div>
         </form>
       </div>
 
