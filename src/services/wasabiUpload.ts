@@ -41,16 +41,13 @@ export const uploadImageToWasabi = async (
       Key: fileName,
       Body: file,
       ContentType: file.type,
+      ACL: 'public-read' as const,
     };
 
-    await wasabi.upload(uploadParams).promise();
+    const result = await wasabi.upload(uploadParams).promise();
     
-    // Generate a pre-signed URL that expires in 7 days (max allowed)
-    const imageUrl = wasabi.getSignedUrl('getObject', {
-      Bucket: 'shoutout-assets',
-      Key: fileName,
-      Expires: 604800 // 7 days in seconds
-    });
+    // Use CloudFlare CDN URL for public access
+    const imageUrl = `https://assets.shoutout.us/${fileName}`;
     
     return {
       success: true,

@@ -40,16 +40,13 @@ export const uploadVideoToWasabi = async (
       Key: fileName,
       Body: file,
       ContentType: file.type,
+      ACL: 'public-read' as const,
     };
 
-    await wasabi.upload(uploadParams).promise();
+    const result = await wasabi.upload(uploadParams).promise();
     
-    // Generate a pre-signed URL that expires in 7 days (max allowed)
-    const videoUrl = wasabi.getSignedUrl('getObject', {
-      Bucket: 'shoutoutorders',
-      Key: fileName,
-      Expires: 604800 // 7 days in seconds
-    });
+    // Use CloudFlare CDN URL for public access
+    const videoUrl = `https://videos.shoutout.us/${fileName}`;
     
     return {
       success: true,
