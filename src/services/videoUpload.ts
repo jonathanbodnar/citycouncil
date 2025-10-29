@@ -20,33 +20,34 @@ export const uploadVideoToWasabi = async (
       return { success: false, error: 'Video must be less than 100MB' };
     }
 
-    // Upload to Supabase Storage instead of base64
-    const { supabase } = await import('./supabase');
+    // Upload to Wasabi S3
+    const AWS = (await import('aws-sdk')).default;
     
+    const wasabi = new AWS.S3({
+      endpoint: 's3.us-central-1.wasabisys.com',
+      accessKeyId: process.env.REACT_APP_WASABI_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY!,
+      region: 'us-central-1',
+      s3ForcePathStyle: true,
+      signatureVersion: 'v4'
+    });
+
     const fileExt = file.name.split('.').pop();
-    const fileName = `${orderId}-${Date.now()}.${fileExt}`;
-    const filePath = `videos/${fileName}`;
+    const fileName = `videos/${orderId}-${Date.now()}.${fileExt}`;
+    
+    const uploadParams = {
+      Bucket: 'shoutoutorders',
+      Key: fileName,
+      Body: file,
+      ContentType: file.type,
+      ACL: 'public-read' as const,
+    };
 
-    const { data, error } = await supabase.storage
-      .from('shoutout-videos')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) {
-      console.error('Supabase Storage upload error:', error);
-      return { success: false, error: 'Upload failed: ' + error.message };
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('shoutout-videos')
-      .getPublicUrl(filePath);
-
+    const result = await wasabi.upload(uploadParams).promise();
+    
     return {
       success: true,
-      videoUrl: publicUrl
+      videoUrl: result.Location
     };
 
   } catch (error) {

@@ -30,6 +30,7 @@ interface OrderFormData {
   eventAudience?: string;
   videoSettingRequest?: string;
   agreedToTerms: boolean;
+  allowPromotionalUse: boolean;
 }
 
 interface TalentWithUser extends TalentProfile {
@@ -182,7 +183,8 @@ const OrderPage: React.FC = () => {
             video_setting_request: orderData.videoSettingRequest,
             approval_status: orderData.isForBusiness ? 'pending' : 'approved',
             approved_at: orderData.isForBusiness ? null : new Date().toISOString(),
-            status: 'pending'
+            status: 'pending',
+            allow_promotional_use: orderData.allowPromotionalUse ?? true
           },
         ])
         .select()
@@ -596,6 +598,19 @@ const OrderPage: React.FC = () => {
               {errors.agreedToTerms && (
                 <p className="mb-4 text-sm text-red-600">{errors.agreedToTerms.message}</p>
               )}
+
+              <div className="flex items-center mb-4">
+                <input
+                  id="allowPromotionalUse"
+                  type="checkbox"
+                  defaultChecked={true}
+                  {...register('allowPromotionalUse')}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="allowPromotionalUse" className="ml-2 block text-sm text-gray-900">
+                  Allow this video to be used by the personality in promotional materials
+                </label>
+              </div>
 
               {!showPayment ? (
                 <button

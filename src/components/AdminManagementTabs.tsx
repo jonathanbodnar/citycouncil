@@ -6,13 +6,17 @@ import {
   ChartBarIcon,
   CurrencyDollarIcon,
   StarIcon,
-  ClockIcon
+  ClockIcon,
+  VideoCameraIcon,
+  HashtagIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { HelpMessage, AdminStats } from '../types';
 import TalentManagement from './TalentManagement';
 import PlatformSettings from './PlatformSettings';
 import AdminHelpDesk from './AdminHelpDesk';
+import PromotionalVideosManagement from './PromotionalVideosManagement';
+import SocialMediaTracking from './SocialMediaTracking';
 import toast from 'react-hot-toast';
 
 interface StatsCardProps {
@@ -42,7 +46,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
 );
 
 const AdminManagementTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'talent' | 'settings' | 'helpdesk'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'social-tracking'>('analytics');
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -218,10 +222,12 @@ const AdminManagementTabs: React.FC = () => {
       {/* Tab Navigation */}
       <div className="mb-8">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto">
             {[
               { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
               { key: 'talent', label: 'Manage Talent', icon: UsersIcon },
+              { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },
+              { key: 'social-tracking', label: 'Social Tracking', icon: HashtagIcon },
               { key: 'settings', label: 'Platform Settings', icon: Cog6ToothIcon },
               { key: 'helpdesk', label: 'Help Desk', icon: ChatBubbleLeftRightIcon },
             ].map((tab) => (
@@ -444,6 +450,16 @@ const AdminManagementTabs: React.FC = () => {
       {/* Help Desk Tab */}
       {activeTab === 'helpdesk' && (
         <AdminHelpDesk />
+      )}
+
+      {/* Promotional Videos Tab */}
+      {activeTab === 'promo-videos' && (
+        <PromotionalVideosManagement />
+      )}
+
+      {/* Social Media Tracking Tab */}
+      {activeTab === 'social-tracking' && (
+        <SocialMediaTracking />
       )}
 
     </div>
