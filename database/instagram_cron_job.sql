@@ -47,32 +47,33 @@ LIMIT 10;
 /*
 NOTES:
 1. Replace YOUR_PROJECT_ID with your actual Supabase project ID
-   - Find it in: Supabase Dashboard → Settings → General → Reference ID
+   Find it in: Supabase Dashboard → Settings → General → Reference ID
    
 2. Replace YOUR_SERVICE_ROLE_KEY with your service role key
-   - Find it in: Supabase Dashboard → Settings → API → service_role secret key
-   - ⚠️ NEVER commit this key to git!
+   Find it in: Supabase Dashboard → Settings → API → service_role secret key
+   WARNING: NEVER commit this key to git!
    
-3. Cron schedule syntax: 'minute hour day month weekday'
-   - '0 2 * * *' = Every day at 2:00 AM UTC
-   - '0 */6 * * *' = Every 6 hours
-   - '0 8 * * 1' = Every Monday at 8:00 AM
-   - '*/30 * * * *' = Every 30 minutes
+3. Cron schedule syntax: minute hour day month weekday
+   Examples:
+   0 2 * * * = Every day at 2:00 AM UTC
+   0 */6 * * * = Every 6 hours  
+   0 8 * * 1 = Every Monday at 8:00 AM
+   */30 * * * * = Every 30 minutes
    
 4. Time zones:
-   - Cron runs in UTC by default
-   - 2 AM UTC = 10 PM EST (previous day) / 7 PM PST (previous day)
-   - Adjust schedule as needed for your timezone
+   Cron runs in UTC by default
+   2 AM UTC = 10 PM EST previous day / 7 PM PST previous day
+   Adjust schedule as needed for your timezone
    
 5. The edge function will:
-   - Fetch all talent with Instagram connected
-   - Check their bio for shoutout.us links
-   - Scan recent posts for @shoutoutvoice tags
-   - Update the tracking tables
+   Fetch all talent with Instagram connected
+   Check their bio for shoutout.us links
+   Scan recent posts for @shoutoutvoice tags
+   Update the tracking tables
    
 6. Monitoring:
-   - Check cron.job_run_details to see execution history
-   - Check Edge Function logs in Supabase Dashboard
-   - Set up alerts for failed runs if needed
+   Check cron.job_run_details to see execution history
+   Check Edge Function logs in Supabase Dashboard
+   Set up alerts for failed runs if needed
 */
 
