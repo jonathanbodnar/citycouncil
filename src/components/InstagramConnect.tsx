@@ -19,6 +19,7 @@ const InstagramConnect: React.FC<InstagramConnectProps> = ({
   // Instagram OAuth config (read from env, never hardcoded)
   const INSTAGRAM_APP_ID = '1169941761684216';
   const REDIRECT_URI = `${window.location.origin}/instagram/callback`;
+  const SCOPE = 'instagram_basic,pages_show_list'; // Graph API scopes for business accounts
 
   useEffect(() => {
     // Listen for OAuth callback messages
@@ -40,11 +41,11 @@ const InstagramConnect: React.FC<InstagramConnectProps> = ({
   const handleConnect = () => {
     setConnecting(true);
     
-    // Build Instagram OAuth URL
-    const authUrl = new URL('https://api.instagram.com/oauth/authorize');
+    // Build Instagram OAuth URL (using Facebook OAuth for Instagram Graph API)
+    const authUrl = new URL('https://www.facebook.com/v18.0/dialog/oauth');
     authUrl.searchParams.append('client_id', INSTAGRAM_APP_ID);
     authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
-    authUrl.searchParams.append('scope', 'user_profile,user_media');
+    authUrl.searchParams.append('scope', SCOPE);
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('state', talentId); // Pass talent ID as state
     
