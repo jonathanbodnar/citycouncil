@@ -56,7 +56,7 @@ serve(async (req) => {
     uploadFormData.append('file', videoBlob)
     uploadFormData.append('upload_preset', 'shoutout_watermarked') // You'll need to create this preset
     uploadFormData.append('transformation', JSON.stringify({
-      overlay: 'shoutout_logo', // Upload your logo to Cloudinary with this public_id
+      overlay: 'shoutout_logo_jruflu', // Your Cloudinary logo public_id
       gravity: 'north_west',
       x: 20,
       y: 20,
