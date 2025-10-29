@@ -86,7 +86,25 @@ const InstagramConnect: React.FC<InstagramConnectProps> = ({
 
       if (data.error) {
         console.error('OAuth response error:', data.error);
-        throw new Error(data.error);
+        
+        // Check if it's a personal account (no business account)
+        if (data.error === 'no_business_account') {
+          toast.error(data.message || 'Only Business accounts supported for automatic tracking');
+          
+          // Prompt for manual username entry
+          const manualUsername = window.prompt(
+            '💡 Only Instagram Business accounts can connect automatically.\n\n' +
+            'For personal accounts, enter your Instagram username (without @) for manual tracking:\n\n' +
+            '(We\'ll track if you add shoutout.us to your bio and tag @shoutoutvoice in posts)'
+          );
+          
+          if (manualUsername && manualUsername.trim()) {
+            await saveManualUsername(manualUsername.trim());
+            return;
+          }
+        }
+        
+        throw new Error(data.message || data.error);
       }
 
       console.log('Instagram connected successfully:', data);
@@ -103,6 +121,39 @@ const InstagramConnect: React.FC<InstagramConnectProps> = ({
     } catch (error: any) {
       console.error('Instagram connection error:', error);
       toast.error(error.message || 'Failed to connect Instagram. Please try again.');
+    } finally {
+      setLoading(false);
+      setConnecting(false);
+    }
+  };
+
+  const saveManualUsername = async (username: string) => {
+    try {
+      setLoading(true);
+      
+      // Save username to database (without API token - manual tracking only)
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({
+          instagram_username: username,
+          instagram_user_id: 'manual', // Flag as manual entry
+          instagram_access_token: null, // No API access
+          instagram_token_expires_at: null
+        })
+        .eq('id', talentId);
+
+      if (error) throw error;
+
+      toast.success(`Instagram @${username} saved! We'll track your bio and posts manually.`);
+      
+      if (onConnectionChange) {
+        onConnectionChange();
+      }
+      
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      console.error('Failed to save username:', error);
+      toast.error('Failed to save Instagram username');
     } finally {
       setLoading(false);
       setConnecting(false);
@@ -199,17 +250,38 @@ const InstagramConnect: React.FC<InstagramConnectProps> = ({
         </div>
       </div>
 
-      <button
-        onClick={handleConnect}
-        disabled={loading || connecting}
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {connecting ? 'Opening Instagram...' : loading ? 'Connecting...' : 'Connect Instagram Account'}
-      </button>
-      
-      <p className="text-xs text-gray-500 mt-3 text-center">
-        Takes 30 seconds • One-time setup
-      </p>
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={handleConnect}
+          disabled={loading || connecting}
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {connecting ? 'Opening Instagram...' : loading ? 'Connecting...' : 'Connect Business Account (Auto-Track)'}
+        </button>
+        
+        <button
+          onClick={() => {
+            const manualUsername = window.prompt(
+              'Enter your Instagram username (without @):\n\n' +
+              '⚠️ Personal accounts only. We\'ll manually check if you:\n' +
+              '• Add shoutout.us to your bio\n' +
+              '• Tag @shoutoutvoice in posts'
+            );
+            
+            if (manualUsername && manualUsername.trim()) {
+              saveManualUsername(manualUsername.trim());
+            }
+          }}
+          disabled={loading || connecting}
+          className="w-full glass-strong px-6 py-3 rounded-lg hover:glass transition-all text-gray-300 border border-white/20 text-sm disabled:opacity-50"
+        >
+          Or Enter Personal Account Manually
+        </button>
+        
+        <p className="text-xs text-gray-500 text-center">
+          Business accounts: Auto-tracking • Personal accounts: Manual verification
+        </p>
+      </div>
     </div>
   );
 };

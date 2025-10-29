@@ -57,81 +57,73 @@ serve(async (req) => {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
     
-    console.log('Got Facebook access token, fetching Instagram Business Account...');
+    console.log('Got Facebook access token, trying Business account first...');
 
-    // Step 2: Get user's Facebook pages (Instagram Business accounts are linked to Pages)
-    const pagesResponse = await fetch(
-      `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
-    );
+    // Step 2: Try to get Instagram Business account (via Facebook Pages)
+    let username = null;
+    let igUserId = null;
+    let finalAccessToken = null;
+    let expiresIn = 5184000; // 60 days default
+    let accountType = 'business';
 
-    if (!pagesResponse.ok) {
-      const errorText = await pagesResponse.text();
-      console.error('Failed to fetch pages:', errorText);
+    try {
+      const pagesResponse = await fetch(
+        `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
+      );
+
+      if (pagesResponse.ok) {
+        const pagesData = await pagesResponse.json();
+        const pages = pagesData.data || [];
+
+        if (pages.length > 0) {
+          // Try to find Instagram Business account
+          for (const page of pages) {
+            const pageId = page.id;
+            const pageAccessToken = page.access_token;
+
+            const igAccountResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
+            );
+
+            if (igAccountResponse.ok) {
+              const igAccountData = await igAccountResponse.json();
+              const businessAccountId = igAccountData.instagram_business_account?.id;
+
+              if (businessAccountId) {
+                // Found a business account!
+                const igProfileResponse = await fetch(
+                  `https://graph.facebook.com/v18.0/${businessAccountId}?fields=username&access_token=${pageAccessToken}`
+                );
+
+                if (igProfileResponse.ok) {
+                  const igProfileData = await igProfileResponse.json();
+                  username = igProfileData.username;
+                  igUserId = businessAccountId;
+                  finalAccessToken = pageAccessToken;
+                  console.log(`Found Instagram Business account: @${username}`);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Business account fetch failed, will try personal account:', error);
+    }
+
+    // Step 3: If no Business account found, return error with instructions
+    if (!username) {
+      console.log('No Business account found');
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch Facebook pages', details: errorText }),
+        JSON.stringify({ 
+          error: 'no_business_account',
+          message: 'No Instagram Business account found',
+          details: 'Only Instagram Business or Creator accounts can be connected automatically. Please convert your Instagram account to a Business account, or enter your Instagram username manually for basic tracking.'
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const pagesData = await pagesResponse.json();
-    const pages = pagesData.data || [];
-
-    if (pages.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'No Facebook pages found. Instagram Business accounts must be linked to a Facebook Page.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Step 3: Get Instagram Business Account from the first page
-    const pageId = pages[0].id;
-    const pageAccessToken = pages[0].access_token;
-
-    const igAccountResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
-    );
-
-    if (!igAccountResponse.ok) {
-      const errorText = await igAccountResponse.text();
-      console.error('Failed to fetch Instagram account:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'No Instagram Business account found for this Facebook Page', details: errorText }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const igAccountData = await igAccountResponse.json();
-    const igUserId = igAccountData.instagram_business_account?.id;
-
-    if (!igUserId) {
-      return new Response(
-        JSON.stringify({ error: 'No Instagram Business account linked to this Facebook Page' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Step 4: Get Instagram username
-    const igProfileResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${igUserId}?fields=username&access_token=${pageAccessToken}`
-    );
-
-    if (!igProfileResponse.ok) {
-      const errorText = await igProfileResponse.text();
-      console.error('Failed to fetch Instagram profile:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch Instagram profile', details: errorText }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const igProfileData = await igProfileResponse.json();
-    const username = igProfileData.username;
-
-    console.log(`Successfully authorized Instagram Business account: @${username}`);
-
-    // Use page access token for Instagram API calls (doesn't expire if page token is long-lived)
-    const finalAccessToken = pageAccessToken;
-    const expiresIn = 5184000; // 60 days
 
     // Step 5: Save to database
     const supabase = createClient(
