@@ -1,0 +1,40 @@
+Subject: RE: Public Access Request - CloudFlare Integration Complete
+
+Thank you for the quick response!
+
+I have successfully integrated CloudFlare CDN with Wasabi. Here is the requested information:
+
+
+CNAME RECORDS:
+
+1. assets.shoutout.us → s3.us-central-1.wasabisys.com (Proxied via CloudFlare)
+   For bucket: shoutout-assets
+
+2. videos.shoutout.us → s3.us-central-1.wasabisys.com (Proxied via CloudFlare)
+   For bucket: shoutoutorders
+
+
+CONTACT PHONE NUMBER:
+
+[YOUR PHONE NUMBER HERE]
+
+
+CloudFlare Configuration:
+- Cache Level: Cache Everything
+- Edge Cache TTL: 1 month (minimizes direct Wasabi egress)
+- Browser Cache TTL: 4 hours
+- All requests to our Wasabi buckets are routed through CloudFlare's CDN
+
+This configuration ensures compliance with your egress policy by caching the majority of requests at CloudFlare's edge servers.
+
+Please let me know if you need any additional information or if there are any other steps required to enable public access for these buckets.
+
+Thank you for your assistance!
+
+Best regards,
+[YOUR NAME]
+[YOUR TITLE]
+ShoutOut
+[YOUR PHONE NUMBER]
+[YOUR EMAIL]
+

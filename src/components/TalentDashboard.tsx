@@ -23,6 +23,7 @@ import SocialAccountsManager from './SocialAccountsManager';
 import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
 import PayoutsDashboard from './PayoutsDashboard';
+import InstagramConnect from './InstagramConnect';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import { emailService } from '../services/emailService';
 import { notificationService } from '../services/notificationService';
@@ -836,6 +837,17 @@ const TalentDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Instagram Connection */}
+            {talentProfile && (
+              <div className="mt-6">
+                <InstagramConnect
+                  talentId={talentProfile.id}
+                  currentUsername={talentProfile.instagram_username}
+                  onConnectionChange={fetchTalentData}
+                />
+              </div>
+            )}
 
             {/* Claim Button */}
             {!talentProfile?.is_participating_in_promotion ? (

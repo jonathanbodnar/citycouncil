@@ -49,7 +49,7 @@ const stats = {
 async function uploadToWasabi(base64Data, fileName, bucket) {
   try {
     // Extract base64 content and mime type
-    const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    const matches = base64Data.match(/^data:([^;]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
       throw new Error('Invalid base64 data format');
     }
@@ -65,10 +65,16 @@ async function uploadToWasabi(base64Data, fileName, bucket) {
       Key: fileName,
       Body: buffer,
       ContentType: mimeType,
-      ACL: 'public-read'
     }).promise();
 
-    return uploadResult.Location;
+    // Generate pre-signed URL (7 days expiry)
+    const signedUrl = wasabi.getSignedUrl('getObject', {
+      Bucket: bucket,
+      Key: fileName,
+      Expires: 604800 // 7 days
+    });
+
+    return signedUrl;
   } catch (error) {
     console.error(`  ❌ Upload failed:`, error.message);
     throw error;

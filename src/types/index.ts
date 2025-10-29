@@ -45,6 +45,10 @@ export interface TalentProfile {
   onboarding_expires_at?: string; // When onboarding token expires
   temp_full_name?: string; // Temporary storage for name before user creation
   temp_avatar_url?: string; // Temporary storage for avatar before user creation
+  instagram_username?: string; // Instagram username for promotion tracking
+  instagram_user_id?: string; // Instagram user ID from Meta API
+  instagram_access_token?: string; // OAuth access token for Instagram API
+  instagram_token_expires_at?: string; // When the Instagram access token expires
   total_orders: number;
   fulfilled_orders: number;
   average_rating: number;

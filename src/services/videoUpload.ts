@@ -40,14 +40,20 @@ export const uploadVideoToWasabi = async (
       Key: fileName,
       Body: file,
       ContentType: file.type,
-      ACL: 'public-read' as const,
     };
 
-    const result = await wasabi.upload(uploadParams).promise();
+    await wasabi.upload(uploadParams).promise();
+    
+    // Generate a pre-signed URL that expires in 7 days (max allowed)
+    const videoUrl = wasabi.getSignedUrl('getObject', {
+      Bucket: 'shoutoutorders',
+      Key: fileName,
+      Expires: 604800 // 7 days in seconds
+    });
     
     return {
       success: true,
-      videoUrl: result.Location
+      videoUrl: videoUrl
     };
 
   } catch (error) {

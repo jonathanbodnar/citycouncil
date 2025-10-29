@@ -19,6 +19,7 @@ import ReviewPage from './pages/ReviewPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import EmailTestPage from './pages/EmailTestPage';
+import InstagramCallbackPage from './pages/InstagramCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -37,6 +38,7 @@ function App() {
             <Route path="/seed" element={<SeedDataPage />} />
             <Route path="/email-test" element={<EmailTestPage />} />
             <Route path="/onboard/:token" element={<TalentOnboardingPage />} />
+            <Route path="/instagram/callback" element={<InstagramCallbackPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-service" element={<TermsOfServicePage />} />
             
