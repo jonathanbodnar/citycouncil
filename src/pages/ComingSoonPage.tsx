@@ -1,93 +1,232 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   PlayIcon, 
   StarIcon, 
   HeartIcon,
-  ArrowRightIcon 
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/solid';
-import Logo from '../components/Logo';
+import { supabase } from '../services/supabase';
+import toast from 'react-hot-toast';
 
 const ComingSoonPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [promoVideos, setPromoVideos] = useState<any[]>([]);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+
+  useEffect(() => {
+    fetchPromoVideos();
+  }, []);
+
+  const fetchPromoVideos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('landing_promo_videos')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setPromoVideos(data || []);
+    } catch (error) {
+      console.error('Error fetching promo videos:', error);
+    }
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase
+        .from('email_waitlist')
+        .insert({
+          email: email.toLowerCase().trim(),
+          source: 'landing_page',
+          discount_code: '25OFF',
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.success('You\'re already on the list! 🎉');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success('🎉 You\'re in! Check your email for your 25% off code.');
+        setEmail('');
+      }
+    } catch (error: any) {
+      console.error('Error adding to waitlist:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const nextVideo = () => {
+    setCurrentVideoIndex((prev) => (prev + 1) % promoVideos.length);
+  };
+
+  const prevVideo = () => {
+    setCurrentVideoIndex((prev) => (prev - 1 + promoVideos.length) % promoVideos.length);
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex flex-col">
       {/* Header */}
       <header className="px-4 py-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Empty header for spacing */}
+        <div className="max-w-7xl mx-auto flex justify-center">
+          <svg className="h-16 w-auto" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <text x="10" y="35" fontFamily="Arial, sans-serif" fontSize="32" fontWeight="bold" fill="white">
+              ShoutOut
+            </text>
+          </svg>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4">
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="max-w-4xl mx-auto text-center">
           {/* Hero Section */}
           <div className="mb-12">
-            <div className="mb-8 flex justify-center">
-              <Logo size="lg" />
-            </div>
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-600 mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
               Coming Soon
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
               Get personalized video messages from your favorite conservative voices, 
-              politicians, and media personalities. The ultimate platform for 
-              authentic connections is launching soon.
+              politicians, and media personalities.
             </p>
           </div>
 
+          {/* CTA Section */}
+          <div className="glass-strong rounded-2xl p-8 border border-white/20 mb-8 shadow-2xl">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Get 25% Off Your First ShoutOut!
+            </h2>
+            <p className="text-gray-300 mb-6 text-lg">
+              Join our waitlist and receive an exclusive discount code when we launch.
+            </p>
+            
+            <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                className="px-6 py-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/30 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none w-full sm:w-auto sm:min-w-96 backdrop-blur-sm"
+                disabled={loading}
+              />
+              <button 
+                type="submit"
+                disabled={loading}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 w-full sm:w-auto shadow-lg disabled:opacity-50"
+              >
+                {loading ? 'Joining...' : 'Get My 25% Off'}
+                <ArrowRightIcon className="h-5 w-5" />
+              </button>
+            </form>
+
+            {/* Video Carousel */}
+            {promoVideos.length > 0 && (
+              <div className="relative max-w-2xl mx-auto">
+                <h3 className="text-white text-lg font-semibold mb-4">See What a ShoutOut Looks Like:</h3>
+                
+                <div className="relative">
+                  {/* Video Container with Rounded Borders */}
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
+                    <video
+                      key={promoVideos[currentVideoIndex].id}
+                      src={promoVideos[currentVideoIndex].video_url}
+                      controls
+                      className="w-full aspect-video bg-black"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
+                  </div>
+
+                  {/* Navigation Buttons */}
+                  {promoVideos.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevVideo}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all backdrop-blur-sm"
+                        aria-label="Previous video"
+                      >
+                        <ChevronLeftIcon className="h-6 w-6" />
+                      </button>
+                      <button
+                        onClick={nextVideo}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all backdrop-blur-sm"
+                        aria-label="Next video"
+                      >
+                        <ChevronRightIcon className="h-6 w-6" />
+                      </button>
+
+                      {/* Dots Indicator */}
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                        {promoVideos.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentVideoIndex(index)}
+                            className={`w-2 h-2 rounded-full transition-all ${
+                              index === currentVideoIndex 
+                                ? 'bg-white w-8' 
+                                : 'bg-white/50 hover:bg-white/75'
+                            }`}
+                            aria-label={`Go to video ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Features Preview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-blue-600 rounded-lg p-6 shadow-lg">
-              <PlayIcon className="h-12 w-12 text-white mx-auto mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="glass rounded-xl p-6 border border-white/10">
+              <PlayIcon className="h-12 w-12 text-blue-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">
                 Personal Videos
               </h3>
-              <p className="text-blue-100">
+              <p className="text-gray-300 text-sm">
                 Custom video messages for birthdays, celebrations, and special occasions
               </p>
             </div>
             
-            <div className="bg-blue-600 rounded-lg p-6 shadow-lg">
-              <StarIcon className="h-12 w-12 text-white mx-auto mb-4" />
+            <div className="glass rounded-xl p-6 border border-white/10">
+              <StarIcon className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">
                 Verified Talent
               </h3>
-              <p className="text-blue-100">
+              <p className="text-gray-300 text-sm">
                 Authentic personalities including politicians, hosts, and commentators
               </p>
             </div>
             
-            <div className="bg-blue-600 rounded-lg p-6 shadow-lg">
-              <HeartIcon className="h-12 w-12 text-white mx-auto mb-4" />
+            <div className="glass rounded-xl p-6 border border-white/10">
+              <HeartIcon className="h-12 w-12 text-red-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">
                 Support Causes
               </h3>
-              <p className="text-blue-100">
+              <p className="text-gray-300 text-sm">
                 Every purchase supports conservative causes and charities
               </p>
-            </div>
-          </div>
-
-          {/* CTA Section */}
-          <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 mb-8 shadow-sm">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Be the First to Know
-            </h2>
-            <p className="text-gray-600 mb-6 text-lg">
-              Join our exclusive early access list and get notified when ShoutOut launches.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="px-6 py-3 rounded-lg bg-white text-gray-900 placeholder-gray-500 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none w-full sm:w-auto sm:min-w-80"
-              />
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 w-full sm:w-auto">
-                Get Early Access
-                <ArrowRightIcon className="h-5 w-5" />
-              </button>
             </div>
           </div>
 
@@ -95,15 +234,15 @@ const ComingSoonPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="px-4 py-6 border-t border-gray-200">
+      <footer className="px-4 py-6 border-t border-white/10">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center text-gray-600">
+          <div className="flex flex-col sm:flex-row justify-between items-center text-gray-400">
             <p>&copy; 2024 ShoutOut. All rights reserved.</p>
             <div className="flex gap-6 mt-4 sm:mt-0">
-              <Link to="/privacy-policy" className="hover:text-gray-900 transition-colors">
+              <Link to="/privacy-policy" className="hover:text-white transition-colors">
                 Privacy Policy
               </Link>
-              <Link to="/terms-of-service" className="hover:text-gray-900 transition-colors">
+              <Link to="/terms-of-service" className="hover:text-white transition-colors">
                 Terms of Service
               </Link>
             </div>

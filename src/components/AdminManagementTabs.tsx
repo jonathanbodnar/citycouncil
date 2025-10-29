@@ -16,6 +16,7 @@ import TalentManagement from './TalentManagement';
 import PlatformSettings from './PlatformSettings';
 import AdminHelpDesk from './AdminHelpDesk';
 import PromotionalVideosManagement from './PromotionalVideosManagement';
+import LandingPromoVideos from './LandingPromoVideos';
 import SocialMediaTracking from './SocialMediaTracking';
 import toast from 'react-hot-toast';
 
@@ -46,7 +47,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
 );
 
 const AdminManagementTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'social-tracking'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking'>('analytics');
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -227,6 +228,7 @@ const AdminManagementTabs: React.FC = () => {
               { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
               { key: 'talent', label: 'Manage Talent', icon: UsersIcon },
               { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },
+              { key: 'landing-videos', label: 'Landing Videos', icon: StarIcon },
               { key: 'social-tracking', label: 'Social Tracking', icon: HashtagIcon },
               { key: 'settings', label: 'Platform Settings', icon: Cog6ToothIcon },
               { key: 'helpdesk', label: 'Help Desk', icon: ChatBubbleLeftRightIcon },
@@ -455,6 +457,11 @@ const AdminManagementTabs: React.FC = () => {
       {/* Promotional Videos Tab */}
       {activeTab === 'promo-videos' && (
         <PromotionalVideosManagement />
+      )}
+
+      {/* Landing Page Videos Tab */}
+      {activeTab === 'landing-videos' && (
+        <LandingPromoVideos />
       )}
 
       {/* Social Media Tracking Tab */}
