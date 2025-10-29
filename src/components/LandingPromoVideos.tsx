@@ -24,11 +24,7 @@ const LandingPromoVideos: React.FC = () => {
   const [videos, setVideos] = useState<LandingPromoVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [newVideo, setNewVideo] = useState({
-    title: '',
-    description: '',
-    file: null as File | null
-  });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetchVideos();
@@ -68,12 +64,12 @@ const LandingPromoVideos: React.FC = () => {
         return;
       }
 
-      setNewVideo(prev => ({ ...prev, file }));
+      setSelectedFile(file);
     }
   };
 
   const handleUpload = async () => {
-    if (!newVideo.file) {
+    if (!selectedFile) {
       toast.error('Please select a video file');
       return;
     }
@@ -85,7 +81,7 @@ const LandingPromoVideos: React.FC = () => {
       const promoVideoId = `promo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Upload video to Wasabi
-      const uploadResult = await uploadVideoToWasabi(newVideo.file, promoVideoId);
+      const uploadResult = await uploadVideoToWasabi(selectedFile, promoVideoId);
       
       if (!uploadResult.success || !uploadResult.videoUrl) {
         throw new Error(uploadResult.error || 'Failed to upload video');
@@ -99,8 +95,8 @@ const LandingPromoVideos: React.FC = () => {
         .from('landing_promo_videos')
         .insert({
           video_url: uploadResult.videoUrl,
-          title: newVideo.title || null,
-          description: newVideo.description || null,
+          title: null,
+          description: null,
           display_order: maxOrder + 1,
           is_active: true
         });
@@ -108,7 +104,7 @@ const LandingPromoVideos: React.FC = () => {
       if (error) throw error;
 
       toast.success('Promo video uploaded successfully!');
-      setNewVideo({ title: '', description: '', file: null });
+      setSelectedFile(null);
       
       // Reset file input
       const fileInput = document.getElementById('video-file-input') as HTMLInputElement;
@@ -206,14 +202,11 @@ const LandingPromoVideos: React.FC = () => {
       <div className="glass rounded-2xl p-6 border border-white/20">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
           <VideoCameraIcon className="h-6 w-6" />
-          Upload New Landing Page Video
+          Upload Landing Page Video
         </h3>
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Video File
-            </label>
             <input
               id="video-file-input"
               type="file"
@@ -222,44 +215,19 @@ const LandingPromoVideos: React.FC = () => {
               className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer"
               disabled={uploading}
             />
-            {newVideo.file && (
+            {selectedFile && (
               <p className="mt-2 text-sm text-gray-400">
-                Selected: {newVideo.file.name} ({(newVideo.file.size / 1024 / 1024).toFixed(2)} MB)
+                Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
               </p>
             )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Title (optional)
-            </label>
-            <input
-              type="text"
-              value={newVideo.title}
-              onChange={(e) => setNewVideo(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="e.g., Sample Birthday Shoutout"
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={uploading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description (optional)
-            </label>
-            <textarea
-              value={newVideo.description}
-              onChange={(e) => setNewVideo(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Brief description of this example video..."
-              rows={3}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={uploading}
-            />
+            <p className="mt-2 text-xs text-gray-500">
+              Max 100MB • MP4, MOV, WEBM supported
+            </p>
           </div>
 
           <button
             onClick={handleUpload}
-            disabled={uploading || !newVideo.file}
+            disabled={uploading || !selectedFile}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading ? (
@@ -303,21 +271,18 @@ const LandingPromoVideos: React.FC = () => {
                   {/* Video Info */}
                   <div className="flex-1">
                     <h4 className="text-white font-semibold">
-                      {video.title || `Video ${index + 1}`}
+                      Video {index + 1}
                     </h4>
-                    {video.description && (
-                      <p className="text-gray-400 text-sm mt-1">{video.description}</p>
-                    )}
                     <div className="flex items-center gap-4 mt-2">
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         video.is_active 
                           ? 'bg-green-500/20 text-green-300' 
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {video.is_active ? 'Active' : 'Hidden'}
+                        {video.is_active ? 'Visible on Landing' : 'Hidden'}
                       </span>
                       <span className="text-xs text-gray-500">
-                        Order: {video.display_order}
+                        Position: {index + 1}
                       </span>
                     </div>
                   </div>
