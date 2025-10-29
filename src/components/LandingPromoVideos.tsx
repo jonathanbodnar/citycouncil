@@ -56,10 +56,19 @@ const LandingPromoVideos: React.FC = () => {
     if (files && files.length > 0) {
       const file = files[0];
       console.log('File object:', file);
+      console.log('File type:', file.type);
+      console.log('File name:', file.name);
       
-      // Validate file type
-      if (!file.type.startsWith('video/')) {
-        toast.error('Please select a video file');
+      // Validate file type - check MIME type OR file extension
+      const validExtensions = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.m4v'];
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      const isVideo = file.type.startsWith('video/') || validExtensions.includes(fileExtension);
+      
+      console.log('File extension:', fileExtension);
+      console.log('Is video?', isVideo);
+      
+      if (!isVideo) {
+        toast.error('Please select a video file (MP4, MOV, WEBM, etc.)');
         e.target.value = ''; // Reset input
         setSelectedFile(null);
         setFileName('');
@@ -75,11 +84,11 @@ const LandingPromoVideos: React.FC = () => {
         return;
       }
 
-      console.log('File validated, setting state:', file.name);
+      console.log('✅ File validated! Setting state:', file.name);
       setSelectedFile(file);
       setFileName(file.name);
       toast.success(`Selected: ${file.name}`);
-      console.log('State should be updated now');
+      console.log('State updated - selectedFile and fileName set');
     } else {
       console.log('No file selected');
       setSelectedFile(null);
