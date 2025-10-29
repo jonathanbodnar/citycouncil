@@ -109,6 +109,7 @@ const InstagramConnect: React.FC<InstagramConnectProps> = ({
   };
 
   const handleDisconnect = async () => {
+    // eslint-disable-next-line no-restricted-globals
     if (!confirm('Disconnect Instagram? This will remove you from the promotion program.')) {
       return;
     }
