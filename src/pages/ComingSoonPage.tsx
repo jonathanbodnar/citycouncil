@@ -20,11 +20,25 @@ const ComingSoonPage: React.FC = () => {
   const [spotsRemaining, setSpotsRemaining] = useState(197);
   const [promoVideos, setPromoVideos] = useState<any[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [videoRefs, setVideoRefs] = useState<{ [key: number]: HTMLVideoElement | null }>({});
 
   useEffect(() => {
     fetchPromoVideos();
     fetchSpotsRemaining();
   }, []);
+
+  // Pause all videos except the active one
+  useEffect(() => {
+    Object.entries(videoRefs).forEach(([index, videoEl]) => {
+      if (videoEl) {
+        const idx = parseInt(index);
+        if (idx !== currentVideoIndex && !videoEl.paused) {
+          videoEl.pause();
+          videoEl.currentTime = 0; // Reset to beginning
+        }
+      }
+    });
+  }, [currentVideoIndex, videoRefs]);
 
   const fetchPromoVideos = async () => {
     try {
@@ -248,10 +262,10 @@ const ComingSoonPage: React.FC = () => {
                       <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black" style={{ height: '450px' }}>
                         <video
                           ref={(el) => {
-                            // Auto-pause when video becomes inactive
-                            if (el && !isActive && !el.paused) {
-                              el.pause();
-                            }
+                            setVideoRefs(prev => ({
+                              ...prev,
+                              [index]: el
+                            }));
                           }}
                           src={video.video_url}
                           poster={video.video_url + '#t=0.5'}
