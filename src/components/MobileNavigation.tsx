@@ -57,7 +57,7 @@ const MobileNavigation: React.FC = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/20 md:hidden backdrop-blur-xl" style={{ background: 'rgba(255, 255, 255, 0.25)' }}>
+    <div className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/20 md:hidden backdrop-blur-xl z-50" style={{ background: 'rgba(255, 255, 255, 0.25)' }}>
       <div className="grid grid-cols-5 py-2">
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;
