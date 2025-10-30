@@ -66,20 +66,47 @@ const ShareModal: React.FC<ShareModalProps> = ({
     return shareUrls[platform as keyof typeof shareUrls] || '#';
   };
 
-  const handleShare = (platform: string) => {
-    if (platform === 'instagram' || platform === 'tiktok') {
-      // Copy text and URL to clipboard for manual sharing
-      const shareText = getShareText(platform);
-      const profileUrl = talentProfileUrl 
-        ? `${window.location.origin}${talentProfileUrl}`
-        : window.location.href;
-      const fullText = `${shareText} ${profileUrl}`;
-      
-      navigator.clipboard.writeText(fullText);
-      alert(`Text copied to clipboard! Open ${platform} and paste to share.`);
-      return;
+  const handleShare = async (platform: string) => {
+    const shareText = getShareText(platform);
+    const profileUrl = talentProfileUrl 
+      ? `${window.location.origin}${talentProfileUrl}`
+      : window.location.href;
+
+    // Try using native Web Share API for mobile (supports video)
+    if (navigator.share && videoUrl) {
+      try {
+        await navigator.share({
+          title: shareText,
+          text: shareText,
+          url: profileUrl
+        });
+        return;
+      } catch (err) {
+        // Fallback to platform-specific sharing
+        console.log('Native share not available, using platform links');
+      }
     }
 
+    // Platform-specific handling
+    if (platform === 'instagram') {
+      // Copy text and open Instagram
+      const fullText = `${shareText}\n\n${profileUrl}`;
+      navigator.clipboard.writeText(fullText);
+      window.open('https://www.instagram.com/', '_blank');
+      alert('Text copied! Paste it in Instagram to share.');
+      return;
+    }
+    
+    if (platform === 'tiktok') {
+      // Copy text and open TikTok
+      const fullText = `${shareText}\n\n${profileUrl}`;
+      navigator.clipboard.writeText(fullText);
+      window.open('https://www.tiktok.com/', '_blank');
+      alert('Text copied! Paste it in TikTok to share.');
+      return;
+    }
+    
+    // For other platforms, open their share dialog
     const shareUrl = getShareUrl(platform);
     window.open(shareUrl, '_blank', 'width=600,height=400');
   };
@@ -118,13 +145,15 @@ const ShareModal: React.FC<ShareModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <ShareIcon className="h-5 w-5 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Share Your ShoutOut</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {isTalentPage ? 'Share Profile' : 'Share Your ShoutOut'}
+              </h2>
             </div>
             <button
               onClick={onClose}
@@ -136,30 +165,23 @@ const ShareModal: React.FC<ShareModalProps> = ({
         </div>
 
         <div className="p-6">
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-6 text-center">
             {isTalentPage 
               ? `Share ${talentName}'s profile`
-              : `Share your personalized ShoutOut from ${talentName} with friends and family!`
+              : `Share your personalized ShoutOut from ${talentName}!`
             }
           </p>
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-5 gap-4 mb-6">
             {platforms.map((platform) => (
               <button
                 key={platform.key}
                 onClick={() => handleShare(platform.key)}
-                className={`w-full flex items-center space-x-3 p-3 rounded-lg text-white transition-colors ${platform.color}`}
+                className={`flex flex-col items-center p-4 rounded-xl text-white transition-all hover:scale-110 ${platform.color}`}
+                title={platform.label}
               >
-                <span className="text-2xl">{platform.icon}</span>
-                <div className="flex-1 text-left">
-                  <div className="font-medium">{platform.label}</div>
-                  <div className="text-sm opacity-90">
-                    {platform.key === 'instagram' || platform.key === 'tiktok' 
-                      ? 'Copy text to share manually'
-                      : 'Share directly'
-                    }
-                  </div>
-                </div>
+                <span className="text-4xl">{platform.icon}</span>
+                <span className="text-xs mt-2 font-medium">{platform.label.split('/')[0]}</span>
               </button>
             ))}
           </div>
