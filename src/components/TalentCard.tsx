@@ -30,7 +30,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
 
   return (
     <Link
-      to={`/talent/${talent.id}`}
+      to={talent.username ? `/${talent.username}` : `/talent/${talent.id}`}
       className="glass hover:glass-strong rounded-3xl shadow-modern hover:shadow-modern-lg transition-all duration-300 overflow-hidden group hover:scale-[1.02]"
       style={{
         boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'

@@ -923,7 +923,7 @@ const TalentManagement: React.FC = () => {
                     </button>
                     
                     <button
-                      onClick={() => window.open(`/talent/${talent.id}`, '_blank')}
+                      onClick={() => window.open(talent.username ? `/${talent.username}` : `/talent/${talent.id}`, '_blank')}
                       className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                       title="View public talent profile (opens in new tab)"
                     >

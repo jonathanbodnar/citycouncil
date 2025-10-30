@@ -516,7 +516,7 @@ const TalentProfilePage: React.FC = () => {
             {relatedTalent.map((related) => (
               <Link
                 key={related.id}
-                to={`/talent/${related.id}`}
+                to={related.username ? `/${related.username}` : `/talent/${related.id}`}
                 className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
               >
                 <div className="aspect-square bg-gray-200 rounded-lg mb-3 flex items-center justify-center">

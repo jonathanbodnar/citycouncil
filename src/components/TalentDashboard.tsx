@@ -811,7 +811,9 @@ const TalentDashboard: React.FC = () => {
                         onClick={() => {
                           const profileUrl = talentProfile?.username 
                             ? `https://shoutout.us/${talentProfile.username}`
-                            : `https://shoutout.us/talent/${talentProfile?.id}`;
+                            : talentProfile?.username 
+                              ? `https://shoutout.us/${talentProfile.username}`
+                              : `https://shoutout.us/talent/${talentProfile?.id}`;
                           navigator.clipboard.writeText(profileUrl);
                           toast.success('Profile URL copied!');
                         }}

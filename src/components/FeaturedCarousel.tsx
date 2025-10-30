@@ -118,7 +118,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   ) : null}
                 </div>
                 <Link
-                  to={`/talent/${currentTalent.id}`}
+                  to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
                   className="inline-block glass-strong text-white px-8 py-4 rounded-2xl font-bold hover:glass border border-white/30 transition-all duration-300 shadow-modern-lg hover:scale-105"
                 >
                   Order ShoutOut
@@ -154,7 +154,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                     ) : null}
                   </div>
                   <Link
-                    to={`/talent/${currentTalent.id}`}
+                    to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
                     className="inline-block glass-strong text-white px-8 py-4 rounded-2xl font-bold hover:glass border border-white/30 transition-all duration-300 shadow-modern-lg hover:scale-105"
                   >
                     Order ShoutOut
