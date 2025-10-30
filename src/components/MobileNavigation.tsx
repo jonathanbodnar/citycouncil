@@ -20,7 +20,12 @@ const MobileNavigation: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
 
-  if (!user) return null;
+  console.log('🔍 MobileNavigation rendering, user:', user?.email, 'user type:', user?.user_type);
+
+  if (!user) {
+    console.log('❌ No user, not showing mobile nav');
+    return null;
+  }
 
   const navigation = [
     {
@@ -56,8 +61,10 @@ const MobileNavigation: React.FC = () => {
     },
   ];
 
+  console.log('✅ Rendering mobile nav with', navigation.length, 'items');
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/20 md:hidden backdrop-blur-xl z-50" style={{ background: 'rgba(255, 255, 255, 0.25)' }}>
+    <div className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/20 md:hidden backdrop-blur-xl" style={{ background: 'rgba(255, 255, 255, 0.25)', zIndex: 9999 }}>
       <div className="grid grid-cols-5 py-2">
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;
