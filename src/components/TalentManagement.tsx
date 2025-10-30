@@ -737,22 +737,23 @@ const TalentManagement: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Donation Percentage * (Min 5%)
+                      Donation Percentage * (Min 5%, Max 100%)
                     </label>
                     <div className="relative">
                       <input
                         type="number"
                         min="5"
-                        max="50"
+                        max="100"
                         value={newTalent.charity_percentage}
                         onChange={(e) => {
-                          const value = Math.max(5, Math.min(50, parseInt(e.target.value) || 5));
+                          const value = Math.max(5, Math.min(100, parseInt(e.target.value) || 5));
                           setNewTalent({...newTalent, charity_percentage: value});
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="5"
                         required={adminDonateProceeds}
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                         <span className="text-gray-500">%</span>
                       </div>
                     </div>
