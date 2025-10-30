@@ -9,17 +9,21 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
+import { addToActiveCampaign } from '../services/activecampaign';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 
 const ComingSoonPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [spotsRemaining, setSpotsRemaining] = useState(197);
   const [promoVideos, setPromoVideos] = useState<any[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
   useEffect(() => {
     fetchPromoVideos();
+    fetchSpotsRemaining();
   }, []);
 
   const fetchPromoVideos = async () => {
@@ -37,6 +41,20 @@ const ComingSoonPage: React.FC = () => {
     }
   };
 
+  const fetchSpotsRemaining = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('email_waitlist')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) throw error;
+      // Start at 197, subtract how many are already signed up
+      setSpotsRemaining(Math.max(0, 197 - (count || 0)));
+    } catch (error) {
+      console.error('Error fetching spots count:', error);
+    }
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -48,6 +66,7 @@ const ComingSoonPage: React.FC = () => {
     setLoading(true);
     
     try {
+      // Add to database
       const { error } = await supabase
         .from('email_waitlist')
         .insert({
@@ -59,12 +78,19 @@ const ComingSoonPage: React.FC = () => {
 
       if (error) {
         if (error.code === '23505') {
+          setSubmitted(true);
           toast.success('You\'re already on the list! 🎉');
         } else {
           throw error;
         }
       } else {
-        toast.success('🎉 You\'re in! Check your email for your 25% off code.');
+        // Add to ActiveCampaign
+        await addToActiveCampaign(email);
+        
+        // Update spots remaining
+        setSpotsRemaining(prev => Math.max(0, prev - 1));
+        
+        setSubmitted(true);
         setEmail('');
       }
     } catch (error: any) {
@@ -109,48 +135,67 @@ const ComingSoonPage: React.FC = () => {
           {/* CTA Section */}
           <div className="glass-strong rounded-2xl p-8 border border-white/20 mb-8 shadow-2xl">
             <h2 className="text-4xl font-bold text-white mb-4">
-              Get 25% Off Your First ShoutOut!
+              Join our beta launch and get 25% off.
             </h2>
-            <p className="text-gray-300 mb-6 text-lg">
-              Join our waitlist and receive an exclusive discount code when we launch.
-            </p>
             
-            <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
-                className="px-6 py-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/30 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none w-full sm:w-auto sm:min-w-96 backdrop-blur-sm"
-                disabled={loading}
-              />
-              <button 
-                type="submit"
-                disabled={loading}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 w-full sm:w-auto shadow-lg disabled:opacity-50"
-              >
-                {loading ? 'Joining...' : 'Get My 25% Off'}
-                <ArrowRightIcon className="h-5 w-5" />
-              </button>
-            </form>
+            {!submitted ? (
+              <>
+                <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email address"
+                    className="px-6 py-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/30 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none w-full sm:w-auto sm:min-w-96 backdrop-blur-sm"
+                    disabled={loading}
+                  />
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 w-full sm:w-auto shadow-lg disabled:opacity-50"
+                  >
+                    {loading ? 'Joining...' : 'Get My 25% Off'}
+                    <ArrowRightIcon className="h-5 w-5" />
+                  </button>
+                </form>
+
+                {/* Spots Remaining Ticker */}
+                <div className="text-center">
+                  <p className="text-yellow-400 font-semibold text-lg animate-pulse">
+                    ⚡ Only {spotsRemaining} spots remain
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="py-6">
+                <p className="text-green-400 text-xl font-semibold">
+                  Thank you! We'll let you know when the app is ready for beta orders!
+                </p>
+              </div>
+            )}
 
             {/* Video Carousel */}
             {promoVideos.length > 0 && (
-              <div className="relative max-w-2xl mx-auto">
+              <div className="relative max-w-2xl mx-auto mt-6">
                 <div className="relative">
-                  {/* Video Container with Rounded Borders - Vertical format like Reels */}
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 max-w-sm mx-auto">
+                  {/* Video Container - Natural aspect ratio */}
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 mx-auto" style={{ maxWidth: '500px' }}>
                     <video
                       key={promoVideos[currentVideoIndex].id}
                       src={promoVideos[currentVideoIndex].video_url}
                       controls
                       className="w-full h-auto bg-black"
-                      muted
                       playsInline
                       preload="metadata"
-                      style={{ maxHeight: '600px' }}
-                      onError={(e) => console.error('Video load error:', e, promoVideos[currentVideoIndex].video_url)}
-                      onLoadedMetadata={() => console.log('Video loaded:', promoVideos[currentVideoIndex].video_url)}
+                      onError={(e) => {
+                        console.error('Video load error:', promoVideos[currentVideoIndex].video_url);
+                        console.error('Error event:', e);
+                      }}
+                      onLoadedMetadata={(e) => {
+                        const video = e.currentTarget;
+                        console.log('Video loaded successfully:', promoVideos[currentVideoIndex].video_url);
+                        console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+                      }}
                     >
                       Your browser does not support the video tag.
                     </video>
