@@ -287,7 +287,7 @@ const OrderPage: React.FC = () => {
           video_setting_request: orderData.videoSettingRequest || null,
           is_business_order: orderData.isForBusiness,
           amount: pricing.subtotal,
-          admin_fee: pricing.admin_fee,
+          admin_fee: pricing.adminFee,
           total_amount: pricing.total,
           status: 'pending',
           allow_promotional_use: orderData.allowPromotionalUse || false,
