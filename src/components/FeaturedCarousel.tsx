@@ -38,7 +38,12 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   }
 
   return (
-    <div className="relative rounded-3xl overflow-hidden shadow-modern-xl z-0">
+    <div 
+      className="relative glass rounded-3xl overflow-hidden shadow-modern-xl z-0"
+      style={{
+        boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
+      }}
+    >
       <div className="relative h-96 md:h-96">
         {/* Desktop Background - Modern Gradient */}
         <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
