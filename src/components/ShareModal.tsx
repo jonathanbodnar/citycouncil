@@ -36,183 +36,20 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
   if (!isOpen) return null;
 
-  const getShareText = (platform: string) => {
+  const getShareText = () => {
+    const profileUrl = talentProfileUrl 
+      ? `${window.location.origin}${talentProfileUrl}`
+      : window.location.href;
+
     // If sharing from talent profile page, use simpler promotional text
     if (isTalentPage) {
-      return `Get a personalized ShoutOut from ${talentName}!`;
+      return `Get a personalized ShoutOut from ${talentName}! ${profileUrl}`;
     }
     
     // If sharing completed order, use received text
-    const talentTag = talentSocialHandles[platform as keyof typeof talentSocialHandles];
-    const baseText = `I just got a personalized ShoutOut from ${talentName} get yours! @ShoutOut`;
-    
-    if (talentTag) {
-      return `${baseText} ${talentTag}`;
-    }
-    return baseText;
+    return `I just got a personalized ShoutOut from ${talentName} - get yours! ${profileUrl}`;
   };
 
-  const getShareUrl = (platform: string) => {
-    const text = encodeURIComponent(getShareText(platform));
-    // Use talent profile URL if provided, otherwise current page
-    const profileUrl = talentProfileUrl 
-      ? `${window.location.origin}${talentProfileUrl}`
-      : window.location.href;
-    const url = encodeURIComponent(profileUrl);
-    
-    const shareUrls = {
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`,
-      twitter: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
-      instagram: `https://www.instagram.com/`, // Instagram doesn't support direct sharing
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${text}`,
-      tiktok: `https://www.tiktok.com/`, // TikTok doesn't support direct sharing
-    };
-
-    return shareUrls[platform as keyof typeof shareUrls] || '#';
-  };
-
-  const handleCopyUrl = async () => {
-    const profileUrl = talentProfileUrl 
-      ? `${window.location.origin}${talentProfileUrl}`
-      : window.location.href;
-    
-    try {
-      await navigator.clipboard.writeText(profileUrl);
-      setCopied(true);
-      toast.success('Profile URL copied to clipboard!');
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      toast.error('Failed to copy URL');
-    }
-  };
-
-  const handleShare = async (platform: string) => {
-    const shareText = getShareText(platform);
-    const profileUrl = talentProfileUrl 
-      ? `${window.location.origin}${talentProfileUrl}`
-      : window.location.href;
-
-    // Platform-specific handling with deep links
-    if (platform === 'instagram') {
-      // Copy text to clipboard first
-      const fullText = `${shareText}\n\n${profileUrl}`;
-      try {
-        await navigator.clipboard.writeText(fullText);
-        
-        // Try Instagram app deep link first (mobile)
-        const instagramUrl = 'instagram://story-camera';
-        const webFallback = 'https://www.instagram.com/';
-        
-        // Create a temporary link to test if Instagram app is available
-        const link = document.createElement('a');
-        link.href = instagramUrl;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        
-        // Try to open Instagram app
-        link.click();
-        
-        // Fallback to web after a short delay if app doesn't open
-        setTimeout(() => {
-          document.body.removeChild(link);
-        }, 500);
-        
-        // Set a longer timeout to open web version if app didn't open
-        setTimeout(() => {
-          window.open(webFallback, '_blank');
-        }, 1500);
-        
-        toast.success('Text copied! Opening Instagram...');
-      } catch (err) {
-        window.open('https://www.instagram.com/', '_blank');
-        toast.error('Please paste the copied text in Instagram');
-      }
-      return;
-    }
-    
-    if (platform === 'tiktok') {
-      // Copy text to clipboard
-      const fullText = `${shareText}\n\n${profileUrl}`;
-      try {
-        await navigator.clipboard.writeText(fullText);
-        
-        // Try TikTok app deep link first (mobile)
-        const tiktokUrl = 'tiktok://';
-        const webFallback = 'https://www.tiktok.com/';
-        
-        const link = document.createElement('a');
-        link.href = tiktokUrl;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        
-        setTimeout(() => {
-          document.body.removeChild(link);
-        }, 500);
-        
-        setTimeout(() => {
-          window.open(webFallback, '_blank');
-        }, 1500);
-        
-        toast.success('Text copied! Opening TikTok...');
-      } catch (err) {
-        window.open('https://www.tiktok.com/', '_blank');
-        toast.error('Please paste the copied text in TikTok');
-      }
-      return;
-    }
-
-    if (platform === 'facebook') {
-      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}&quote=${encodeURIComponent(shareText)}`;
-      window.open(shareUrl, '_blank', 'width=600,height=400');
-      return;
-    }
-
-    if (platform === 'twitter') {
-      const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(profileUrl)}`;
-      window.open(shareUrl, '_blank', 'width=600,height=400');
-      return;
-    }
-
-    if (platform === 'linkedin') {
-      const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`;
-      window.open(shareUrl, '_blank', 'width=600,height=400');
-      return;
-    }
-  };
-
-  const platforms = [
-    { 
-      key: 'facebook', 
-      label: 'Facebook', 
-      icon: '📘', 
-      color: 'bg-blue-600 hover:bg-blue-700' 
-    },
-    { 
-      key: 'twitter', 
-      label: 'Twitter/X', 
-      icon: '🐦', 
-      color: 'bg-black hover:bg-gray-800' 
-    },
-    { 
-      key: 'instagram', 
-      label: 'Instagram', 
-      icon: '📸', 
-      color: 'bg-pink-600 hover:bg-pink-700' 
-    },
-    { 
-      key: 'linkedin', 
-      label: 'LinkedIn', 
-      icon: '💼', 
-      color: 'bg-blue-700 hover:bg-blue-800' 
-    },
-    { 
-      key: 'tiktok', 
-      label: 'TikTok', 
-      icon: '🎵', 
-      color: 'bg-black hover:bg-gray-800' 
-    },
-  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
@@ -242,51 +79,36 @@ const ShareModal: React.FC<ShareModalProps> = ({
             }
           </p>
 
-          {/* Share Text Field */}
-          <div className="mb-4 p-4 glass-light rounded-xl border border-white/20">
-            <label className="block text-white text-sm font-medium mb-2">Share Text</label>
-            <div className="mb-3 p-3 bg-black/30 border border-white/10 rounded-lg">
-              <p className="text-white text-sm">
-                "{getShareText('twitter')}"
+          {/* Share Text with URL */}
+          <div className="mb-6 p-4 glass-light rounded-xl border border-white/20">
+            <label className="block text-white text-sm font-medium mb-2">Share Message</label>
+            <div className="mb-3 p-4 bg-black/30 border border-white/10 rounded-lg">
+              <p className="text-white text-sm break-all">
+                {getShareText()}
               </p>
             </div>
             <button
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(getShareText('twitter'));
-                  toast.success('Share text copied!');
+                  await navigator.clipboard.writeText(getShareText());
+                  setCopied(true);
+                  toast.success('Copied to clipboard!');
+                  setTimeout(() => setCopied(false), 2000);
                 } catch (err) {
-                  toast.error('Failed to copy text');
+                  toast.error('Failed to copy');
                 }
               }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-            >
-              <ClipboardDocumentIcon className="h-4 w-4" />
-              Copy Text
-            </button>
-          </div>
-
-          {/* Copy Profile URL Field */}
-          <div className="mb-6 p-4 glass-light rounded-xl border border-white/20">
-            <label className="block text-white text-sm font-medium mb-2">Profile URL</label>
-            <div className="mb-3 p-3 bg-black/30 border border-white/10 rounded-lg break-all">
-              <p className="text-white text-sm">
-                {talentProfileUrl ? `${window.location.origin}${talentProfileUrl}` : window.location.href}
-              </p>
-            </div>
-            <button
-              onClick={handleCopyUrl}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
             >
               {copied ? (
                 <>
-                  <CheckIcon className="h-4 w-4" />
-                  URL Copied!
+                  <CheckIcon className="h-5 w-5" />
+                  Copied!
                 </>
               ) : (
                 <>
-                  <ClipboardDocumentIcon className="h-4 w-4" />
-                  Copy URL
+                  <ClipboardDocumentIcon className="h-5 w-5" />
+                  Copy to Clipboard
                 </>
               )}
             </button>
@@ -294,7 +116,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
           <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg mb-6">
             <p className="text-blue-400 text-xs text-center">
-              💡 Paste the URL on social media - it will show a preview with {talentName}'s profile image
+              💡 Paste on social media - the link will show a preview with {talentName}'s profile image
             </p>
           </div>
 
@@ -303,7 +125,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
             className="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-lg font-medium transition-colors border border-white/20"
           >
             Done
-          </button>
+            </button>
         </div>
       </div>
     </div>
