@@ -10,7 +10,7 @@ const SignupPage: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'user' as 'user' | 'talent',
+    userType: 'user' as 'user' | 'talent', // Always 'user' - talent accounts created by admin only
     agreeToTerms: false,
   });
   const [loading, setLoading] = useState(false);
@@ -58,9 +58,9 @@ const SignupPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <Link to="/" className="flex justify-center">
-            <Logo size="lg" />
+            <Logo size="lg" theme="dark" />
           </Link>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -106,22 +106,6 @@ const SignupPage: React.FC = () => {
                 value={formData.email}
                 onChange={handleChange}
               />
-            </div>
-
-            <div>
-              <label htmlFor="userType" className="block text-sm font-medium text-gray-700">
-                Account Type
-              </label>
-              <select
-                id="userType"
-                name="userType"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                value={formData.userType}
-                onChange={handleChange}
-              >
-                <option value="user">Customer - Order ShoutOuts</option>
-                <option value="talent">Talent - Create ShoutOuts</option>
-              </select>
             </div>
 
             <div>

@@ -108,7 +108,7 @@ const MobileNavigation: React.FC = () => {
               className="flex flex-col items-center py-2 px-1 relative transition-all"
               style={{ 
                 textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-                color: isActive ? '#d4e3ff' : 'rgba(212, 227, 255, 0.7)'
+                color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)'
               }}
             >
               <Icon className="h-6 w-6" style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }} />

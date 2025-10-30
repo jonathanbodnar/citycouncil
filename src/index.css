@@ -218,7 +218,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Step titles and headings - but NOT stats numbers */
 .text-xl.font-semibold:not([style*="color"]),
 .text-2xl.font-bold:not([style*="color"]) {
-  color: #91a2c1 !important;
+  color: #ffffff !important;
 }
 
 /* Dark Theme Form Inputs */
@@ -281,11 +281,11 @@ button[class*="bg-primary-50"] {
 
 /* Dark Theme Links and Buttons */
 a {
-  color: #91a2c1 !important;
+  color: #ffffff !important;
 }
 
 a:hover {
-  color: #9791c1 !important;
+  color: #e5e5e5 !important;
 }
 
 /* Exception for links that are styled as buttons */
@@ -305,11 +305,11 @@ button:not(.bg-gradient-to-r):not([class*="bg-red"]):not([class*="bg-green"]):no
 
 /* Active tab text */
 .text-primary-600 {
-  color: #91a2c1 !important;
+  color: #ffffff !important;
 }
 
 .border-primary-500 {
-  border-color: #91a2c1 !important;
+  border-color: #ffffff !important;
 }
 
 /* Navy Blue Brand Color */
