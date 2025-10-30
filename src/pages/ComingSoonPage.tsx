@@ -175,75 +175,108 @@ const ComingSoonPage: React.FC = () => {
               </div>
             )}
 
-            {/* Video Carousel */}
+            {/* Video Carousel - Swipeable Stack */}
             {promoVideos.length > 0 && (
-              <div className="relative max-w-2xl mx-auto mt-6">
-                <div className="relative">
-                  {/* Video Container - Natural aspect ratio */}
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 mx-auto" style={{ maxWidth: '500px' }}>
-                    <video
-                      key={promoVideos[currentVideoIndex].id}
-                      src={promoVideos[currentVideoIndex].video_url}
-                      controls
-                      className="w-full h-auto bg-black"
-                      playsInline
-                      preload="metadata"
-                      crossOrigin="anonymous"
-                      onError={(e) => {
-                        const video = e.currentTarget;
-                        console.error('❌ Video load error:', promoVideos[currentVideoIndex].video_url);
-                        console.error('Error details:', {
-                          networkState: video.networkState,
-                          readyState: video.readyState,
-                          error: video.error
-                        });
+              <div className="relative mx-auto mt-6" style={{ height: '500px', maxWidth: '350px' }}>
+                {promoVideos.map((video, index) => {
+                  const offset = index - currentVideoIndex;
+                  const isActive = index === currentVideoIndex;
+                  const isVisible = Math.abs(offset) <= 2;
+                  
+                  if (!isVisible) return null;
+                  
+                  return (
+                    <div
+                      key={video.id}
+                      className="absolute inset-0 transition-all duration-500 ease-out cursor-pointer"
+                      style={{
+                        transform: `translateX(${offset * 20}px) translateY(${Math.abs(offset) * 15}px) scale(${1 - Math.abs(offset) * 0.05})`,
+                        opacity: isActive ? 1 : 0.6,
+                        zIndex: promoVideos.length - Math.abs(offset),
+                        pointerEvents: isActive ? 'auto' : 'none',
                       }}
-                      onLoadedMetadata={(e) => {
-                        const video = e.currentTarget;
-                        console.log('✅ Video loaded successfully:', promoVideos[currentVideoIndex].video_url);
-                        console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+                      onClick={() => {
+                        if (isActive) return;
+                        setCurrentVideoIndex(index);
+                      }}
+                      onTouchStart={(e) => {
+                        if (!isActive) return;
+                        const touch = e.touches[0];
+                        const startX = touch.clientX;
+                        
+                        const handleTouchMove = (e: TouchEvent) => {
+                          const currentX = e.touches[0].clientX;
+                          const diff = startX - currentX;
+                          
+                          if (Math.abs(diff) > 50) {
+                            if (diff > 0 && currentVideoIndex < promoVideos.length - 1) {
+                              nextVideo();
+                            } else if (diff < 0 && currentVideoIndex > 0) {
+                              prevVideo();
+                            }
+                            document.removeEventListener('touchmove', handleTouchMove);
+                            document.removeEventListener('touchend', handleTouchEnd);
+                          }
+                        };
+                        
+                        const handleTouchEnd = () => {
+                          document.removeEventListener('touchmove', handleTouchMove);
+                          document.removeEventListener('touchend', handleTouchEnd);
+                        };
+                        
+                        document.addEventListener('touchmove', handleTouchMove);
+                        document.addEventListener('touchend', handleTouchEnd);
                       }}
                     >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-
-                  {/* Navigation Buttons */}
-                  {promoVideos.length > 1 && (
-                    <>
-                      <button
-                        onClick={prevVideo}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all backdrop-blur-sm"
-                        aria-label="Previous video"
-                      >
-                        <ChevronLeftIcon className="h-6 w-6" />
-                      </button>
-                      <button
-                        onClick={nextVideo}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all backdrop-blur-sm"
-                        aria-label="Next video"
-                      >
-                        <ChevronRightIcon className="h-6 w-6" />
-                      </button>
-
-                      {/* Dots Indicator */}
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                        {promoVideos.map((_, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setCurrentVideoIndex(index)}
-                            className={`w-2 h-2 rounded-full transition-all ${
-                              index === currentVideoIndex 
-                                ? 'bg-white w-8' 
-                                : 'bg-white/50 hover:bg-white/75'
-                            }`}
-                            aria-label={`Go to video ${index + 1}`}
-                          />
-                        ))}
+                      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black h-full">
+                        <video
+                          src={video.video_url}
+                          controls={isActive}
+                          className="w-full object-cover bg-black"
+                          style={{ height: '450px' }}
+                          playsInline
+                          preload="metadata"
+                          crossOrigin="anonymous"
+                          muted={!isActive}
+                          onError={(e) => {
+                            const videoEl = e.currentTarget;
+                            console.error('❌ Video load error:', video.video_url);
+                            console.error('Error details:', {
+                              networkState: videoEl.networkState,
+                              readyState: videoEl.readyState,
+                              error: videoEl.error
+                            });
+                          }}
+                          onLoadedMetadata={(e) => {
+                            const videoEl = e.currentTarget;
+                            console.log('✅ Video loaded successfully:', video.video_url);
+                            console.log('Video dimensions:', videoEl.videoWidth, 'x', videoEl.videoHeight);
+                          }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
                       </div>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  );
+                })}
+
+                {/* Dots Indicator */}
+                {promoVideos.length > 1 && (
+                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+                    {promoVideos.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentVideoIndex(index)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentVideoIndex 
+                            ? 'bg-white w-8' 
+                            : 'bg-white/40 hover:bg-white/60'
+                        }`}
+                        aria-label={`Go to video ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
