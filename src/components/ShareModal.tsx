@@ -235,80 +235,75 @@ const ShareModal: React.FC<ShareModalProps> = ({
         </div>
 
         <div className="p-6">
-          <div className="mb-6 text-center">
-            <p className="text-white/80 mb-2">
-              {isTalentPage 
-                ? `Share ${talentName}'s profile`
-                : `Share your personalized ShoutOut from ${talentName}!`
-              }
-            </p>
-            {videoUrl && (
-              <p className="text-white/50 text-xs">
-                💡 For Instagram/TikTok: Copy the text, then manually upload the video from your device
+          <p className="text-white/80 mb-6 text-center">
+            {isTalentPage 
+              ? `Share ${talentName}'s profile on social media`
+              : `Share your personalized ShoutOut from ${talentName}!`
+            }
+          </p>
+
+          {/* Share Text Field */}
+          <div className="mb-4 p-4 glass-light rounded-xl border border-white/20">
+            <label className="block text-white text-sm font-medium mb-2">Share Text</label>
+            <div className="mb-3 p-3 bg-black/30 border border-white/10 rounded-lg">
+              <p className="text-white text-sm">
+                "{getShareText('twitter')}"
               </p>
-            )}
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(getShareText('twitter'));
+                  toast.success('Share text copied!');
+                } catch (err) {
+                  toast.error('Failed to copy text');
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            >
+              <ClipboardDocumentIcon className="h-4 w-4" />
+              Copy Text
+            </button>
           </div>
 
           {/* Copy Profile URL Field */}
           <div className="mb-6 p-4 glass-light rounded-xl border border-white/20">
             <label className="block text-white text-sm font-medium mb-2">Profile URL</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={talentProfileUrl ? `${window.location.origin}${talentProfileUrl}` : window.location.href}
-                readOnly
-                className="flex-1 px-3 py-2 bg-black/30 border border-white/20 rounded-lg text-white text-sm"
-              />
-              <button
-                onClick={handleCopyUrl}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium whitespace-nowrap"
-              >
-                {copied ? (
-                  <>
-                    <CheckIcon className="h-4 w-4" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <ClipboardDocumentIcon className="h-4 w-4" />
-                    Copy
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-5 gap-4 mb-6">
-            {platforms.map((platform) => (
-              <button
-                key={platform.key}
-                onClick={() => handleShare(platform.key)}
-                className={`flex flex-col items-center p-4 rounded-xl text-white transition-all hover:scale-110 ${platform.color}`}
-                title={platform.label}
-              >
-                <span className="text-4xl">{platform.icon}</span>
-                <span className="text-xs mt-2 font-medium">{platform.label.split('/')[0]}</span>
-              </button>
-            ))}
-          </div>
-
-          {isTalentPage && (
-            <div className="mt-6 p-4 glass-light rounded-lg border border-white/20">
-              <h4 className="font-medium text-white mb-2">Share Text:</h4>
-              <p className="text-sm text-white/80">
-                "{getShareText('twitter')}"
+            <div className="mb-3 p-3 bg-black/30 border border-white/10 rounded-lg break-all">
+              <p className="text-white text-sm">
+                {talentProfileUrl ? `${window.location.origin}${talentProfileUrl}` : window.location.href}
               </p>
             </div>
-          )}
-
-          <div className="mt-6">
             <button
-              onClick={onClose}
-              className="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-lg font-medium transition-colors border border-white/20"
+              onClick={handleCopyUrl}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
             >
-              Done
+              {copied ? (
+                <>
+                  <CheckIcon className="h-4 w-4" />
+                  URL Copied!
+                </>
+              ) : (
+                <>
+                  <ClipboardDocumentIcon className="h-4 w-4" />
+                  Copy URL
+                </>
+              )}
             </button>
           </div>
+
+          <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg mb-6">
+            <p className="text-blue-400 text-xs text-center">
+              💡 Paste the URL on social media - it will show a preview with {talentName}'s profile image
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-lg font-medium transition-colors border border-white/20"
+          >
+            Done
+          </button>
         </div>
       </div>
     </div>

@@ -48,6 +48,60 @@ const TalentProfilePage: React.FC = () => {
     }
   }, [id, username]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Update meta tags for social sharing
+  useEffect(() => {
+    if (talent) {
+      const talentName = talent.temp_full_name || talent.users.full_name;
+      const profileUrl = window.location.href;
+      const description = talent.bio || `Get a personalized ShoutOut from ${talentName}`;
+      const imageUrl = talent.temp_avatar_url || talent.users.avatar_url || '';
+
+      // Update basic meta tags
+      document.title = `${talentName} - ShoutOut`;
+      
+      // Update or create Open Graph meta tags
+      const updateMetaTag = (property: string, content: string) => {
+        let metaTag = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+        if (!metaTag) {
+          metaTag = document.createElement('meta');
+          metaTag.setAttribute('property', property);
+          document.head.appendChild(metaTag);
+        }
+        metaTag.content = content;
+      };
+
+      // Update or create Twitter meta tags
+      const updateTwitterTag = (name: string, content: string) => {
+        let metaTag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
+        if (!metaTag) {
+          metaTag = document.createElement('meta');
+          metaTag.setAttribute('name', name);
+          document.head.appendChild(metaTag);
+        }
+        metaTag.content = content;
+      };
+
+      // Open Graph tags
+      updateMetaTag('og:title', `${talentName} on ShoutOut`);
+      updateMetaTag('og:description', description);
+      updateMetaTag('og:image', imageUrl);
+      updateMetaTag('og:url', profileUrl);
+      updateMetaTag('og:type', 'profile');
+      updateMetaTag('og:site_name', 'ShoutOut');
+
+      // Twitter Card tags
+      updateTwitterTag('twitter:card', 'summary_large_image');
+      updateTwitterTag('twitter:title', `${talentName} on ShoutOut`);
+      updateTwitterTag('twitter:description', description);
+      updateTwitterTag('twitter:image', imageUrl);
+
+      // Return cleanup function
+      return () => {
+        document.title = 'ShoutOut';
+      };
+    }
+  }, [talent]);
+
   const fetchTalentProfile = async () => {
     try {
       // Fetch talent profile with related data (by ID or username)
