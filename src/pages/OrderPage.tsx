@@ -17,6 +17,7 @@ import { lunarPayService } from '../services/lunarPayService';
 import { emailService } from '../services/emailService';
 import { notificationService } from '../services/notificationService';
 import toast from 'react-hot-toast';
+import { verifyFortisTransaction } from '../services/fortisCommerceService';
 
 interface OrderFormData {
   requestDetails: string;
@@ -143,11 +144,24 @@ const OrderPage: React.FC = () => {
   };
 
   const handlePaymentSuccess = async (paymentResult: any) => {
+    console.log('handlePaymentSuccess called with', paymentResult);
     if (!talent || !user || !orderData) return;
 
     setSubmitting(true);
     try {
       const pricing = calculatePricing();
+      console.log('pricing for order', pricing);
+      // Verify Fortis transaction server-side before recording order
+      const transactionId = paymentResult?.id || paymentResult?.transaction_id;
+      console.log('transactionId', transactionId);
+      if (transactionId) {
+        try {
+          const verify = await verifyFortisTransaction(transactionId);
+          console.log('Fortis verify status:', verify.statusCode);
+        } catch (e) {
+          console.warn('Fortis verification failed:', e);
+        }
+      }
       
       // For corporate orders, don't set deadline until approved
       // For personal orders, set deadline immediately
@@ -163,6 +177,11 @@ const OrderPage: React.FC = () => {
       }
 
       // Create order in database with payment info
+      console.log('Inserting order…', {
+        userId: user.id,
+        talentId: talent.id,
+        transactionId: paymentResult?.id || paymentResult?.transaction_id,
+      });
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([
@@ -174,7 +193,8 @@ const OrderPage: React.FC = () => {
             admin_fee: pricing.adminFee,
             charity_amount: pricing.charityAmount,
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
-            payment_transaction_id: paymentResult.id || paymentResult.transaction_id || `TEST_${Date.now()}`,
+            payment_transaction_id: paymentResult.id || paymentResult.transaction_id,
+            payment_transaction_payload: paymentResult?.payload ?? null,
             is_corporate: orderData.isForBusiness,
             is_corporate_order: orderData.isForBusiness,
             company_name: orderData.businessName,
@@ -189,6 +209,8 @@ const OrderPage: React.FC = () => {
         ])
         .select()
         .single();
+
+      console.log('Insert result', { order, orderError });
 
       if (orderError) throw orderError;
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CreditCardIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
-import { lunarPayService } from '../services/lunarPayService';
 import { useAuth } from '../context/AuthContext';
+import { createFortisIntention, verifyFortisTransaction } from '../services/fortisCommerceService';
 
 interface FortisPaymentFormProps {
   amount: number;
@@ -25,68 +25,128 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   loading = false
 }) => {
   const { user } = useAuth();
-  const cardElementRef = useRef<any>(null);
-  const [fortisElements, setFortisElements] = useState<{ elements: any; cardElement: any } | null>(null);
+  const iframeContainerRef = useRef<HTMLDivElement>(null);
+  const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
-  const [paymentIntention, setPaymentIntention] = useState<any>(null);
+  const [orderReference, setOrderReference] = useState<string | null>(null);
+  const successHandledRef = useRef(false);
 
   useEffect(() => {
     initializeFortis();
+    // Listen for postMessage from Fortis iframe as a final fallback
+    const onMessage = (event: MessageEvent) => {
+      try {
+        const origin = String(event.origin || '');
+        if (!origin.includes('fortis.tech')) return;
+        const data: any = event.data;
+        console.log('iframe message from fortis', data);
+        const hasId = !!(data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id);
+        const hasStatus = !!(data?.data?.status_code || data?.status_code || data?.reason_code_id || data?.value?.status_code || data?.value?.reason_code_id);
+        if (hasId || hasStatus) handleMessageSuccess(data);
+      } catch {
+        // ignore malformed messages
+      }
+    };
+    const handleMessageSuccess = (payload: any) => {
+      if (successHandledRef.current) return;
+      successHandledRef.current = true;
+      console.log('iframe message transaction payload', payload);
+      const txId = payload?.transaction?.id || payload?.data?.id || payload?.id || payload?.value?.id;
+      if (txId) {
+        verifyFortisTransaction(txId)
+          .then((verify) => {
+            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
+          })
+          .catch((e) => {
+            const msg = (e as any)?.message || 'Verification failed';
+            setError(msg);
+            onPaymentError(msg);
+          });
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
   }, []);
 
   const initializeFortis = async () => {
     try {
       setIsLoading(true);
-      
-      // Check if LunarPay API key is available
-      const hasApiKey = process.env.REACT_APP_LUNARPAY_API_KEY;
-      
-      if (!hasApiKey) {
-        console.warn('LunarPay API key not found. Using test mode.');
-        setError('Payment system is in test mode. Please add REACT_APP_LUNARPAY_API_KEY to environment variables.');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Step 1: Create transaction intention from LunarPay for Fortis Commerce.js
-      const intentionResult = await lunarPayService.createTransactionIntention({
-        amount,
-        currency: 'USD',
-        orderId,
-        customerEmail,
-        customerName,
-        description,
-        metadata: {
-          user_id: user?.id,
+      // Step 1: Create transaction intention via Supabase Edge Function
+      const cents = Math.round(amount * 100);
+      const intention = await createFortisIntention(cents);
+      setOrderReference(intention.orderReference);
+
+      // Step 2: Ensure Commerce is loaded (added in index.html as async script)
+      const waitForCommerce = () => new Promise<void>((resolve, reject) => {
+        let attempts = 0;
+        const i = setInterval(() => {
+          attempts++;
+          if ((window as any).Commerce?.elements) {
+            clearInterval(i);
+            resolve();
+          }
+          if (attempts > 100) {
+            clearInterval(i);
+            reject(new Error('Fortis Commerce JS failed to load'));
+          }
+        }, 100);
+      });
+
+      await waitForCommerce();
+
+      const CommerceElements = (window as any).Commerce.elements;
+      const instance = new CommerceElements(intention.clientToken, {
+        params: {
+          amount: cents / 100,
+          currency_code: 'USD',
+          order_reference: intention.orderReference,
+          location_id: intention.locationId,
+        },
+      });
+
+      // Helper to normalize success payloads
+      const handleSuccess = async (payload: any) => {
+        if (successHandledRef.current) return;
+        successHandledRef.current = true;
+        console.log('payment_success payload', payload);
+        try {
+          const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
+          if (!txId) throw new Error('Missing transaction id');
+          const verify = await verifyFortisTransaction(txId);
+          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
+        } catch (e: any) {
+          setError(e.message || 'Verification failed');
+          onPaymentError(e.message || 'Verification failed');
         }
+      };
+
+      // Events (attach BEFORE create to avoid missing early events)
+      console.log('Attaching Commerce JS handlers');
+      instance.eventBus.on('ready', () => {
+        console.log('Commerce iframe ready');
+        setIsLoading(false);
+      });
+      instance.eventBus.on('payment_success', handleSuccess);
+      // Add extra fallbacks in case library emits different event names
+      instance.eventBus.on('success', handleSuccess as any);
+      instance.eventBus.on('transaction_success', handleSuccess as any);
+      instance.eventBus.on('transaction.completed', handleSuccess as any);
+      instance.eventBus.on('payment_error', (e: any) => {
+        setError(e?.message || 'Payment failed');
+        onPaymentError(e?.message || 'Payment failed');
+      });
+      instance.eventBus.on('error', (e: any) => {
+        setError(e?.message || 'Payment error');
       });
 
-      if (!intentionResult.success) {
-        console.error('LunarPay transaction intention failed:', intentionResult.error);
-        throw new Error(`Payment setup failed: ${intentionResult.error || 'Unable to connect to payment processor'}`);
-      }
-      
-      console.log('LunarPay transaction intention successful:', {
-        intentionId: intentionResult.intentionId,
-        hasClientSecret: !!intentionResult.clientSecret
-      });
+      // Create iframe in our container (pass selector string to avoid null ref timing)
+      console.log('Creating Commerce iframe');
+      // Render Fortis labels (Payment Info, Total) as white via dark theme
+      instance.create({ container: '#fortis-card-element', theme: 'dark' });
 
-      setPaymentIntention(intentionResult);
-
-      // Step 2: Initialize Fortis Commerce.js with client_token
-      console.log('Initializing Fortis Commerce.js with client_token...');
-      const { elements } = await lunarPayService.initializeFortisCommerce(
-        'fortis-card-element', 
-        intentionResult.clientSecret // This is the client_token from LunarPay
-      );
-
-      console.log('Fortis Commerce.js initialized successfully');
-      setFortisElements({ elements, cardElement: null });
-      cardElementRef.current = elements;
-
-      // Commerce.js handles validation and events internally
+      setCommerceInstance(instance);
 
     } catch (err) {
       console.error('Failed to initialize payment:', err);
@@ -98,123 +158,18 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
-    // Commerce.js handles payment processing automatically through the iframe
-    // Payment success/error will be handled through Commerce.js events
-    console.log('Commerce.js will handle payment processing automatically');
+    if (!commerceInstance) return;
+    commerceInstance.submit();
   };
 
-  const handleApplePay = async () => {
-    if (!fortisElements || !paymentIntention) return;
+  // Apple Pay / Google Pay buttons are not needed here since Commerce JS iframe handles wallets
 
-    try {
-      setIsLoading(true);
-      
-      // Create Apple Pay payment method
-      const { error: paymentError, paymentMethod } = await fortisElements!.elements.createPaymentMethod({
-        type: 'apple_pay',
-        amount: Math.round(amount * 100),
-        currency: 'usd',
-        country: 'US',
-      });
-
-      if (paymentError) {
-        throw new Error(paymentError.message);
-      }
-
-      // Confirm payment with Fortis Elements
-      const { error: confirmError, paymentIntent } = await fortisElements!.elements.confirmPayment({
-        clientSecret: paymentIntention.clientSecret,
-        paymentMethod,
-      });
-
-      if (confirmError) {
-        throw new Error(confirmError.message);
-      }
-
-      // Send result back to LunarPay
-      const confirmationResult = await lunarPayService.confirmPayment({
-        intentionId: paymentIntention.intentionId,
-        paymentResult: paymentIntent,
-        orderId,
-      });
-
-      if (!confirmationResult.success) {
-        throw new Error(confirmationResult.error || 'Payment confirmation failed');
-      }
-
-      onPaymentSuccess(confirmationResult);
-    } catch (err: any) {
-      setError(err.message);
-      onPaymentError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGooglePay = async () => {
-    if (!fortisElements || !paymentIntention) return;
-
-    try {
-      setIsLoading(true);
-      
-      // Create Google Pay payment method
-      const { error: paymentError, paymentMethod } = await fortisElements!.elements.createPaymentMethod({
-        type: 'google_pay',
-        amount: Math.round(amount * 100),
-        currency: 'usd',
-        country: 'US',
-      });
-
-      if (paymentError) {
-        throw new Error(paymentError.message);
-      }
-
-      // Confirm payment with Fortis Elements
-      const { error: confirmError, paymentIntent } = await fortisElements!.elements.confirmPayment({
-        clientSecret: paymentIntention.clientSecret,
-        paymentMethod,
-      });
-
-      if (confirmError) {
-        throw new Error(confirmError.message);
-      }
-
-      // Send result back to LunarPay
-      const confirmationResult = await lunarPayService.confirmPayment({
-        intentionId: paymentIntention.intentionId,
-        paymentResult: paymentIntent,
-        orderId,
-      });
-
-      if (!confirmationResult.success) {
-        throw new Error(confirmationResult.error || 'Payment confirmation failed');
-      }
-
-      onPaymentSuccess(confirmationResult);
-    } catch (err: any) {
-      setError(err.message);
-      onPaymentError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-12 bg-gray-200 rounded mb-4"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
+  // Always render container; show loading states within the form instead of returning early
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
+    <div className="rounded-2xl px-4 py-5  md:p-6 bg-gradient-to-br from-slate-900/40 to-slate-800/20 border border-white/10 shadow-xl max-w-3xl mx-auto">
+      <h3 className="text-xl font-semibold text-white mb-2">Payment Information</h3>
+      <p className="text-sm text-slate-300 mb-6">Complete your payment securely. Your card information is encrypted and never stored on our servers.</p>
       
       {/* Payment Method Selection */}
       <div className="mb-6">
@@ -222,10 +177,10 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           <button
             type="button"
             onClick={() => setPaymentMethod('card')}
-            className={`flex items-center justify-center p-3 border rounded-lg transition-colors ${
+            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
               paymentMethod === 'card'
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
+                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
             }`}
           >
             <CreditCardIcon className="h-5 w-5 mr-2" />
@@ -235,10 +190,10 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           <button
             type="button"
             onClick={() => setPaymentMethod('apple')}
-            className={`flex items-center justify-center p-3 border rounded-lg transition-colors ${
+            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
               paymentMethod === 'apple'
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
+                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
             }`}
           >
             <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
@@ -248,10 +203,10 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           <button
             type="button"
             onClick={() => setPaymentMethod('google')}
-            className={`flex items-center justify-center p-3 border rounded-lg transition-colors ${
+            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
               paymentMethod === 'google'
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
+                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
             }`}
           >
             <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
@@ -264,12 +219,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       {paymentMethod === 'card' && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Payment Information
-            </label>
-            <p className="text-sm text-gray-600 mb-4">
-              Complete your payment securely. Your card information is encrypted and never stored on our servers.
-            </p>
+            <label className="block text-sm font-medium text-white mb-2">Payment Info</label>
+            <p className="text-xs text-slate-300 mb-4">All major cards, Apple Pay, and Google Pay are supported.</p>
           </div>
 
           {error && (
@@ -281,8 +232,9 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           {/* Commerce.js iframe container - handles everything */}
           <div 
             id="fortis-card-element"
-            className="border border-gray-300 rounded-lg overflow-hidden"
-            style={{ minHeight: '400px' }}
+            ref={iframeContainerRef}
+            className="rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#0F121A] p-10 max-w-2xl mx-auto"
+            style={{ minHeight: '380px' }}
           />
           
           {isLoading && (
@@ -294,48 +246,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         </div>
       )}
 
-      {/* Apple Pay */}
-      {paymentMethod === 'apple' && (
-        <div>
-          <button
-            onClick={handleApplePay}
-            disabled={loading || isLoading}
-            className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading || isLoading ? 'Processing...' : '🍎 Pay with Apple Pay'}
-          </button>
-          
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Google Pay */}
-      {paymentMethod === 'google' && (
-        <div>
-          <button
-            onClick={handleGooglePay}
-            disabled={loading || isLoading}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading || isLoading ? 'Processing...' : 'G Pay with Google Pay'}
-          </button>
-          
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Wallet buttons are rendered inside the Commerce iframe when available */}
 
       {/* Security Info */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-        <p className="text-xs text-gray-600 text-center">
-          🔒 Your payment information is secure and encrypted. Powered by Fortis.
+      <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10">
+        <p className="text-xs text-slate-300 text-center">
+          🔒 Payments are processed securely in the embedded Fortis form.
         </p>
       </div>
     </div>

@@ -102,7 +102,8 @@ export interface Order {
   fulfillment_deadline: string;
   created_at: string;
   updated_at: string;
-  stripe_payment_intent_id: string;
+  payment_transaction_id: string;
+  payment_transaction_payload?: any;
   is_corporate: boolean; // Legacy field, keeping for backwards compatibility
   company_name?: string;
 }
