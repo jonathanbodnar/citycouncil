@@ -92,43 +92,93 @@ const ShareModal: React.FC<ShareModalProps> = ({
       ? `${window.location.origin}${talentProfileUrl}`
       : window.location.href;
 
-    // Try using native Web Share API for mobile (supports video)
-    if (navigator.share && videoUrl) {
-      try {
-        await navigator.share({
-          title: shareText,
-          text: shareText,
-          url: profileUrl
-        });
-        return;
-      } catch (err) {
-        // Fallback to platform-specific sharing
-        console.log('Native share not available, using platform links');
-      }
-    }
-
-    // Platform-specific handling
+    // Platform-specific handling with deep links
     if (platform === 'instagram') {
-      // Copy text and open Instagram
+      // Copy text to clipboard first
       const fullText = `${shareText}\n\n${profileUrl}`;
-      navigator.clipboard.writeText(fullText);
-      window.open('https://www.instagram.com/', '_blank');
-      toast.success('Text copied! Paste it in Instagram to share.');
+      try {
+        await navigator.clipboard.writeText(fullText);
+        
+        // Try Instagram app deep link first (mobile)
+        const instagramUrl = 'instagram://story-camera';
+        const webFallback = 'https://www.instagram.com/';
+        
+        // Create a temporary link to test if Instagram app is available
+        const link = document.createElement('a');
+        link.href = instagramUrl;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Try to open Instagram app
+        link.click();
+        
+        // Fallback to web after a short delay if app doesn't open
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 500);
+        
+        // Set a longer timeout to open web version if app didn't open
+        setTimeout(() => {
+          window.open(webFallback, '_blank');
+        }, 1500);
+        
+        toast.success('Text copied! Opening Instagram...');
+      } catch (err) {
+        window.open('https://www.instagram.com/', '_blank');
+        toast.error('Please paste the copied text in Instagram');
+      }
       return;
     }
     
     if (platform === 'tiktok') {
-      // Copy text and open TikTok
+      // Copy text to clipboard
       const fullText = `${shareText}\n\n${profileUrl}`;
-      navigator.clipboard.writeText(fullText);
-      window.open('https://www.tiktok.com/', '_blank');
-      toast.success('Text copied! Paste it in TikTok to share.');
+      try {
+        await navigator.clipboard.writeText(fullText);
+        
+        // Try TikTok app deep link first (mobile)
+        const tiktokUrl = 'tiktok://';
+        const webFallback = 'https://www.tiktok.com/';
+        
+        const link = document.createElement('a');
+        link.href = tiktokUrl;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 500);
+        
+        setTimeout(() => {
+          window.open(webFallback, '_blank');
+        }, 1500);
+        
+        toast.success('Text copied! Opening TikTok...');
+      } catch (err) {
+        window.open('https://www.tiktok.com/', '_blank');
+        toast.error('Please paste the copied text in TikTok');
+      }
       return;
     }
-    
-    // For other platforms, open their share dialog
-    const shareUrl = getShareUrl(platform);
-    window.open(shareUrl, '_blank', 'width=600,height=400');
+
+    if (platform === 'facebook') {
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}&quote=${encodeURIComponent(shareText)}`;
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+      return;
+    }
+
+    if (platform === 'twitter') {
+      const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(profileUrl)}`;
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+      return;
+    }
+
+    if (platform === 'linkedin') {
+      const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`;
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+      return;
+    }
   };
 
   const platforms = [
@@ -185,12 +235,19 @@ const ShareModal: React.FC<ShareModalProps> = ({
         </div>
 
         <div className="p-6">
-          <p className="text-white/80 mb-6 text-center">
-            {isTalentPage 
-              ? `Share ${talentName}'s profile`
-              : `Share your personalized ShoutOut from ${talentName}!`
-            }
-          </p>
+          <div className="mb-6 text-center">
+            <p className="text-white/80 mb-2">
+              {isTalentPage 
+                ? `Share ${talentName}'s profile`
+                : `Share your personalized ShoutOut from ${talentName}!`
+              }
+            </p>
+            {videoUrl && (
+              <p className="text-white/50 text-xs">
+                💡 For Instagram/TikTok: Copy the text, then manually upload the video from your device
+              </p>
+            )}
+          </div>
 
           {/* Copy Profile URL Field */}
           <div className="mb-6 p-4 glass-light rounded-xl border border-white/20">
