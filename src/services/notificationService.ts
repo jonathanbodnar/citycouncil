@@ -37,13 +37,15 @@ export const notificationService = {
 
   // Talent notifications
   async notifyNewOrder(talentUserId: string, orderId: string, userName: string, amount: number): Promise<void> {
-    await this.createNotification(
+    console.log('📢 Creating new order notification for talent:', { talentUserId, orderId, userName, amount });
+    const result = await this.createNotification(
       talentUserId,
       'order_placed',
       '🎬 New Order Received!',
       `${userName} ordered a ShoutOut for $${amount.toFixed(2)}`,
       { order_id: orderId }
     );
+    console.log('📢 New order notification result:', result);
   },
 
   async notifyOrderDeadlineApproaching(talentUserId: string, orderId: string, hoursLeft: number): Promise<void> {
@@ -67,23 +69,27 @@ export const notificationService = {
 
   // User notifications
   async notifyOrderConfirmed(userId: string, orderId: string, talentName: string): Promise<void> {
-    await this.createNotification(
+    console.log('📢 Creating order confirmed notification for user:', { userId, orderId, talentName });
+    const result = await this.createNotification(
       userId,
       'order_placed',
       '✅ Order Confirmed',
       `Your ShoutOut from ${talentName} is confirmed and being created!`,
       { order_id: orderId }
     );
+    console.log('📢 Order confirmed notification result:', result);
   },
 
   async notifyOrderDelivered(userId: string, orderId: string, talentName: string): Promise<void> {
-    await this.createNotification(
+    console.log('📢 Creating order delivered notification for user:', { userId, orderId, talentName });
+    const result = await this.createNotification(
       userId,
       'order_fulfilled',
       '🎉 Your ShoutOut is Ready!',
       `${talentName} has completed your personalized video. Watch it now!`,
       { order_id: orderId }
     );
+    console.log('📢 Order delivered notification result:', result);
   },
 
   // Mark notification as read

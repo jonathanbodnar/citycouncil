@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
 import { 
@@ -8,12 +8,64 @@ import {
   BellIcon 
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
+import { Notification } from '../types';
 import Logo from './Logo';
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+
+  // Fetch notifications on mount and when user changes
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      
+      // Set up real-time subscription for new notifications
+      const channel = supabase
+        .channel('notifications-header')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchNotifications();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      setNotifications(data || []);
+      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -70,18 +122,65 @@ const Header: React.FC = () => {
                     className="p-2 text-white hover:text-gray-300 relative transition-colors"
                   >
                     <BellIcon className="h-6 w-6" />
-                    <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </button>
 
                   {/* Notification Dropdown */}
                   {showNotifications && (
                     <div className="absolute right-0 mt-2 w-80 glass-strong rounded-2xl shadow-modern-xl border border-white/30 z-[10000] overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(30px)' }}>
                       <div className="p-4">
-                        <h3 className="font-semibold text-white mb-3">Notifications</h3>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-white">Notifications</h3>
+                          <Link 
+                            to="/notifications"
+                            className="text-xs text-blue-300 hover:text-blue-200"
+                            onClick={() => setShowNotifications(false)}
+                          >
+                            View All
+                          </Link>
+                        </div>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
-                          <p className="text-sm text-gray-300 text-center py-8">
-                            No new notifications
-                          </p>
+                          {notifications.length === 0 ? (
+                            <p className="text-sm text-gray-300 text-center py-8">
+                              No new notifications
+                            </p>
+                          ) : (
+                            notifications.map((notification) => (
+                              <Link
+                                key={notification.id}
+                                to="/notifications"
+                                onClick={() => setShowNotifications(false)}
+                                className={`block p-3 rounded-lg transition-colors ${
+                                  notification.is_read 
+                                    ? 'bg-white/5 hover:bg-white/10' 
+                                    : 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30'
+                                }`}
+                              >
+                                <div className="flex items-start space-x-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-white truncate">
+                                      {notification.title}
+                                    </p>
+                                    <p className="text-xs text-gray-300 mt-1 line-clamp-2">
+                                      {notification.message}
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      {new Date(notification.created_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                  {!notification.is_read && (
+                                    <div className="flex-shrink-0">
+                                      <div className="h-2 w-2 rounded-full bg-blue-400"></div>
+                                    </div>
+                                  )}
+                                </div>
+                              </Link>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
