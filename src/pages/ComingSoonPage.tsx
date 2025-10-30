@@ -188,12 +188,14 @@ const ComingSoonPage: React.FC = () => {
                   return (
                     <div
                       key={video.id}
-                      className="absolute inset-0 transition-all duration-500 ease-out cursor-pointer"
+                      className="absolute transition-all duration-500 ease-out cursor-pointer"
                       style={{
                         transform: `translateX(${offset * 20}px) translateY(${Math.abs(offset) * 15}px) scale(${1 - Math.abs(offset) * 0.05})`,
                         opacity: isActive ? 1 : 0.6,
                         zIndex: promoVideos.length - Math.abs(offset),
                         pointerEvents: isActive ? 'auto' : 'none',
+                        width: '100%',
+                        height: '450px'
                       }}
                       onClick={() => {
                         if (isActive) return;
@@ -228,12 +230,11 @@ const ComingSoonPage: React.FC = () => {
                         document.addEventListener('touchend', handleTouchEnd);
                       }}
                     >
-                      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black h-full">
+                      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black" style={{ height: '450px' }}>
                         <video
                           src={video.video_url}
                           controls={isActive}
-                          className="w-full object-cover bg-black"
-                          style={{ height: '450px' }}
+                          className="w-full h-full object-cover bg-black"
                           playsInline
                           preload="metadata"
                           crossOrigin="anonymous"
