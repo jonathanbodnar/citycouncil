@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   XMarkIcon,
-  ShareIcon 
+  ShareIcon,
+  ClipboardDocumentIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -29,6 +32,8 @@ const ShareModal: React.FC<ShareModalProps> = ({
   videoUrl,
   isTalentPage = false
 }) => {
+  const [copied, setCopied] = useState(false);
+
   if (!isOpen) return null;
 
   const getShareText = (platform: string) => {
@@ -66,6 +71,21 @@ const ShareModal: React.FC<ShareModalProps> = ({
     return shareUrls[platform as keyof typeof shareUrls] || '#';
   };
 
+  const handleCopyUrl = async () => {
+    const profileUrl = talentProfileUrl 
+      ? `${window.location.origin}${talentProfileUrl}`
+      : window.location.href;
+    
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      setCopied(true);
+      toast.success('Profile URL copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy URL');
+    }
+  };
+
   const handleShare = async (platform: string) => {
     const shareText = getShareText(platform);
     const profileUrl = talentProfileUrl 
@@ -93,7 +113,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
       const fullText = `${shareText}\n\n${profileUrl}`;
       navigator.clipboard.writeText(fullText);
       window.open('https://www.instagram.com/', '_blank');
-      alert('Text copied! Paste it in Instagram to share.');
+      toast.success('Text copied! Paste it in Instagram to share.');
       return;
     }
     
@@ -102,7 +122,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
       const fullText = `${shareText}\n\n${profileUrl}`;
       navigator.clipboard.writeText(fullText);
       window.open('https://www.tiktok.com/', '_blank');
-      alert('Text copied! Paste it in TikTok to share.');
+      toast.success('Text copied! Paste it in TikTok to share.');
       return;
     }
     
@@ -146,18 +166,18 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-        <div className="p-6 border-b border-gray-200">
+      <div className="glass-strong rounded-2xl shadow-xl max-w-md w-full border border-white/20">
+        <div className="p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <ShareIcon className="h-5 w-5 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">
+              <ShareIcon className="h-5 w-5 text-white" />
+              <h2 className="text-xl font-semibold text-white">
                 {isTalentPage ? 'Share Profile' : 'Share Your ShoutOut'}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-white/60 hover:text-white transition-colors"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
@@ -165,12 +185,41 @@ const ShareModal: React.FC<ShareModalProps> = ({
         </div>
 
         <div className="p-6">
-          <p className="text-gray-600 mb-6 text-center">
+          <p className="text-white/80 mb-6 text-center">
             {isTalentPage 
               ? `Share ${talentName}'s profile`
               : `Share your personalized ShoutOut from ${talentName}!`
             }
           </p>
+
+          {/* Copy Profile URL Field */}
+          <div className="mb-6 p-4 glass-light rounded-xl border border-white/20">
+            <label className="block text-white text-sm font-medium mb-2">Profile URL</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={talentProfileUrl ? `${window.location.origin}${talentProfileUrl}` : window.location.href}
+                readOnly
+                className="flex-1 px-3 py-2 bg-black/30 border border-white/20 rounded-lg text-white text-sm"
+              />
+              <button
+                onClick={handleCopyUrl}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium whitespace-nowrap"
+              >
+                {copied ? (
+                  <>
+                    <CheckIcon className="h-4 w-4" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <ClipboardDocumentIcon className="h-4 w-4" />
+                    Copy
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
 
           <div className="grid grid-cols-5 gap-4 mb-6">
             {platforms.map((platform) => (
@@ -187,13 +236,10 @@ const ShareModal: React.FC<ShareModalProps> = ({
           </div>
 
           {isTalentPage && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Share Text:</h4>
-              <p className="text-sm text-gray-700">
+            <div className="mt-6 p-4 glass-light rounded-lg border border-white/20">
+              <h4 className="font-medium text-white mb-2">Share Text:</h4>
+              <p className="text-sm text-white/80">
                 "{getShareText('twitter')}"
-              </p>
-              <p className="text-xs text-gray-500 mt-2">
-                Link: {talentProfileUrl ? `${window.location.origin}${talentProfileUrl}` : window.location.href}
               </p>
             </div>
           )}
@@ -201,7 +247,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
           <div className="mt-6">
             <button
               onClick={onClose}
-              className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg hover:bg-gray-900 font-medium"
+              className="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-lg font-medium transition-colors border border-white/20"
             >
               Done
             </button>
