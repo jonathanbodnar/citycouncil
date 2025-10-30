@@ -20,8 +20,8 @@ export const uploadVideoToWasabi = async (
       return { success: false, error: 'Please select a video file (MP4, MOV, WEBM, etc.)' };
     }
 
-    if (file.size > 100 * 1024 * 1024) { // 100MB limit
-      return { success: false, error: 'Video must be less than 100MB' };
+    if (file.size > 300 * 1024 * 1024) { // 300MB limit
+      return { success: false, error: 'Video must be less than 300MB' };
     }
 
     // Upload to Wasabi S3

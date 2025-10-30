@@ -137,8 +137,6 @@ const ComingSoonPage: React.FC = () => {
             {/* Video Carousel */}
             {promoVideos.length > 0 && (
               <div className="relative max-w-2xl mx-auto">
-                <h3 className="text-white text-lg font-semibold mb-4">See What a ShoutOut Looks Like:</h3>
-                
                 <div className="relative">
                   {/* Video Container with Rounded Borders */}
                   <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
@@ -147,11 +145,12 @@ const ComingSoonPage: React.FC = () => {
                       src={promoVideos[currentVideoIndex].video_url}
                       controls
                       className="w-full aspect-video bg-black"
-                      autoPlay
                       muted
-                      loop
                       playsInline
-                    />
+                      preload="metadata"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
                   </div>
 
                   {/* Navigation Buttons */}
