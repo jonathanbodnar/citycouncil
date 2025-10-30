@@ -247,6 +247,12 @@ const ComingSoonPage: React.FC = () => {
                     >
                       <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black" style={{ height: '450px' }}>
                         <video
+                          ref={(el) => {
+                            // Auto-pause when video becomes inactive
+                            if (el && !isActive && !el.paused) {
+                              el.pause();
+                            }
+                          }}
                           src={video.video_url}
                           poster={video.video_url + '#t=0.5'}
                           controls={isActive}
