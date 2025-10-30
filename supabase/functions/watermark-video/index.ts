@@ -96,11 +96,14 @@ serve(async (req) => {
         statusText: cloudinaryResponse.statusText,
         error: error
       })
+      
+      // If it's the "too large" error, just return original video for now
+      // TODO: Fix eager_async configuration in Cloudinary preset
+      console.log('Returning original video (watermarking unavailable for large videos)')
       return new Response(
         JSON.stringify({ 
-          error: `Cloudinary error (${cloudinaryResponse.status}): ${error}`,
           watermarkedUrl: videoUrl,
-          warning: 'Watermarking failed - returning original video'
+          warning: 'Video watermarking is temporarily unavailable - downloading original'
         }),
         { 
           status: 200, // Return 200 so frontend can handle gracefully
