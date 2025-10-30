@@ -765,16 +765,6 @@ const TalentOnboardingPage: React.FC = () => {
             You've been invited to join as a talent member. Let's get your profile set up.
           </p>
           
-          {/* Complete Setup Button */}
-          <div className="mb-4 sm:mb-6">
-            <button
-              disabled
-              className="w-full bg-gray-300 text-gray-500 py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-sm sm:text-base font-semibold cursor-not-allowed"
-            >
-              Complete Setup to Enable Orders
-            </button>
-          </div>
-          
           {/* Profile Preview Card - Mobile Optimized */}
           <div className={`bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 ${currentStep === 4 ? 'hidden' : ''}`}>
             <div className="flex flex-col sm:flex-row sm:min-h-[400px]">
