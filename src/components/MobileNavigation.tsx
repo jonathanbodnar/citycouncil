@@ -28,7 +28,13 @@ const MobileNavigation: React.FC = () => {
   }
 
   // Navigation for logged-in users
-  const authenticatedNavigation = [
+  const authenticatedNavigation: Array<{
+    name: string;
+    href: string;
+    icon: any;
+    iconSolid: any;
+    badge?: boolean;
+  }> = [
     {
       name: 'Home',
       href: '/home',
@@ -63,7 +69,13 @@ const MobileNavigation: React.FC = () => {
   ];
 
   // Navigation for non-logged-in users
-  const guestNavigation = [
+  const guestNavigation: Array<{
+    name: string;
+    href: string;
+    icon: any;
+    iconSolid: any;
+    badge?: boolean;
+  }> = [
     {
       name: 'Home',
       href: '/home',
