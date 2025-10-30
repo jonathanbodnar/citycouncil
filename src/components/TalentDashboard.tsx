@@ -114,20 +114,47 @@ const TalentDashboard: React.FC = () => {
     setUploadingVideo(orderId);
     
     try {
-      // Upload video to Wasabi S3
+      // Step 1: Upload video to Wasabi S3
+      toast.loading('Uploading video...', { id: 'upload' });
       const uploadResult = await uploadVideoToWasabi(file, orderId);
       
       if (!uploadResult.success) {
-        toast.error(uploadResult.error || 'Upload failed');
+        toast.error(uploadResult.error || 'Upload failed', { id: 'upload' });
         return;
       }
+      toast.success('Video uploaded!', { id: 'upload' });
 
-      // Update order with video URL and mark as completed
+      // Step 2: Apply watermark via Cloudinary
+      let finalVideoUrl = uploadResult.videoUrl;
+      try {
+        toast.loading('Adding watermark...', { id: 'watermark' });
+        const { data: watermarkData, error: watermarkError } = await supabase.functions.invoke('watermark-video', {
+          body: { 
+            videoUrl: uploadResult.videoUrl,
+            orderId: orderId,
+            talentName: user?.full_name || 'Talent'
+          }
+        });
+
+        if (!watermarkError && watermarkData?.watermarkedUrl) {
+          finalVideoUrl = watermarkData.watermarkedUrl;
+          toast.success('Watermark applied!', { id: 'watermark' });
+        } else {
+          console.warn('Watermarking failed, using original video');
+          toast.dismiss('watermark');
+        }
+      } catch (watermarkError) {
+        console.error('Watermark error:', watermarkError);
+        // Continue with original video if watermarking fails
+        toast.dismiss('watermark');
+      }
+
+      // Step 3: Update order with watermarked video URL and mark as completed
       const { error } = await supabase
         .from('orders')
         .update({ 
           status: 'completed',
-          video_url: uploadResult.videoUrl
+          video_url: finalVideoUrl
         })
         .eq('id', orderId);
 

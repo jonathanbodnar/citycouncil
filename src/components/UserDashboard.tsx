@@ -10,7 +10,8 @@ import {
   PlayIcon,
   ShareIcon,
   PencilIcon,
-  PlusIcon
+  PlusIcon,
+  CloudArrowDownIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
@@ -340,6 +341,18 @@ const UserDashboard: React.FC = () => {
                           videoUrl={order.video_url}
                           className="w-full h-full"
                         />
+                      </div>
+                      
+                      {/* Download Button */}
+                      <div className="mt-4">
+                        <a
+                          href={order.video_url}
+                          download={`shoutout-${order.id}.mp4`}
+                          className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <CloudArrowDownIcon className="h-5 w-5" />
+                          <span>Download Video</span>
+                        </a>
                       </div>
                     </div>
                   )}
