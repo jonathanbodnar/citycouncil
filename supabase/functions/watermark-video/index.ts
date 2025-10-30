@@ -26,6 +26,21 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Check if we already have a watermarked version cached
+    const { data: cached, error: cacheError } = await supabase
+      .from('watermarked_videos_cache')
+      .select('cloudinary_url')
+      .eq('original_video_url', videoUrl)
+      .single()
+
+    if (!cacheError && cached?.cloudinary_url) {
+      console.log('Using cached watermarked video:', cached.cloudinary_url)
+      return new Response(
+        JSON.stringify({ watermarkedUrl: cached.cloudinary_url }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // For now, we'll use Cloudinary as the watermarking service
     // This is more reliable than running FFmpeg in edge functions
     const cloudinaryCloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME')
@@ -107,6 +122,24 @@ serve(async (req) => {
     const watermarkedUrl = cloudinaryData.secure_url
 
     console.log('Watermarked video created:', watermarkedUrl)
+
+    // Cache the watermarked URL for future requests
+    try {
+      await supabase
+        .from('watermarked_videos_cache')
+        .upsert({
+          original_video_url: videoUrl,
+          cloudinary_url: watermarkedUrl,
+          cloudinary_public_id: cloudinaryData.public_id,
+          created_at: new Date().toISOString()
+        }, {
+          onConflict: 'original_video_url'
+        })
+      console.log('Cached watermarked URL for future use')
+    } catch (cacheError) {
+      console.warn('Failed to cache watermarked URL:', cacheError)
+      // Don't fail the request if caching fails
+    }
 
     return new Response(
       JSON.stringify({ watermarkedUrl }),
