@@ -26,6 +26,7 @@ const LandingPromoVideos: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>('');
+  const fileRef = React.useRef<File | null>(null);
 
   useEffect(() => {
     fetchVideos();
@@ -90,11 +91,15 @@ const LandingPromoVideos: React.FC = () => {
 
       console.log('✅ File validated! Setting state:', file.name);
       
+      // Store in ref (persists across re-renders)
+      fileRef.current = file;
+      
       // Set both state values immediately
       setFileName(file.name);
       setSelectedFile(file);
       
       console.log('State update called for:', file.name);
+      console.log('File stored in ref:', fileRef.current?.name);
       toast.success(`Selected: ${file.name}`);
     } else {
       console.log('No file selected');
@@ -104,7 +109,10 @@ const LandingPromoVideos: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) {
+    // Use ref as source of truth (persists across re-renders)
+    const fileToUpload = fileRef.current || selectedFile;
+    
+    if (!fileToUpload) {
       toast.error('Please select a video file');
       return;
     }
@@ -115,8 +123,10 @@ const LandingPromoVideos: React.FC = () => {
       // Generate a unique ID for the promo video
       const promoVideoId = `promo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
+      console.log('Uploading file from ref:', fileRef.current?.name);
+      
       // Upload video to Wasabi
-      const uploadResult = await uploadVideoToWasabi(selectedFile, promoVideoId);
+      const uploadResult = await uploadVideoToWasabi(fileToUpload, promoVideoId);
       
       if (!uploadResult.success || !uploadResult.videoUrl) {
         throw new Error(uploadResult.error || 'Failed to upload video');
@@ -141,6 +151,7 @@ const LandingPromoVideos: React.FC = () => {
       toast.success('Promo video uploaded successfully!');
       setSelectedFile(null);
       setFileName('');
+      fileRef.current = null;
       
       // Reset file input
       const fileInput = document.getElementById('video-file-input') as HTMLInputElement;
@@ -261,7 +272,7 @@ const LandingPromoVideos: React.FC = () => {
             </p>
             {/* Debug info */}
             <p className="mt-2 text-xs text-yellow-400">
-              Debug: fileName="{fileName}" | selectedFile={selectedFile ? 'SET' : 'NULL'} | button={fileName ? 'ENABLED' : 'DISABLED'}
+              Debug: fileName="{fileName}" | selectedFile={selectedFile ? 'SET' : 'NULL'} | fileRef={fileRef.current ? 'SET' : 'NULL'} | button={fileName || fileRef.current ? 'ENABLED' : 'DISABLED'}
             </p>
           </div>
 
@@ -275,7 +286,7 @@ const LandingPromoVideos: React.FC = () => {
               console.log('disabled?', uploading || !fileName);
               handleUpload();
             }}
-            disabled={uploading || !fileName}
+            disabled={uploading || (!fileName && !fileRef.current)}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading ? (
