@@ -264,6 +264,67 @@ const OrderPage: React.FC = () => {
     setSubmitting(false);
   };
 
+  const handleSkipPayment = async () => {
+    if (!talent || !user || !orderData) return;
+
+    setSubmitting(true);
+    try {
+      const pricing = calculatePricing();
+
+      // Create the order without payment
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          customer_id: user.id,
+          talent_id: talent.id,
+          request_details: orderData.requestDetails,
+          recipient_name: orderData.recipientName || null,
+          business_name: orderData.businessName || null,
+          occasion: orderData.occasion || null,
+          special_instructions: orderData.specialInstructions || null,
+          event_description: orderData.eventDescription || null,
+          event_audience: orderData.eventAudience || null,
+          video_setting_request: orderData.videoSettingRequest || null,
+          is_business_order: orderData.isForBusiness,
+          amount: pricing.subtotal,
+          admin_fee: pricing.admin_fee,
+          total_amount: pricing.total,
+          status: 'pending',
+          allow_promotional_use: orderData.allowPromotionalUse || false,
+          payment_status: 'skipped_test', // Mark as test order
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Send notifications
+      await notificationService.sendOrderNotification(
+        talent.user_id,
+        order.id,
+        'new_order',
+        `New order from ${user.full_name || 'a customer'}`
+      );
+
+      await emailService.sendTalentOrderNotification(
+        talent.users.email || '',
+        talent.users.full_name,
+        order.id,
+        user.full_name || 'Customer',
+        orderData.requestDetails
+      );
+
+      toast.success('Test order created successfully (Payment Skipped)!');
+      navigate('/dashboard');
+
+    } catch (error: any) {
+      console.error('Error creating test order:', error);
+      toast.error('Failed to create test order: ' + error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const processTalentPayout = async (order: any, talentAmount: number) => {
     if (!talent) {
       console.error('Talent not found for payout processing');
@@ -613,13 +674,35 @@ const OrderPage: React.FC = () => {
               </div>
 
               {!showPayment ? (
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-blue-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-modern hover:shadow-modern-lg glow-blue"
-                >
-                  {submitting ? 'Processing...' : `Continue to Payment - $${pricing.total.toFixed(2)}`}
-                </button>
+                <div className="space-y-3">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-blue-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-modern hover:shadow-modern-lg glow-blue"
+                  >
+                    {submitting ? 'Processing...' : `Continue to Payment - $${pricing.total.toFixed(2)}`}
+                  </button>
+                  
+                  {/* Testing: Skip Payment Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (orderData) {
+                        handleSkipPayment();
+                      } else {
+                        // Store order data first
+                        handleSubmit((data) => {
+                          setOrderData(data);
+                          setTimeout(() => handleSkipPayment(), 100);
+                        })();
+                      }
+                    }}
+                    disabled={submitting}
+                    className="w-full bg-yellow-500 text-gray-900 py-3 px-8 rounded-2xl font-semibold hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 border-2 border-yellow-600"
+                  >
+                    ⚠️ Skip Payment (Testing Only)
+                  </button>
+                </div>
               ) : (
                 <div className="space-y-4">
                   <button
