@@ -45,14 +45,20 @@ FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Install serve globally
-RUN npm install -g serve
+# Copy package files for production dependencies
+COPY package*.json ./
+
+# Install production dependencies (including express and prerender-node)
+RUN npm ci --only=production
 
 # Copy built app from build stage
 COPY --from=build /app/build ./build
 
+# Copy server.js
+COPY server.js ./
+
 # Expose port
 EXPOSE $PORT
 
-# Start the app
-CMD ["sh", "-c", "serve -s build -l $PORT"]
+# Start the Express server with Prerender middleware
+CMD ["node", "server.js"]
