@@ -460,9 +460,9 @@ const AdminManagementTabs: React.FC = () => {
       )}
 
       {/* Landing Page Videos Tab */}
-      {activeTab === 'landing-videos' && (
+      <div style={{ display: activeTab === 'landing-videos' ? 'block' : 'none' }}>
         <LandingPromoVideos />
-      )}
+      </div>
 
       {/* Social Media Tracking Tab */}
       {activeTab === 'social-tracking' && (
