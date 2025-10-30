@@ -933,26 +933,54 @@ const TalentManagement: React.FC = () => {
                       <button
                         onClick={async () => {
                           try {
-                            toast.loading('Preparing download with watermark...');
+                            toast.loading('Adding watermark...', { id: 'watermark' });
                             
-                            // Simply download the video - watermark will be added when user views/shares
+                            // Call watermark edge function
+                            const { data, error } = await supabase.functions.invoke('watermark-video', {
+                              body: { 
+                                videoUrl: talent.promo_video_url,
+                                orderId: talent.id,
+                                talentName: talent.users?.full_name || talent.temp_full_name || talent.username
+                              }
+                            });
+
+                            if (error) {
+                              console.error('Watermark error:', error);
+                              throw error;
+                            }
+
+                            if (data.warning) {
+                              console.warn('Watermark warning:', data.warning);
+                              toast.error(data.warning, { id: 'watermark' });
+                              return;
+                            }
+
+                            toast.success('Watermark applied!', { id: 'watermark' });
+                            
+                            // Download the watermarked video
+                            toast.loading('Downloading video...', { id: 'download' });
+                            const response = await fetch(data.watermarkedUrl);
+                            const blob = await response.blob();
+                            
+                            const url = window.URL.createObjectURL(blob);
                             const link = document.createElement('a');
-                            link.href = talent.promo_video_url!;
-                            link.download = `${talent.username || talent.id}-promo-video-watermarked.mp4`;
-                            link.target = '_blank';
+                            link.href = url;
+                            link.download = `shoutout-${talent.username || talent.id}-watermarked.mp4`;
                             document.body.appendChild(link);
                             link.click();
+                            
+                            // Cleanup
+                            window.URL.revokeObjectURL(url);
                             document.body.removeChild(link);
                             
-                            toast.dismiss();
-                            toast.success('Downloading promo video with watermark...');
+                            toast.success('Video downloaded!', { id: 'download' });
                           } catch (error) {
                             console.error('Download error:', error);
-                            toast.error('Failed to download video');
+                            toast.error('Failed to download video. Try direct download from profile.', { id: 'download' });
                           }
                         }}
                         className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                        title="Download promo video (with watermark)"
+                        title="Download promo video with watermark"
                       >
                         <ArrowDownTrayIcon className="h-4 w-4" />
                       </button>

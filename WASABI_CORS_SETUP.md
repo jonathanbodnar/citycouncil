@@ -23,7 +23,23 @@ Go to: https://console.wasabisys.com/
 2. Go to **Settings** tab
 3. Find **CORS Configuration** section
 4. Click **Edit**
-5. Paste this XML:
+5. **Try JSON format first** (most Wasabi interfaces prefer this):
+
+```json
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
+    "AllowedOrigins": ["https://shoutout.us", "http://localhost:3000"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }
+]
+```
+
+6. Click **Save**
+
+**If you get a syntax error with JSON**, try the XML format:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -41,8 +57,6 @@ Go to: https://console.wasabisys.com/
   </CORSRule>
 </CORSConfiguration>
 ```
-
-6. Click **Save**
 
 ### Step 3: Configure CORS for `shoutout-assets` bucket
 

@@ -54,15 +54,16 @@ serve(async (req) => {
     const videoBlob = await videoResponse.blob()
     
     uploadFormData.append('file', videoBlob)
-    uploadFormData.append('upload_preset', 'shoutout_watermarked') // You'll need to create this preset
+    uploadFormData.append('upload_preset', 'shoutout_watermarked')
+    
+    // Add watermark transformation: ShoutOut logo in top-left corner
     uploadFormData.append('transformation', JSON.stringify({
-      overlay: 'shoutout_logo_jruflu', // Your Cloudinary logo public_id
+      overlay: 'shoutout_logo_jruflu',
       gravity: 'north_west',
-      x: 20,
-      y: 20,
-      width: 150,
-      opacity: 60,
-      flags: 'layer_apply'
+      x: 10,
+      y: 10,
+      width: 120,
+      opacity: 60
     }))
 
     const cloudinaryResponse = await fetch(
