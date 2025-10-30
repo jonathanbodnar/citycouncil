@@ -17,13 +17,16 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const MobileNavigation: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  console.log('🔍 MobileNavigation rendering, user:', user?.email, 'user type:', user?.user_type);
+  console.log('🔍 MobileNavigation rendering, user:', user?.email, 'loading:', loading);
 
-  if (!user) {
-    console.log('❌ No user, not showing mobile nav');
+  // Don't render anything while auth is loading or if there's no user
+  if (loading || !user) {
+    if (!loading && !user) {
+      console.log('❌ No user, not showing mobile nav');
+    }
     return null;
   }
 
