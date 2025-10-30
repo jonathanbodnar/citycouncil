@@ -267,62 +267,15 @@ const OrderPage: React.FC = () => {
   const handleSkipPayment = async () => {
     if (!talent || !user || !orderData) return;
 
-    setSubmitting(true);
-    try {
-      const pricing = calculatePricing();
+    // Mock payment result for testing - just process as if payment succeeded
+    const mockPaymentResult = {
+      transaction_id: `TEST_${Date.now()}`,
+      amount: calculatePricing().total,
+      status: 'test_skipped'
+    };
 
-      // Create the order without payment
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_id: user.id,
-          talent_id: talent.id,
-          request_details: orderData.requestDetails,
-          recipient_name: orderData.recipientName || null,
-          business_name: orderData.businessName || null,
-          occasion: orderData.occasion || null,
-          special_instructions: orderData.specialInstructions || null,
-          event_description: orderData.eventDescription || null,
-          event_audience: orderData.eventAudience || null,
-          video_setting_request: orderData.videoSettingRequest || null,
-          is_business_order: orderData.isForBusiness,
-          amount: pricing.subtotal,
-          admin_fee: pricing.adminFee,
-          total_amount: pricing.total,
-          status: 'pending',
-          allow_promotional_use: orderData.allowPromotionalUse || false,
-          payment_status: 'skipped_test', // Mark as test order
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Send notifications
-      await notificationService.sendOrderNotification(
-        talent.user_id,
-        order.id,
-        'new_order',
-        `New order from ${user.full_name || 'a customer'}`
-      );
-
-      await emailService.sendTalentOrderNotification(
-        talent.users.email || '',
-        talent.users.full_name,
-        order.id,
-        user.full_name || 'Customer',
-        orderData.requestDetails
-      );
-
-      toast.success('Test order created successfully (Payment Skipped)!');
-      navigate('/dashboard');
-
-    } catch (error: any) {
-      console.error('Error creating test order:', error);
-      toast.error('Failed to create test order: ' + error.message);
-    } finally {
-      setSubmitting(false);
-    }
+    // Reuse the same payment success handler
+    await handlePaymentSuccess(mockPaymentResult);
   };
 
   const processTalentPayout = async (order: any, talentAmount: number) => {
