@@ -722,32 +722,32 @@ const TalentOnboardingPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        {/* Progress Steps - Mobile Optimized */}
+        <div className="mb-6 sm:mb-8 overflow-x-auto">
+          <div className="flex items-center justify-between min-w-max sm:min-w-0">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  currentStep >= step.number
-                    ? 'glass-strong border-white/30 text-white'
-                    : 'border-white/20 text-gray-400'
-                }`}>
-                  {currentStep > step.number ? (
-                    <CheckCircleIcon className="w-6 h-6" />
-                  ) : (
-                    <span className="text-sm font-semibold">{step.number}</span>
-                  )}
-                </div>
-                <div className="ml-3">
-                  <p className={`text-sm font-medium ${
+                <div className="flex flex-col items-center">
+                  <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 ${
+                    currentStep >= step.number
+                      ? 'glass-strong border-white/30 text-white'
+                      : 'border-white/20 text-gray-400'
+                  }`}>
+                    {currentStep > step.number ? (
+                      <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    ) : (
+                      <span className="text-xs sm:text-sm font-semibold">{step.number}</span>
+                    )}
+                  </div>
+                  <p className={`text-xs sm:text-sm font-medium mt-1 whitespace-nowrap ${
                     currentStep >= step.number ? 'text-white' : 'text-gray-400'
                   }`}>
                     {step.title}
                   </p>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-4 ${
+                  <div className={`w-12 sm:w-16 h-0.5 mx-2 sm:mx-4 ${
                     currentStep > step.number ? 'bg-white/30' : 'bg-white/10'
                   }`} />
                 )}
@@ -757,29 +757,29 @@ const TalentOnboardingPage: React.FC = () => {
         </div>
 
         {/* Welcome Message */}
-        <div className={`bg-white rounded-lg shadow-sm p-6 mb-8 ${currentStep === 4 ? 'hidden' : ''}`}>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <div className={`bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 ${currentStep === 4 ? 'hidden' : ''}`}>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
             Welcome to ShoutOut!
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 mb-4">
             You've been invited to join as a talent member. Let's get your profile set up.
           </p>
           
           {/* Complete Setup Button */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <button
               disabled
-              className="w-full bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-semibold cursor-not-allowed"
+              className="w-full bg-gray-300 text-gray-500 py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-sm sm:text-base font-semibold cursor-not-allowed"
             >
               Complete Setup to Enable Orders
             </button>
           </div>
           
-          {/* Profile Preview Card */}
+          {/* Profile Preview Card - Mobile Optimized */}
           <div className={`bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 ${currentStep === 4 ? 'hidden' : ''}`}>
-            <div className="flex min-h-[400px]">
-              {/* Profile Image - Left Side (40% width, full height) */}
-              <div className="w-2/5">
+            <div className="flex flex-col sm:flex-row sm:min-h-[400px]">
+              {/* Profile Image - Top on mobile, Left on desktop */}
+              <div className="w-full sm:w-2/5 h-64 sm:h-auto">
                 <div className="h-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative">
                   {(onboardingData.talent.temp_avatar_url || onboardingData.talent.users?.avatar_url) ? (
                     <img
@@ -807,17 +807,17 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Profile Info - Right Side (60% width) */}
-              <div className="w-3/5 p-6 flex flex-col">
+              {/* Profile Info - Bottom on mobile, Right on desktop */}
+              <div className="w-full sm:w-3/5 p-4 sm:p-6 flex flex-col">
                 {/* Header Section */}
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   {/* Position Title */}
                   {onboardingData.talent.position && (
-                    <p className="text-sm font-medium text-gray-600 mb-1 uppercase tracking-wide">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 uppercase tracking-wide">
                       {onboardingData.talent.position}
                     </p>
                   )}
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                     {onboardingData.talent.temp_full_name || onboardingData.talent.users?.full_name || 'Talent Member'}
                   </h2>
                   <div className="flex items-center space-x-4 mb-4">
@@ -851,56 +851,56 @@ const TalentOnboardingPage: React.FC = () => {
                 {/* Rating - Hidden during onboarding since talent hasn't received orders yet */}
 
                 {/* Bio */}
-                <p className="text-gray-700 mb-6 leading-relaxed flex-1">
+                <p className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6 leading-relaxed flex-1">
                   {onboardingData.talent.bio || 'Profile bio will be added during setup.'}
                 </p>
 
-                {/* Stats - Bottom Section */}
+                {/* Stats - Bottom Section - Mobile Optimized */}
                 <div className="mt-auto">
-                  <div className={`grid gap-4 mb-4 ${
+                  <div className={`grid gap-2 sm:gap-4 mb-3 sm:mb-4 ${
                     donateProceeds && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 
-                      ? 'grid-cols-4' 
+                      ? 'grid-cols-2 sm:grid-cols-4' 
                       : 'grid-cols-3'
                   }`}>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-xl sm:text-2xl font-bold text-blue-600">
                         ${onboardingData.talent.pricing}
                       </div>
-                      <div className="text-sm text-gray-600">Personal</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Personal</div>
                     </div>
 
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-xl sm:text-2xl font-bold text-blue-600">
                         {onboardingData.talent.fulfillment_time_hours}h
                       </div>
-                      <div className="text-sm text-gray-600">Delivery</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Delivery</div>
                     </div>
 
                     {onboardingData.talent.allow_corporate_pricing && (
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
+                        <div className="text-xl sm:text-2xl font-bold text-blue-600">
                           ${onboardingData.talent.corporate_pricing || Math.round(onboardingData.talent.pricing * 1.5)}
                         </div>
-                        <div className="text-sm text-gray-600">Corporate</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Corporate</div>
                       </div>
                     )}
 
                     {(donateProceeds && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-red-600">
+                        <div className="text-xl sm:text-2xl font-bold text-red-600">
                           {onboardingData.talent.charity_percentage}%
                         </div>
-                        <div className="text-sm text-gray-600">To Charity</div>
+                        <div className="text-xs sm:text-sm text-gray-600">To Charity</div>
                       </div>
                     )}
                   </div>
 
                   {/* Charity Info */}
                   {donateProceeds && onboardingData.talent.charity_name && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 && (
-                    <div className="bg-red-50 rounded-lg p-4">
+                    <div className="bg-red-50 rounded-lg p-3 sm:p-4">
                       <div className="flex items-center text-red-800">
-                        <HeartIcon className="h-5 w-5 mr-2" />
-                        <span className="text-sm font-medium">
+                        <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm font-medium">
                           {onboardingData.talent.charity_percentage}% of proceeds go to {onboardingData.talent.charity_name}
                         </span>
                       </div>
@@ -912,8 +912,8 @@ const TalentOnboardingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Step Content */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        {/* Step Content - Mobile Optimized */}
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
           {currentStep === 1 && !onboardingData?.talent.user_id && (
             <form onSubmit={handleStep1Submit}>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
