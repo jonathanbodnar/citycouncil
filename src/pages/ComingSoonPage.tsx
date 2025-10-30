@@ -192,7 +192,7 @@ const ComingSoonPage: React.FC = () => {
 
             {/* Video Carousel - Swipeable Stack */}
             {promoVideos.length > 0 && (
-              <div className="relative mx-auto mt-6" style={{ height: '500px', maxWidth: '350px' }}>
+              <div className="relative mx-auto mt-6 mb-12" style={{ height: '450px', maxWidth: '350px' }}>
                 {promoVideos.map((video, index) => {
                   const offset = index - currentVideoIndex;
                   const isActive = index === currentVideoIndex;
@@ -284,7 +284,7 @@ const ComingSoonPage: React.FC = () => {
 
                 {/* Dots Indicator */}
                 {promoVideos.length > 1 && (
-                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2" style={{ bottom: '-40px' }}>
                     {promoVideos.map((_, index) => (
                       <button
                         key={index}
