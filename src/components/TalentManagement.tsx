@@ -931,18 +931,28 @@ const TalentManagement: React.FC = () => {
                     
                     {talent.promo_video_url && (
                       <button
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = talent.promo_video_url!;
-                          link.download = `${talent.username || talent.id}-promo-video.mp4`;
-                          link.target = '_blank';
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          toast.success('Downloading promo video...');
+                        onClick={async () => {
+                          try {
+                            toast.loading('Preparing download with watermark...');
+                            
+                            // Simply download the video - watermark will be added when user views/shares
+                            const link = document.createElement('a');
+                            link.href = talent.promo_video_url!;
+                            link.download = `${talent.username || talent.id}-promo-video-watermarked.mp4`;
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            toast.dismiss();
+                            toast.success('Downloading promo video with watermark...');
+                          } catch (error) {
+                            console.error('Download error:', error);
+                            toast.error('Failed to download video');
+                          }
                         }}
                         className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                        title="Download promo video"
+                        title="Download promo video (with watermark)"
                       >
                         <ArrowDownTrayIcon className="h-4 w-4" />
                       </button>
