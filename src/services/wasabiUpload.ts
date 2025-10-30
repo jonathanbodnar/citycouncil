@@ -46,8 +46,9 @@ export const uploadImageToWasabi = async (
 
     const result = await wasabi.upload(uploadParams).promise();
     
-    // Use CloudFlare CDN URL for public access
-    const imageUrl = `https://assets.shoutout.us/${fileName}`;
+    // Use direct Wasabi URL (CloudFlare CDN can be added later)
+    // Direct access: https://shoutout-assets.s3.us-central-1.wasabisys.com/path/file.jpg
+    const imageUrl = `https://shoutout-assets.s3.us-central-1.wasabisys.com/${fileName}`;
     
     return {
       success: true,

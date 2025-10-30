@@ -49,9 +49,9 @@ export const uploadVideoToWasabi = async (
 
     const result = await wasabi.upload(uploadParams).promise();
     
-    // Use CloudFlare CDN URL for public access
-    // CloudFlare should proxy: videos.shoutout.us -> shoutoutorders.s3.us-central-1.wasabisys.com
-    const videoUrl = `https://videos.shoutout.us/${fileName}`;
+    // Use direct Wasabi URL (CloudFlare CDN can be added later)
+    // Direct access: https://shoutoutorders.s3.us-central-1.wasabisys.com/videos/file.mp4
+    const videoUrl = `https://shoutoutorders.s3.us-central-1.wasabisys.com/${fileName}`;
     
     console.log('Video uploaded successfully:', videoUrl);
     
