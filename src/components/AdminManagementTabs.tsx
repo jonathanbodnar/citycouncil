@@ -16,7 +16,7 @@ import TalentManagement from './TalentManagement';
 import PlatformSettings from './PlatformSettings';
 import AdminHelpDesk from './AdminHelpDesk';
 import PromotionalVideosManagement from './PromotionalVideosManagement';
-import LandingPromoVideos from './LandingPromoVideos';
+import LandingVideoUpload from './LandingVideoUpload';
 import SocialMediaTracking from './SocialMediaTracking';
 import toast from 'react-hot-toast';
 
@@ -460,9 +460,9 @@ const AdminManagementTabs: React.FC = () => {
       )}
 
       {/* Landing Page Videos Tab */}
-      <div style={{ display: activeTab === 'landing-videos' ? 'block' : 'none' }}>
-        <LandingPromoVideos />
-      </div>
+      {activeTab === 'landing-videos' && (
+        <LandingVideoUpload />
+      )}
 
       {/* Social Media Tracking Tab */}
       {activeTab === 'social-tracking' && (
