@@ -955,6 +955,7 @@ const TalentManagement: React.FC = () => {
                               return;
                             }
 
+                            console.log('Watermarked URL from Cloudinary:', data.watermarkedUrl);
                             toast.success('Watermark applied!', { id: 'watermark' });
                             
                             // Download the watermarked video
