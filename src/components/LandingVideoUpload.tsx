@@ -48,25 +48,30 @@ export default function LandingVideoUpload() {
     }
 
     setUploading(true);
+    console.log('Starting upload for file:', file.name, 'Size:', file.size);
 
     try {
       const id = `promo_${Date.now()}`;
       const result = await uploadVideoToWasabi(file, id);
+      console.log('Upload result:', result);
 
       if (!result.success) throw new Error(result.error);
 
-      const { error } = await supabase.from('landing_promo_videos').insert({
+      console.log('Inserting to database:', result.videoUrl);
+      const { error, data } = await supabase.from('landing_promo_videos').insert({
         video_url: result.videoUrl,
         display_order: videos.length,
         is_active: true
-      });
+      }).select();
 
       if (error) throw error;
+      console.log('Database insert success:', data);
 
       toast.success('Uploaded!');
       form.reset();
-      loadVideos();
+      await loadVideos();
     } catch (err: any) {
+      console.error('Upload failed:', err);
       toast.error(err.message);
     } finally {
       setUploading(false);

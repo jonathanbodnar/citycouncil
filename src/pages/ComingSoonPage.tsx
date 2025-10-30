@@ -138,16 +138,19 @@ const ComingSoonPage: React.FC = () => {
             {promoVideos.length > 0 && (
               <div className="relative max-w-2xl mx-auto">
                 <div className="relative">
-                  {/* Video Container with Rounded Borders */}
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
+                  {/* Video Container with Rounded Borders - Vertical format like Reels */}
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 max-w-sm mx-auto">
                     <video
                       key={promoVideos[currentVideoIndex].id}
                       src={promoVideos[currentVideoIndex].video_url}
                       controls
-                      className="w-full aspect-video bg-black"
+                      className="w-full h-auto bg-black"
                       muted
                       playsInline
                       preload="metadata"
+                      style={{ maxHeight: '600px' }}
+                      onError={(e) => console.error('Video load error:', e, promoVideos[currentVideoIndex].video_url)}
+                      onLoadedMetadata={() => console.log('Video loaded:', promoVideos[currentVideoIndex].video_url)}
                     >
                       Your browser does not support the video tag.
                     </video>
