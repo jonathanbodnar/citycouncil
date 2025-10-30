@@ -53,11 +53,17 @@ const TalentProfilePage: React.FC = () => {
     if (talent) {
       const talentName = talent.temp_full_name || talent.users.full_name;
       const profileUrl = window.location.href;
-      const description = talent.bio || `Get a personalized ShoutOut from ${talentName}`;
-      const imageUrl = talent.temp_avatar_url || talent.users.avatar_url || '';
+      const description = talent.bio || `Get a personalized video ShoutOut from ${talentName}. Order custom video messages from your favorite personalities!`;
+      const imageUrl = talent.temp_avatar_url || talent.users.avatar_url || 'https://shoutout.us/logo512.png';
 
       // Update basic meta tags
-      document.title = `${talentName} - ShoutOut`;
+      document.title = `${talentName} - Personalized Video ShoutOuts`;
+      
+      // Update description meta tag
+      const descriptionTag = document.querySelector('meta[name="description"]') as HTMLMetaElement;
+      if (descriptionTag) {
+        descriptionTag.content = description;
+      }
       
       // Update or create Open Graph meta tags
       const updateMetaTag = (property: string, content: string) => {
@@ -81,19 +87,30 @@ const TalentProfilePage: React.FC = () => {
         metaTag.content = content;
       };
 
-      // Open Graph tags
-      updateMetaTag('og:title', `${talentName} on ShoutOut`);
+      // Open Graph tags - with full image URL
+      updateMetaTag('og:title', `${talentName} - Personalized Video ShoutOuts`);
       updateMetaTag('og:description', description);
       updateMetaTag('og:image', imageUrl);
+      updateMetaTag('og:image:secure_url', imageUrl);
+      updateMetaTag('og:image:type', 'image/jpeg');
+      updateMetaTag('og:image:width', '1200');
+      updateMetaTag('og:image:height', '630');
       updateMetaTag('og:url', profileUrl);
       updateMetaTag('og:type', 'profile');
       updateMetaTag('og:site_name', 'ShoutOut');
 
       // Twitter Card tags
       updateTwitterTag('twitter:card', 'summary_large_image');
-      updateTwitterTag('twitter:title', `${talentName} on ShoutOut`);
+      updateTwitterTag('twitter:title', `${talentName} - Personalized Video ShoutOuts`);
       updateTwitterTag('twitter:description', description);
       updateTwitterTag('twitter:image', imageUrl);
+      updateTwitterTag('twitter:image:alt', `${talentName} profile picture`);
+
+      console.log('📱 Meta tags updated:', {
+        title: `${talentName} - Personalized Video ShoutOuts`,
+        image: imageUrl,
+        description: description.substring(0, 50) + '...'
+      });
 
       // Return cleanup function
       return () => {
