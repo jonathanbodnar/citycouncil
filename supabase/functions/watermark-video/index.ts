@@ -111,6 +111,8 @@ serve(async (req) => {
 
     const cloudinaryData = await cloudinaryResponse.json()
     
+    console.log('Cloudinary response data:', JSON.stringify(cloudinaryData, null, 2))
+    
     if (!cloudinaryData.secure_url) {
       console.error('No secure_url in Cloudinary response:', cloudinaryData)
       return new Response(
@@ -127,6 +129,7 @@ serve(async (req) => {
     const watermarkedUrl = cloudinaryData.secure_url
 
     console.log('Watermarked video created:', watermarkedUrl)
+    console.log('Eager transformations:', cloudinaryData.eager)
 
     // Cache the watermarked URL for future requests
     try {
