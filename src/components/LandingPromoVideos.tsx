@@ -251,13 +251,17 @@ const LandingPromoVideos: React.FC = () => {
               className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer"
               disabled={uploading}
             />
-            {selectedFile && (
-              <p className="mt-2 text-sm text-gray-400">
-                Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+            {fileName && (
+              <p className="mt-2 text-sm text-green-400">
+                ✓ Selected: {fileName} {selectedFile ? `(${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)` : ''}
               </p>
             )}
             <p className="mt-2 text-xs text-gray-500">
               Max 100MB • MP4, MOV, WEBM supported
+            </p>
+            {/* Debug info */}
+            <p className="mt-2 text-xs text-yellow-400">
+              Debug: fileName="{fileName}" | selectedFile={selectedFile ? 'SET' : 'NULL'} | button={fileName ? 'ENABLED' : 'DISABLED'}
             </p>
           </div>
 
