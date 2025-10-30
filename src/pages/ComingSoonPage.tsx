@@ -35,6 +35,7 @@ const ComingSoonPage: React.FC = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
+      console.log('Fetched promo videos for landing:', data);
       setPromoVideos(data || []);
     } catch (error) {
       console.error('Error fetching promo videos:', error);
@@ -154,7 +155,7 @@ const ComingSoonPage: React.FC = () => {
                     disabled={loading}
                     className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 w-full sm:w-auto shadow-lg disabled:opacity-50"
                   >
-                    {loading ? 'Joining...' : 'Get My 25% Off'}
+                    {loading ? 'Joining...' : 'Claim Beta Spot'}
                     <ArrowRightIcon className="h-5 w-5" />
                   </button>
                 </form>
@@ -187,13 +188,19 @@ const ComingSoonPage: React.FC = () => {
                       className="w-full h-auto bg-black"
                       playsInline
                       preload="metadata"
+                      crossOrigin="anonymous"
                       onError={(e) => {
-                        console.error('Video load error:', promoVideos[currentVideoIndex].video_url);
-                        console.error('Error event:', e);
+                        const video = e.currentTarget;
+                        console.error('❌ Video load error:', promoVideos[currentVideoIndex].video_url);
+                        console.error('Error details:', {
+                          networkState: video.networkState,
+                          readyState: video.readyState,
+                          error: video.error
+                        });
                       }}
                       onLoadedMetadata={(e) => {
                         const video = e.currentTarget;
-                        console.log('Video loaded successfully:', promoVideos[currentVideoIndex].video_url);
+                        console.log('✅ Video loaded successfully:', promoVideos[currentVideoIndex].video_url);
                         console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
                       }}
                     >

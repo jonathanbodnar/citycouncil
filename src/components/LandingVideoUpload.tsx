@@ -28,9 +28,10 @@ export default function LandingVideoUpload() {
         .order('display_order');
       
       if (error) throw error;
+      console.log('Loaded landing videos:', data);
       setVideos(data || []);
     } catch (err) {
-      console.error(err);
+      console.error('Error loading videos:', err);
     } finally {
       setLoading(false);
     }
@@ -173,13 +174,20 @@ export default function LandingVideoUpload() {
           <div className="space-y-4">
             {videos.map((video, idx) => (
               <div key={video.id} className="glass-strong rounded-xl p-4 border border-white/20 flex items-center gap-4">
-                <video src={video.video_url} className="w-32 h-20 object-cover rounded-lg bg-black" muted />
+                <video 
+                  src={video.video_url} 
+                  className="w-32 h-20 object-cover rounded-lg bg-black" 
+                  muted 
+                  preload="metadata"
+                  onError={(e) => console.error('Thumbnail load error:', video.video_url)}
+                />
                 
                 <div className="flex-1">
                   <h4 className="text-white font-semibold">Video {idx + 1}</h4>
                   <span className={`text-xs px-2 py-1 rounded-full ${video.is_active ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-400'}`}>
                     {video.is_active ? 'Visible' : 'Hidden'}
                   </span>
+                  <p className="text-xs text-gray-500 mt-1 break-all">{video.video_url}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">
