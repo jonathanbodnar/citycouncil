@@ -98,6 +98,7 @@ const TalentProfilePage: React.FC = () => {
       updateMetaTag('og:url', profileUrl);
       updateMetaTag('og:type', 'profile');
       updateMetaTag('og:site_name', 'ShoutOut');
+      updateMetaTag('fb:app_id', '202212960836121');
 
       // Twitter Card tags
       updateTwitterTag('twitter:card', 'summary_large_image');
