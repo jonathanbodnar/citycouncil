@@ -54,21 +54,11 @@ serve(async (req) => {
     const videoBlob = await videoResponse.blob()
     
     uploadFormData.append('file', videoBlob)
-    uploadFormData.append('api_key', cloudinaryApiKey)
-    uploadFormData.append('timestamp', Math.floor(Date.now() / 1000).toString())
-    
-    // Create signature for authenticated upload (required for transformations)
-    const timestamp = Math.floor(Date.now() / 1000)
-    const paramsToSign = `timestamp=${timestamp}${cloudinaryApiSecret}`
-    
-    // For now, use unsigned upload with transformation URL parameter
-    // Build transformation string: overlay logo, position top-left, 60% opacity
-    const transformation = 'l_shoutout_logo_jruflu,g_north_west,x_10,y_10,w_120,o_60'
-    
     uploadFormData.append('upload_preset', 'shoutout_watermarked')
-    uploadFormData.append('transformation', transformation)
-
-    console.log('Uploading to Cloudinary with transformation:', transformation)
+    
+    // Note: Transformation is configured in the upload preset itself
+    // Unsigned uploads don't allow transformation parameter directly
+    console.log('Uploading to Cloudinary with preset: shoutout_watermarked')
 
     const cloudinaryResponse = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/video/upload`,
