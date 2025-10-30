@@ -52,8 +52,8 @@ function App() {
             {/* Main app routes with layout */}
             <Route path="/" element={<Layout />}>
               <Route path="/home" element={<HomePage />} />
-              <Route path="/talent/:id" element={<TalentProfilePage />} />
               <Route path="/:username" element={<TalentProfilePage />} />
+              <Route path="/talent/:id" element={<TalentProfilePage />} />
               <Route path="/order/:talentId" element={
                 <ProtectedRoute>
                   <OrderPage />
