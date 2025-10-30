@@ -253,7 +253,6 @@ const ComingSoonPage: React.FC = () => {
                           className="w-full h-full object-cover bg-black"
                           playsInline
                           preload="metadata"
-                          crossOrigin="anonymous"
                           muted={!isActive}
                           onError={(e) => {
                             const videoEl = e.currentTarget;
