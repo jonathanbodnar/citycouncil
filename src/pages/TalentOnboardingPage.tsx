@@ -1231,21 +1231,42 @@ const TalentOnboardingPage: React.FC = () => {
                             max="50"
                             value={profileData.charity_percentage}
                             onChange={(e) => {
-                              const inputValue = e.target.value;
-                              // Allow empty string during typing
-                              if (inputValue === '') {
+                              const value = e.target.value;
+                              // If empty or being cleared, set to minimum
+                              if (value === '' || value === '0') {
                                 setProfileData(prev => ({ ...prev, charity_percentage: 5 }));
+                                updateProfilePreview({ charity_percentage: 5 });
                                 return;
                               }
-                              const numValue = parseInt(inputValue);
-                              // Only update if it's a valid number
-                              if (!isNaN(numValue)) {
-                                const clampedValue = Math.max(5, Math.min(50, numValue));
-                                setProfileData(prev => ({ ...prev, charity_percentage: clampedValue }));
-                                updateProfilePreview({ charity_percentage: clampedValue });
-                                if (clampedValue > 0 && !donateProceeds) {
+                              
+                              // Parse as number
+                              const num = parseInt(value, 10);
+                              
+                              // If valid number, update state
+                              if (!isNaN(num)) {
+                                // Don't clamp during typing - let them type freely
+                                // Only enforce min/max on blur
+                                setProfileData(prev => ({ ...prev, charity_percentage: num }));
+                                // Debounce the preview update to avoid jumping
+                                if (num >= 5 && num <= 50) {
+                                  updateProfilePreview({ charity_percentage: num });
+                                }
+                                if (num > 0 && !donateProceeds) {
                                   setDonateProceeds(true);
                                 }
+                              }
+                            }}
+                            onBlur={(e) => {
+                              // Enforce min/max when leaving the field
+                              const num = parseInt(e.target.value, 10);
+                              if (isNaN(num) || num < 5) {
+                                const finalValue = 5;
+                                setProfileData(prev => ({ ...prev, charity_percentage: finalValue }));
+                                updateProfilePreview({ charity_percentage: finalValue });
+                              } else if (num > 50) {
+                                const finalValue = 50;
+                                setProfileData(prev => ({ ...prev, charity_percentage: finalValue }));
+                                updateProfilePreview({ charity_percentage: finalValue });
                               }
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
