@@ -22,15 +22,13 @@ const MobileNavigation: React.FC = () => {
 
   console.log('🔍 MobileNavigation rendering, user:', user?.email, 'loading:', loading);
 
-  // Don't render anything while auth is loading or if there's no user
-  if (loading || !user) {
-    if (!loading && !user) {
-      console.log('❌ No user, not showing mobile nav');
-    }
+  // Don't render anything while auth is loading
+  if (loading) {
     return null;
   }
 
-  const navigation = [
+  // Navigation for logged-in users
+  const authenticatedNavigation = [
     {
       name: 'Home',
       href: '/home',
@@ -64,11 +62,29 @@ const MobileNavigation: React.FC = () => {
     },
   ];
 
-  console.log('✅ Rendering mobile nav with', navigation.length, 'items');
+  // Navigation for non-logged-in users
+  const guestNavigation = [
+    {
+      name: 'Home',
+      href: '/home',
+      icon: HomeIcon,
+      iconSolid: HomeIconSolid,
+    },
+    {
+      name: 'Login',
+      href: '/login',
+      icon: UserCircleIcon,
+      iconSolid: UserCircleIconSolid,
+    },
+  ];
+
+  const navigation = user ? authenticatedNavigation : guestNavigation;
+
+  console.log('✅ Rendering mobile nav with', navigation.length, 'items', user ? '(authenticated)' : '(guest)');
 
   return (
     <div className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/20 md:hidden backdrop-blur-xl" style={{ background: 'rgba(255, 255, 255, 0.25)', zIndex: 9999 }}>
-      <div className="grid grid-cols-5 py-2">
+      <div className={`grid py-2 ${user ? 'grid-cols-5' : 'grid-cols-2'}`}>
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = isActive ? item.iconSolid : item.icon;
@@ -77,12 +93,11 @@ const MobileNavigation: React.FC = () => {
             <Link
               key={item.name}
               to={item.href}
-              className={`flex flex-col items-center py-2 px-1 relative transition-all ${
-                isActive
-                  ? 'text-white'
-                  : 'text-white/70 hover:text-white'
-              }`}
-              style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)' }}
+              className="flex flex-col items-center py-2 px-1 relative transition-all"
+              style={{ 
+                textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                color: isActive ? '#d4e3ff' : 'rgba(212, 227, 255, 0.7)'
+              }}
             >
               <Icon className="h-6 w-6" style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }} />
               {item.badge && (
