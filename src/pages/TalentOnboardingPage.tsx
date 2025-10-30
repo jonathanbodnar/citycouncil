@@ -1234,13 +1234,13 @@ const TalentOnboardingPage: React.FC = () => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Donation Percentage * (Minimum 5%)
+                          Donation Percentage * (Minimum 5%, Maximum 100%)
                         </label>
                         <div className="relative">
                           <input
                             type="number"
                             min="5"
-                            max="50"
+                            max="100"
                             value={profileData.charity_percentage}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -1259,8 +1259,8 @@ const TalentOnboardingPage: React.FC = () => {
                                 // Don't clamp during typing - let them type freely
                                 // Only enforce min/max on blur
                                 setProfileData(prev => ({ ...prev, charity_percentage: num }));
-                                // Debounce the preview update to avoid jumping
-                                if (num >= 5 && num <= 50) {
+                                // Update preview if within valid range
+                                if (num >= 5 && num <= 100) {
                                   updateProfilePreview({ charity_percentage: num });
                                 }
                                 if (num > 0 && !donateProceeds) {
@@ -1275,8 +1275,8 @@ const TalentOnboardingPage: React.FC = () => {
                                 const finalValue = 5;
                                 setProfileData(prev => ({ ...prev, charity_percentage: finalValue }));
                                 updateProfilePreview({ charity_percentage: finalValue });
-                              } else if (num > 50) {
-                                const finalValue = 50;
+                              } else if (num > 100) {
+                                const finalValue = 100;
                                 setProfileData(prev => ({ ...prev, charity_percentage: finalValue }));
                                 updateProfilePreview({ charity_percentage: finalValue });
                               }
