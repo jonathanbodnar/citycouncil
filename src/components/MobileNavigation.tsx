@@ -67,15 +67,16 @@ const MobileNavigation: React.FC = () => {
             <Link
               key={item.name}
               to={item.href}
-              className={`flex flex-col items-center py-2 px-1 relative ${
+              className={`flex flex-col items-center py-2 px-1 relative transition-all ${
                 isActive
-                  ? 'text-primary-600'
-                  : 'text-gray-400 hover:text-gray-600'
+                  ? 'text-white'
+                  : 'text-white/70 hover:text-white'
               }`}
+              style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)' }}
             >
-              <Icon className="h-6 w-6" />
+              <Icon className="h-6 w-6" style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }} />
               {item.badge && (
-                <span className="absolute top-1 right-1/2 transform translate-x-2 block h-2 w-2 rounded-full bg-red-400"></span>
+                <span className="absolute top-1 right-1/2 transform translate-x-2 block h-2 w-2 rounded-full bg-red-500 shadow-lg"></span>
               )}
               <span className="text-xs mt-1 font-medium">{item.name}</span>
             </Link>
