@@ -85,11 +85,21 @@ const ComingSoonPage: React.FC = () => {
           throw error;
         }
       } else {
-        // Add to ActiveCampaign
-        await addToActiveCampaign(email);
+        // Add to ActiveCampaign (don't fail if this errors)
+        try {
+          console.log('Adding to ActiveCampaign:', email);
+          const acResult = await addToActiveCampaign(email);
+          console.log('ActiveCampaign result:', acResult);
+          if (!acResult.success) {
+            console.error('ActiveCampaign failed:', acResult.error);
+          }
+        } catch (acError) {
+          console.error('ActiveCampaign error:', acError);
+          // Continue anyway - don't block user signup
+        }
         
-        // Update spots remaining
-        setSpotsRemaining(prev => Math.max(0, prev - 1));
+        // Refresh spots remaining from database
+        await fetchSpotsRemaining();
         
         setSubmitted(true);
         setEmail('');
@@ -124,9 +134,6 @@ const ComingSoonPage: React.FC = () => {
         <div className="max-w-4xl mx-auto text-center">
           {/* Hero Section */}
           <div className="mb-12">
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Coming Soon
-            </h1>
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
               Get personalized video messages from your favorite conservative voices, 
               politicians, and media personalities.
@@ -233,6 +240,7 @@ const ComingSoonPage: React.FC = () => {
                       <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black" style={{ height: '450px' }}>
                         <video
                           src={video.video_url}
+                          poster={video.video_url + '#t=0.5'}
                           controls={isActive}
                           className="w-full h-full object-cover bg-black"
                           playsInline
@@ -256,6 +264,11 @@ const ComingSoonPage: React.FC = () => {
                         >
                           Your browser does not support the video tag.
                         </video>
+                        {!isActive && (
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                            <PlayIcon className="h-16 w-16 text-white opacity-75" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
