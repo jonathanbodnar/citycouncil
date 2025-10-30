@@ -27,18 +27,23 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Check if we already have a watermarked version cached
-    const { data: cached, error: cacheError } = await supabase
-      .from('watermarked_videos_cache')
-      .select('cloudinary_url')
-      .eq('original_video_url', videoUrl)
-      .single()
+    try {
+      const { data: cached, error: cacheError } = await supabase
+        .from('watermarked_videos_cache')
+        .select('cloudinary_url')
+        .eq('original_video_url', videoUrl)
+        .single()
 
-    if (!cacheError && cached?.cloudinary_url) {
-      console.log('Using cached watermarked video:', cached.cloudinary_url)
-      return new Response(
-        JSON.stringify({ watermarkedUrl: cached.cloudinary_url }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      if (!cacheError && cached?.cloudinary_url) {
+        console.log('Using cached watermarked video:', cached.cloudinary_url)
+        return new Response(
+          JSON.stringify({ watermarkedUrl: cached.cloudinary_url }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    } catch (cacheError) {
+      // Cache table might not exist yet - just log and continue
+      console.warn('Cache lookup failed (table may not exist):', cacheError)
     }
 
     // For now, we'll use Cloudinary as the watermarking service
