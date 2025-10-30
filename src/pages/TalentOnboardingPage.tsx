@@ -627,24 +627,32 @@ const TalentOnboardingPage: React.FC = () => {
         setUploadingVideo(true);
         console.log('Uploading welcome video to Wasabi...');
         
-        const uploadResult = await uploadVideoToWasabi(
-          welcomeVideoFile, 
-          `welcome-${onboardingData?.talent.id}-${Date.now()}`
-        );
-        
-        if (!uploadResult.success || !uploadResult.videoUrl) {
-          throw new Error(uploadResult.error || 'Failed to upload video');
+        try {
+          const uploadResult = await uploadVideoToWasabi(
+            welcomeVideoFile, 
+            `welcome-${onboardingData?.talent.id}-${Date.now()}`
+          );
+          
+          if (uploadResult.success && uploadResult.videoUrl) {
+            finalVideoUrl = uploadResult.videoUrl;
+            console.log('Welcome video uploaded successfully:', finalVideoUrl);
+          } else {
+            console.warn('Video upload failed, but continuing onboarding:', uploadResult.error);
+            toast.error('Video upload failed. You can add it later from your dashboard.');
+            // Don't throw - allow onboarding to complete without video
+          }
+        } catch (uploadError) {
+          console.error('Video upload error:', uploadError);
+          toast.error('Video upload failed. You can add it later from your dashboard.');
+          // Don't throw - allow onboarding to complete without video
         }
-        
-        finalVideoUrl = uploadResult.videoUrl;
-        console.log('Welcome video uploaded successfully:', finalVideoUrl);
       }
 
-      // Save welcome video URL and complete onboarding
+      // Complete onboarding (with or without video)
       const { error: videoError } = await supabase
         .from('talent_profiles')
         .update({
-          promo_video_url: finalVideoUrl,
+          promo_video_url: finalVideoUrl || null,
           onboarding_completed: true,
           is_active: true, // Activate talent when onboarding completes
           onboarding_token: null,
@@ -654,12 +662,16 @@ const TalentOnboardingPage: React.FC = () => {
 
       if (videoError) throw videoError;
 
-      toast.success('Welcome video uploaded! Onboarding completed - Welcome to ShoutOut!');
+      if (finalVideoUrl) {
+        toast.success('Onboarding completed - Welcome to ShoutOut!');
+      } else {
+        toast.success('Onboarding completed! You can upload your promo video from your dashboard.');
+      }
       navigate('/dashboard');
 
     } catch (error: any) {
-      console.error('Error uploading welcome video:', error);
-      toast.error(error.message || 'Failed to upload welcome video');
+      console.error('Error completing onboarding:', error);
+      toast.error(error.message || 'Failed to complete onboarding');
     } finally {
       setUploadingVideo(false);
     }
