@@ -49,8 +49,12 @@ const ComingSoonPage: React.FC = () => {
         .select('*', { count: 'exact', head: true });
 
       if (error) throw error;
-      // Start at 197, subtract how many are already signed up
-      setSpotsRemaining(Math.max(0, 197 - (count || 0)));
+      
+      console.log('📊 Email waitlist count:', count);
+      const remaining = Math.max(0, 197 - (count || 0));
+      console.log('📊 Spots remaining:', remaining);
+      
+      setSpotsRemaining(remaining);
     } catch (error) {
       console.error('Error fetching spots count:', error);
     }
@@ -85,21 +89,25 @@ const ComingSoonPage: React.FC = () => {
           throw error;
         }
       } else {
+        console.log('✅ Email added to database successfully');
+        
         // Add to ActiveCampaign (don't fail if this errors)
         try {
-          console.log('Adding to ActiveCampaign:', email);
+          console.log('📧 Adding to ActiveCampaign:', email);
           const acResult = await addToActiveCampaign(email);
-          console.log('ActiveCampaign result:', acResult);
+          console.log('📧 ActiveCampaign result:', acResult);
           if (!acResult.success) {
-            console.error('ActiveCampaign failed:', acResult.error);
+            console.error('❌ ActiveCampaign failed:', acResult.error);
           }
         } catch (acError) {
-          console.error('ActiveCampaign error:', acError);
+          console.error('❌ ActiveCampaign error:', acError);
           // Continue anyway - don't block user signup
         }
         
         // Refresh spots remaining from database
+        console.log('🔄 Refreshing spots count...');
         await fetchSpotsRemaining();
+        console.log('✅ Spots count refreshed');
         
         setSubmitted(true);
         setEmail('');
