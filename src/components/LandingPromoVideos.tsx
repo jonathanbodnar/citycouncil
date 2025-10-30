@@ -31,6 +31,10 @@ const LandingPromoVideos: React.FC = () => {
     fetchVideos();
   }, []);
 
+  useEffect(() => {
+    console.log('🔄 State changed - fileName:', fileName, 'selectedFile:', selectedFile);
+  }, [fileName, selectedFile]);
+
   const fetchVideos = async () => {
     try {
       setLoading(true);
@@ -86,15 +90,11 @@ const LandingPromoVideos: React.FC = () => {
 
       console.log('✅ File validated! Setting state:', file.name);
       
-      // Force state update by setting both values in sequence
+      // Set both state values immediately
       setFileName(file.name);
+      setSelectedFile(file);
       
-      // Use a small delay to ensure state update
-      setTimeout(() => {
-        setSelectedFile(file);
-        console.log('State updated - selectedFile and fileName set');
-      }, 0);
-      
+      console.log('State update called for:', file.name);
       toast.success(`Selected: ${file.name}`);
     } else {
       console.log('No file selected');
