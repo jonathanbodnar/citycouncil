@@ -28,7 +28,14 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="App">
-          <Toaster position="top-right" />
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              style: {
+                zIndex: 99999,
+              },
+            }}
+          />
           <Routes>
             {/* Coming Soon page without layout */}
             <Route index element={<ComingSoonPage />} />
