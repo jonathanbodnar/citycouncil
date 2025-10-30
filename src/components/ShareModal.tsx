@@ -8,6 +8,7 @@ interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   talentName: string;
+  talentProfileUrl?: string; // The talent's profile URL (e.g., /joshfirestine)
   talentSocialHandles?: {
     twitter?: string;
     facebook?: string;
@@ -16,18 +17,27 @@ interface ShareModalProps {
     linkedin?: string;
   };
   videoUrl?: string;
+  isTalentPage?: boolean; // True if sharing from talent profile page (not user's completed order)
 }
 
 const ShareModal: React.FC<ShareModalProps> = ({ 
   isOpen, 
   onClose, 
   talentName, 
+  talentProfileUrl,
   talentSocialHandles = {},
-  videoUrl 
+  videoUrl,
+  isTalentPage = false
 }) => {
   if (!isOpen) return null;
 
   const getShareText = (platform: string) => {
+    // If sharing from talent profile page, use simpler promotional text
+    if (isTalentPage) {
+      return `Get a personalized ShoutOut from ${talentName}!`;
+    }
+    
+    // If sharing completed order, use received text
     const talentTag = talentSocialHandles[platform as keyof typeof talentSocialHandles];
     const baseText = `I just got a personalized ShoutOut from ${talentName} get yours! @ShoutOut`;
     
@@ -39,7 +49,11 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
   const getShareUrl = (platform: string) => {
     const text = encodeURIComponent(getShareText(platform));
-    const url = encodeURIComponent(window.location.origin);
+    // Use talent profile URL if provided, otherwise current page
+    const profileUrl = talentProfileUrl 
+      ? `${window.location.origin}${talentProfileUrl}`
+      : window.location.href;
+    const url = encodeURIComponent(profileUrl);
     
     const shareUrls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`,
@@ -54,8 +68,14 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
   const handleShare = (platform: string) => {
     if (platform === 'instagram' || platform === 'tiktok') {
-      // Copy text to clipboard for manual sharing
-      navigator.clipboard.writeText(getShareText(platform));
+      // Copy text and URL to clipboard for manual sharing
+      const shareText = getShareText(platform);
+      const profileUrl = talentProfileUrl 
+        ? `${window.location.origin}${talentProfileUrl}`
+        : window.location.href;
+      const fullText = `${shareText} ${profileUrl}`;
+      
+      navigator.clipboard.writeText(fullText);
       alert(`Text copied to clipboard! Open ${platform} and paste to share.`);
       return;
     }
@@ -117,7 +137,10 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
         <div className="p-6">
           <p className="text-gray-600 mb-6">
-            Share your personalized ShoutOut from {talentName} with friends and family!
+            {isTalentPage 
+              ? `Share ${talentName}'s profile`
+              : `Share your personalized ShoutOut from ${talentName} with friends and family!`
+            }
           </p>
 
           <div className="space-y-3">
@@ -141,26 +164,22 @@ const ShareModal: React.FC<ShareModalProps> = ({
             ))}
           </div>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">Share Text Preview:</h4>
-            <p className="text-sm text-gray-700">
-              "{getShareText('twitter')}"
-            </p>
-          </div>
+          {isTalentPage && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Share Text:</h4>
+              <p className="text-sm text-gray-700">
+                "{getShareText('twitter')}"
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Link: {talentProfileUrl ? `${window.location.origin}${talentProfileUrl}` : window.location.href}
+              </p>
+            </div>
+          )}
 
-          <div className="mt-6 flex space-x-3">
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(getShareText('twitter'));
-                alert('Text copied to clipboard!');
-              }}
-              className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300"
-            >
-              Copy Text
-            </button>
+          <div className="mt-6">
             <button
               onClick={onClose}
-              className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+              className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg hover:bg-gray-900 font-medium"
             >
               Done
             </button>

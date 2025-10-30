@@ -550,6 +550,9 @@ const TalentProfilePage: React.FC = () => {
           isOpen={shareModalOpen}
           onClose={() => setShareModalOpen(false)}
           talentName={talent.temp_full_name || talent.users.full_name}
+          talentProfileUrl={talent.username ? `/${talent.username}` : `/talent/${talent.id}`}
+          isTalentPage={true}
+          videoUrl={talent.promo_video_url}
           talentSocialHandles={{
             twitter: talent.social_accounts?.find(acc => acc.platform === 'twitter')?.handle,
             facebook: talent.social_accounts?.find(acc => acc.platform === 'facebook')?.handle,
