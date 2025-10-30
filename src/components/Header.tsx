@@ -212,7 +212,7 @@ const Header: React.FC = () => {
                         <Menu.Item>
                           {({ active }) => (
                             <Link
-                              to="/dashboard"
+                              to="/dashboard?tab=profile"
                               className={`${
                                 active ? 'bg-white/5' : ''
                               } flex items-center px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors`}
@@ -225,22 +225,10 @@ const Header: React.FC = () => {
                         <Menu.Item>
                           {({ active }) => (
                             <button
-                              className={`${
-                                active ? 'bg-gray-100' : ''
-                              } flex items-center w-full px-4 py-2 text-sm text-gray-700`}
-                            >
-                              <Cog6ToothIcon className="mr-3 h-5 w-5" />
-                              Settings
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
                               onClick={handleSignOut}
                               className={`${
-                                active ? 'bg-gray-100' : ''
-                              } flex items-center w-full px-4 py-2 text-sm text-gray-700`}
+                                active ? 'bg-white/5' : ''
+                              } flex items-center w-full px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors`}
                             >
                               <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5" />
                               Sign Out

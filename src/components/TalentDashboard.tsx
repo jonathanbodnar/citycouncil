@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   ClockIcon, 
   CheckCircleIcon, 
@@ -44,6 +44,7 @@ interface ReviewWithUser extends Review {
 
 const TalentDashboard: React.FC = () => {
   const { user, updateProfile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
@@ -52,6 +53,14 @@ const TalentDashboard: React.FC = () => {
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  // Handle tab from URL parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['orders', 'analytics', 'profile', 'payouts', 'promotion'].includes(tabParam)) {
+      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
