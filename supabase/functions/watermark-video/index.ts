@@ -75,12 +75,11 @@ serve(async (req) => {
     
     uploadFormData.append('file', videoBlob)
     uploadFormData.append('upload_preset', 'shoutout_watermarked')
-    uploadFormData.append('eager_async', 'true') // Process large videos asynchronously
     
-    // Note: Watermark transformation is configured in the upload preset:
-    // l_shoutout_logo_jruflu,g_north_west,x_10,y_10,w_240,o_60
-    // (240px width, top-left corner, 60% opacity)
-    console.log('Uploading to Cloudinary with preset: shoutout_watermarked (async processing)')
+    // Note: Watermark transformation and eager_async must be configured in the upload preset
+    // Transformation: l_shoutout_logo_jruflu,g_north_west,x_10,y_10,w_240,o_60
+    // Eager async: enabled in preset for large videos
+    console.log('Uploading to Cloudinary with preset: shoutout_watermarked')
 
     const cloudinaryResponse = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/video/upload`,
