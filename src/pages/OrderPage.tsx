@@ -174,7 +174,7 @@ const OrderPage: React.FC = () => {
             admin_fee: pricing.adminFee,
             charity_amount: pricing.charityAmount,
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
-            stripe_payment_intent_id: paymentResult.id || paymentResult.transaction_id,
+            // Note: stripe_payment_intent_id column doesn't exist, so we'll track payment info elsewhere if needed
             is_corporate: orderData.isForBusiness,
             is_corporate_order: orderData.isForBusiness,
             company_name: orderData.businessName,
