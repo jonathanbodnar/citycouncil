@@ -211,6 +211,24 @@ const TalentOnboardingPage: React.FC = () => {
       // Set charity donation toggle based on existing data
       setDonateProceeds(data.charity_percentage > 0 && data.charity_name);
 
+      // Load existing bank info if available
+      const { data: bankData, error: bankError } = await supabase
+        .from('vendor_bank_info')
+        .select('*')
+        .eq('talent_id', data.id)
+        .single();
+
+      if (!bankError && bankData) {
+        console.log('Loaded existing bank info');
+        setPayoutData({
+          account_holder_name: bankData.account_holder_name || '',
+          bank_name: bankData.bank_name || '',
+          account_number: bankData.account_number_masked || '',
+          routing_number: bankData.routing_number_masked || '',
+          account_type: bankData.account_type || 'checking'
+        });
+      }
+
     } catch (error) {
       console.error('Error fetching onboarding data:', error);
       setOnboardingData({
@@ -611,7 +629,7 @@ const TalentOnboardingPage: React.FC = () => {
         
         const uploadResult = await uploadVideoToWasabi(
           welcomeVideoFile, 
-          `welcome-videos/${onboardingData?.talent.id}-welcome-${Date.now()}.mp4`
+          `welcome-${onboardingData?.talent.id}-${Date.now()}`
         );
         
         if (!uploadResult.success || !uploadResult.videoUrl) {
@@ -1213,11 +1231,21 @@ const TalentOnboardingPage: React.FC = () => {
                             max="50"
                             value={profileData.charity_percentage}
                             onChange={(e) => {
-                              const value = Math.max(5, Math.min(50, parseInt(e.target.value) || 5));
-                              updateProfilePreview({ charity_percentage: value });
-                              // Ensure donateProceeds is true when percentage is set
-                              if (value > 0 && !donateProceeds) {
-                                setDonateProceeds(true);
+                              const inputValue = e.target.value;
+                              // Allow empty string during typing
+                              if (inputValue === '') {
+                                setProfileData(prev => ({ ...prev, charity_percentage: 5 }));
+                                return;
+                              }
+                              const numValue = parseInt(inputValue);
+                              // Only update if it's a valid number
+                              if (!isNaN(numValue)) {
+                                const clampedValue = Math.max(5, Math.min(50, numValue));
+                                setProfileData(prev => ({ ...prev, charity_percentage: clampedValue }));
+                                updateProfilePreview({ charity_percentage: clampedValue });
+                                if (clampedValue > 0 && !donateProceeds) {
+                                  setDonateProceeds(true);
+                                }
                               }
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

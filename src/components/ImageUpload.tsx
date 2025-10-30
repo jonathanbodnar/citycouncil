@@ -27,7 +27,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -51,6 +51,31 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setPreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
+
+    // Auto-upload immediately after file selection
+    setUploading(true);
+    try {
+      const result = await uploadImageToWasabi(file, uploadPath);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      onImageUploaded(result.imageUrl!);
+      toast.success('Image uploaded successfully!');
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+      // Reset on error
+      setSelectedFile(null);
+      setPreview(currentImageUrl || null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleUpload = async () => {
@@ -113,42 +138,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               type="file"
               accept="image/*"
               onChange={handleFileSelect}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              disabled={uploading}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
             />
             <p className="text-xs text-gray-500 mt-1">
               PNG, JPG, or GIF. Max {maxSizeMB}MB. Recommended: 400x400px.
+              {uploading && <span className="text-blue-600 font-medium"> Uploading...</span>}
             </p>
           </div>
-          
-          {selectedFile && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleUpload}
-                disabled={uploading}
-                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm"
-              >
-                {uploading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <CloudArrowUpIcon className="h-4 w-4" />
-                    Upload
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={clearSelection}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Cancel"
-              >
-                <XMarkIcon className="h-4 w-4" />
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
