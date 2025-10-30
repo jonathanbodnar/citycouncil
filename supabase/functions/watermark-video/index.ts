@@ -80,11 +80,39 @@ serve(async (req) => {
 
     if (!cloudinaryResponse.ok) {
       const error = await cloudinaryResponse.text()
-      console.error('Cloudinary error:', error)
-      throw new Error('Failed to watermark video via Cloudinary')
+      console.error('Cloudinary upload failed:', {
+        status: cloudinaryResponse.status,
+        statusText: cloudinaryResponse.statusText,
+        error: error
+      })
+      return new Response(
+        JSON.stringify({ 
+          error: `Cloudinary error (${cloudinaryResponse.status}): ${error}`,
+          watermarkedUrl: videoUrl,
+          warning: 'Watermarking failed - returning original video'
+        }),
+        { 
+          status: 200, // Return 200 so frontend can handle gracefully
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
     }
 
     const cloudinaryData = await cloudinaryResponse.json()
+    
+    if (!cloudinaryData.secure_url) {
+      console.error('No secure_url in Cloudinary response:', cloudinaryData)
+      return new Response(
+        JSON.stringify({ 
+          watermarkedUrl: videoUrl,
+          warning: 'Watermarking incomplete - returning original video'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+    
     const watermarkedUrl = cloudinaryData.secure_url
 
     console.log('Watermarked video created:', watermarkedUrl)
