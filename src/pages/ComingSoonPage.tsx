@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   PlayIcon, 
@@ -20,7 +20,7 @@ const ComingSoonPage: React.FC = () => {
   const [spotsRemaining, setSpotsRemaining] = useState(197);
   const [promoVideos, setPromoVideos] = useState<any[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [videoRefs, setVideoRefs] = useState<{ [key: number]: HTMLVideoElement | null }>({});
+  const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
 
   useEffect(() => {
     fetchPromoVideos();
@@ -29,7 +29,7 @@ const ComingSoonPage: React.FC = () => {
 
   // Pause all videos except the active one
   useEffect(() => {
-    Object.entries(videoRefs).forEach(([index, videoEl]) => {
+    Object.entries(videoRefs.current).forEach(([index, videoEl]) => {
       if (videoEl) {
         const idx = parseInt(index);
         if (idx !== currentVideoIndex && !videoEl.paused) {
@@ -38,7 +38,7 @@ const ComingSoonPage: React.FC = () => {
         }
       }
     });
-  }, [currentVideoIndex, videoRefs]);
+  }, [currentVideoIndex]);
 
   const fetchPromoVideos = async () => {
     try {
@@ -262,10 +262,7 @@ const ComingSoonPage: React.FC = () => {
                       <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-black" style={{ height: '450px' }}>
                         <video
                           ref={(el) => {
-                            setVideoRefs(prev => ({
-                              ...prev,
-                              [index]: el
-                            }));
+                            videoRefs.current[index] = el;
                           }}
                           src={video.video_url}
                           poster={video.video_url + '#t=0.5'}
