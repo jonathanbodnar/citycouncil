@@ -206,7 +206,7 @@ const ComingSoonPage: React.FC = () => {
 
             {/* Video Carousel - Swipeable Stack */}
             {promoVideos.length > 0 && (
-              <div className="relative mx-auto mt-6 mb-12" style={{ height: '450px', maxWidth: '350px' }}>
+              <div className="relative mx-auto mt-6 mb-12 w-full max-w-sm md:max-w-md lg:max-w-lg" style={{ height: '450px' }}>
                 {promoVideos.map((video, index) => {
                   const offset = index - currentVideoIndex;
                   const isActive = index === currentVideoIndex;
