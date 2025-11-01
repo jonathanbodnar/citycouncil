@@ -54,8 +54,13 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
       className="relative gradient-border rounded-3xl shadow-modern-xl z-0"
     >
       <div className="relative h-96 md:h-96 rounded-3xl overflow-hidden">
-        {/* Desktop Background - Modern Gradient */}
-        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
+        {/* Desktop Background - Custom Gradient */}
+        <div 
+          className="hidden md:block absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, #905476 0%, #0b0123 100%)'
+          }}
+        ></div>
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
         {enhancedImageUrl ? (
@@ -94,12 +99,22 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
               alt={currentTalent.temp_full_name || currentTalent.users.full_name}
               className="w-full h-full object-cover object-top"
             />
-            {/* Modern gradient overlay for mobile */}
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-600/60 to-red-600/40"></div>
+            {/* Custom gradient overlay for mobile */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: 'linear-gradient(to top, rgba(11, 1, 35, 0.8) 0%, rgba(144, 84, 118, 0.6) 100%)'
+              }}
+            ></div>
           </div>
         ) : (
           /* Mobile Fallback - Pure gradient */
-          <div className="md:hidden absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
+          <div 
+            className="md:hidden absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, #905476 0%, #0b0123 100%)'
+            }}
+          ></div>
         )}
         
         {/* Content */}
