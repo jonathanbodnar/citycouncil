@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MagnifyingGlassIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import toast from 'react-hot-toast';
+import { loadMoovDropInScript } from '../lib/moovClient';
 
 interface TalentWithUser extends TalentProfile {
   users: {
@@ -42,6 +43,8 @@ const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchTalent();
@@ -172,6 +175,70 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const startOnboarding = async () => {
+    try {
+      toast.loading('Starting onboarding...', { id: 'moov-onboard' });
+
+      // 1) Load Moov Drop-in script
+      await loadMoovDropInScript();
+
+      // 2) Get a short-lived token from edge function (must include /accounts.write)
+      const { data, error } = await supabase.functions.invoke('moov-token', { body: {} });
+      if (error) throw error as any;
+      const authToken = (data as any)?.accessToken || (data as any)?.access_token;
+      if (!authToken) throw new Error('No auth token returned');
+
+      // 3) Mount <moov-onboarding> web component
+      setIsOnboardingOpen(true);
+      setTimeout(() => {
+        if (!onboardingContainerRef.current) return;
+        onboardingContainerRef.current.innerHTML = '';
+
+        const el = document.createElement('moov-onboarding') as any;
+        el.token = authToken;
+        el.facilitatorAccountID = '277439a2-2cf1-4a09-aa97-904a25970c7f';
+        el.capabilities = ['transfers', 'send-funds'];
+        el.open = true;
+
+        const refreshToken = async () => {
+          try {
+            const { data: tdata, error: terror } = await supabase.functions.invoke('moov-token', { body: {} });
+            if (terror) throw terror as any;
+            const next = (tdata as any)?.accessToken || (tdata as any)?.access_token;
+            if (next) el.token = next;
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to refresh token:', e);
+          }
+        };
+
+        const handleSuccess = (evt: any) => {
+          // eslint-disable-next-line no-console
+          console.log('Onboarding complete!', evt?.detail);
+          setIsOnboardingOpen(false);
+        };
+        const handleCancel = () => {
+          setIsOnboardingOpen(false);
+        };
+        const handleResourceCreated = async () => {
+          await refreshToken();
+        };
+
+        el.addEventListener('onSuccess', handleSuccess);
+        el.addEventListener('onCancel', handleCancel);
+        el.addEventListener('onResourceCreated', handleResourceCreated);
+
+        onboardingContainerRef.current?.appendChild(el);
+      }, 0);
+
+      toast.success('Onboarding opened', { id: 'moov-onboard' });
+    } catch (err: any) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to start onboarding:', err);
+      toast.error('Failed to start onboarding', { id: 'moov-onboard' });
+    }
+  };
+
   const filteredTalent = talent.filter(t => {
     const matchesSearch = !searchQuery || 
       t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -213,6 +280,12 @@ const HomePage: React.FC = () => {
             className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
           >
             Generate Token
+          </button>
+          <button
+            onClick={startOnboarding}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-all duration-200"
+          >
+            Start Onboarding
           </button>
             <button
               onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
@@ -284,6 +357,15 @@ const HomePage: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500">
             Try adjusting your search or category filter.
           </p>
+        </div>
+      )}
+
+      {/* Simple overlay to host the <moov-onboarding> drop */}
+      {isOnboardingOpen && (
+        <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-4">
+            <div ref={onboardingContainerRef} />
+          </div>
         </div>
       )}
 

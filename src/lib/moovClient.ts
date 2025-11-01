@@ -5,6 +5,8 @@
   - Provides a temporary mocked access token function
 */
 
+import { supabase } from '../services/supabase';
+
 type MoovEnvConfig = {
   publicKey: string | undefined;
   accountId: string | undefined;
@@ -24,10 +26,12 @@ export const getMoovConfig = (): MoovEnvConfig => ({
  * TODO: Replace with a Supabase Edge Function that requests a short-lived Moov access token server-side.
  */
 export async function getMockMoovAccessToken(): Promise<string> {
-  // IMPORTANT: Do NOT use a real token in client code. This is only for local prototyping.
-  // Replace this with a call to your Supabase function when ready.
-  const placeholderToken = "REPLACE_WITH_SERVER_ISSUED_TOKEN";
-  return placeholderToken;
+  // Fetch a short-lived token from the Supabase Edge Function `moov-token`.
+  const { data, error } = await supabase.functions.invoke('moov-token', { body: {} });
+  if (error) throw error as any;
+  const token = (data as any)?.accessToken || (data as any)?.access_token;
+  if (!token) throw new Error('Failed to obtain Moov access token');
+  return token as string;
 }
 
 /**
