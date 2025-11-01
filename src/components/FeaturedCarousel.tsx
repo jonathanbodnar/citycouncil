@@ -39,10 +39,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
 
   return (
     <div 
-      className="relative glass rounded-3xl overflow-hidden shadow-modern-xl z-0"
-      style={{
-        boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
-      }}
+      className="relative gradient-border rounded-3xl overflow-hidden shadow-modern-xl z-0"
     >
       <div className="relative h-96 md:h-96">
         {/* Desktop Background - Modern Gradient */}
@@ -124,7 +121,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 </div>
                 <Link
                   to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
-                  className="inline-block glass-strong text-white px-8 py-4 rounded-2xl font-bold hover:glass border border-white/30 transition-all duration-300 shadow-modern-lg hover:scale-105"
+                  className="inline-block px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-modern-lg hover:scale-105"
+                  style={{
+                    backgroundColor: '#3a86ff',
+                    color: '#ffffff'
+                  }}
                 >
                   Order ShoutOut
                 </Link>
@@ -160,7 +161,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   </div>
                   <Link
                     to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
-                    className="inline-block glass-strong text-white px-8 py-4 rounded-2xl font-bold hover:glass border border-white/30 transition-all duration-300 shadow-modern-lg hover:scale-105"
+                    className="inline-block px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-modern-lg hover:scale-105"
+                    style={{
+                      backgroundColor: '#3a86ff',
+                      color: '#ffffff'
+                    }}
                   >
                     Order ShoutOut
                   </Link>
