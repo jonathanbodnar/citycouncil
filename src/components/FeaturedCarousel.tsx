@@ -3,6 +3,26 @@ import { Link } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { TalentProfile } from '../types';
 
+// AI Upscaling function for featured card images
+const getUpscaledImageUrl = (imageUrl: string | undefined): string | undefined => {
+  if (!imageUrl) return undefined;
+  
+  // Check if it's a Wasabi S3 URL
+  if (imageUrl.includes('wasabisys.com') || imageUrl.includes('shoutout-assets')) {
+    const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'dl85nqovp';
+    
+    // Extract the filename from the URL
+    const filename = imageUrl.split('/').pop();
+    
+    // Return Cloudinary URL with AI upscaling transformation
+    // e_upscale: AI upscaling, q_auto: automatic quality, f_auto: automatic format
+    return `https://res.cloudinary.com/${cloudName}/image/fetch/e_upscale,q_auto:best,f_auto,w_1200,c_limit/${encodeURIComponent(imageUrl)}`;
+  }
+  
+  // If not a Wasabi URL, return original
+  return imageUrl;
+};
+
 interface FeaturedCarouselProps {
   talent: (TalentProfile & {
     users: {
@@ -37,6 +57,9 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
     return null;
   }
 
+  // Get AI upscaled image URL for featured card
+  const upscaledImageUrl = getUpscaledImageUrl(currentTalent.temp_avatar_url || currentTalent.users.avatar_url);
+
   return (
     <div 
       className="relative gradient-border rounded-3xl shadow-modern-xl z-0"
@@ -46,11 +69,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
-        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) ? (
+        {upscaledImageUrl ? (
           <div 
             className="hidden md:block absolute right-0 top-0 w-1/2 h-full"
             style={{
-              backgroundImage: `url(${currentTalent.temp_avatar_url || currentTalent.users.avatar_url})`,
+              backgroundImage: `url(${upscaledImageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'top center',
               maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
@@ -75,10 +98,10 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         )}
         
         {/* Mobile Background with Photo or Gradient */}
-        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) ? (
+        {upscaledImageUrl ? (
           <div className="md:hidden absolute inset-0">
             <img
-              src={currentTalent.temp_avatar_url || currentTalent.users.avatar_url}
+              src={upscaledImageUrl}
               alt={currentTalent.temp_full_name || currentTalent.users.full_name}
               className="w-full h-full object-cover object-top"
             />
