@@ -4,6 +4,7 @@ import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
+import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
   users: {
@@ -158,6 +159,19 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const handleGenerateMoovToken = async () => {
+    try {
+      toast.loading('Generating Moov token...', { id: 'moov-token' });
+      const { data, error } = await supabase.functions.invoke('moov-token', { body: {} });
+      if (error) throw error as any;
+      toast.success('Token generated. Check console for details.', { id: 'moov-token' });
+      console.log('Moov access token:', data?.accessToken);
+    } catch (err: any) {
+      console.error('Failed to generate Moov token:', err);
+      toast.error('Failed to generate token', { id: 'moov-token' });
+    }
+  };
+
   const filteredTalent = talent.filter(t => {
     const matchesSearch = !searchQuery || 
       t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -193,7 +207,13 @@ const HomePage: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Browse by Category</h3>
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleGenerateMoovToken}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
+          >
+            Generate Token
+          </button>
             <button
               onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
               className="p-2 text-gray-600 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200"
