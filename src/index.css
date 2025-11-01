@@ -58,7 +58,7 @@
   animation: float 3s ease-in-out infinite;
 }
 
-/* Animated Gradient Border */
+/* Static Gradient Border */
 .gradient-border {
   position: relative;
   isolation: isolate;
@@ -69,18 +69,13 @@
   position: absolute;
   inset: -2px;
   background: linear-gradient(
-    90deg, 
-    #ff006e 0%, 
-    #8338ec 20%, 
-    #3a86ff 40%, 
-    #06ffa5 60%, 
-    #ffbe0b 80%, 
-    #ff006e 100%
+    135deg, 
+    #ff006e 0%,
+    #8338ec 50%, 
+    #3a86ff 100%
   );
-  background-size: 200% 200%;
   border-radius: inherit;
   z-index: -2;
-  animation: gradient-rotate 4s ease infinite;
   opacity: 0.9;
 }
 
