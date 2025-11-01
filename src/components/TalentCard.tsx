@@ -19,7 +19,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   const demandColors = {
     high: 'bg-red-500/20 text-red-400',
     medium: 'bg-yellow-500/20 text-yellow-400',
-    low: 'bg-green-500/20 text-green-400',
+    low: 'bg-green-500/30 text-white',
   };
 
   const demandText = {
