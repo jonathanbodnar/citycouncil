@@ -58,7 +58,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         <div 
           className="hidden md:block absolute inset-0"
           style={{
-            background: 'linear-gradient(135deg, #905476 0%, #0b0123 100%)'
+            background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
           }}
         ></div>
         
@@ -103,7 +103,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
             <div 
               className="absolute inset-0"
               style={{
-                background: 'linear-gradient(to top, rgba(11, 1, 35, 0.8) 0%, rgba(144, 84, 118, 0.6) 100%)'
+                background: 'linear-gradient(to top, rgba(144, 84, 118, 0.8) 0%, rgba(11, 1, 35, 0.6) 100%)'
               }}
             ></div>
           </div>
@@ -112,7 +112,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
           <div 
             className="md:hidden absolute inset-0"
             style={{
-              background: 'linear-gradient(135deg, #905476 0%, #0b0123 100%)'
+              background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
             }}
           ></div>
         )}
