@@ -6,171 +6,320 @@ type Props = {}
 
 const MoovOnboard = (props: Props) => {
   const [accountId, setAccountId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [hover, setHover] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    phone: '', // 10 digits
+    phone: '',
     addressLine1: '',
     city: '',
-    stateOrProvince: '', // 2 chars
+    stateOrProvince: '',
     postalCode: '',
-    month: '', // 2 digits
-    day: '', // 2 digits
-    year: '', // 4 digits
-    ssn: '', // 9 digits
+    month: '',
+    day: '',
+    year: '',
+    ssn: ''
   })
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let { name, value } = e.target
+    if (name === 'stateOrProvince') value = value.toUpperCase()
+    setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const validateForm = () => {
+    const nameRegex = /^[A-Za-z]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const cityRegex = /^[A-Za-z\s]+$/
+    const stateRegex =
+      /^(A[KLRZ]|C[AOT]|D[EC]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEHINOST]|N[CDEHJMVY]|O[HKR]|P[AWR]|RI|S[CD]|T[NX]|UT|V[AIT]|W[AIVY])$/
+    const postalRegex = /^\d{5}$/
+    const ssnRegex = /^\d{9}$/
+    const phoneRegex = /^\d{10}$/
+    const monthRegex = /^(0[1-9]|1[0-2])$/
+    const dayRegex = /^(0[1-9]|[12][0-9]|3[01])$/
+    const yearNum = Number(form.year)
+    const currentYear = new Date().getFullYear()
+    if (!nameRegex.test(form.firstName)) return 'First name must contain only letters'
+    if (!nameRegex.test(form.lastName)) return 'Last name must contain only letters'
+    if (!emailRegex.test(form.email)) return 'Please enter a valid email address'
+    if (!phoneRegex.test(form.phone)) return 'Phone number must be exactly 10 digits'
+    if (!cityRegex.test(form.city)) return 'City name must contain only letters'
+    if (!stateRegex.test(form.stateOrProvince.toUpperCase()))
+      return 'State must be a valid U.S. 2-letter code (e.g., CA, NY)'
+    if (!postalRegex.test(form.postalCode)) return 'Postal code must be exactly 5 digits'
+    if (!ssnRegex.test(form.ssn)) return 'SSN must be exactly 9 digits'
+    if (!monthRegex.test(form.month)) return 'Month must be valid (01–12)'
+    if (!dayRegex.test(form.day)) return 'Day must be valid (01–31)'
+    if (isNaN(yearNum) || yearNum < 1895 || yearNum >= currentYear)
+      return 'Year must be a valid year in the past (e.g., 1990)'
+    return null
+  }
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault()
+    const validationError = validateForm()
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
     setIsLoading(true)
     const toastId = 'moov-create'
     toast.loading('Creating & verifying Moov account...', { id: toastId })
-
     try {
       const { data, error } = await supabase.functions.invoke('moov-create-account', {
         body: form
       })
-
-      if (error) throw error as any
-
+      if (error) throw error
       if (data?.accountID) {
         toast.success(`Account created! ID: ${data.accountID}`, { id: toastId })
-        console.log('Moov account created:', data)
         setAccountId(data.accountID)
-      } else {
-        throw new Error('Failed to get accountID from response')
-      }
+      } else throw new Error('Failed to get accountID from response')
     } catch (err: any) {
-      console.error('Failed to create Moov account:', err)
-      toast.error(err.message || 'Failed to create account', { id: toastId })
+      toast.error(err.message || 'Failed to create account', { id: 'moov-create' })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  const glassCard: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
+    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+    borderRadius: '20px',
+    padding: '40px',
+    width: '100%',
+    maxWidth: '480px',
+    color: '#f9fafb',
+    margin: 'auto',
+    position: 'relative',
+    maxHeight: '90vh', // 🔹 Limit height for mobile
+    overflowY: 'auto', // 🔹 Make form scrollable
+    scrollbarWidth: 'thin' // For Firefox
   }
 
-  // --- STYLING (with the fix) ---
-
-  // 1. ⭐ THE FIX: An inline style object to force the style of the email field on ALL inputs.
-  const inputFixStyle = {
-    color: '#E5E7EB', // Light text color (Tailwind's `text-gray-200`)
-    backgroundColor: '#374151', // Dark background (Tailwind's `bg-gray-700`)
-    border: '1px solid #4B5563', // Darker border (Tailwind's `border-gray-600`)
-    borderRadius: '0.375rem', // `rounded-md`
-    padding: '0.75rem', // `p-3`
-    width: '100%', // `w-full`
+  const headingStyle: React.CSSProperties = {
+    fontSize: '28px',
+    fontWeight: 700,
+    textAlign: 'center',
+    marginBottom: '10px',
+    color: '#ffffff'
   }
 
-  // 2. We remove the 'className' from the inputs and just use the style object.
-  const labelStyle = 'block text-sm font-medium text-gray-200 mb-1'
+  const subheadingStyle: React.CSSProperties = {
+    textAlign: 'center',
+    fontSize: '14px',
+    color: '#d1d5db',
+    marginBottom: '30px'
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: '1px solid rgba(255,255,255,0.2)',
+    background: 'rgba(255,255,255,0.08)',
+    color: '#f9fafb',
+    fontSize: '14px',
+    outline: 'none',
+    marginBottom: '16px',
+    transition: 'all 0.3s ease'
+  }
+
+  const buttonBase: React.CSSProperties = {
+    marginTop: '1rem',
+    width: '100%',
+    padding: '14px',
+    fontSize: '16px',
+    fontWeight: 600,
+    border: 'none',
+    borderRadius: '10px',
+    color: '#fff',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    boxShadow: '0 0 15px rgba(139, 92, 246, 0.4)'
+  }
+
+  const buttonHover: React.CSSProperties = {
+    ...buttonBase,
+    transform: 'translateY(-1px)',
+    background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+    boxShadow: '0 0 25px rgba(139, 92, 246, 0.6)'
+  }
 
   return (
-    // 3. Using dark background colors to match your screenshot
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      {!accountId ? (
-        <form onSubmit={handleCreateAccount} className='max-w-md w-full space-y-6 bg-gray-800 p-8 rounded-lg shadow-xl'>
-          <h3 className='text-3xl font-extrabold text-white text-center mb-6'>Onboard New Talent</h3>
-          <p className="text-center text-sm text-gray-300 mb-8">
-            Please provide your details to create and verify your Moov account.
-          </p>
+    <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+      <button
+        style={hover ? buttonHover : buttonBase}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onClick={() => setOpen(true)}
+      >
+        Start Onboarding
+      </button>
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="firstName" className={labelStyle}>First Name</label>
-              {/* Apply the fix here */}
-              <input style={inputFixStyle} id="firstName" name="firstName" value={form.firstName} onChange={handleFormChange} placeholder="John" required />
-            </div>
-            <div>
-              <label htmlFor="lastName" className={labelStyle}>Last Name</label>
-              {/* Apply the fix here */}
-              <input style={inputFixStyle} id="lastName" name="lastName" value={form.lastName} onChange={handleFormChange} placeholder="Doe" required />
-            </div>
-            <div>
-              <label htmlFor="email" className={labelStyle}>Email Address</label>
-              {/* Apply the fix here */}
-              <input style={inputFixStyle} id="email" name="email" type="email" value={form.email} onChange={handleFormChange} placeholder="john.doe@example.com" required />
-            </div>
-            <div>
-              <label htmlFor="phone" className={labelStyle}>Phone Number</label>
-              {/* Apply the fix here */}
-              <input style={inputFixStyle} id="phone" name="phone" value={form.phone} onChange={handleFormChange} placeholder="5551234567 (10 digits)" maxLength={10} required />
-            </div>
-          </div>
+      {open && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            animation: 'fadeIn 0.3s ease',
+            padding: '20px'
+          }}
+          onClick={() => setOpen(false)}
+        >
+          <div onClick={e => e.stopPropagation()}>
+            {!accountId ? (
+              <form style={glassCard} onSubmit={handleCreateAccount}>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '14px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#f9fafb',
+                    fontSize: '22px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ×
+                </button>
 
-          <div className="space-y-4 pt-4 border-t border-gray-700">
-            <h4 className="text-xl font-semibold text-white">Address</h4>
-            <div>
-              <label htmlFor="addressLine1" className={labelStyle}>Address Line 1</label>
-              <input style={inputFixStyle} id="addressLine1" name="addressLine1" value={form.addressLine1} onChange={handleFormChange} placeholder="123 Main St" required />
-            </div>
-            <div>
-              <label htmlFor="city" className={labelStyle}>City</label>
-              <input style={inputFixStyle} id="city" name="city" value={form.city} onChange={handleFormChange} placeholder="Anytown" required />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="stateOrProvince" className={labelStyle}>State (2-letter code)</label>
-                <input style={inputFixStyle} id="stateOrProvince" name="stateOrProvince" value={form.stateOrProvince} onChange={handleFormChange} placeholder="CA" maxLength={2} required />
-              </div>
-              <div>
-                <label htmlFor="postalCode" className={labelStyle}>Postal Code</label>
-                <input style={inputFixStyle} id="postalCode" name="postalCode" placeholder="90210" required />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4 pt-4 border-t border-gray-700">
-            <h4 className="text-xl font-semibold text-white">Date of Birth</h4>
-            <div className='grid grid-cols-3 gap-4'>
-              <div>
-                <label htmlFor="month" className={labelStyle}>Month</label>
-                <input style={inputFixStyle} id="month" name="month" value={form.month} onChange={handleFormChange} placeholder="MM" maxLength={2} required />
-              </div>
-              <div>
-                <label htmlFor="day" className={labelStyle}>Day</label>
-                <input style={inputFixStyle} id="day" name="day" value={form.day} onChange={handleFormChange} placeholder="DD" maxLength={2} required />
-              </div>
-              <div>
-                <label htmlFor="year" className={labelStyle}>Year</label>
-                <input style={inputFixStyle} id="year" name="year" value={form.year} onChange={handleFormChange} placeholder="YYYY" maxLength={4} required />
-              </div>
-            </div>
-          </div>
+                <h3 style={headingStyle}>Onboard New Talent</h3>
+                <p style={subheadingStyle}>Please provide your details below.</p>
 
-          <div className="space-y-4 pt-4 border-t border-gray-700">
-            <h4 className="text-xl font-semibold text-white">Social Security Number</h4>
-            <div>
-              <label htmlFor="ssn" className={labelStyle}>SSN (9 digits)</label>
-              <input style={inputFixStyle} id="ssn" name="ssn" value={form.ssn} onChange={handleFormChange} placeholder="123456789" maxLength={9} required />
-            </div>
-          </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input name="firstName" placeholder="First Name" value={form.firstName} onChange={handleFormChange} style={inputStyle} required />
+                  <input name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleFormChange} style={inputStyle} required />
+                </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className='w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out disabled:bg-gray-400'
-          >
-            {isLoading ? 'Processing...' : 'Create & Verify Account'}
-          </button>
-        </form>
-      ) : (
-        <div className='max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-xl text-center'>
-          <h3 className='text-3xl font-extrabold text-white mb-4'>Account Created!</h3>
-          <p className='text-lg text-gray-300 mb-2'>
-            Your account ID is:
-          </p>
-          <code className='block bg-gray-700 p-3 rounded-md text-white break-all text-sm mb-6'>
-            {accountId}
-          </code>
-          <p className='text-base text-gray-400'>
-            The account is now being verified. You will receive updates via webhooks.
-          </p>
+                <input name="email" placeholder="Email Address" value={form.email} onChange={handleFormChange} style={inputStyle} required />
+                <input
+                  name="phone"
+                  placeholder="Phone Number (10 digits)"
+                  value={form.phone}
+                  onChange={e => {
+                    if (/^\d{0,10}$/.test(e.target.value)) handleFormChange(e)
+                  }}
+                  style={inputStyle}
+                  required
+                />
+                <input name="addressLine1" placeholder="Address" value={form.addressLine1} onChange={handleFormChange} style={inputStyle} required />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input name="city" placeholder="City" value={form.city} onChange={handleFormChange} style={inputStyle} required />
+                  <input
+                    name="stateOrProvince"
+                    placeholder="State (e.g. CA)"
+                    value={form.stateOrProvince}
+                    onChange={e => {
+                      if (/^[A-Za-z]{0,2}$/.test(e.target.value)) handleFormChange(e)
+                    }}
+                    style={inputStyle}
+                    maxLength={2}
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    name="postalCode"
+                    placeholder="Postal Code (5 digits)"
+                    value={form.postalCode}
+                    onChange={e => {
+                      if (/^\d{0,5}$/.test(e.target.value)) handleFormChange(e)
+                    }}
+                    style={inputStyle}
+                    required
+                  />
+                  <input
+                    name="ssn"
+                    placeholder="SSN (9 digits)"
+                    value={form.ssn}
+                    onChange={e => {
+                      if (/^\d{0,9}$/.test(e.target.value)) handleFormChange(e)
+                    }}
+                    style={inputStyle}
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    name="month"
+                    placeholder="MM"
+                    value={form.month}
+                    onChange={e => {
+                      if (/^\d{0,2}$/.test(e.target.value)) handleFormChange(e)
+                    }}
+                    style={{ ...inputStyle, marginBottom: 0 }}
+                    required
+                  />
+                  <input
+                    name="day"
+                    placeholder="DD"
+                    value={form.day}
+                    onChange={e => {
+                      if (/^\d{0,2}$/.test(e.target.value)) handleFormChange(e)
+                    }}
+                    style={{ ...inputStyle, marginBottom: 0 }}
+                    required
+                  />
+                  <input
+                    name="year"
+                    placeholder="YYYY"
+                    value={form.year}
+                    onChange={e => {
+                      if (/^\d{0,4}$/.test(e.target.value)) handleFormChange(e)
+                    }}
+                    style={{ ...inputStyle, marginBottom: 0 }}
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  style={hover ? buttonHover : buttonBase}
+                  onMouseEnter={() => setHover(true)}
+                  onMouseLeave={() => setHover(false)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Create & Verify Account'}
+                </button>
+              </form>
+            ) : (
+              <div style={glassCard}>
+                <h3 style={headingStyle}>Account Created!</h3>
+                <p>Your account ID is:</p>
+                <code
+                  style={{
+                    display: 'block',
+                    background: 'rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    margin: '12px 0',
+                    color: '#a78bfa'
+                  }}
+                >
+                  {accountId}
+                </code>
+                <p style={{ color: '#cbd5e1' }}>Verification is in progress. You’ll receive updates soon.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
