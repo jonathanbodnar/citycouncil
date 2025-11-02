@@ -4,8 +4,7 @@ import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
-import toast from 'react-hot-toast';
-import { loadMoovDropInScript } from '../lib/moovClient';
+import MoovOnboard from './MoovOnboard';
 
 interface TalentWithUser extends TalentProfile {
   users: {
@@ -162,82 +161,8 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleGenerateMoovToken = async () => {
-    try {
-      toast.loading('Generating Moov token...', { id: 'moov-token' });
-      const { data, error } = await supabase.functions.invoke('moov-token', { body: {} });
-      if (error) throw error as any;
-      toast.success('Token generated. Check console for details.', { id: 'moov-token' });
-      console.log('Moov access token:', data?.accessToken);
-    } catch (err: any) {
-      console.error('Failed to generate Moov token:', err);
-      toast.error('Failed to generate token', { id: 'moov-token' });
-    }
-  };
 
-  const startOnboarding = async () => {
-    try {
-      toast.loading('Starting onboarding...', { id: 'moov-onboard' });
 
-      // 1) Load Moov Drop-in script
-      await loadMoovDropInScript();
-
-      // 2) Get a short-lived token from edge function (must include /accounts.write)
-      const { data, error } = await supabase.functions.invoke('moov-token', { body: {} });
-      if (error) throw error as any;
-      const authToken = (data as any)?.accessToken || (data as any)?.access_token;
-      if (!authToken) throw new Error('No auth token returned');
-
-      // 3) Mount <moov-onboarding> web component
-      setIsOnboardingOpen(true);
-      setTimeout(() => {
-        if (!onboardingContainerRef.current) return;
-        onboardingContainerRef.current.innerHTML = '';
-
-        const el = document.createElement('moov-onboarding') as any;
-        el.token = authToken;
-        el.facilitatorAccountID = '277439a2-2cf1-4a09-aa97-904a25970c7f';
-        el.capabilities = ['transfers', 'send-funds'];
-        el.open = true;
-
-        const refreshToken = async () => {
-          try {
-            const { data: tdata, error: terror } = await supabase.functions.invoke('moov-token', { body: {} });
-            if (terror) throw terror as any;
-            const next = (tdata as any)?.accessToken || (tdata as any)?.access_token;
-            if (next) el.token = next;
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error('Failed to refresh token:', e);
-          }
-        };
-
-        const handleSuccess = (evt: any) => {
-          // eslint-disable-next-line no-console
-          console.log('Onboarding complete!', evt?.detail);
-          setIsOnboardingOpen(false);
-        };
-        const handleCancel = () => {
-          setIsOnboardingOpen(false);
-        };
-        const handleResourceCreated = async () => {
-          await refreshToken();
-        };
-
-        el.addEventListener('onSuccess', handleSuccess);
-        el.addEventListener('onCancel', handleCancel);
-        el.addEventListener('onResourceCreated', handleResourceCreated);
-
-        onboardingContainerRef.current?.appendChild(el);
-      }, 0);
-
-      toast.success('Onboarding opened', { id: 'moov-onboard' });
-    } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to start onboarding:', err);
-      toast.error('Failed to start onboarding', { id: 'moov-onboard' });
-    }
-  };
 
   const filteredTalent = talent.filter(t => {
     const matchesSearch = !searchQuery || 
@@ -275,18 +200,8 @@ const HomePage: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Browse by Category</h3>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={handleGenerateMoovToken}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
-          >
-            Generate Token
-          </button>
-          <button
-            onClick={startOnboarding}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-all duration-200"
-          >
-            Start Onboarding
-          </button>
+        <MoovOnboard/>
+         
             <button
               onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
               className="p-2 text-gray-600 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200"
