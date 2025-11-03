@@ -24,8 +24,8 @@ WHERE total_orders > 0 OR fulfilled_orders > 0 OR average_rating > 0;
 -- 4. Clear any promotional video tracking data (if exists)
 -- DELETE FROM promotional_videos_tracking;
 
--- 5. Clear social media tracking data
-DELETE FROM instagram_activity_tracking;
+-- 5. Clear social media tracking data (if table exists - uncomment if you have this)
+-- DELETE FROM instagram_activity_tracking;
 
 -- 6. Clear email waitlist (optional - uncomment if you want to clear)
 -- DELETE FROM email_waitlist;
