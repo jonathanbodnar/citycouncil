@@ -376,6 +376,20 @@ const TalentManagement: React.FC = () => {
 
   const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing' | 'is_verified', value: boolean) => {
     try {
+      // If unfeaturing, remove the featured_order
+      if (field === 'is_featured' && !value) {
+        const { error } = await supabase
+          .from('talent_profiles')
+          .update({ [field]: value, featured_order: null })
+          .eq('id', talentId);
+
+        if (error) throw error;
+        
+        toast.success('Talent removed from featured carousel');
+        fetchTalents();
+        return;
+      }
+
       const { error } = await supabase
         .from('talent_profiles')
         .update({ [field]: value })
@@ -386,7 +400,7 @@ const TalentManagement: React.FC = () => {
       const action = field === 'is_active' 
         ? (value ? 'activated' : 'deactivated')
         : field === 'is_featured'
-        ? (value ? 'featured' : 'unfeatured')
+        ? (value ? 'added to featured carousel' : 'unfeatured')
         : field === 'allow_corporate_pricing'
         ? (value ? 'corporate pricing enabled' : 'corporate pricing disabled')
         : (value ? 'verified' : 'unverified');
@@ -397,6 +411,77 @@ const TalentManagement: React.FC = () => {
     } catch (error) {
       console.error(`Error toggling talent ${field}:`, error);
       toast.error(`Failed to update talent status`);
+    }
+  };
+
+  const setFeaturedOrder = async (talentId: string, newOrder: number) => {
+    try {
+      // Get current featured talents
+      const { data: featuredTalents, error: fetchError } = await supabase
+        .from('talent_profiles')
+        .select('id, featured_order')
+        .eq('is_featured', true)
+        .order('featured_order', { ascending: true, nullsFirst: false });
+
+      if (fetchError) throw fetchError;
+
+      // Find the talent being moved
+      const movingTalent = featuredTalents?.find(t => t.id === talentId);
+      const currentOrder = movingTalent?.featured_order || null;
+
+      // If setting the same order, do nothing
+      if (currentOrder === newOrder) return;
+
+      // Shift other talents
+      if (featuredTalents) {
+        for (const talent of featuredTalents) {
+          if (talent.id === talentId) continue;
+
+          let updatedOrder = talent.featured_order;
+
+          if (currentOrder === null) {
+            // New featured talent - shift everyone at or after newOrder down
+            if (talent.featured_order && talent.featured_order >= newOrder) {
+              updatedOrder = talent.featured_order + 1;
+            }
+          } else {
+            // Moving existing featured talent
+            if (newOrder > currentOrder) {
+              // Moving down - shift talents between old and new position up
+              if (talent.featured_order && talent.featured_order > currentOrder && talent.featured_order <= newOrder) {
+                updatedOrder = talent.featured_order - 1;
+              }
+            } else {
+              // Moving up - shift talents between new and old position down
+              if (talent.featured_order && talent.featured_order >= newOrder && talent.featured_order < currentOrder) {
+                updatedOrder = talent.featured_order + 1;
+              }
+            }
+          }
+
+          if (updatedOrder !== talent.featured_order) {
+            await supabase
+              .from('talent_profiles')
+              .update({ featured_order: updatedOrder })
+              .eq('id', talent.id);
+          }
+        }
+      }
+
+      // Update the moving talent's order
+      const { error: updateError } = await supabase
+        .from('talent_profiles')
+        .update({ featured_order: newOrder, is_featured: true })
+        .eq('id', talentId);
+
+      if (updateError) throw updateError;
+
+      toast.success(`Featured order updated to position ${newOrder}`);
+      fetchTalents();
+
+    } catch (error) {
+      console.error('Error setting featured order:', error);
+      toast.error('Failed to update featured order');
     }
   };
 
@@ -880,6 +965,25 @@ const TalentManagement: React.FC = () => {
                     >
                       <span className="text-lg">{talent.is_featured ? '⭐' : '☆'}</span>
                     </button>
+                    
+                    {talent.is_featured && (
+                      <select
+                        value={talent.featured_order || ''}
+                        onChange={(e) => {
+                          const order = parseInt(e.target.value);
+                          if (order) setFeaturedOrder(talent.id, order);
+                        }}
+                        className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        title="Featured position in carousel"
+                      >
+                        <option value="">Order...</option>
+                        {Array.from({ length: Math.max(10, talents.filter(t => t.is_featured).length + 1) }, (_, i) => i + 1).map(num => (
+                          <option key={num} value={num}>
+                            Position {num}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     
                     <button
                       onClick={() => toggleTalentStatus(talent.id, 'allow_corporate_pricing', !talent.allow_corporate_pricing)}
