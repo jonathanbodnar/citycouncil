@@ -18,6 +18,7 @@ const Header: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  const notificationRef = React.useRef<HTMLDivElement>(null);
 
   // Fetch notifications on mount and when user changes
   useEffect(() => {
@@ -46,6 +47,23 @@ const Header: React.FC = () => {
       };
     }
   }, [user]);
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -116,7 +134,7 @@ const Header: React.FC = () => {
             {user ? (
               <>
                 {/* Notifications */}
-                <div className="relative">
+                <div className="relative" ref={notificationRef}>
                   <button 
                     onClick={() => setShowNotifications(!showNotifications)}
                     className="p-2 text-white hover:text-gray-300 relative transition-colors"
