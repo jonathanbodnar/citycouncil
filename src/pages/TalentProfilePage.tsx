@@ -277,7 +277,7 @@ const TalentProfilePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 overflow-hidden mb-8">
+      <div className="gradient-border rounded-3xl shadow-modern-xl overflow-hidden mb-8">
         <div className="md:flex">
           {/* Avatar / Promo Video */}
           <div className="md:w-1/3">
@@ -461,8 +461,8 @@ const TalentProfilePage: React.FC = () => {
             {/* CTA Button */}
             <Link
               to={user ? `/order/${talent.id}` : '/login'}
-              className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl border border-white/20 hover:scale-[1.02]"
-              style={{ backgroundColor: '#b93030' }}
+              className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl hover:scale-[1.02]"
+              style={{ backgroundColor: '#3a86ff' }}
             >
               Order ShoutOut - Starting at ${talent.pricing}
             </Link>
