@@ -65,6 +65,45 @@ const Header: React.FC = () => {
     };
   }, [showNotifications]);
 
+  // Mark notifications as read when dropdown is opened
+  useEffect(() => {
+    const markNotificationsAsRead = async () => {
+      if (!user || !showNotifications || notifications.length === 0) return;
+
+      // Get IDs of unread notifications
+      const unreadIds = notifications
+        .filter(n => !n.is_read)
+        .map(n => n.id);
+
+      if (unreadIds.length === 0) return;
+
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .in('id', unreadIds);
+
+        if (error) throw error;
+
+        // Update local state
+        setNotifications(prevNotifications =>
+          prevNotifications.map(n =>
+            unreadIds.includes(n.id) ? { ...n, is_read: true } : n
+          )
+        );
+        setUnreadCount(0);
+      } catch (error) {
+        console.error('Error marking notifications as read:', error);
+      }
+    };
+
+    if (showNotifications) {
+      // Small delay to allow user to see the notifications before marking as read
+      const timer = setTimeout(markNotificationsAsRead, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showNotifications, notifications, user]);
+
   const fetchNotifications = async () => {
     if (!user) return;
 
