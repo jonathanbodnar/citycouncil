@@ -131,13 +131,20 @@ const Header: React.FC = () => {
 
                   {/* Notification Dropdown */}
                   {showNotifications && (
-                    <div className="absolute right-0 mt-2 w-80 glass-strong rounded-2xl shadow-modern-xl border border-white/30 z-[10000] overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(30px)' }}>
+                    <div 
+                      className="absolute right-0 mt-2 w-80 rounded-2xl shadow-modern-xl border border-white/30 z-[10000] overflow-hidden" 
+                      style={{ 
+                        background: 'rgba(17, 24, 39, 0.95)', 
+                        backdropFilter: 'blur(40px)',
+                        WebkitBackdropFilter: 'blur(40px)'
+                      }}
+                    >
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-white">Notifications</h3>
                           <Link 
                             to="/notifications"
-                            className="text-xs text-blue-300 hover:text-blue-200"
+                            className="text-xs text-blue-400 hover:text-blue-300"
                             onClick={() => setShowNotifications(false)}
                           >
                             View All
@@ -145,7 +152,7 @@ const Header: React.FC = () => {
                         </div>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           {notifications.length === 0 ? (
-                            <p className="text-sm text-gray-300 text-center py-8">
+                            <p className="text-sm text-gray-400 text-center py-8">
                               No new notifications
                             </p>
                           ) : (
@@ -157,7 +164,7 @@ const Header: React.FC = () => {
                                 className={`block p-3 rounded-lg transition-colors ${
                                   notification.is_read 
                                     ? 'bg-white/5 hover:bg-white/10' 
-                                    : 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30'
+                                    : 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/50'
                                 }`}
                               >
                                 <div className="flex items-start space-x-2">
@@ -168,7 +175,7 @@ const Header: React.FC = () => {
                                     <p className="text-xs text-gray-300 mt-1 line-clamp-2">
                                       {notification.message}
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-1">
+                                    <p className="text-xs text-gray-500 mt-1">
                                       {new Date(notification.created_at).toLocaleDateString()}
                                     </p>
                                   </div>
