@@ -29,7 +29,9 @@ interface SimplifiedTalent {
   username?: string;
   users?: {
     full_name: string;
-  };
+  } | {
+    full_name: string;
+  }[];
 }
 
 const BulkVideoUpload: React.FC = () => {
@@ -200,7 +202,14 @@ const BulkVideoUpload: React.FC = () => {
 
   const getTalentName = (talentId: string) => {
     const talent = talents.find(t => t.id === talentId);
-    return talent?.temp_full_name || talent?.users?.full_name || 'Unknown';
+    if (!talent) return 'Unknown';
+    
+    // Handle both single object and array from Supabase
+    const userName = Array.isArray(talent.users) 
+      ? talent.users[0]?.full_name 
+      : talent.users?.full_name;
+    
+    return talent.temp_full_name || userName || 'Unknown';
   };
 
   return (
