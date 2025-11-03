@@ -145,7 +145,7 @@ const BulkVideoUpload: React.FC = () => {
       updateVideoItem(item.id, { 
         status: 'success', 
         progress: 100,
-        videoUrl: uploadResult.url 
+        videoUrl: uploadResult.videoUrl 
       });
 
       return true;
