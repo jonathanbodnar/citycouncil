@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { TalentProfile } from '../types';
@@ -24,18 +24,50 @@ interface FeaturedCarouselProps {
 
 const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => 
       prevIndex === talent.length - 1 ? 0 : prevIndex + 1
     );
+    // Pause auto-scroll when user manually navigates
+    setIsPaused(true);
+    // Resume after 10 seconds
+    setTimeout(() => setIsPaused(false), 10000);
   };
 
   const prevSlide = () => {
     setCurrentIndex((prevIndex) => 
       prevIndex === 0 ? talent.length - 1 : prevIndex - 1
     );
+    // Pause auto-scroll when user manually navigates
+    setIsPaused(true);
+    // Resume after 10 seconds
+    setTimeout(() => setIsPaused(false), 10000);
   };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+    // Pause auto-scroll when user manually navigates
+    setIsPaused(true);
+    // Resume after 10 seconds
+    setTimeout(() => setIsPaused(false), 10000);
+  };
+
+  // Auto-scroll every 5 seconds
+  useEffect(() => {
+    // Only auto-scroll if there's more than one talent and not paused
+    if (talent.length <= 1 || isPaused) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => 
+        prevIndex === talent.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000); // 5 seconds
+
+    // Cleanup interval on component unmount or when talent/pause state changes
+    return () => clearInterval(interval);
+  }, [talent.length, isPaused]); // Re-create interval if talent count or pause state changes
 
   if (talent.length === 0) return null;
 
@@ -230,7 +262,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
           {talent.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
+              onClick={() => goToSlide(index)}
               className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${
                 index === currentIndex
                   ? 'bg-white'
