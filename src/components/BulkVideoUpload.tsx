@@ -23,8 +23,17 @@ interface VideoUploadItem {
   error?: string;
 }
 
+interface SimplifiedTalent {
+  id: string;
+  temp_full_name?: string;
+  username?: string;
+  users?: {
+    full_name: string;
+  };
+}
+
 const BulkVideoUpload: React.FC = () => {
-  const [talents, setTalents] = useState<TalentProfile[]>([]);
+  const [talents, setTalents] = useState<SimplifiedTalent[]>([]);
   const [videoItems, setVideoItems] = useState<VideoUploadItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
