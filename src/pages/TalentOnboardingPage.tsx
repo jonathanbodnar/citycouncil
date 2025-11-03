@@ -592,6 +592,22 @@ const TalentOnboardingPage: React.FC = () => {
 
       if (videoError) throw videoError;
 
+      // Send admin notification email
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.functions.invoke('onboarding-complete-notification', {
+          body: {
+            talentId: onboardingData?.talent.id,
+            talentName: onboardingData?.talent.temp_full_name || user?.user_metadata?.full_name || 'New Talent',
+            email: user?.email || 'No email provided'
+          }
+        });
+        console.log('Admin notification sent successfully');
+      } catch (notificationError) {
+        console.error('Failed to send admin notification:', notificationError);
+        // Don't block onboarding completion if notification fails
+      }
+
       if (finalVideoUrl) {
         toast.success('Onboarding completed - Welcome to ShoutOut!');
       } else {
