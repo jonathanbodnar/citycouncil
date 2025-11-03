@@ -18,6 +18,7 @@ import AdminHelpDesk from './AdminHelpDesk';
 import PromotionalVideosManagement from './PromotionalVideosManagement';
 import LandingVideoUpload from './LandingVideoUpload';
 import SocialMediaTracking from './SocialMediaTracking';
+import BulkVideoUpload from './BulkVideoUpload';
 import toast from 'react-hot-toast';
 
 interface StatsCardProps {
@@ -47,7 +48,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
 );
 
 const AdminManagementTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload'>('analytics');
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -227,6 +228,7 @@ const AdminManagementTabs: React.FC = () => {
             {[
               { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
               { key: 'talent', label: 'Manage Talent', icon: UsersIcon },
+              { key: 'bulk-upload', label: 'Bulk Upload', icon: VideoCameraIcon },
               { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },
               { key: 'landing-videos', label: 'Landing Videos', icon: StarIcon },
               { key: 'social-tracking', label: 'Social Tracking', icon: HashtagIcon },
@@ -444,14 +446,9 @@ const AdminManagementTabs: React.FC = () => {
         <TalentManagement />
       )}
 
-      {/* Platform Settings Tab */}
-      {activeTab === 'settings' && (
-        <PlatformSettings />
-      )}
-
-      {/* Help Desk Tab */}
-      {activeTab === 'helpdesk' && (
-        <AdminHelpDesk />
+      {/* Bulk Video Upload Tab */}
+      {activeTab === 'bulk-upload' && (
+        <BulkVideoUpload />
       )}
 
       {/* Promotional Videos Tab */}
@@ -467,6 +464,16 @@ const AdminManagementTabs: React.FC = () => {
       {/* Social Media Tracking Tab */}
       {activeTab === 'social-tracking' && (
         <SocialMediaTracking />
+      )}
+
+      {/* Platform Settings Tab */}
+      {activeTab === 'settings' && (
+        <PlatformSettings />
+      )}
+
+      {/* Help Desk Tab */}
+      {activeTab === 'helpdesk' && (
+        <AdminHelpDesk />
       )}
 
     </div>
