@@ -278,9 +278,17 @@ const TalentProfilePage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
       <div className="gradient-border rounded-3xl shadow-modern-xl mb-8">
-        <div className="md:flex rounded-3xl overflow-hidden">
+        <div className="md:flex rounded-3xl overflow-hidden relative">
+          {/* Background Gradient - Desktop */}
+          <div 
+            className="hidden md:block absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
+            }}
+          ></div>
+          
           {/* Avatar / Promo Video */}
-          <div className="md:w-1/3">
+          <div className="md:w-1/3 relative z-10">
             <div className="h-full min-h-[400px] bg-gray-100 relative group">
               {playingPromoVideo && talent.promo_video_url ? (
                 /* Playing Promo Video */
@@ -333,7 +341,7 @@ const TalentProfilePage: React.FC = () => {
           </div>
 
           {/* Profile Info */}
-          <div className="md:w-2/3 p-6">
+          <div className="md:w-2/3 p-6 relative z-10">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 {/* Position Title */}
