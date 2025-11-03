@@ -1,6 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import supabase from '../services/supabase'
+import OnboardingModal from '../components/moov/OnboardingModal'
+import OnboardingForm from '../components/moov/OnboardingForm'
+ 
 
 type Props = {}
 
@@ -9,7 +12,11 @@ const MoovOnboard = (props: Props) => {
   const [isLoading, setIsLoading] = useState(false)
   const [hover, setHover] = useState(false)
   const [open, setOpen] = useState(false)
-
+  const [isChecking, setIsChecking] = useState(false)
+  const [verification, setVerification] = useState<any>(null)
+  const [verificationStatus, setVerificationStatus] = useState<string>('unverified')
+  const [initLoading, setInitLoading] = useState(true)
+  
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -31,6 +38,64 @@ const MoovOnboard = (props: Props) => {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleCheckVerification = async () => {
+    const idToCheck = accountId
+    
+    setIsChecking(true)
+    toast.loading('Checking verification status…', { id: 'moov-get' })
+    try {
+      // Send accountId in request body (edge function supports body)
+      const { data, error } = await supabase.functions.invoke(
+        'moov-get-account',
+        {
+          body: { accountId: idToCheck } // Send as a JSON object
+        }
+      )
+      if (error) throw error
+      const status = data?.verification?.status || data?.verification?.verificationStatus || 'unknown'
+      setVerification(data) // for the <pre> tag
+      setVerificationStatus(status) // for the status display
+      toast.success(`Verification: ${status}`, { id: 'moov-get' })
+      console.log('Moov account details:', data)
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to fetch verification', { id: 'moov-get' })
+    } finally {
+      setIsChecking(false)
+    }
+  }
+
+  // On mount: check if talent already has a moov_account_id
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser()
+        const uid = auth?.user?.id
+        if (!uid) return
+        const { data: tp } = await supabase
+          .from('talent_profiles')
+          .select('moov_account_id')
+          .eq('user_id', uid)
+          .maybeSingle()
+        if (tp?.moov_account_id) {
+          setAccountId(tp.moov_account_id)
+        }
+      } catch (_) {
+        // ignore
+      } finally {
+        setInitLoading(false)
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // After initial load, if we have an accountId, automatically trigger a check
+  useEffect(() => {
+    if (!initLoading && accountId) {
+      handleCheckVerification()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initLoading, accountId])
+
   const validateForm = () => {
     const nameRegex = /^[A-Za-z]+$/
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -44,14 +109,19 @@ const MoovOnboard = (props: Props) => {
     const dayRegex = /^(0[1-9]|[12][0-9]|3[01])$/
     const yearNum = Number(form.year)
     const currentYear = new Date().getFullYear()
-    if (!nameRegex.test(form.firstName)) return 'First name must contain only letters'
-    if (!nameRegex.test(form.lastName)) return 'Last name must contain only letters'
-    if (!emailRegex.test(form.email)) return 'Please enter a valid email address'
-    if (!phoneRegex.test(form.phone)) return 'Phone number must be exactly 10 digits'
+    if (!nameRegex.test(form.firstName))
+      return 'First name must contain only letters'
+    if (!nameRegex.test(form.lastName))
+      return 'Last name must contain only letters'
+    if (!emailRegex.test(form.email))
+      return 'Please enter a valid email address'
+    if (!phoneRegex.test(form.phone))
+      return 'Phone number must be exactly 10 digits'
     if (!cityRegex.test(form.city)) return 'City name must contain only letters'
     if (!stateRegex.test(form.stateOrProvince.toUpperCase()))
       return 'State must be a valid U.S. 2-letter code (e.g., CA, NY)'
-    if (!postalRegex.test(form.postalCode)) return 'Postal code must be exactly 5 digits'
+    if (!postalRegex.test(form.postalCode))
+      return 'Postal code must be exactly 5 digits'
     if (!ssnRegex.test(form.ssn)) return 'SSN must be exactly 9 digits'
     if (!monthRegex.test(form.month)) return 'Month must be valid (01–12)'
     if (!dayRegex.test(form.day)) return 'Day must be valid (01–31)'
@@ -71,16 +141,35 @@ const MoovOnboard = (props: Props) => {
     const toastId = 'moov-create'
     toast.loading('Creating & verifying Moov account...', { id: toastId })
     try {
-      const { data, error } = await supabase.functions.invoke('moov-create-account', {
-        body: form
-      })
+      const { data, error } = await supabase.functions.invoke(
+        'moov-create-account',
+        {
+          body: form
+        }
+      )
       if (error) throw error
       if (data?.accountID) {
         toast.success(`Account created! ID: ${data.accountID}`, { id: toastId })
         setAccountId(data.accountID)
+        // Store in talent_profiles.moov_account_id so we can resume later
+        try {
+          const { data: auth } = await supabase.auth.getUser()
+          const uid = auth?.user?.id
+          if (uid) {
+            const { error: updErr } = await supabase
+              .from('talent_profiles')
+              .update({ moov_account_id: data.accountID })
+              .eq('user_id', uid)
+            if (updErr) console.error('Failed to update moov_account_id:', updErr)
+          }
+        } catch (e) {
+          console.error('Persist moov_account_id failed:', e)
+        }
       } else throw new Error('Failed to get accountID from response')
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create account', { id: 'moov-create' })
+      toast.error(err.message || 'Failed to create account', {
+        id: 'moov-create'
+      })
     } finally {
       setIsLoading(false)
     }
@@ -133,8 +222,8 @@ const MoovOnboard = (props: Props) => {
   }
 
   const buttonBase: React.CSSProperties = {
-    marginTop: '1rem',
     width: '100%',
+    textWrap: 'nowrap',
     padding: '14px',
     fontSize: '16px',
     fontWeight: 600,
@@ -155,174 +244,79 @@ const MoovOnboard = (props: Props) => {
   }
 
   return (
-    <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-      <button
-        style={hover ? buttonHover : buttonBase}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        onClick={() => setOpen(true)}
-      >
-        Start Onboarding
-      </button>
-
-      {open && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-            animation: 'fadeIn 0.3s ease',
-            padding: '20px'
-          }}
-          onClick={() => setOpen(false)}
+    <>
+      {initLoading ? (
+        <button
+          className='h-14'
+          style={buttonBase}
+          disabled
         >
-          <div onClick={e => e.stopPropagation()}>
-            {!accountId ? (
-              <form style={glassCard} onSubmit={handleCreateAccount}>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '14px',
-                    background: 'none',
-                    border: 'none',
-                    color: '#f9fafb',
-                    fontSize: '22px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ×
-                </button>
-
-                <h3 style={headingStyle}>Onboard New Talent</h3>
-                <p style={subheadingStyle}>Please provide your details below.</p>
-
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input name="firstName" placeholder="First Name" value={form.firstName} onChange={handleFormChange} style={inputStyle} required />
-                  <input name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleFormChange} style={inputStyle} required />
-                </div>
-
-                <input name="email" placeholder="Email Address" value={form.email} onChange={handleFormChange} style={inputStyle} required />
-                <input
-                  name="phone"
-                  placeholder="Phone Number (10 digits)"
-                  value={form.phone}
-                  onChange={e => {
-                    if (/^\d{0,10}$/.test(e.target.value)) handleFormChange(e)
-                  }}
-                  style={inputStyle}
-                  required
-                />
-                <input name="addressLine1" placeholder="Address" value={form.addressLine1} onChange={handleFormChange} style={inputStyle} required />
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input name="city" placeholder="City" value={form.city} onChange={handleFormChange} style={inputStyle} required />
-                  <input
-                    name="stateOrProvince"
-                    placeholder="State (e.g. CA)"
-                    value={form.stateOrProvince}
-                    onChange={e => {
-                      if (/^[A-Za-z]{0,2}$/.test(e.target.value)) handleFormChange(e)
-                    }}
-                    style={inputStyle}
-                    maxLength={2}
-                    required
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input
-                    name="postalCode"
-                    placeholder="Postal Code (5 digits)"
-                    value={form.postalCode}
-                    onChange={e => {
-                      if (/^\d{0,5}$/.test(e.target.value)) handleFormChange(e)
-                    }}
-                    style={inputStyle}
-                    required
-                  />
-                  <input
-                    name="ssn"
-                    placeholder="SSN (9 digits)"
-                    value={form.ssn}
-                    onChange={e => {
-                      if (/^\d{0,9}$/.test(e.target.value)) handleFormChange(e)
-                    }}
-                    style={inputStyle}
-                    required
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input
-                    name="month"
-                    placeholder="MM"
-                    value={form.month}
-                    onChange={e => {
-                      if (/^\d{0,2}$/.test(e.target.value)) handleFormChange(e)
-                    }}
-                    style={{ ...inputStyle, marginBottom: 0 }}
-                    required
-                  />
-                  <input
-                    name="day"
-                    placeholder="DD"
-                    value={form.day}
-                    onChange={e => {
-                      if (/^\d{0,2}$/.test(e.target.value)) handleFormChange(e)
-                    }}
-                    style={{ ...inputStyle, marginBottom: 0 }}
-                    required
-                  />
-                  <input
-                    name="year"
-                    placeholder="YYYY"
-                    value={form.year}
-                    onChange={e => {
-                      if (/^\d{0,4}$/.test(e.target.value)) handleFormChange(e)
-                    }}
-                    style={{ ...inputStyle, marginBottom: 0 }}
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  style={hover ? buttonHover : buttonBase}
-                  onMouseEnter={() => setHover(true)}
-                  onMouseLeave={() => setHover(false)}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Processing...' : 'Create & Verify Account'}
-                </button>
-              </form>
-            ) : (
-              <div style={glassCard}>
-                <h3 style={headingStyle}>Account Created!</h3>
-                <p>Your account ID is:</p>
-                <code
-                  style={{
-                    display: 'block',
-                    background: 'rgba(255,255,255,0.08)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    margin: '12px 0',
-                    color: '#a78bfa'
-                  }}
-                >
-                  {accountId}
-                </code>
-                <p style={{ color: '#cbd5e1' }}>Verification is in progress. You’ll receive updates soon.</p>
-              </div>
-            )}
-          </div>
-        </div>
+          Loading…
+        </button>
+      ) : accountId ? (
+        <button
+          className='h-14'
+          style={hover ? buttonHover : buttonBase}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onClick={handleCheckVerification}
+          disabled={isChecking}
+        >
+          {isChecking ? 'Checking…' : 'Check verification'}
+        </button>
+      ) : (
+        <button
+          className='h-14'
+          style={hover ? buttonHover : buttonBase}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onClick={() => setOpen(true)}
+        >
+          Start Onboarding
+        </button>
       )}
-    </div>
+
+      <OnboardingModal open={open} onClose={() => setOpen(false)}>
+        {!accountId ? (
+          <OnboardingForm
+            form={form}
+            onChange={handleFormChange}
+            onClose={() => setOpen(false)}
+            onSubmit={handleCreateAccount}
+            isLoading={isLoading}
+            glassCard={glassCard}
+            headingStyle={headingStyle}
+            subheadingStyle={subheadingStyle}
+            inputStyle={inputStyle}
+            buttonBase={buttonBase}
+            buttonHover={buttonHover}
+            hover={hover}
+            setHover={setHover}
+          />
+        ) : (
+          <div style={glassCard}>
+            <h3 style={headingStyle}>Account Created!</h3>
+            <p>Your account ID is:</p>
+            <code
+              style={{
+                display: 'block',
+                background: 'rgba(255,255,255,0.08)',
+                borderRadius: '10px',
+                padding: '12px',
+                margin: '12px 0',
+                color: '#a78bfa'
+              }}
+            >
+              {accountId}
+            </code>
+            <p style={{ color: '#cbd5e1' }}>
+              Verification is in progress. You’ll receive updates soon.
+            </p>
+          </div>
+        )}
+      </OnboardingModal>
+      
+    </>
   )
 }
 

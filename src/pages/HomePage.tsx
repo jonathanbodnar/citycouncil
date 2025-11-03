@@ -4,7 +4,6 @@ import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
-import MoovOnboard from './MoovOnboard';
 
 interface TalentWithUser extends TalentProfile {
   users: {
@@ -200,7 +199,6 @@ const HomePage: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Browse by Category</h3>
         <div className="flex items-center space-x-2">
-        <MoovOnboard/>
          
             <button
               onClick={() => setSearchQuery(searchQuery ? '' : 'search')}

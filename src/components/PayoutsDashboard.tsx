@@ -15,6 +15,7 @@ import { lunarPayService } from '../services/lunarPayService';
 import { bankAccountService } from '../services/bankAccountService';
 import SecureBankInput from './SecureBankInput';
 import toast from 'react-hot-toast';
+import MoovOnboard from '../pages/MoovOnboard';
 
 interface PayoutWithOrder extends Payout {
   orders: {
@@ -208,10 +209,12 @@ const PayoutsDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Payouts</h2>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+        <MoovOnboard/>
+
           <button
             onClick={exportPayouts}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex h-14 w-full text-center justify-center items-center gap-2  px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
             <ArrowDownTrayIcon className="h-4 w-4" />
             Export CSV
@@ -219,7 +222,7 @@ const PayoutsDashboard: React.FC = () => {
           {!bankInfo && (
             <button
               onClick={() => setShowBankForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <PlusIcon className="h-4 w-4" />
               Add Bank Info
