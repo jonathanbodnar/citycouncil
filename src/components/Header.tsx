@@ -189,11 +189,12 @@ const Header: React.FC = () => {
                   {/* Notification Dropdown */}
                   {showNotifications && (
                     <div 
-                      className="absolute right-0 mt-2 w-80 rounded-2xl shadow-modern-xl border border-white/30 z-[10000] overflow-hidden" 
+                      className="absolute right-0 mt-2 w-80 rounded-2xl shadow-modern-xl border border-white/30 overflow-hidden" 
                       style={{ 
                         background: 'rgba(17, 24, 39, 0.95)', 
                         backdropFilter: 'blur(40px)',
-                        WebkitBackdropFilter: 'blur(40px)'
+                        WebkitBackdropFilter: 'blur(40px)',
+                        zIndex: 10002
                       }}
                     >
                       <div className="p-4">
