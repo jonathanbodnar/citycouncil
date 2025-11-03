@@ -53,6 +53,8 @@ const TermsOfServicePage: React.FC = () => {
               <li>Maintain professional standards</li>
               <li>Respond to customer requests promptly</li>
               <li>Comply with platform guidelines</li>
+              <li>Own all rights to images, videos, and content they upload to the platform, or have explicit permission to use such content</li>
+              <li>Indemnify ShoutOut against any claims arising from unauthorized use of copyrighted or trademarked materials in their uploads</li>
             </ul>
           </section>
 
