@@ -18,8 +18,7 @@ DELETE FROM orders;
 UPDATE talent_profiles SET
   total_orders = 0,
   fulfilled_orders = 0,
-  average_rating = 0.0,
-  avg_delivery_time_hours = NULL
+  average_rating = 0.0
 WHERE total_orders > 0 OR fulfilled_orders > 0 OR average_rating > 0;
 
 -- 4. Clear any promotional video tracking data (if exists)
@@ -31,8 +30,9 @@ DELETE FROM instagram_activity_tracking;
 -- 6. Clear email waitlist (optional - uncomment if you want to clear)
 -- DELETE FROM email_waitlist;
 
--- 7. Clear watermarked video cache
-DELETE FROM watermarked_videos_cache;
+-- NOTE: Watermarked video cache is NOT cleared to preserve video processing
+-- If you want to clear it, uncomment the line below:
+-- DELETE FROM watermarked_videos_cache;
 
 -- 8. Reset spots remaining counter (if using landing page)
 -- UPDATE app_settings SET value = '197' WHERE key = 'spots_remaining';
