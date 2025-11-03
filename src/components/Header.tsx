@@ -173,7 +173,7 @@ const Header: React.FC = () => {
             {user ? (
               <>
                 {/* Notifications */}
-                <div className="relative" ref={notificationRef}>
+                <div className="relative z-[10005]" ref={notificationRef}>
                   <button 
                     onClick={() => setShowNotifications(!showNotifications)}
                     className="p-2 text-white hover:text-gray-300 relative transition-colors"
@@ -194,7 +194,7 @@ const Header: React.FC = () => {
                         background: 'rgba(17, 24, 39, 0.95)', 
                         backdropFilter: 'blur(40px)',
                         WebkitBackdropFilter: 'blur(40px)',
-                        zIndex: 10002
+                        zIndex: 10006
                       }}
                     >
                       <div className="p-4">
