@@ -52,7 +52,8 @@ const MoovOnboard = (props: Props) => {
         }
       )
       if (error) throw error
-      const status = data?.verification?.status || data?.verification?.verificationStatus || 'unknown'
+      const status = data?.capabilities[0]?.status == 'enabled' ? "verified" : "unverified"
+      console.log(data, 'data')
       setVerification(data) // for the <pre> tag
       setVerificationStatus(status) // for the status display
       toast.success(`Verification: ${status}`, { id: 'moov-get' })

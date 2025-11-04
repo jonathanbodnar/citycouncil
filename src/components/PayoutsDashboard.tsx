@@ -11,7 +11,6 @@ import {
 import { supabase } from '../services/supabase'
 import { useAuth } from '../context/AuthContext'
 import { Payout, VendorBankInfo } from '../types'
-import { bankAccountService } from '../services/bankAccountService'
 import toast from 'react-hot-toast'
 import MoovOnboard from '../pages/MoovOnboard'
 
