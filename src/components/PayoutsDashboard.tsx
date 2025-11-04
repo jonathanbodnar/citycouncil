@@ -32,10 +32,10 @@ const PayoutsDashboard: React.FC = () => {
   const [bankInfo, setBankInfo] = useState<VendorBankInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBankForm, setShowBankForm] = useState(false);
+  const [moovAccountId, setMoovAccountId] = useState<string | null>(null);
   const [bankFormData, setBankFormData] = useState({
     account_holder_name: '',
-    bank_name: '',
-    account_number: '',
+     account_number: '',
     routing_number: '',
     account_type: 'checking' as 'checking' | 'savings'
   });
@@ -50,14 +50,16 @@ const PayoutsDashboard: React.FC = () => {
     try {
       setLoading(true);
 
-      // Get talent profile to get talent ID
+      // Get talent profile to get talent ID and moov account id
       const { data: talentProfile } = await supabase
         .from('talent_profiles')
-        .select('id')
+        .select('id, moov_account_id')
         .eq('user_id', user?.id)
         .single();
 
       if (!talentProfile) return;
+
+      setMoovAccountId(talentProfile.moov_account_id || null);
 
       // Fetch payouts
       const { data: payoutsData, error: payoutsError } = await supabase
@@ -97,28 +99,60 @@ const PayoutsDashboard: React.FC = () => {
       // Get talent profile
       const { data: talentProfile } = await supabase
         .from('talent_profiles')
-        .select('id')
+        .select('id, moov_account_id')
         .eq('user_id', user?.id)
         .single();
 
       if (!talentProfile) throw new Error('Talent profile not found');
 
+      // Require a Moov account first
+      const accountId = talentProfile.moov_account_id || moovAccountId;
+      if (!accountId) {
+        toast.error('Please create your Moov account before adding bank info.');
+        return;
+      }
+
+      // Call Edge Function to add bank account to Moov
+      toast.loading('Linking bank account with Moov…', { id: 'moov-bank' });
+      console.log('Invoking moov-add-bank-account with payload:', {
+        accountId,
+        holderName: bankFormData.account_holder_name,
+        accountNumber: bankFormData.account_number?.replace(/\s+/g, ''),
+        routingNumber: bankFormData.routing_number?.replace(/\s+/g, ''),
+        accountType: bankFormData.account_type,
+      });
+      const { data: moovResp, error: moovErr } = await supabase.functions.invoke('moov-add-bank-account', {
+        body: {
+          accountId,
+          holderName: bankFormData.account_holder_name,
+          accountNumber: bankFormData.account_number?.replace(/\s+/g, ''),
+          routingNumber: bankFormData.routing_number?.replace(/\s+/g, ''),
+          accountType: bankFormData.account_type,
+        },
+      });
+      if (moovErr) throw moovErr;
+      if (!moovResp || !(moovResp as any).bankAccountID) {
+        console.error('Unexpected Moov response:', moovResp);
+        throw new Error('Moov did not return a bankAccountID');
+      }
+
       // Use secure bank account service with encryption
       await bankAccountService.updateBankAccount(talentProfile.id, {
         account_holder_name: bankFormData.account_holder_name,
-        bank_name: bankFormData.bank_name,
+        bank_name: 'N/A',
         account_number: bankFormData.account_number,
         routing_number: bankFormData.routing_number,
         account_type: bankFormData.account_type
       });
 
-      toast.success('Bank information encrypted and saved securely');
+      toast.success('Bank linked to Moov and saved securely', { id: 'moov-bank' });
       setShowBankForm(false);
       fetchPayoutData();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving bank info:', error);
-      toast.error('Failed to save bank information');
+      const message = error?.message || String(error);
+      toast.error(`Failed to save bank information: ${message}`);
     }
   };
 
@@ -219,15 +253,13 @@ const PayoutsDashboard: React.FC = () => {
             <ArrowDownTrayIcon className="h-4 w-4" />
             Export CSV
           </button>
-          {!bankInfo && (
-            <button
-              onClick={() => setShowBankForm(true)}
-              className="flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Add Bank Info
-            </button>
-          )}
+          <button
+            onClick={() => setShowBankForm(true)}
+            className="flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <PlusIcon className="h-4 w-4" />
+            {bankInfo ? 'Update Bank Info' : 'Add Bank Info'}
+          </button>
         </div>
       </div>
 
@@ -333,18 +365,7 @@ const PayoutsDashboard: React.FC = () => {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bank Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={bankFormData.bank_name}
-                  onChange={(e) => setBankFormData({...bankFormData, bank_name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              {/* Bank name is not required by Moov; we'll store 'N/A' server-side */}
               
               <SecureBankInput
                 label="Account Number"
@@ -363,7 +384,6 @@ const PayoutsDashboard: React.FC = () => {
                 onChange={(value) => setBankFormData({...bankFormData, routing_number: value})}
                 placeholder="9-digit routing number"
                 required={true}
-                pattern="[0-9]{9}"
                 maxLength={9}
               />
               
