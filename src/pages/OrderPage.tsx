@@ -408,7 +408,7 @@ const OrderPage: React.FC = () => {
               </h2>
               
               <div className="space-y-4">
-                <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                   <input
                     type="radio"
                     value="false"
@@ -416,7 +416,8 @@ const OrderPage: React.FC = () => {
                     {...register('isForBusiness', { 
                       setValueAs: (value) => value === 'true'
                     })}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                    className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400"
+                    style={{ accentColor: '#3b82f6' }}
                   />
                   <div className="ml-3 flex items-center">
                     <UserIcon className="h-6 w-6 text-gray-400 mr-3" />
@@ -432,14 +433,15 @@ const OrderPage: React.FC = () => {
                 </label>
 
                 {talent.allow_corporate_pricing && (
-                  <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       value="true"
                       {...register('isForBusiness', { 
                         setValueAs: (value) => value === 'true'
                       })}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                      className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400"
+                      style={{ accentColor: '#3b82f6' }}
                     />
                     <div className="ml-3 flex items-center">
                       <BuildingOfficeIcon className="h-6 w-6 text-gray-400 mr-3" />
@@ -607,14 +609,16 @@ const OrderPage: React.FC = () => {
 
             {/* Terms and Submit */}
             <div className="glass rounded-2xl shadow-modern p-6">
-              <div className="flex items-center mb-4">
+              <div className="flex items-start mb-4">
                 <input
                   id="agreedToTerms"
                   type="checkbox"
+                  defaultChecked={true}
                   {...register('agreedToTerms', { required: 'You must agree to the terms' })}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
+                  style={{ accentColor: '#3b82f6' }}
                 />
-                <label htmlFor="agreedToTerms" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="agreedToTerms" className="ml-3 block text-sm text-gray-900">
                   I agree to the{' '}
                   <button type="button" className="text-primary-600 hover:text-primary-500 underline">
                     Terms of Service
@@ -629,15 +633,16 @@ const OrderPage: React.FC = () => {
                 <p className="mb-4 text-sm text-red-600">{errors.agreedToTerms.message}</p>
               )}
 
-              <div className="flex items-center mb-4">
+              <div className="flex items-start mb-4">
                 <input
                   id="allowPromotionalUse"
                   type="checkbox"
                   defaultChecked={true}
                   {...register('allowPromotionalUse')}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
+                  style={{ accentColor: '#3b82f6' }}
                 />
-                <label htmlFor="allowPromotionalUse" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="allowPromotionalUse" className="ml-3 block text-sm text-gray-900">
                   Allow this video to be used by the personality in promotional materials
                 </label>
               </div>
