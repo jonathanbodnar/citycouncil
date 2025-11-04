@@ -1,61 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  BanknotesIcon, 
-  CreditCardIcon, 
+import React, { useState, useEffect } from 'react'
+import {
+  BanknotesIcon,
+  CreditCardIcon,
   ArrowDownTrayIcon,
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
   PlusIcon
-} from '@heroicons/react/24/outline';
-import { supabase } from '../services/supabase';
-import { useAuth } from '../context/AuthContext';
-import { Payout, VendorBankInfo } from '../types';
-import { bankAccountService } from '../services/bankAccountService';
-import toast from 'react-hot-toast';
-import MoovOnboard from '../pages/MoovOnboard';
+} from '@heroicons/react/24/outline'
+import { supabase } from '../services/supabase'
+import { useAuth } from '../context/AuthContext'
+import { Payout, VendorBankInfo } from '../types'
+import { bankAccountService } from '../services/bankAccountService'
+import toast from 'react-hot-toast'
+import MoovOnboard from '../pages/MoovOnboard'
 
 interface PayoutWithOrder extends Payout {
   orders: {
-    id: string;
-    request_details: string;
-    created_at: string;
-    amount: number;
-  };
+    id: string
+    request_details: string
+    created_at: string
+    amount: number
+  }
 }
 
 const PayoutsDashboard: React.FC = () => {
-  const { user } = useAuth();
-  const [payouts, setPayouts] = useState<PayoutWithOrder[]>([]);
-  const [bankInfo, setBankInfo] = useState<VendorBankInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [moovAccountId, setMoovAccountId] = useState<string | null>(null);
+  const { user } = useAuth()
+  const [payouts, setPayouts] = useState<PayoutWithOrder[]>([])
+  const [bankInfo, setBankInfo] = useState<VendorBankInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [moovAccountId, setMoovAccountId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user?.user_type === 'talent') {
-      fetchPayoutData();
+      fetchPayoutData()
     }
-  }, [user]);
+  }, [user])
 
   const fetchPayoutData = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
 
       // Get talent profile to get talent ID and moov account id
       const { data: talentProfile } = await supabase
         .from('talent_profiles')
         .select('id, moov_account_id')
         .eq('user_id', user?.id)
-        .single();
+        .single()
 
-      if (!talentProfile) return;
+      if (!talentProfile) return
 
-      setMoovAccountId(talentProfile.moov_account_id || null);
+      const currentMoovId = talentProfile.moov_account_id || null
+      setMoovAccountId(currentMoovId)
 
       // Fetch payouts
       const { data: payoutsData, error: payoutsError } = await supabase
         .from('payouts')
-        .select(`
+        .select(
+          `
           *,
           orders (
             id,
@@ -63,25 +65,52 @@ const PayoutsDashboard: React.FC = () => {
             created_at,
             amount
           )
-        `)
+        `
+        )
         .eq('talent_id', talentProfile.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
 
-      if (payoutsError) throw payoutsError;
+      if (payoutsError) throw payoutsError
+      setPayouts(payoutsData || [])
 
-      // Fetch bank info (masked for display)
-      const bankData = await bankAccountService.getBankAccountForDisplay(talentProfile.id);
+      if (currentMoovId) {
+        const { data: banksData, error: banksError } =
+          await supabase.functions.invoke(
+            'moov-list-bank-accounts',
+            { body: { moovAccountId: currentMoovId } } 
+          )
 
-      setPayouts(payoutsData || []);
-      setBankInfo(bankData);
+        if (banksError) throw banksError
 
+        if (banksData && banksData.length > 0) {
+          const moovBank = banksData[0] 
+          console.log(moovBank.lastFourAccountNumber, 'banksData')
+          const bankInfoForDisplay: VendorBankInfo = {
+            id: moovBank.bankAccountID,
+            talent_id: talentProfile.id, // From our profile query
+            account_holder_name: moovBank.holderName,
+            bank_name: moovBank.bankName,
+            account_number_masked: `****${moovBank.lastFourAccountNumber}`,
+            is_verified: moovBank.status === 'verified',
+            // Add dummy values for any other required fields in your type
+            account_number: '',
+            routing_number: ''
+          }
+          setBankInfo(bankInfoForDisplay)
+        } else {
+          setBankInfo(null) // No banks found
+        }
+      } else {
+        setBankInfo(null) // No moov account
+      }
+      // --- END OF NEW LOGIC ---
     } catch (error) {
-      console.error('Error fetching payout data:', error);
-      toast.error('Failed to load payout information');
+      console.error('Error fetching payout data:', error)
+      toast.error('Failed to load payout information')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const linkBankViaPlaid = async () => {
     try {
@@ -90,257 +119,299 @@ const PayoutsDashboard: React.FC = () => {
         .from('talent_profiles')
         .select('id, moov_account_id')
         .eq('user_id', user?.id)
-        .single();
-      if (tpErr) throw tpErr;
-      if (!talentProfile) throw new Error('Talent profile not found');
-      const accountId = talentProfile.moov_account_id || moovAccountId;
+        .single()
+      if (tpErr) throw tpErr
+      if (!talentProfile) throw new Error('Talent profile not found')
+      const accountId = talentProfile.moov_account_id || moovAccountId
       if (!accountId) {
-        toast.error('Please create your Moov account before linking your bank.');
-        return;
+        toast.error('Please create your Moov account before linking your bank.')
+        return
       }
 
       // Create Plaid Link token
-      toast.loading('Preparing Plaid Link…', { id: 'plaid-link' });
-      const { data: auth } = await supabase.auth.getUser();
-      const uid = auth?.user?.id || user?.id;
-      if (!uid) throw new Error('Not authenticated');
-      const { data: tokenResp, error: tokenErr } = await supabase.functions.invoke('plaid-create-link-token', {
-        body: { userId: uid }
-      });
-      if (tokenErr) throw tokenErr;
-      const linkToken = (tokenResp as any)?.link_token;
-      if (!linkToken) throw new Error('Missing Plaid link_token');
+      toast.loading('Preparing Plaid Link…', { id: 'plaid-link' })
+      const { data: auth } = await supabase.auth.getUser()
+      const uid = auth?.user?.id || user?.id
+      if (!uid) throw new Error('Not authenticated')
+      const { data: tokenResp, error: tokenErr } =
+        await supabase.functions.invoke('plaid-create-link-token', {
+          body: { userId: uid }
+        })
+      if (tokenErr) throw tokenErr
+      const linkToken = (tokenResp as any)?.link_token
+      if (!linkToken) throw new Error('Missing Plaid link_token')
 
       // Load Plaid script if needed
-      const loadPlaidScript = () => new Promise<void>((resolve, reject) => {
-        if ((window as any).Plaid) return resolve();
-        const s = document.createElement('script');
-        s.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
-        s.async = true;
-        s.onload = () => resolve();
-        s.onerror = () => reject(new Error('Failed to load Plaid Link'));
-        document.body.appendChild(s);
-      });
+      const loadPlaidScript = () =>
+        new Promise<void>((resolve, reject) => {
+          if ((window as any).Plaid) return resolve()
+          const s = document.createElement('script')
+          s.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js'
+          s.async = true
+          s.onload = () => resolve()
+          s.onerror = () => reject(new Error('Failed to load Plaid Link'))
+          document.body.appendChild(s)
+        })
 
-      await loadPlaidScript();
+      await loadPlaidScript()
 
       const handler = (window as any).Plaid.create({
         token: linkToken,
         onSuccess: async (public_token: string, metadata: any) => {
           try {
-            const selectedAccountId = metadata?.accounts?.[0]?.id || metadata?.account_id;
-            if (!selectedAccountId) throw new Error('No account selected');
+            const selectedAccountId =
+              metadata?.accounts?.[0]?.id || metadata?.account_id
+            if (!selectedAccountId) throw new Error('No account selected')
 
-            toast.loading('Linking your bank to Moov…', { id: 'plaid-link' });
-            const { error: linkErr } = await supabase.functions.invoke('moov-plaid-link-account', {
-              body: {
-                public_token,
-                account_id: selectedAccountId,
-                moov_account_id: accountId,
+            toast.loading('Linking your bank to Moov…', { id: 'plaid-link' })
+            const { error: linkErr } = await supabase.functions.invoke(
+              'moov-plaid-link-account',
+              {
+                body: {
+                  public_token,
+                  account_id: selectedAccountId,
+                  moov_account_id: accountId
+                }
               }
-            });
-            if (linkErr) throw linkErr;
+            )
+            if (linkErr) throw linkErr
 
-            toast.success('Bank linked successfully!', { id: 'plaid-link' });
-            fetchPayoutData();
+            toast.success('Bank linked successfully!', { id: 'plaid-link' })
+            fetchPayoutData()
           } catch (err: any) {
-            console.error('Plaid/Moov link error:', err);
-            toast.error(err?.message || 'Failed to link bank account', { id: 'plaid-link' });
+            console.error('Plaid/Moov link error:', err)
+            toast.error(err?.message || 'Failed to link bank account', {
+              id: 'plaid-link'
+            })
           }
         },
         onExit: () => {
-          toast.dismiss('plaid-link');
+          toast.dismiss('plaid-link')
         }
-      });
+      })
 
-      handler.open();
+      handler.open()
     } catch (error: any) {
-      console.error('Plaid Link init error:', error);
-      toast.error(error?.message || 'Failed to start Plaid Link', { id: 'plaid-link' });
+      console.error('Plaid Link init error:', error)
+      toast.error(error?.message || 'Failed to start Plaid Link', {
+        id: 'plaid-link'
+      })
     }
-  };
+  }
 
   const exportPayouts = () => {
     if (payouts.length === 0) {
-      toast.error('No payouts to export');
-      return;
+      toast.error('No payouts to export')
+      return
     }
 
     // Create CSV content
-    const headers = ['Date', 'Order ID', 'Description', 'Amount', 'Status', 'Processed Date'];
+    const headers = [
+      'Date',
+      'Order ID',
+      'Description',
+      'Amount',
+      'Status',
+      'Processed Date'
+    ]
     const csvContent = [
       headers.join(','),
-      ...payouts.map(payout => [
-        new Date(payout.created_at).toLocaleDateString(),
-        payout.order_id,
-        `"${payout.orders.request_details.substring(0, 50)}..."`,
-        `$${payout.amount.toFixed(2)}`,
-        payout.status,
-        payout.processed_at ? new Date(payout.processed_at).toLocaleDateString() : 'N/A'
-      ].join(','))
-    ].join('\n');
+      ...payouts.map(payout =>
+        [
+          new Date(payout.created_at).toLocaleDateString(),
+          payout.order_id,
+          `"${payout.orders.request_details.substring(0, 50)}..."`,
+          `$${payout.amount.toFixed(2)}`,
+          payout.status,
+          payout.processed_at
+            ? new Date(payout.processed_at).toLocaleDateString()
+            : 'N/A'
+        ].join(',')
+      )
+    ].join('\n')
 
     // Download CSV
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `payouts_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `payouts_${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
 
-    toast.success('Payouts exported successfully');
-  };
+    toast.success('Payouts exported successfully')
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'processed':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+        return <CheckCircleIcon className='h-5 w-5 text-green-500' />
       case 'failed':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+        return <XCircleIcon className='h-5 w-5 text-red-500' />
       case 'pending':
-        return <ClockIcon className="h-5 w-5 text-yellow-500" />;
+        return <ClockIcon className='h-5 w-5 text-yellow-500' />
       default:
-        return <ClockIcon className="h-5 w-5 text-gray-500" />;
+        return <ClockIcon className='h-5 w-5 text-gray-500' />
     }
-  };
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'processed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800'
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800'
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800'
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800'
     }
-  };
+  }
 
   const totalEarnings = payouts
     .filter(p => p.status === 'processed')
-    .reduce((sum, p) => sum + p.amount, 0);
+    .reduce((sum, p) => sum + p.amount, 0)
 
   const pendingEarnings = payouts
     .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + p.amount, 0);
+    .reduce((sum, p) => sum + p.amount, 0)
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className='space-y-6'>
+        <div className='animate-pulse'>
+          <div className='h-8 bg-gray-200 rounded w-1/4 mb-6'></div>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-gray-200 h-24 rounded-lg"></div>
+              <div key={i} className='bg-gray-200 h-24 rounded-lg'></div>
             ))}
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Payouts</h2>
-        <div className="flex gap-3 items-center">
-        <MoovOnboard/>
+    <div className='space-y-6'>
+      <div className='flex justify-between items-center'>
+        <h2 className='text-2xl font-bold text-gray-900'>Payouts</h2>
+        <div className='flex gap-3 items-center'>
+          <MoovOnboard />
 
           <button
             onClick={exportPayouts}
-            className="flex h-14 w-full text-center justify-center items-center gap-2  px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className='flex h-14 w-full text-center justify-center text-nowrap  items-center gap-2  px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors'
           >
-            <ArrowDownTrayIcon className="h-4 w-4" />
+            <ArrowDownTrayIcon className='h-4 w-4' />
             Export CSV
           </button>
           <button
             onClick={linkBankViaPlaid}
-            className="flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className='flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
           >
-            <PlusIcon className="h-4 w-4" />
-            {bankInfo ? 'Update Bank Link' : 'Link Bank via Plaid'}
+            <PlusIcon className='h-4 w-4' />
+            {bankInfo ? 'Update Bank Account' : 'Link Bank Account'}
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <BanknotesIcon className="h-8 w-8 text-green-500" />
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">${totalEarnings.toFixed(2)}</p>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div className='bg-white rounded-lg shadow-sm p-6'>
+          <div className='flex items-center'>
+            <BanknotesIcon className='h-8 w-8 text-green-500' />
+            <div className='ml-4'>
+              <p className='text-sm text-gray-600'>Total Earnings</p>
+              <p className='text-2xl font-bold text-gray-900'>
+                ${totalEarnings.toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <ClockIcon className="h-8 w-8 text-yellow-500" />
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">${pendingEarnings.toFixed(2)}</p>
+        <div className='bg-white rounded-lg shadow-sm p-6'>
+          <div className='flex items-center'>
+            <ClockIcon className='h-8 w-8 text-yellow-500' />
+            <div className='ml-4'>
+              <p className='text-sm text-gray-600'>Pending</p>
+              <p className='text-2xl font-bold text-gray-900'>
+                ${pendingEarnings.toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <CreditCardIcon className="h-8 w-8 text-blue-500" />
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">Total Payouts</p>
-              <p className="text-2xl font-bold text-gray-900">{payouts.length}</p>
+        <div className='bg-white rounded-lg shadow-sm p-6'>
+          <div className='flex items-center'>
+            <CreditCardIcon className='h-8 w-8 text-blue-500' />
+            <div className='ml-4'>
+              <p className='text-sm text-gray-600'>Total Payouts</p>
+              <p className='text-2xl font-bold text-gray-900'>
+                {payouts.length}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bank Information */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Bank Information</h3>
+      <div className='bg-white rounded-lg shadow-sm p-6'>
+        <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+          Bank Information
+        </h3>
+        {bankInfo && (
+          <div className='flex items-center gap-2 mb-4 text-green-600'>
+            <CheckCircleIcon className='h-5 w-5' />
+            <span>Bank account linked successfully</span>
+          </div>
+        )}
         {bankInfo ? (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className='bg-gray-50 rounded-lg p-4'>
+            <div className='grid grid-cols-2 gap-4'>
               <div>
-                <p className="text-sm text-gray-600">Account Holder</p>
-                <p className="font-medium">{bankInfo.account_holder_name}</p>
+                <p className='text-sm text-gray-600'>Account Holder</p>
+                <p className='font-medium'>{bankInfo.account_holder_name}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Bank Name</p>
-                <p className="font-medium">{bankInfo.bank_name}</p>
+                <p className='text-sm text-gray-600'>Bank Name</p>
+                <p className='font-medium'>{bankInfo.bank_name}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Account Number</p>
-                <p className="font-medium font-mono">{bankInfo.account_number_masked || `****${bankInfo.account_number?.slice(-4) || ''}`}</p>
+                <p className='text-sm text-gray-600'>Account Number</p>
+                <p className='font-medium font-mono'>
+                  {bankInfo.account_number_masked ||
+                    `****${bankInfo.account_number?.slice(-4) || ''}`}
+                </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Status</p>
-                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  bankInfo.is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
+                <p className='text-sm text-gray-600'>Status</p>
+                <span
+                  className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                    bankInfo.is_verified
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}
+                >
                   {bankInfo.is_verified ? 'Verified' : 'Pending Verification'}
                 </span>
               </div>
             </div>
             <button
               onClick={linkBankViaPlaid}
-              className="mt-4 text-sm text-blue-600 hover:text-blue-700 underline"
+              className='mt-4 text-sm text-blue-600 hover:text-blue-700 underline'
             >
               Update Bank Link
             </button>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <CreditCardIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">No bank information on file</p>
+          <div className='text-center py-8'>
+            <CreditCardIcon className='h-12 w-12 text-gray-400 mx-auto mb-4' />
+            <p className='text-gray-600 mb-4'>No bank information on file</p>
             <button
               onClick={linkBankViaPlaid}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
             >
               Link Bank via Plaid
             </button>
@@ -349,41 +420,48 @@ const PayoutsDashboard: React.FC = () => {
       </div>
 
       {/* Payouts List */}
-      <div className="bg-white rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Payout History</h3>
+      <div className='bg-white rounded-lg shadow-sm'>
+        <div className='px-6 py-4 border-b border-gray-200'>
+          <h3 className='text-lg font-semibold text-gray-900'>
+            Payout History
+          </h3>
         </div>
-        
+
         {payouts.length > 0 ? (
-          <div className="divide-y divide-gray-200">
-            {payouts.map((payout) => (
-              <div key={payout.id} className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
+          <div className='divide-y divide-gray-200'>
+            {payouts.map(payout => (
+              <div key={payout.id} className='p-6'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center space-x-3'>
                     {getStatusIcon(payout.status)}
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className='font-medium text-gray-900'>
                         Order #{payout.order_id.slice(-8)}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className='text-sm text-gray-600'>
                         {payout.orders.request_details.substring(0, 60)}...
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className='text-xs text-gray-500'>
                         {new Date(payout.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
+
+                  <div className='text-right'>
+                    <p className='font-semibold text-gray-900'>
                       ${payout.amount.toFixed(2)}
                     </p>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(payout.status)}`}>
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                        payout.status
+                      )}`}
+                    >
                       {payout.status}
                     </span>
                     {payout.processed_at && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Processed {new Date(payout.processed_at).toLocaleDateString()}
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Processed{' '}
+                        {new Date(payout.processed_at).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -392,15 +470,19 @@ const PayoutsDashboard: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <BanknotesIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No payouts yet</h3>
-            <p className="text-gray-600">Payouts will appear here when orders are completed.</p>
+          <div className='text-center py-12'>
+            <BanknotesIcon className='h-12 w-12 text-gray-400 mx-auto mb-4' />
+            <h3 className='text-lg font-medium text-gray-900 mb-2'>
+              No payouts yet
+            </h3>
+            <p className='text-gray-600'>
+              Payouts will appear here when orders are completed.
+            </p>
           </div>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PayoutsDashboard;
+export default PayoutsDashboard
