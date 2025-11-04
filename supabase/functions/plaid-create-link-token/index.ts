@@ -36,7 +36,7 @@ serve(async req => {
 
     const tokenRequest = {
       user: { client_user_id: userId },
-      client_name: 'Your App Name',
+      client_name: 'Shoutout',
       products: ['auth', 'transactions'],
       country_codes: ['US'],
       language: 'en',
