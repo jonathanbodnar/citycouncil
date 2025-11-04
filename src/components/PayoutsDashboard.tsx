@@ -82,7 +82,9 @@ const PayoutsDashboard: React.FC = () => {
         if (banksError) throw banksError
 
         if (banksData && banksData.length > 0) {
-          const moovBank = banksData[0] 
+          console.log(banksData, 'banksData')
+          const latestBank = banksData?.length - 1
+          const moovBank = banksData[latestBank] 
           console.log(moovBank.lastFourAccountNumber, 'banksData')
           const bankInfoForDisplay: VendorBankInfo = {
             id: moovBank.bankAccountID,
@@ -91,9 +93,7 @@ const PayoutsDashboard: React.FC = () => {
             bank_name: moovBank.bankName,
             account_number_masked: `****${moovBank.lastFourAccountNumber}`,
             is_verified: moovBank.status === 'verified',
-            // Add dummy values for any other required fields in your type
-            account_number: '',
-            routing_number: ''
+            routing_number: moovBank.routingNumber
           }
           setBankInfo(bankInfoForDisplay)
         } else {
@@ -311,7 +311,7 @@ const PayoutsDashboard: React.FC = () => {
             className='flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
           >
             <PlusIcon className='h-4 w-4' />
-            {bankInfo ? 'Update Bank Account' : 'Link Bank Account'}
+            Link Bank Account
           </button>
         </div>
       </div>
@@ -401,7 +401,7 @@ const PayoutsDashboard: React.FC = () => {
               onClick={linkBankViaPlaid}
               className='mt-4 text-sm text-blue-600 hover:text-blue-700 underline'
             >
-              Update Bank Link
+              Add Another Bank Account
             </button>
           </div>
         ) : (
