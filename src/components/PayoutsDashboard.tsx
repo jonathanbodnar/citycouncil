@@ -29,6 +29,7 @@ const PayoutsDashboard: React.FC = () => {
   const [bankInfo, setBankInfo] = useState<VendorBankInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [moovAccountId, setMoovAccountId] = useState<string | null>(null)
+  const [isLinkingBank, setIsLinkingBank] = useState(false)
 
   useEffect(() => {
     if (user?.user_type === 'talent') {
@@ -91,9 +92,12 @@ const PayoutsDashboard: React.FC = () => {
             talent_id: talentProfile.id, // From our profile query
             account_holder_name: moovBank.holderName,
             bank_name: moovBank.bankName,
+            account_type: moovBank.bankAccountType,
             account_number_masked: `****${moovBank.lastFourAccountNumber}`,
             is_verified: moovBank.status === 'verified',
-            routing_number: moovBank.routingNumber
+            routing_number: moovBank.routingNumber,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }
           setBankInfo(bankInfoForDisplay)
         } else {
@@ -113,6 +117,8 @@ const PayoutsDashboard: React.FC = () => {
 
   const linkBankViaPlaid = async () => {
     try {
+      if (isLinkingBank) return
+      setIsLinkingBank(true)
       // Ensure Moov account exists
       const { data: talentProfile, error: tpErr } = await supabase
         .from('talent_profiles')
@@ -177,15 +183,18 @@ const PayoutsDashboard: React.FC = () => {
 
             toast.success('Bank linked successfully!', { id: 'plaid-link' })
             fetchPayoutData()
+            setIsLinkingBank(false)
           } catch (err: any) {
             console.error('Plaid/Moov link error:', err)
             toast.error(err?.message || 'Failed to link bank account', {
               id: 'plaid-link'
             })
+            setIsLinkingBank(false)
           }
         },
         onExit: () => {
           toast.dismiss('plaid-link')
+          setIsLinkingBank(false)
         }
       })
 
@@ -195,6 +204,7 @@ const PayoutsDashboard: React.FC = () => {
       toast.error(error?.message || 'Failed to start Plaid Link', {
         id: 'plaid-link'
       })
+      setIsLinkingBank(false)
     }
   }
 
@@ -308,10 +318,11 @@ const PayoutsDashboard: React.FC = () => {
           </button>
           <button
             onClick={linkBankViaPlaid}
+            disabled={isLinkingBank}
             className='flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
           >
             <PlusIcon className='h-4 w-4' />
-            Link Bank Account
+            {isLinkingBank ? 'Opening Plaid…' : 'Link Bank Account'}
           </button>
         </div>
       </div>
@@ -399,9 +410,10 @@ const PayoutsDashboard: React.FC = () => {
             </div>
             <button
               onClick={linkBankViaPlaid}
+              disabled={isLinkingBank}
               className='mt-4 text-sm text-blue-600 hover:text-blue-700 underline'
             >
-              Add Another Bank Account
+              {isLinkingBank ? 'Opening…' : 'Add Another Bank Account'}
             </button>
           </div>
         ) : (
@@ -410,9 +422,10 @@ const PayoutsDashboard: React.FC = () => {
             <p className='text-gray-600 mb-4'>No bank information on file</p>
             <button
               onClick={linkBankViaPlaid}
+              disabled={isLinkingBank}
               className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
             >
-              Link Bank via Plaid
+              {isLinkingBank ? 'Opening Plaid…' : 'Link Bank via Plaid'}
             </button>
           </div>
         )}
