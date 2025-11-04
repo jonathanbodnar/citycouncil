@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+      "Moov": {
+        "command": "npx",
+        "args": [
+          "-y", "--package", "@moovio/sdk",
+          "--", "mcp", "start",
+          "--username", "rEvCk_pOVqe5Pi73",
+          "--password", "odUP-ZAPFaA1WMZqSh6ioi4qEeJBvn-z",
+          "--x-moov-version", "v2024.01.00"
+        ]
+      }
+    }
+  }

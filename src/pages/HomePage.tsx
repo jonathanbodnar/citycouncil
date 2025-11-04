@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MagnifyingGlassIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
@@ -41,6 +41,8 @@ const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchTalent();
@@ -159,6 +161,9 @@ const HomePage: React.FC = () => {
     }
   };
 
+
+
+
   const filteredTalent = talent.filter(t => {
     const matchesSearch = !searchQuery || 
       t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -194,7 +199,8 @@ const HomePage: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Browse by Category</h3>
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
+         
             <button
               onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
               className="p-2 text-gray-600 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200"
@@ -265,6 +271,15 @@ const HomePage: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500">
             Try adjusting your search or category filter.
           </p>
+        </div>
+      )}
+
+      {/* Simple overlay to host the <moov-onboarding> drop */}
+      {isOnboardingOpen && (
+        <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-4">
+            <div ref={onboardingContainerRef} />
+          </div>
         </div>
       )}
 
