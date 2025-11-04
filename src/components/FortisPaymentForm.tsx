@@ -96,15 +96,9 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       await waitForCommerce();
 
-      const CommerceElements = (window as any).Commerce.elements;
-      const instance = new CommerceElements(intention.clientToken, {
-        params: {
-          amount: cents / 100,
-          currency_code: 'USD',
-          order_reference: intention.orderReference,
-          location_id: intention.locationId,
-        },
-      });
+      const ElementsCtor = (window as any).Commerce?.elements;
+      if (!ElementsCtor) throw new Error('Commerce elements not available');
+      const elements = new ElementsCtor(intention.clientToken);
 
       // Helper to normalize success payloads
       const handleSuccess = async (payload: any) => {
@@ -124,29 +118,42 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       // Events (attach BEFORE create to avoid missing early events)
       console.log('Attaching Commerce JS handlers');
-      instance.eventBus.on('ready', () => {
+      elements.eventBus.on('ready', () => {
         console.log('Commerce iframe ready');
         setIsLoading(false);
       });
-      instance.eventBus.on('payment_success', handleSuccess);
+      elements.eventBus.on('payment_success', handleSuccess);
       // Add extra fallbacks in case library emits different event names
-      instance.eventBus.on('success', handleSuccess as any);
-      instance.eventBus.on('transaction_success', handleSuccess as any);
-      instance.eventBus.on('transaction.completed', handleSuccess as any);
-      instance.eventBus.on('payment_error', (e: any) => {
+      elements.eventBus.on('success', handleSuccess as any);
+      elements.eventBus.on('transaction_success', handleSuccess as any);
+      elements.eventBus.on('transaction.completed', handleSuccess as any);
+      elements.eventBus.on('payment_error', (e: any) => {
         setError(e?.message || 'Payment failed');
         onPaymentError(e?.message || 'Payment failed');
       });
-      instance.eventBus.on('error', (e: any) => {
+      elements.eventBus.on('error', (e: any) => {
         setError(e?.message || 'Payment error');
       });
 
       // Create iframe in our container (pass selector string to avoid null ref timing)
       console.log('Creating Commerce iframe');
-      // Render Fortis labels (Payment Info, Total) as white via dark theme
-      instance.create({ container: '#fortis-card-element', theme: 'dark' });
+      elements.create({
+        container: '#payment',
+        theme: 'default',
+        environment: intention.environment || 'sandbox',
+        view: 'default',
+        language: 'en-us',
+        defaultCountry: 'US',
+        floatingLabels: true,
+        showReceipt: true,
+        showSubmitButton: true,
+        showValidationAnimation: true,
+        hideAgreementCheckbox: false,
+        hideTotal: false,
+        digitalWallets: ['ApplePay', 'GooglePay'],
+      });
 
-      setCommerceInstance(instance);
+      setCommerceInstance(elements);
 
     } catch (err) {
       console.error('Failed to initialize payment:', err);
@@ -231,10 +238,15 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
           {/* Commerce.js iframe container - handles everything */}
           <div 
-            id="fortis-card-element"
+            id="payment"
             ref={iframeContainerRef}
-            className="rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#0F121A] p-10 max-w-2xl mx-auto"
-            style={{ minHeight: '380px' }}
+            style={{
+              background: 'white',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              minHeight: '400px'
+            }}
           />
           
           {isLoading && (
