@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 
 const SignupPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const returnTo = searchParams.get('returnTo') || '/home';
+  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -17,7 +21,7 @@ const SignupPage: React.FC = () => {
   const { user, signUp } = useAuth();
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={returnTo} replace />;
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -45,10 +49,13 @@ const SignupPage: React.FC = () => {
 
     try {
       await signUp(formData.email, formData.password, formData.fullName, formData.userType);
-      toast.success('Account created successfully! You can now sign in.');
+      toast.success('Account created successfully! Redirecting...');
+      // Navigate to returnTo URL after successful signup
+      setTimeout(() => {
+        navigate(returnTo);
+      }, 1000);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
-    } finally {
       setLoading(false);
     }
   };
@@ -66,7 +73,7 @@ const SignupPage: React.FC = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              to="/login"
+              to={`/login${returnTo !== '/home' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
               className="font-medium text-primary-600 hover:text-primary-500"
             >
               sign in to your existing account

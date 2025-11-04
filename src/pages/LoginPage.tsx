@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 import { supabase } from '../services/supabase';
 
 const LoginPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const returnTo = searchParams.get('returnTo') || '/home';
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +19,7 @@ const LoginPage: React.FC = () => {
   const { user, signIn } = useAuth();
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={returnTo} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,8 +37,11 @@ const LoginPage: React.FC = () => {
       const result = await signIn(email, password);
       console.log('Sign in result:', result);
       clearTimeout(timeout);
-      toast.success('Welcome back!');
-      // Don't set loading to false here - let the auth state change handle it
+      toast.success('Welcome back! Redirecting...');
+      // Navigate to returnTo URL after successful login
+      setTimeout(() => {
+        navigate(returnTo);
+      }, 1000);
     } catch (error: any) {
       console.error('Sign in error:', error);
       clearTimeout(timeout);
@@ -105,7 +112,7 @@ const LoginPage: React.FC = () => {
           <p className="mt-2 text-center text-sm text-gray-300">
             Or{' '}
             <Link
-              to="/signup"
+              to={`/signup${returnTo !== '/home' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
               className="font-medium text-blue-400 hover:text-blue-300"
             >
               create a new account

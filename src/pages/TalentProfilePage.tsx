@@ -468,7 +468,7 @@ const TalentProfilePage: React.FC = () => {
 
             {/* CTA Button */}
             <Link
-              to={user ? `/order/${talent.id}` : '/login'}
+              to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
               className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl hover:scale-[1.02]"
               style={{ backgroundColor: '#3a86ff' }}
             >
