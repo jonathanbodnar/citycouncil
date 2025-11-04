@@ -11,10 +11,10 @@ const corsHeaders = {
 };
 
 // Hardcoded for testing – do not read from Deno.env
-const baseUrl = 'https://api.sandbox.fortis.tech/v1';
-const developerId = 'nIhfZE7c';
-const userId = '11eecaab9e90d0f88e846b8c';
-const userApiKey = '11f0b4dbab5e536685a8cdd0';
+const baseUrl = 'https://api.fortis.tech/v1';
+const developerId = 'sfcRK525';
+const userId = '31f0ab8e8c8e1b708956086b';
+const userApiKey = '11f0b9ad16fa333aaa494a9d';
 
 async function fortisFetch(path: string, init?: RequestInit) {
   const res = await fetch(`${baseUrl}${path}`, {

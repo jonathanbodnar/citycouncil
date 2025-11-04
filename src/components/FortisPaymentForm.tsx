@@ -16,15 +16,9 @@ interface FortisPaymentFormProps {
 
 const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   amount,
-  orderId,
-  customerEmail,
-  customerName,
-  description,
   onPaymentSuccess,
   onPaymentError,
-  loading = false
 }) => {
-  const { user } = useAuth();
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +35,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         const origin = String(event.origin || '');
         if (!origin.includes('fortis.tech')) return;
         const data: any = event.data;
-        console.log('iframe message from fortis', data);
         const hasId = !!(data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id);
         const hasStatus = !!(data?.data?.status_code || data?.status_code || data?.reason_code_id || data?.value?.status_code || data?.value?.reason_code_id);
         if (hasId || hasStatus) handleMessageSuccess(data);
@@ -96,15 +89,9 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       await waitForCommerce();
 
-      const CommerceElements = (window as any).Commerce.elements;
-      const instance = new CommerceElements(intention.clientToken, {
-        params: {
-          amount: cents / 100,
-          currency_code: 'USD',
-          order_reference: intention.orderReference,
-          location_id: intention.locationId,
-        },
-      });
+      const ElementsCtor = (window as any).Commerce?.elements;
+      if (!ElementsCtor) throw new Error('Commerce elements not available');
+      const elements = new ElementsCtor(intention.clientToken);
 
       // Helper to normalize success payloads
       const handleSuccess = async (payload: any) => {
@@ -124,29 +111,42 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       // Events (attach BEFORE create to avoid missing early events)
       console.log('Attaching Commerce JS handlers');
-      instance.eventBus.on('ready', () => {
+      elements.eventBus.on('ready', () => {
         console.log('Commerce iframe ready');
         setIsLoading(false);
       });
-      instance.eventBus.on('payment_success', handleSuccess);
+      elements.eventBus.on('payment_success', handleSuccess);
       // Add extra fallbacks in case library emits different event names
-      instance.eventBus.on('success', handleSuccess as any);
-      instance.eventBus.on('transaction_success', handleSuccess as any);
-      instance.eventBus.on('transaction.completed', handleSuccess as any);
-      instance.eventBus.on('payment_error', (e: any) => {
+      elements.eventBus.on('success', handleSuccess as any);
+      elements.eventBus.on('transaction_success', handleSuccess as any);
+      elements.eventBus.on('transaction.completed', handleSuccess as any);
+      elements.eventBus.on('payment_error', (e: any) => {
         setError(e?.message || 'Payment failed');
         onPaymentError(e?.message || 'Payment failed');
       });
-      instance.eventBus.on('error', (e: any) => {
+      elements.eventBus.on('error', (e: any) => {
         setError(e?.message || 'Payment error');
       });
 
       // Create iframe in our container (pass selector string to avoid null ref timing)
       console.log('Creating Commerce iframe');
-      // Render Fortis labels (Payment Info, Total) as white via dark theme
-      instance.create({ container: '#fortis-card-element', theme: 'dark' });
+      elements.create({
+        container: '#payment',
+        theme: 'default',
+        environment: 'production',
+        view: 'default',
+        language: 'en-us',
+        defaultCountry: 'US',
+        floatingLabels: true,
+        showReceipt: true,
+        showSubmitButton: true,
+        showValidationAnimation: true,
+        hideAgreementCheckbox: false,
+        hideTotal: false,
+        digitalWallets: ['ApplePay', 'GooglePay'],
+      });
 
-      setCommerceInstance(instance);
+      setCommerceInstance(elements);
 
     } catch (err) {
       console.error('Failed to initialize payment:', err);
@@ -156,15 +156,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!commerceInstance) return;
-    commerceInstance.submit();
-  };
-
-  // Apple Pay / Google Pay buttons are not needed here since Commerce JS iframe handles wallets
-
-  // Always render container; show loading states within the form instead of returning early
 
   return (
     <div className="rounded-2xl px-4 py-5  md:p-6 bg-gradient-to-br from-slate-900/40 to-slate-800/20 border border-white/10 shadow-xl max-w-3xl mx-auto">
@@ -172,48 +163,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       <p className="text-sm text-slate-300 mb-6">Complete your payment securely. Your card information is encrypted and never stored on our servers.</p>
       
       {/* Payment Method Selection */}
-      <div className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('card')}
-            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
-              paymentMethod === 'card'
-                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
-                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
-            }`}
-          >
-            <CreditCardIcon className="h-5 w-5 mr-2" />
-            Card
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('apple')}
-            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
-              paymentMethod === 'apple'
-                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
-                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
-            }`}
-          >
-            <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
-            Apple Pay
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('google')}
-            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
-              paymentMethod === 'google'
-                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
-                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
-            }`}
-          >
-            <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
-            Google Pay
-          </button>
-        </div>
-      </div>
+     
 
       {/* Fortis Commerce.js Payment Form */}
       {paymentMethod === 'card' && (
@@ -231,10 +181,15 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
           {/* Commerce.js iframe container - handles everything */}
           <div 
-            id="fortis-card-element"
+            id="payment"
             ref={iframeContainerRef}
-            className="rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#0F121A] p-10 max-w-2xl mx-auto"
-            style={{ minHeight: '380px' }}
+            style={{
+              background: 'white',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              minHeight: '400px'
+            }}
           />
           
           {isLoading && (

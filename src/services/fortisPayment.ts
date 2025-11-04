@@ -56,7 +56,7 @@ export class FortisPaymentService {
 
     this.baseUrl = this.config.environment === 'production' 
       ? 'https://api.fortis.tech' 
-      : 'https://api.sandbox.fortis.tech';
+      : 'https://api.fortis.tech ';
   }
 
   // Initialize Fortis Elements for payment form

@@ -114,12 +114,6 @@ const OrderPage: React.FC = () => {
       ? (talent.corporate_pricing || talent.pricing * 1.5) 
       : talent.pricing;
       
-    console.log('Pricing calculation:', {
-      isForBusiness,
-      personalPrice: talent.pricing,
-      corporatePrice: talent.corporate_pricing,
-      basePrice
-    });
     
     const subtotal = basePrice;
     const adminFeePercentage = talent.admin_fee_percentage || parseInt(process.env.REACT_APP_ADMIN_FEE_PERCENTAGE || '15');
@@ -658,25 +652,6 @@ const OrderPage: React.FC = () => {
                     {submitting ? 'Processing...' : `Continue to Payment - $${pricing.total.toFixed(2)}`}
                   </button>
                   
-                  {/* Testing: Skip Payment Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (orderData) {
-                        handleSkipPayment();
-                      } else {
-                        // Store order data first
-                        handleSubmit((data) => {
-                          setOrderData(data);
-                          setTimeout(() => handleSkipPayment(), 100);
-                        })();
-                      }
-                    }}
-                    disabled={submitting}
-                    className="w-full bg-yellow-500 text-gray-900 py-3 px-8 rounded-2xl font-semibold hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 border-2 border-yellow-600"
-                  >
-                    ⚠️ Skip Payment (Testing Only)
-                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">
