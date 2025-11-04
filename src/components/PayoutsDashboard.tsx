@@ -11,9 +11,7 @@ import {
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Payout, VendorBankInfo } from '../types';
-import { lunarPayService } from '../services/lunarPayService';
 import { bankAccountService } from '../services/bankAccountService';
-import SecureBankInput from './SecureBankInput';
 import toast from 'react-hot-toast';
 import MoovOnboard from '../pages/MoovOnboard';
 
@@ -31,14 +29,7 @@ const PayoutsDashboard: React.FC = () => {
   const [payouts, setPayouts] = useState<PayoutWithOrder[]>([]);
   const [bankInfo, setBankInfo] = useState<VendorBankInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showBankForm, setShowBankForm] = useState(false);
   const [moovAccountId, setMoovAccountId] = useState<string | null>(null);
-  const [bankFormData, setBankFormData] = useState({
-    account_holder_name: '',
-     account_number: '',
-    routing_number: '',
-    account_type: 'checking' as 'checking' | 'savings'
-  });
 
   useEffect(() => {
     if (user?.user_type === 'talent') {
@@ -92,67 +83,80 @@ const PayoutsDashboard: React.FC = () => {
     }
   };
 
-  const handleBankInfoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const linkBankViaPlaid = async () => {
     try {
-      // Get talent profile
-      const { data: talentProfile } = await supabase
+      // Ensure Moov account exists
+      const { data: talentProfile, error: tpErr } = await supabase
         .from('talent_profiles')
         .select('id, moov_account_id')
         .eq('user_id', user?.id)
         .single();
-
+      if (tpErr) throw tpErr;
       if (!talentProfile) throw new Error('Talent profile not found');
-
-      // Require a Moov account first
       const accountId = talentProfile.moov_account_id || moovAccountId;
       if (!accountId) {
-        toast.error('Please create your Moov account before adding bank info.');
+        toast.error('Please create your Moov account before linking your bank.');
         return;
       }
 
-      // Call Edge Function to add bank account to Moov
-      toast.loading('Linking bank account with Moov…', { id: 'moov-bank' });
-      console.log('Invoking moov-add-bank-account with payload:', {
-        accountId,
-        holderName: bankFormData.account_holder_name,
-        accountNumber: bankFormData.account_number?.replace(/\s+/g, ''),
-        routingNumber: bankFormData.routing_number?.replace(/\s+/g, ''),
-        accountType: bankFormData.account_type,
+      // Create Plaid Link token
+      toast.loading('Preparing Plaid Link…', { id: 'plaid-link' });
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id || user?.id;
+      if (!uid) throw new Error('Not authenticated');
+      const { data: tokenResp, error: tokenErr } = await supabase.functions.invoke('plaid-create-link-token', {
+        body: { userId: uid }
       });
-      const { data: moovResp, error: moovErr } = await supabase.functions.invoke('moov-add-bank-account', {
-        body: {
-          accountId,
-          holderName: bankFormData.account_holder_name,
-          accountNumber: bankFormData.account_number?.replace(/\s+/g, ''),
-          routingNumber: bankFormData.routing_number?.replace(/\s+/g, ''),
-          accountType: bankFormData.account_type,
+      if (tokenErr) throw tokenErr;
+      const linkToken = (tokenResp as any)?.link_token;
+      if (!linkToken) throw new Error('Missing Plaid link_token');
+
+      // Load Plaid script if needed
+      const loadPlaidScript = () => new Promise<void>((resolve, reject) => {
+        if ((window as any).Plaid) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+        s.async = true;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Failed to load Plaid Link'));
+        document.body.appendChild(s);
+      });
+
+      await loadPlaidScript();
+
+      const handler = (window as any).Plaid.create({
+        token: linkToken,
+        onSuccess: async (public_token: string, metadata: any) => {
+          try {
+            const selectedAccountId = metadata?.accounts?.[0]?.id || metadata?.account_id;
+            if (!selectedAccountId) throw new Error('No account selected');
+
+            toast.loading('Linking your bank to Moov…', { id: 'plaid-link' });
+            const { error: linkErr } = await supabase.functions.invoke('moov-plaid-link-account', {
+              body: {
+                public_token,
+                account_id: selectedAccountId,
+                moov_account_id: accountId,
+              }
+            });
+            if (linkErr) throw linkErr;
+
+            toast.success('Bank linked successfully!', { id: 'plaid-link' });
+            fetchPayoutData();
+          } catch (err: any) {
+            console.error('Plaid/Moov link error:', err);
+            toast.error(err?.message || 'Failed to link bank account', { id: 'plaid-link' });
+          }
         },
-      });
-      if (moovErr) throw moovErr;
-      if (!moovResp || !(moovResp as any).bankAccountID) {
-        console.error('Unexpected Moov response:', moovResp);
-        throw new Error('Moov did not return a bankAccountID');
-      }
-
-      // Use secure bank account service with encryption
-      await bankAccountService.updateBankAccount(talentProfile.id, {
-        account_holder_name: bankFormData.account_holder_name,
-        bank_name: 'N/A',
-        account_number: bankFormData.account_number,
-        routing_number: bankFormData.routing_number,
-        account_type: bankFormData.account_type
+        onExit: () => {
+          toast.dismiss('plaid-link');
+        }
       });
 
-      toast.success('Bank linked to Moov and saved securely', { id: 'moov-bank' });
-      setShowBankForm(false);
-      fetchPayoutData();
-
+      handler.open();
     } catch (error: any) {
-      console.error('Error saving bank info:', error);
-      const message = error?.message || String(error);
-      toast.error(`Failed to save bank information: ${message}`);
+      console.error('Plaid Link init error:', error);
+      toast.error(error?.message || 'Failed to start Plaid Link', { id: 'plaid-link' });
     }
   };
 
@@ -254,11 +258,11 @@ const PayoutsDashboard: React.FC = () => {
             Export CSV
           </button>
           <button
-            onClick={() => setShowBankForm(true)}
+            onClick={linkBankViaPlaid}
             className="flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <PlusIcon className="h-4 w-4" />
-            {bankInfo ? 'Update Bank Info' : 'Add Bank Info'}
+            {bankInfo ? 'Update Bank Link' : 'Link Bank via Plaid'}
           </button>
         </div>
       </div>
@@ -324,10 +328,10 @@ const PayoutsDashboard: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => setShowBankForm(true)}
+              onClick={linkBankViaPlaid}
               className="mt-4 text-sm text-blue-600 hover:text-blue-700 underline"
             >
-              Update Bank Information
+              Update Bank Link
             </button>
           </div>
         ) : (
@@ -335,91 +339,14 @@ const PayoutsDashboard: React.FC = () => {
             <CreditCardIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 mb-4">No bank information on file</p>
             <button
-              onClick={() => setShowBankForm(true)}
+              onClick={linkBankViaPlaid}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Add Bank Information
+              Link Bank via Plaid
             </button>
           </div>
         )}
       </div>
-
-      {/* Bank Form Modal */}
-      {showBankForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="glass-strong rounded-2xl p-8 w-full max-w-md border border-white/30 shadow-modern-xl" style={{ background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(30px)' }}>
-            <h3 className="text-lg font-semibold mb-4">
-              {bankInfo ? 'Update' : 'Add'} Bank Information
-            </h3>
-            <form onSubmit={handleBankInfoSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Account Holder Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={bankFormData.account_holder_name}
-                  onChange={(e) => setBankFormData({...bankFormData, account_holder_name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              {/* Bank name is not required by Moov; we'll store 'N/A' server-side */}
-              
-              <SecureBankInput
-                label="Account Number"
-                type="account"
-                value={bankFormData.account_number}
-                onChange={(value) => setBankFormData({...bankFormData, account_number: value})}
-                placeholder="Enter account number"
-                required={true}
-                maxLength={17}
-              />
-              
-              <SecureBankInput
-                label="Routing Number"
-                type="routing"
-                value={bankFormData.routing_number}
-                onChange={(value) => setBankFormData({...bankFormData, routing_number: value})}
-                placeholder="9-digit routing number"
-                required={true}
-                maxLength={9}
-              />
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Account Type
-                </label>
-                <select
-                  value={bankFormData.account_type}
-                  onChange={(e) => setBankFormData({...bankFormData, account_type: e.target.value as 'checking' | 'savings'})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="checking">Checking</option>
-                  <option value="savings">Savings</option>
-                </select>
-              </div>
-              
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowBankForm(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Payouts List */}
       <div className="bg-white rounded-lg shadow-sm">
