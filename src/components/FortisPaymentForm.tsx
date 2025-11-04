@@ -16,15 +16,9 @@ interface FortisPaymentFormProps {
 
 const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   amount,
-  orderId,
-  customerEmail,
-  customerName,
-  description,
   onPaymentSuccess,
   onPaymentError,
-  loading = false
 }) => {
-  const { user } = useAuth();
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -139,7 +133,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       elements.create({
         container: '#payment',
         theme: 'default',
-        environment: intention.environment || 'sandbox',
+        environment: 'production',
         view: 'default',
         language: 'en-us',
         defaultCountry: 'US',
@@ -162,15 +156,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!commerceInstance) return;
-    commerceInstance.submit();
-  };
-
-  // Apple Pay / Google Pay buttons are not needed here since Commerce JS iframe handles wallets
-
-  // Always render container; show loading states within the form instead of returning early
 
   return (
     <div className="rounded-2xl px-4 py-5  md:p-6 bg-gradient-to-br from-slate-900/40 to-slate-800/20 border border-white/10 shadow-xl max-w-3xl mx-auto">
