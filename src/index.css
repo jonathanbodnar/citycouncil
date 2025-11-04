@@ -34,6 +34,18 @@
   }
 }
 
+@keyframes gradient-rotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
@@ -44,6 +56,36 @@
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+/* Static Gradient Border */
+.gradient-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg, 
+    #ff006e 0%,
+    #8338ec 50%, 
+    #3a86ff 100%
+  );
+  border-radius: inherit;
+  z-index: -2;
+  opacity: 0.9;
+}
+
+.gradient-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.98);
+  border-radius: inherit;
+  z-index: -1;
 }
 
 /* Glass morphism utilities - Dark theme */

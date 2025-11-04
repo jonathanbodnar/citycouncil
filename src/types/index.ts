@@ -35,6 +35,7 @@ export interface TalentProfile {
   charity_percentage?: number;
   charity_name?: string;
   is_featured: boolean;
+  featured_order?: number | null; // Order position in featured carousel (1 = first, 2 = second, etc.)
   admin_fee_percentage?: number;
   social_accounts: SocialAccount[];
   payout_details?: StripeConnectAccount;

@@ -539,81 +539,11 @@ const TalentOnboardingPage: React.FC = () => {
 
   const handleStep3Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Step 3 form submitted!');
-    console.log('Payout data:', payoutData);
+    console.log('Step 3 - Skipping payout information for now');
     
-    // Validate required fields (temporarily exclude routing number)
-    if (!payoutData.account_holder_name || !payoutData.bank_name || !payoutData.account_number) {
-      toast.error('Please fill in all required fields');
-      console.log('Missing required fields:', {
-        account_holder_name: !!payoutData.account_holder_name,
-        bank_name: !!payoutData.bank_name,
-        account_number: !!payoutData.account_number,
-        routing_number: !!payoutData.routing_number
-      });
-      return;
-    }
-
-    // Validate routing number format if provided
-    if (payoutData.routing_number && payoutData.routing_number.length !== 9) {
-      toast.error('Routing number must be exactly 9 digits');
-      console.log('Invalid routing number length:', payoutData.routing_number.length);
-      return;
-    }
-    
-    try {
-      // Encrypt sensitive bank account information
-      console.log('Encrypting bank account information...');
-      const { encryptedAccount, encryptedRouting } = await bankEncryption.encryptBankInfo(
-        payoutData.account_number,
-        payoutData.routing_number
-      );
-
-      // Save encrypted bank information (upsert to handle existing records)
-      const { error: bankError } = await supabase
-        .from('vendor_bank_info')
-        .upsert({
-          talent_id: onboardingData?.talent.id,
-          account_holder_name: payoutData.account_holder_name,
-          bank_name: payoutData.bank_name,
-          account_type: payoutData.account_type,
-          // Store encrypted data
-          account_number_encrypted: encryptedAccount.encrypted,
-          account_number_iv: encryptedAccount.iv,
-          routing_number_encrypted: encryptedRouting.encrypted,
-          routing_number_iv: encryptedRouting.iv,
-          // Store masked versions for display
-          account_number_masked: bankEncryption.maskAccountNumber(payoutData.account_number),
-          routing_number_masked: bankEncryption.maskRoutingNumber(payoutData.routing_number),
-          is_verified: false
-        }, {
-          onConflict: 'talent_id'
-        });
-
-      if (bankError) throw bankError;
-      console.log('Bank information encrypted and saved successfully');
-
-      // Final avatar sync before completion
-      if (onboardingData?.talent.user_id && onboardingData?.talent.temp_avatar_url) {
-        const { error: finalAvatarError } = await supabase
-          .from('users')
-          .update({
-            avatar_url: onboardingData.talent.temp_avatar_url
-          })
-          .eq('id', onboardingData.talent.user_id);
-
-        if (finalAvatarError) {
-          console.error('Error in final avatar sync:', finalAvatarError);
-        }
-      }
-
-      toast.success('Payout information saved! Now let\'s create your welcome video.');
-      setCurrentStep(4);
-
-    } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-      toast.error(error.message || 'Failed to complete onboarding');
-    }
+    // Skip payout information - talent can add it later in dashboard
+    // Just move to the next step
+    setCurrentStep(4);
   };
 
   const handleStep4Submit = async (e: React.FormEvent) => {
@@ -661,6 +591,22 @@ const TalentOnboardingPage: React.FC = () => {
         .eq('id', onboardingData?.talent.id);
 
       if (videoError) throw videoError;
+
+      // Send admin notification email
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.functions.invoke('onboarding-complete-notification', {
+          body: {
+            talentId: onboardingData?.talent.id,
+            talentName: onboardingData?.talent.temp_full_name || user?.user_metadata?.full_name || 'New Talent',
+            email: user?.email || 'No email provided'
+          }
+        });
+        console.log('Admin notification sent successfully');
+      } catch (notificationError) {
+        console.error('Failed to send admin notification:', notificationError);
+        // Don't block onboarding completion if notification fails
+      }
 
       if (finalVideoUrl) {
         toast.success('Onboarding completed - Welcome to ShoutOut!');
@@ -1312,77 +1258,10 @@ const TalentOnboardingPage: React.FC = () => {
                 Step 3: Payout Information
               </h2>
               
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Holder Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={payoutData.account_holder_name}
-                    onChange={(e) => setPayoutData({...payoutData, account_holder_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Full name on bank account"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bank Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={payoutData.bank_name}
-                    onChange={(e) => setPayoutData({...payoutData, bank_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Name of your bank"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <SecureBankInput
-                    label="Account Number"
-                    type="account"
-                    value={payoutData.account_number}
-                    onChange={(value) => setPayoutData({...payoutData, account_number: value})}
-                    placeholder="Enter account number"
-                    required={true}
-                    maxLength={17}
-                  />
-                  
-                  <SecureBankInput
-                    label="Routing Number"
-                    type="routing"
-                    value={payoutData.routing_number}
-                    onChange={(value) => setPayoutData({...payoutData, routing_number: value})}
-                    placeholder="9-digit routing number"
-                    required={false}
-                    maxLength={9}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Type *
-                  </label>
-                  <select
-                    value={payoutData.account_type}
-                    onChange={(e) => setPayoutData({...payoutData, account_type: e.target.value as 'checking' | 'savings'})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="checking">Checking</option>
-                    <option value="savings">Savings</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Your bank information will be verified by our admin team before payouts can be processed. 
-                  You'll be notified once verification is complete.
+              <div className="glass-strong rounded-2xl p-8 mb-6 border border-white/30 text-center">
+                <CreditCardIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                <p className="text-lg text-white leading-relaxed">
+                  You will be able to add payout details in your dashboard shortly after onboarding. Thank you!
                 </p>
               </div>
               

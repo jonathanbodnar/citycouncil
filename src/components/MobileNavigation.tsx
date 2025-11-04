@@ -95,7 +95,15 @@ const MobileNavigation: React.FC = () => {
   console.log('✅ Rendering mobile nav with', navigation.length, 'items', user ? '(authenticated)' : '(guest)');
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/20 md:hidden backdrop-blur-xl" style={{ background: 'rgba(255, 255, 255, 0.25)', zIndex: 9999 }}>
+    <div 
+      className="fixed bottom-0 left-0 right-0 border-t border-white/20 md:hidden" 
+      style={{ 
+        background: 'rgba(17, 24, 39, 0.95)', 
+        backdropFilter: 'blur(40px)',
+        WebkitBackdropFilter: 'blur(40px)',
+        zIndex: 9999 
+      }}
+    >
       <div className={`grid py-2 ${user ? 'grid-cols-5' : 'grid-cols-2'}`}>
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;

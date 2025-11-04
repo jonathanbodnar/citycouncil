@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { TalentProfile } from '../types';
+
+// Enhanced image quality function for featured card images
+const getEnhancedImageUrl = (imageUrl: string | undefined): string | undefined => {
+  if (!imageUrl) return undefined;
+  
+  // For now, just return the original URL
+  // Cloudinary upscaling can be added later if needed
+  return imageUrl;
+};
 
 interface FeaturedCarouselProps {
   talent: (TalentProfile & {
@@ -15,18 +24,50 @@ interface FeaturedCarouselProps {
 
 const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => 
       prevIndex === talent.length - 1 ? 0 : prevIndex + 1
     );
+    // Pause auto-scroll when user manually navigates
+    setIsPaused(true);
+    // Resume after 10 seconds
+    setTimeout(() => setIsPaused(false), 10000);
   };
 
   const prevSlide = () => {
     setCurrentIndex((prevIndex) => 
       prevIndex === 0 ? talent.length - 1 : prevIndex - 1
     );
+    // Pause auto-scroll when user manually navigates
+    setIsPaused(true);
+    // Resume after 10 seconds
+    setTimeout(() => setIsPaused(false), 10000);
   };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+    // Pause auto-scroll when user manually navigates
+    setIsPaused(true);
+    // Resume after 10 seconds
+    setTimeout(() => setIsPaused(false), 10000);
+  };
+
+  // Auto-scroll every 5 seconds
+  useEffect(() => {
+    // Only auto-scroll if there's more than one talent and not paused
+    if (talent.length <= 1 || isPaused) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => 
+        prevIndex === talent.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000); // 5 seconds
+
+    // Cleanup interval on component unmount or when talent/pause state changes
+    return () => clearInterval(interval);
+  }, [talent.length, isPaused]); // Re-create interval if talent count or pause state changes
 
   if (talent.length === 0) return null;
 
@@ -37,23 +78,28 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
     return null;
   }
 
+  // Get enhanced image URL for featured card
+  const enhancedImageUrl = getEnhancedImageUrl(currentTalent.temp_avatar_url || currentTalent.users.avatar_url);
+
   return (
     <div 
-      className="relative glass rounded-3xl overflow-hidden shadow-modern-xl z-0"
-      style={{
-        boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
-      }}
+      className="relative gradient-border rounded-3xl shadow-modern-xl z-0"
     >
-      <div className="relative h-96 md:h-96">
-        {/* Desktop Background - Modern Gradient */}
-        <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
+      <div className="relative h-96 md:h-96 rounded-3xl overflow-hidden">
+        {/* Desktop Background - Custom Gradient */}
+        <div 
+          className="hidden md:block absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
+          }}
+        ></div>
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
-        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) ? (
+        {enhancedImageUrl ? (
           <div 
             className="hidden md:block absolute right-0 top-0 w-1/2 h-full"
             style={{
-              backgroundImage: `url(${currentTalent.temp_avatar_url || currentTalent.users.avatar_url})`,
+              backgroundImage: `url(${enhancedImageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'top center',
               maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
@@ -78,19 +124,29 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         )}
         
         {/* Mobile Background with Photo or Gradient */}
-        {(currentTalent.temp_avatar_url || currentTalent.users.avatar_url) ? (
+        {enhancedImageUrl ? (
           <div className="md:hidden absolute inset-0">
             <img
-              src={currentTalent.temp_avatar_url || currentTalent.users.avatar_url}
+              src={enhancedImageUrl}
               alt={currentTalent.temp_full_name || currentTalent.users.full_name}
               className="w-full h-full object-cover object-top"
             />
-            {/* Modern gradient overlay for mobile */}
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-600/60 to-red-600/40"></div>
+            {/* Custom gradient overlay for mobile */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: 'linear-gradient(to top, rgba(144, 84, 118, 0.8) 0%, rgba(11, 1, 35, 0.6) 100%)'
+              }}
+            ></div>
           </div>
         ) : (
           /* Mobile Fallback - Pure gradient */
-          <div className="md:hidden absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-red-600"></div>
+          <div 
+            className="md:hidden absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
+            }}
+          ></div>
         )}
         
         {/* Content */}
@@ -124,7 +180,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 </div>
                 <Link
                   to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
-                  className="inline-block glass-strong text-white px-8 py-4 rounded-2xl font-bold hover:glass border border-white/30 transition-all duration-300 shadow-modern-lg hover:scale-105"
+                  className="inline-block px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-modern-lg hover:scale-105"
+                  style={{
+                    backgroundColor: '#3a86ff',
+                    color: '#ffffff'
+                  }}
                 >
                   Order ShoutOut
                 </Link>
@@ -160,7 +220,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   </div>
                   <Link
                     to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
-                    className="inline-block glass-strong text-white px-8 py-4 rounded-2xl font-bold hover:glass border border-white/30 transition-all duration-300 shadow-modern-lg hover:scale-105"
+                    className="inline-block px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-modern-lg hover:scale-105"
+                    style={{
+                      backgroundColor: '#3a86ff',
+                      color: '#ffffff'
+                    }}
                   >
                     Order ShoutOut
                   </Link>
@@ -198,7 +262,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
           {talent.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
+              onClick={() => goToSlide(index)}
               className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${
                 index === currentIndex
                   ? 'bg-white'

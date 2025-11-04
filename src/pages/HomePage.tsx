@@ -125,6 +125,7 @@ const HomePage: React.FC = () => {
         `)
         .eq('is_featured', true)
         .eq('is_active', true)
+        .order('featured_order', { ascending: true, nullsFirst: false })
         .limit(5);
 
       if (error) throw error;

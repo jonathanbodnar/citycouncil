@@ -18,6 +18,7 @@ const Header: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  const notificationRef = React.useRef<HTMLDivElement>(null);
 
   // Fetch notifications on mount and when user changes
   useEffect(() => {
@@ -46,6 +47,62 @@ const Header: React.FC = () => {
       };
     }
   }, [user]);
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
+  // Mark notifications as read when dropdown is opened
+  useEffect(() => {
+    const markNotificationsAsRead = async () => {
+      if (!user || !showNotifications || notifications.length === 0) return;
+
+      // Get IDs of unread notifications
+      const unreadIds = notifications
+        .filter(n => !n.is_read)
+        .map(n => n.id);
+
+      if (unreadIds.length === 0) return;
+
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .in('id', unreadIds);
+
+        if (error) throw error;
+
+        // Update local state
+        setNotifications(prevNotifications =>
+          prevNotifications.map(n =>
+            unreadIds.includes(n.id) ? { ...n, is_read: true } : n
+          )
+        );
+        setUnreadCount(0);
+      } catch (error) {
+        console.error('Error marking notifications as read:', error);
+      }
+    };
+
+    if (showNotifications) {
+      // Small delay to allow user to see the notifications before marking as read
+      const timer = setTimeout(markNotificationsAsRead, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showNotifications, notifications, user]);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -116,7 +173,7 @@ const Header: React.FC = () => {
             {user ? (
               <>
                 {/* Notifications */}
-                <div className="relative">
+                <div className="relative z-[10005]" ref={notificationRef}>
                   <button 
                     onClick={() => setShowNotifications(!showNotifications)}
                     className="p-2 text-white hover:text-gray-300 relative transition-colors"
@@ -131,13 +188,21 @@ const Header: React.FC = () => {
 
                   {/* Notification Dropdown */}
                   {showNotifications && (
-                    <div className="absolute right-0 mt-2 w-80 glass-strong rounded-2xl shadow-modern-xl border border-white/30 z-[10000] overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(30px)' }}>
+                    <div 
+                      className="absolute right-0 mt-2 w-80 rounded-2xl shadow-modern-xl border border-white/30 overflow-hidden" 
+                      style={{ 
+                        background: 'rgba(17, 24, 39, 0.95)', 
+                        backdropFilter: 'blur(40px)',
+                        WebkitBackdropFilter: 'blur(40px)',
+                        zIndex: 10006
+                      }}
+                    >
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-white">Notifications</h3>
                           <Link 
                             to="/notifications"
-                            className="text-xs text-blue-300 hover:text-blue-200"
+                            className="text-xs text-blue-400 hover:text-blue-300"
                             onClick={() => setShowNotifications(false)}
                           >
                             View All
@@ -145,7 +210,7 @@ const Header: React.FC = () => {
                         </div>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           {notifications.length === 0 ? (
-                            <p className="text-sm text-gray-300 text-center py-8">
+                            <p className="text-sm text-gray-400 text-center py-8">
                               No new notifications
                             </p>
                           ) : (
@@ -157,7 +222,7 @@ const Header: React.FC = () => {
                                 className={`block p-3 rounded-lg transition-colors ${
                                   notification.is_read 
                                     ? 'bg-white/5 hover:bg-white/10' 
-                                    : 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30'
+                                    : 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/50'
                                 }`}
                               >
                                 <div className="flex items-start space-x-2">
@@ -168,7 +233,7 @@ const Header: React.FC = () => {
                                     <p className="text-xs text-gray-300 mt-1 line-clamp-2">
                                       {notification.message}
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-1">
+                                    <p className="text-xs text-gray-500 mt-1">
                                       {new Date(notification.created_at).toLocaleDateString()}
                                     </p>
                                   </div>
