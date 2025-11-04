@@ -41,7 +41,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         const origin = String(event.origin || '');
         if (!origin.includes('fortis.tech')) return;
         const data: any = event.data;
-        console.log('iframe message from fortis', data);
         const hasId = !!(data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id);
         const hasStatus = !!(data?.data?.status_code || data?.status_code || data?.reason_code_id || data?.value?.status_code || data?.value?.reason_code_id);
         if (hasId || hasStatus) handleMessageSuccess(data);
@@ -179,48 +178,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       <p className="text-sm text-slate-300 mb-6">Complete your payment securely. Your card information is encrypted and never stored on our servers.</p>
       
       {/* Payment Method Selection */}
-      <div className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('card')}
-            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
-              paymentMethod === 'card'
-                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
-                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
-            }`}
-          >
-            <CreditCardIcon className="h-5 w-5 mr-2" />
-            Card
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('apple')}
-            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
-              paymentMethod === 'apple'
-                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
-                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
-            }`}
-          >
-            <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
-            Apple Pay
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => setPaymentMethod('google')}
-            className={`flex items-center justify-center px-4 py-2 rounded-xl transition-all duration-200 border ${
-              paymentMethod === 'google'
-                ? 'border-sky-400/70 bg-sky-500/20 text-sky-100 shadow'
-                : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
-            }`}
-          >
-            <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
-            Google Pay
-          </button>
-        </div>
-      </div>
+     
 
       {/* Fortis Commerce.js Payment Form */}
       {paymentMethod === 'card' && (

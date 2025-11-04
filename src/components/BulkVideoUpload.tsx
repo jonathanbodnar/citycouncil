@@ -207,7 +207,7 @@ const BulkVideoUpload: React.FC = () => {
     // Handle both single object and array from Supabase
     const userName = Array.isArray(talent.users) 
       ? talent.users[0]?.full_name 
-      : talent.users?.full_name;
+      : "talent.users?.full_name";
     
     return talent.temp_full_name || userName || 'Unknown';
   };
@@ -319,7 +319,7 @@ const BulkVideoUpload: React.FC = () => {
                           <option value="">Select Talent *</option>
                           {talents.map(talent => (
                             <option key={talent.id} value={talent.id} className="bg-gray-800">
-                              {talent.temp_full_name || talent.users?.full_name}
+                              {talent.temp_full_name || ""}
                             </option>
                           ))}
                         </select>
