@@ -788,9 +788,9 @@ const TalentDashboard: React.FC = () => {
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">📢</div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-lg text-gray-900 mb-2">$200/month in Ad Spend</h4>
+                    <h4 className="font-bold text-lg text-gray-900 mb-2">$300/month in Ad Spend</h4>
                     <p className="text-gray-600">
-                      We'll dedicate $200 per month promoting YOUR ShoutOut profile through Rumble and Meta ads. 
+                      We'll spend <strong>$300 per month</strong> directly advertising YOUR profile through Rumble and Instagram ads. 
                       Get more visibility and orders without spending a dime!
                     </p>
                   </div>
@@ -800,19 +800,19 @@ const TalentDashboard: React.FC = () => {
 
             {/* How to Get It */}
             <div className="mb-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">✅ How to Qualify:</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">✅ Requirements (You Must):</h3>
               <div className="space-y-4">
                 <div className="glass rounded-2xl p-4 border border-white/30">
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">🔗</div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-1">Add Link to Your Social Bio</h4>
-                      <p className="text-sm text-gray-600 mb-2">Add your ShoutOut profile link to your Instagram/X bio (or linktree)</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">Put Profile Link in Your Bio</h4>
+                      <p className="text-sm text-gray-600 mb-2">Add your ShoutOut profile link (shoutout.us/yourname) to your link in bio on all socials</p>
                       <button 
                         onClick={() => {
                           const profileUrl = talentProfile?.username 
-                            ? `https://shoutout.us/${talentProfile.username}`
-                            : `https://shoutout.us/talent/${talentProfile?.id}`;
+                            ? `shoutout.us/${talentProfile.username}`
+                            : `shoutout.us/talent/${talentProfile?.id}`;
                           navigator.clipboard.writeText(profileUrl);
                           toast.success('Profile URL copied!');
                         }}
@@ -828,28 +828,10 @@ const TalentDashboard: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">📱</div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-2">Post Promo Video Twice Monthly</h4>
-                      <p className="text-sm text-gray-600 mb-2">Post your ShoutOut promo video to your stories 2x per month</p>
-                      <div className="flex gap-2 text-sm">
-                        <button 
-                          onClick={() => {
-                            navigator.clipboard.writeText('Shoutoutvoice');
-                            toast.success('Copied Shoutoutvoice!');
-                          }}
-                          className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30"
-                        >
-                          📋 Shoutoutvoice (Instagram)
-                        </button>
-                        <button 
-                          onClick={() => {
-                            navigator.clipboard.writeText('Shoutoutvoice');
-                            toast.success('Copied Shoutoutvoice!');
-                          }}
-                          className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30"
-                        >
-                          📋 Shoutoutvoice (X)
-                        </button>
-                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Post Promo Video on Instagram Stories</h4>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Post your promo video on <strong>Instagram stories</strong> (with link to your profile) <strong>at least twice a month</strong>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -858,16 +840,19 @@ const TalentDashboard: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">🎬</div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-1">Post at Least One ShoutOut Video</h4>
-                      <p className="text-sm text-gray-600 mb-2">Share at least one of your completed ShoutOut videos on Instagram</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">Post at Least One ShoutOut Video Monthly</h4>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Post <strong>at least one ShoutOut video</strong> on your profile <strong>a month</strong>. Point viewers to your link in bio. 
+                        (Collab with <strong>@shoutoutvoice</strong> on Instagram)
+                      </p>
                       <button 
                         onClick={() => {
-                          navigator.clipboard.writeText('Shoutoutvoice');
-                          toast.success('Copied Shoutoutvoice!');
+                          navigator.clipboard.writeText('@shoutoutvoice');
+                          toast.success('Copied @shoutoutvoice!');
                         }}
                         className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
                       >
-                        📋 Tag Shoutoutvoice
+                        📋 Copy @shoutoutvoice
                       </button>
                     </div>
                   </div>
@@ -932,7 +917,7 @@ const TalentDashboard: React.FC = () => {
                     Claimed on {new Date(talentProfile.promotion_claimed_at!).toLocaleDateString()}
                   </p>
                   <p className="text-sm text-green-300 mt-2">
-                    Keep posting and tagging us to maintain your $200/month ad spend!
+                    Keep posting and tagging us to maintain your $300/month ad spend!
                   </p>
                 </div>
               </div>
