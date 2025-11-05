@@ -24,7 +24,7 @@ import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
 import SecureBankInput from '../components/SecureBankInput';
 import SupportChatWidget from '../components/SupportChatWidget';
-import MFAEnrollment from '../components/MFAEnrollment';
+import MFAEnrollmentDual from '../components/MFAEnrollmentDual';
 import toast from 'react-hot-toast';
 
 const TalentOnboardingPage: React.FC = () => {
@@ -1389,10 +1389,10 @@ const TalentOnboardingPage: React.FC = () => {
               </h2>
               
               <p className="text-gray-600 mb-6">
-                As a talent on ShoutOut, you're required to enable two-factor authentication (MFA) to protect your account and earnings. This adds an extra layer of security beyond just your password.
+                As a talent on ShoutOut, you're required to enable two-factor authentication (MFA) to protect your account and earnings. Choose between an authenticator app or SMS text messages.
               </p>
 
-              <MFAEnrollment
+              <MFAEnrollmentDual
                 onComplete={async () => {
                   // Complete onboarding after MFA is enabled
                   try {
