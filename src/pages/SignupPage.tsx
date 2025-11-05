@@ -15,7 +15,7 @@ const SignupPage: React.FC = () => {
     password: '',
     confirmPassword: '',
     userType: 'user' as 'user' | 'talent', // Always 'user' - talent accounts created by admin only
-    agreeToTerms: false,
+    agreeToTerms: true,
   });
   const [loading, setLoading] = useState(false);
   const { user, signUp } = useAuth();
@@ -155,11 +155,12 @@ const SignupPage: React.FC = () => {
               id="agreeToTerms"
               name="agreeToTerms"
               type="checkbox"
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-5 w-5 rounded border-2 border-gray-400 transition-colors mt-0.5"
+              style={{ accentColor: '#3b82f6' }}
               checked={formData.agreeToTerms}
               onChange={handleChange}
             />
-            <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-900">
+            <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-white">
               I agree to the{' '}
               <button type="button" className="text-primary-600 hover:text-primary-500 underline">
                 Terms and Conditions
