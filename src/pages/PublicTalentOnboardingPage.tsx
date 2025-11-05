@@ -10,7 +10,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import ImageUpload from '../components/ImageUpload';
-import CharitySelector from '../components/CharitySelector';
 import { TalentCategory } from '../types';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
@@ -618,12 +617,44 @@ const PublicTalentOnboardingPage: React.FC = () => {
                 You will be able to add payout details in your dashboard shortly after onboarding. Thank you!
               </p>
 
-              <div className="mb-6">
-                <CharitySelector
-                  charityName={charityData.charityName}
-                  charityPercentage={charityData.charityPercentage}
-                  onCharityChange={(name, percentage) => setCharityData({ charityName: name, charityPercentage: percentage })}
-                />
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Charity Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={charityData.charityName}
+                    onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
+                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Red Cross, St. Jude's, etc."
+                  />
+                </div>
+
+                {charityData.charityName && (
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">
+                      Donation Percentage (5-100%)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="5"
+                        max="100"
+                        value={charityData.charityPercentage}
+                        onChange={(e) => setCharityData({ ...charityData, charityPercentage: parseInt(e.target.value) || 5 })}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value) || 5;
+                          const clamped = Math.max(5, Math.min(100, val));
+                          setCharityData({ ...charityData, charityPercentage: clamped });
+                        }}
+                        className="w-24 px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-white text-lg">%</span>
+                      <span className="text-sm text-gray-400 ml-2">of each order goes to charity</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button
