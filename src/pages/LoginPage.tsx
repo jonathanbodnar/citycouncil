@@ -52,7 +52,7 @@ const LoginPage: React.FC = () => {
         console.log('Factors:', { factors, factorsError });
         
         // Check for any verified factor (TOTP or Phone)
-        let factorId = null;
+        let factorId: string | null = null;
         
         if (factors?.totp && factors.totp.length > 0) {
           const verifiedTotp = factors.totp.find((f: any) => f.status === 'verified');
