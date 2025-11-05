@@ -206,6 +206,17 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
           // If no talent profile exists, create one
           setUserId(signInData.user.id);
+          
+          // Update user_type to 'talent' in public.users
+          const { error: updateUserError } = await supabase
+            .from('users')
+            .update({ user_type: 'talent' })
+            .eq('id', signInData.user.id);
+
+          if (updateUserError) {
+            console.error('Failed to update user_type:', updateUserError);
+          }
+
           const { data: talentData, error: talentError } = await supabase
             .from('talent_profiles')
             .insert({
@@ -238,6 +249,17 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
       if (!authData.user) throw new Error('Failed to create user account');
       setUserId(authData.user.id);
+
+      // Update user_type to 'talent' in public.users
+      const { error: updateUserError } = await supabase
+        .from('users')
+        .update({ user_type: 'talent' })
+        .eq('id', authData.user.id);
+
+      if (updateUserError) {
+        console.error('Failed to update user_type:', updateUserError);
+        // Don't throw, continue with talent profile creation
+      }
 
       // Create talent profile
       const { data: talentData, error: talentError } = await supabase
