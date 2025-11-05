@@ -10,7 +10,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import ImageUpload from '../components/ImageUpload';
-import CategorySelector from '../components/CategorySelector';
 import CharitySelector from '../components/CharitySelector';
 import { TalentCategory } from '../types';
 import { uploadVideoToWasabi } from '../services/videoUpload';
@@ -486,10 +485,32 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   <label className="block text-sm font-medium text-white mb-2">
                     Category *
                   </label>
-                  <CategorySelector
-                    selectedCategory={profileData.category}
-                    onCategoryChange={(category) => setProfileData({ ...profileData, category })}
-                  />
+                  <select
+                    required
+                    value={profileData.category}
+                    onChange={(e) => setProfileData({ ...profileData, category: e.target.value as TalentCategory })}
+                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a category...</option>
+                    <option value="politician">Politician</option>
+                    <option value="candidate">Candidate</option>
+                    <option value="party-leader">Party Leader</option>
+                    <option value="reporter">Reporter</option>
+                    <option value="tv-host">TV/Radio Host</option>
+                    <option value="commentator">Commentator</option>
+                    <option value="author">Author/Speaker</option>
+                    <option value="comedian">Comedian</option>
+                    <option value="musician">Musician</option>
+                    <option value="actor">Actor</option>
+                    <option value="influencer">Influencer</option>
+                    <option value="activist">Activist</option>
+                    <option value="faith-leader">Faith Leader</option>
+                    <option value="academic">Academic</option>
+                    <option value="military">Military/Veteran</option>
+                    <option value="youth-leader">Youth Leader</option>
+                    <option value="patriotic-entertainer">Patriotic Entertainer</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
 
                 {/* Position/Title */}
