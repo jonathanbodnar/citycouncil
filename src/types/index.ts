@@ -37,6 +37,7 @@ export interface TalentProfile {
   is_featured: boolean;
   featured_order?: number | null; // Order position in featured carousel (1 = first, 2 = second, etc.)
   admin_fee_percentage?: number;
+  first_orders_promo_active?: boolean; // 0% admin fee for first 10 orders
   social_accounts: SocialAccount[];
   payout_details?: StripeConnectAccount;
   fortis_vendor_id?: string; // Fortis vendor ID for payouts

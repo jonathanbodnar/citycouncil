@@ -116,14 +116,26 @@ const OrderPage: React.FC = () => {
       
     
     const subtotal = basePrice;
-    const adminFeePercentage = talent.admin_fee_percentage || parseInt(process.env.REACT_APP_ADMIN_FEE_PERCENTAGE || '15');
+    
+    // Check if talent is in promotional period (first 10 orders get 0% admin fee)
+    const isPromoActive = talent.first_orders_promo_active === true && (talent.fulfilled_orders || 0) < 10;
+    
+    let adminFeePercentage = 0;
+    if (isPromoActive) {
+      // First 10 orders: 0% admin fee
+      adminFeePercentage = 0;
+    } else {
+      // After 10 orders: use configured or default admin fee
+      adminFeePercentage = talent.admin_fee_percentage || parseInt(process.env.REACT_APP_ADMIN_FEE_PERCENTAGE || '25');
+    }
+    
     const adminFee = subtotal * (adminFeePercentage / 100);
     const charityAmount = talent.charity_percentage 
       ? subtotal * (talent.charity_percentage / 100) 
       : 0;
     const total = subtotal + adminFee;
 
-    return { subtotal, adminFee, charityAmount, total };
+    return { subtotal, adminFee, charityAmount, total, isPromoActive };
   };
 
   const [showPayment, setShowPayment] = useState(false);
@@ -725,8 +737,17 @@ const OrderPage: React.FC = () => {
                 <span className="font-medium">${pricing.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Service Fee</span>
-                <span className="font-medium">${pricing.adminFee.toFixed(2)}</span>
+                <span className="text-gray-600">
+                  Service Fee
+                  {pricing.isPromoActive && (
+                    <span className="ml-2 text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded">
+                      FIRST 10 ORDERS FREE!
+                    </span>
+                  )}
+                </span>
+                <span className={`font-medium ${pricing.isPromoActive ? 'text-green-600 line-through' : ''}`}>
+                  ${pricing.adminFee.toFixed(2)}
+                </span>
               </div>
               {pricing.charityAmount > 0 && (
                 <div className="flex justify-between text-red-600">

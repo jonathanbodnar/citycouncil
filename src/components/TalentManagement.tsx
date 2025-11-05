@@ -907,12 +907,20 @@ const TalentManagement: React.FC = () => {
                         {getStatusBadge(talent)}
                       </div>
                       
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1 flex-wrap">
                         <span>@{talent.username}</span>
                         <span>•</span>
                         <span>${talent.pricing}</span>
                         <span>•</span>
                         <span>{talent.category.replace('-', ' ')}</span>
+                        {talent.first_orders_promo_active && talent.fulfilled_orders < 10 && (
+                          <>
+                            <span>•</span>
+                            <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                              0% FEE ({talent.fulfilled_orders}/10 orders)
+                            </span>
+                          </>
+                        )}
                       </div>
                       
                       {talent.bio && (
