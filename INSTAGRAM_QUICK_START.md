@@ -36,9 +36,9 @@ supabase functions deploy instagram-tracker
 ### **Step 3: Add Secrets (1 minute)**
 
 ```bash
-supabase secrets set INSTAGRAM_APP_ID=1169941761684216
-supabase secrets set INSTAGRAM_APP_SECRET=9ae2d6081c396315fe052ab07afdd534
-supabase secrets set INSTAGRAM_REDIRECT_URI=https://shoutout.us/instagram/callback
+supabase secrets set INSTAGRAM_APP_ID=your_instagram_app_id
+supabase secrets set INSTAGRAM_APP_SECRET=your_instagram_app_secret
+supabase secrets set INSTAGRAM_REDIRECT_URI=https://yourdomain.com/instagram/callback
 ```
 
 ---

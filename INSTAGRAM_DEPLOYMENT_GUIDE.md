@@ -57,9 +57,9 @@ In Supabase Dashboard → Edge Functions → Secrets:
 
 **Required Secrets:**
 ```
-INSTAGRAM_APP_ID=1169941761684216
-INSTAGRAM_APP_SECRET=9ae2d6081c396315fe052ab07afdd534
-INSTAGRAM_REDIRECT_URI=https://shoutout.us/instagram/callback
+INSTAGRAM_APP_ID=your_instagram_app_id
+INSTAGRAM_APP_SECRET=your_instagram_app_secret
+INSTAGRAM_REDIRECT_URI=https://yourdomain.com/instagram/callback
 ```
 
 **For local development:**
