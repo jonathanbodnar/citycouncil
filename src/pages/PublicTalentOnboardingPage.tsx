@@ -77,7 +77,34 @@ const PublicTalentOnboardingPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Create auth user
+      // Check if user already exists and has a talent profile
+      const { data: existingSession } = await supabase.auth.getSession();
+      
+      if (existingSession?.session?.user) {
+        // User is already logged in, check for existing talent profile
+        const { data: existingProfile, error: profileCheckError } = await supabase
+          .from('talent_profiles')
+          .select('id, onboarding_completed')
+          .eq('user_id', existingSession.session.user.id)
+          .single();
+
+        if (existingProfile) {
+          setUserId(existingSession.session.user.id);
+          setTalentProfileId(existingProfile.id);
+          
+          if (existingProfile.onboarding_completed) {
+            toast.success('Welcome back! Redirecting to dashboard...');
+            navigate('/talent-dashboard');
+            return;
+          } else {
+            toast.success('Continuing onboarding...');
+            setCurrentStep(2);
+            return;
+          }
+        }
+      }
+
+      // Try to create new account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: accountData.email,
         password: accountData.password,
@@ -88,9 +115,77 @@ const PublicTalentOnboardingPage: React.FC = () => {
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user account');
+      // Handle "User already registered" error
+      if (authError) {
+        if (authError.message?.includes('User already registered')) {
+          // Try to sign in instead
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: accountData.email,
+            password: accountData.password,
+          });
 
+          if (signInError) {
+            toast.error('Account exists. Please use the correct password or reset it.');
+            return;
+          }
+
+          if (!signInData.user) throw new Error('Failed to sign in');
+
+          // Check for existing talent profile
+          const { data: existingProfile, error: profileCheckError } = await supabase
+            .from('talent_profiles')
+            .select('id, onboarding_completed')
+            .eq('user_id', signInData.user.id)
+            .single();
+
+          if (existingProfile) {
+            setUserId(signInData.user.id);
+            setTalentProfileId(existingProfile.id);
+            
+            if (existingProfile.onboarding_completed) {
+              toast.success('Welcome back! Redirecting to dashboard...');
+              navigate('/talent-dashboard');
+              return;
+            } else {
+              toast.success('Continuing onboarding...');
+              setCurrentStep(2);
+              return;
+            }
+          }
+
+          // If no talent profile exists, create one
+          setUserId(signInData.user.id);
+          const { data: talentData, error: talentError } = await supabase
+            .from('talent_profiles')
+            .insert({
+              user_id: signInData.user.id,
+              category: 'other',
+              bio: '',
+              pricing: 50,
+              fulfillment_time_hours: 72,
+              is_featured: false,
+              is_active: false,
+              total_orders: 0,
+              fulfilled_orders: 0,
+              average_rating: 0,
+              admin_fee_percentage: 25,
+              first_orders_promo_active: true,
+              onboarding_completed: false,
+            })
+            .select()
+            .single();
+
+          if (talentError) throw talentError;
+          setTalentProfileId(talentData.id);
+          toast.success('Continuing onboarding...');
+          setCurrentStep(2);
+          return;
+        }
+        
+        throw authError;
+      }
+
+      if (!authData.user) throw new Error('Failed to create user account');
       setUserId(authData.user.id);
 
       // Create talent profile
