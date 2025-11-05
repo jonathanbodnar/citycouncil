@@ -1,28 +1,40 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
-import HomePage from './pages/HomePage';
-import ComingSoonPage from './pages/ComingSoonPage';
-import TalentProfilePage from './pages/TalentProfilePage';
-import TalentOnboardingPage from './pages/TalentOnboardingPage';
-import PublicTalentOnboardingPage from './pages/PublicTalentOnboardingPage';
-import OrderPage from './pages/OrderPage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import AdminDashboard from './pages/AdminDashboard';
-import SeedDataPage from './pages/SeedDataPage';
-import NotificationsPage from './pages/NotificationsPage';
-import HelpPage from './pages/HelpPage';
-import ReviewPage from './pages/ReviewPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsOfServicePage from './pages/TermsOfServicePage';
-import EmailTestPage from './pages/EmailTestPage';
-import InstagramCallbackPage from './pages/InstagramCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+      <p className="text-gray-400">Loading...</p>
+    </div>
+  </div>
+);
+
+// Lazy load all pages for code splitting
+const HomePage = lazy(() => import('./pages/HomePage'));
+const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
+const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'));
+const TalentOnboardingPage = lazy(() => import('./pages/TalentOnboardingPage'));
+const PublicTalentOnboardingPage = lazy(() => import('./pages/PublicTalentOnboardingPage'));
+const OrderPage = lazy(() => import('./pages/OrderPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const SeedDataPage = lazy(() => import('./pages/SeedDataPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const HelpPage = lazy(() => import('./pages/HelpPage'));
+const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
+const EmailTestPage = lazy(() => import('./pages/EmailTestPage'));
+const InstagramCallbackPage = lazy(() => import('./pages/InstagramCallbackPage'));
 
 function App() {
   return (
@@ -37,7 +49,8 @@ function App() {
               },
             }}
           />
-          <Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             {/* Coming Soon page without layout */}
             <Route index element={<ComingSoonPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -88,6 +101,7 @@ function App() {
               } />
             </Route>
           </Routes>
+          </Suspense>
         </div>
       </Router>
     </AuthProvider>
