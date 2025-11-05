@@ -148,7 +148,7 @@ export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): { succes
   }
   
   const errors: Record<string, string> = {};
-  result.error.errors.forEach(err => {
+  result.error.issues.forEach(err => {
     const path = err.path.join('.');
     errors[path] = err.message;
   });
