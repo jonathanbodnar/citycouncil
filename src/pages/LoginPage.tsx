@@ -21,7 +21,8 @@ const LoginPage: React.FC = () => {
   const [mfaFactorId, setMfaFactorId] = useState('');
   const { user, signIn } = useAuth();
 
-  if (user) {
+  // Don't redirect if MFA verification is in progress
+  if (user && !showMFAVerification) {
     return <Navigate to={returnTo} replace />;
   }
 
