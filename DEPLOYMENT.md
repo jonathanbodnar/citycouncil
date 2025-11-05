@@ -17,9 +17,9 @@
 Add these environment variables in Railway dashboard:
 
 ```env
-# Supabase (Already configured)
-REACT_APP_SUPABASE_URL=https://utafetamgwukkbrlezev.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+# Supabase
+REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-anon-key-here
 
 # App Configuration
 REACT_APP_ADMIN_FEE_PERCENTAGE=15

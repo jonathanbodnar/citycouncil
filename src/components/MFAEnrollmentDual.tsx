@@ -92,12 +92,18 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
       }
     } catch (error: any) {
       console.error('MFA phone enrollment error:', error);
-      if (error.message?.includes('Phone')) {
-        toast.error('SMS MFA is not enabled. Please contact support or use authenticator app.');
+      if (error.message?.includes('Phone') || error.message?.includes('not enabled') || error.message?.includes('SMS')) {
+        toast.error('SMS MFA requires Twilio setup ($75/mo). Please use Authenticator App instead.', {
+          duration: 5000
+        });
+        // Auto-redirect back to method selection
+        setTimeout(() => {
+          setStep('method-select');
+        }, 2000);
       } else {
-        toast.error('Failed to start phone enrollment');
+        toast.error(`Failed to start phone enrollment: ${error.message}`);
       }
-    } finally {
+    } finally{
       setLoading(false);
     }
   };
@@ -217,16 +223,19 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
                 setStep('phone-entry');
               }}
               disabled={loading}
-              className="w-full p-4 border-2 border-gray-700 hover:border-blue-500 rounded-lg transition-colors text-left group"
+              className="w-full p-4 border-2 border-gray-700 hover:border-blue-500 rounded-lg transition-colors text-left group relative"
             >
               <div className="flex items-center">
                 <div className="flex-shrink-0 h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
                   <DevicePhoneMobileIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-4 flex-1">
-                  <div className="text-white font-semibold mb-1">Text Message (SMS)</div>
+                  <div className="text-white font-semibold mb-1 flex items-center gap-2">
+                    Text Message (SMS)
+                    <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">Requires Setup</span>
+                  </div>
                   <div className="text-gray-400 text-sm">
-                    Receive codes via text message
+                    Receive codes via text message (Twilio required)
                   </div>
                 </div>
               </div>

@@ -16,7 +16,6 @@ import {
   ShareIcon
 } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
-import { bankEncryption } from '../services/encryption';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import { TalentOnboardingData, TalentCategory } from '../types';
 import Logo from '../components/Logo';
@@ -212,23 +211,7 @@ const TalentOnboardingPage: React.FC = () => {
       // Set charity donation toggle based on existing data
       setDonateProceeds(data.charity_percentage > 0 && data.charity_name);
 
-      // Load existing bank info if available
-      const { data: bankData, error: bankError } = await supabase
-        .from('vendor_bank_info')
-        .select('*')
-        .eq('talent_id', data.id)
-        .single();
-
-      if (!bankError && bankData) {
-        console.log('Loaded existing bank info');
-        setPayoutData({
-          account_holder_name: bankData.account_holder_name || '',
-          bank_name: bankData.bank_name || '',
-          account_number: bankData.account_number_masked || '',
-          routing_number: bankData.routing_number_masked || '',
-          account_type: bankData.account_type || 'checking'
-        });
-      }
+      // Bank info now handled by Moov/Plaid - no need to load vendor_bank_info
 
     } catch (error) {
       console.error('Error fetching onboarding data:', error);

@@ -49,6 +49,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
   });
 
   // Step 3: Charity (optional)
+  const [donateToCharity, setDonateToCharity] = useState(false);
   const [charityData, setCharityData] = useState({
     charityName: '',
     charityPercentage: 5,
@@ -374,8 +375,8 @@ const PublicTalentOnboardingPage: React.FC = () => {
       const { error } = await supabase
         .from('talent_profiles')
         .update({
-          charity_name: charityData.charityName || null,
-          charity_percentage: charityData.charityName ? charityData.charityPercentage : 0,
+          charity_name: donateToCharity && charityData.charityName ? charityData.charityName : null,
+          charity_percentage: donateToCharity && charityData.charityName ? charityData.charityPercentage : 0,
         })
         .eq('id', talentProfileId);
 
@@ -790,41 +791,76 @@ const PublicTalentOnboardingPage: React.FC = () => {
                 You will be able to add payout details in your dashboard shortly after onboarding. Thank you!
               </p>
 
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Charity Name (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={charityData.charityName}
-                    onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Red Cross, St. Jude's, etc."
-                  />
+              {/* Charity Toggle */}
+              <div className="glass-strong rounded-2xl p-6 mb-6 border border-white/30">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">Donate to Charity</h3>
+                    <p className="text-sm text-gray-300">Donate a percentage of your earnings to charity</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDonateToCharity(!donateToCharity);
+                      if (!donateToCharity) {
+                        // Reset charity data when turning off
+                        setCharityData({ charityName: '', charityPercentage: 5 });
+                      }
+                    }}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      donateToCharity ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                        donateToCharity ? 'translate-x-7' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
 
-                {charityData.charityName && (
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Donation Percentage (5-100%)
-                    </label>
-                    <div className="flex items-center gap-2">
+                {/* Show charity fields when toggle is ON */}
+                {donateToCharity && (
+                  <div className="space-y-4 mt-6 pt-6 border-t border-white/20">
+                    <div>
+                      <label className="block text-sm font-medium text-white mb-2">
+                        Charity Name *
+                      </label>
                       <input
-                        type="number"
-                        min="5"
-                        max="100"
-                        value={charityData.charityPercentage}
-                        onChange={(e) => setCharityData({ ...charityData, charityPercentage: parseInt(e.target.value) || 5 })}
-                        onBlur={(e) => {
-                          const val = parseInt(e.target.value) || 5;
-                          const clamped = Math.max(5, Math.min(100, val));
-                          setCharityData({ ...charityData, charityPercentage: clamped });
-                        }}
-                        className="w-24 px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        type="text"
+                        required={donateToCharity}
+                        value={charityData.charityName}
+                        onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
+                        className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Red Cross, St. Jude's, etc."
                       />
-                      <span className="text-white text-lg">%</span>
-                      <span className="text-sm text-gray-400 ml-2">of each order goes to charity</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-white mb-2">
+                        Donation Percentage (5-100%) *
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          required={donateToCharity}
+                          min="5"
+                          max="100"
+                          value={charityData.charityPercentage}
+                          onChange={(e) => setCharityData({ ...charityData, charityPercentage: parseInt(e.target.value) || 5 })}
+                          onBlur={(e) => {
+                            const val = parseInt(e.target.value) || 5;
+                            const clamped = Math.max(5, Math.min(100, val));
+                            setCharityData({ ...charityData, charityPercentage: clamped });
+                          }}
+                          className="w-32 px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="text-white text-lg font-semibold">%</span>
+                        <span className="text-sm text-gray-300">of each order goes to charity</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Example: 10% of a $100 order = $10 donated to charity
+                      </p>
                     </div>
                   </div>
                 )}
@@ -845,26 +881,96 @@ const PublicTalentOnboardingPage: React.FC = () => {
             <form onSubmit={handleStep4Submit}>
               <h2 className="text-2xl font-bold text-white mb-6">Upload Your Promo Video</h2>
               
-              <p className="text-gray-300 mb-6">
-                Upload a short video introducing yourself and what people can expect from their ShoutOut!
-              </p>
+              <div className="glass-strong rounded-2xl p-6 mb-6 border border-white/30">
+                <div className="text-center mb-6">
+                  <VideoCameraIcon className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    Record Your Promo Video
+                  </h3>
+                  <p className="text-gray-300">
+                    Create a 30-60 second introduction video to welcome potential customers
+                  </p>
+                </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-white mb-2">
-                  Promo Video * (MP4, max 300MB)
-                </label>
-                <input
-                  type="file"
-                  accept="video/*"
-                  required
-                  onChange={(e) => setPromoVideo(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
-                />
+                {/* Script Template */}
+                <div className="glass border border-white/20 rounded-xl p-4 mb-6">
+                  <h4 className="font-semibold text-white mb-3">
+                    Script Template
+                  </h4>
+                  <div className="text-sm text-gray-300 space-y-2">
+                    <p className="text-white"><strong>Opening:</strong> "Hi! I'm [Your Name]..."</p>
+                    <p className="text-white"><strong>Introduction:</strong> "[Brief description of who you are - Former Fox News host, Political commentator, etc.]"</p>
+                    <p className="text-white"><strong>Service:</strong> "I'm now on ShoutOut where you can order a personalized video from me for any occasion you're looking for..."</p>
+                    <p className="text-white"><strong>Personal Touch:</strong> "[Add your own spin - mention what makes your videos special]"</p>
+                    <p className="text-white"><strong>Closing:</strong> "Find me on ShoutOut!"</p>
+                  </div>
+                </div>
+
+                {/* Recording Tips */}
+                <div className="glass border border-white/20 rounded-xl p-4 mb-6">
+                  <h4 className="font-semibold text-white mb-3">
+                    Recording Tips
+                  </h4>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li>• Record in good lighting (natural light works best)</li>
+                    <li>• Ensure clear audio (avoid background noise)</li>
+                    <li>• Look directly at the camera</li>
+                    <li>• Speak clearly and with enthusiasm</li>
+                    <li>• Keep it between 30-60 seconds</li>
+                    <li>• Be authentic and show your personality!</li>
+                  </ul>
+                </div>
+
+                {/* Video Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Upload Promo Video *
+                  </label>
+                  <input
+                    type="file"
+                    id="promo-video-upload"
+                    accept="video/*"
+                    required
+                    onChange={(e) => setPromoVideo(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="promo-video-upload"
+                    className="flex items-center justify-center gap-2 glass-strong hover:glass border border-white/30 rounded-2xl px-6 py-4 cursor-pointer transition-all duration-300 hover:shadow-modern"
+                  >
+                    <VideoCameraIcon className="h-5 w-5 text-white" />
+                    <span className="font-medium text-white">
+                      {promoVideo ? promoVideo.name : 'Choose Video File'}
+                    </span>
+                  </label>
+                  <p className="mt-2 text-sm text-gray-400 text-center">
+                    Supported formats: MP4, MOV, AVI • Max size: 300MB
+                  </p>
+
+                  {/* Video Preview */}
+                  {promoVideo && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-white mb-2">
+                        Video Preview
+                      </label>
+                      <div className="relative rounded-xl overflow-hidden bg-gray-900 max-w-md mx-auto">
+                        <video
+                          src={URL.createObjectURL(promoVideo)}
+                          controls
+                          className="w-full h-auto"
+                          style={{ maxHeight: '300px' }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <button
                 type="submit"
-                disabled={videoUploading}
+                disabled={!promoVideo || videoUploading}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {videoUploading ? 'Uploading Video...' : 'Continue to Security Setup'}

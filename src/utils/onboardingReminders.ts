@@ -43,17 +43,11 @@ export const sendOnboardingReminders = async () => {
       if (talent.user_id) currentStep = 2; // Account created
       if (talent.bio && talent.pricing) currentStep = 3; // Profile complete
       
-      // Check if bank info exists
-      const { data: bankInfo } = await supabase
-        .from('vendor_bank_info')
-        .select('id')
-        .eq('talent_id', talent.id)
-        .single();
-      
-      if (bankInfo) currentStep = 4; // Bank info added
+      // Bank info now handled by Moov/Plaid - skip bank check
+      currentStep = 4; // Assume bank step complete (handled externally)
 
       // Only send if they haven't completed all steps
-      if (currentStep < 4 || !talent.onboarding_completed) {
+      if (!talent.onboarding_completed) {
         const accountCreatedAt = new Date(user.created_at);
         const daysSinceStart = Math.floor((Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
 

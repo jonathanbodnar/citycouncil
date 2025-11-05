@@ -6,6 +6,8 @@ declare const Deno: any;
 // Expects JSON body: { amount_cents: number }
 // Returns: { clientToken, locationId, amount, orderReference, environment }
 
+import { withRateLimit, RateLimitPresets } from '../_shared/rateLimiter.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -47,7 +49,7 @@ function randomOrderReference() {
   return `ORDER-${uuid}`;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withRateLimit(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -107,6 +109,6 @@ Deno.serve(async (req) => {
       status: 500,
     });
   }
-});
+}, RateLimitPresets.PAYMENT, { keyPrefix: 'payment' }));
 
 

@@ -1,9 +1,35 @@
 const express = require('express');
 const path = require('path');
+const helmet = require('helmet');
 const prerender = require('prerender-node');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Security headers with Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://connect.facebook.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
+      frameSrc: ["'self'", "https://www.facebook.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Allow embedding for social media
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true,
+  },
+}));
+
+console.log('✅ Helmet security headers enabled');
 
 // Prerender.io middleware
 // Set your Prerender.io token as PRERENDER_TOKEN environment variable in Railway
