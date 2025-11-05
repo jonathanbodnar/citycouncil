@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MagnifyingGlassIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
+import { useAuth } from '../context/AuthContext';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
+import PromoPackageModal from '../components/PromoPackageModal';
 
 interface TalentWithUser extends TalentProfile {
   users: {
@@ -35,6 +37,7 @@ const TALENT_CATEGORIES = [
 ];
 
 const HomePage: React.FC = () => {
+  const { user } = useAuth();
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,12 +45,18 @@ const HomePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [isTalent, setIsTalent] = useState(false);
   const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchTalent();
     fetchFeaturedTalent();
   }, []);
+
+  useEffect(() => {
+    checkIfTalentAndShowModal();
+  }, [user]);
 
   const fetchTalent = async () => {
     try {
@@ -107,6 +116,37 @@ const HomePage: React.FC = () => {
       console.error('Error fetching talent:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkIfTalentAndShowModal = async () => {
+    if (!user?.id) return;
+
+    // Check if user has already seen the modal in this session
+    const hasSeenModal = localStorage.getItem(`promo-modal-seen-${user.id}`);
+    if (hasSeenModal) return;
+
+    try {
+      // Check if user is talent
+      const { data, error } = await supabase
+        .from('talent_profiles')
+        .select('is_participating_in_promotion')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        // Not a talent user, don't show modal
+        return;
+      }
+
+      setIsTalent(true);
+
+      // If talent and hasn't claimed promo yet, show modal
+      if (!data.is_participating_in_promotion) {
+        setShowPromoModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking talent status:', error);
     }
   };
 
@@ -281,6 +321,11 @@ const HomePage: React.FC = () => {
             <div ref={onboardingContainerRef} />
           </div>
         </div>
+      )}
+
+      {/* Promo Package Modal */}
+      {showPromoModal && isTalent && (
+        <PromoPackageModal onClose={() => setShowPromoModal(false)} />
       )}
 
     </div>
