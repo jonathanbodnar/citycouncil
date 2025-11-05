@@ -129,11 +129,14 @@ const OrderPage: React.FC = () => {
       adminFeePercentage = talent.admin_fee_percentage || parseInt(process.env.REACT_APP_ADMIN_FEE_PERCENTAGE || '25');
     }
     
+    // Admin fee is deducted from talent earnings, NOT added to customer total
     const adminFee = subtotal * (adminFeePercentage / 100);
     const charityAmount = talent.charity_percentage 
       ? subtotal * (talent.charity_percentage / 100) 
       : 0;
-    const total = subtotal + adminFee;
+    
+    // Customer total is just the subtotal (admin fee comes out of talent's earnings)
+    const total = subtotal;
 
     return { subtotal, adminFee, charityAmount, total, isPromoActive };
   };
@@ -735,19 +738,6 @@ const OrderPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">ShoutOut Price</span>
                 <span className="font-medium">${pricing.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">
-                  Service Fee
-                  {pricing.isPromoActive && (
-                    <span className="ml-2 text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded">
-                      FIRST 10 ORDERS FREE!
-                    </span>
-                  )}
-                </span>
-                <span className={`font-medium ${pricing.isPromoActive ? 'text-green-600 line-through' : ''}`}>
-                  ${pricing.adminFee.toFixed(2)}
-                </span>
               </div>
               {pricing.charityAmount > 0 && (
                 <div className="flex justify-between text-red-600">
