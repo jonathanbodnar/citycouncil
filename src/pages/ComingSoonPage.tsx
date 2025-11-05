@@ -123,6 +123,17 @@ const ComingSoonPage: React.FC = () => {
         await fetchSpotsRemaining();
         console.log('✅ Spots count refreshed');
         
+        // Track Meta Pixel Lead event
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+          console.log('📊 Tracking Meta Pixel Lead event');
+          (window as any).fbq('track', 'Lead', {
+            content_name: 'Beta Waitlist Signup',
+            content_category: 'Landing Page',
+            value: 0.00,
+            currency: 'USD'
+          });
+        }
+        
         setSubmitted(true);
         setEmail('');
       }
