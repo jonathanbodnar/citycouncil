@@ -189,7 +189,7 @@ const PromoPackageModal: React.FC<PromoPackageModalProps> = ({ onClose }) => {
                     <ul className="space-y-1 ml-4">
                       <li className="flex items-start gap-2">
                         <span className="text-blue-400 mt-0.5">→</span>
-                        <span>Add ShoutOut link to your social media bios</span>
+                        <span>Add your ShoutOut link to your social media bios</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-blue-400 mt-0.5">→</span>
