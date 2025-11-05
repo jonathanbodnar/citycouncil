@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import ImageUpload from '../components/ImageUpload';
+import Logo from '../components/Logo';
 import { TalentCategory } from '../types';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
@@ -19,6 +20,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
 
   // Step 1: Account Creation
   const [accountData, setAccountData] = useState({
@@ -26,6 +28,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
+  });
+  const [signInData, setSignInData] = useState({
+    email: '',
+    password: '',
   });
   const [userId, setUserId] = useState<string | null>(null);
   const [talentProfileId, setTalentProfileId] = useState<string | null>(null);
@@ -59,6 +65,51 @@ const PublicTalentOnboardingPage: React.FC = () => {
     { number: 4, title: 'Promo Video', icon: VideoCameraIcon },
     { number: 5, title: 'Security (MFA)', icon: ShieldCheckIcon },
   ];
+
+  // Sign In Handler (for returning users)
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data: signInResult, error: signInError } = await supabase.auth.signInWithPassword({
+        email: signInData.email,
+        password: signInData.password,
+      });
+
+      if (signInError) throw signInError;
+      if (!signInResult.user) throw new Error('Failed to sign in');
+
+      // Check for existing talent profile
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from('talent_profiles')
+        .select('id, onboarding_completed')
+        .eq('user_id', signInResult.user.id)
+        .single();
+
+      if (!existingProfile) {
+        toast.error('No talent profile found. Please create a new account.');
+        return;
+      }
+
+      setUserId(signInResult.user.id);
+      setTalentProfileId(existingProfile.id);
+
+      if (existingProfile.onboarding_completed) {
+        toast.success('Welcome back! Redirecting to dashboard...');
+        navigate('/dashboard');
+        return;
+      }
+
+      toast.success('Welcome back! Continuing your onboarding...');
+      setCurrentStep(2);
+    } catch (error: any) {
+      console.error('Error signing in:', error);
+      toast.error(error.message || 'Failed to sign in');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Step 1: Create Account
   const handleStep1Submit = async (e: React.FormEvent) => {
@@ -406,6 +457,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <Logo size="lg" theme="dark" />
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
