@@ -120,9 +120,11 @@ Click **"Save"** or **"Deploy"**
 4. Add these secrets:
 
 ```
-MAILGUN_API_KEY = REDACTED_MAILGUN_KEY
+MAILGUN_API_KEY = your_mailgun_api_key_here
 MAILGUN_DOMAIN = mail.shoutout.us
 ```
+
+**⚠️ IMPORTANT**: Never commit actual API keys to the repository. Get the real API key from Mailgun dashboard.
 
 ---
 
