@@ -453,8 +453,8 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   </label>
                   <ImageUpload
                     currentImageUrl={profileData.avatarUrl}
-                    onUploadComplete={(url) => setProfileData({ ...profileData, avatarUrl: url })}
-                    folder="avatars"
+                    onImageUploaded={(url) => setProfileData({ ...profileData, avatarUrl: url })}
+                    uploadPath="talent-avatars"
                   />
                 </div>
 
