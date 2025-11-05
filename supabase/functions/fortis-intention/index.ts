@@ -13,10 +13,10 @@ const corsHeaders = {
 };
 
 const baseUrl = 'https://api.fortis.tech/v1';
-const developerId = 'sfcRK525';
-const userId = '31f0ab8e8c8e1b708956086b';
-const userApiKey = '11f0b9ad16fa333aaa494a9d';
-const locationId = Deno.env.get('FORTIS_LOCATION_ID') ?? '31f0ab8e84aa406ea1df55d2';
+const developerId = Deno.env.get('FORTIS_DEVELOPER_ID');
+const userId = Deno.env.get('FORTIS_USER_ID');
+const userApiKey = Deno.env.get('FORTIS_USER_API_KEY');
+const locationId = Deno.env.get('FORTIS_LOCATION_ID');
 
 async function fortisFetch(path: string, init?: RequestInit) {
   const res = await fetch(`${baseUrl}${path}`, {

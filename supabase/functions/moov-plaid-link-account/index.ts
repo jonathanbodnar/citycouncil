@@ -5,13 +5,14 @@ import { PlaidApi, Configuration, PlaidEnvironments } from 'npm:plaid'
 // @ts-ignore - Deno npm import
 import { Moov } from 'npm:@moovio/sdk'
 
-const PLAID_CLIENT_ID = '690a0403d4073e001d79578f'
 // @ts-ignore
-const PLAID_SECRET = 'f173024af98b655280539e90ad49c5'
+const PLAID_CLIENT_ID = (globalThis as any).Deno?.env.get('PLAID_CLIENT_ID')
 // @ts-ignore
-const MOOV_PUBLIC_KEY = 'rEvCk_pOVqe5Pi73'
+const PLAID_SECRET = (globalThis as any).Deno?.env.get('PLAID_SECRET')
 // @ts-ignore
-const MOOV_SECRET_KEY = 'odUP-ZAPFaA1WMZqSh6ioi4qEeJBvn-z'
+const MOOV_PUBLIC_KEY = (globalThis as any).Deno?.env.get('MOOV_PUBLIC_KEY')
+// @ts-ignore
+const MOOV_SECRET_KEY = (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY')
 const MOOV_VERSION = 'v2024.01.00'
 
 const plaidConfig = new Configuration({

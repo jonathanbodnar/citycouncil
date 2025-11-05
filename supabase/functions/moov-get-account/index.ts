@@ -3,8 +3,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 // @ts-ignore - Deno npm import is resolved at runtime in Edge Functions
 import { Moov } from 'npm:@moovio/sdk'
 
-const MOOV_PUBLIC_KEY = 'rEvCk_pOVqe5Pi73'
-const MOOV_SECRET_KEY = 'odUP-ZAPFaA1WMZqSh6ioi4qEeJBvn-z'
+// @ts-ignore - available at runtime in Edge Functions
+const MOOV_PUBLIC_KEY = (globalThis as any).Deno?.env.get('MOOV_PUBLIC_KEY')
+// @ts-ignore - available at runtime in Edge Functions
+const MOOV_SECRET_KEY = (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY')
 const MOOV_VERSION = 'v2024.01.00'
 
 const corsHeaders = {

@@ -4,9 +4,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { PlaidApi, Configuration, PlaidEnvironments } from 'npm:plaid'
 
 // Load secrets (should be set via Supabase Dashboard or CLI)
-const PLAID_CLIENT_ID = '690a0403d4073e001d79578f'
 // @ts-ignore
-const PLAID_SECRET = 'f173024af98b655280539e90ad49c5'
+const PLAID_CLIENT_ID = (globalThis as any).Deno?.env.get('PLAID_CLIENT_ID')
+// @ts-ignore
+const PLAID_SECRET = (globalThis as any).Deno?.env.get('PLAID_SECRET')
 
 const config = new Configuration({
   basePath: PlaidEnvironments.sandbox,

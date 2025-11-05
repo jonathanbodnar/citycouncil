@@ -6,12 +6,9 @@ import { Moov } from 'npm:@moovio/sdk'
 
 // Moov Secrets
 // @ts-ignore
-const MOOV_PUBLIC_KEY =
-  (globalThis as any).Deno?.env.get('MOOV_PUBLIC_KEY') || 'rEvCk_pOVqe5Pi73'
+const MOOV_PUBLIC_KEY = (globalThis as any).Deno?.env.get('MOOV_PUBLIC_KEY')
 // @ts-ignore
-const MOOV_SECRET_KEY =
-  (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY') ||
-  'odUP-ZAPFaA1WMZqSh6ioi4qEeJBvn-z'
+const MOOV_SECRET_KEY = (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY')
 const MOOV_VERSION = 'v2024.01.00'
 
 const corsHeaders = {
