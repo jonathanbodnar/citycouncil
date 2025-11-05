@@ -24,6 +24,7 @@ import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
 import PayoutsDashboard from './PayoutsDashboard';
 import InstagramConnect from './InstagramConnect';
+import MFASettings from './MFASettings';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import { emailService } from '../services/emailService';
 import { notificationService } from '../services/notificationService';
@@ -1098,6 +1099,12 @@ const TalentDashboard: React.FC = () => {
                   }
                 }}
               />
+            </div>
+
+            {/* Security Settings - MFA */}
+            <div className="pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
+              <MFASettings />
             </div>
 
             <div className="pt-6">
