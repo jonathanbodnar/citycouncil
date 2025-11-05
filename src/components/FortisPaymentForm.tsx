@@ -132,7 +132,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       console.log('Creating Commerce iframe');
       elements.create({
         container: '#payment',
-        theme: 'default',
+        theme: 'dark',
         environment: 'production',
         view: 'default',
         language: 'en-us',
@@ -184,7 +184,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             id="payment"
             ref={iframeContainerRef}
             style={{
-              background: 'white',
+              background: '#11161f',
               padding: '30px',
               borderRadius: '8px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
