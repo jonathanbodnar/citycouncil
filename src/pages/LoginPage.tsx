@@ -42,18 +42,63 @@ const LoginPage: React.FC = () => {
       clearTimeout(timeout);
 
       // Check if MFA is required
-      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      console.log('AAL Check:', { aal, aalError });
       
       if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
+        console.log('MFA is required - fetching factors...');
         // MFA is required - get the factor ID
-        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+        console.log('Factors:', { factors, factorsError });
+        
+        // Check for any verified factor (TOTP or Phone)
+        let factorId = null;
         
         if (factors?.totp && factors.totp.length > 0) {
-          setMfaFactorId(factors.totp[0].id);
+          const verifiedTotp = factors.totp.find((f: any) => f.status === 'verified');
+          if (verifiedTotp) {
+            factorId = verifiedTotp.id;
+            console.log('Found verified TOTP factor:', factorId);
+          }
+        }
+        
+        if (!factorId && factors?.phone && factors.phone.length > 0) {
+          const verifiedPhone = factors.phone.find((f: any) => f.status === 'verified');
+          if (verifiedPhone) {
+            factorId = verifiedPhone.id;
+            console.log('Found verified Phone factor:', factorId);
+          }
+        }
+        
+        if (factorId) {
+          // For phone factors, we need to send the challenge (SMS) first
+          const isPhoneFactor = factors?.phone?.some((f: any) => f.id === factorId);
+          
+          if (isPhoneFactor) {
+            console.log('Sending SMS challenge...');
+            const { error: challengeError } = await supabase.auth.mfa.challenge({
+              factorId: factorId
+            });
+            
+            if (challengeError) {
+              console.error('Challenge error:', challengeError);
+              toast.error('Failed to send verification code');
+              setLoading(false);
+              return;
+            }
+            
+            toast.success('Verification code sent to your phone!');
+          }
+          
+          setMfaFactorId(factorId);
           setShowMFAVerification(true);
           setLoading(false);
           return;
+        } else {
+          console.warn('MFA required but no verified factors found');
         }
+      } else {
+        console.log('MFA not required - current level:', aal?.currentLevel, 'next level:', aal?.nextLevel);
       }
 
       toast.success('Welcome back! Redirecting...');
