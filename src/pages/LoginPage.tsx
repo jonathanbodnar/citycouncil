@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 import { supabase } from '../services/supabase';
+import MFAVerification from '../components/MFAVerification';
 
 const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +17,8 @@ const LoginPage: React.FC = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [showMFAVerification, setShowMFAVerification] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState('');
   const { user, signIn } = useAuth();
 
   if (user) {
@@ -37,6 +40,22 @@ const LoginPage: React.FC = () => {
       const result = await signIn(email, password);
       console.log('Sign in result:', result);
       clearTimeout(timeout);
+
+      // Check if MFA is required
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      
+      if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
+        // MFA is required - get the factor ID
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        
+        if (factors?.totp && factors.totp.length > 0) {
+          setMfaFactorId(factors.totp[0].id);
+          setShowMFAVerification(true);
+          setLoading(false);
+          return;
+        }
+      }
+
       toast.success('Welcome back! Redirecting...');
       // Navigate to returnTo URL after successful login
       setTimeout(() => {
@@ -48,6 +67,20 @@ const LoginPage: React.FC = () => {
       toast.error(error.message || 'Failed to sign in');
       setLoading(false); // Make sure to stop loading on error
     }
+  };
+
+  const handleMFASuccess = () => {
+    toast.success('Welcome back! Redirecting...');
+    setTimeout(() => {
+      navigate(returnTo);
+    }, 1000);
+  };
+
+  const handleMFACancel = () => {
+    setShowMFAVerification(false);
+    setMfaFactorId('');
+    // Sign out the partially authenticated session
+    supabase.auth.signOut();
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -98,6 +131,19 @@ const LoginPage: React.FC = () => {
       setResetLoading(false);
     }
   };
+
+  // Show MFA verification if required
+  if (showMFAVerification && mfaFactorId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <MFAVerification
+          factorId={mfaFactorId}
+          onSuccess={handleMFASuccess}
+          onCancel={handleMFACancel}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

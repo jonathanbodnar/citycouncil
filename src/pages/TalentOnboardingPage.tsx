@@ -24,6 +24,7 @@ import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
 import SecureBankInput from '../components/SecureBankInput';
 import SupportChatWidget from '../components/SupportChatWidget';
+import MFAEnrollment from '../components/MFAEnrollment';
 import toast from 'react-hot-toast';
 
 const TalentOnboardingPage: React.FC = () => {
@@ -578,42 +579,18 @@ const TalentOnboardingPage: React.FC = () => {
         }
       }
 
-      // Complete onboarding (with or without video)
+      // Update promo video (but don't complete onboarding yet)
       const { error: videoError } = await supabase
         .from('talent_profiles')
         .update({
-          promo_video_url: finalVideoUrl || null,
-          onboarding_completed: true,
-          is_active: true, // Activate talent when onboarding completes
-          onboarding_token: null,
-          onboarding_expires_at: null
+          promo_video_url: finalVideoUrl || null
         })
         .eq('id', onboardingData?.talent.id);
 
       if (videoError) throw videoError;
 
-      // Send admin notification email
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        await supabase.functions.invoke('onboarding-complete-notification', {
-          body: {
-            talentId: onboardingData?.talent.id,
-            talentName: onboardingData?.talent.temp_full_name || user?.user_metadata?.full_name || 'New Talent',
-            email: user?.email || 'No email provided'
-          }
-        });
-        console.log('Admin notification sent successfully');
-      } catch (notificationError) {
-        console.error('Failed to send admin notification:', notificationError);
-        // Don't block onboarding completion if notification fails
-      }
-
-      if (finalVideoUrl) {
-        toast.success('Onboarding completed - Welcome to ShoutOut!');
-      } else {
-        toast.success('Onboarding completed! You can upload your promo video from your dashboard.');
-      }
-      navigate('/dashboard');
+      toast.success('Promo video saved! One more step: Enable MFA security');
+      setCurrentStep(5);
 
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
@@ -656,7 +633,8 @@ const TalentOnboardingPage: React.FC = () => {
     { number: 1, title: 'Account Setup', icon: UserIcon },
     { number: 2, title: 'Profile Details', icon: UserIcon },
     { number: 3, title: 'Payout Setup', icon: CreditCardIcon },
-    { number: 4, title: 'Promo Video', icon: VideoCameraIcon }
+    { number: 4, title: 'Promo Video', icon: VideoCameraIcon },
+    { number: 5, title: 'Security (MFA)', icon: CheckBadgeIcon }
   ];
 
   return (
@@ -1398,10 +1376,63 @@ const TalentOnboardingPage: React.FC = () => {
                   disabled={!welcomeVideoFile || uploadingVideo}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-red-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-red-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {uploadingVideo ? 'Uploading...' : 'Complete Onboarding'}
+                  {uploadingVideo ? 'Uploading...' : 'Continue to Security Setup'}
                 </button>
               </div>
             </form>
+          )}
+
+          {currentStep === 5 && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Step 5: Enable Two-Factor Authentication
+              </h2>
+              
+              <p className="text-gray-600 mb-6">
+                As a talent on ShoutOut, you're required to enable two-factor authentication (MFA) to protect your account and earnings. This adds an extra layer of security beyond just your password.
+              </p>
+
+              <MFAEnrollment
+                onComplete={async () => {
+                  // Complete onboarding after MFA is enabled
+                  try {
+                    const { error: completeError } = await supabase
+                      .from('talent_profiles')
+                      .update({
+                        onboarding_completed: true,
+                        is_active: true,
+                        onboarding_token: null,
+                        onboarding_expires_at: null
+                      })
+                      .eq('id', onboardingData?.talent.id);
+
+                    if (completeError) throw completeError;
+
+                    // Send admin notification email
+                    try {
+                      const { data: { user } } = await supabase.auth.getUser();
+                      await supabase.functions.invoke('onboarding-complete-notification', {
+                        body: {
+                          talentId: onboardingData?.talent.id,
+                          talentName: onboardingData?.talent.temp_full_name || user?.user_metadata?.full_name || 'New Talent',
+                          email: user?.email || 'No email provided'
+                        }
+                      });
+                      console.log('Admin notification sent successfully');
+                    } catch (notificationError) {
+                      console.error('Failed to send admin notification:', notificationError);
+                    }
+
+                    toast.success('Welcome to ShoutOut! Your account is now fully secured.');
+                    navigate('/dashboard');
+                  } catch (error: any) {
+                    console.error('Error completing onboarding:', error);
+                    toast.error('Failed to complete onboarding');
+                  }
+                }}
+                required={true}
+              />
+            </div>
           )}
         </div>
       </div>
