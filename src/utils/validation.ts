@@ -18,7 +18,7 @@ export const orderSchema = z.object({
   pricing: z.number()
     .positive('Price must be positive')
     .max(10000, 'Price exceeds maximum'),
-  video_type: z.union([z.literal('personal'), z.literal('business')]),
+  video_type: z.string(),
   promotional_use: z.boolean().optional(),
 });
 
