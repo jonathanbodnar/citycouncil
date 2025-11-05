@@ -34,7 +34,7 @@ const MFASettings: React.FC = () => {
   };
 
   const handleDisableMFA = async (factorId: string) => {
-    if (!confirm('Are you sure you want to disable MFA? This will make your account less secure.')) {
+    if (!window.confirm('Are you sure you want to disable MFA? This will make your account less secure.')) {
       return;
     }
 
