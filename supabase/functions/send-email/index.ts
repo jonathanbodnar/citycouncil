@@ -4,6 +4,8 @@
 // - Function is invoked at /send-email
 // - Uses Deno.serve per Supabase recommendations
 
+import { withRateLimit, RateLimitPresets, getIdentifier } from '../_shared/rateLimiter.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -13,7 +15,7 @@ const corsHeaders = {
 
 console.info('send-email function starting');
 
-Deno.serve(async (req) => {
+Deno.serve(withRateLimit(async (req) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
@@ -138,4 +140,4 @@ Deno.serve(async (req) => {
       status: 500
     });
   }
-});
+}, RateLimitPresets.EMAIL, { keyPrefix: 'email' }));
