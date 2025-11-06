@@ -78,7 +78,8 @@ const CommsCenterManagement: React.FC = () => {
       if (error) throw error;
       
       // Type assertion to fix PostgREST foreign key type inference
-      const typedData = (data || []) as TalentWithPhone[];
+      // TypeScript doesn't correctly infer one-to-one foreign key relations
+      const typedData = (data || []) as unknown as TalentWithPhone[];
       setTalents(typedData);
     } catch (error) {
       console.error('Error fetching talents:', error);
