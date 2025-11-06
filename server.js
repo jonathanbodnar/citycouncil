@@ -18,7 +18,9 @@ app.use(helmet({
         "https://connect.facebook.net",
         "https://static.cloudflareinsights.com",
         "https://js.fortis.tech",
-        "https://*.fortis.tech"
+        "https://*.fortis.tech",
+        "https://cdn.plaid.com",
+        "https://*.plaid.com"
       ],
       styleSrc: [
         "'self'", 
@@ -56,14 +58,20 @@ app.use(helmet({
         "https://*.facebook.com",
         "https://cloudflareinsights.com",
         "https://*.cloudinary.com",
-        "https://res.cloudinary.com"
+        "https://res.cloudinary.com",
+        "https://cdn.plaid.com",
+        "https://*.plaid.com",
+        "https://production.plaid.com",
+        "https://sandbox.plaid.com"
       ],
       frameSrc: [
         "'self'", 
         "https://www.facebook.com",
         "https://*.facebook.com",
         "https://js.fortis.tech",
-        "https://*.fortis.tech"
+        "https://*.fortis.tech",
+        "https://cdn.plaid.com",
+        "https://*.plaid.com"
       ],
       formAction: [
         "'self'",
