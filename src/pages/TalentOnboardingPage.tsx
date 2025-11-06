@@ -274,10 +274,13 @@ const TalentOnboardingPage: React.FC = () => {
         // Don't throw - the trigger might have created it
       }
 
-      // Update talent profile with user ID
+      // Update talent profile with user ID and copy temp_full_name to full_name
       const { error: updateError } = await supabase
         .from('talent_profiles')
-        .update({ user_id: authData.user.id })
+        .update({ 
+          user_id: authData.user.id,
+          full_name: onboardingData?.talent.temp_full_name || null
+        })
         .eq('id', onboardingData?.talent.id);
 
       if (updateError) throw updateError;
