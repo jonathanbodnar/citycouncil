@@ -142,7 +142,15 @@ const PublicTalentOnboardingPage: React.FC = () => {
       setCurrentStep(2);
     } catch (error: any) {
       console.error('Error signing in:', error);
-      toast.error(error.message || 'Failed to sign in');
+      
+      // Provide more helpful error messages
+      if (error.message?.includes('Invalid login credentials')) {
+        toast.error('Incorrect email or password. Please try again or create a new account.');
+      } else if (error.message?.includes('Email not confirmed')) {
+        toast.error('Please check your email to confirm your account first.');
+      } else {
+        toast.error(error.message || 'Failed to sign in');
+      }
     } finally {
       setLoading(false);
     }
@@ -568,7 +576,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
         <div className="glass-strong rounded-2xl shadow-2xl border border-white/30 p-4 sm:p-6">
           {/* Step 1: Create Account or Sign In */}
           {currentStep === 1 && !showSignIn && (
-            <form onSubmit={handleStep1Submit}>
+            <form onSubmit={handleStep1Submit} autoComplete="on">
               <h2 className="text-xl font-bold text-white mb-3">Create Your Account</h2>
               
               <div className="space-y-3">
@@ -579,6 +587,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   <input
                     type="text"
                     required
+                    autoComplete="name"
                     value={accountData.fullName}
                     onChange={(e) => setAccountData({ ...accountData, fullName: e.target.value })}
                     className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -593,6 +602,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   <input
                     type="email"
                     required
+                    autoComplete="email"
                     value={accountData.email}
                     onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
                     className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -608,6 +618,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     type="password"
                     required
                     minLength={6}
+                    autoComplete="new-password"
                     value={accountData.password}
                     onChange={(e) => setAccountData({ ...accountData, password: e.target.value })}
                     className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -623,6 +634,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     type="password"
                     required
                     minLength={6}
+                    autoComplete="new-password"
                     value={accountData.confirmPassword}
                     onChange={(e) => setAccountData({ ...accountData, confirmPassword: e.target.value })}
                     className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -653,7 +665,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
           {/* Step 1: Sign In Form */}
           {currentStep === 1 && showSignIn && (
-            <form onSubmit={handleSignIn}>
+            <form onSubmit={handleSignIn} autoComplete="on">
               <h2 className="text-xl font-bold text-white mb-3">Sign In to Continue</h2>
               <p className="text-xs text-gray-300 mb-4">
                 Resume your onboarding where you left off
@@ -667,6 +679,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   <input
                     type="email"
                     required
+                    autoComplete="email"
                     value={signInData.email}
                     onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
                     className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -681,6 +694,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   <input
                     type="password"
                     required
+                    autoComplete="current-password"
                     value={signInData.password}
                     onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                     className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
