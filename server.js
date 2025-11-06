@@ -39,7 +39,9 @@ app.use(helmet({
         "https://*.supabase.co", 
         "wss://*.supabase.co",
         "https://api.fortis.tech",
-        "https://*.fortis.tech"
+        "https://*.fortis.tech",
+        "https://*.wasabisys.com",
+        "https://s3.us-central-1.wasabisys.com"
       ],
       frameSrc: [
         "'self'", 
