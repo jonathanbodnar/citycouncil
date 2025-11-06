@@ -276,8 +276,9 @@ const OrderPage: React.FC = () => {
         // Don't fail the order if notifications fail
       }
 
-      // Process talent payout (admin fee is already deducted)
-      await processTalentPayout(order, pricing.subtotal - pricing.adminFee);
+      // Note: Payouts are now handled through Moov/Plaid integration
+      // Talent will receive payouts directly to their connected bank account
+      // No immediate payout processing needed here
 
       toast.success('Payment successful! Your order has been placed.');
       navigate('/dashboard');
@@ -307,77 +308,6 @@ const OrderPage: React.FC = () => {
 
     // Reuse the same payment success handler
     await handlePaymentSuccess(mockPaymentResult);
-  };
-
-  const processTalentPayout = async (order: any, talentAmount: number) => {
-    if (!talent) {
-      console.error('Talent not found for payout processing');
-      return;
-    }
-
-    try {
-      // Check if talent has vendor setup, if not create one
-      let vendorId = talent.fortis_vendor_id;
-      
-      if (!vendorId) {
-        const vendorResult = await lunarPayService.createVendor({
-          talentId: talent.id,
-          businessName: talent.users.full_name,
-          contactName: talent.users.full_name,
-          email: talent.users.email || `talent${talent.id}@shoutout.com`,
-        });
-        
-        vendorId = vendorResult.id;
-        
-        // Update talent profile with vendor ID
-        await supabase
-          .from('talent_profiles')
-          .update({ fortis_vendor_id: vendorId })
-          .eq('id', talent.id);
-      }
-
-      // Ensure we have a valid vendor ID before processing payout
-      if (!vendorId) {
-        throw new Error('Failed to create or retrieve vendor ID');
-      }
-
-      // Schedule payout through LunarPay (this would typically be done via a background job)
-      await lunarPayService.processVendorPayout({
-        vendorId,
-        amount: talentAmount,
-        description: `ShoutOut payout for order ${order.id}`,
-        orderId: order.id,
-      });
-
-      // Log the payout
-      await supabase
-        .from('payouts')
-        .insert([
-          {
-            talent_id: talent.id,
-            order_id: order.id,
-            amount: talentAmount,
-            vendor_id: vendorId,
-            status: 'processed',
-            processed_at: new Date().toISOString(),
-          },
-        ]);
-
-    } catch (error: any) {
-      console.error('Error processing talent payout:', error);
-      // Don't fail the order, but log the error for manual processing
-      await supabase
-        .from('payout_errors')
-        .insert([
-          {
-            talent_id: talent.id,
-            order_id: order.id,
-            amount: talentAmount,
-            error_message: error?.message || 'Unknown payout error',
-            created_at: new Date().toISOString(),
-          },
-        ]);
-    }
   };
 
   if (loading) {
