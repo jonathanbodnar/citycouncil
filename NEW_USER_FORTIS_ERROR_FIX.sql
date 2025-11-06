@@ -35,14 +35,12 @@ SELECT
   'OLD USER (WORKS)' as user_type,
   id,
   email,
-  full_name,
-  user_type,
+  raw_user_meta_data->>'full_name' as full_name,
   phone,
   created_at,
   email_confirmed_at,
   CASE WHEN phone IS NULL THEN '⚠️ No phone' ELSE '✅ Has phone' END as phone_status,
-  CASE WHEN email_confirmed_at IS NULL THEN '⚠️ Email unconfirmed' ELSE '✅ Email confirmed' END as email_status,
-  CASE WHEN user_type IS NULL THEN '⚠️ NULL user_type' ELSE '✅ Has user_type' END as type_status
+  CASE WHEN email_confirmed_at IS NULL THEN '⚠️ Email unconfirmed' ELSE '✅ Email confirmed' END as email_status
 FROM auth.users
 WHERE email = 'jonathanbagwell123@gmail.com';
 
@@ -51,14 +49,12 @@ SELECT
   'NEW USER (FAILS)' as user_type,
   id,
   email,
-  full_name,
-  user_type,
+  raw_user_meta_data->>'full_name' as full_name,
   phone,
   created_at,
   email_confirmed_at,
   CASE WHEN phone IS NULL THEN '⚠️ No phone' ELSE '✅ Has phone' END as phone_status,
-  CASE WHEN email_confirmed_at IS NULL THEN '⚠️ Email unconfirmed' ELSE '✅ Email confirmed' END as email_status,
-  CASE WHEN user_type IS NULL THEN '⚠️ NULL user_type' ELSE '✅ Has user_type' END as type_status
+  CASE WHEN email_confirmed_at IS NULL THEN '⚠️ Email unconfirmed' ELSE '✅ Email confirmed' END as email_status
 FROM auth.users
 WHERE email LIKE '%@%' -- Replace with actual failing user email
   AND created_at > NOW() - INTERVAL '7 days'
