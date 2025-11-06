@@ -295,29 +295,27 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
       if (!authData.user) throw new Error('Failed to create user account');
       
-      // Check if email confirmation is required
-      if (authData.session === null && authData.user.email_confirmed_at === null) {
-        toast.success('Account created! Please check your email to verify your account, then return here to continue.', {
-          duration: 8000,
-        });
-        setLoading(false);
-        return;
-      }
-      
       setUserId(authData.user.id);
 
-      // Update user_type to 'talent' in public.users
-      const { error: updateUserError } = await supabase
+      // Create user record in public.users table (using service role to bypass RLS)
+      // This ensures the user exists even if email confirmation is pending
+      const { error: userInsertError } = await supabase
         .from('users')
-        .update({ user_type: 'talent' })
-        .eq('id', authData.user.id);
+        .upsert({
+          id: authData.user.id,
+          email: accountData.email,
+          full_name: accountData.fullName,
+          user_type: 'talent',
+        }, {
+          onConflict: 'id'
+        });
 
-      if (updateUserError) {
-        console.error('Failed to update user_type:', updateUserError);
-        // Don't throw, continue with talent profile creation
+      if (userInsertError) {
+        console.error('Failed to create user record:', userInsertError);
+        // Don't throw - the trigger might have created it
       }
 
-      // Create talent profile
+      // Create talent profile (this will work even without active session)
       const { data: talentData, error: talentError } = await supabase
         .from('talent_profiles')
         .insert({
@@ -340,6 +338,15 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
       if (talentError) throw talentError;
       setTalentProfileId(talentData.id);
+
+      // Check if email confirmation is required
+      if (authData.session === null && authData.user.email_confirmed_at === null) {
+        toast.success('Account created! Please verify your email, then sign in to continue.', {
+          duration: 8000,
+        });
+        setLoading(false);
+        return;
+      }
 
       toast.success('Account created successfully!');
       setCurrentStep(2);

@@ -256,41 +256,42 @@ const TalentOnboardingPage: React.FC = () => {
 
       if (!authData.user) throw new Error('Failed to create user account');
 
+      // Create user record in our users table (even if email confirmation is pending)
+      const { error: userError } = await supabase
+        .from('users')
+        .upsert({
+          id: authData.user.id,
+          email: accountData.email,
+          full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
+          user_type: 'talent',
+          avatar_url: onboardingData?.talent.temp_avatar_url
+        }, {
+          onConflict: 'id'
+        });
+
+      if (userError) {
+        console.error('Failed to create user record:', userError);
+        // Don't throw - the trigger might have created it
+      }
+
+      // Update talent profile with user ID
+      const { error: updateError } = await supabase
+        .from('talent_profiles')
+        .update({ user_id: authData.user.id })
+        .eq('id', onboardingData?.talent.id);
+
+      if (updateError) throw updateError;
+
       // Check if email confirmation is required
       if (authData.session === null && authData.user.email_confirmed_at === null) {
-        toast.success('Account created! Please check your email to verify your account, then return here to continue.', {
+        toast.success('Account created! Please verify your email, then sign in to continue.', {
           duration: 8000,
         });
         return;
       }
 
-      if (authData.user) {
-        // Create user record in our users table
-        const { error: userError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              email: accountData.email,
-              full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
-              user_type: 'talent',
-              avatar_url: onboardingData?.talent.temp_avatar_url
-            }
-          ]);
-
-        if (userError) throw userError;
-
-        // Update talent profile with user ID
-        const { error: updateError } = await supabase
-          .from('talent_profiles')
-          .update({ user_id: authData.user.id })
-          .eq('id', onboardingData?.talent.id);
-
-        if (updateError) throw updateError;
-
-        toast.success('Account created successfully!');
-        setCurrentStep(2);
-      }
+      toast.success('Account created successfully!');
+      setCurrentStep(2);
 
     } catch (error: any) {
       console.error('Error creating account:', error);
