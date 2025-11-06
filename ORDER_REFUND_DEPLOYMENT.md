@@ -45,10 +45,10 @@ supabase functions list --project-ref utafetamgwukkbrlezev
 ```
 
 **Environment Variables (Already Set in Railway):**
-- `FORTIS_DEVELOPER_ID` = sfcRK525
-- `FORTIS_USER_ID` = 31f0ab8e8c8e1b708956086b
-- `FORTIS_USER_API_KEY` = 11f0b9ad16fa333aaa494a9d
-- `FORTIS_LOCATION_ID` = (from Railway env)
+- `FORTIS_DEVELOPER_ID` = (your Fortis developer ID)
+- `FORTIS_USER_ID` = (your Fortis user ID)
+- `FORTIS_USER_API_KEY` = (your Fortis API key)
+- `FORTIS_LOCATION_ID` = (your Fortis location ID)
 
 ---
 

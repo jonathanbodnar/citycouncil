@@ -10,11 +10,10 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Hardcoded for testing – do not read from Deno.env
 const baseUrl = 'https://api.fortis.tech/v1';
-const developerId = 'sfcRK525';
-const userId = '31f0ab8e8c8e1b708956086b';
-const userApiKey = '11f0b9ad16fa333aaa494a9d';
+const developerId = Deno.env.get('FORTIS_DEVELOPER_ID');
+const userId = Deno.env.get('FORTIS_USER_ID');
+const userApiKey = Deno.env.get('FORTIS_USER_API_KEY');
 
 async function fortisFetch(path: string, init?: RequestInit) {
   const res = await fetch(`${baseUrl}${path}`, {
@@ -50,6 +49,16 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Validate environment variables
+    if (!developerId || !userId || !userApiKey) {
+      return new Response(JSON.stringify({
+        error: 'Fortis credentials not configured'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+
     const { transaction_id } = await req.json();
     if (!transaction_id || typeof transaction_id !== 'string') {
       return new Response(JSON.stringify({ error: 'transaction_id is required' }), {
