@@ -47,6 +47,8 @@ const UserDashboard: React.FC = () => {
   const [orders, setOrders] = useState<OrderWithTalent[]>([]);
   const [reviews, setReviews] = useState<ReviewWithTalent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editedRequestDetails, setEditedRequestDetails] = useState('');
   const [activeTab, setActiveTab] = useState<'orders' | 'reviews' | 'profile'>('orders');
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareOrderData, setShareOrderData] = useState<OrderWithTalent | null>(null);
@@ -233,6 +235,49 @@ const UserDashboard: React.FC = () => {
     }
   };
 
+  // Start editing request details
+  const startEditingRequest = (order: OrderWithTalent) => {
+    setEditingOrderId(order.id);
+    setEditedRequestDetails(order.request_details);
+  };
+
+  // Cancel editing
+  const cancelEditingRequest = () => {
+    setEditingOrderId(null);
+    setEditedRequestDetails('');
+  };
+
+  // Save edited request details
+  const saveRequestDetails = async (orderId: string) => {
+    if (!editedRequestDetails.trim()) {
+      toast.error('Request details cannot be empty');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ request_details: editedRequestDetails })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, request_details: editedRequestDetails }
+          : order
+      ));
+
+      toast.success('Request details updated!');
+      setEditingOrderId(null);
+      setEditedRequestDetails('');
+    } catch (error: any) {
+      console.error('Error updating request details:', error);
+      toast.error(error.message || 'Failed to update request details');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -334,10 +379,48 @@ const UserDashboard: React.FC = () => {
                   </div>
 
                   <div className="mb-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Request Details:</h4>
-                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
-                      {order.request_details}
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900">Request Details:</h4>
+                      {order.status === 'pending' && editingOrderId !== order.id && (
+                        <button
+                          onClick={() => startEditingRequest(order)}
+                          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    
+                    {editingOrderId === order.id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={editedRequestDetails}
+                          onChange={(e) => setEditedRequestDetails(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          rows={4}
+                          placeholder="Describe your request..."
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveRequestDetails(order.id)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEditingRequest}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+                        {order.request_details}
+                      </p>
+                    )}
                   </div>
 
                   {order.is_corporate_order && (
