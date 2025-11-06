@@ -44,8 +44,8 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION check_and_update_promo_status()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Only run when order status changes to 'delivered'
-    IF NEW.status = 'delivered' AND OLD.status != 'delivered' THEN
+    -- Only run when order status changes to 'completed'
+    IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
         -- Get the talent's current fulfilled_orders count
         UPDATE talent_profiles
         SET first_orders_promo_active = CASE 
