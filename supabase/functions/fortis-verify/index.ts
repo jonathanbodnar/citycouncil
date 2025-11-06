@@ -49,10 +49,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Validate environment variables
     if (!developerId || !userId || !userApiKey) {
       return new Response(JSON.stringify({
-        error: 'Fortis credentials not configured',
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+        error: 'Fortis credentials not configured'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
     }
 
     const { transaction_id } = await req.json();

@@ -478,51 +478,44 @@ const PublicTalentOnboardingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Logo size="lg" theme="dark" />
+    <div className="min-h-screen py-3 px-3 sm:py-8 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        {/* Logo - Compact */}
+        <div className="flex justify-center mb-3">
+          <Logo size="sm" theme="dark" className="h-8" />
         </div>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
+        {/* Header - Compact */}
+        <div className="text-center mb-3">
+          <h1 className="text-2xl sm:text-4xl font-bold text-white mb-1">
             Become a ShoutOut Talent
           </h1>
-          <p className="text-gray-300">
-            Join our platform and start earning with personalized video messages
+          <p className="text-xs sm:text-sm text-gray-300">
+            Join and start earning with personalized videos
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8 overflow-x-auto">
-          <div className="flex items-center justify-between min-w-max px-4">
+        {/* Progress Steps - Compact Dots */}
+        <div className="mb-4">
+          <div className="flex items-center justify-center gap-2">
             {steps.map((step, index) => (
               <React.Fragment key={step.number}>
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs font-bold ${
                       currentStep > step.number
-                        ? 'bg-green-500'
+                        ? 'bg-green-500 text-white'
                         : currentStep === step.number
-                        ? 'bg-blue-500'
-                        : 'glass border-2 border-white/30'
+                        ? 'bg-blue-500 text-white'
+                        : 'glass border-2 border-white/30 text-white'
                     }`}
                   >
-                    {currentStep > step.number ? (
-                      <CheckCircleIcon className="h-6 w-6 text-white" />
-                    ) : (
-                      <step.icon className="h-6 w-6 text-white" />
-                    )}
+                    {currentStep > step.number ? '✓' : step.number}
                   </div>
-                  <span className="mt-2 text-xs text-white font-medium text-center">
-                    {step.title}
-                  </span>
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-1 mx-4 ${
+                    className={`w-6 sm:w-8 h-1 ${
                       currentStep > step.number ? 'bg-green-500' : 'bg-white/20'
                     }`}
                   />
@@ -532,16 +525,16 @@ const PublicTalentOnboardingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Form Content */}
-        <div className="glass-strong rounded-3xl shadow-2xl border border-white/30 p-8">
+        {/* Form Content - Compact */}
+        <div className="glass-strong rounded-2xl shadow-2xl border border-white/30 p-4 sm:p-6">
           {/* Step 1: Create Account */}
           {currentStep === 1 && (
             <form onSubmit={handleStep1Submit}>
-              <h2 className="text-2xl font-bold text-white mb-6">Create Your Account</h2>
+              <h2 className="text-xl font-bold text-white mb-3">Create Your Account</h2>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Full Name *
                   </label>
                   <input
@@ -549,13 +542,13 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     required
                     value={accountData.fullName}
                     onChange={(e) => setAccountData({ ...accountData, fullName: e.target.value })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="John Doe"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Email *
                   </label>
                   <input
@@ -563,13 +556,13 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     required
                     value={accountData.email}
                     onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="john@example.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Password *
                   </label>
                   <input
@@ -578,16 +571,13 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     minLength={6}
                     value={accountData.password}
                     onChange={(e) => setAccountData({ ...accountData, password: e.target.value })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="••••••••"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Must be at least 6 characters
-                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Confirm Password *
                   </label>
                   <input
@@ -596,7 +586,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     minLength={6}
                     value={accountData.confirmPassword}
                     onChange={(e) => setAccountData({ ...accountData, confirmPassword: e.target.value })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="••••••••"
                   />
                 </div>
@@ -605,7 +595,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Creating Account...' : 'Create Account & Continue'}
               </button>
@@ -615,28 +605,33 @@ const PublicTalentOnboardingPage: React.FC = () => {
           {/* Step 2: Profile Information */}
           {currentStep === 2 && (
             <form onSubmit={handleStep2Submit}>
-              <h2 className="text-2xl font-bold text-white mb-6">Profile Information</h2>
+              <h2 className="text-xl font-bold text-white mb-3">Profile Information</h2>
               
-              <div className="space-y-6">
-                {/* Profile Picture */}
+              <div className="space-y-3">
+                {/* Profile Picture - Compact */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Profile Picture *
                   </label>
-                  <ImageUpload
-                    currentImageUrl={profileData.avatarUrl}
-                    onImageUploaded={(url) => setProfileData({ ...profileData, avatarUrl: url })}
-                    uploadPath="talent-avatars"
-                  />
+                  <div className="flex items-center gap-3">
+                    {profileData.avatarUrl && (
+                      <img src={profileData.avatarUrl} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
+                    )}
+                    <ImageUpload
+                      currentImageUrl={profileData.avatarUrl}
+                      onImageUploaded={(url) => setProfileData({ ...profileData, avatarUrl: url })}
+                      uploadPath="talent-avatars"
+                    />
+                  </div>
                 </div>
 
                 {/* Username */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Username * (will be your profile URL)
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Username * (profile URL)
                   </label>
-                  <div className="flex items-center">
-                    <span className="glass px-4 py-3 rounded-l-xl text-gray-300 border border-white/30 border-r-0">
+                  <div className="flex items-center text-sm">
+                    <span className="glass px-2 py-2 rounded-l-lg text-gray-300 border border-white/30 border-r-0 text-xs">
                       shoutout.us/
                     </span>
                     <input
@@ -644,25 +639,22 @@ const PublicTalentOnboardingPage: React.FC = () => {
                       required
                       value={profileData.username}
                       onChange={(e) => setProfileData({ ...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                      className="flex-1 px-4 py-3 glass border border-white/30 rounded-r-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 text-sm glass border border-white/30 rounded-r-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="yourname"
                     />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Lowercase letters, numbers, and hyphens only
-                  </p>
                 </div>
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Category *
                   </label>
                   <select
                     required
                     value={profileData.category}
                     onChange={(e) => setProfileData({ ...profileData, category: e.target.value as TalentCategory })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select a category...</option>
                     <option value="politician">Politician</option>
@@ -688,42 +680,42 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
                 {/* Position/Title */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Position/Title (optional)
                   </label>
                   <input
                     type="text"
                     value={profileData.position}
                     onChange={(e) => setProfileData({ ...profileData, position: e.target.value })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., Congressman, Judge, Senator"
                   />
                 </div>
 
-                {/* Bio */}
+                {/* Bio - Compact */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Bio * (min 50 characters)
                   </label>
                   <textarea
                     required
                     minLength={50}
-                    rows={4}
+                    rows={3}
                     value={profileData.bio}
                     onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Tell your audience about yourself..."
                   />
                   <p className="text-xs text-gray-400 mt-1">
-                    {profileData.bio.length}/50 characters minimum
+                    {profileData.bio.length}/50 min
                   </p>
                 </div>
 
-                {/* Pricing */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Pricing - 2 Columns */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Personal ShoutOut Price * ($)
+                    <label className="block text-xs font-medium text-white mb-1">
+                      Personal ($) *
                     </label>
                     <input
                       type="number"
@@ -732,13 +724,13 @@ const PublicTalentOnboardingPage: React.FC = () => {
                       step="5"
                       value={profileData.pricing}
                       onChange={(e) => setProfileData({ ...profileData, pricing: parseFloat(e.target.value) })}
-                      className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Business ShoutOut Price * ($)
+                    <label className="block text-xs font-medium text-white mb-1">
+                      Business ($) *
                     </label>
                     <input
                       type="number"
@@ -747,14 +739,14 @@ const PublicTalentOnboardingPage: React.FC = () => {
                       step="5"
                       value={profileData.corporatePricing}
                       onChange={(e) => setProfileData({ ...profileData, corporatePricing: parseFloat(e.target.value) })}
-                      className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
 
                 {/* Fulfillment Time */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-xs font-medium text-white mb-1">
                     Fulfillment Time * (hours)
                   </label>
                   <input
@@ -764,10 +756,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     step="24"
                     value={profileData.fulfillmentTime}
                     onChange={(e) => setProfileData({ ...profileData, fulfillmentTime: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <p className="text-xs text-gray-400 mt-1">
-                    How long will it take you to deliver a video? (24h = 1 day, 72h = 3 days)
+                    24h = 1 day, 72h = 3 days
                   </p>
                 </div>
               </div>
@@ -775,9 +767,9 @@ const PublicTalentOnboardingPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Saving...' : 'Continue to Charity Settings'}
+                {loading ? 'Saving...' : 'Continue'}
               </button>
             </form>
           )}
@@ -785,35 +777,34 @@ const PublicTalentOnboardingPage: React.FC = () => {
           {/* Step 3: Charity (Optional) */}
           {currentStep === 3 && (
             <form onSubmit={handleStep3Submit}>
-              <h2 className="text-2xl font-bold text-white mb-6">Charity Donation (Optional)</h2>
+              <h2 className="text-xl font-bold text-white mb-3">Charity Donation (Optional)</h2>
               
-              <p className="text-gray-300 mb-6">
-                You will be able to add payout details in your dashboard shortly after onboarding. Thank you!
+              <p className="text-xs text-gray-300 mb-3">
+                Payout details can be added in your dashboard after onboarding.
               </p>
 
-              {/* Charity Toggle */}
-              <div className="glass-strong rounded-2xl p-6 mb-6 border border-white/30">
-                <div className="flex items-center justify-between mb-4">
+              {/* Charity Toggle - Compact */}
+              <div className="glass-strong rounded-xl p-4 mb-3 border border-white/30">
+                <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-1">Donate to Charity</h3>
-                    <p className="text-sm text-gray-300">Donate a percentage of your earnings to charity</p>
+                    <h3 className="text-sm font-semibold text-white mb-0.5">Donate to Charity</h3>
+                    <p className="text-xs text-gray-300">Share earnings with a charity</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
                       setDonateToCharity(!donateToCharity);
                       if (!donateToCharity) {
-                        // Reset charity data when turning off
                         setCharityData({ charityName: '', charityPercentage: 5 });
                       }
                     }}
-                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       donateToCharity ? 'bg-blue-600' : 'bg-gray-600'
                     }`}
                   >
                     <span
-                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                        donateToCharity ? 'translate-x-7' : 'translate-x-1'
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                        donateToCharity ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
@@ -821,9 +812,9 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
                 {/* Show charity fields when toggle is ON */}
                 {donateToCharity && (
-                  <div className="space-y-4 mt-6 pt-6 border-t border-white/20">
+                  <div className="space-y-3 mt-3 pt-3 border-t border-white/20">
                     <div>
-                      <label className="block text-sm font-medium text-white mb-2">
+                      <label className="block text-xs font-medium text-white mb-1">
                         Charity Name *
                       </label>
                       <input
@@ -831,14 +822,14 @@ const PublicTalentOnboardingPage: React.FC = () => {
                         required={donateToCharity}
                         value={charityData.charityName}
                         onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
-                        className="w-full px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Red Cross, St. Jude's, etc."
+                        className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Red Cross, St. Jude's"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-white mb-2">
-                        Donation Percentage (5-100%) *
+                      <label className="block text-xs font-medium text-white mb-1">
+                        Donation % (5-100%) *
                       </label>
                       <div className="flex items-center gap-2">
                         <input
@@ -853,14 +844,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
                             const clamped = Math.max(5, Math.min(100, val));
                             setCharityData({ ...charityData, charityPercentage: clamped });
                           }}
-                          className="w-32 px-4 py-3 glass border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-20 px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
-                        <span className="text-white text-lg font-semibold">%</span>
-                        <span className="text-sm text-gray-300">of each order goes to charity</span>
+                        <span className="text-white font-semibold">%</span>
+                        <span className="text-xs text-gray-300">per order</span>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
-                        Example: 10% of a $100 order = $10 donated to charity
-                      </p>
                     </div>
                   </div>
                 )}
@@ -869,9 +857,9 @@ const PublicTalentOnboardingPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Saving...' : 'Continue to Promo Video'}
+                {loading ? 'Saving...' : 'Continue'}
               </button>
             </form>
           )}
@@ -879,52 +867,41 @@ const PublicTalentOnboardingPage: React.FC = () => {
           {/* Step 4: Promo Video */}
           {currentStep === 4 && (
             <form onSubmit={handleStep4Submit}>
-              <h2 className="text-2xl font-bold text-white mb-6">Upload Your Promo Video</h2>
+              <h2 className="text-xl font-bold text-white mb-3">Upload Promo Video</h2>
               
-              <div className="glass-strong rounded-2xl p-6 mb-6 border border-white/30">
-                <div className="text-center mb-6">
-                  <VideoCameraIcon className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Record Your Promo Video
-                  </h3>
-                  <p className="text-gray-300">
-                    Create a 30-60 second introduction video to welcome potential customers
-                  </p>
-                </div>
-
-                {/* Script Template */}
-                <div className="glass border border-white/20 rounded-xl p-4 mb-6">
-                  <h4 className="font-semibold text-white mb-3">
-                    Script Template
-                  </h4>
-                  <div className="text-sm text-gray-300 space-y-2">
-                    <p className="text-white"><strong>Opening:</strong> "Hi! I'm [Your Name]..."</p>
-                    <p className="text-white"><strong>Introduction:</strong> "[Brief description of who you are - Former Fox News host, Political commentator, etc.]"</p>
-                    <p className="text-white"><strong>Service:</strong> "I'm now on ShoutOut where you can order a personalized video from me for any occasion you're looking for..."</p>
-                    <p className="text-white"><strong>Personal Touch:</strong> "[Add your own spin - mention what makes your videos special]"</p>
-                    <p className="text-white"><strong>Closing:</strong> "Find me on ShoutOut!"</p>
+              <div className="space-y-3">
+                {/* Script Template - Collapsible */}
+                <details className="glass border border-white/20 rounded-lg p-3">
+                  <summary className="text-sm font-semibold text-white cursor-pointer">
+                    📝 Script Template (30-60 sec)
+                  </summary>
+                  <div className="text-xs text-gray-300 space-y-1.5 mt-2">
+                    <p><strong>1. Opening:</strong> "Hi! I'm [Your Name]..."</p>
+                    <p><strong>2. Intro:</strong> "[Who you are - Former Fox News, Congressman, etc.]"</p>
+                    <p><strong>3. Service:</strong> "I'm on ShoutOut - order a personalized video..."</p>
+                    <p><strong>4. Personal:</strong> "[What makes your videos special]"</p>
+                    <p><strong>5. Close:</strong> "Find me on ShoutOut!"</p>
                   </div>
-                </div>
+                </details>
 
-                {/* Recording Tips */}
-                <div className="glass border border-white/20 rounded-xl p-4 mb-6">
-                  <h4 className="font-semibold text-white mb-3">
-                    Recording Tips
-                  </h4>
-                  <ul className="text-sm text-gray-300 space-y-1">
-                    <li>• Record in good lighting (natural light works best)</li>
-                    <li>• Ensure clear audio (avoid background noise)</li>
-                    <li>• Look directly at the camera</li>
-                    <li>• Speak clearly and with enthusiasm</li>
-                    <li>• Keep it between 30-60 seconds</li>
-                    <li>• Be authentic and show your personality!</li>
+                {/* Recording Tips - Collapsible */}
+                <details className="glass border border-white/20 rounded-lg p-3">
+                  <summary className="text-sm font-semibold text-white cursor-pointer">
+                    💡 Recording Tips
+                  </summary>
+                  <ul className="text-xs text-gray-300 space-y-0.5 mt-2">
+                    <li>• Good lighting (natural light)</li>
+                    <li>• Clear audio (no background noise)</li>
+                    <li>• Look at the camera</li>
+                    <li>• Speak clearly & enthusiastically</li>
+                    <li>• Be authentic!</li>
                   </ul>
-                </div>
+                </details>
 
-                {/* Video Upload */}
+                {/* Video Upload - Compact */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Upload Promo Video *
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Upload Video *
                   </label>
                   <input
                     type="file"
@@ -936,29 +913,26 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   />
                   <label
                     htmlFor="promo-video-upload"
-                    className="flex items-center justify-center gap-2 glass-strong hover:glass border border-white/30 rounded-2xl px-6 py-4 cursor-pointer transition-all duration-300 hover:shadow-modern"
+                    className="flex items-center justify-center gap-2 glass-strong hover:glass border border-white/30 rounded-lg px-4 py-3 cursor-pointer transition-all duration-300"
                   >
                     <VideoCameraIcon className="h-5 w-5 text-white" />
-                    <span className="font-medium text-white">
-                      {promoVideo ? promoVideo.name : 'Choose Video File'}
+                    <span className="text-sm font-medium text-white truncate">
+                      {promoVideo ? promoVideo.name : 'Choose Video'}
                     </span>
                   </label>
-                  <p className="mt-2 text-sm text-gray-400 text-center">
-                    Supported formats: MP4, MOV, AVI • Max size: 300MB
+                  <p className="mt-1 text-xs text-gray-400 text-center">
+                    MP4, MOV, AVI • Max 300MB
                   </p>
 
-                  {/* Video Preview */}
+                  {/* Video Preview - Compact */}
                   {promoVideo && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-white mb-2">
-                        Video Preview
-                      </label>
-                      <div className="relative rounded-xl overflow-hidden bg-gray-900 max-w-md mx-auto">
+                    <div className="mt-3">
+                      <div className="relative rounded-lg overflow-hidden bg-gray-900">
                         <video
                           src={URL.createObjectURL(promoVideo)}
                           controls
                           className="w-full h-auto"
-                          style={{ maxHeight: '300px' }}
+                          style={{ maxHeight: '200px' }}
                         >
                           Your browser does not support the video tag.
                         </video>
@@ -971,9 +945,9 @@ const PublicTalentOnboardingPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={!promoVideo || videoUploading}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {videoUploading ? 'Uploading Video...' : 'Continue to Security Setup'}
+                {videoUploading ? 'Uploading...' : 'Continue'}
               </button>
             </form>
           )}
@@ -981,10 +955,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
           {/* Step 5: MFA */}
           {currentStep === 5 && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Secure Your Account</h2>
+              <h2 className="text-xl font-bold text-white mb-3">Secure Your Account</h2>
               
-              <p className="text-gray-300 mb-6">
-                Set up two-factor authentication to protect your account and earnings.
+              <p className="text-xs text-gray-300 mb-3">
+                Set up two-factor authentication to protect your account.
               </p>
 
               <MFAEnrollmentDual

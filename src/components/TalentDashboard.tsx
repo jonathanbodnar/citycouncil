@@ -280,23 +280,42 @@ const TalentDashboard: React.FC = () => {
 
   const handleRejectOrder = async (orderId: string, reason: string) => {
     try {
-      const now = new Date().toISOString();
-      const { error } = await supabase
-        .from('orders')
-        .update({ 
-          approval_status: 'rejected',
-          rejected_at: now,
-          rejection_reason: reason
-        })
-        .eq('id', orderId);
+      // Find the order to get transaction ID
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        toast.error('Order not found');
+        return;
+      }
 
-      if (error) throw error;
+      if (!order.payment_transaction_id) {
+        toast.error('Cannot process refund: No transaction ID found');
+        return;
+      }
 
-      toast.success('Corporate order rejected.');
-      fetchTalentData();
-    } catch (error) {
+      // Import refund service dynamically
+      const { refundService } = await import('../services/refundService');
+
+      toast.loading('Processing refund...', { id: 'refund' });
+
+      // Process refund through Fortis
+      const result = await refundService.processRefund({
+        orderId: orderId,
+        transactionId: order.payment_transaction_id,
+        reason: reason,
+        deniedBy: 'talent',
+      });
+
+      if (result.success) {
+        toast.success('Order denied and refund processed successfully', { id: 'refund' });
+        setRejectingOrderId(null);
+        setRejectionReason('');
+        fetchTalentData();
+      } else {
+        toast.error(result.error || 'Failed to process refund', { id: 'refund' });
+      }
+    } catch (error: any) {
       console.error('Error rejecting order:', error);
-      toast.error('Failed to reject order');
+      toast.error(error.message || 'Failed to deny order', { id: 'refund' });
     }
   };
 
@@ -427,10 +446,22 @@ const TalentDashboard: React.FC = () => {
                               className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center gap-2"
                             >
                               <XCircleIcon className="h-4 w-4" />
-                              Reject
+                              Reject & Refund
                             </button>
                           </>
-                        ) : (
+                        ) : order.status !== 'completed' && order.status !== 'denied' && order.status !== 'cancelled' ? (
+                          <>
+                            {/* Show Deny button for non-corporate pending/in_progress orders */}
+                            <button
+                              onClick={() => setRejectingOrderId(order.id)}
+                              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center gap-2 text-sm"
+                            >
+                              <XCircleIcon className="h-4 w-4" />
+                              Deny & Refund
+                            </button>
+                          </>
+                        ) : null}
+                        {(order.status === 'pending' || order.status === 'in_progress') && (
                           <button
                             onClick={() => handleAcceptOrder(order.id)}
                             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern transition-all duration-300"
@@ -1103,13 +1134,16 @@ const TalentDashboard: React.FC = () => {
 
       {/* Rejection Reason Modal */}
       {rejectingOrderId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Reject Corporate Order
-            </h3>
+            <div className="flex items-center mb-4">
+              <XCircleIcon className="h-6 w-6 text-red-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Deny Order & Process Refund
+              </h3>
+            </div>
             <p className="text-sm text-gray-600 mb-4">
-              Please provide a reason for rejecting this business order. This will be shown to the customer.
+              Please provide a reason for denying this order. The customer will be notified and automatically refunded via email and in-app notification.
             </p>
             <textarea
               value={rejectionReason}
@@ -1129,9 +1163,9 @@ const TalentDashboard: React.FC = () => {
                     toast.error('Please provide a rejection reason');
                   }
                 }}
-                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
               >
-                Reject Order
+                Deny & Refund
               </button>
               <button
                 onClick={() => {

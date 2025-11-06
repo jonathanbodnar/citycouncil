@@ -91,7 +91,7 @@ export interface Order {
   amount: number;
   admin_fee: number;
   charity_amount?: number;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded' | 'denied';
   approval_status: 'pending' | 'approved' | 'rejected';
   is_corporate_order: boolean;
   event_description?: string;
@@ -100,6 +100,11 @@ export interface Order {
   approved_at?: string;
   rejected_at?: string;
   rejection_reason?: string;
+  denial_reason?: string;
+  denied_by?: 'admin' | 'talent';
+  denied_at?: string;
+  refund_id?: string;
+  refund_amount?: number;
   video_url?: string;
   fulfillment_deadline: string;
   created_at: string;
@@ -156,7 +161,7 @@ export interface StripeConnectAccount {
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'order_placed' | 'order_fulfilled' | 'order_late' | 'new_review' | 'profile_incomplete';
+  type: 'order_placed' | 'order_fulfilled' | 'order_late' | 'order_denied' | 'new_review' | 'profile_incomplete';
   title: string;
   message: string;
   is_read: boolean;
