@@ -40,7 +40,9 @@ app.use(helmet({
         "blob:",
         "data:",
         "https://*.wasabisys.com",
-        "https://s3.us-central-1.wasabisys.com"
+        "https://s3.us-central-1.wasabisys.com",
+        "https://*.cloudinary.com",
+        "https://res.cloudinary.com"
       ],
       connectSrc: [
         "'self'", 
@@ -52,7 +54,9 @@ app.use(helmet({
         "https://s3.us-central-1.wasabisys.com",
         "https://www.facebook.com",
         "https://*.facebook.com",
-        "https://cloudflareinsights.com"
+        "https://cloudflareinsights.com",
+        "https://*.cloudinary.com",
+        "https://res.cloudinary.com"
       ],
       frameSrc: [
         "'self'", 
