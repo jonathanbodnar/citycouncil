@@ -46,7 +46,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     <div className={`relative bg-black rounded-lg overflow-hidden ${className}`}>
       <video
         id="video-player"
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
         poster={thumbnailUrl}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}

@@ -50,6 +50,8 @@ const UserDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'reviews' | 'profile'>('orders');
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareOrderData, setShareOrderData] = useState<OrderWithTalent | null>(null);
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+  const [downloadOrderId, setDownloadOrderId] = useState<string | null>(null);
 
   // Handle tab from URL parameter
   useEffect(() => {
@@ -191,6 +193,43 @@ const UserDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error cancelling order:', error);
       toast.error('Failed to cancel order');
+    }
+  };
+
+  // Check if user has already reviewed this order
+  const hasReviewed = (orderId: string) => {
+    return reviews.some(review => review.order_id === orderId);
+  };
+
+  // Handle download video - prompt for review if not reviewed yet
+  const handleDownloadClick = async (order: OrderWithTalent) => {
+    if (!hasReviewed(order.id)) {
+      // Show review prompt first
+      setDownloadOrderId(order.id);
+      setShowReviewPrompt(true);
+    } else {
+      // Download directly
+      await downloadVideo(order);
+    }
+  };
+
+  // Actually download the video
+  const downloadVideo = async (order: OrderWithTalent) => {
+    try {
+      const response = await fetch(order.video_url!);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success('Video downloaded!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download video');
     }
   };
 
@@ -345,23 +384,22 @@ const UserDashboard: React.FC = () => {
                   {order.video_url && (
                     <div className="mb-4">
                       <h4 className="font-medium text-gray-900 mb-2">Your ShoutOut:</h4>
-                      <div className="aspect-video">
+                      <div className="w-full max-h-[600px] bg-black rounded-lg overflow-hidden">
                         <VideoPlayer 
                           videoUrl={order.video_url}
-                          className="w-full h-full"
+                          className="w-full h-full object-contain"
                         />
                       </div>
                       
                       {/* Download Button */}
                       <div className="mt-4">
-                        <a
-                          href={order.video_url}
-                          download={`shoutout-${order.id}.mp4`}
+                        <button
+                          onClick={() => handleDownloadClick(order)}
                           className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           <CloudArrowDownIcon className="h-5 w-5" />
                           <span>Download Video</span>
-                        </a>
+                        </button>
                       </div>
                     </div>
                   )}
@@ -593,6 +631,67 @@ const UserDashboard: React.FC = () => {
           }}
           videoUrl={shareOrderData.video_url}
         />
+      )}
+
+      {/* Review Prompt Modal */}
+      {showReviewPrompt && downloadOrderId && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            {/* Background overlay */}
+            <div 
+              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+              onClick={() => {
+                setShowReviewPrompt(false);
+                setDownloadOrderId(null);
+              }}
+            />
+
+            {/* Modal panel */}
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                  <StarIcon className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Leave a Review First?
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      We'd love to hear your feedback! Would you like to leave a review for this ShoutOut before downloading?
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <Link
+                  to={`/review/${downloadOrderId}`}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:col-start-2 sm:text-sm"
+                  onClick={() => {
+                    setShowReviewPrompt(false);
+                    setDownloadOrderId(null);
+                  }}
+                >
+                  Leave Review
+                </Link>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                  onClick={async () => {
+                    const order = orders.find(o => o.id === downloadOrderId);
+                    if (order) {
+                      await downloadVideo(order);
+                    }
+                    setShowReviewPrompt(false);
+                    setDownloadOrderId(null);
+                  }}
+                >
+                  Download Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
