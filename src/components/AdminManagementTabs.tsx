@@ -19,6 +19,7 @@ import PromotionalVideosManagement from './PromotionalVideosManagement';
 import LandingVideoUpload from './LandingVideoUpload';
 import SocialMediaTracking from './SocialMediaTracking';
 import BulkVideoUpload from './BulkVideoUpload';
+import OrdersManagement from './admin/OrdersManagement';
 import toast from 'react-hot-toast';
 
 interface StatsCardProps {
@@ -48,7 +49,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
 );
 
 const AdminManagementTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload'>('analytics');
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -227,6 +228,7 @@ const AdminManagementTabs: React.FC = () => {
           <nav className="-mb-px flex space-x-8 overflow-x-auto">
             {[
               { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
+              { key: 'orders', label: 'Orders', icon: CurrencyDollarIcon },
               { key: 'talent', label: 'Manage Talent', icon: UsersIcon },
               { key: 'bulk-upload', label: 'Bulk Upload', icon: VideoCameraIcon },
               { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },
@@ -469,6 +471,11 @@ const AdminManagementTabs: React.FC = () => {
       {/* Platform Settings Tab */}
       {activeTab === 'settings' && (
         <PlatformSettings />
+      )}
+
+      {/* Orders Management Tab */}
+      {activeTab === 'orders' && (
+        <OrdersManagement />
       )}
 
       {/* Help Desk Tab */}
