@@ -11,12 +11,47 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://connect.facebook.net"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
-      frameSrc: ["'self'", "https://www.facebook.com"],
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "'unsafe-eval'", 
+        "https://connect.facebook.net",
+        "https://js.fortis.tech",
+        "https://*.fortis.tech"
+      ],
+      styleSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "https://fonts.googleapis.com"
+      ],
+      fontSrc: [
+        "'self'", 
+        "https://fonts.gstatic.com"
+      ],
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "https:", 
+        "blob:"
+      ],
+      connectSrc: [
+        "'self'", 
+        "https://*.supabase.co", 
+        "wss://*.supabase.co",
+        "https://api.fortis.tech",
+        "https://*.fortis.tech"
+      ],
+      frameSrc: [
+        "'self'", 
+        "https://www.facebook.com",
+        "https://js.fortis.tech",
+        "https://*.fortis.tech"
+      ],
+      formAction: [
+        "'self'",
+        "https://js.fortis.tech",
+        "https://*.fortis.tech"
+      ],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     },
