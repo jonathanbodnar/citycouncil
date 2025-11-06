@@ -16,7 +16,7 @@ const MOOV_SECRET_KEY = (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY')
 const MOOV_VERSION = 'v2024.01.00'
 
 const plaidConfig = new Configuration({
-  basePath: PlaidEnvironments.sandbox,
+  basePath: PlaidEnvironments.production,
   baseOptions: {
     headers: {
       'PLAID-CLIENT-ID': PLAID_CLIENT_ID!,
