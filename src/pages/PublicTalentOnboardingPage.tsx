@@ -312,18 +312,19 @@ const PublicTalentOnboardingPage: React.FC = () => {
           // If no talent profile exists, create one
           setUserId(signInData.user.id);
           
-          // Update user_type and phone to 'talent' in public.users
+          // Update user_type and phone to 'talent' using Edge Function
           const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
-          const { error: updateUserError } = await supabase
-            .from('users')
-            .update({ 
-              user_type: 'talent',
-              phone: formattedPhone 
-            })
-            .eq('id', signInData.user.id);
+          const { error: convertError } = await supabase.functions.invoke('convert-to-talent', {
+            body: {
+              userId: signInData.user.id,
+              fullName: accountData.fullName,
+              phone: formattedPhone,
+            },
+          });
 
-          if (updateUserError) {
-            console.error('Failed to update user_type:', updateUserError);
+          if (convertError) {
+            console.error('Failed to convert user to talent:', convertError);
+            throw new Error('Failed to set up talent account. Please contact support.');
           }
 
           const { data: talentData, error: talentError } = await supabase
@@ -361,33 +362,19 @@ const PublicTalentOnboardingPage: React.FC = () => {
       setUserId(authData.user.id);
 
       // Update user record to set user_type to 'talent'
-      // A trigger likely already created the user record, so we just need to update it
+      // Use Edge Function with service role to bypass RLS
       const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
-      const { error: userUpdateError } = await supabase
-        .from('users')
-        .update({
-          user_type: 'talent',
+      const { error: convertError } = await supabase.functions.invoke('convert-to-talent', {
+        body: {
+          userId: authData.user.id,
+          fullName: accountData.fullName,
           phone: formattedPhone,
-          full_name: accountData.fullName,
-        })
-        .eq('id', authData.user.id);
+        },
+      });
 
-      if (userUpdateError) {
-        console.error('Failed to update user record to talent:', userUpdateError);
-        // Try insert as fallback
-        const { error: userInsertError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: accountData.email,
-            full_name: accountData.fullName,
-            phone: formattedPhone,
-            user_type: 'talent',
-          });
-        
-        if (userInsertError) {
-          console.error('Failed to insert user record:', userInsertError);
-        }
+      if (convertError) {
+        console.error('Failed to convert user to talent:', convertError);
+        throw new Error('Failed to set up talent account. Please contact support.');
       }
 
       // Create talent profile (this will work even without active session)
