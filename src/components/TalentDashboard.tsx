@@ -64,6 +64,9 @@ const TalentDashboard: React.FC = () => {
     const tabParam = searchParams.get('tab');
     if (tabParam && ['orders', 'analytics', 'profile', 'payouts', 'promotion'].includes(tabParam)) {
       setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion');
+    } else if (!tabParam) {
+      // Default to orders when no tab parameter
+      setActiveTab('orders');
     }
   }, [searchParams]);
 
