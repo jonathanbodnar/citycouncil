@@ -15,9 +15,10 @@ interface TalentWithPhone {
   temp_full_name: string;
   username: string;
   temp_avatar_url?: string;
-  users?: {
-    phone?: string;
-    full_name?: string;
+  user_id: string;
+  users: {
+    phone: string;
+    full_name: string;
     avatar_url?: string;
   };
 }
@@ -107,7 +108,7 @@ const CommsCenterManagement: React.FC = () => {
       // Call Twilio Edge Function to send SMS
       const { data, error } = await supabase.functions.invoke('send-sms', {
         body: {
-          to: selectedTalent.users?.phone,
+          to: selectedTalent.users.phone,
           message: messageText,
           talentId: selectedTalent.id
         }
@@ -157,7 +158,7 @@ const CommsCenterManagement: React.FC = () => {
           // Call Twilio Edge Function
           const { error } = await supabase.functions.invoke('send-sms', {
             body: {
-              to: talent.users?.phone,
+              to: talent.users.phone,
               message: massMessageText,
               talentId: talent.id
             }
@@ -282,9 +283,9 @@ const CommsCenterManagement: React.FC = () => {
                 }`}
               >
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  {(talent.temp_avatar_url || talent.users?.avatar_url) ? (
+                  {(talent.temp_avatar_url || talent.users.avatar_url) ? (
                     <img
-                      src={talent.temp_avatar_url || talent.users?.avatar_url}
+                      src={talent.temp_avatar_url || talent.users.avatar_url}
                       alt={talent.temp_full_name || talent.full_name}
                       className="w-full h-full rounded-full object-cover"
                     />
@@ -313,9 +314,9 @@ const CommsCenterManagement: React.FC = () => {
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                    {(selectedTalent.temp_avatar_url || selectedTalent.users?.avatar_url) ? (
+                    {(selectedTalent.temp_avatar_url || selectedTalent.users.avatar_url) ? (
                       <img
-                        src={selectedTalent.temp_avatar_url || selectedTalent.users?.avatar_url}
+                        src={selectedTalent.temp_avatar_url || selectedTalent.users.avatar_url}
                         alt={selectedTalent.temp_full_name || selectedTalent.full_name}
                         className="w-full h-full rounded-full object-cover"
                       />
@@ -330,7 +331,7 @@ const CommsCenterManagement: React.FC = () => {
                       {selectedTalent.temp_full_name || selectedTalent.full_name}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {selectedTalent.users?.phone?.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')}
+                      {selectedTalent.users.phone.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')}
                     </div>
                   </div>
                 </div>
