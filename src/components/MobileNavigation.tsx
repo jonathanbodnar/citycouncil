@@ -5,14 +5,16 @@ import {
   RectangleStackIcon, 
   UserCircleIcon, 
   ChatBubbleLeftRightIcon,
-  BellIcon 
+  BellIcon,
+  BanknotesIcon
 } from '@heroicons/react/24/outline';
 import { 
   HomeIcon as HomeIconSolid, 
   RectangleStackIcon as RectangleStackIconSolid, 
   UserCircleIcon as UserCircleIconSolid, 
   ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconSolid,
-  BellIcon as BellIconSolid 
+  BellIcon as BellIconSolid,
+  BanknotesIcon as BanknotesIconSolid
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext';
 
@@ -47,13 +49,23 @@ const MobileNavigation: React.FC = () => {
       icon: RectangleStackIcon,
       iconSolid: RectangleStackIconSolid,
     },
-    {
-      name: 'Notifications',
-      href: '/notifications',
-      icon: BellIcon,
-      iconSolid: BellIconSolid,
-      badge: true,
-    },
+    // Talent gets Payouts, regular users get Notifications
+    ...(user?.user_type === 'talent' ? [
+      {
+        name: 'Payouts',
+        href: '/dashboard?tab=payouts',
+        icon: BanknotesIcon,
+        iconSolid: BanknotesIconSolid,
+      }
+    ] : [
+      {
+        name: 'Notifications',
+        href: '/notifications',
+        icon: BellIcon,
+        iconSolid: BellIconSolid,
+        badge: true,
+      }
+    ]),
     {
       name: 'Help',
       href: '/help',
