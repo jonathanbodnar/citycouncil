@@ -16,6 +16,7 @@ app.use(helmet({
         "'unsafe-inline'", 
         "'unsafe-eval'", 
         "https://connect.facebook.net",
+        "https://static.cloudflareinsights.com",
         "https://js.fortis.tech",
         "https://*.fortis.tech"
       ],
@@ -34,6 +35,13 @@ app.use(helmet({
         "https:", 
         "blob:"
       ],
+      mediaSrc: [
+        "'self'",
+        "blob:",
+        "data:",
+        "https://*.wasabisys.com",
+        "https://s3.us-central-1.wasabisys.com"
+      ],
       connectSrc: [
         "'self'", 
         "https://*.supabase.co", 
@@ -41,18 +49,23 @@ app.use(helmet({
         "https://api.fortis.tech",
         "https://*.fortis.tech",
         "https://*.wasabisys.com",
-        "https://s3.us-central-1.wasabisys.com"
+        "https://s3.us-central-1.wasabisys.com",
+        "https://www.facebook.com",
+        "https://*.facebook.com",
+        "https://cloudflareinsights.com"
       ],
       frameSrc: [
         "'self'", 
         "https://www.facebook.com",
+        "https://*.facebook.com",
         "https://js.fortis.tech",
         "https://*.fortis.tech"
       ],
       formAction: [
         "'self'",
         "https://js.fortis.tech",
-        "https://*.fortis.tech"
+        "https://*.fortis.tech",
+        "https://www.facebook.com"
       ],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
