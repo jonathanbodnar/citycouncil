@@ -52,6 +52,8 @@ const OrdersManagement: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
+      console.log('🔍 [ADMIN] Fetching all orders...');
+      
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -68,6 +70,16 @@ const OrdersManagement: React.FC = () => {
           )
         `)
         .order('created_at', { ascending: false });
+
+      console.log('📦 [ADMIN] Orders query result:', {
+        count: data?.length || 0,
+        error: error,
+        ordersByUser: data?.reduce((acc: any, order: any) => {
+          const email = order.users?.email || 'unknown';
+          acc[email] = (acc[email] || 0) + 1;
+          return acc;
+        }, {})
+      });
 
       if (error) throw error;
       setOrders(data || []);

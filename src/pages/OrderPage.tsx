@@ -186,10 +186,13 @@ const OrderPage: React.FC = () => {
       }
 
       // Create order in database with payment info
-      console.log('Inserting order…', {
+      console.log('🔄 Inserting order…', {
         userId: user.id,
+        userEmail: user.email,
         talentId: talent.id,
+        talentName: talent.temp_full_name || talent.users.full_name,
         transactionId: paymentResult?.id || paymentResult?.transaction_id,
+        amount: pricing.total,
       });
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -219,7 +222,12 @@ const OrderPage: React.FC = () => {
         .select()
         .single();
 
-      console.log('Insert result', { order, orderError });
+      console.log('✅ Order insert result:', { 
+        success: !orderError,
+        orderId: order?.id,
+        error: orderError,
+        orderData: order
+      });
 
       if (orderError) throw orderError;
 
