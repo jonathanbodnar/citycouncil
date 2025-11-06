@@ -178,8 +178,12 @@ The following test accounts are available for development:
 - Row Level Security (RLS) on all database tables
 - Role-based access control
 - Secure authentication with Supabase
+- Multi-factor authentication (MFA) for talent accounts
 - Payment security with Stripe
 - Input validation and sanitization
+- AES-256-GCM encryption for sensitive data
+- GDPR, CCPA, and privacy law compliance
+- Comprehensive data retention and deletion policy (see [DATA_RETENTION_POLICY.md](./DATA_RETENTION_POLICY.md))
 
 ## 📱 PWA Features
 

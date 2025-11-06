@@ -134,7 +134,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="glass border-b border-white/10 backdrop-blur-xl relative z-[10001]">
+    <header className="glass border-b border-white/10 backdrop-blur-xl relative z-[1000]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -173,7 +173,7 @@ const Header: React.FC = () => {
             {user ? (
               <>
                 {/* Notifications */}
-                <div className="relative z-[10005]" ref={notificationRef}>
+                <div className="relative z-[2000]" ref={notificationRef}>
                   <button 
                     onClick={() => setShowNotifications(!showNotifications)}
                     className="p-2 text-white hover:text-gray-300 relative transition-colors"
@@ -189,12 +189,11 @@ const Header: React.FC = () => {
                   {/* Notification Dropdown */}
                   {showNotifications && (
                     <div 
-                      className="absolute right-0 mt-2 w-80 rounded-2xl shadow-modern-xl border border-white/30 overflow-hidden" 
+                      className="absolute right-0 mt-2 w-80 rounded-2xl shadow-modern-xl border border-white/30 overflow-hidden z-[2001]" 
                       style={{ 
                         background: 'rgba(17, 24, 39, 0.95)', 
                         backdropFilter: 'blur(40px)',
-                        WebkitBackdropFilter: 'blur(40px)',
-                        zIndex: 10006
+                        WebkitBackdropFilter: 'blur(40px)'
                       }}
                     >
                       <div className="p-4">
@@ -253,7 +252,7 @@ const Header: React.FC = () => {
                 </div>
 
                 {/* User Dropdown */}
-                <Menu as="div" className="relative z-[10000]">
+                <Menu as="div" className="relative z-[1500]">
                   <Menu.Button className="flex items-center space-x-2 p-2 rounded-xl hover:bg-white/10 transition-all duration-200">
                     <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
                       <UserCircleIcon className="h-6 w-6 text-white" />
@@ -272,7 +271,7 @@ const Header: React.FC = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right glass-strong rounded-2xl shadow-modern-xl ring-1 ring-white/20 focus:outline-none z-[9999] overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(25px)' }}>
+                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right glass-strong rounded-2xl shadow-modern-xl ring-1 ring-white/20 focus:outline-none z-[1501] overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(25px)' }}>
                       <div className="py-1">
                         <Menu.Item>
                           {({ active }) => (
