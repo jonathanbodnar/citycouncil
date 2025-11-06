@@ -60,15 +60,15 @@ const TalentDashboard: React.FC = () => {
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
 
   // Handle tab from URL parameter
+  const tabParam = searchParams.get('tab');
   useEffect(() => {
-    const tabParam = searchParams.get('tab');
     if (tabParam && ['orders', 'analytics', 'profile', 'payouts', 'promotion'].includes(tabParam)) {
       setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion');
-    } else if (!tabParam) {
+    } else {
       // Default to orders when no tab parameter
       setActiveTab('orders');
     }
-  }, [searchParams]);
+  }, [tabParam]); // Watch the actual tab value
 
   useEffect(() => {
     if (user) {
