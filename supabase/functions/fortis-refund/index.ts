@@ -12,6 +12,7 @@ const baseUrl = 'https://api.fortis.tech/v1';
 const developerId = Deno.env.get('FORTIS_DEVELOPER_ID');
 const userId = Deno.env.get('FORTIS_USER_ID');
 const userApiKey = Deno.env.get('FORTIS_USER_API_KEY');
+const locationId = Deno.env.get('FORTIS_LOCATION_ID');
 
 async function fortisFetch(path: string, init?: RequestInit) {
   const res = await fetch(`${baseUrl}${path}`, {
@@ -92,12 +93,11 @@ Deno.serve(async (req) => {
     
     console.log(`Processing refund of ${refundAmount} cents for transaction ${transaction_id}`);
 
-    // Process refund via Fortis API
+    // Process refund via Fortis API - create refund transaction
     const refundResponse = await fortisFetch(`/transactions/${transaction_id}/refund`, {
-      method: 'POST',
+      method: 'PATCH',
       body: JSON.stringify({
         transaction_amount: refundAmount,
-        reason: reason || 'Order cancelled/denied',
       }),
     });
 
