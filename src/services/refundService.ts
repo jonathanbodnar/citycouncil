@@ -22,9 +22,14 @@ class RefundService {
    */
   async processRefund(request: RefundRequest): Promise<RefundResult> {
     try {
-      // Step 1: Process refund via Fortis Edge Function
+      // Step 1: Validate reason is provided
+      if (!request.reason || request.reason.trim().length === 0) {
+        throw new Error('Denial reason is required');
+      }
+
+      // Step 2: Process refund via Fortis Edge Function
       console.log('Processing Fortis refund:', request);
-      const { data: refundData, error: refundError } = await supabase.functions.invoke('fortis-refunds', {
+      const { data: refundData, error: refundError } = await supabase.functions.invoke('fortis-refund', {
         body: {
           transaction_id: request.transactionId,
           amount: request.amount,
@@ -38,7 +43,7 @@ class RefundService {
 
       console.log('Fortis refund successful:', refundData);
 
-      // Step 2: Update order status to 'denied'
+      // Step 3: Update order status to 'denied'
       console.log('Updating order status to denied for order:', request.orderId);
       const { data: updateData, error: updateError } = await supabase
         .from('orders')
@@ -67,7 +72,7 @@ class RefundService {
 
       console.log('Order status updated successfully to denied');
 
-      // Step 3: Get order details for notifications
+      // Step 4: Get order details for notifications
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .select(`
@@ -95,7 +100,7 @@ class RefundService {
         };
       }
 
-      // Step 4: Send notifications
+      // Step 5: Send notifications to customer
       await this.sendDenialNotifications(order, request.reason, request.deniedBy);
 
       return {
