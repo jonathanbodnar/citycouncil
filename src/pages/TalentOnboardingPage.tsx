@@ -305,27 +305,37 @@ const TalentOnboardingPage: React.FC = () => {
       // Format phone to E.164 (+1XXXXXXXXXX)
       const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
 
-      // Create user record in our users table (even if email confirmation is pending)
-      const { error: userError } = await supabase
+      // Update user record to set user_type to 'talent'
+      // Try direct update first (works if RLS policy is updated)
+      const { error: userUpdateError } = await supabase
         .from('users')
-        .upsert({
-          id: authData.user.id,
-          email: accountData.email,
+        .update({
+          user_type: 'talent',
           phone: formattedPhone,
           full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
-          user_type: 'talent',
           avatar_url: onboardingData?.talent.temp_avatar_url
-        }, {
-          onConflict: 'id'
+        })
+        .eq('id', authData.user.id);
+
+      // If direct update fails, try Edge Function fallback
+      if (userUpdateError) {
+        console.warn('Direct update failed, trying Edge Function:', userUpdateError);
+        const { error: convertError } = await supabase.functions.invoke('convert-to-talent', {
+          body: {
+            userId: authData.user.id,
+            fullName: onboardingData?.talent.temp_full_name || 'Talent Member',
+            phone: formattedPhone,
+          },
         });
 
-      if (userError) {
-        console.error('Failed to create user record:', userError);
-        // Don't throw - the trigger might have created it
+        if (convertError) {
+          console.error('Failed to convert user to talent:', convertError);
+          throw new Error('Failed to set up talent account. Please contact support.');
+        }
       }
 
       // Update talent profile with user ID and copy temp_full_name to full_name
-      const { error: updateError } = await supabase
+      const { error: talentUpdateError } = await supabase
         .from('talent_profiles')
         .update({ 
           user_id: authData.user.id,
@@ -333,7 +343,7 @@ const TalentOnboardingPage: React.FC = () => {
         })
         .eq('id', onboardingData?.talent.id);
 
-      if (updateError) throw updateError;
+      if (talentUpdateError) throw talentUpdateError;
 
       // Check if email confirmation is required
       if (authData.session === null && authData.user.email_confirmed_at === null) {
