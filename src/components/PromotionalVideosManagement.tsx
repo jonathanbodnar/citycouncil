@@ -7,18 +7,22 @@ interface PromotionalVideo {
   id: string;
   created_at: string;
   video_url: string;
-  request_details: string;
-  allow_promotional_use: boolean;
-  talent_profiles: {
+  request_details?: string;
+  allow_promotional_use?: boolean;
+  talent_profiles?: {
     id: string;
     temp_full_name: string;
     users: {
       full_name: string;
     } | null;
   };
-  users: {
+  users?: {
     full_name: string;
   };
+  // Fields for onboarding promo videos
+  talent_name?: string;
+  video_type?: 'order' | 'onboarding';
+  username?: string;
 }
 
 const PromotionalVideosManagement: React.FC = () => {
@@ -33,7 +37,9 @@ const PromotionalVideosManagement: React.FC = () => {
   const fetchPromotionalVideos = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch order videos with promotional use allowed
+      const { data: orderVideos, error: orderError } = await supabase
         .from('orders')
         .select(`
           id,
@@ -57,9 +63,47 @@ const PromotionalVideosManagement: React.FC = () => {
         .not('video_url', 'is', null)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (orderError) throw orderError;
 
-      setVideos((data as any) || []);
+      // Fetch onboarding promo videos
+      const { data: promoVideos, error: promoError } = await supabase
+        .from('talent_profiles')
+        .select(`
+          id,
+          created_at,
+          promo_video_url,
+          username,
+          temp_full_name,
+          users!talent_profiles_user_id_fkey (
+            full_name
+          )
+        `)
+        .not('promo_video_url', 'is', null)
+        .order('created_at', { ascending: false });
+
+      if (promoError) throw promoError;
+
+      // Combine and format both types of videos
+      const formattedOrderVideos: PromotionalVideo[] = (orderVideos || []).map((video: any) => ({
+        ...video,
+        video_type: 'order' as const
+      }));
+
+      const formattedPromoVideos: PromotionalVideo[] = (promoVideos || []).map((video: any) => ({
+        id: video.id,
+        created_at: video.created_at,
+        video_url: video.promo_video_url,
+        request_details: 'Onboarding Promo Video',
+        video_type: 'onboarding' as const,
+        talent_name: video.users?.full_name || video.temp_full_name || 'Unknown',
+        username: video.username
+      }));
+
+      // Combine and sort by date
+      const allVideos = [...formattedOrderVideos, ...formattedPromoVideos]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setVideos(allVideos);
     } catch (error) {
       console.error('Error fetching promotional videos:', error);
       toast.error('Failed to load promotional videos');
@@ -182,17 +226,32 @@ const PromotionalVideosManagement: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-white/10">
               {videos.map((video) => {
-                const talentName = video.talent_profiles?.users?.full_name || 
-                                   video.talent_profiles?.temp_full_name || 
-                                   'Unknown';
-                const customerName = video.users?.full_name || 'Unknown';
+                const isOnboardingVideo = video.video_type === 'onboarding';
+                const talentName = isOnboardingVideo 
+                  ? video.talent_name
+                  : (video.talent_profiles?.users?.full_name || 
+                     video.talent_profiles?.temp_full_name || 
+                     'Unknown');
+                const customerName = isOnboardingVideo 
+                  ? 'N/A (Onboarding)' 
+                  : (video.users?.full_name || 'Unknown');
 
                 return (
-                  <tr key={video.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={`${video.video_type}-${video.id}`} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <VideoCameraIcon className="h-5 w-5 text-blue-400 mr-2" />
-                        <span className="text-sm font-medium text-white">{talentName}</span>
+                      <div className="flex items-center gap-2">
+                        <VideoCameraIcon className="h-5 w-5 text-blue-400" />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-white">{talentName}</span>
+                          {isOnboardingVideo && video.username && (
+                            <span className="text-xs text-gray-400">@{video.username}</span>
+                          )}
+                        </div>
+                        {isOnboardingVideo && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            Promo
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -213,7 +272,7 @@ const PromotionalVideosManagement: React.FC = () => {
                         <button
                           onClick={() => handleDownloadWithWatermark(
                             video.video_url,
-                            talentName,
+                            talentName || 'talent',
                             video.id
                           )}
                           disabled={downloadingVideo === video.id}
