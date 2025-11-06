@@ -995,6 +995,23 @@ const TalentDashboard: React.FC = () => {
               </div>
             </div>
 
+            {/* Full Name Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                value={talentProfile.full_name || ''}
+                onChange={(e) => setTalentProfile({ ...talentProfile, full_name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="John Smith"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Your legal name (used for payouts and verification)
+              </p>
+            </div>
+
             {/* Bio Section */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1003,6 +1020,7 @@ const TalentDashboard: React.FC = () => {
               <textarea
                 rows={4}
                 value={talentProfile.bio}
+                onChange={(e) => setTalentProfile({ ...talentProfile, bio: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="Tell customers about yourself and what makes your ShoutOuts special..."
               />
@@ -1021,6 +1039,7 @@ const TalentDashboard: React.FC = () => {
                   type="number"
                   step="0.01"
                   value={talentProfile.pricing}
+                  onChange={(e) => setTalentProfile({ ...talentProfile, pricing: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">For individual customers</p>
@@ -1033,6 +1052,7 @@ const TalentDashboard: React.FC = () => {
                   type="number"
                   step="0.01"
                   value={talentProfile.corporate_pricing || talentProfile.pricing * 1.5}
+                  onChange={(e) => setTalentProfile({ ...talentProfile, corporate_pricing: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">For business customers</p>
@@ -1044,6 +1064,7 @@ const TalentDashboard: React.FC = () => {
                 <input
                   type="number"
                   value={talentProfile.fulfillment_time_hours}
+                  onChange={(e) => setTalentProfile({ ...talentProfile, fulfillment_time_hours: parseInt(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
@@ -1124,7 +1145,30 @@ const TalentDashboard: React.FC = () => {
             </div>
 
             <div className="pt-6">
-              <button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern hover:shadow-modern-lg transition-all duration-300">
+              <button 
+                onClick={async () => {
+                  try {
+                    const { error } = await supabase
+                      .from('talent_profiles')
+                      .update({
+                        full_name: talentProfile.full_name,
+                        bio: talentProfile.bio,
+                        pricing: talentProfile.pricing,
+                        corporate_pricing: talentProfile.corporate_pricing,
+                        fulfillment_time_hours: talentProfile.fulfillment_time_hours,
+                      })
+                      .eq('id', talentProfile.id);
+
+                    if (error) throw error;
+                    toast.success('Profile updated successfully!');
+                    await fetchTalentData(); // Refresh data
+                  } catch (error: any) {
+                    console.error('Error updating profile:', error);
+                    toast.error(error.message || 'Failed to update profile');
+                  }
+                }}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern hover:shadow-modern-lg transition-all duration-300"
+              >
                 Update Profile
               </button>
             </div>
