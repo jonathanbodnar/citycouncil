@@ -549,6 +549,8 @@ const UserDashboard: React.FC = () => {
               </div>
             </div>
 
+            {/* Payment Methods - Temporarily disabled */}
+            {/* 
             <div className="pt-6 border-t border-gray-200">
               <h4 className="text-lg font-medium text-gray-900 mb-4">Payment Methods</h4>
               <div className="space-y-3">
@@ -570,6 +572,7 @@ const UserDashboard: React.FC = () => {
                 </button>
               </div>
             </div>
+            */}
           </div>
         </div>
       )}
