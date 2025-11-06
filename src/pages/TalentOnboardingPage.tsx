@@ -371,33 +371,24 @@ const TalentOnboardingPage: React.FC = () => {
       // Format phone to E.164 (+1XXXXXXXXXX)
       const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
 
-      // Update user record to set user_type to 'talent'
-      // Try direct update first (works if RLS policy is updated)
-      const { error: userUpdateError } = await supabase
+      // Create user record in public.users table
+      // Use upsert to handle case where record might already exist
+      const { error: userInsertError } = await supabase
         .from('users')
-        .update({
+        .upsert({
+          id: authData.user.id,
+          email: authData.user.email,
           user_type: 'talent',
           phone: formattedPhone,
           full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
           avatar_url: onboardingData?.talent.temp_avatar_url
-        })
-        .eq('id', authData.user.id);
-
-      // If direct update fails, try Edge Function fallback
-      if (userUpdateError) {
-        console.warn('Direct update failed, trying Edge Function:', userUpdateError);
-        const { error: convertError } = await supabase.functions.invoke('convert-to-talent', {
-          body: {
-            userId: authData.user.id,
-            fullName: onboardingData?.talent.temp_full_name || 'Talent Member',
-            phone: formattedPhone,
-          },
+        }, {
+          onConflict: 'id'
         });
 
-        if (convertError) {
-          console.error('Failed to convert user to talent:', convertError);
-          throw new Error('Failed to set up talent account. Please contact support.');
-        }
+      if (userInsertError) {
+        console.error('Failed to create/update user record:', userInsertError);
+        throw new Error('Failed to set up user account. Please contact support.');
       }
 
       // Update talent profile with user ID and copy temp_full_name to full_name
