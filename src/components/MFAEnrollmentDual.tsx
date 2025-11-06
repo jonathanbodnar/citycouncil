@@ -119,8 +119,7 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
       // For ENROLLMENT, use mfa.verify() not challengeAndVerify()
       const { data, error } = await supabase.auth.mfa.verify({
         factorId: factorId,
-        code: verifyCode,
-        friendlyName: selectedMethod === 'totp' ? 'Authenticator App' : 'My Phone'
+        code: verifyCode
       });
 
       if (error) throw error;
