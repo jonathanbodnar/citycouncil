@@ -114,9 +114,10 @@ class RefundService {
       // Create in-app notification
       await notificationService.createNotification(
         customerUserId,
+        'order_denied',
         'Order Denied & Refunded',
         `Your order for ${talentName} has been denied. ${reason}. A refund of $${refundAmount.toFixed(2)} has been processed to your original payment method.`,
-        `/dashboard?tab=orders`
+        { order_id: request.orderId }
       );
 
       // Send email notification

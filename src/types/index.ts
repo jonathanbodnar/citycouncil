@@ -161,7 +161,7 @@ export interface StripeConnectAccount {
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'order_placed' | 'order_fulfilled' | 'order_late' | 'new_review' | 'profile_incomplete';
+  type: 'order_placed' | 'order_fulfilled' | 'order_late' | 'order_denied' | 'new_review' | 'profile_incomplete';
   title: string;
   message: string;
   is_read: boolean;
