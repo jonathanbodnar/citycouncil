@@ -24,6 +24,7 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
   
   // Common states
   const [factorId, setFactorId] = useState<string>('');
+  const [challengeId, setChallengeId] = useState<string>('');
   const [verifyCode, setVerifyCode] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -81,11 +82,15 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
         setFactorId(data.id);
         
         // Send OTP to phone
-        const { error: challengeError } = await supabase.auth.mfa.challenge({
+        const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
           factorId: data.id
         });
 
         if (challengeError) throw challengeError;
+        
+        if (challengeData) {
+          setChallengeId(challengeData.id);
+        }
 
         toast.success('Verification code sent to your phone!');
         setStep('verify');
@@ -116,10 +121,19 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+      // For PHONE enrollment, challengeId is required
+      // For TOTP enrollment, challengeId is not needed (will be undefined)
+      const verifyParams: any = {
         factorId: factorId,
         code: verifyCode
-      });
+      };
+      
+      // Only add challengeId for phone MFA
+      if (selectedMethod === 'phone' && challengeId) {
+        verifyParams.challengeId = challengeId;
+      }
+
+      const { data, error } = await supabase.auth.mfa.verify(verifyParams);
 
       if (error) throw error;
 
