@@ -208,6 +208,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
           data: {
             full_name: accountData.fullName,
           },
+          emailRedirectTo: `${window.location.origin}/onboard`,
         },
       });
 
@@ -293,6 +294,16 @@ const PublicTalentOnboardingPage: React.FC = () => {
       }
 
       if (!authData.user) throw new Error('Failed to create user account');
+      
+      // Check if email confirmation is required
+      if (authData.session === null && authData.user.email_confirmed_at === null) {
+        toast.success('Account created! Please check your email to verify your account, then return here to continue.', {
+          duration: 8000,
+        });
+        setLoading(false);
+        return;
+      }
+      
       setUserId(authData.user.id);
 
       // Update user_type to 'talent' in public.users

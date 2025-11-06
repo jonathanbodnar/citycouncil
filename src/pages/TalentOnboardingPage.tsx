@@ -247,11 +247,22 @@ const TalentOnboardingPage: React.FC = () => {
           data: {
             full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
             user_type: 'talent'
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/talent-onboarding/${token}`,
         }
       });
 
       if (authError) throw authError;
+
+      if (!authData.user) throw new Error('Failed to create user account');
+
+      // Check if email confirmation is required
+      if (authData.session === null && authData.user.email_confirmed_at === null) {
+        toast.success('Account created! Please check your email to verify your account, then return here to continue.', {
+          duration: 8000,
+        });
+        return;
+      }
 
       if (authData.user) {
         // Create user record in our users table
