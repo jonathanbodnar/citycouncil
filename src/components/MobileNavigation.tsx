@@ -143,7 +143,10 @@ const MobileNavigation: React.FC = () => {
     >
       <div className={`grid py-2 ${user ? 'grid-cols-5' : 'grid-cols-2'}`}>
         {navigation.map((item) => {
-          const isActive = location.pathname === item.href;
+          // Better active detection for routes with query params
+          const isActive = location.pathname === item.href || 
+                          (item.href.includes('?') && location.pathname + location.search === item.href) ||
+                          (item.href === '/dashboard' && location.pathname === '/dashboard' && !location.search);
           const Icon = isActive ? item.iconSolid : item.icon;
           
           return (

@@ -303,62 +303,64 @@ const PayoutsDashboard: React.FC = () => {
   }
 
   return (
-    <div className='space-y-6'>
-      <div className='flex justify-between items-center'>
-        <h2 className='text-2xl font-bold text-gray-900'>Payouts</h2>
-        <div className='flex gap-3 items-center'>
-          <MoovOnboard />
+    <div className='space-y-4 md:space-y-6 pb-20 md:pb-0'>
+      <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3'>
+        <h2 className='text-xl md:text-2xl font-bold text-gray-900'>Payouts</h2>
+        <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center'>
+          <div className='hidden sm:block'>
+            <MoovOnboard />
+          </div>
 
           <button
             onClick={exportPayouts}
-            className='flex h-14 w-full text-center justify-center text-nowrap  items-center gap-2  px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors'
+            className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base'
           >
             <ArrowDownTrayIcon className='h-4 w-4' />
-            Export CSV
+            <span className='whitespace-nowrap'>Export CSV</span>
           </button>
           <button
             onClick={linkBankViaPlaid}
             disabled={isLinkingBank}
-            className='flex h-14 w-full text-center justify-center items-center text-nowrap gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+            className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base disabled:opacity-50'
           >
             <PlusIcon className='h-4 w-4' />
-            {isLinkingBank ? 'Opening Plaid…' : 'Link Bank Account'}
+            <span className='whitespace-nowrap'>{isLinkingBank ? 'Opening Plaid…' : 'Link Bank'}</span>
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-        <div className='bg-white rounded-lg shadow-sm p-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6'>
+        <div className='bg-white rounded-lg shadow-sm p-4 md:p-6'>
           <div className='flex items-center'>
-            <BanknotesIcon className='h-8 w-8 text-green-500' />
-            <div className='ml-4'>
-              <p className='text-sm text-gray-600'>Total Earnings</p>
-              <p className='text-2xl font-bold text-gray-900'>
+            <BanknotesIcon className='h-6 w-6 md:h-8 md:w-8 text-green-500' />
+            <div className='ml-3 md:ml-4'>
+              <p className='text-xs md:text-sm text-gray-600'>Total Earnings</p>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>
                 ${totalEarnings.toFixed(2)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className='bg-white rounded-lg shadow-sm p-6'>
+        <div className='bg-white rounded-lg shadow-sm p-4 md:p-6'>
           <div className='flex items-center'>
-            <ClockIcon className='h-8 w-8 text-yellow-500' />
-            <div className='ml-4'>
-              <p className='text-sm text-gray-600'>Pending</p>
-              <p className='text-2xl font-bold text-gray-900'>
+            <ClockIcon className='h-6 w-6 md:h-8 md:w-8 text-yellow-500' />
+            <div className='ml-3 md:ml-4'>
+              <p className='text-xs md:text-sm text-gray-600'>Pending</p>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>
                 ${pendingEarnings.toFixed(2)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className='bg-white rounded-lg shadow-sm p-6'>
+        <div className='bg-white rounded-lg shadow-sm p-4 md:p-6'>
           <div className='flex items-center'>
-            <CreditCardIcon className='h-8 w-8 text-blue-500' />
-            <div className='ml-4'>
-              <p className='text-sm text-gray-600'>Total Payouts</p>
-              <p className='text-2xl font-bold text-gray-900'>
+            <CreditCardIcon className='h-6 w-6 md:h-8 md:w-8 text-blue-500' />
+            <div className='ml-3 md:ml-4'>
+              <p className='text-xs md:text-sm text-gray-600'>Total Payouts</p>
+              <p className='text-lg md:text-2xl font-bold text-gray-900'>
                 {payouts.length}
               </p>
             </div>
@@ -367,8 +369,8 @@ const PayoutsDashboard: React.FC = () => {
       </div>
 
       {/* Bank Information */}
-      <div className='bg-white rounded-lg shadow-sm p-6'>
-        <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+      <div className='bg-white rounded-lg shadow-sm p-4 md:p-6'>
+        <h3 className='text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4'>
           Bank Information
         </h3>
         {bankInfo && (
@@ -378,8 +380,8 @@ const PayoutsDashboard: React.FC = () => {
           </div>
         )}
         {bankInfo ? (
-          <div className='bg-gray-50 rounded-lg p-4'>
-            <div className='grid grid-cols-2 gap-4'>
+          <div className='bg-gray-50 rounded-lg p-3 md:p-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4'>
               <div>
                 <p className='text-sm text-gray-600'>Account Holder</p>
                 <p className='font-medium'>{bankInfo.account_holder_name}</p>
@@ -433,8 +435,8 @@ const PayoutsDashboard: React.FC = () => {
 
       {/* Payouts List */}
       <div className='bg-white rounded-lg shadow-sm'>
-        <div className='px-6 py-4 border-b border-gray-200'>
-          <h3 className='text-lg font-semibold text-gray-900'>
+        <div className='px-4 md:px-6 py-3 md:py-4 border-b border-gray-200'>
+          <h3 className='text-base md:text-lg font-semibold text-gray-900'>
             Payout History
           </h3>
         </div>
@@ -442,8 +444,8 @@ const PayoutsDashboard: React.FC = () => {
         {payouts.length > 0 ? (
           <div className='divide-y divide-gray-200'>
             {payouts.map(payout => (
-              <div key={payout.id} className='p-6'>
-                <div className='flex items-center justify-between'>
+              <div key={payout.id} className='p-4 md:p-6'>
+                <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
                   <div className='flex items-center space-x-3'>
                     {getStatusIcon(payout.status)}
                     <div>
