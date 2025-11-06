@@ -81,8 +81,53 @@ const TalentOnboardingPage: React.FC = () => {
   useEffect(() => {
     if (token) {
       fetchOnboardingData();
+      loadSavedProgress();
     }
   }, [token]);
+
+  // Load saved progress from localStorage
+  const loadSavedProgress = () => {
+    try {
+      const savedKey = `admin_onboarding_progress_${token}`;
+      const savedData = localStorage.getItem(savedKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.currentStep) setCurrentStep(parsed.currentStep);
+        if (parsed.profileData) setProfileData({ ...profileData, ...parsed.profileData });
+        if (parsed.donateProceeds !== undefined) setDonateProceeds(parsed.donateProceeds);
+        if (parsed.welcomeVideoUrl) setWelcomeVideoUrl(parsed.welcomeVideoUrl);
+        console.log('Admin onboarding progress restored from localStorage');
+        toast.success('Progress restored! Continuing where you left off...', { duration: 2000 });
+      }
+    } catch (error) {
+      console.error('Failed to load saved progress:', error);
+    }
+  };
+
+  // Save progress to localStorage after each step
+  const saveProgress = () => {
+    try {
+      const savedKey = `admin_onboarding_progress_${token}`;
+      const progressData = {
+        currentStep,
+        profileData,
+        donateProceeds,
+        welcomeVideoUrl,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(savedKey, JSON.stringify(progressData));
+      console.log('Admin onboarding progress saved to localStorage');
+    } catch (error) {
+      console.error('Failed to save progress:', error);
+    }
+  };
+
+  // Save progress whenever key data changes
+  useEffect(() => {
+    if (onboardingData && currentStep > 1) {
+      saveProgress();
+    }
+  }, [currentStep, profileData, donateProceeds, welcomeVideoUrl]);
 
 
   const fetchOnboardingData = async () => {
@@ -1405,6 +1450,11 @@ const TalentOnboardingPage: React.FC = () => {
                       .eq('id', onboardingData?.talent.id);
 
                     if (completeError) throw completeError;
+
+                    // Clear saved progress from localStorage
+                    const savedKey = `admin_onboarding_progress_${token}`;
+                    localStorage.removeItem(savedKey);
+                    console.log('Admin onboarding progress cleared from localStorage');
 
                     // Send admin notification email
                     try {

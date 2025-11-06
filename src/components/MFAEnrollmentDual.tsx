@@ -41,9 +41,9 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
   const [verifyCode, setVerifyCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Clean up any existing phone factors that might be stuck
+  // Clean up any existing unverified factors (both phone and TOTP) that might be stuck
   useEffect(() => {
-    const cleanupStuckPhoneFactors = async () => {
+    const cleanupStuckFactors = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -51,16 +51,17 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
         const { data: factors } = await supabase.auth.mfa.listFactors();
         if (!factors?.all) return;
 
-        // Find any unverified phone factors
-        const unverifiedPhoneFactors = factors.all.filter(
-          (f: any) => f.factor_type === 'phone' && f.status === 'unverified'
+        // Find any unverified factors (phone OR totp)
+        const unverifiedFactors = factors.all.filter(
+          (f: any) => f.status === 'unverified'
         );
 
         // Unenroll them
-        for (const factor of unverifiedPhoneFactors) {
+        for (const factor of unverifiedFactors) {
           try {
             await supabase.auth.mfa.unenroll({ factorId: factor.id });
-            console.log('Cleaned up unverified phone factor:', factor.id);
+            console.log(`Cleaned up unverified ${factor.factor_type} factor:`, factor.id);
+            toast.success(`Cleaned up stuck ${factor.factor_type === 'totp' ? 'authenticator' : 'phone'} setup`, { duration: 2000 });
           } catch (err) {
             console.error('Failed to cleanup factor:', err);
           }
@@ -70,7 +71,7 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
       }
     };
 
-    cleanupStuckPhoneFactors();
+    cleanupStuckFactors();
   }, []);
 
   const formatPhoneNumber = (value: string) => {
