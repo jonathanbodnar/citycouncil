@@ -173,11 +173,11 @@ class RefundService {
         </div>
       `;
 
-      await emailService.sendEmail(
-        customerEmail,
-        'Order Denied - Refund Processed',
-        emailHtml
-      );
+      await emailService.sendEmail({
+        to: customerEmail,
+        subject: 'Order Denied - Refund Processed',
+        html: emailHtml
+      });
 
       console.log('Denial notifications sent successfully');
     } catch (error) {
