@@ -122,7 +122,7 @@ const BulkVideoUpload: React.FC = () => {
           occasion: item.occasion,
           message: 'Historical video upload',
           pricing: 0,
-          status: 'delivered',
+          status: 'completed',
           video_url: uploadResult.videoUrl,
           completed_at: new Date().toISOString(),
           is_historical: true // Mark as historical
