@@ -792,7 +792,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   </label>
                   <CategorySelector
                     selectedCategories={profileData.categories}
-                    onChange={(categories) => setProfileData({ ...profileData, categories })}
+                    onCategoryChange={(categories) => setProfileData({ ...profileData, categories })}
+                    autoSave={false}
+                    startEditing={true}
+                    stayInEditMode={true}
                   />
                 </div>
 
