@@ -22,6 +22,8 @@ const PublicTalentOnboardingPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
 
   // Step 1: Account Creation
   const [accountData, setAccountData] = useState({
@@ -369,6 +371,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
       return;
     }
 
+    if (!profileData.fullName) {
+      toast.error('Full name is required');
+      return;
+    }
+
     if (!profileData.username) {
       toast.error('Username is required');
       return;
@@ -387,6 +394,20 @@ const PublicTalentOnboardingPage: React.FC = () => {
     setLoading(true);
 
     try {
+      // Check if username is already taken by another profile
+      const { data: existingProfile } = await supabase
+        .from('talent_profiles')
+        .select('id, username')
+        .eq('username', profileData.username.toLowerCase())
+        .neq('id', talentProfileId) // Exclude current profile
+        .maybeSingle();
+
+      if (existingProfile) {
+        toast.error(`Username "${profileData.username}" is already taken. Please choose another.`);
+        setLoading(false);
+        return;
+      }
+
       // Update talent profile
       const { error } = await supabase
         .from('talent_profiles')
@@ -403,7 +424,13 @@ const PublicTalentOnboardingPage: React.FC = () => {
         })
         .eq('id', talentProfileId);
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific constraint violation error
+        if (error.message.includes('idx_talent_profiles_username') || error.message.includes('duplicate key')) {
+          throw new Error(`Username "${profileData.username}" is already taken. Please choose another.`);
+        }
+        throw error;
+      }
 
       toast.success('Profile information saved!');
       setCurrentStep(3);

@@ -49,13 +49,13 @@ serve(async req => {
       .from('users')
       .select('phone')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
     
     const { data: talentProfile } = await supabase
       .from('talent_profiles')
-      .select('full_name')
+      .select('*')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
     // Format phone number for Plaid (remove all non-digits, ensure 10 digits)
     let phoneNumber = null
