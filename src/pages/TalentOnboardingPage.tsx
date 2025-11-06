@@ -319,18 +319,10 @@ const TalentOnboardingPage: React.FC = () => {
               }
               
               // Password doesn't match - show login form
-              toast.error('An account with this email already exists. Please enter your password to continue.');
+              toast.error('An account with this email already exists. Please enter the correct password to continue.');
               setLoginData({ email: accountData.email, password: '' });
               
-              // Update talent profile to mark that user_id exists (trigger login form)
-              if (signInData?.user) {
-                await supabase
-                  .from('talent_profiles')
-                  .update({ user_id: signInData.user.id })
-                  .eq('id', onboardingData?.talent.id);
-              }
-              
-              // Force re-fetch to show login form
+              // Force re-fetch to show login form (don't try to access signInData.user since login failed)
               await fetchOnboardingData();
               return;
             }
