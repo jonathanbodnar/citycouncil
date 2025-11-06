@@ -51,6 +51,7 @@ export interface TalentProfile {
   instagram_user_id?: string; // Instagram user ID from Meta API
   instagram_access_token?: string; // OAuth access token for Instagram API
   instagram_token_expires_at?: string; // When the Instagram access token expires
+  full_name?: string; // Legal full name (used for Moov/Plaid onboarding)
   total_orders: number;
   fulfilled_orders: number;
   average_rating: number;
