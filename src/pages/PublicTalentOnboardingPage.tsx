@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { 
@@ -66,6 +66,42 @@ const PublicTalentOnboardingPage: React.FC = () => {
     { number: 4, title: 'Promo Video', icon: VideoCameraIcon },
     { number: 5, title: 'Security (MFA)', icon: ShieldCheckIcon },
   ];
+
+  // Load saved progress from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('talent_onboarding_progress');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.currentStep) setCurrentStep(parsed.currentStep);
+        if (parsed.userId) setUserId(parsed.userId);
+        if (parsed.talentProfileId) setTalentProfileId(parsed.talentProfileId);
+        if (parsed.accountData) setAccountData({ ...accountData, ...parsed.accountData });
+        if (parsed.profileData) setProfileData({ ...profileData, ...parsed.profileData });
+        if (parsed.charityData) setCharityData({ ...charityData, ...parsed.charityData });
+        if (parsed.donateToCharity !== undefined) setDonateToCharity(parsed.donateToCharity);
+        toast.success('Progress restored! Continuing where you left off...');
+      } catch (error) {
+        console.error('Failed to parse saved progress:', error);
+      }
+    }
+  }, []);
+
+  // Save progress to localStorage whenever critical data changes
+  useEffect(() => {
+    if (userId || currentStep > 1) {
+      const dataToSave = {
+        currentStep,
+        userId,
+        talentProfileId,
+        accountData: { email: accountData.email, fullName: accountData.fullName },
+        profileData,
+        charityData,
+        donateToCharity,
+      };
+      localStorage.setItem('talent_onboarding_progress', JSON.stringify(dataToSave));
+    }
+  }, [currentStep, userId, talentProfileId, profileData, charityData, donateToCharity]);
 
   // Sign In Handler (for returning users)
   const handleSignIn = async (e: React.FormEvent) => {
@@ -465,6 +501,9 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
       if (error) throw error;
 
+      // Clear saved onboarding progress
+      localStorage.removeItem('talent_onboarding_progress');
+
       toast.success('🎉 Onboarding complete! Welcome to ShoutOut!');
       
       // Redirect to dashboard
@@ -527,8 +566,8 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
         {/* Form Content - Compact */}
         <div className="glass-strong rounded-2xl shadow-2xl border border-white/30 p-4 sm:p-6">
-          {/* Step 1: Create Account */}
-          {currentStep === 1 && (
+          {/* Step 1: Create Account or Sign In */}
+          {currentStep === 1 && !showSignIn && (
             <form onSubmit={handleStep1Submit}>
               <h2 className="text-xl font-bold text-white mb-3">Create Your Account</h2>
               
@@ -599,6 +638,74 @@ const PublicTalentOnboardingPage: React.FC = () => {
               >
                 {loading ? 'Creating Account...' : 'Create Account & Continue'}
               </button>
+
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowSignIn(true)}
+                  className="text-sm text-blue-400 hover:text-blue-300 underline"
+                >
+                  Already started? Sign in to continue
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Step 1: Sign In Form */}
+          {currentStep === 1 && showSignIn && (
+            <form onSubmit={handleSignIn}>
+              <h2 className="text-xl font-bold text-white mb-3">Sign In to Continue</h2>
+              <p className="text-xs text-gray-300 mb-4">
+                Resume your onboarding where you left off
+              </p>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={signInData.email}
+                    onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="john@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={signInData.password}
+                    onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-4 bg-gradient-to-r from-green-600 to-green-700 text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:from-green-700 hover:to-green-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Signing In...' : 'Sign In & Continue'}
+              </button>
+
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowSignIn(false)}
+                  className="text-sm text-blue-400 hover:text-blue-300 underline"
+                >
+                  Need to create an account?
+                </button>
+              </div>
             </form>
           )}
 
