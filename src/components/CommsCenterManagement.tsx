@@ -66,7 +66,7 @@ const CommsCenterManagement: React.FC = () => {
           username,
           temp_avatar_url,
           user_id,
-          users!talent_profiles_user_id_fkey (
+          users:user_id (
             phone,
             full_name,
             avatar_url

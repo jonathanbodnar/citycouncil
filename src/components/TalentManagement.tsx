@@ -24,7 +24,9 @@ interface TalentWithUser extends TalentProfile {
     full_name: string;
     avatar_url?: string;
     email?: string;
+    phone?: string;
   };
+  temp_phone?: string; // For editing phone number
 }
 
 const TalentManagement: React.FC = () => {
@@ -327,15 +329,27 @@ const TalentManagement: React.FC = () => {
         console.log('FORCING user table to match temp fields:', {
           userId: editingTalent.user_id,
           tempName: editingTalent.temp_full_name,
-          tempImage: editingTalent.temp_avatar_url ? 'IMAGE_SET' : 'NO_IMAGE'
+          tempImage: editingTalent.temp_avatar_url ? 'IMAGE_SET' : 'NO_IMAGE',
+          tempPhone: editingTalent.temp_phone ? 'PHONE_SET' : 'NO_PHONE'
         });
+        
+        // Prepare user update data
+        const userUpdateData: any = {
+          full_name: editingTalent.temp_full_name,
+          avatar_url: editingTalent.temp_avatar_url
+        };
+        
+        // Add phone if it exists (format to E.164: +1XXXXXXXXXX)
+        if (editingTalent.temp_phone) {
+          const cleaned = editingTalent.temp_phone.replace(/\D/g, '');
+          if (cleaned.length === 10) {
+            userUpdateData.phone = `+1${cleaned}`;
+          }
+        }
         
         const { error: userError } = await supabase
           .from('users')
-          .update({
-            full_name: editingTalent.temp_full_name,
-            avatar_url: editingTalent.temp_avatar_url
-          })
+          .update(userUpdateData)
           .eq('id', editingTalent.user_id);
 
         if (userError) {
@@ -372,7 +386,8 @@ const TalentManagement: React.FC = () => {
           users (
             full_name,
             avatar_url,
-            email
+            email,
+            phone
           )
         `)
         .eq('id', editingTalent.id)
@@ -1182,6 +1197,35 @@ const TalentManagement: React.FC = () => {
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={editingTalent.temp_phone || editingTalent.users?.phone?.replace(/(\+1)?(\d{3})(\d{3})(\d{4})/, '($2) $3-$4') || ''}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/\D/g, '');
+                    if (cleaned.length <= 10) {
+                      let formatted = cleaned;
+                      if (cleaned.length > 6) {
+                        formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                      } else if (cleaned.length > 3) {
+                        formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+                      } else if (cleaned.length > 0) {
+                        formatted = `(${cleaned}`;
+                      }
+                      setEditingTalent({...editingTalent, temp_phone: formatted});
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="(555) 123-4567"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  For MFA and SMS notifications
+                </p>
               </div>
               
               <div>
