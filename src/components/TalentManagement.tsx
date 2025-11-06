@@ -77,11 +77,13 @@ const TalentManagement: React.FC = () => {
       if (error) throw error;
 
       if (data?.global_admin_fee_percentage) {
-        setDefaultAdminFee(data.global_admin_fee_percentage);
+        const fetchedFee = data.global_admin_fee_percentage;
+        console.log('Platform settings loaded: admin fee =', fetchedFee + '%');
+        setDefaultAdminFee(fetchedFee);
         // Update newTalent with the fetched admin fee
         setNewTalent(prev => ({
           ...prev,
-          admin_fee_percentage: data.global_admin_fee_percentage
+          admin_fee_percentage: fetchedFee
         }));
       }
     } catch (error) {
@@ -89,6 +91,14 @@ const TalentManagement: React.FC = () => {
       // Keep default of 25% if fetch fails
     }
   };
+
+  // Update admin fee input whenever defaultAdminFee changes
+  useEffect(() => {
+    setNewTalent(prev => ({
+      ...prev,
+      admin_fee_percentage: defaultAdminFee
+    }));
+  }, [defaultAdminFee]);
 
   useEffect(() => {
     // Filter talents based on search query

@@ -1058,6 +1058,36 @@ const TalentDashboard: React.FC = () => {
               </p>
             </div>
 
+            {/* Phone Number Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                value={userHasPhone && userPhone ? userPhone : ''}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/\D/g, '');
+                  if (cleaned.length <= 10) {
+                    let formatted = cleaned;
+                    if (cleaned.length > 6) {
+                      formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                    } else if (cleaned.length > 3) {
+                      formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+                    } else if (cleaned.length > 0) {
+                      formatted = `(${cleaned}`;
+                    }
+                    setUserPhone(formatted);
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="(555) 123-4567"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Used for account security (MFA) and payout notifications
+              </p>
+            </div>
+
             {/* Bio Section */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1194,7 +1224,8 @@ const TalentDashboard: React.FC = () => {
               <button 
                 onClick={async () => {
                   try {
-                    const { error } = await supabase
+                    // Update talent profile
+                    const { error: profileError } = await supabase
                       .from('talent_profiles')
                       .update({
                         full_name: talentProfile.full_name,
@@ -1205,7 +1236,19 @@ const TalentDashboard: React.FC = () => {
                       })
                       .eq('id', talentProfile.id);
 
-                    if (error) throw error;
+                    if (profileError) throw profileError;
+
+                    // Update phone number in users table if changed
+                    if (userPhone) {
+                      const formattedPhone = `+1${userPhone.replace(/\D/g, '')}`;
+                      const { error: phoneError } = await supabase
+                        .from('users')
+                        .update({ phone: formattedPhone })
+                        .eq('id', user?.id);
+
+                      if (phoneError) throw phoneError;
+                    }
+
                     toast.success('Profile updated successfully!');
                     await fetchTalentData(); // Refresh data
                   } catch (error: any) {
