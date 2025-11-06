@@ -91,7 +91,7 @@ export interface Order {
   amount: number;
   admin_fee: number;
   charity_amount?: number;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded' | 'denied';
   approval_status: 'pending' | 'approved' | 'rejected';
   is_corporate_order: boolean;
   event_description?: string;
@@ -100,6 +100,11 @@ export interface Order {
   approved_at?: string;
   rejected_at?: string;
   rejection_reason?: string;
+  denial_reason?: string;
+  denied_by?: 'admin' | 'talent';
+  denied_at?: string;
+  refund_id?: string;
+  refund_amount?: number;
   video_url?: string;
   fulfillment_deadline: string;
   created_at: string;
