@@ -256,18 +256,28 @@ const TalentDashboard: React.FC = () => {
 
   const handleAcceptOrder = async (orderId: string) => {
     try {
-      const { error } = await supabase
+      console.log('Accepting order:', orderId);
+      
+      const { data, error } = await supabase
         .from('orders')
         .update({ status: 'in_progress' })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating order status:', error);
+        throw error;
+      }
 
+      console.log('Order accepted successfully:', data);
       toast.success('Order accepted! You can now upload the video.');
-      fetchTalentData();
-    } catch (error) {
+      
+      // Refresh data to show updated status
+      await fetchTalentData();
+    } catch (error: any) {
       console.error('Error accepting order:', error);
-      toast.error('Failed to accept order');
+      toast.error(error.message || 'Failed to accept order');
     }
   };
 
