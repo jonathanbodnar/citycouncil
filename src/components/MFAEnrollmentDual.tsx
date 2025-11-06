@@ -28,6 +28,38 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
   const [verifyCode, setVerifyCode] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Clean up any existing phone factors that might be stuck
+  useEffect(() => {
+    const cleanupStuckPhoneFactors = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        if (!factors?.all) return;
+
+        // Find any unverified phone factors
+        const unverifiedPhoneFactors = factors.all.filter(
+          (f: any) => f.factor_type === 'phone' && f.status === 'unverified'
+        );
+
+        // Unenroll them
+        for (const factor of unverifiedPhoneFactors) {
+          try {
+            await supabase.auth.mfa.unenroll({ factorId: factor.id });
+            console.log('Cleaned up unverified phone factor:', factor.id);
+          } catch (err) {
+            console.error('Failed to cleanup factor:', err);
+          }
+        }
+      } catch (error) {
+        console.error('Error cleaning up stuck factors:', error);
+      }
+    };
+
+    cleanupStuckPhoneFactors();
+  }, []);
+
   const formatPhoneNumber = (value: string) => {
     const cleaned = value.replace(/\D/g, '');
     if (cleaned.length <= 3) return cleaned;
@@ -79,35 +111,38 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
       if (error) throw error;
 
       if (data) {
-        setFactorId(data.id);
+        const enrolledFactorId = data.id;
+        setFactorId(enrolledFactorId);
         
-        // Send OTP to phone
-        const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-          factorId: data.id
-        });
+        try {
+          // Send OTP to phone
+          const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+            factorId: enrolledFactorId
+          });
 
-        if (challengeError) throw challengeError;
-        
-        if (challengeData) {
-          setChallengeId(challengeData.id);
+          if (challengeError) throw challengeError;
+          
+          if (challengeData) {
+            setChallengeId(challengeData.id);
+          }
+
+          toast.success('Verification code sent to your phone!');
+          setStep('verify');
+        } catch (challengeError: any) {
+          // Challenge failed, clean up the factor that was just created
+          console.error('MFA challenge failed, cleaning up factor:', challengeError);
+          try {
+            await supabase.auth.mfa.unenroll({ factorId: enrolledFactorId });
+            console.log('Successfully cleaned up failed MFA factor');
+          } catch (cleanupError) {
+            console.error('Failed to cleanup MFA factor:', cleanupError);
+          }
+          setFactorId('');
+          throw challengeError; // Re-throw to be caught by outer catch
         }
-
-        toast.success('Verification code sent to your phone!');
-        setStep('verify');
       }
     } catch (error: any) {
       console.error('MFA phone enrollment error:', error);
-      
-      // If factor was created but challenge failed, try to clean it up
-      if (factorId) {
-        try {
-          await supabase.auth.mfa.unenroll({ factorId });
-          console.log('Cleaned up failed MFA factor');
-        } catch (cleanupError) {
-          console.error('Failed to cleanup MFA factor:', cleanupError);
-        }
-        setFactorId('');
-      }
       
       if (error.message?.includes('Phone') || error.message?.includes('not enabled') || error.message?.includes('SMS') || error.message?.includes('factor')) {
         // User-friendly error message
