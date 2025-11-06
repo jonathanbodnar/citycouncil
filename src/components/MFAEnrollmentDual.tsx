@@ -126,6 +126,16 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
             setChallengeId(challengeData.id);
           }
 
+          // Save phone number to users table for Plaid/Moov integration
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('users')
+              .update({ phone: formattedPhone })
+              .eq('id', user.id);
+            console.log('Phone number saved to users table:', formattedPhone);
+          }
+
           toast.success('Verification code sent to your phone!');
           setStep('verify');
         } catch (challengeError: any) {
