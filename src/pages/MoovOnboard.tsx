@@ -32,6 +32,68 @@ const MoovOnboard = (props: Props) => {
     ssn: ''
   })
 
+  // Prefill user data on component mount
+  useEffect(() => {
+    const prefillUserData = async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser()
+        const uid = authData?.user?.id
+        if (!uid) return
+
+        // Get user email from auth
+        const userEmail = authData.user.email || ''
+
+        // Get user's talent profile for full name
+        const { data: profile } = await supabase
+          .from('talent_profiles')
+          .select('full_name')
+          .eq('user_id', uid)
+          .maybeSingle()
+
+        // Get user's phone from public.users table
+        const { data: userData } = await supabase
+          .from('users')
+          .select('phone')
+          .eq('id', uid)
+          .maybeSingle()
+
+        // Parse full name into first/last
+        let firstName = ''
+        let lastName = ''
+        if (profile?.full_name) {
+          const nameParts = profile.full_name.trim().split(' ')
+          firstName = nameParts[0] || ''
+          lastName = nameParts.slice(1).join(' ') || ''
+        }
+
+        // Clean phone number (remove formatting)
+        let cleanPhone = ''
+        if (userData?.phone) {
+          cleanPhone = userData.phone.replace(/\D/g, '')
+          // Remove country code if present
+          if (cleanPhone.startsWith('1') && cleanPhone.length === 11) {
+            cleanPhone = cleanPhone.slice(1)
+          }
+        }
+
+        // Update form with prefilled data
+        setForm(prev => ({
+          ...prev,
+          firstName,
+          lastName,
+          email: userEmail,
+          phone: cleanPhone
+        }))
+      } catch (error) {
+        console.error('Error prefilling user data:', error)
+      }
+    }
+
+    if (open && !accountId) {
+      prefillUserData()
+    }
+  }, [open, accountId])
+
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let { name, value } = e.target
     if (name === 'stateOrProvince') value = value.toUpperCase()

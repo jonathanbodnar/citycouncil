@@ -65,9 +65,9 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
         ×
       </button>
 
-      <h3 style={headingStyle}>Onboard New Talent</h3>
+      <h3 style={headingStyle}>Setup Your Payouts Account</h3>
       <p style={subheadingStyle}>
-        Please provide your details below.
+        To receive payouts please enter your legal information. You can connect your bank account after verification.
       </p>
 
       <div style={{ display: 'flex', gap: '10px' }}>
@@ -149,12 +149,21 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
         />
         <input
           name='ssn'
+          type='password'
           placeholder='SSN (9 digits)'
           value={form.ssn}
           onChange={(e) => {
             if (/^\d{0,9}$/.test(e.target.value)) onChange(e)
           }}
-          style={inputStyle}
+          style={{
+            ...inputStyle,
+            letterSpacing: '0.3em',
+            fontFamily: 'monospace'
+          }}
+          inputMode='numeric'
+          pattern='\d*'
+          maxLength={9}
+          autoComplete='off'
           required
         />
       </div>
@@ -191,8 +200,35 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
         />
       </div>
 
+      {/* SSL Encryption Notice */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        padding: '12px',
+        marginTop: '10px',
+        marginBottom: '10px',
+        background: 'rgba(34, 197, 94, 0.1)',
+        border: '1px solid rgba(34, 197, 94, 0.3)',
+        borderRadius: '8px',
+        color: '#86efac',
+        fontSize: '13px'
+      }}>
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          viewBox="0 0 24 24" 
+          fill="currentColor" 
+          style={{ width: '18px', height: '18px', flexShrink: 0 }}
+        >
+          <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
+        </svg>
+        <span>
+          <strong>256-bit SSL Encrypted</strong> - Your information is secure
+        </span>
+      </div>
+
       <button
-        className='mt-4'
         type='submit'
         style={hover ? buttonHover : buttonBase}
         onMouseEnter={() => setHover(true)}
