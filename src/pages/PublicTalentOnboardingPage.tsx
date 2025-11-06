@@ -360,24 +360,34 @@ const PublicTalentOnboardingPage: React.FC = () => {
       
       setUserId(authData.user.id);
 
-      // Create user record in public.users table (using service role to bypass RLS)
-      // This ensures the user exists even if email confirmation is pending
+      // Update user record to set user_type to 'talent'
+      // A trigger likely already created the user record, so we just need to update it
       const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
-      const { error: userInsertError } = await supabase
+      const { error: userUpdateError } = await supabase
         .from('users')
-        .upsert({
-          id: authData.user.id,
-          email: accountData.email,
-          full_name: accountData.fullName,
-          phone: formattedPhone,
+        .update({
           user_type: 'talent',
-        }, {
-          onConflict: 'id'
-        });
+          phone: formattedPhone,
+          full_name: accountData.fullName,
+        })
+        .eq('id', authData.user.id);
 
-      if (userInsertError) {
-        console.error('Failed to create user record:', userInsertError);
-        // Don't throw - the trigger might have created it
+      if (userUpdateError) {
+        console.error('Failed to update user record to talent:', userUpdateError);
+        // Try insert as fallback
+        const { error: userInsertError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: accountData.email,
+            full_name: accountData.fullName,
+            phone: formattedPhone,
+            user_type: 'talent',
+          });
+        
+        if (userInsertError) {
+          console.error('Failed to insert user record:', userInsertError);
+        }
       }
 
       // Create talent profile (this will work even without active session)
