@@ -13,7 +13,7 @@ Deploy the function **without rate limiting** to fix CORS issues.
 ### 1. Go to Supabase Dashboard
 - Navigate to: https://supabase.com/dashboard/project/utafetamgwukkbrlezev
 - Click **Edge Functions** in the left sidebar
-- Find `fortis-refund` function
+- Find `fortis-refunds` function (note: plural)
 
 ### 2. Update the Function Code
 Click **Edit** and replace ALL code with the following:
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
 ```
 
 ### 3. Verify Environment Variables
-Make sure these secrets are set in the Supabase Dashboard under **Edge Functions > fortis-refund > Secrets**:
+Make sure these secrets are set in the Supabase Dashboard under **Edge Functions > fortis-refunds > Secrets**:
 
 - `FORTIS_DEVELOPER_ID`
 - `FORTIS_USER_ID`
@@ -207,5 +207,5 @@ After deployment, test refunds:
 
 ---
 
-**File:** `supabase/functions/fortis-refund/index.ts`
+**File:** `supabase/functions/fortis-refunds/index.ts` (note: plural)
 
