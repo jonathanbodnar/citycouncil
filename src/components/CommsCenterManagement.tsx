@@ -76,7 +76,10 @@ const CommsCenterManagement: React.FC = () => {
         .order('temp_full_name', { ascending: true });
 
       if (error) throw error;
-      setTalents(data || []);
+      
+      // Type assertion to fix PostgREST foreign key type inference
+      const typedData = (data || []) as TalentWithPhone[];
+      setTalents(typedData);
     } catch (error) {
       console.error('Error fetching talents:', error);
       toast.error('Failed to load talents');
