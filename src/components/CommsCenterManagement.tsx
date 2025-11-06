@@ -66,7 +66,7 @@ const CommsCenterManagement: React.FC = () => {
           username,
           temp_avatar_url,
           user_id,
-          users:user_id (
+          users!inner (
             phone,
             full_name,
             avatar_url
