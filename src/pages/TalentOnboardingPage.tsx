@@ -298,7 +298,81 @@ const TalentOnboardingPage: React.FC = () => {
         }
       });
 
-      if (authError) throw authError;
+      // Handle "User already registered" error - try logging in and linking account
+      if (authError) {
+        if (authError.message?.includes('User already registered') || authError.message?.includes('already been registered')) {
+          // Try to sign in with the provided credentials
+          try {
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email: accountData.email,
+              password: accountData.password,
+            });
+
+            if (signInError) {
+              // Check if it's an unconfirmed email issue
+              if (signInError.message?.includes('Email not confirmed') || signInError.message?.includes('confirm your email')) {
+                toast.error(
+                  'Your account exists but email is not confirmed. Please check your email for a confirmation link, or contact support if you need help.',
+                  { duration: 8000 }
+                );
+                return;
+              }
+              
+              // Password doesn't match - show login form
+              toast.error('An account with this email already exists. Please enter your password to continue.');
+              setLoginData({ email: accountData.email, password: '' });
+              
+              // Update talent profile to mark that user_id exists (trigger login form)
+              if (signInData?.user) {
+                await supabase
+                  .from('talent_profiles')
+                  .update({ user_id: signInData.user.id })
+                  .eq('id', onboardingData?.talent.id);
+              }
+              
+              // Force re-fetch to show login form
+              await fetchOnboardingData();
+              return;
+            }
+
+            // Login successful! Link the user to talent profile
+            if (signInData.user) {
+              // Format phone
+              const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
+              
+              // Update talent profile with user_id
+              const { error: linkError } = await supabase
+                .from('talent_profiles')
+                .update({ 
+                  user_id: signInData.user.id,
+                  full_name: onboardingData?.talent.temp_full_name || null
+                })
+                .eq('id', onboardingData?.talent.id);
+
+              if (linkError) {
+                console.error('Failed to link user to talent profile:', linkError);
+                throw new Error('Failed to link account. Please contact support.');
+              }
+
+              // Update user metadata
+              await supabase.from('users').update({
+                user_type: 'talent',
+                phone: formattedPhone,
+                full_name: onboardingData?.talent.temp_full_name
+              }).eq('id', signInData.user.id);
+
+              toast.success('Account linked successfully!');
+              setCurrentStep(2);
+              return;
+            }
+          } catch (linkError: any) {
+            console.error('Error during account linking:', linkError);
+            toast.error(linkError.message || 'Failed to link account');
+            return;
+          }
+        }
+        throw authError;
+      }
 
       if (!authData.user) throw new Error('Failed to create user account');
 
