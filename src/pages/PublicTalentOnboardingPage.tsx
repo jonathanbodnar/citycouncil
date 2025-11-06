@@ -615,14 +615,14 @@ const PublicTalentOnboardingPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Progress Steps - Compact Dots */}
-        <div className="mb-4">
-          <div className="flex items-center justify-center gap-2">
+        {/* Progress Steps - Mobile Responsive */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between max-w-4xl mx-auto px-2">
             {steps.map((step, index) => (
               <React.Fragment key={step.number}>
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center flex-1 min-w-0">
                   <div
-                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs font-bold ${
+                    className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1 sm:mb-2 ${
                       currentStep > step.number
                         ? 'bg-green-500 text-white'
                         : currentStep === step.number
@@ -632,10 +632,15 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   >
                     {currentStep > step.number ? '✓' : step.number}
                   </div>
+                  <p className={`text-[10px] sm:text-xs font-medium text-center whitespace-nowrap px-1 ${
+                    currentStep >= step.number ? 'text-white' : 'text-gray-400'
+                  }`}>
+                    {step.title}
+                  </p>
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-6 sm:w-8 h-1 ${
+                    className={`w-4 sm:w-8 md:w-12 h-0.5 sm:h-1 mb-6 sm:mb-8 ${
                       currentStep > step.number ? 'bg-green-500' : 'bg-white/20'
                     }`}
                   />
