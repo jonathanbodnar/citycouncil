@@ -24,7 +24,7 @@ class RefundService {
     try {
       // Step 1: Process refund via Fortis Edge Function
       console.log('Processing Fortis refund:', request);
-      const { data: refundData, error: refundError } = await supabase.functions.invoke('fortis-refund', {
+      const { data: refundData, error: refundError } = await supabase.functions.invoke('fortis-refunds', {
         body: {
           transaction_id: request.transactionId,
           amount: request.amount,
