@@ -38,7 +38,7 @@ const MoovOnboard = (props: Props) => {
       try {
         const { data: authData } = await supabase.auth.getUser()
         const uid = authData?.user?.id
-        if (!uid) return
+        if (!uid || !authData.user) return
 
         // Get user email from auth
         const userEmail = authData.user.email || ''
