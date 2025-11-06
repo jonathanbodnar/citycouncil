@@ -196,27 +196,43 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
 
     setLoading(true);
     try {
-      // For PHONE enrollment, challengeId is required
-      // For TOTP enrollment, challengeId is not needed (will be undefined)
-      const verifyParams: any = {
+      console.log('Starting MFA verification:', {
+        method: selectedMethod,
         factorId: factorId,
-        code: verifyCode
-      };
-      
-      // Only add challengeId for phone MFA
-      if (selectedMethod === 'phone' && challengeId) {
-        verifyParams.challengeId = challengeId;
+        challengeId: challengeId,
+        codeLength: verifyCode.length
+      });
+
+      // For TOTP, use challengeAndVerify (creates challenge + verifies in one call)
+      // For PHONE, use verify with challengeId
+      if (selectedMethod === 'totp') {
+        const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+          factorId: factorId,
+          code: verifyCode
+        });
+
+        if (error) throw error;
+        
+        console.log('TOTP verification successful:', data);
+        toast.success('Authenticator app enabled successfully!');
+        onComplete();
+      } else if (selectedMethod === 'phone') {
+        // For phone, we already have a challengeId from enrollment
+        const { data, error } = await supabase.auth.mfa.verify({
+          factorId: factorId,
+          challengeId: challengeId,
+          code: verifyCode
+        });
+
+        if (error) throw error;
+        
+        console.log('Phone verification successful:', data);
+        toast.success('SMS authentication enabled successfully!');
+        onComplete();
       }
-
-      const { data, error } = await supabase.auth.mfa.verify(verifyParams);
-
-      if (error) throw error;
-
-      toast.success('MFA enabled successfully!');
-      onComplete();
     } catch (error: any) {
       console.error('MFA verification error:', error);
-      toast.error('Invalid code. Please try again.');
+      toast.error(`Invalid code. Please try again. ${error.message || ''}`);
     } finally {
       setLoading(false);
     }
