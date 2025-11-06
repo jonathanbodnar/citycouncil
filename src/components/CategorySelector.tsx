@@ -122,9 +122,9 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <label className="block text-sm font-medium text-gray-700">
-          Select Your Categories ({tempCategories.length} selected)
+      <div className="flex items-center justify-between mb-2 sm:mb-4">
+        <label className="block text-xs sm:text-sm font-medium text-gray-700">
+          {tempCategories.length} selected
         </label>
         {!autoSave && (
           <div className="flex space-x-2">
@@ -132,7 +132,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
               type="button"
               onClick={handleSave}
               disabled={tempCategories.length === 0}
-              className="bg-primary-600 text-white px-3 py-1 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="bg-primary-600 text-white px-2 sm:px-3 py-1 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
             >
               Save
             </button>
@@ -141,17 +141,17 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
               onClick={handleCancel}
               className="text-gray-600 hover:text-gray-700"
             >
-              <XMarkIcon className="h-5 w-5" />
+              <XMarkIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
         )}
       </div>
       
-      <p className="text-sm text-gray-600 mb-4">
-        Select all categories that describe your expertise. You can choose multiple categories.
+      <p className="text-xs sm:text-sm text-gray-400 mb-2 sm:mb-3">
+        Tap to select multiple categories
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+      <div className="grid grid-cols-1 gap-2 max-h-60 sm:max-h-80 overflow-y-auto pr-1">
         {TALENT_CATEGORIES.map((category) => {
           const isSelected = tempCategories.includes(category.value as TalentCategory);
           return (
@@ -159,19 +159,27 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
               key={category.value}
               type="button"
               onClick={() => handleCategoryToggle(category.value as TalentCategory)}
-              className={`p-4 border-2 rounded-lg text-left transition-all ${
+              className={`p-2 sm:p-3 border-2 rounded-lg text-left transition-all ${
                 isSelected
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  ? 'border-primary-500 bg-primary-50/20 border-primary-400'
+                  : 'border-white/20 hover:border-white/40 bg-white/5'
               }`}
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-1">{category.label}</h4>
-                  <p className="text-sm text-gray-600">{category.description}</p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h4 className={`text-xs sm:text-sm font-medium mb-0.5 ${
+                    isSelected ? 'text-white' : 'text-gray-200'
+                  }`}>
+                    {category.label}
+                  </h4>
+                  <p className={`text-xs leading-tight ${
+                    isSelected ? 'text-gray-300' : 'text-gray-400'
+                  }`}>
+                    {category.description}
+                  </p>
                 </div>
                 {isSelected && (
-                  <CheckIcon className="h-5 w-5 text-primary-600 flex-shrink-0" />
+                  <CheckIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-400 flex-shrink-0" />
                 )}
               </div>
             </button>

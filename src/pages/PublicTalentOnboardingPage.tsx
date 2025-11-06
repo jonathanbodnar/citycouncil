@@ -39,6 +39,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
   // Step 2: Profile Information
   const [profileData, setProfileData] = useState({
+    fullName: '',
     username: '',
     category: '' as TalentCategory,
     categories: [] as TalentCategory[],
@@ -390,6 +391,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
       const { error } = await supabase
         .from('talent_profiles')
         .update({
+          full_name: profileData.fullName,
           username: profileData.username.toLowerCase(),
           category: profileData.categories[0], // Primary category
           categories: profileData.categories, // All categories
@@ -402,15 +404,6 @@ const PublicTalentOnboardingPage: React.FC = () => {
         .eq('id', talentProfileId);
 
       if (error) throw error;
-
-      // Update user's full name if it was changed
-      if (userId) {
-        await supabase.auth.updateUser({
-          data: {
-            full_name: accountData.fullName,
-          },
-        });
-      }
 
       toast.success('Profile information saved!');
       setCurrentStep(3);
@@ -765,6 +758,21 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileData.fullName}
+                    onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="John Smith"
+                  />
+                </div>
+
                 {/* Username */}
                 <div>
                   <label className="block text-xs font-medium text-white mb-1">
@@ -793,7 +801,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   <CategorySelector
                     selectedCategories={profileData.categories}
                     onCategoryChange={(categories) => setProfileData({ ...profileData, categories })}
-                    autoSave={false}
+                    autoSave={true}
                     startEditing={true}
                     stayInEditMode={true}
                   />
