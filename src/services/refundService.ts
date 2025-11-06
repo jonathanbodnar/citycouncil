@@ -117,7 +117,7 @@ class RefundService {
         'order_denied',
         'Order Denied & Refunded',
         `Your order for ${talentName} has been denied. ${reason}. A refund of $${refundAmount.toFixed(2)} has been processed to your original payment method.`,
-        { order_id: request.orderId }
+        { order_id: order.id }
       );
 
       // Send email notification
