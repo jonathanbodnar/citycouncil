@@ -39,7 +39,8 @@ class RefundService {
       console.log('Fortis refund successful:', refundData);
 
       // Step 2: Update order status to 'denied'
-      const { error: updateError } = await supabase
+      console.log('Updating order status to denied for order:', request.orderId);
+      const { data: updateData, error: updateError } = await supabase
         .from('orders')
         .update({
           status: 'denied',
@@ -49,12 +50,22 @@ class RefundService {
           refund_id: refundData.refund_id,
           refund_amount: refundData.refund_amount,
         })
-        .eq('id', request.orderId);
+        .eq('id', request.orderId)
+        .select();
+
+      console.log('Order update result:', { updateData, updateError });
 
       if (updateError) {
         console.error('Failed to update order status:', updateError);
         throw new Error('Refund processed but failed to update order status');
       }
+
+      if (!updateData || updateData.length === 0) {
+        console.error('Order not found or not updated:', request.orderId);
+        throw new Error('Order not found or update failed');
+      }
+
+      console.log('Order status updated successfully to denied');
 
       // Step 3: Get order details for notifications
       const { data: order, error: orderError } = await supabase
