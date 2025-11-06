@@ -20,6 +20,7 @@ import LandingVideoUpload from './LandingVideoUpload';
 import SocialMediaTracking from './SocialMediaTracking';
 import BulkVideoUpload from './BulkVideoUpload';
 import OrdersManagement from './admin/OrdersManagement';
+import CommsCenterManagement from './CommsCenterManagement';
 import toast from 'react-hot-toast';
 
 interface StatsCardProps {
@@ -53,7 +54,7 @@ interface AdminManagementTabsProps {
 }
 
 const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
-  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload';
+  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload' | 'comms';
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -464,6 +465,11 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
       {/* Help Desk Tab */}
       {activeTab === 'helpdesk' && (
         <AdminHelpDesk />
+      )}
+
+      {/* Comms Center Tab */}
+      {activeTab === 'comms' && (
+        <CommsCenterManagement />
       )}
 
     </div>

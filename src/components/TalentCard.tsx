@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { StarIcon, HeartIcon } from '@heroicons/react/24/solid';
+import { StarIcon, HeartIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
 
 interface TalentCardProps {
@@ -76,8 +76,11 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           )}
         </div>
         
-        <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-200">
-          {talent.temp_full_name || talent.users.full_name}
+        <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-200 flex items-center gap-2">
+          <span>{talent.temp_full_name || talent.users.full_name}</span>
+          {talent.is_verified && (
+            <CheckBadgeIcon className="h-5 w-5 text-blue-500 flex-shrink-0" title="Verified Talent" />
+          )}
         </h3>
         
         {/* Categories - Max 1 line */}
