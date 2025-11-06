@@ -56,6 +56,7 @@ const TalentDashboard: React.FC = () => {
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [userHasPhone, setUserHasPhone] = useState(true);
+  const [userPhone, setUserPhone] = useState('');
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
 
   // Handle tab from URL parameter
@@ -94,6 +95,15 @@ const TalentDashboard: React.FC = () => {
       if (!userError && userData) {
         const hasPhone = !!userData.phone;
         setUserHasPhone(hasPhone);
+        
+        // Format phone for display if exists
+        if (userData.phone) {
+          const cleaned = userData.phone.replace(/\D/g, '').slice(-10); // Remove +1 and formatting
+          if (cleaned.length === 10) {
+            const formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+            setUserPhone(formatted);
+          }
+        }
         
         // Show prompt if no phone and hasn't been dismissed this session
         const dismissedThisSession = sessionStorage.getItem('phonePromptDismissed');
@@ -380,9 +390,17 @@ const TalentDashboard: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Talent Dashboard</h1>
+      <div className="mb-4 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Talent Dashboard</h1>
         <p className="text-gray-600">Welcome back, {user?.full_name}!</p>
+        
+        {/* Mobile Promotion Button */}
+        <button
+          onClick={() => setActiveTab('promotion')}
+          className="md:hidden mt-3 w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 rounded-xl font-medium shadow-modern hover:shadow-modern-lg transition-all duration-300 flex items-center justify-center gap-2"
+        >
+          🎁 View Promotions
+        </button>
       </div>
 
       {/* Phone Number Prompt (if missing) */}
@@ -400,8 +418,8 @@ const TalentDashboard: React.FC = () => {
         />
       )}
 
-      {/* Tab Navigation */}
-      <div className="mb-8">
+      {/* Tab Navigation - Hidden on Mobile */}
+      <div className="mb-8 hidden md:block">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {[
@@ -750,7 +768,9 @@ const TalentDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 mb-2">
-                  {((talentProfile.fulfilled_orders / talentProfile.total_orders) * 100).toFixed(1)}%
+                  {talentProfile.total_orders > 0 
+                    ? ((talentProfile.fulfilled_orders / talentProfile.total_orders) * 100).toFixed(1)
+                    : '0.0'}%
                 </div>
                 <div className="text-sm text-gray-600">Fulfillment Rate</div>
               </div>

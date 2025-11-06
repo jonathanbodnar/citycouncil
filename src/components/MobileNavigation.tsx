@@ -6,7 +6,8 @@ import {
   UserCircleIcon, 
   ChatBubbleLeftRightIcon,
   BellIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { 
   HomeIcon as HomeIconSolid, 
@@ -14,7 +15,8 @@ import {
   UserCircleIcon as UserCircleIconSolid, 
   ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconSolid,
   BellIcon as BellIconSolid,
-  BanknotesIcon as BanknotesIconSolid
+  BanknotesIcon as BanknotesIconSolid,
+  ChartBarIcon as ChartBarIconSolid
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext';
 
@@ -36,7 +38,40 @@ const MobileNavigation: React.FC = () => {
     icon: any;
     iconSolid: any;
     badge?: boolean;
-  }> = [
+  }> = user?.user_type === 'talent' ? [
+    // Talent Navigation (no Home, has Stats)
+    {
+      name: 'Orders',
+      href: '/dashboard',
+      icon: RectangleStackIcon,
+      iconSolid: RectangleStackIconSolid,
+    },
+    {
+      name: 'Stats',
+      href: '/dashboard?tab=analytics',
+      icon: ChartBarIcon,
+      iconSolid: ChartBarIconSolid,
+    },
+    {
+      name: 'Payouts',
+      href: '/dashboard?tab=payouts',
+      icon: BanknotesIcon,
+      iconSolid: BanknotesIconSolid,
+    },
+    {
+      name: 'Help',
+      href: '/help',
+      icon: ChatBubbleLeftRightIcon,
+      iconSolid: ChatBubbleLeftRightIconSolid,
+    },
+    {
+      name: 'Profile',
+      href: '/dashboard?tab=profile',
+      icon: UserCircleIcon,
+      iconSolid: UserCircleIconSolid,
+    },
+  ] : [
+    // Regular User Navigation
     {
       name: 'Home',
       href: '/home',
@@ -44,28 +79,18 @@ const MobileNavigation: React.FC = () => {
       iconSolid: HomeIconSolid,
     },
     {
-      name: user?.user_type === 'talent' ? 'Orders' : 'My Orders',
+      name: 'My Orders',
       href: '/dashboard',
       icon: RectangleStackIcon,
       iconSolid: RectangleStackIconSolid,
     },
-    // Talent gets Payouts, regular users get Notifications
-    ...(user?.user_type === 'talent' ? [
-      {
-        name: 'Payouts',
-        href: '/dashboard?tab=payouts',
-        icon: BanknotesIcon,
-        iconSolid: BanknotesIconSolid,
-      }
-    ] : [
-      {
-        name: 'Notifications',
-        href: '/notifications',
-        icon: BellIcon,
-        iconSolid: BellIconSolid,
-        badge: true,
-      }
-    ]),
+    {
+      name: 'Notifications',
+      href: '/notifications',
+      icon: BellIcon,
+      iconSolid: BellIconSolid,
+      badge: true,
+    },
     {
       name: 'Help',
       href: '/help',
