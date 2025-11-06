@@ -11,6 +11,7 @@ import {
 import { StarIcon } from '@heroicons/react/24/solid';
 import ImageUpload from '../components/ImageUpload';
 import Logo from '../components/Logo';
+import CategorySelector from '../components/CategorySelector';
 import { TalentCategory } from '../types';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
@@ -40,10 +41,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
   const [profileData, setProfileData] = useState({
     username: '',
     category: '' as TalentCategory,
+    categories: [] as TalentCategory[],
     bio: '',
     position: '',
     pricing: 50,
-    corporatePricing: 75,
     fulfillmentTime: 72,
     avatarUrl: '',
   });
@@ -372,8 +373,8 @@ const PublicTalentOnboardingPage: React.FC = () => {
       return;
     }
 
-    if (!profileData.category) {
-      toast.error('Category is required');
+    if (profileData.categories.length === 0) {
+      toast.error('Please select at least one category');
       return;
     }
 
@@ -390,11 +391,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
         .from('talent_profiles')
         .update({
           username: profileData.username.toLowerCase(),
-          category: profileData.category,
+          category: profileData.categories[0], // Primary category
+          categories: profileData.categories, // All categories
           bio: profileData.bio,
           position: profileData.position,
           pricing: profileData.pricing,
-          corporate_pricing: profileData.corporatePricing,
           fulfillment_time_hours: profileData.fulfillmentTime,
           temp_avatar_url: profileData.avatarUrl,
         })
@@ -784,37 +785,15 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Category */}
+                {/* Categories - Multi Select */}
                 <div>
                   <label className="block text-xs font-medium text-white mb-1">
-                    Category *
+                    Categories * (Select all that apply)
                   </label>
-                  <select
-                    required
-                    value={profileData.category}
-                    onChange={(e) => setProfileData({ ...profileData, category: e.target.value as TalentCategory })}
-                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select a category...</option>
-                    <option value="politician">Politician</option>
-                    <option value="candidate">Candidate</option>
-                    <option value="party-leader">Party Leader</option>
-                    <option value="reporter">Reporter</option>
-                    <option value="tv-host">TV/Radio Host</option>
-                    <option value="commentator">Commentator</option>
-                    <option value="author">Author/Speaker</option>
-                    <option value="comedian">Comedian</option>
-                    <option value="musician">Musician</option>
-                    <option value="actor">Actor</option>
-                    <option value="influencer">Influencer</option>
-                    <option value="activist">Activist</option>
-                    <option value="faith-leader">Faith Leader</option>
-                    <option value="academic">Academic</option>
-                    <option value="military">Military/Veteran</option>
-                    <option value="youth-leader">Youth Leader</option>
-                    <option value="patriotic-entertainer">Patriotic Entertainer</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <CategorySelector
+                    selectedCategories={profileData.categories}
+                    onChange={(categories) => setProfileData({ ...profileData, categories })}
+                  />
                 </div>
 
                 {/* Position/Title */}
@@ -850,37 +829,22 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Pricing - 2 Columns */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-white mb-1">
-                      Personal ($) *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="10"
-                      step="5"
-                      value={profileData.pricing}
-                      onChange={(e) => setProfileData({ ...profileData, pricing: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-white mb-1">
-                      Business ($) *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="10"
-                      step="5"
-                      value={profileData.corporatePricing}
-                      onChange={(e) => setProfileData({ ...profileData, corporatePricing: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                {/* Pricing */}
+                <div>
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Price per Video ($) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="10"
+                    step="5"
+                    value={profileData.pricing}
+                    onChange={(e) => setProfileData({ ...profileData, pricing: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="50"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Recommended: $50-$200</p>
                 </div>
 
                 {/* Fulfillment Time */}

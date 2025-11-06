@@ -97,16 +97,33 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
       }
     } catch (error: any) {
       console.error('MFA phone enrollment error:', error);
-      if (error.message?.includes('Phone') || error.message?.includes('not enabled') || error.message?.includes('SMS')) {
-        toast.error('SMS MFA requires Twilio setup ($75/mo). Please use Authenticator App instead.', {
+      
+      // If factor was created but challenge failed, try to clean it up
+      if (factorId) {
+        try {
+          await supabase.auth.mfa.unenroll({ factorId });
+          console.log('Cleaned up failed MFA factor');
+        } catch (cleanupError) {
+          console.error('Failed to cleanup MFA factor:', cleanupError);
+        }
+        setFactorId('');
+      }
+      
+      if (error.message?.includes('Phone') || error.message?.includes('not enabled') || error.message?.includes('SMS') || error.message?.includes('factor')) {
+        // User-friendly error message
+        toast.error('SMS authentication is temporarily unavailable. Please use the Authenticator App instead.', {
           duration: 5000
         });
-        // Auto-redirect back to method selection
+        // Reset state and redirect back to method selection
+        setPhoneNumber('');
         setTimeout(() => {
           setStep('method-select');
         }, 2000);
       } else {
-        toast.error(`Failed to start phone enrollment: ${error.message}`);
+        toast.error('Failed to start phone enrollment. Please try again or use the Authenticator App.');
+        // Reset state
+        setPhoneNumber('');
+        setStep('method-select');
       }
     } finally{
       setLoading(false);
@@ -244,12 +261,11 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
                   <DevicePhoneMobileIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-4 flex-1">
-                  <div className="text-white font-semibold mb-1 flex items-center gap-2">
+                  <div className="text-white font-semibold mb-1">
                     Text Message (SMS)
-                    <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">Requires Setup</span>
                   </div>
                   <div className="text-gray-400 text-sm">
-                    Receive codes via text message (Twilio required)
+                    Receive codes via text message
                   </div>
                 </div>
               </div>
