@@ -91,6 +91,35 @@ const PublicTalentOnboardingPage: React.FC = () => {
     }
   }, []);
 
+  // Check username availability with debounce
+  useEffect(() => {
+    if (!profileData.username || profileData.username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setCheckingUsername(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const { data: existingProfile } = await supabase
+          .from('talent_profiles')
+          .select('id, username')
+          .eq('username', profileData.username.toLowerCase())
+          .neq('id', talentProfileId || '00000000-0000-0000-0000-000000000000')
+          .maybeSingle();
+
+        setUsernameAvailable(!existingProfile);
+      } catch (error) {
+        console.error('Error checking username:', error);
+        setUsernameAvailable(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 500); // Debounce for 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [profileData.username, talentProfileId]);
+
   // Save progress to localStorage whenever critical data changes
   useEffect(() => {
     if (userId || currentStep > 1) {
@@ -378,6 +407,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
     if (!profileData.username) {
       toast.error('Username is required');
+      return;
+    }
+
+    if (usernameAvailable === false) {
+      toast.error(`Username "${profileData.username}" is already taken. Please choose another.`);
       return;
     }
 
@@ -814,10 +848,31 @@ const PublicTalentOnboardingPage: React.FC = () => {
                       required
                       value={profileData.username}
                       onChange={(e) => setProfileData({ ...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                      className="flex-1 px-3 py-2 text-sm glass border border-white/30 rounded-r-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`flex-1 px-3 py-2 text-sm glass border rounded-r-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
+                        usernameAvailable === false 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : usernameAvailable === true 
+                            ? 'border-green-500 focus:ring-green-500'
+                            : 'border-white/30 focus:ring-blue-500'
+                      }`}
                       placeholder="yourname"
                     />
                   </div>
+                  {usernameAvailable === false && (
+                    <p className="text-xs text-red-400 mt-1">
+                      ❌ Username already taken - please choose another
+                    </p>
+                  )}
+                  {usernameAvailable === true && (
+                    <p className="text-xs text-green-400 mt-1">
+                      ✓ Username available
+                    </p>
+                  )}
+                  {checkingUsername && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Checking availability...
+                    </p>
+                  )}
                 </div>
 
                 {/* Categories - Multi Select */}
