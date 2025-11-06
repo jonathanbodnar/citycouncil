@@ -163,27 +163,31 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         setRecentOrders(recentOrdersData || []);
 
         // Fetch top talent with delivery time calculations
-        const { data: topTalentData } = await supabase
+        const { data: allTalentData } = await supabase
           .from('talent_profiles')
           .select(`
             *,
             users!talent_profiles_user_id_fkey (full_name, avatar_url)
-          `)
-          .order('total_orders', { ascending: false })
-          .limit(5);
+          `);
 
-        // Calculate individual delivery times for each talent
+        // Calculate actual order count and stats for each talent
         const topTalentWithStats = await Promise.all(
-          (topTalentData || []).map(async (talent) => {
+          (allTalentData || []).map(async (talent) => {
+            // Get ALL orders for this talent (not just completed)
             const { data: talentOrders } = await supabase
               .from('orders')
               .select('created_at, updated_at, approved_at, status')
-              .eq('talent_id', talent.id)
-              .eq('status', 'completed');
+              .eq('talent_id', talent.id);
 
+            // Count total orders (all statuses)
+            const actualTotalOrders = talentOrders?.length || 0;
+
+            // Calculate avg delivery time for completed orders only
+            const completedOrders = talentOrders?.filter(o => o.status === 'completed') || [];
             let avgDeliveryTime = 0;
-            if (talentOrders && talentOrders.length > 0) {
-              const deliveryTimes = talentOrders
+            
+            if (completedOrders.length > 0) {
+              const deliveryTimes = completedOrders
                 .map(order => {
                   const createdAt = new Date(order.created_at);
                   const approvedAt = order.approved_at ? new Date(order.approved_at) : createdAt;
@@ -199,12 +203,18 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
 
             return {
               ...talent,
+              total_orders: actualTotalOrders, // Use real count from orders table
               avg_delivery_time_hours: avgDeliveryTime
             };
           })
         );
 
-        setTopTalent(topTalentWithStats);
+        // Sort by actual order count (descending) and take top 5
+        const sortedTopTalent = topTalentWithStats
+          .sort((a, b) => b.total_orders - a.total_orders)
+          .slice(0, 5);
+
+        setTopTalent(sortedTopTalent);
 
       } else if (activeTab === 'helpdesk') {
         const { data, error } = await supabase
