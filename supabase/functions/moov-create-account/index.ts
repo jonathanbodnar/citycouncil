@@ -7,21 +7,18 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Read from Supabase secrets
 // @ts-ignore - available at runtime in Edge Functions
-const MOOV_PUBLIC_KEY =
-  (globalThis as any).Deno?.env.get('MOOV_PUBLIC_KEY') || 'rEvCk_pOVqe5Pi73'
+const MOOV_PUBLIC_KEY = (globalThis as any).Deno?.env.get('MOOV_PUBLIC_KEY')
 // @ts-ignore - available at runtime in Edge Functions
-const MOOV_SECRET_KEY =
-  (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY') ||
-  'odUP-ZAPFaA1WMZqSh6ioi4qEeJBvn-z'
+const MOOV_SECRET_KEY = (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY')
 const MOOV_VERSION = 'v2024.01.00'
 
 // Supabase env
 // @ts-ignore - available at runtime in Edge Functions
-const SUPABASE_URL = "https://utafetamgwukkbrlezev.supabase.co"
+const SUPABASE_URL = (globalThis as any).Deno?.env.get('SUPABASE_URL')
 // @ts-ignore - available at runtime in Edge Functions
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4"
+const SUPABASE_ANON_KEY = (globalThis as any).Deno?.env.get('SUPABASE_ANON_KEY')
 // @ts-ignore - available at runtime in Edge Functions
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTg2ODMwMCwiZXhwIjoyMDc1NDQ0MzAwfQ.bmjLfmsX3_wYxjyHZzFoVhZ4XxJvqbH8DIfpHTXVrKQ"
+const SUPABASE_SERVICE_ROLE_KEY = (globalThis as any).Deno?.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
