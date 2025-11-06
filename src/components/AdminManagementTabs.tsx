@@ -48,8 +48,12 @@ const StatsCard: React.FC<StatsCardProps> = ({
   </div>
 );
 
-const AdminManagementTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload'>('analytics');
+interface AdminManagementTabsProps {
+  activeTab: string;
+}
+
+const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
+  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload';
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -221,38 +225,7 @@ const AdminManagementTabs: React.FC = () => {
 
 
   return (
-    <div className="mt-8">
-      {/* Tab Navigation */}
-      <div className="mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 overflow-x-auto">
-            {[
-              { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
-              { key: 'orders', label: 'Orders', icon: CurrencyDollarIcon },
-              { key: 'talent', label: 'Manage Talent', icon: UsersIcon },
-              { key: 'bulk-upload', label: 'Bulk Upload', icon: VideoCameraIcon },
-              { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },
-              { key: 'landing-videos', label: 'Landing Videos', icon: StarIcon },
-              { key: 'social-tracking', label: 'Social Tracking', icon: HashtagIcon },
-              { key: 'settings', label: 'Platform Settings', icon: Cog6ToothIcon },
-              { key: 'helpdesk', label: 'Help Desk', icon: ChatBubbleLeftRightIcon },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                  activeTab === tab.key
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <tab.icon className="h-4 w-4" />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+    <div>
 
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (

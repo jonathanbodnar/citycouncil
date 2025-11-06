@@ -1,17 +1,25 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
+import AdminLayout from '../components/AdminLayout';
 import AdminManagementTabs from '../components/AdminManagementTabs';
 
 const AdminDashboard: React.FC = () => {
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600">Platform overview and management</p>
-      </div>
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const activeTab = searchParams.get('tab') || 'analytics';
 
-      {/* Management Tabs - Now at top with Analytics first */}
-      <AdminManagementTabs />
-    </div>
+  return (
+    <AdminLayout>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
+          <p className="text-gray-300">Platform overview and management</p>
+        </div>
+
+        {/* Management Content - Tab controlled by URL params */}
+        <AdminManagementTabs activeTab={activeTab} />
+      </div>
+    </AdminLayout>
   );
 };
 
