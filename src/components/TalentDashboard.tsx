@@ -461,7 +461,7 @@ const TalentDashboard: React.FC = () => {
                             </button>
                           </>
                         ) : null}
-                        {(order.status === 'pending' || order.status === 'in_progress') && order.status !== 'denied' && (
+                        {(order.status === 'pending' || order.status === 'in_progress') && (
                           <button
                             onClick={() => handleAcceptOrder(order.id)}
                             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern transition-all duration-300"
