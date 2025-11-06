@@ -1217,14 +1217,21 @@ const PublicTalentOnboardingPage: React.FC = () => {
               <h2 className="text-xl font-bold text-white mb-3">Secure Your Account</h2>
               
               <p className="text-xs text-gray-300 mb-3">
-                Set up two-factor authentication to protect your account.
+                Set up two-factor authentication to protect your account. Choose authenticator app for best results.
               </p>
 
               <MFAEnrollmentDual
                 onComplete={handleMFAComplete}
-                required={true}
+                required={false}
                 initialPhone={accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : undefined}
               />
+              
+              <button
+                onClick={handleMFAComplete}
+                className="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2.5 px-4 rounded-xl text-sm font-medium transition-colors"
+              >
+                Skip MFA for Now
+              </button>
             </div>
           )}
         </div>
