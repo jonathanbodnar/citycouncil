@@ -1,3 +1,24 @@
+# Deploy Fortis Refund Edge Function - CORS Fix
+
+## Problem
+The `fortis-refund` Edge Function is failing with CORS errors because it's trying to import `withRateLimit` from a shared module that doesn't exist in the deployment.
+
+## Solution
+Deploy the function **without rate limiting** to fix CORS issues.
+
+---
+
+## 📋 Deployment Steps
+
+### 1. Go to Supabase Dashboard
+- Navigate to: https://supabase.com/dashboard/project/utafetamgwukkbrlezev
+- Click **Edge Functions** in the left sidebar
+- Find `fortis-refund` function
+
+### 2. Update the Function Code
+Click **Edit** and replace ALL code with the following:
+
+```typescript
 // Supabase Edge Function: Process Fortis refund
 // Expects JSON body: { transaction_id: string, amount?: number, reason?: string }
 // If amount not provided, full refund is processed
@@ -137,4 +158,54 @@ Deno.serve(async (req) => {
     );
   }
 });
+```
+
+### 3. Verify Environment Variables
+Make sure these secrets are set in the Supabase Dashboard under **Edge Functions > fortis-refund > Secrets**:
+
+- `FORTIS_DEVELOPER_ID`
+- `FORTIS_USER_ID`
+- `FORTIS_USER_API_KEY`
+
+### 4. Deploy
+Click **Deploy** button in the Supabase Dashboard.
+
+### 5. Test
+Try processing a refund from the Orders Management page in your admin dashboard.
+
+---
+
+## ✅ What This Fixes
+
+1. **CORS Error**: Removed `withRateLimit` import that was causing module resolution failures
+2. **Deployment**: Function now has zero external dependencies
+3. **Functionality**: All refund logic remains intact
+
+## 📝 Changes Made
+
+- ❌ Removed: `import { withRateLimit, RateLimitPresets } from '../_shared/rateLimiter.ts';`
+- ❌ Removed: `import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';` (unused)
+- ❌ Removed: `withRateLimit()` wrapper around `Deno.serve()`
+- ✅ Kept: All CORS headers
+- ✅ Kept: All Fortis refund logic
+- ✅ Kept: Error handling and validation
+
+## 🔒 Security Note
+
+Rate limiting was removed to fix deployment. Consider implementing rate limiting at the database/application level if needed for production.
+
+---
+
+## 🧪 Testing
+
+After deployment, test refunds:
+
+1. Go to Admin Dashboard > Orders Management
+2. Click "Refund" on a completed order
+3. Enter a reason and click "Process Refund"
+4. Should succeed without CORS errors ✅
+
+---
+
+**File:** `supabase/functions/fortis-refund/index.ts`
 
