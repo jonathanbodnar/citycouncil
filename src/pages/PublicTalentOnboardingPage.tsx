@@ -24,6 +24,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
   const [showSignIn, setShowSignIn] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [defaultAdminFee, setDefaultAdminFee] = useState(25); // Default to 25%, will fetch from platform settings
 
   // Step 1: Account Creation
   const [accountData, setAccountData] = useState({
@@ -71,6 +72,30 @@ const PublicTalentOnboardingPage: React.FC = () => {
     { number: 4, title: 'Promo Video', icon: VideoCameraIcon },
     { number: 5, title: 'Security (MFA)', icon: ShieldCheckIcon },
   ];
+
+  // Fetch platform settings on mount
+  useEffect(() => {
+    fetchPlatformSettings();
+  }, []);
+
+  const fetchPlatformSettings = async () => {
+    try {
+      const { data, error} = await supabase
+        .from('app_settings')
+        .select('global_admin_fee_percentage')
+        .single();
+
+      if (error) throw error;
+
+      if (data?.global_admin_fee_percentage) {
+        setDefaultAdminFee(data.global_admin_fee_percentage);
+        console.log('Platform settings loaded: admin fee =', data.global_admin_fee_percentage + '%');
+      }
+    } catch (error) {
+      console.error('Error fetching platform settings:', error);
+      // Keep default of 25% if fetch fails
+    }
+  };
 
   // Load saved progress from localStorage on mount
   useEffect(() => {
@@ -310,11 +335,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
               pricing: 50,
               fulfillment_time_hours: 72,
               is_featured: false,
-              is_active: false,
+              is_active: false, // Admin must approve before going live
               total_orders: 0,
               fulfilled_orders: 0,
               average_rating: 0,
-              admin_fee_percentage: 25,
+              admin_fee_percentage: defaultAdminFee, // Use platform settings
               first_orders_promo_active: true,
               onboarding_completed: false,
             })
@@ -365,11 +390,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
           pricing: 50,
           fulfillment_time_hours: 72,
           is_featured: false,
-          is_active: false, // Inactive until onboarding complete
+          is_active: false, // Admin must approve before going live
           total_orders: 0,
           fulfilled_orders: 0,
           average_rating: 0,
-          admin_fee_percentage: 25,
+          admin_fee_percentage: defaultAdminFee, // Use platform settings
           first_orders_promo_active: true, // Enable 0% fee promo
           onboarding_completed: false,
         })
@@ -578,12 +603,12 @@ const PublicTalentOnboardingPage: React.FC = () => {
     }
 
     try {
-      // Mark onboarding as complete and activate profile
+      // Mark onboarding as complete - profile stays INACTIVE until admin approves
       const { error } = await supabase
         .from('talent_profiles')
         .update({
           onboarding_completed: true,
-          is_active: true,
+          is_active: false, // Admin must approve before profile goes live
         })
         .eq('id', talentProfileId);
 
@@ -592,12 +617,12 @@ const PublicTalentOnboardingPage: React.FC = () => {
       // Clear saved onboarding progress
       localStorage.removeItem('talent_onboarding_progress');
 
-      toast.success('🎉 Onboarding complete! Welcome to ShoutOut!');
+      toast.success('🎉 Onboarding complete! Your profile is pending admin approval.');
       
       // Redirect to dashboard
       setTimeout(() => {
         navigate('/dashboard');
-      }, 1500);
+      }, 2000);
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       toast.error(error.message || 'Failed to complete onboarding');

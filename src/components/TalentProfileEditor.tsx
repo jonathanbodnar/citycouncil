@@ -64,7 +64,7 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
       charity_name: talent.charity_name || '',
       is_featured: talent.is_featured,
       is_active: talent.is_active,
-      admin_fee_percentage: talent.admin_fee_percentage || 15,
+      admin_fee_percentage: talent.admin_fee_percentage || 25, // Default to 25% to match platform settings
     }
   });
 

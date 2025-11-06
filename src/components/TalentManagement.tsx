@@ -37,6 +37,7 @@ const TalentManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTalent, setEditingTalent] = useState<TalentWithUser | null>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [defaultAdminFee, setDefaultAdminFee] = useState(25); // Default to 25% if settings not loaded
   const [newTalent, setNewTalent] = useState({
     full_name: '',
     position: '',
@@ -52,7 +53,7 @@ const TalentManagement: React.FC = () => {
     is_verified: false,
     charity_percentage: 5,
     charity_name: '',
-    admin_fee_percentage: 15
+    admin_fee_percentage: 25 // Will be updated from platform settings
   });
   
   // Charity donation toggle for admin creation
@@ -62,8 +63,32 @@ const TalentManagement: React.FC = () => {
   const [editDonateProceeds, setEditDonateProceeds] = useState(false);
 
   useEffect(() => {
+    fetchPlatformSettings();
     fetchTalents();
   }, []);
+
+  const fetchPlatformSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('global_admin_fee_percentage')
+        .single();
+
+      if (error) throw error;
+
+      if (data?.global_admin_fee_percentage) {
+        setDefaultAdminFee(data.global_admin_fee_percentage);
+        // Update newTalent with the fetched admin fee
+        setNewTalent(prev => ({
+          ...prev,
+          admin_fee_percentage: data.global_admin_fee_percentage
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching platform settings:', error);
+      // Keep default of 25% if fetch fails
+    }
+  };
 
   useEffect(() => {
     // Filter talents based on search query
@@ -212,7 +237,7 @@ const TalentManagement: React.FC = () => {
         is_verified: false,
         charity_percentage: 5,
         charity_name: '',
-        admin_fee_percentage: 15
+        admin_fee_percentage: defaultAdminFee // Use platform settings default
       });
       fetchTalents();
 
