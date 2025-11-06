@@ -7,11 +7,12 @@ interface MFAEnrollmentDualProps {
   onComplete: () => void;
   onSkip?: () => void;
   required?: boolean;
+  initialPhone?: string; // Pre-fill phone number (E.164 format: +1XXXXXXXXXX)
 }
 
 type MFAMethod = 'totp' | 'phone' | null;
 
-const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSkip, required = false }) => {
+const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSkip, required = false, initialPhone }) => {
   const [step, setStep] = useState<'intro' | 'method-select' | 'phone-entry' | 'qr' | 'verify'>('intro');
   const [selectedMethod, setSelectedMethod] = useState<MFAMethod>(null);
   
@@ -21,6 +22,18 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
   
   // Phone states
   const [phoneNumber, setPhoneNumber] = useState('');
+
+  // Auto-populate phone number if provided
+  useEffect(() => {
+    if (initialPhone) {
+      // Convert E.164 (+1XXXXXXXXXX) to formatted (XXX) XXX-XXXX
+      const digits = initialPhone.replace(/\D/g, '').slice(-10); // Get last 10 digits
+      if (digits.length === 10) {
+        const formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+        setPhoneNumber(formatted);
+      }
+    }
+  }, [initialPhone]);
   
   // Common states
   const [factorId, setFactorId] = useState<string>('');

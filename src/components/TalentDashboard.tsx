@@ -25,6 +25,7 @@ import CharitySelector from './CharitySelector';
 import PayoutsDashboard from './PayoutsDashboard';
 import InstagramConnect from './InstagramConnect';
 import MFASettings from './MFASettings';
+import PhoneNumberPrompt from './PhoneNumberPrompt';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import { emailService } from '../services/emailService';
 import { notificationService } from '../services/notificationService';
@@ -54,6 +55,8 @@ const TalentDashboard: React.FC = () => {
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [userHasPhone, setUserHasPhone] = useState(true);
+  const [showPhonePrompt, setShowPhonePrompt] = useState(false);
 
   // Handle tab from URL parameter
   useEffect(() => {
@@ -80,6 +83,24 @@ const TalentDashboard: React.FC = () => {
 
       if (profileError) throw profileError;
       setTalentProfile(profileData);
+
+      // Check if user has phone number
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('id', user?.id)
+        .single();
+
+      if (!userError && userData) {
+        const hasPhone = !!userData.phone;
+        setUserHasPhone(hasPhone);
+        
+        // Show prompt if no phone and hasn't been dismissed this session
+        const dismissedThisSession = sessionStorage.getItem('phonePromptDismissed');
+        if (!hasPhone && !dismissedThisSession) {
+          setShowPhonePrompt(true);
+        }
+      }
 
       // Fetch orders for this talent
       const { data: ordersData, error: ordersError } = await supabase
@@ -353,6 +374,21 @@ const TalentDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">Talent Dashboard</h1>
         <p className="text-gray-600">Welcome back, {user?.full_name}!</p>
       </div>
+
+      {/* Phone Number Prompt (if missing) */}
+      {showPhonePrompt && !userHasPhone && (
+        <PhoneNumberPrompt
+          onComplete={() => {
+            setShowPhonePrompt(false);
+            setUserHasPhone(true);
+            fetchTalentData(); // Refresh data
+          }}
+          onDismiss={() => {
+            setShowPhonePrompt(false);
+            sessionStorage.setItem('phonePromptDismissed', 'true');
+          }}
+        />
+      )}
 
       {/* Tab Navigation */}
       <div className="mb-8">

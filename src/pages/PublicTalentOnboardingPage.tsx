@@ -29,6 +29,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
   const [accountData, setAccountData] = useState({
     fullName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -286,10 +287,14 @@ const PublicTalentOnboardingPage: React.FC = () => {
           // If no talent profile exists, create one
           setUserId(signInData.user.id);
           
-          // Update user_type to 'talent' in public.users
+          // Update user_type and phone to 'talent' in public.users
+          const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
           const { error: updateUserError } = await supabase
             .from('users')
-            .update({ user_type: 'talent' })
+            .update({ 
+              user_type: 'talent',
+              phone: formattedPhone 
+            })
             .eq('id', signInData.user.id);
 
           if (updateUserError) {
@@ -332,12 +337,14 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
       // Create user record in public.users table (using service role to bypass RLS)
       // This ensures the user exists even if email confirmation is pending
+      const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
       const { error: userInsertError } = await supabase
         .from('users')
         .upsert({
           id: authData.user.id,
           email: accountData.email,
           full_name: accountData.fullName,
+          phone: formattedPhone,
           user_type: 'talent',
         }, {
           onConflict: 'id'
@@ -686,6 +693,35 @@ const PublicTalentOnboardingPage: React.FC = () => {
                     className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="john@example.com"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    autoComplete="tel"
+                    value={accountData.phone}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/\D/g, '');
+                      if (cleaned.length <= 10) {
+                        let formatted = cleaned;
+                        if (cleaned.length > 6) {
+                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                        } else if (cleaned.length > 3) {
+                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+                        } else if (cleaned.length > 0) {
+                          formatted = `(${cleaned}`;
+                        }
+                        setAccountData({ ...accountData, phone: formatted });
+                      }
+                    }}
+                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="(555) 123-4567"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">For account security & payouts</p>
                 </div>
 
                 <div>
@@ -1165,6 +1201,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
               <MFAEnrollmentDual
                 onComplete={handleMFAComplete}
                 required={true}
+                initialPhone={accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : undefined}
               />
             </div>
           )}
