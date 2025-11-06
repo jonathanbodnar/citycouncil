@@ -42,6 +42,8 @@ const OrdersManagement: React.FC = () => {
   const [denyReason, setDenyReason] = useState('');
   const [processing, setProcessing] = useState(false);
   const [showDenyModal, setShowDenyModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
 
   useEffect(() => {
     fetchOrders();
@@ -124,6 +126,55 @@ const OrdersManagement: React.FC = () => {
     setShowDenyModal(false);
     setSelectedOrder(null);
     setDenyReason('');
+  };
+
+  const handleRefundOrder = async () => {
+    if (!selectedOrder || !refundReason.trim()) {
+      toast.error('Please provide a reason for the refund');
+      return;
+    }
+
+    if (!selectedOrder.payment_transaction_id) {
+      toast.error('Cannot refund: No transaction ID found');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const result = await refundService.processRefund({
+        orderId: selectedOrder.id,
+        transactionId: selectedOrder.payment_transaction_id,
+        reason: refundReason,
+        deniedBy: 'admin',
+      });
+
+      if (result.success) {
+        toast.success('Refund processed successfully');
+        setShowRefundModal(false);
+        setSelectedOrder(null);
+        setRefundReason('');
+        fetchOrders();
+      } else {
+        toast.error(result.error || 'Failed to process refund');
+      }
+    } catch (error: any) {
+      console.error('Error processing refund:', error);
+      toast.error(error.message || 'Failed to process refund');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const openRefundModal = (order: Order) => {
+    setSelectedOrder(order);
+    setShowRefundModal(true);
+    setRefundReason('');
+  };
+
+  const closeRefundModal = () => {
+    setShowRefundModal(false);
+    setSelectedOrder(null);
+    setRefundReason('');
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -254,22 +305,38 @@ const OrdersManagement: React.FC = () => {
                       ${(order.amount / 100).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      {order.status !== 'denied' && order.status !== 'cancelled' && (
-                        <button
-                          onClick={() => openDenyModal(order)}
-                          className="inline-flex items-center px-3 py-1.5 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors"
-                        >
-                          <XCircleIcon className="h-4 w-4 mr-1" />
-                          Deny & Refund
-                        </button>
-                      )}
-                      {order.status === 'denied' && order.refund_id && (
-                        <span className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-600 rounded-md text-xs">
-                          <CheckCircleIcon className="h-4 w-4 mr-1" />
-                          Refunded
-                        </span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end gap-2">
+                        {/* Deny & Refund - for pending/in_progress orders */}
+                        {(order.status === 'pending' || order.status === 'in_progress') && (
+                          <button
+                            onClick={() => openDenyModal(order)}
+                            className="inline-flex items-center px-3 py-1.5 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors"
+                          >
+                            <XCircleIcon className="h-4 w-4 mr-1" />
+                            Deny & Refund
+                          </button>
+                        )}
+                        
+                        {/* Refund - for completed orders */}
+                        {order.status === 'completed' && !order.refund_id && (
+                          <button
+                            onClick={() => openRefundModal(order)}
+                            className="inline-flex items-center px-3 py-1.5 border border-orange-300 text-orange-700 rounded-md hover:bg-orange-50 transition-colors"
+                          >
+                            <CurrencyDollarIcon className="h-4 w-4 mr-1" />
+                            Refund
+                          </button>
+                        )}
+                        
+                        {/* Refunded badge */}
+                        {(order.status === 'denied' || order.refund_id) && (
+                          <span className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-600 rounded-md text-xs">
+                            <CheckCircleIcon className="h-4 w-4 mr-1" />
+                            Refunded
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -332,6 +399,65 @@ const OrdersManagement: React.FC = () => {
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {processing ? 'Processing...' : 'Deny & Refund'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Completed Order Modal */}
+      {showRefundModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <CurrencyDollarIcon className="h-6 w-6 text-orange-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Refund Completed Order</h3>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Customer:</strong> {selectedOrder.users.full_name} ({selectedOrder.users.email})
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Talent:</strong> {selectedOrder.talent_profiles.users.full_name}
+              </p>
+              <p className="text-sm text-gray-600 mb-4">
+                <strong>Amount to Refund:</strong> ${(selectedOrder.amount / 100).toFixed(2)}
+              </p>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Refund Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="E.g., Customer dissatisfied with video quality, incorrect content, etc."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={processing}
+              />
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+              <p className="text-xs text-orange-800">
+                <strong>Note:</strong> This will process a refund for a completed order. The customer will be notified via email and in-app notification. The talent has already been paid, so this may require manual adjustment.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={closeRefundModal}
+                disabled={processing}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRefundOrder}
+                disabled={processing || !refundReason.trim()}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {processing ? 'Processing...' : 'Process Refund'}
               </button>
             </div>
           </div>
