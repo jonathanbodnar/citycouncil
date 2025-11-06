@@ -89,15 +89,21 @@ serve(async req => {
     }
 
     // Only add user data if we have valid information
-    if (authUser?.email || phoneNumber || (givenName && familyName)) {
-      tokenRequest.user.email_address = authUser?.email || undefined
-      tokenRequest.user.phone_number = phoneNumber || undefined
-      
-      if (givenName && familyName) {
-        tokenRequest.user.name = {
-          given_name: givenName,
-          family_name: familyName,
-        }
+    // IMPORTANT: Only send email/phone/name if they are valid, otherwise omit them entirely
+    if (authUser?.email) {
+      tokenRequest.user.email_address = authUser.email
+    }
+    
+    // Only send phone if it's EXACTLY 10 digits (Plaid requirement)
+    if (phoneNumber && phoneNumber.length === 10) {
+      tokenRequest.user.phone_number = phoneNumber
+    }
+    
+    // Only send name if both parts exist
+    if (givenName && familyName) {
+      tokenRequest.user.name = {
+        given_name: givenName,
+        family_name: familyName,
       }
     }
 
