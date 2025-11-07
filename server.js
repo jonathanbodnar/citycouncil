@@ -65,7 +65,10 @@ app.use(helmet({
         "https://cdn.plaid.com",
         "https://*.plaid.com",
         "https://production.plaid.com",
-        "https://sandbox.plaid.com"
+        "https://sandbox.plaid.com",
+        "https://www.google-analytics.com",
+        "https://analytics.google.com",
+        "https://www.googletagmanager.com"
       ],
       frameSrc: [
         "'self'", 
