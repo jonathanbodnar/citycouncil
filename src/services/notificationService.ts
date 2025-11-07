@@ -46,6 +46,85 @@ export const notificationService = {
       { order_id: orderId }
     );
     console.log('📢 New order notification result:', result);
+
+    // Check if SMS is enabled for this notification type
+    await this.sendSMSIfEnabled('talent_new_order', talentUserId, orderId, {
+      user_name: userName,
+      amount: amount.toFixed(2)
+    });
+  },
+
+  // Send SMS if enabled in settings
+  async sendSMSIfEnabled(
+    notificationType: string,
+    userId: string,
+    orderId: string,
+    variables: Record<string, string>
+  ): Promise<void> {
+    try {
+      // Check if SMS is enabled for this notification type
+      const { data: setting } = await supabase
+        .from('notification_settings')
+        .select('sms_enabled, sms_template')
+        .eq('notification_type', notificationType)
+        .single();
+
+      if (!setting || !setting.sms_enabled || !setting.sms_template) {
+        console.log(`SMS not enabled for ${notificationType}`);
+        return;
+      }
+
+      // Get user details
+      const { data: user } = await supabase
+        .from('users')
+        .select('full_name, phone')
+        .eq('id', userId)
+        .single();
+
+      if (!user || !user.phone) {
+        console.log('User phone not found for SMS');
+        return;
+      }
+
+      // Get order details for fulfillment link
+      const { data: order } = await supabase
+        .from('orders')
+        .select('fulfillment_token')
+        .eq('id', orderId)
+        .single();
+
+      // Build template variables
+      const firstName = user.full_name?.split(' ')[0] || 'there';
+      const orderLink = order?.fulfillment_token 
+        ? `${window.location.origin}/fulfill/${order.fulfillment_token}`
+        : `${window.location.origin}/dashboard?order=${orderId}`;
+
+      // Replace template variables
+      let message = setting.sms_template;
+      message = message.replace(/\{\{first_name\}\}/g, firstName);
+      message = message.replace(/\{\{order_link\}\}/g, orderLink);
+      message = message.replace(/\{\{user_name\}\}/g, variables.user_name || '');
+      message = message.replace(/\{\{amount\}\}/g, variables.amount || '');
+      message = message.replace(/\{\{talent_name\}\}/g, variables.talent_name || '');
+      message = message.replace(/\{\{hours\}\}/g, variables.hours || '');
+
+      // Send SMS via Twilio Edge Function
+      console.log('📱 Sending SMS:', { to: user.phone, message });
+      const { error } = await supabase.functions.invoke('send-sms', {
+        body: {
+          to: user.phone,
+          message: message
+        }
+      });
+
+      if (error) {
+        console.error('Error sending SMS:', error);
+      } else {
+        console.log('✅ SMS sent successfully');
+      }
+    } catch (error) {
+      console.error('Error in sendSMSIfEnabled:', error);
+    }
   },
 
   async notifyOrderDeadlineApproaching(talentUserId: string, orderId: string, hoursLeft: number): Promise<void> {
