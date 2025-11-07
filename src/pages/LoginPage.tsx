@@ -21,15 +21,34 @@ const LoginPage: React.FC = () => {
   const [mfaFactorId, setMfaFactorId] = useState('');
   const { user, signIn } = useAuth();
 
-  // Don't redirect if MFA verification is in progress
-  if (user && !showMFAVerification) {
-    // Check if there's a fulfillment token to redirect to
-    const fulfillmentToken = sessionStorage.getItem('fulfillment_redirect_token');
-    if (fulfillmentToken) {
-      sessionStorage.removeItem('fulfillment_redirect_token');
-      return <Navigate to={`/fulfill/${fulfillmentToken}`} replace />;
+  // Handle redirect after successful login
+  React.useEffect(() => {
+    if (user && !showMFAVerification) {
+      // Check if there's a fulfillment token to redirect to
+      const fulfillmentToken = sessionStorage.getItem('fulfillment_redirect_token');
+      console.log('LoginPage: User logged in, checking fulfillment token:', fulfillmentToken);
+      
+      if (fulfillmentToken) {
+        console.log('LoginPage: Found fulfillment token, redirecting to /fulfill/', fulfillmentToken);
+        sessionStorage.removeItem('fulfillment_redirect_token');
+        navigate(`/fulfill/${fulfillmentToken}`, { replace: true });
+      } else {
+        console.log('LoginPage: No fulfillment token, redirecting to:', returnTo);
+        navigate(returnTo, { replace: true });
+      }
     }
-    return <Navigate to={returnTo} replace />;
+  }, [user, showMFAVerification, navigate, returnTo]);
+
+  // Don't render the form if user is already logged in
+  if (user && !showMFAVerification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

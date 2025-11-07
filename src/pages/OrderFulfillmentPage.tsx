@@ -22,10 +22,13 @@ const OrderFulfillmentPage: React.FC = () => {
       // If user is not logged in, redirect to login FIRST
       // Don't try to verify the token yet (RLS will block it)
       if (!user) {
+        console.log('OrderFulfillmentPage: User not logged in, storing token:', token);
         toast('Please log in to fulfill this order', { icon: '🔐' });
         // Store the token in session storage so we can redirect back after login
         if (token) {
           sessionStorage.setItem('fulfillment_redirect_token', token);
+          console.log('OrderFulfillmentPage: Token stored in sessionStorage');
+          console.log('OrderFulfillmentPage: Verification:', sessionStorage.getItem('fulfillment_redirect_token'));
         }
         navigate('/login');
         setLoading(false);
