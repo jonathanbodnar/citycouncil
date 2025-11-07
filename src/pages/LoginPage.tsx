@@ -31,7 +31,8 @@ const LoginPage: React.FC = () => {
         userType: user?.user_type 
       });
       
-      if (user && !showMFAVerification) {
+      // CRITICAL: Must have both user AND user.id (user object fully populated)
+      if (user && user.id && !showMFAVerification) {
         console.log('LoginPage: REDIRECT LOGIC RUNNING');
         console.log('LoginPage: User object:', user);
         console.log('LoginPage: User ID:', user.id);
