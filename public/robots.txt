@@ -1,3 +1,19 @@
-# https://www.robotstxt.org/robotstxt.html
+# ShoutOut.us - Conservative & Faith-Based Video Shoutout Platform
+# Robots.txt - Optimized for SEO
+
 User-agent: *
-Disallow:
+Allow: /
+Allow: /talent/*
+Allow: /category/*
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /login
+Disallow: /signup
+Disallow: /orders
+Disallow: /fulfill/*
+
+# Sitemap location
+Sitemap: https://shoutout.us/sitemap.xml
+
+# Crawl-delay (be nice to our servers)
+Crawl-delay: 1
