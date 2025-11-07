@@ -29,8 +29,16 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Clean phone number (remove +1 and formatting)
-    const cleanPhone = from.replace(/\D/g, '');
+    // Clean phone number (remove all non-digits)
+    let cleanPhone = from.replace(/\D/g, '');
+    
+    // If phone starts with 1 and is 11 digits, strip the leading 1
+    // Twilio sends +16145551234, we store 6145551234
+    if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    
+    console.log('Phone lookup:', { from, cleanPhone });
     
     // Find the talent by phone number
     const { data: user, error: userError } = await supabase
@@ -38,6 +46,8 @@ serve(async (req) => {
       .select('id, full_name')
       .eq('phone', cleanPhone)
       .single();
+    
+    console.log('User lookup result:', { user, error: userError });
 
     if (userError || !user) {
       console.error('❌ User not found for phone:', from);
