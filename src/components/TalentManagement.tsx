@@ -526,6 +526,24 @@ const TalentManagement: React.FC = () => {
     }
   };
 
+  const setImagePosition = async (talentId: string, position: string) => {
+    try {
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({ featured_image_position: position })
+        .eq('id', talentId);
+
+      if (error) throw error;
+
+      toast.success('Featured image position updated - check carousel!');
+      fetchTalents();
+
+    } catch (error) {
+      console.error('Error setting image position:', error);
+      toast.error('Failed to update image position');
+    }
+  };
+
   const setFeaturedOrder = async (talentId: string, newOrder: number) => {
     try {
       // Get current featured talents
@@ -1087,22 +1105,40 @@ const TalentManagement: React.FC = () => {
                     </button>
                     
                     {talent.is_featured && (
-                      <select
-                        value={talent.featured_order || ''}
-                        onChange={(e) => {
-                          const order = parseInt(e.target.value);
-                          if (order) setFeaturedOrder(talent.id, order);
-                        }}
-                        className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                        title="Featured position in carousel"
-                      >
-                        <option value="">Order...</option>
-                        {Array.from({ length: Math.max(10, talents.filter(t => t.is_featured).length + 1) }, (_, i) => i + 1).map(num => (
-                          <option key={num} value={num}>
-                            Position {num}
-                          </option>
-                        ))}
-                      </select>
+                      <>
+                        <select
+                          value={talent.featured_order || ''}
+                          onChange={(e) => {
+                            const order = parseInt(e.target.value);
+                            if (order) setFeaturedOrder(talent.id, order);
+                          }}
+                          className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          title="Featured position in carousel"
+                        >
+                          <option value="">Order...</option>
+                          {Array.from({ length: Math.max(10, talents.filter(t => t.is_featured).length + 1) }, (_, i) => i + 1).map(num => (
+                            <option key={num} value={num}>
+                              Position {num}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        <select
+                          value={talent.featured_image_position || 'center center'}
+                          onChange={(e) => setImagePosition(talent.id, e.target.value)}
+                          className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          title="Adjust face position in carousel image"
+                        >
+                          <option value="center center">Face Center</option>
+                          <option value="center 20%">Face Top</option>
+                          <option value="center 30%">Face Upper</option>
+                          <option value="center 40%">Face Mid-Upper</option>
+                          <option value="center 60%">Face Mid-Lower</option>
+                          <option value="center 70%">Face Lower</option>
+                          <option value="left center">Face Left</option>
+                          <option value="right center">Face Right</option>
+                        </select>
+                      </>
                     )}
                     
                     <button

@@ -101,7 +101,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
             style={{
               backgroundImage: `url(${enhancedImageUrl})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center center',
+              backgroundPosition: currentTalent.featured_image_position || 'center center',
               maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
               WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
             }}
@@ -125,12 +125,14 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         
         {/* Mobile Background with Photo or Gradient */}
         {enhancedImageUrl ? (
-          <div className="md:hidden absolute inset-0">
-            <img
-              src={enhancedImageUrl}
-              alt={currentTalent.temp_full_name || currentTalent.users.full_name}
-              className="w-full h-full object-cover object-center"
-            />
+          <div 
+            className="md:hidden absolute inset-0"
+            style={{
+              backgroundImage: `url(${enhancedImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: currentTalent.featured_image_position || 'center center',
+            }}
+          >
             {/* Custom gradient overlay for mobile */}
             <div 
               className="absolute inset-0"
