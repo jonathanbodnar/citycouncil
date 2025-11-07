@@ -6,7 +6,7 @@ import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 
 interface TalentProfile {
   id: string;
-  name: string;
+  full_name: string;
   slug: string;
   bio: string;
   category: string;
@@ -70,12 +70,12 @@ export default function TalentProfilePage() {
 
   // Generate SEO-optimized content
   const categoryDisplay = talent.category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  const seoTitle = `${talent.name} - Personalized Video Messages | Conservative & Faith-Based Shoutouts`;
-  const seoDescription = `Book a personalized video message from ${talent.name}, ${categoryDisplay}. ${talent.bio?.substring(0, 120)}... Starting at $${talent.pricing}. Fast response time, authentic conservative values.`;
+  const seoTitle = `${talent.full_name} - Personalized Video Messages | Conservative & Faith-Based Shoutouts`;
+  const seoDescription = `Book a personalized video message from ${talent.full_name}, ${categoryDisplay}. ${talent.bio?.substring(0, 120)}... Starting at $${talent.pricing}. Fast response time, authentic conservative values.`;
   const seoKeywords = [
-    talent.name,
-    `${talent.name} video message`,
-    `${talent.name} shoutout`,
+    talent.full_name,
+    `${talent.full_name} video message`,
+    `${talent.full_name} shoutout`,
     'conservative video message',
     'faith-based influencer video',
     'patriotic celebrity shoutout',
@@ -89,7 +89,7 @@ export default function TalentProfilePage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Person",
-    "name": talent.name,
+    "name": talent.full_name,
     "description": talent.bio,
     "image": talent.profile_image_url,
     "jobTitle": categoryDisplay,
@@ -97,7 +97,7 @@ export default function TalentProfilePage() {
       "@type": "Offer",
       "price": talent.pricing,
       "priceCurrency": "USD",
-      "description": `Personalized video message from ${talent.name}`
+      "description": `Personalized video message from ${talent.full_name}`
     },
     "aggregateRating": talent.rating ? {
       "@type": "AggregateRating",
@@ -142,7 +142,7 @@ export default function TalentProfilePage() {
               {categoryDisplay}
             </a>
             <span className="mx-2">/</span>
-            <span className="font-semibold">{talent.name}</span>
+            <span className="font-semibold">{talent.full_name}</span>
           </nav>
 
           <div className="grid md:grid-cols-2 gap-12">
@@ -151,7 +151,7 @@ export default function TalentProfilePage() {
               <div className="relative">
                 <img 
                   src={talent.profile_image_url} 
-                  alt={`${talent.name} - ${categoryDisplay} - Personalized Video Messages`}
+                  alt={`${talent.full_name} - ${categoryDisplay} - Personalized Video Messages`}
                   className="w-full rounded-2xl shadow-2xl"
                 />
                 <div className="absolute top-4 right-4 bg-white px-4 py-2 rounded-full shadow-lg">
@@ -173,7 +173,7 @@ export default function TalentProfilePage() {
 
             {/* Right: Details & CTA */}
             <div>
-              <h1 className="text-4xl font-bold mb-2">{talent.name}</h1>
+              <h1 className="text-4xl font-bold mb-2">{talent.full_name}</h1>
               <p className="text-xl text-gray-600 mb-4 capitalize">{categoryDisplay}</p>
 
               {/* Trust Indicators */}
@@ -197,7 +197,7 @@ export default function TalentProfilePage() {
 
               {/* Bio */}
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-3">About {talent.name}</h2>
+                <h2 className="text-2xl font-bold mb-3">About {talent.full_name}</h2>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                   {talent.bio}
                 </p>
@@ -231,7 +231,7 @@ export default function TalentProfilePage() {
               <div className="mt-8 bg-gray-50 p-6 rounded-xl">
                 <h3 className="font-bold mb-4">What You Get:</h3>
                 <ul className="space-y-2 text-sm text-gray-700">
-                  <li>✓ Personalized video message from {talent.name}</li>
+                  <li>✓ Personalized video message from {talent.full_name}</li>
                   <li>✓ Custom content tailored to your occasion</li>
                   <li>✓ High-quality video download</li>
                   <li>✓ Fast delivery ({talent.response_time || '24-48 hours'})</li>
@@ -269,15 +269,15 @@ export default function TalentProfilePage() {
 
           {/* SEO Content Section */}
           <div className="mt-16 prose max-w-none">
-            <h2>Book a Personalized Video Message from {talent.name}</h2>
+            <h2>Book a Personalized Video Message from {talent.full_name}</h2>
             <p>
-              Looking for a unique, personalized video gift? {talent.name} is available on ShoutOut.us 
+              Looking for a unique, personalized video gift? {talent.full_name} is available on ShoutOut.us 
               to create custom video messages for any occasion. Whether you need a birthday shoutout, 
-              corporate endorsement, motivational message, or special surprise, {talent.name} delivers 
+              corporate endorsement, motivational message, or special surprise, {talent.full_name} delivers 
               authentic, high-quality personalized videos that make lasting memories.
             </p>
             
-            <h3>Why Choose {talent.name} on ShoutOut.us?</h3>
+            <h3>Why Choose {talent.full_name} on ShoutOut.us?</h3>
             <ul>
               <li><strong>Authentic Conservative Values:</strong> ShoutOut.us is the leading platform for 
               conservative, patriotic, and faith-based video messages.</li>

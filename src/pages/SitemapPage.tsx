@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 
 interface TalentProfile {
   id: string;
-  name: string;
+  full_name: string;
   slug: string;
   category: string;
   bio: string;
@@ -22,11 +22,11 @@ export default function SitemapPage() {
   const generateSitemap = async () => {
     try {
       // Fetch all active talent profiles
-      const { data: talents, error } = await supabase
+      const { data: talents, error} = await supabase
         .from('talent_profiles')
-        .select('id, name, slug, category, bio, keywords, updated_at')
+        .select('id, full_name, slug, category, bio, keywords, updated_at')
         .eq('is_active', true)
-        .order('name');
+        .order('full_name');
 
       if (error) throw error;
 
@@ -67,7 +67,7 @@ export default function SitemapPage() {
 
       // Individual talent profiles
       talents?.forEach(talent => {
-        const slug = talent.slug || talent.name.toLowerCase().replace(/\s+/g, '-');
+        const slug = talent.slug || talent.full_name.toLowerCase().replace(/\s+/g, '-');
         const lastMod = talent.updated_at ? new Date(talent.updated_at).toISOString().split('T')[0] : now;
         
         sitemapXml += `  <url>
