@@ -77,7 +77,8 @@ serve(async (req) => {
       to: formattedTo,
       from: TWILIO_PHONE_NUMBER,
       messageLength: message.length,
-      talentId
+      talentId,
+      hasMessagingServiceSid: !!TWILIO_MESSAGING_SERVICE_SID
     });
 
     // Extract and shorten URLs in the message
