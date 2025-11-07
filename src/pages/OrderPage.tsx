@@ -201,9 +201,9 @@ const OrderPage: React.FC = () => {
             user_id: user.id,
             talent_id: talent.id,
             request_details: orderData.requestDetails,
-            amount: pricing.total,
-            admin_fee: pricing.adminFee,
-            charity_amount: pricing.charityAmount,
+            amount: Math.round(pricing.total * 100), // Store in cents
+            admin_fee: Math.round(pricing.adminFee * 100), // Store in cents
+            charity_amount: Math.round(pricing.charityAmount * 100), // Store in cents
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
             payment_transaction_id: paymentResult.id || paymentResult.transaction_id,
             payment_transaction_payload: paymentResult?.payload ?? null,
