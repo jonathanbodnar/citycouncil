@@ -22,7 +22,6 @@ const TalentOnboardingPage = lazy(() => import('./pages/TalentOnboardingPage'));
 const PublicTalentOnboardingPage = lazy(() => import('./pages/PublicTalentOnboardingPage'));
 const OrderFulfillmentPage = lazy(() => import('./pages/OrderFulfillmentPage'));
 const OrderPage = lazy(() => import('./pages/OrderPage'));
-const SitemapPage = lazy(() => import('./pages/SitemapPage'));
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
@@ -59,7 +58,6 @@ function App() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
             <Route path="/fulfill/:token" element={<OrderFulfillmentPage />} />
-            <Route path="/sitemap.xml" element={<SitemapPage />} />
             <Route path="/talent/:slug" element={<TalentProfilePage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/seed" element={<SeedDataPage />} />

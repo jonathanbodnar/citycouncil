@@ -106,6 +106,67 @@ if (process.env.PRERENDER_TOKEN) {
   console.warn('⚠️  PRERENDER_TOKEN not set - social media previews may not work');
 }
 
+// Sitemap.xml route - must come before static files
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.REACT_APP_SUPABASE_URL,
+      process.env.REACT_APP_SUPABASE_ANON_KEY
+    );
+
+    // Fetch active talent profiles
+    const { data: talents, error } = await supabase
+      .from('talent_profiles')
+      .select('slug, full_name, updated_at')
+      .eq('is_active', true)
+      .order('full_name');
+
+    if (error) throw error;
+
+    const baseUrl = 'https://shoutout.us';
+    const now = new Date().toISOString().split('T')[0];
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+    // Homepage
+    xml += `  <url>\n    <loc>${baseUrl}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+
+    // Category pages
+    const categories = [
+      'political-commentators',
+      'faith-leaders',
+      'conservative-voices',
+      'patriots',
+      'sports',
+      'entertainment',
+      'business'
+    ];
+
+    categories.forEach(cat => {
+      xml += `  <url>\n    <loc>${baseUrl}/category/${cat}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+    });
+
+    // Talent profiles
+    if (talents) {
+      talents.forEach(talent => {
+        const slug = talent.slug || talent.full_name.toLowerCase().replace(/\s+/g, '-');
+        const lastMod = talent.updated_at ? new Date(talent.updated_at).toISOString().split('T')[0] : now;
+        xml += `  <url>\n    <loc>${baseUrl}/talent/${slug}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+      });
+    }
+
+    xml += '</urlset>';
+
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error('Error generating sitemap:', error);
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
 // Serve static files from the React build
 app.use(express.static(path.join(__dirname, 'build'), {
   maxAge: '1d',
