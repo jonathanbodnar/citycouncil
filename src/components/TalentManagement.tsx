@@ -340,32 +340,23 @@ const TalentManagement: React.FC = () => {
           avatar_url: editingTalent.temp_avatar_url
         };
         
-        // Add phone if it exists (format to E.164: +1XXXXXXXXXX)
+        // Add phone if it exists - SIMPLE: just +1 and 10 digits
         if (editingTalent.temp_phone) {
           const cleaned = editingTalent.temp_phone.replace(/\D/g, '');
-          console.log('Phone cleaning:', { 
-            raw: editingTalent.temp_phone, 
-            cleaned, 
-            length: cleaned.length 
-          });
           
           if (cleaned.length === 10) {
-            userUpdateData.phone = cleaned; // Store as 10 digits (no +1)
-            console.log('Phone formatted for database:', cleaned);
-          } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
-            // If they entered 11 digits starting with 1, strip the leading 1
-            userUpdateData.phone = cleaned.substring(1);
-            console.log('Phone formatted (stripped +1):', cleaned.substring(1));
+            // Store as +1XXXXXXXXXX for Comms Center compatibility
+            userUpdateData.phone = `+1${cleaned}`;
+            console.log('✅ Phone will be saved as:', userUpdateData.phone);
           } else if (cleaned.length === 0) {
-            // Empty phone - remove from update (or set to null to clear)
-            console.log('Phone is empty - skipping update');
+            // Empty - clear phone
+            userUpdateData.phone = null;
+            console.log('📱 Phone will be cleared (empty input)');
           } else {
-            console.warn('Phone invalid length:', cleaned.length, 'digits');
-            toast.error(`Phone must be 10 digits. Got ${cleaned.length} digits.`);
-            return; // Don't proceed with save if phone is invalid
+            console.error('❌ Invalid phone length:', cleaned.length, 'digits');
+            toast.error(`Phone must be exactly 10 digits. You entered ${cleaned.length}.`);
+            return; // Don't save
           }
-        } else {
-          console.log('⚠️ No temp_phone set - phone will not be updated');
         }
         
         const { error: userError } = await supabase
@@ -374,13 +365,14 @@ const TalentManagement: React.FC = () => {
           .eq('id', editingTalent.user_id);
 
         if (userError) {
-          console.error('FAILED: User table sync:', userError);
-          toast.error(`Failed to update user profile: ${userError.message}`);
+          console.error('❌ FAILED: User update error:', userError);
+          toast.error(`Failed to update user: ${userError.message}`);
+          return; // Stop if user update fails
         } else {
-          console.log('SUCCESS: User table synced to temp fields');
+          console.log('✅ SUCCESS: User table updated');
           if (userUpdateData.phone) {
-            console.log('✅ Phone number saved to database:', userUpdateData.phone);
-            toast.success('Phone number updated! Talent will now appear in Comms Center.');
+            console.log('📱 Phone saved:', userUpdateData.phone);
+            toast.success(`Phone saved as ${userUpdateData.phone} - Talent will appear in Comms Center!`);
           }
         }
       }
@@ -450,7 +442,7 @@ const TalentManagement: React.FC = () => {
     }
   };
 
-  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing' | 'is_verified', value: boolean) => {
+  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing' | 'is_verified' | 'is_coming_soon', value: boolean) => {
     try {
       // If unfeaturing, remove the featured_order
       if (field === 'is_featured' && !value) {
@@ -479,6 +471,8 @@ const TalentManagement: React.FC = () => {
         ? (value ? 'added to featured carousel' : 'unfeatured')
         : field === 'allow_corporate_pricing'
         ? (value ? 'corporate pricing enabled' : 'corporate pricing disabled')
+        : field === 'is_coming_soon'
+        ? (value ? 'marked as Coming Soon' : 'Coming Soon removed (now orderable)')
         : (value ? 'verified' : 'unverified');
       
       toast.success(`Talent ${action} successfully`);
@@ -1093,6 +1087,18 @@ const TalentManagement: React.FC = () => {
                       <span className="text-lg">{talent.is_verified ? '✅' : '⚪'}</span>
                     </button>
                     
+                    <button
+                      onClick={() => toggleTalentStatus(talent.id, 'is_coming_soon', !talent.is_coming_soon)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        talent.is_coming_soon 
+                          ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' 
+                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      title={talent.is_coming_soon ? 'Remove Coming Soon status (make orderable)' : 'Mark as Coming Soon (shows on /home but not orderable)'}
+                    >
+                      <span className="text-lg">{talent.is_coming_soon ? '⏳' : '⚪'}</span>
+                    </button>
+                    
                     {talent.is_participating_in_promotion && (
                       <div className="p-2 bg-purple-50 rounded-lg" title="Participating in promotion program">
                         <span className="text-lg">🎁</span>
@@ -1101,24 +1107,20 @@ const TalentManagement: React.FC = () => {
                     
                     <button
                       onClick={() => {
-                        // Initialize temp_phone from users.phone if it exists
+                        // Initialize temp_phone - just store 10 digits
                         const phoneFromDB = talent.users?.phone;
-                        let formattedPhone = '';
+                        let cleanedPhone = '';
                         if (phoneFromDB) {
-                          const cleaned = phoneFromDB.replace(/\D/g, '');
-                          // Format as (XXX) XXX-XXXX
-                          if (cleaned.length === 10) {
-                            formattedPhone = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-                          } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
-                            // Strip leading 1
-                            const digits = cleaned.substring(1);
-                            formattedPhone = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+                          cleanedPhone = phoneFromDB.replace(/\D/g, '');
+                          // If it's 11 digits starting with 1, strip the 1
+                          if (cleanedPhone.length === 11 && cleanedPhone.startsWith('1')) {
+                            cleanedPhone = cleanedPhone.substring(1);
                           }
                         }
                         
                         setEditingTalent({
                           ...talent,
-                          temp_phone: formattedPhone // Initialize from database
+                          temp_phone: cleanedPhone // Store just 10 digits
                         });
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
                       }}
@@ -1249,42 +1251,24 @@ const TalentManagement: React.FC = () => {
                 </label>
                 <input
                   type="tel"
-                  value={(() => {
-                    // Try temp_phone first
-                    if (editingTalent.temp_phone) {
-                      return editingTalent.temp_phone;
-                    }
-                    
-                    // Fallback to formatting users.phone
-                    const phone = editingTalent.users?.phone;
-                    if (phone) {
-                      const cleaned = phone.replace(/\D/g, '');
-                      if (cleaned.length === 10) {
-                        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-                      }
-                      return phone; // Return as-is if format is unexpected
-                    }
-                    
-                    return ''; // No phone available
-                  })()}
+                  value={editingTalent.temp_phone || ''}
                   onChange={(e) => {
                     const cleaned = e.target.value.replace(/\D/g, '');
-                    console.log('📱 Phone input changed:', { raw: e.target.value, cleaned, length: cleaned.length });
                     if (cleaned.length <= 10) {
-                      let formatted = cleaned;
-                      if (cleaned.length > 6) {
-                        formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-                      } else if (cleaned.length > 3) {
-                        formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-                      } else if (cleaned.length > 0) {
-                        formatted = `(${cleaned}`;
-                      }
-                      console.log('📱 Setting temp_phone to:', formatted);
+                      // Store the raw 10-digit number
+                      setEditingTalent({...editingTalent, temp_phone: cleaned});
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Format for display when user leaves the field
+                    const cleaned = e.target.value.replace(/\D/g, '');
+                    if (cleaned.length === 10) {
+                      const formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
                       setEditingTalent({...editingTalent, temp_phone: formatted});
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="(555) 123-4567"
+                  placeholder="6319438186 or (631) 943-8186"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   For MFA and SMS notifications
