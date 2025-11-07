@@ -230,13 +230,21 @@ const HomePage: React.FC = () => {
       t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.bio.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // "coming_soon" is a special category filter
-    const matchesCategory = selectedCategory === 'all' || 
-      selectedCategory === 'coming_soon' 
-        ? t.is_coming_soon === true
-        : (t.categories && t.categories.length > 0 
-            ? t.categories.includes(selectedCategory) 
-            : t.category === selectedCategory);
+    // Category filtering logic
+    let matchesCategory = false;
+    
+    if (selectedCategory === 'all') {
+      // Show everything (active + coming soon)
+      matchesCategory = true;
+    } else if (selectedCategory === 'coming_soon') {
+      // Show only coming soon
+      matchesCategory = t.is_coming_soon === true;
+    } else {
+      // Show by specific category
+      matchesCategory = t.categories && t.categories.length > 0 
+        ? t.categories.includes(selectedCategory) 
+        : t.category === selectedCategory;
+    }
     
     return matchesSearch && matchesCategory;
   });
