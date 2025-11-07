@@ -475,16 +475,12 @@ const UserDashboard: React.FC = () => {
                   {order.video_url && (
                     <div className="mb-4">
                       <h4 className="font-medium text-gray-900 mb-2">Your ShoutOut:</h4>
-                      {/* Responsive video container - mobile: full width, desktop: max width with aspect ratio */}
-                      <div className="w-full bg-black rounded-lg overflow-hidden" style={{ maxHeight: 'min(600px, 80vh)' }}>
-                        <div className="relative w-full" style={{ paddingTop: '177.78%' }}> {/* 9:16 aspect ratio for vertical video */}
-                          <div className="absolute inset-0">
-                            <VideoPlayer 
-                              videoUrl={order.video_url}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        </div>
+                      {/* Responsive video container - constrained width on desktop */}
+                      <div className="w-full max-w-md mx-auto bg-black rounded-lg overflow-hidden">
+                        <VideoPlayer 
+                          videoUrl={order.video_url}
+                          className="w-full h-auto"
+                        />
                       </div>
                       
                       {/* Download Button */}
