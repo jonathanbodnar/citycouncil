@@ -42,7 +42,7 @@ const HomePage: React.FC = () => {
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all' | 'coming_soon'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [showPromoModal, setShowPromoModal] = useState(false);
@@ -71,26 +71,46 @@ const HomePage: React.FC = () => {
             avatar_url
           )
         `)
-        .or('is_active.eq.true,is_coming_soon.eq.true') // Show active OR coming soon
-        .order('display_order', { ascending: true, nullsFirst: false }) // Manual order first (lower = higher)
-        .order('created_at', { ascending: false }); // Then newest first for NULL display_order
+        .or('is_active.eq.true,is_coming_soon.eq.true'); // Show active OR coming soon
 
       if (error) {
         console.error('Supabase error fetching talent:', error);
         throw error;
       }
 
-      console.log('Talent data fetched:', data?.length, 'profiles');
+      // Sort in JavaScript to handle complex logic
+      const sortedData = (data || []).sort((a, b) => {
+        // 1. If both have display_order, sort by that (ascending)
+        if (a.display_order !== null && b.display_order !== null) {
+          return a.display_order - b.display_order;
+        }
+        
+        // 2. If only one has display_order, it comes first
+        if (a.display_order !== null) return -1;
+        if (b.display_order !== null) return 1;
+        
+        // 3. For NULL display_order: Active before Coming Soon
+        const aIsActive = a.is_active && !a.is_coming_soon;
+        const bIsActive = b.is_active && !b.is_coming_soon;
+        
+        if (aIsActive && !bIsActive) return -1;
+        if (!aIsActive && bIsActive) return 1;
+        
+        // 4. Within same status, newest first (by created_at)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      console.log('Talent data fetched:', sortedData.length, 'profiles');
 
       // Handle null data
-      if (!data || data.length === 0) {
+      if (!sortedData || sortedData.length === 0) {
         setTalent([]);
         setAvailableCategories([]);
         return;
       }
 
       // Map profiles - use temp fields if users data is missing (for incomplete onboarding)
-      const talentWithUsers = data.map(profile => {
+      const talentWithUsers = sortedData.map(profile => {
         // If no users data, create a synthetic user object from temp fields
         if (!profile.users) {
           return {
@@ -108,7 +128,7 @@ const HomePage: React.FC = () => {
       setTalent(talentWithUsers);
 
       // Get available categories from both single category and categories array
-      const allCategories = data.flatMap(t => 
+      const allCategories = sortedData.flatMap(t => 
         t.categories && t.categories.length > 0 ? t.categories : [t.category]
       );
       const categories = Array.from(new Set(allCategories));
@@ -210,10 +230,13 @@ const HomePage: React.FC = () => {
       t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.bio.toLowerCase().includes(searchQuery.toLowerCase());
     
+    // "coming_soon" is a special category filter
     const matchesCategory = selectedCategory === 'all' || 
-      (t.categories && t.categories.length > 0 
-        ? t.categories.includes(selectedCategory) 
-        : t.category === selectedCategory);
+      selectedCategory === 'coming_soon' 
+        ? t.is_coming_soon === true
+        : (t.categories && t.categories.length > 0 
+            ? t.categories.includes(selectedCategory) 
+            : t.category === selectedCategory);
     
     return matchesSearch && matchesCategory;
   });
@@ -279,6 +302,16 @@ const HomePage: React.FC = () => {
             }`}
           >
             All Categories
+          </button>
+          <button
+            onClick={() => setSelectedCategory('coming_soon')}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+              selectedCategory === 'coming_soon'
+                ? 'glass-strong text-white shadow-lg border-white/30'
+                : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
+            }`}
+          >
+            ⏳ Coming Soon
           </button>
           {TALENT_CATEGORIES
             .filter(cat => availableCategories.includes(cat.key as TalentCategory))
