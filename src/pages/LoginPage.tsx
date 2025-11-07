@@ -27,13 +27,17 @@ const LoginPage: React.FC = () => {
       // Check if there's a fulfillment token to redirect to
       const fulfillmentToken = sessionStorage.getItem('fulfillment_redirect_token');
       console.log('LoginPage: User logged in, checking fulfillment token:', fulfillmentToken);
+      console.log('LoginPage: User type:', user.user_type);
       
       if (fulfillmentToken) {
         console.log('LoginPage: Found fulfillment token, redirecting to /fulfill/', fulfillmentToken);
         sessionStorage.removeItem('fulfillment_redirect_token');
         navigate(`/fulfill/${fulfillmentToken}`, { replace: true });
+      } else if (user.user_type === 'talent') {
+        console.log('LoginPage: Talent user, redirecting to dashboard');
+        navigate('/dashboard', { replace: true });
       } else {
-        console.log('LoginPage: No fulfillment token, redirecting to:', returnTo);
+        console.log('LoginPage: Regular user, redirecting to:', returnTo);
         navigate(returnTo, { replace: true });
       }
     }
