@@ -424,12 +424,6 @@ const TalentDashboard: React.FC = () => {
         <p className="text-gray-600">Welcome back, {user?.full_name}!</p>
         
         {/* Mobile Promotion Button */}
-        <button
-          onClick={() => setActiveTab('promotion')}
-          className="md:hidden mt-3 w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 rounded-xl font-medium shadow-modern hover:shadow-modern-lg transition-all duration-300 flex items-center justify-center gap-2"
-        >
-          🎁 View Promotions
-        </button>
       </div>
 
       {/* Phone Number Prompt (if missing) */}

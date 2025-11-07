@@ -172,6 +172,17 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                {/* Bonus/Promotions Button - Talent Only */}
+                {user.user_type === 'talent' && (
+                  <Link
+                    to="/dashboard?tab=promotion"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-blue-600 text-white font-medium hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <span className="text-lg">🎁</span>
+                    <span className="hidden sm:inline">Bonus</span>
+                  </Link>
+                )}
+
                 {/* Notifications */}
                 <div className="relative z-[2000]" ref={notificationRef}>
                   <button 
