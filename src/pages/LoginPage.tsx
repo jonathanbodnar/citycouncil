@@ -24,7 +24,15 @@ const LoginPage: React.FC = () => {
   // Handle redirect after successful login
   React.useEffect(() => {
     const handleRedirect = async () => {
+      console.log('LoginPage useEffect triggered:', { 
+        hasUser: !!user, 
+        showMFAVerification,
+        userId: user?.id,
+        userType: user?.user_type 
+      });
+      
       if (user && !showMFAVerification) {
+        console.log('LoginPage: REDIRECT LOGIC RUNNING');
         console.log('LoginPage: User object:', user);
         console.log('LoginPage: User ID:', user.id);
         console.log('LoginPage: User type from context:', user.user_type);
@@ -51,11 +59,13 @@ const LoginPage: React.FC = () => {
           console.log('LoginPage: Database user type:', userData?.user_type);
           
           if (!error && userData?.user_type === 'talent') {
-            console.log('LoginPage: Talent user confirmed, redirecting to dashboard');
+            console.log('LoginPage: ✅ Talent user confirmed, CALLING navigate(/dashboard)');
             navigate('/dashboard', { replace: true });
+            console.log('LoginPage: ✅ navigate() called');
           } else if (user.user_type === 'talent') {
-            console.log('LoginPage: Talent user from context, redirecting to dashboard');
+            console.log('LoginPage: ✅ Talent user from context, CALLING navigate(/dashboard)');
             navigate('/dashboard', { replace: true });
+            console.log('LoginPage: ✅ navigate() called');
           } else {
             console.log('LoginPage: Regular user, redirecting to:', returnTo);
             navigate(returnTo, { replace: true });
@@ -64,7 +74,9 @@ const LoginPage: React.FC = () => {
           console.error('LoginPage: Error checking user type:', err);
           // Fallback to context user_type
           if (user.user_type === 'talent') {
+            console.log('LoginPage: ✅ Fallback - Talent user, CALLING navigate(/dashboard)');
             navigate('/dashboard', { replace: true });
+            console.log('LoginPage: ✅ navigate() called');
           } else {
             navigate(returnTo, { replace: true });
           }

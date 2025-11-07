@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
@@ -39,7 +38,6 @@ const TALENT_CATEGORIES = [
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,14 +48,6 @@ const HomePage: React.FC = () => {
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [isTalent, setIsTalent] = useState(false);
   const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
-
-  // Redirect talent users to their dashboard
-  useEffect(() => {
-    if (user?.user_type === 'talent') {
-      console.log('HomePage: Talent user detected, redirecting to dashboard');
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, navigate]);
 
   useEffect(() => {
     fetchTalent();
