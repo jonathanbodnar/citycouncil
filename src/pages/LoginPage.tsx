@@ -190,10 +190,10 @@ const LoginPage: React.FC = () => {
   };
 
   const handleMFASuccess = () => {
-    toast.success('Welcome back! Redirecting...');
-    setTimeout(() => {
-      navigate(returnTo);
-    }, 1000);
+    console.log('LoginPage: MFA verification successful, clearing MFA state');
+    setShowMFAVerification(false);
+    toast.success('Welcome back!');
+    // Let the useEffect handle the redirect based on user type
   };
 
   const handleMFACancel = () => {
