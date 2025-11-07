@@ -19,22 +19,8 @@ const OrderFulfillmentPage: React.FC = () => {
 
   const verifyTokenAndLoadOrder = async () => {
     try {
-      // Lookup order by token
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('*, talent_profiles!orders_talent_id_fkey(user_id)')
-        .eq('fulfillment_token', token)
-        .single();
-
-      if (orderError || !orderData) {
-        toast.error('Invalid or expired fulfillment link');
-        navigate('/');
-        return;
-      }
-
-      setOrder(orderData);
-
-      // If user is not logged in, prompt them to log in
+      // If user is not logged in, redirect to login FIRST
+      // Don't try to verify the token yet (RLS will block it)
       if (!user) {
         toast('Please log in to fulfill this order', { icon: '🔐' });
         // Store the token in session storage so we can redirect back after login
@@ -42,8 +28,25 @@ const OrderFulfillmentPage: React.FC = () => {
           sessionStorage.setItem('fulfillment_redirect_token', token);
         }
         navigate('/login');
+        setLoading(false);
         return;
       }
+
+      // User is logged in - now lookup order by token
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('*, talent_profiles!orders_talent_id_fkey(user_id)')
+        .eq('fulfillment_token', token)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('Order lookup error:', orderError);
+        toast.error('Invalid or expired fulfillment link');
+        navigate('/');
+        return;
+      }
+
+      setOrder(orderData);
 
       // Verify the logged-in user is the talent for this order
       const talentUserId = orderData.talent_profiles?.user_id;
