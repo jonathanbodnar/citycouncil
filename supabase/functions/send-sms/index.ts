@@ -56,7 +56,8 @@ serve(async (req) => {
     // Otherwise use From number directly
     if (TWILIO_MESSAGING_SERVICE_SID) {
       body.append('MessagingServiceSid', TWILIO_MESSAGING_SERVICE_SID);
-      console.log('Using Messaging Service for automatic link shortening');
+      body.append('ShortenUrls', 'true'); // Explicitly enable link shortening
+      console.log('Using Messaging Service with link shortening enabled');
     } else {
       body.append('From', TWILIO_PHONE_NUMBER);
       console.log('Using direct From number (no link shortening)');
