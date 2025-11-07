@@ -77,16 +77,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
           console.log('Creating user profile for:', authUser.email);
+          
+          // Use UPSERT to avoid duplicate key errors
           const { data: createdUser, error: createError } = await supabase
             .from('users')
-            .insert([
+            .upsert([
               {
                 id: authUser.id,
                 email: authUser.email || '',
                 full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
                 user_type: authUser.user_metadata?.user_type || 'user',
               },
-            ])
+            ], {
+              onConflict: 'id',
+              ignoreDuplicates: false
+            })
             .select()
             .single();
 
@@ -145,25 +150,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Create user profile in our users table
+      // Note: The database trigger (handle_new_user) automatically creates the user
+      // but we'll use UPSERT here to ensure the data is correct and avoid race conditions
       if (data.user) {
         const { error: profileError } = await supabase
           .from('users')
-          .insert([
+          .upsert([
             {
               id: data.user.id,
               email: data.user.email,
               full_name: fullName,
               user_type: userType,
             },
-          ]);
+          ], {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Error upserting user profile:', profileError);
+          // Don't throw - the trigger may have already created it
+        }
 
         // Create additional profile based on user type
         if (userType === 'user') {
+          // Use UPSERT for user_profiles too
           await supabase
             .from('user_profiles')
-            .insert([{ user_id: data.user.id }]);
+            .upsert([{ user_id: data.user.id }], {
+              onConflict: 'user_id',
+              ignoreDuplicates: true
+            });
         } else if (userType === 'talent') {
           // We'll handle talent profile creation in the onboarding flow
         }
