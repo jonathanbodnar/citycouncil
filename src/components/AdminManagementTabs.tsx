@@ -91,10 +91,10 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         const corporateOrders = orders?.filter(o => o.is_corporate_order) || [];
         const pendingApprovalOrders = orders?.filter(o => o.approval_status === 'pending') || [];
         
-        const grossGenerated = orders?.reduce((sum, order) => sum + order.amount, 0) || 0;
-        const grossEarnings = orders?.reduce((sum, order) => sum + order.admin_fee, 0) || 0;
+        const grossGenerated = (orders?.reduce((sum, order) => sum + order.amount, 0) || 0) / 100;
+        const grossEarnings = (orders?.reduce((sum, order) => sum + order.admin_fee, 0) || 0) / 100;
         const refundedOrders = orders?.filter(o => o.status === 'refunded') || [];
-        const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0);
+        const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0) / 100;
         
         const totalUsers = users?.filter(u => u.user_type === 'user').length || 0;
         const activeTalent = talent?.filter(t => t.is_active).length || 0;
@@ -356,7 +356,7 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">${order.amount}</p>
+                        <p className="font-semibold text-gray-900">${(order.amount / 100).toFixed(2)}</p>
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                           order.status === 'completed' ? 'bg-green-100 text-green-800' :
                           order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

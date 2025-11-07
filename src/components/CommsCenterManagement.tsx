@@ -45,6 +45,7 @@ const CommsCenterManagement: React.FC = () => {
   const [showMassMessage, setShowMassMessage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | 'live' | 'coming_soon' | 'other'>('all');
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
   useEffect(() => {
     fetchTalentsWithPhone();
@@ -127,21 +128,26 @@ const CommsCenterManagement: React.FC = () => {
     }
   };
 
-  // Filter talents based on status
+  // Filter talents based on status and unread messages
   useEffect(() => {
-    if (statusFilter === 'all') {
-      setFilteredTalents(talents);
-    } else if (statusFilter === 'live') {
-      // Live talent: is_active = true AND is_coming_soon = false (or null)
-      setFilteredTalents(talents.filter(t => (t as any).is_active === true && !(t as any).is_coming_soon));
+    let filtered = talents;
+
+    // Apply status filter
+    if (statusFilter === 'live') {
+      filtered = filtered.filter(t => (t as any).is_active === true && !(t as any).is_coming_soon);
     } else if (statusFilter === 'coming_soon') {
-      // Coming Soon: is_coming_soon = true
-      setFilteredTalents(talents.filter(t => (t as any).is_coming_soon === true));
+      filtered = filtered.filter(t => (t as any).is_coming_soon === true);
     } else if (statusFilter === 'other') {
-      // Other: has phone but not live and not coming soon
-      setFilteredTalents(talents.filter(t => (t as any).is_active === false && !(t as any).is_coming_soon));
+      filtered = filtered.filter(t => (t as any).is_active === false && !(t as any).is_coming_soon);
     }
-  }, [statusFilter, talents]);
+
+    // Apply unread filter
+    if (showUnreadOnly) {
+      filtered = filtered.filter(t => (t.unreadCount || 0) > 0);
+    }
+
+    setFilteredTalents(filtered);
+  }, [statusFilter, talents, showUnreadOnly]);
 
   const fetchMessages = async (talentId: string) => {
     try {
@@ -444,9 +450,30 @@ const CommsCenterManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Talent List */}
         <div className="md:col-span-1 glass rounded-2xl shadow-modern border border-gray-200 p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Talent ({filteredTalents.length})</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Talent ({filteredTalents.length})</h3>
+            <button
+              onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                showUnreadOnly
+                  ? 'bg-red-500 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${showUnreadOnly ? 'bg-white' : 'bg-red-500'}`}></div>
+              Unread
+            </button>
+          </div>
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
-            {filteredTalents.map((talent) => (
+            {filteredTalents.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm">
+                  {showUnreadOnly ? 'No unread messages' : 'No talents found'}
+                </p>
+              </div>
+            ) : (
+              filteredTalents.map((talent) => (
               <button
                 key={talent.id}
                 onClick={() => setSelectedTalent(talent)}
@@ -494,7 +521,7 @@ const CommsCenterManagement: React.FC = () => {
                   </div>
                 </div>
               </button>
-            ))}
+            )))}
           </div>
         </div>
 

@@ -513,7 +513,7 @@ const TalentDashboard: React.FC = () => {
                             )}
                           </h4>
                           <p className="text-sm text-gray-300">
-                            ${order.amount.toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                            ${(order.amount / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                           </p>
                           {order.is_corporate_order && order.approval_status === 'pending' ? (
                             <p className="text-sm text-orange-400 font-medium">
@@ -636,7 +636,7 @@ const TalentDashboard: React.FC = () => {
                         <div>
                           <h4 className="font-semibold text-white">{order.users.full_name}</h4>
                           <p className="text-sm text-gray-300">
-                            ${order.amount.toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                            ${(order.amount / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -801,7 +801,7 @@ const TalentDashboard: React.FC = () => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Earnings</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${(completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0)).toFixed(0)}
+                    ${(completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0) / 100).toFixed(0)}
                   </p>
                 </div>
               </div>
@@ -829,7 +829,7 @@ const TalentDashboard: React.FC = () => {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 mb-2">
-                  ${((completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0)) / completedOrders.length || 0).toFixed(0)}
+                  ${((completedOrders.reduce((sum, order) => sum + (order.amount - order.admin_fee), 0) / 100) / completedOrders.length || 0).toFixed(0)}
                 </div>
                 <div className="text-sm text-gray-600">Avg. Earnings/Order</div>
               </div>
