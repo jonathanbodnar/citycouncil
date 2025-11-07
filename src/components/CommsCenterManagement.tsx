@@ -481,7 +481,7 @@ const CommsCenterManagement: React.FC = () => {
                     selectedTalent?.id === talent.id ? 'text-white' : 'text-gray-900'
                   }`}>
                     {talent.temp_full_name || talent.full_name}
-                    {talent.unreadCount && talent.unreadCount > 0 && selectedTalent?.id !== talent.id && (
+                    {(talent.unreadCount || 0) > 0 && selectedTalent?.id !== talent.id && (
                       <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
                         {talent.unreadCount}
                       </span>
