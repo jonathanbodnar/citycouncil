@@ -22,6 +22,7 @@ interface TalentWithPhone {
     full_name: string;
     avatar_url?: string;
   };
+  unreadCount?: number;
 }
 
 interface Message {
@@ -47,13 +48,20 @@ const CommsCenterManagement: React.FC = () => {
 
   useEffect(() => {
     fetchTalentsWithPhone();
+    // Poll for unread counts every 5 seconds
+    const interval = setInterval(() => fetchUnreadCounts(), 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (selectedTalent) {
       fetchMessages(selectedTalent.id);
+      markMessagesAsRead(selectedTalent.id);
       // Poll for new messages every 5 seconds
-      const interval = setInterval(() => fetchMessages(selectedTalent.id), 5000);
+      const interval = setInterval(() => {
+        fetchMessages(selectedTalent.id);
+        fetchUnreadCounts();
+      }, 5000);
       return () => clearInterval(interval);
     }
   }, [selectedTalent]);
@@ -108,6 +116,9 @@ const CommsCenterManagement: React.FC = () => {
         console.warn('   2. Phone is not null or empty string');
         console.warn('   3. Foreign key relationship users!inner is working');
       }
+
+      // Fetch unread counts after loading talents
+      fetchUnreadCounts();
     } catch (error) {
       console.error('Error fetching talents:', error);
       toast.error('Failed to load talents');
@@ -144,6 +155,58 @@ const CommsCenterManagement: React.FC = () => {
       setMessages(data || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
+    }
+  };
+
+  const fetchUnreadCounts = async () => {
+    try {
+      // Get unread message counts for each talent
+      const { data, error } = await supabase
+        .from('sms_messages')
+        .select('talent_id')
+        .eq('from_admin', false)
+        .eq('read_by_admin', false);
+
+      if (error) throw error;
+
+      // Count unread messages per talent
+      const unreadCounts: Record<string, number> = {};
+      data?.forEach((msg: any) => {
+        unreadCounts[msg.talent_id] = (unreadCounts[msg.talent_id] || 0) + 1;
+      });
+
+      // Update talents with unread counts
+      setTalents(prevTalents => 
+        prevTalents.map(talent => ({
+          ...talent,
+          unreadCount: unreadCounts[talent.id] || 0
+        }))
+      );
+
+      setFilteredTalents(prevFiltered =>
+        prevFiltered.map(talent => ({
+          ...talent,
+          unreadCount: unreadCounts[talent.id] || 0
+        }))
+      );
+    } catch (error) {
+      console.error('Error fetching unread counts:', error);
+    }
+  };
+
+  const markMessagesAsRead = async (talentId: string) => {
+    try {
+      await supabase
+        .from('sms_messages')
+        .update({ read_by_admin: true })
+        .eq('talent_id', talentId)
+        .eq('from_admin', false)
+        .eq('read_by_admin', false);
+
+      // Update local state
+      fetchUnreadCounts();
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
     }
   };
 
@@ -387,13 +450,18 @@ const CommsCenterManagement: React.FC = () => {
               <button
                 key={talent.id}
                 onClick={() => setSelectedTalent(talent)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all relative ${
                   selectedTalent?.id === talent.id
-                    ? 'bg-blue-100 border-2 border-blue-500'
-                    : 'hover:bg-gray-100 border-2 border-transparent'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50'
+                    : 'hover:bg-gray-100 hover:shadow-md'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                {/* Red dot for unread messages */}
+                {talent.unreadCount && talent.unreadCount > 0 && selectedTalent?.id !== talent.id && (
+                  <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg"></div>
+                )}
+                
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 relative">
                   {(talent.temp_avatar_url || talent.users.avatar_url) ? (
                     <img
                       src={talent.temp_avatar_url || talent.users.avatar_url}
@@ -401,16 +469,29 @@ const CommsCenterManagement: React.FC = () => {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <span className="text-blue-600 font-medium">
+                    <span className={`font-medium ${
+                      selectedTalent?.id === talent.id ? 'text-white' : 'text-blue-600'
+                    }`}>
                       {(talent.temp_full_name || talent.full_name).charAt(0)}
                     </span>
                   )}
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="font-medium text-gray-900">
+                  <div className={`font-medium flex items-center gap-2 ${
+                    selectedTalent?.id === talent.id ? 'text-white' : 'text-gray-900'
+                  }`}>
                     {talent.temp_full_name || talent.full_name}
+                    {talent.unreadCount && talent.unreadCount > 0 && selectedTalent?.id !== talent.id && (
+                      <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                        {talent.unreadCount}
+                      </span>
+                    )}
                   </div>
-                  <div className="text-xs text-gray-500">@{talent.username}</div>
+                  <div className={`text-xs ${
+                    selectedTalent?.id === talent.id ? 'text-blue-100' : 'text-gray-500'
+                  }`}>
+                    @{talent.username}
+                  </div>
                 </div>
               </button>
             ))}
