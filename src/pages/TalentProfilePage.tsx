@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../services/supabase';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 
 interface TalentProfile {
