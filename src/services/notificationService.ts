@@ -77,11 +77,11 @@ export const notificationService = {
       // Get user details
       const { data: user } = await supabase
         .from('users')
-        .select('full_name, phone')
+        .select('full_name, phone_number')
         .eq('id', userId)
         .single();
 
-      if (!user || !user.phone) {
+      if (!user || !user.phone_number) {
         console.log('User phone not found for SMS');
         return;
       }
@@ -109,10 +109,10 @@ export const notificationService = {
       message = message.replace(/\{\{hours\}\}/g, variables.hours || '');
 
       // Send SMS via Twilio Edge Function
-      console.log('📱 Sending SMS:', { to: user.phone, message });
+      console.log('📱 Sending SMS:', { to: user.phone_number, message });
       const { error } = await supabase.functions.invoke('send-sms', {
         body: {
-          to: user.phone,
+          to: user.phone_number,
           message: message
         }
       });
@@ -159,8 +159,29 @@ export const notificationService = {
     console.log('📢 Order confirmed notification result:', result);
   },
 
+  async notifyOrderApproved(userId: string, orderId: string, talentName: string): Promise<void> {
+    console.log('📢 Creating order approved notification for user:', { userId, orderId, talentName });
+    
+    // In-app notification
+    const result = await this.createNotification(
+      userId,
+      'order_placed',
+      '👍 Order Approved!',
+      `Great news! ${talentName} approved your ShoutOut order and will start working on it soon.`,
+      { order_id: orderId }
+    );
+    console.log('📢 Order approved notification result:', result);
+
+    // SMS notification
+    await this.sendSMSIfEnabled('user_order_approved', userId, orderId, {
+      talent_name: talentName
+    });
+  },
+
   async notifyOrderDelivered(userId: string, orderId: string, talentName: string): Promise<void> {
     console.log('📢 Creating order delivered notification for user:', { userId, orderId, talentName });
+    
+    // In-app notification
     const result = await this.createNotification(
       userId,
       'order_fulfilled',
@@ -169,6 +190,11 @@ export const notificationService = {
       { order_id: orderId }
     );
     console.log('📢 Order delivered notification result:', result);
+
+    // SMS notification
+    await this.sendSMSIfEnabled('user_order_completed', userId, orderId, {
+      talent_name: talentName
+    });
   },
 
   // Mark notification as read

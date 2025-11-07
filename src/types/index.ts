@@ -4,6 +4,7 @@ export interface User {
   full_name: string;
   user_type: 'user' | 'talent' | 'admin';
   avatar_url?: string;
+  phone_number?: string; // E.164 format (+1XXXXXXXXXX)
   created_at: string;
   updated_at: string;
 }

@@ -8,7 +8,7 @@ interface AuthContextType {
   supabaseUser: SupabaseUser | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, userType: 'user' | 'talent') => Promise<any>;
+  signUp: (email: string, password: string, fullName: string, userType: 'user' | 'talent', phoneNumber?: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, userType: 'user' | 'talent') => {
+  const signUp = async (email: string, password: string, fullName: string, userType: 'user' | 'talent', phoneNumber?: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -128,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: {
             full_name: fullName,
             user_type: userType,
+            phone_number: phoneNumber || null,
           },
           emailRedirectTo: undefined, // Disable email confirmation redirect
         },

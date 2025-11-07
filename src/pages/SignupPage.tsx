@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
+import PhoneInput from '../components/PhoneInput';
 import toast from 'react-hot-toast';
 
 const SignupPage: React.FC = () => {
@@ -12,6 +13,7 @@ const SignupPage: React.FC = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: '',
     userType: 'user' as 'user' | 'talent', // Always 'user' - talent accounts created by admin only
@@ -48,7 +50,7 @@ const SignupPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await signUp(formData.email, formData.password, formData.fullName, formData.userType);
+      await signUp(formData.email, formData.password, formData.fullName, formData.userType, formData.phoneNumber);
       toast.success('Account created successfully! Redirecting...');
       // Navigate to returnTo URL after successful signup
       setTimeout(() => {
@@ -113,6 +115,19 @@ const SignupPage: React.FC = () => {
                 value={formData.email}
                 onChange={handleChange}
               />
+            </div>
+
+            <div>
+              <PhoneInput
+                value={formData.phoneNumber}
+                onChange={(value) => setFormData(prev => ({ ...prev, phoneNumber: value }))}
+                label="Phone Number (Optional)"
+                placeholder="(555) 123-4567"
+                required={false}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Get SMS notifications when your video is ready
+              </p>
             </div>
 
             <div>
