@@ -324,6 +324,9 @@ const TalentDashboard: React.FC = () => {
     try {
       const now = new Date().toISOString();
       
+      // Get order details for notification
+      const orderToApprove = orders.find(o => o.id === orderId);
+      
       // Calculate fulfillment deadline from approval time
       const fulfillmentDeadline = new Date();
       fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + (talentProfile?.fulfillment_time_hours || 48));
@@ -339,6 +342,15 @@ const TalentDashboard: React.FC = () => {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Notify user that order was approved
+      if (orderToApprove) {
+        await notificationService.notifyOrderApproved(
+          orderToApprove.user_id,
+          orderId,
+          user?.full_name || 'Your talent'
+        );
+      }
 
       toast.success('Corporate order approved! Timer has started.');
       fetchTalentData();
