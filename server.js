@@ -13,7 +13,8 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: [
         "'self'", 
-        "'unsafe-inline'", 
+        // Note: 'unsafe-eval' is required for React/Vite in production
+        // 'unsafe-inline' removed for better security - use nonces for inline scripts
         "'unsafe-eval'", 
         "https://connect.facebook.net",
         "https://static.cloudflareinsights.com",
