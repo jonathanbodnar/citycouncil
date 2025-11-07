@@ -11,46 +11,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper function to shorten URLs using Twilio's link shortening
-async function shortenUrl(longUrl: string): Promise<string> {
-  if (!TWILIO_MESSAGING_SERVICE_SID) {
-    console.log('Twilio Messaging Service SID not configured, skipping link shortening');
-    return longUrl;
-  }
-
-  try {
-    const authHeader = `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`;
-    const shortenUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages/Services/${TWILIO_MESSAGING_SERVICE_SID}/ShortUrls.json`;
-
-    console.log('Shortening URL:', longUrl);
-
-    const response = await fetch(shortenUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": authHeader,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        Url: longUrl,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Twilio link shortening error:', errorData);
-      // Fall back to original URL if shortening fails
-      return longUrl;
-    }
-
-    const data = await response.json();
-    console.log('URL shortened successfully:', data.short_url);
-    return data.short_url;
-  } catch (error) {
-    console.error('Error shortening URL:', error);
-    // Fall back to original URL if shortening fails
-    return longUrl;
-  }
-}
+// NOTE: Twilio automatically shortens links when using a Messaging Service
+// with link shortening enabled. No manual API call needed!
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -78,26 +40,8 @@ serve(async (req) => {
       from: TWILIO_PHONE_NUMBER,
       messageLength: message.length,
       talentId,
-      hasMessagingServiceSid: !!TWILIO_MESSAGING_SERVICE_SID
+      usingMessagingService: !!TWILIO_MESSAGING_SERVICE_SID
     });
-
-    // Extract and shorten URLs in the message
-    let processedMessage = message;
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const urls = message.match(urlRegex);
-
-    if (urls && urls.length > 0) {
-      console.log(`Found ${urls.length} URL(s) to shorten`);
-      
-      // Shorten each URL
-      for (const url of urls) {
-        const shortUrl = await shortenUrl(url);
-        processedMessage = processedMessage.replace(url, shortUrl);
-      }
-
-      console.log('Original message length:', message.length);
-      console.log('Processed message length:', processedMessage.length);
-    }
 
     // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
@@ -105,7 +49,7 @@ serve(async (req) => {
 
     const body = new URLSearchParams({
       To: formattedTo,
-      Body: processedMessage,
+      Body: message,
     });
 
     // Use Messaging Service if available, otherwise use From number
@@ -138,8 +82,6 @@ serve(async (req) => {
         success: true,
         messageSid: twilioData.sid,
         status: twilioData.status,
-        originalLength: message.length,
-        shortenedLength: processedMessage.length,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
