@@ -359,6 +359,11 @@ const TalentManagement: React.FC = () => {
           }
         }
         
+        console.log('🔄 ATTEMPTING USER UPDATE:', {
+          user_id: editingTalent.user_id,
+          updateData: userUpdateData
+        });
+
         const { error: userError } = await supabase
           .from('users')
           .update(userUpdateData)
@@ -368,11 +373,26 @@ const TalentManagement: React.FC = () => {
           console.error('❌ FAILED: User update error:', userError);
           toast.error(`Failed to update user: ${userError.message}`);
           return; // Stop if user update fails
-        } else {
-          console.log('✅ SUCCESS: User table updated');
-          if (userUpdateData.phone) {
-            console.log('📱 Phone saved:', userUpdateData.phone);
-            toast.success(`Phone saved as ${userUpdateData.phone} - Talent will appear in Comms Center!`);
+        }
+        
+        // VERIFY the phone was actually saved
+        const { data: verifyUser, error: verifyError } = await supabase
+          .from('users')
+          .select('phone, full_name')
+          .eq('id', editingTalent.user_id)
+          .single();
+          
+        console.log('✅ USER UPDATE COMPLETE - VERIFICATION:', {
+          saved_phone: verifyUser?.phone,
+          expected_phone: userUpdateData.phone,
+          match: verifyUser?.phone === userUpdateData.phone
+        });
+        
+        if (userUpdateData.phone) {
+          if (verifyUser?.phone === userUpdateData.phone) {
+            toast.success(`✅ Phone saved as ${userUpdateData.phone} - Talent will appear in Comms Center!`);
+          } else {
+            toast.error(`⚠️ Phone update FAILED - Database shows: ${verifyUser?.phone || 'NULL'}`);
           }
         }
       }
