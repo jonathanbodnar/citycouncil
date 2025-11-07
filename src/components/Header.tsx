@@ -176,10 +176,10 @@ const Header: React.FC = () => {
                 {user.user_type === 'talent' && (
                   <Link
                     to="/dashboard?tab=promotion"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-blue-600 text-white font-medium hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <span className="text-lg">🎁</span>
-                    <span className="hidden sm:inline">Bonus</span>
+                    <span>Bonus</span>
                   </Link>
                 )}
 
