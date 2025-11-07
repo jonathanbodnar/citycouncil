@@ -21,6 +21,7 @@ const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'));
 const TalentOnboardingPage = lazy(() => import('./pages/TalentOnboardingPage'));
 const PublicTalentOnboardingPage = lazy(() => import('./pages/PublicTalentOnboardingPage'));
+const OrderFulfillmentPage = lazy(() => import('./pages/OrderFulfillmentPage'));
 const OrderPage = lazy(() => import('./pages/OrderPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
@@ -56,6 +57,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
+            <Route path="/fulfill/:token" element={<OrderFulfillmentPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/seed" element={<SeedDataPage />} />
             <Route path="/email-test" element={<EmailTestPage />} />

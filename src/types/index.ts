@@ -111,6 +111,7 @@ export interface Order {
   refund_amount?: number;
   video_url?: string;
   fulfillment_deadline: string;
+  fulfillment_token?: string; // Unique token for direct fulfillment link
   created_at: string;
   updated_at: string;
   payment_transaction_id: string;
