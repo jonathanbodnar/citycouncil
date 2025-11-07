@@ -23,6 +23,12 @@ const LoginPage: React.FC = () => {
 
   // Don't redirect if MFA verification is in progress
   if (user && !showMFAVerification) {
+    // Check if there's a fulfillment token to redirect to
+    const fulfillmentToken = sessionStorage.getItem('fulfillment_redirect_token');
+    if (fulfillmentToken) {
+      sessionStorage.removeItem('fulfillment_redirect_token');
+      return <Navigate to={`/fulfill/${fulfillmentToken}`} replace />;
+    }
     return <Navigate to={returnTo} replace />;
   }
 
