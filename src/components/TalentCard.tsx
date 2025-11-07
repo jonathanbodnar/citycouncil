@@ -14,6 +14,7 @@ interface TalentCardProps {
 }
 
 const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
+  const isComingSoon = talent.is_coming_soon === true;
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
   
   const demandColors = {
@@ -28,10 +29,13 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
     low: 'Available',
   };
 
-  return (
-    <Link
-      to={talent.username ? `/${talent.username}` : `/talent/${talent.id}`}
-      className="glass hover:glass-strong rounded-3xl shadow-modern hover:shadow-modern-lg transition-all duration-300 overflow-hidden group hover:scale-[1.02]"
+  const cardContent = (
+    <div 
+      className={`glass rounded-3xl shadow-modern transition-all duration-300 overflow-hidden group ${
+        isComingSoon 
+          ? 'opacity-90 cursor-default' 
+          : 'hover:glass-strong hover:shadow-modern-lg hover:scale-[1.02] cursor-pointer'
+      }`}
       style={{
         boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
       }}
@@ -52,10 +56,17 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           </div>
         )}
         
-        {/* Demand Indicator */}
-        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium glass-strong ${demandColors[demandLevel]} border border-white/30`}>
-          {demandText[demandLevel]}
-        </div>
+        {/* Coming Soon Badge */}
+        {isComingSoon ? (
+          <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold glass-strong bg-amber-500/30 text-amber-400 border border-amber-400/50 shadow-lg animate-pulse">
+            COMING SOON
+          </div>
+        ) : (
+          /* Demand Indicator */
+          <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium glass-strong ${demandColors[demandLevel]} border border-white/30`}>
+            {demandText[demandLevel]}
+          </div>
+        )}
 
         {/* Charity Indicator */}
         {(talent.charity_percentage && talent.charity_percentage > 0) ? (
@@ -152,6 +163,18 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           ) : null}
         </div>
       </div>
+    </div>
+  );
+
+  // If coming soon, return non-clickable card
+  if (isComingSoon) {
+    return cardContent;
+  }
+
+  // Otherwise, wrap in Link
+  return (
+    <Link to={talent.username ? `/${talent.username}` : `/talent/${talent.id}`}>
+      {cardContent}
     </Link>
   );
 };

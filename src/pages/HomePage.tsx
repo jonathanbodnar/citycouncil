@@ -71,8 +71,7 @@ const HomePage: React.FC = () => {
             avatar_url
           )
         `)
-        .eq('is_active', true)
-        .or('is_coming_soon.is.null,is_coming_soon.eq.false') // Exclude "Coming Soon" talent
+        .or('is_active.eq.true,is_coming_soon.eq.true') // Show active OR coming soon
         .order('total_orders', { ascending: false });
 
       if (error) {

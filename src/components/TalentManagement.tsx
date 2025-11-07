@@ -1269,6 +1269,7 @@ const TalentManagement: React.FC = () => {
                   })()}
                   onChange={(e) => {
                     const cleaned = e.target.value.replace(/\D/g, '');
+                    console.log('📱 Phone input changed:', { raw: e.target.value, cleaned, length: cleaned.length });
                     if (cleaned.length <= 10) {
                       let formatted = cleaned;
                       if (cleaned.length > 6) {
@@ -1278,6 +1279,7 @@ const TalentManagement: React.FC = () => {
                       } else if (cleaned.length > 0) {
                         formatted = `(${cleaned}`;
                       }
+                      console.log('📱 Setting temp_phone to:', formatted);
                       setEditingTalent({...editingTalent, temp_phone: formatted});
                     }
                   }}
