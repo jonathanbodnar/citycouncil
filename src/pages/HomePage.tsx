@@ -72,6 +72,7 @@ const HomePage: React.FC = () => {
           )
         `)
         .eq('is_active', true)
+        .or('is_coming_soon.is.null,is_coming_soon.eq.false') // Exclude "Coming Soon" talent
         .order('total_orders', { ascending: false });
 
       if (error) {

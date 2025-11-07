@@ -35,6 +35,7 @@ interface Message {
 
 const CommsCenterManagement: React.FC = () => {
   const [talents, setTalents] = useState<TalentWithPhone[]>([]);
+  const [filteredTalents, setFilteredTalents] = useState<TalentWithPhone[]>([]);
   const [selectedTalent, setSelectedTalent] = useState<TalentWithPhone | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -42,6 +43,7 @@ const CommsCenterManagement: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [showMassMessage, setShowMassMessage] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'live' | 'coming_soon' | 'other'>('all');
 
   useEffect(() => {
     fetchTalentsWithPhone();
@@ -71,6 +73,8 @@ const CommsCenterManagement: React.FC = () => {
           username,
           temp_avatar_url,
           user_id,
+          is_active,
+          is_coming_soon,
           users!inner (
             phone,
             full_name,
@@ -96,6 +100,7 @@ const CommsCenterManagement: React.FC = () => {
       // TypeScript doesn't correctly infer one-to-one foreign key relations
       const typedData = (data || []) as unknown as TalentWithPhone[];
       setTalents(typedData);
+      setFilteredTalents(typedData); // Initially show all
       
       if (typedData.length === 0) {
         console.warn('⚠️  No talents with phone numbers found. Make sure:');
@@ -110,6 +115,22 @@ const CommsCenterManagement: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Filter talents based on status
+  useEffect(() => {
+    if (statusFilter === 'all') {
+      setFilteredTalents(talents);
+    } else if (statusFilter === 'live') {
+      // Live talent: is_active = true AND is_coming_soon = false (or null)
+      setFilteredTalents(talents.filter(t => (t as any).is_active === true && !(t as any).is_coming_soon));
+    } else if (statusFilter === 'coming_soon') {
+      // Coming Soon: is_coming_soon = true
+      setFilteredTalents(talents.filter(t => (t as any).is_coming_soon === true));
+    } else if (statusFilter === 'other') {
+      // Other: has phone but not live and not coming soon
+      setFilteredTalents(talents.filter(t => (t as any).is_active === false && !(t as any).is_coming_soon));
+    }
+  }, [statusFilter, talents]);
 
   const fetchMessages = async (talentId: string) => {
     try {
@@ -179,7 +200,7 @@ const CommsCenterManagement: React.FC = () => {
     let failCount = 0;
 
     try {
-      for (const talent of talents) {
+      for (const talent of filteredTalents) {
         try {
           // Call Twilio Edge Function
           const { error } = await supabase.functions.invoke('send-sms', {
@@ -232,32 +253,79 @@ const CommsCenterManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Communications Center</h2>
-          <p className="text-gray-600">Send SMS messages to talent</p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Communications Center</h2>
+            <p className="text-gray-600">Send SMS messages to talent</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                toast.loading('Refreshing talent list...');
+                fetchTalentsWithPhone().then(() => {
+                  toast.dismiss();
+                  toast.success('Talent list refreshed!');
+                });
+              }}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              title="Refresh talent list"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+              Refresh
+            </button>
+            <button
+              onClick={() => setShowMassMessage(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={filteredTalents.length === 0}
+            >
+              <UserGroupIcon className="h-5 w-5" />
+              Mass Text ({filteredTalents.length})
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-2 border-b border-gray-200">
           <button
-            onClick={() => {
-              toast.loading('Refreshing talent list...');
-              fetchTalentsWithPhone().then(() => {
-                toast.dismiss();
-                toast.success('Talent list refreshed!');
-              });
-            }}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Refresh talent list"
+            onClick={() => setStatusFilter('all')}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+              statusFilter === 'all'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
           >
-            <ArrowPathIcon className="h-5 w-5" />
-            Refresh
+            All ({talents.length})
           </button>
           <button
-            onClick={() => setShowMassMessage(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => setStatusFilter('live')}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+              statusFilter === 'live'
+                ? 'border-green-600 text-green-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
           >
-            <UserGroupIcon className="h-5 w-5" />
-            Mass Text ({talents.length})
+            Live on /home ({talents.filter(t => (t as any).is_active === true && !(t as any).is_coming_soon).length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('coming_soon')}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+              statusFilter === 'coming_soon'
+                ? 'border-amber-600 text-amber-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Coming Soon ({talents.filter(t => (t as any).is_coming_soon === true).length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('other')}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+              statusFilter === 'other'
+                ? 'border-gray-600 text-gray-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Other ({talents.filter(t => (t as any).is_active === false && !(t as any).is_coming_soon).length})
           </button>
         </div>
       </div>
@@ -276,7 +344,8 @@ const CommsCenterManagement: React.FC = () => {
               </button>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              This will send a text message to all {talents.length} talent(s) with phone numbers on file.
+              This will send a text message to {filteredTalents.length} talent(s) 
+              {statusFilter !== 'all' && <span className="font-medium"> ({statusFilter === 'live' ? 'Live on /home' : statusFilter === 'coming_soon' ? 'Coming Soon' : 'Other'})</span>}.
             </p>
             <textarea
               value={massMessageText}
@@ -301,7 +370,7 @@ const CommsCenterManagement: React.FC = () => {
                 disabled={!massMessageText.trim() || sending}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {sending ? 'Sending...' : `Send to ${talents.length}`}
+                {sending ? 'Sending...' : `Send to ${filteredTalents.length}`}
               </button>
             </div>
           </div>
@@ -312,9 +381,9 @@ const CommsCenterManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Talent List */}
         <div className="md:col-span-1 glass rounded-2xl shadow-modern border border-gray-200 p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Talent ({talents.length})</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Talent ({filteredTalents.length})</h3>
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
-            {talents.map((talent) => (
+            {filteredTalents.map((talent) => (
               <button
                 key={talent.id}
                 onClick={() => setSelectedTalent(talent)}

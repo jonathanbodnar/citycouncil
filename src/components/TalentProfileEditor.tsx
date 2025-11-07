@@ -37,6 +37,7 @@ interface ProfileFormData {
   charity_name: string;
   is_featured: boolean;
   is_active: boolean;
+  is_coming_soon: boolean;
   admin_fee_percentage: number;
 }
 
@@ -64,6 +65,7 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
       charity_name: talent.charity_name || '',
       is_featured: talent.is_featured,
       is_active: talent.is_active,
+      is_coming_soon: talent.is_coming_soon || false,
       admin_fee_percentage: talent.admin_fee_percentage || 25, // Default to 25% to match platform settings
     }
   });
@@ -116,6 +118,7 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
           charity_name: data.charity_name,
           is_featured: data.is_featured,
           is_active: data.is_active,
+          is_coming_soon: data.is_coming_soon,
           admin_fee_percentage: data.admin_fee_percentage,
         })
         .eq('id', talent.id);
@@ -361,6 +364,17 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
                 />
                 <label className="ml-2 block text-sm text-gray-900">
                   Active Profile
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  {...register('is_coming_soon')}
+                  className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">
+                  Coming Soon
+                  <span className="ml-1 text-xs text-gray-500">(Not visible on /home)</span>
                 </label>
               </div>
             </div>
