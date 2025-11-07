@@ -356,10 +356,16 @@ const TalentManagement: React.FC = () => {
             // If they entered 11 digits starting with 1, strip the leading 1
             userUpdateData.phone = cleaned.substring(1);
             console.log('Phone formatted (stripped +1):', cleaned.substring(1));
+          } else if (cleaned.length === 0) {
+            // Empty phone - remove from update (or set to null to clear)
+            console.log('Phone is empty - skipping update');
           } else {
             console.warn('Phone invalid length:', cleaned.length, 'digits');
             toast.error(`Phone must be 10 digits. Got ${cleaned.length} digits.`);
+            return; // Don't proceed with save if phone is invalid
           }
+        } else {
+          console.log('⚠️ No temp_phone set - phone will not be updated');
         }
         
         const { error: userError } = await supabase
