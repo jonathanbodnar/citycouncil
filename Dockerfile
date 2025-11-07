@@ -3,8 +3,9 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and npm config
 COPY package*.json ./
+COPY .npmrc ./
 
 # Install dependencies
 RUN npm ci --only=production=false
@@ -45,8 +46,9 @@ FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Copy package files for production dependencies
+# Copy package files and npm config for production dependencies
 COPY package*.json ./
+COPY .npmrc ./
 
 # Install production dependencies (including express and prerender-node)
 RUN npm ci --only=production
