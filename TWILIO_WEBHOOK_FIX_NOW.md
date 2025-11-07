@@ -25,10 +25,10 @@ It should be the FULL URL below ⬇️
 ### **Step 1: Copy This EXACT URL**
 
 ```
-https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms
+https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
 ```
 
-**CRITICAL:** Make sure the field width is wide enough to see the whole URL!
+**CRITICAL:** The `?apikey=` parameter is REQUIRED for Supabase Edge Functions!
 
 ---
 
@@ -43,9 +43,9 @@ https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms
 
 4. **CLEAR** the existing URL
 
-5. **PASTE** the new URL:
+5. **PASTE** the new URL (including the apikey parameter):
    ```
-   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms
+   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
    ```
 
 6. Ensure **"HTTP Post"** is selected in the dropdown (it already is ✅)
@@ -97,7 +97,7 @@ https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms
 
 After saving, verify these:
 
-- [ ] URL is complete: `https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms`
+- [ ] URL is complete with apikey: `https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJh...Jk4`
 - [ ] Method is: `HTTP Post`
 - [ ] "Send a webhook" radio button is selected
 - [ ] Click "Save" button
@@ -126,15 +126,15 @@ After saving, verify these:
    - Go back to Integration tab
    - Click in the Request URL field
    - Press `Ctrl+A` (select all) or `Cmd+A` on Mac
-   - Verify the ENTIRE URL is selected and matches:
+   - Verify the ENTIRE URL is selected and matches (including apikey):
      ```
-     https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms
+     https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
      ```
 
 3. **Test Webhook Manually:**
    - Use this cURL command to test the endpoint:
    ```bash
-   curl -X POST "https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms" \
+   curl -X POST "https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4" \
      -H "Content-Type: application/x-www-form-urlencoded" \
      -d "From=%2B16145551234&Body=Test&MessageSid=SM123"
    ```
@@ -154,7 +154,7 @@ After saving, verify these:
 
 1. ✅ Talent sends SMS to your Twilio number: `+12175898027`
 2. ✅ Twilio receives the message
-3. ✅ Twilio calls your webhook: `https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms`
+3. ✅ Twilio calls your webhook: `https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=...`
 4. ✅ Edge function processes the message:
    - Extracts phone number from `From` field
    - Cleans phone: `+16145551234` → `6145551234`
@@ -172,7 +172,7 @@ After saving, verify these:
 |---------|-------|
 | **Messaging Service ID** | `MG0ed8e40e1201e534f5e15acd26b1681b` |
 | **Phone Number** | `+12175898027` |
-| **Webhook URL** | `https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms` |
+| **Webhook URL** | `https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJh...E-Jk4` |
 | **HTTP Method** | `POST` |
 | **Location** | Messaging Service → Integration → Incoming Messages |
 
