@@ -33,6 +33,7 @@
     "prerender-node": "^3.8.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.64.0",
     "react-hot-toast": "^2.6.0",
     "react-plaid-link": "^4.1.1",
