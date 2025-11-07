@@ -220,7 +220,7 @@ Some Twilio configurations allow you to add query parameters separately:
 Try encoding the URL with the apikey:
 
 ```
-https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY
 ```
 
 Make sure the entire URL is on ONE LINE with no spaces or line breaks.

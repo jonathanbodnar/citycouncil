@@ -18,7 +18,7 @@
 4. Copy and paste it into a text editor
 5. Verify it's EXACTLY:
    ```
-   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY
    ```
 
 **Common Issues:**
@@ -98,7 +98,7 @@ Let's verify the Edge Function itself works:
 1. Open a new browser tab
 2. Paste this URL:
    ```
-   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY
    ```
 3. Press Enter
 4. **Expected:** You might see an error page (GET not supported), but this proves the URL is reachable
@@ -108,7 +108,7 @@ Let's verify the Edge Function itself works:
 Open Terminal/Command Prompt and run:
 
 ```bash
-curl -X POST "https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4" \
+curl -X POST "https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "From=%2B16145551234&Body=Test+message&MessageSid=SM123456"
 ```
@@ -163,7 +163,7 @@ If Messaging Service webhook isn't working, try setting it on the phone number:
 4. Under **"A MESSAGE COMES IN"**:
    - **Webhook URL:**
      ```
-     https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+     https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY
      ```
    - **HTTP Method:** POST
 5. Click **"Save configuration"**

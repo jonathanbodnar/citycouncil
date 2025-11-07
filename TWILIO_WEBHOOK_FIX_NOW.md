@@ -25,7 +25,7 @@ It should be the FULL URL below ⬇️
 ### **Step 1: Copy This EXACT URL**
 
 ```
-https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY
 ```
 
 **CRITICAL:** The `?apikey=` parameter is REQUIRED for Supabase Edge Functions!
@@ -45,7 +45,7 @@ https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGc
 
 5. **PASTE** the new URL (including the apikey parameter):
    ```
-   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+   https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY
    ```
 
 6. Ensure **"HTTP Post"** is selected in the dropdown (it already is ✅)
@@ -128,13 +128,13 @@ After saving, verify these:
    - Press `Ctrl+A` (select all) or `Cmd+A` on Mac
    - Verify the ENTIRE URL is selected and matches (including apikey):
      ```
-     https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4
+     https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY
      ```
 
 3. **Test Webhook Manually:**
    - Use this cURL command to test the endpoint:
    ```bash
-   curl -X POST "https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0YWZldGFtZ3d1a2ticmxlemV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NjgzMDAsImV4cCI6MjA3NTQ0NDMwMH0.6ycEWh2sLck45S8zjzNU0GqHTu_P1hh86YvP43E-Jk4" \
+   curl -X POST "https://utafetamgwukkbrlezev.supabase.co/functions/v1/receive-sms?apikey=YOUR_SUPABASE_ANON_KEY" \
      -H "Content-Type: application/x-www-form-urlencoded" \
      -d "From=%2B16145551234&Body=Test&MessageSid=SM123"
    ```
