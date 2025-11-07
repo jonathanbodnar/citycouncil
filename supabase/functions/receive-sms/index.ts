@@ -16,8 +16,26 @@ serve(async (req) => {
   }
 
   try {
+    console.log('📞 Webhook received from:', req.headers.get('user-agent'));
+    console.log('📋 Content-Type:', req.headers.get('content-type'));
+    
     // Parse Twilio's form data
-    const formData = await req.formData();
+    const contentType = req.headers.get('content-type') || '';
+    let formData: FormData;
+    
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      formData = await req.formData();
+    } else {
+      // Fallback: try to parse as text and convert to FormData
+      const text = await req.text();
+      console.log('📝 Raw body:', text);
+      formData = new FormData();
+      const params = new URLSearchParams(text);
+      params.forEach((value, key) => {
+        formData.append(key, value);
+      });
+    }
+    
     const from = formData.get('From') as string; // Phone number that sent the message
     const body = formData.get('Body') as string; // Message content
     const messageSid = formData.get('MessageSid') as string; // Twilio message ID
@@ -33,19 +51,36 @@ serve(async (req) => {
     let cleanPhone = from.replace(/\D/g, '');
     
     // If phone starts with 1 and is 11 digits, strip the leading 1
-    // Twilio sends +16145551234, we store 6145551234
+    // Twilio sends +16145551234, we need to try multiple formats
     if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
       cleanPhone = cleanPhone.substring(1);
     }
     
     console.log('Phone lookup:', { from, cleanPhone });
     
-    // Find the talent by phone number
-    const { data: user, error: userError } = await supabase
+    // Try multiple phone formats to find the user
+    // Format 1: 10 digits (4692079703)
+    // Format 2: 11 digits with 1 (14692079703)
+    // Format 3: With + prefix (+14692079703)
+    // Format 4: With +1 prefix (+14692079703)
+    
+    const phoneVariations = [
+      cleanPhone,                    // 4692079703
+      `1${cleanPhone}`,              // 14692079703
+      `+${cleanPhone}`,              // +4692079703
+      `+1${cleanPhone}`,             // +14692079703
+      from                           // Original format from Twilio
+    ];
+    
+    console.log('Trying phone variations:', phoneVariations);
+    
+    // Find the talent by phone number (try all variations)
+    const { data: users, error: userError } = await supabase
       .from('users')
-      .select('id, full_name')
-      .eq('phone', cleanPhone)
-      .single();
+      .select('id, full_name, phone')
+      .in('phone', phoneVariations);
+    
+    const user = users && users.length > 0 ? users[0] : null;
     
     console.log('User lookup result:', { user, error: userError });
 
