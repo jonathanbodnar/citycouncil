@@ -58,6 +58,7 @@ const TalentDashboard: React.FC = () => {
   const [userHasPhone, setUserHasPhone] = useState(true);
   const [userPhone, setUserPhone] = useState('');
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
 
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
@@ -69,6 +70,31 @@ const TalentDashboard: React.FC = () => {
       setActiveTab('orders');
     }
   }, [tabParam]); // Watch the actual tab value
+
+  // Handle order parameter from fulfillment link
+  useEffect(() => {
+    const orderParam = searchParams.get('order');
+    if (orderParam && orders.length > 0) {
+      // Set orders tab
+      setActiveTab('orders');
+      // Highlight the order
+      setHighlightedOrderId(orderParam);
+      // Scroll to the order after a short delay
+      setTimeout(() => {
+        const orderElement = document.getElementById(`order-${orderParam}`);
+        if (orderElement) {
+          orderElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Flash animation
+          orderElement.classList.add('animate-pulse');
+          setTimeout(() => {
+            orderElement.classList.remove('animate-pulse');
+            // Remove highlight after 5 seconds
+            setTimeout(() => setHighlightedOrderId(null), 5000);
+          }, 2000);
+        }
+      }, 300);
+    }
+  }, [searchParams, orders]);
 
   useEffect(() => {
     if (user) {
@@ -467,7 +493,15 @@ const TalentDashboard: React.FC = () => {
               <h3 className="text-lg font-semibold text-white mb-4">Pending Orders</h3>
               <div className="space-y-4">
                 {pendingOrders.map((order) => (
-                  <div key={order.id} className="glass glow-blue rounded-2xl p-6 border border-white/30 hover:glass-strong transition-all duration-300">
+                  <div 
+                    key={order.id} 
+                    id={`order-${order.id}`}
+                    className={`glass glow-blue rounded-2xl p-6 border transition-all duration-300 ${
+                      highlightedOrderId === order.id 
+                        ? 'border-yellow-400 border-2 shadow-lg shadow-yellow-400/50' 
+                        : 'border-white/30 hover:glass-strong'
+                    }`}
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
@@ -589,7 +623,15 @@ const TalentDashboard: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">In Progress</h3>
               <div className="space-y-4">
                 {inProgressOrders.map((order) => (
-                  <div key={order.id} className="glass glow-blue rounded-2xl p-6 border border-white/30 hover:glass-strong transition-all duration-300">
+                  <div 
+                    key={order.id} 
+                    id={`order-${order.id}`}
+                    className={`glass glow-blue rounded-2xl p-6 border transition-all duration-300 ${
+                      highlightedOrderId === order.id 
+                        ? 'border-yellow-400 border-2 shadow-lg shadow-yellow-400/50' 
+                        : 'border-white/30 hover:glass-strong'
+                    }`}
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
@@ -645,7 +687,15 @@ const TalentDashboard: React.FC = () => {
                 {completedOrders.map((order) => {
                   const orderReview = reviews.find(r => r.order_id === order.id);
                   return (
-                    <div key={order.id} className="glass border border-white/30 rounded-2xl p-6 hover:glass-strong transition-all duration-300">
+                    <div 
+                      key={order.id} 
+                      id={`order-${order.id}`}
+                      className={`glass rounded-2xl p-6 border transition-all duration-300 ${
+                        highlightedOrderId === order.id 
+                          ? 'border-yellow-400 border-2 shadow-lg shadow-yellow-400/50' 
+                          : 'border-white/30 hover:glass-strong'
+                      }`}
+                    >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
