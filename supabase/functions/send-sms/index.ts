@@ -54,14 +54,21 @@ serve(async (req) => {
 
     // Use Messaging Service if available (don't include From when using MessagingServiceSid)
     // Otherwise use From number directly
-    if (TWILIO_MESSAGING_SERVICE_SID) {
+    const hasMessagingServiceSid = !!TWILIO_MESSAGING_SERVICE_SID;
+    console.log('Messaging Service SID available:', hasMessagingServiceSid);
+    
+    if (hasMessagingServiceSid) {
       body.append('MessagingServiceSid', TWILIO_MESSAGING_SERVICE_SID);
       body.append('ShortenUrls', 'true'); // Explicitly enable link shortening
-      console.log('Using Messaging Service with link shortening enabled');
+      console.log('✓ Using MessagingServiceSid:', TWILIO_MESSAGING_SERVICE_SID.substring(0, 8) + '...');
+      console.log('✓ ShortenUrls parameter set to: true');
     } else {
       body.append('From', TWILIO_PHONE_NUMBER);
-      console.log('Using direct From number (no link shortening)');
+      console.log('✗ Using direct From number (no link shortening available)');
     }
+    
+    // Log the full request body for debugging
+    console.log('Twilio API request body:', Array.from(body.entries()));
 
     const twilioResponse = await fetch(twilioUrl, {
       method: "POST",
