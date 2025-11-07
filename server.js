@@ -21,7 +21,9 @@ app.use(helmet({
         "https://js.fortis.tech",
         "https://*.fortis.tech",
         "https://cdn.plaid.com",
-        "https://*.plaid.com"
+        "https://*.plaid.com",
+        "https://www.googletagmanager.com",
+        "https://www.google-analytics.com"
       ],
       styleSrc: [
         "'self'", 
