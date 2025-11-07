@@ -133,7 +133,8 @@ const TalentManagement: React.FC = () => {
           users (
             full_name,
             avatar_url,
-            email
+            email,
+            phone
           )
         `)
         .order('created_at', { ascending: false });
