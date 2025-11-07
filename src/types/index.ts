@@ -57,6 +57,7 @@ export interface TalentProfile {
   average_rating: number;
   is_active: boolean;
   is_coming_soon?: boolean; // Marks talent as "Coming Soon" - not visible on /home yet
+  display_order?: number | null; // Controls order on /home (lower = higher on page, NULL = sort by created_at DESC)
 }
 
 export type TalentCategory = 

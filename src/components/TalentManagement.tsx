@@ -484,6 +484,28 @@ const TalentManagement: React.FC = () => {
     }
   };
 
+  const setDisplayOrder = async (talentId: string, newOrder: number | null) => {
+    try {
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({ display_order: newOrder })
+        .eq('id', talentId);
+
+      if (error) throw error;
+
+      if (newOrder === null) {
+        toast.success('Display order removed - talent will sort by newest first');
+      } else {
+        toast.success(`Display order set to position ${newOrder}`);
+      }
+      fetchTalents();
+
+    } catch (error) {
+      console.error('Error setting display order:', error);
+      toast.error('Failed to update display order');
+    }
+  };
+
   const setFeaturedOrder = async (talentId: string, newOrder: number) => {
     try {
       // Get current featured talents
@@ -1098,6 +1120,24 @@ const TalentManagement: React.FC = () => {
                     >
                       <span className="text-lg">{talent.is_coming_soon ? '⏳' : '⚪'}</span>
                     </button>
+                    
+                    {/* Display Order Control */}
+                    <select
+                      value={talent.display_order === null || talent.display_order === undefined ? '' : talent.display_order}
+                      onChange={(e) => {
+                        const order = e.target.value === '' ? null : parseInt(e.target.value);
+                        setDisplayOrder(talent.id, order);
+                      }}
+                      className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      title="Display order on /home page (lower = higher on page, blank = newest first)"
+                    >
+                      <option value="">Auto (newest)</option>
+                      {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>
+                          Position {num}
+                        </option>
+                      ))}
+                    </select>
                     
                     {talent.is_participating_in_promotion && (
                       <div className="p-2 bg-purple-50 rounded-lg" title="Participating in promotion program">

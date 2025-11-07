@@ -48,7 +48,6 @@ const PublicTalentOnboardingPage: React.FC = () => {
     category: '' as TalentCategory,
     categories: [] as TalentCategory[],
     bio: '',
-    position: '',
     pricing: 50,
     fulfillmentTime: 72,
     avatarUrl: '',
@@ -491,7 +490,6 @@ const PublicTalentOnboardingPage: React.FC = () => {
           category: profileData.categories[0], // Primary category
           categories: profileData.categories, // All categories
           bio: profileData.bio,
-          position: profileData.position,
           pricing: profileData.pricing,
           fulfillment_time_hours: profileData.fulfillmentTime,
           temp_avatar_url: profileData.avatarUrl,
@@ -964,18 +962,6 @@ const PublicTalentOnboardingPage: React.FC = () => {
                 </div>
 
                 {/* Position/Title */}
-                <div>
-                  <label className="block text-xs font-medium text-white mb-1">
-                    Position/Title (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.position}
-                    onChange={(e) => setProfileData({ ...profileData, position: e.target.value })}
-                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Congressman, Judge, Senator"
-                  />
-                </div>
 
                 {/* Bio - Compact */}
                 <div>

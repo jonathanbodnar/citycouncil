@@ -78,15 +78,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
 
       {/* Content */}
       <div className="p-6">
-        {/* Position Title - Reserve space even if empty */}
-        <div className="h-5 mb-2">
-          {talent.position && (
-            <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">
-              {talent.position}
-            </p>
-          )}
-        </div>
-        
         <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-200 flex items-center gap-2">
           <span>{talent.temp_full_name || talent.users.full_name}</span>
           {talent.is_verified && (

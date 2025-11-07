@@ -72,7 +72,8 @@ const HomePage: React.FC = () => {
           )
         `)
         .or('is_active.eq.true,is_coming_soon.eq.true') // Show active OR coming soon
-        .order('total_orders', { ascending: false });
+        .order('display_order', { ascending: true, nullsFirst: false }) // Manual order first (lower = higher)
+        .order('created_at', { ascending: false }); // Then newest first for NULL display_order
 
       if (error) {
         console.error('Supabase error fetching talent:', error);

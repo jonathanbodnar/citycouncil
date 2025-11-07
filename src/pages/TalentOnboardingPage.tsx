@@ -51,7 +51,6 @@ const TalentOnboardingPage: React.FC = () => {
   // Step 2: Profile Details
   const [profileData, setProfileData] = useState({
     bio: '',
-    position: '',
     category: 'other' as TalentCategory,
     categories: [] as TalentCategory[],
     pricing: 299.99,
@@ -235,7 +234,6 @@ const TalentOnboardingPage: React.FC = () => {
       // Pre-fill profile data (use actual saved values, not fallbacks)
       setProfileData({
         bio: data.bio || '',
-        position: data.position || '',
         category: data.category || 'other',
         categories: data.categories || [],
         pricing: data.pricing ?? 299.99, // Use nullish coalescing to preserve 0 values
@@ -507,7 +505,6 @@ const TalentOnboardingPage: React.FC = () => {
         if (updates.charity_name !== undefined) dbUpdate.charity_name = updates.charity_name;
         if (updates.categories) dbUpdate.categories = updates.categories;
         if (updates.category) dbUpdate.category = updates.category;
-        if (updates.position !== undefined) dbUpdate.position = updates.position;
         
         console.log('Database update payload:', dbUpdate);
         console.log('Talent ID for update:', onboardingData.talent.id);
@@ -609,10 +606,7 @@ const TalentOnboardingPage: React.FC = () => {
         temp_avatar_url: onboardingData?.talent.temp_avatar_url // Save uploaded image
       };
 
-      // Add position field if it's provided (after migration)
-      if (profileData.position !== undefined) {
-        updateData.position = profileData.position || null;
-      }
+      // Position field removed - no longer needed
 
       // Update talent profile
       const { error: talentError } = await supabase
@@ -1128,21 +1122,6 @@ const TalentOnboardingPage: React.FC = () => {
                   maxSizeMB={5}
                 />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Position <span className="text-gray-500">(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.position}
-                    onChange={(e) => updateProfilePreview({ position: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., Congressman, Judge, Senator, Pastor"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Title that appears above your name on your profile
-                  </p>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
