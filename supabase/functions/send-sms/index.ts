@@ -52,11 +52,14 @@ serve(async (req) => {
       Body: message,
     });
 
-    // Use Messaging Service if available, otherwise use From number
+    // Use Messaging Service if available (don't include From when using MessagingServiceSid)
+    // Otherwise use From number directly
     if (TWILIO_MESSAGING_SERVICE_SID) {
       body.append('MessagingServiceSid', TWILIO_MESSAGING_SERVICE_SID);
+      console.log('Using Messaging Service for automatic link shortening');
     } else {
       body.append('From', TWILIO_PHONE_NUMBER);
+      console.log('Using direct From number (no link shortening)');
     }
 
     const twilioResponse = await fetch(twilioUrl, {
