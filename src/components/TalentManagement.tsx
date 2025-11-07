@@ -1243,7 +1243,24 @@ const TalentManagement: React.FC = () => {
                 </label>
                 <input
                   type="tel"
-                  value={editingTalent.temp_phone || editingTalent.users?.phone?.replace(/(\+1)?(\d{3})(\d{3})(\d{4})/, '($2) $3-$4') || ''}
+                  value={(() => {
+                    // Try temp_phone first
+                    if (editingTalent.temp_phone) {
+                      return editingTalent.temp_phone;
+                    }
+                    
+                    // Fallback to formatting users.phone
+                    const phone = editingTalent.users?.phone;
+                    if (phone) {
+                      const cleaned = phone.replace(/\D/g, '');
+                      if (cleaned.length === 10) {
+                        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                      }
+                      return phone; // Return as-is if format is unexpected
+                    }
+                    
+                    return ''; // No phone available
+                  })()}
                   onChange={(e) => {
                     const cleaned = e.target.value.replace(/\D/g, '');
                     if (cleaned.length <= 10) {
