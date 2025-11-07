@@ -342,8 +342,22 @@ const TalentManagement: React.FC = () => {
         // Add phone if it exists (format to E.164: +1XXXXXXXXXX)
         if (editingTalent.temp_phone) {
           const cleaned = editingTalent.temp_phone.replace(/\D/g, '');
+          console.log('Phone cleaning:', { 
+            raw: editingTalent.temp_phone, 
+            cleaned, 
+            length: cleaned.length 
+          });
+          
           if (cleaned.length === 10) {
-            userUpdateData.phone = `+1${cleaned}`;
+            userUpdateData.phone = cleaned; // Store as 10 digits (no +1)
+            console.log('Phone formatted for database:', cleaned);
+          } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
+            // If they entered 11 digits starting with 1, strip the leading 1
+            userUpdateData.phone = cleaned.substring(1);
+            console.log('Phone formatted (stripped +1):', cleaned.substring(1));
+          } else {
+            console.warn('Phone invalid length:', cleaned.length, 'digits');
+            toast.error(`Phone must be 10 digits. Got ${cleaned.length} digits.`);
           }
         }
         
@@ -354,8 +368,13 @@ const TalentManagement: React.FC = () => {
 
         if (userError) {
           console.error('FAILED: User table sync:', userError);
+          toast.error(`Failed to update user profile: ${userError.message}`);
         } else {
           console.log('SUCCESS: User table synced to temp fields');
+          if (userUpdateData.phone) {
+            console.log('✅ Phone number saved to database:', userUpdateData.phone);
+            toast.success('Phone number updated! Talent will now appear in Comms Center.');
+          }
         }
       }
 
@@ -1075,7 +1094,25 @@ const TalentManagement: React.FC = () => {
                     
                     <button
                       onClick={() => {
-                        setEditingTalent(talent);
+                        // Initialize temp_phone from users.phone if it exists
+                        const phoneFromDB = talent.users?.phone;
+                        let formattedPhone = '';
+                        if (phoneFromDB) {
+                          const cleaned = phoneFromDB.replace(/\D/g, '');
+                          // Format as (XXX) XXX-XXXX
+                          if (cleaned.length === 10) {
+                            formattedPhone = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                          } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
+                            // Strip leading 1
+                            const digits = cleaned.substring(1);
+                            formattedPhone = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+                          }
+                        }
+                        
+                        setEditingTalent({
+                          ...talent,
+                          temp_phone: formattedPhone // Initialize from database
+                        });
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
                       }}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
