@@ -23,7 +23,9 @@ app.use(helmet({
         "https://cdn.plaid.com",
         "https://*.plaid.com",
         "https://www.googletagmanager.com",
-        "https://www.google-analytics.com"
+        "https://www.google-analytics.com",
+        "https://dashboard.searchatlas.com",
+        "https://*.searchatlas.com"
       ],
       styleSrc: [
         "'self'", 
@@ -68,7 +70,9 @@ app.use(helmet({
         "https://sandbox.plaid.com",
         "https://www.google-analytics.com",
         "https://analytics.google.com",
-        "https://www.googletagmanager.com"
+        "https://www.googletagmanager.com",
+        "https://dashboard.searchatlas.com",
+        "https://*.searchatlas.com"
       ],
       frameSrc: [
         "'self'", 
