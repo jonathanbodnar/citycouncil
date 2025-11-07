@@ -4,7 +4,8 @@ import {
   UserGroupIcon, 
   ChatBubbleLeftRightIcon,
   XMarkIcon,
-  CheckCircleIcon 
+  CheckCircleIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
@@ -57,6 +58,10 @@ const CommsCenterManagement: React.FC = () => {
 
   const fetchTalentsWithPhone = async () => {
     try {
+      setLoading(true);
+      
+      console.log('🔍 Fetching talents with phone numbers...');
+      
       const { data, error } = await supabase
         .from('talent_profiles')
         .select(`
@@ -73,14 +78,31 @@ const CommsCenterManagement: React.FC = () => {
           )
         `)
         .not('users.phone', 'is', null)
+        .neq('users.phone', '')  // Also exclude empty strings
         .order('temp_full_name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Query error:', error);
+        throw error;
+      }
+      
+      console.log(`✅ Found ${data?.length || 0} talents with phone numbers`);
+      console.log('📱 Talent phone numbers:', data?.map(t => ({
+        name: (t as any).temp_full_name,
+        phone: (t as any).users?.phone
+      })));
       
       // Type assertion to fix PostgREST foreign key type inference
       // TypeScript doesn't correctly infer one-to-one foreign key relations
       const typedData = (data || []) as unknown as TalentWithPhone[];
       setTalents(typedData);
+      
+      if (typedData.length === 0) {
+        console.warn('⚠️  No talents with phone numbers found. Make sure:');
+        console.warn('   1. Phone numbers are saved to users.phone column');
+        console.warn('   2. Phone is not null or empty string');
+        console.warn('   3. Foreign key relationship users!inner is working');
+      }
     } catch (error) {
       console.error('Error fetching talents:', error);
       toast.error('Failed to load talents');
@@ -215,13 +237,29 @@ const CommsCenterManagement: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Communications Center</h2>
           <p className="text-gray-600">Send SMS messages to talent</p>
         </div>
-        <button
-          onClick={() => setShowMassMessage(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <UserGroupIcon className="h-5 w-5" />
-          Mass Text ({talents.length})
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              toast.loading('Refreshing talent list...');
+              fetchTalentsWithPhone().then(() => {
+                toast.dismiss();
+                toast.success('Talent list refreshed!');
+              });
+            }}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Refresh talent list"
+          >
+            <ArrowPathIcon className="h-5 w-5" />
+            Refresh
+          </button>
+          <button
+            onClick={() => setShowMassMessage(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <UserGroupIcon className="h-5 w-5" />
+            Mass Text ({talents.length})
+          </button>
+        </div>
       </div>
 
       {/* Mass Message Modal */}
