@@ -23,24 +23,56 @@ const LoginPage: React.FC = () => {
 
   // Handle redirect after successful login
   React.useEffect(() => {
-    if (user && !showMFAVerification) {
-      // Check if there's a fulfillment token to redirect to
-      const fulfillmentToken = sessionStorage.getItem('fulfillment_redirect_token');
-      console.log('LoginPage: User logged in, checking fulfillment token:', fulfillmentToken);
-      console.log('LoginPage: User type:', user.user_type);
-      
-      if (fulfillmentToken) {
-        console.log('LoginPage: Found fulfillment token, redirecting to /fulfill/', fulfillmentToken);
-        sessionStorage.removeItem('fulfillment_redirect_token');
-        navigate(`/fulfill/${fulfillmentToken}`, { replace: true });
-      } else if (user.user_type === 'talent') {
-        console.log('LoginPage: Talent user, redirecting to dashboard');
-        navigate('/dashboard', { replace: true });
-      } else {
-        console.log('LoginPage: Regular user, redirecting to:', returnTo);
-        navigate(returnTo, { replace: true });
+    const handleRedirect = async () => {
+      if (user && !showMFAVerification) {
+        console.log('LoginPage: User object:', user);
+        console.log('LoginPage: User ID:', user.id);
+        console.log('LoginPage: User type from context:', user.user_type);
+        
+        // Check if there's a fulfillment token to redirect to
+        const fulfillmentToken = sessionStorage.getItem('fulfillment_redirect_token');
+        console.log('LoginPage: Fulfillment token:', fulfillmentToken);
+        
+        if (fulfillmentToken) {
+          console.log('LoginPage: Found fulfillment token, redirecting to /fulfill/', fulfillmentToken);
+          sessionStorage.removeItem('fulfillment_redirect_token');
+          navigate(`/fulfill/${fulfillmentToken}`, { replace: true });
+          return;
+        }
+        
+        // Double-check user type from database
+        try {
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('user_type')
+            .eq('id', user.id)
+            .single();
+          
+          console.log('LoginPage: Database user type:', userData?.user_type);
+          
+          if (!error && userData?.user_type === 'talent') {
+            console.log('LoginPage: Talent user confirmed, redirecting to dashboard');
+            navigate('/dashboard', { replace: true });
+          } else if (user.user_type === 'talent') {
+            console.log('LoginPage: Talent user from context, redirecting to dashboard');
+            navigate('/dashboard', { replace: true });
+          } else {
+            console.log('LoginPage: Regular user, redirecting to:', returnTo);
+            navigate(returnTo, { replace: true });
+          }
+        } catch (err) {
+          console.error('LoginPage: Error checking user type:', err);
+          // Fallback to context user_type
+          if (user.user_type === 'talent') {
+            navigate('/dashboard', { replace: true });
+          } else {
+            navigate(returnTo, { replace: true });
+          }
+        }
       }
-    }
+    };
+    
+    handleRedirect();
   }, [user, showMFAVerification, navigate, returnTo]);
 
   // Don't render the form if user is already logged in
