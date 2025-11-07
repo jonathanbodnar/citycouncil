@@ -15,7 +15,8 @@ app.use(helmet({
         "'self'", 
         // Note: 'unsafe-eval' is required for React/Vite in production
         // 'unsafe-inline' removed for better security - use nonces for inline scripts
-        "'unsafe-eval'", 
+        "'unsafe-eval'",
+        "data:", // Allow data: URIs for base64 encoded scripts (SearchAtlas Otto)
         "https://connect.facebook.net",
         "https://static.cloudflareinsights.com",
         "https://js.fortis.tech",
