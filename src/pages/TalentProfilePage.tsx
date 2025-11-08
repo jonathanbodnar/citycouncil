@@ -50,7 +50,7 @@ export default function TalentProfilePage() {
           is_active,
           promo_video_url,
           social_accounts,
-          users!inner (
+          users!talent_profiles_user_id_fkey (
             full_name,
             avatar_url
           )
