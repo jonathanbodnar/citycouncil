@@ -34,6 +34,8 @@ export default function TalentProfilePage() {
 
   const fetchTalent = async () => {
     try {
+      console.log('🔍 Fetching talent by slug:', slug);
+      
       const { data, error } = await supabase
         .from('talent_profiles')
         .select(`
@@ -47,44 +49,58 @@ export default function TalentProfilePage() {
           average_rating,
           is_active,
           promo_video_url,
-          users!talent_profiles_user_id_fkey (
+          social_accounts,
+          users!inner (
             full_name,
             avatar_url
-          ),
-          social_accounts
+          )
         `)
         .eq('slug', slug)
         .eq('is_active', true)
         .single();
 
-      if (error) throw error;
+      console.log('📦 Supabase response:', { data, error });
+
+      if (error) {
+        console.error('❌ Supabase error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.error('❌ No data returned');
+        return;
+      }
       
       // Type assertion for joined data
       const userData = Array.isArray(data.users) ? data.users[0] : data.users;
       const socialAccounts = data.social_accounts as { instagram?: string; twitter?: string } | null;
+      
+      console.log('👤 User data:', userData);
       
       // Transform data to match interface
       const transformedData: TalentProfile = {
         id: data.id,
         slug: data.slug,
         full_name: userData?.full_name || '',
-        bio: data.bio,
+        bio: data.bio || '',
         category: data.category,
         pricing: data.pricing,
         profile_image_url: userData?.avatar_url || '',
-        featured_video_url: data.promo_video_url,
-        keywords: data.keywords,
-        total_orders: data.total_orders,
-        rating: data.average_rating,
+        featured_video_url: data.promo_video_url || undefined,
+        keywords: data.keywords || [],
+        total_orders: data.total_orders || 0,
+        rating: data.average_rating || 0,
         is_active: data.is_active,
         instagram_handle: socialAccounts?.instagram,
         twitter_handle: socialAccounts?.twitter,
         response_time: '24 hours' // Default
       };
       
+      console.log('✅ Transformed talent data:', transformedData);
       setTalent(transformedData);
-    } catch (error) {
-      console.error('Error fetching talent:', error);
+    } catch (error: any) {
+      console.error('❌ Error fetching talent:', error);
+      console.error('Error details:', error.message, error.details, error.hint);
     } finally {
       setLoading(false);
     }
