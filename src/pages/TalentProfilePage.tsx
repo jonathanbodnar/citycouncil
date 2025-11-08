@@ -59,22 +59,26 @@ export default function TalentProfilePage() {
 
       if (error) throw error;
       
+      // Type assertion for joined data
+      const userData = Array.isArray(data.users) ? data.users[0] : data.users;
+      const socialAccounts = data.social_accounts as { instagram?: string; twitter?: string } | null;
+      
       // Transform data to match interface
-      const transformedData = {
+      const transformedData: TalentProfile = {
         id: data.id,
         slug: data.slug,
-        full_name: data.users?.full_name || '',
+        full_name: userData?.full_name || '',
         bio: data.bio,
         category: data.category,
         pricing: data.pricing,
-        profile_image_url: data.users?.avatar_url || '',
+        profile_image_url: userData?.avatar_url || '',
         featured_video_url: data.promo_video_url,
         keywords: data.keywords,
         total_orders: data.total_orders,
         rating: data.average_rating,
         is_active: data.is_active,
-        instagram_handle: data.social_accounts?.instagram,
-        twitter_handle: data.social_accounts?.twitter,
+        instagram_handle: socialAccounts?.instagram,
+        twitter_handle: socialAccounts?.twitter,
         response_time: '24 hours' // Default
       };
       
