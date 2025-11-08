@@ -23,7 +23,8 @@ interface TalentProfile {
 }
 
 export default function TalentProfilePage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug?: string; username?: string; id?: string }>();
+  const slug = params.slug || params.username || params.id;
   const navigate = useNavigate();
   const [talent, setTalent] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
