@@ -148,9 +148,9 @@ const WelcomePage: React.FC = () => {
             Welcome, {firstName}! 👋
           </h1>
           <div 
-            className="inline-flex items-center gap-2 px-4 py-2 glass-strong rounded-full border border-white/30 shadow-modern"
+            className="inline-flex items-center gap-2 px-4 py-2 glass-strong rounded-full border border-white/30"
             style={{
-              boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
+              boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1), 0 4px 20px rgba(0, 0, 0, 0.08)'
             }}
           >
             <ClockIcon className="h-5 w-5 text-blue-400" />
@@ -301,7 +301,7 @@ const WelcomePage: React.FC = () => {
             <div className="space-y-4">
               <h3 className="font-semibold text-white text-lg">Quick Start Tips:</h3>
               
-              <div className="space-y-3 text-base text-gray-300">
+              <div className="space-y-4 text-base text-gray-300">
                 <div>
                   <strong className="text-white">1. Fulfilling orders:</strong> we will text you from{' '}
                   <button
