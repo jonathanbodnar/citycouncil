@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Fonts */
+@font-face {
+  font-family: 'TT Ramillas';
+  src: url('/fonts/TT-Ramillas-Bold.woff2') format('woff2'),
+       url('/fonts/TT-Ramillas-Bold.woff') format('woff'),
+       url('/fonts/TT-Ramillas-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Dark Glass Morphism Design System - macOS Inspired */
 
 /* Custom animations */
