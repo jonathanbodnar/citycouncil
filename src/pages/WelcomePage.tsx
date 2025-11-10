@@ -220,11 +220,12 @@ const WelcomePage: React.FC = () => {
                     (217) 589-8027
                   </a>{' '}
                   with a link when you get an order, follow the link to fulfill the order.
-                  <br />
-                  <span className="text-sm text-gray-400 italic">
-                    (tip: you can respond to texts we send through that number for help or just to say hi! 
-                    We will use this number to text you about platform updates, so please save it!)
-                  </span>
+                  <div className="mt-2 p-3 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+                    <span className="text-sm text-blue-200">
+                      💡 <strong>Tip:</strong> You can respond to texts we send through that number for help or just to say hi! 
+                      We will use this number to text you about platform updates, so please save it!
+                    </span>
+                  </div>
                 </div>
 
                 <div>
@@ -281,17 +282,12 @@ const WelcomePage: React.FC = () => {
                 className="w-full glass rounded-xl p-4 border border-white/20 hover:border-green-400 transition-all hover:scale-[1.02] text-white font-medium flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
                 disabled
               >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                Download your promo graphic
-                <span className="text-xs text-gray-400">(coming soon)</span>
-              </button>
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  Download your promo graphic
+                  <span className="text-xs text-gray-400">(coming soon)</span>
+                </button>
+              </div>
             </div>
-
-            <p className="text-xs text-gray-400 mt-4">
-              Your "media center" - link to media center tab will have custom branded media promoting 
-              your profile ready for download and posting!
-            </p>
-          </div>
 
           {/* Bonus & Promo Package */}
           <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
@@ -322,11 +318,11 @@ const WelcomePage: React.FC = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="text-3xl">📢</div>
+                <div className="text-3xl">🚀</div>
                 <div>
-                  <h3 className="font-semibold text-white mb-1">Promotional Support</h3>
+                  <h3 className="font-semibold text-white mb-1">Free Ad Spend Credit</h3>
                   <p className="text-gray-300 text-sm">
-                    Custom branded media, social promotion, and marketing materials to help you succeed.
+                    Get advertising credit added to your account to promote your ShoutOut profile and boost your bookings!
                   </p>
                 </div>
               </div>
