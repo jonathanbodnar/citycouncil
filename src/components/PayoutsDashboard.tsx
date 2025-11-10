@@ -30,12 +30,31 @@ const PayoutsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [moovAccountId, setMoovAccountId] = useState<string | null>(null)
   const [isLinkingBank, setIsLinkingBank] = useState(false)
+  const [payoutsEnabled, setPayoutsEnabled] = useState(false)
 
   useEffect(() => {
     if (user?.user_type === 'talent') {
       fetchPayoutData()
+      fetchPayoutsEnabledSetting()
     }
   }, [user])
+
+  const fetchPayoutsEnabledSetting = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'payouts_enabled')
+        .single()
+
+      if (error) throw error
+      setPayoutsEnabled(data?.setting_value === 'true')
+    } catch (error) {
+      console.error('Error fetching payouts enabled setting:', error)
+      // Default to false if setting doesn't exist
+      setPayoutsEnabled(false)
+    }
+  }
 
   const fetchPayoutData = async () => {
     try {
@@ -308,7 +327,9 @@ const PayoutsDashboard: React.FC = () => {
         <h2 className='text-xl md:text-2xl font-bold text-gray-900'>Payouts</h2>
         <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center'>
           <div className='hidden sm:block'>
-            <MoovOnboard />
+            <div className={!payoutsEnabled ? 'opacity-50 pointer-events-none' : ''}>
+              <MoovOnboard />
+            </div>
           </div>
 
           <button
@@ -320,14 +341,31 @@ const PayoutsDashboard: React.FC = () => {
           </button>
           <button
             onClick={linkBankViaPlaid}
-            disabled={isLinkingBank}
-            className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base disabled:opacity-50'
+            disabled={isLinkingBank || !payoutsEnabled}
+            className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed'
           >
             <PlusIcon className='h-4 w-4' />
             <span className='whitespace-nowrap'>{isLinkingBank ? 'Opening Plaid…' : 'Link Bank'}</span>
           </button>
         </div>
       </div>
+
+      {/* Payouts Disabled Notice */}
+      {!payoutsEnabled && (
+        <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
+          <div className='flex items-start gap-3'>
+            <ClockIcon className='h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5' />
+            <div>
+              <h3 className='text-sm font-semibold text-yellow-900 mb-1'>
+                Payouts Coming Soon
+              </h3>
+              <p className='text-sm text-yellow-800'>
+                Payouts will be enabled before soft launch - all videos completed prior to launch will be paid out as soon as payouts are enabled.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6'>
@@ -412,8 +450,12 @@ const PayoutsDashboard: React.FC = () => {
             </div>
             <button
               onClick={linkBankViaPlaid}
-              disabled={isLinkingBank}
-              className='mt-4 text-sm text-blue-600 hover:text-blue-700 underline'
+              disabled={isLinkingBank || !payoutsEnabled}
+              className={`mt-4 text-sm underline ${
+                isLinkingBank || !payoutsEnabled
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-blue-600 hover:text-blue-700'
+              }`}
             >
               {isLinkingBank ? 'Opening…' : 'Add Another Bank Account'}
             </button>
@@ -424,8 +466,8 @@ const PayoutsDashboard: React.FC = () => {
             <p className='text-gray-600 mb-4'>No bank information on file</p>
             <button
               onClick={linkBankViaPlaid}
-              disabled={isLinkingBank}
-              className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
+              disabled={isLinkingBank || !payoutsEnabled}
+              className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >
               {isLinkingBank ? 'Opening Plaid…' : 'Link Bank via Plaid'}
             </button>

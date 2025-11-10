@@ -31,6 +31,7 @@ const WelcomePage: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [talentFullName, setTalentFullName] = useState('');
   const [generatingGraphic, setGeneratingGraphic] = useState(false);
+  const [payoutsEnabled, setPayoutsEnabled] = useState(false);
 
   // Soft launch date: November 24th, 2025
   const softLaunchDate = new Date('2025-11-24T00:00:00');
@@ -48,6 +49,7 @@ const WelcomePage: React.FC = () => {
     if (user && user.user_type === 'talent') {
       fetchPendingOrders();
       fetchTalentProfile();
+      fetchPayoutsEnabledSetting();
     } else if (user) {
       // Redirect non-talent users to their appropriate dashboard
       navigate('/home');
@@ -76,6 +78,23 @@ const WelcomePage: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  const fetchPayoutsEnabledSetting = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'payouts_enabled')
+        .single();
+
+      if (error) throw error;
+      setPayoutsEnabled(data?.setting_value === 'true');
+    } catch (error) {
+      console.error('Error fetching payouts enabled setting:', error);
+      // Default to false if setting doesn't exist
+      setPayoutsEnabled(false);
+    }
+  };
 
   const fetchPendingOrders = async () => {
     try {
@@ -422,13 +441,21 @@ const WelcomePage: React.FC = () => {
 
                 <div>
                   <strong className="text-white">3. Setup Payouts:</strong>{' '}
-                  <Link 
-                    to="/dashboard?tab=payouts" 
-                    className="text-blue-400 hover:text-blue-300 underline font-medium"
-                  >
-                    Click here
-                  </Link>{' '}
-                  to securely setup your payouts and receive payments for your orders.
+                  {payoutsEnabled ? (
+                    <>
+                      <Link 
+                        to="/dashboard?tab=payouts" 
+                        className="text-blue-400 hover:text-blue-300 underline font-medium"
+                      >
+                        Click here
+                      </Link>{' '}
+                      to securely setup your payouts and receive payments for your orders.
+                    </>
+                  ) : (
+                    <span className="text-gray-300">
+                      we will enable payouts shortly. Once all security checks are complete.
+                    </span>
+                  )}
                 </div>
 
                 <div>
