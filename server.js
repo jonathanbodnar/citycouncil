@@ -56,7 +56,9 @@ app.use(helmet({
         "'self'", 
         "https://*.railway.app", // Railway deployment domains
         "https://*.supabase.co", 
+        "https://utafetamgwukkbrlezev.supabase.co", // Specific Supabase project
         "wss://*.supabase.co",
+        "wss://utafetamgwukkbrlezev.supabase.co",
         "https://api.fortis.tech",
         "https://*.fortis.tech",
         "https://*.wasabisys.com",
