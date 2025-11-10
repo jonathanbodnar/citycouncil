@@ -153,7 +153,7 @@ const WelcomePage: React.FC = () => {
         {/* Main Grid - Responsive */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Pending Orders */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 lg:row-span-2">
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
             <div className="flex items-center gap-3 mb-4">
               <ClipboardDocumentIcon className="h-6 w-6 text-blue-400" />
               <h2 className="text-2xl font-bold text-white">Pending Orders</h2>
@@ -297,22 +297,45 @@ const WelcomePage: React.FC = () => {
           <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
             <div className="flex items-center gap-3 mb-4">
               <GiftIcon className="h-6 w-6 text-yellow-400" />
-              <h2 className="text-2xl font-bold text-white">Bonus</h2>
+              <h2 className="text-2xl font-bold text-white">Bonus & Promo Package</h2>
             </div>
 
-            <div className="text-center py-8">
-              <div className="text-6xl mb-4">🎁</div>
-              <h3 className="text-xl font-bold text-white mb-2">
-                Bonus & Promo Package Details Outlined
-              </h3>
-              <p className="text-gray-300 text-sm mb-4">
-                Learn about your exclusive launch bonuses and promotional opportunities
-              </p>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">🎉</div>
+                <div>
+                  <h3 className="font-semibold text-white mb-1">Zero Fees on First 10 Orders</h3>
+                  <p className="text-gray-300 text-sm">
+                    We've waived ShoutOut's 25% fee on your first 10 orders to help you get started!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">💰</div>
+                <div>
+                  <h3 className="font-semibold text-white mb-1">$250 Launch Bonus</h3>
+                  <p className="text-gray-300 text-sm">
+                    Complete your first 10 orders within 30 days of launch and receive a $250 bonus!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">📢</div>
+                <div>
+                  <h3 className="font-semibold text-white mb-1">Promotional Support</h3>
+                  <p className="text-gray-300 text-sm">
+                    Custom branded media, social promotion, and marketing materials to help you succeed.
+                  </p>
+                </div>
+              </div>
+
               <Link
                 to="/dashboard?tab=promotion"
-                className="inline-block px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-xl hover:scale-105 transition-transform"
+                className="block w-full text-center px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-xl hover:scale-105 transition-transform mt-4"
               >
-                View Details
+                View Full Details
               </Link>
             </div>
           </div>
