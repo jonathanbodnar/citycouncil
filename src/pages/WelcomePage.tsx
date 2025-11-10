@@ -342,6 +342,23 @@ const WelcomePage: React.FC = () => {
                     <span className="text-xs text-gray-400">(add profile photo first)</span>
                   )}
                 </button>
+
+                {/* Instagram Collab Badge */}
+                <div className="mt-3 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-400/30">
+                  <p className="text-xs text-gray-300 mb-2 text-center">
+                    Collab your posts with @shoutoutvoice on Instagram!
+                  </p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText('@shoutoutvoice');
+                      toast.success('Instagram username copied!');
+                    }}
+                    className="w-full glass rounded-lg px-3 py-2 border border-white/20 hover:border-purple-400 transition-all text-white font-medium text-sm hover:scale-[1.02] flex items-center justify-center gap-2"
+                  >
+                    <span className="text-purple-300">@shoutoutvoice</span>
+                    <ClipboardDocumentIcon className="h-4 w-4 text-purple-300" />
+                  </button>
+                </div>
                 </div>
           </div>
 
