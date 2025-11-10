@@ -246,9 +246,9 @@ async function drawProfileUrlText(
   ctx.shadowOffsetY = 2;
   
   // Position text in bottom left, next to icon
-  // Fixed position at 1270px from top (much lower)
+  // Fixed position at 1241px from top (1270 - 29)
   const textX = 180; // Leave space for ShoutOut icon (80px icon + 20px gap)
-  const textY = 1270; // Fixed position at 1270px from top (80px from bottom)
+  const textY = 1241; // Fixed position at 1241px from top
   
   ctx.fillText(profileUrl, textX, textY);
   
