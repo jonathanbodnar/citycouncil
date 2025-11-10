@@ -251,7 +251,7 @@ const WelcomePage: React.FC = () => {
             Welcome, {firstName}! 👋
           </h1>
           <div 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/30"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-strong border border-white/30"
             style={{
               boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
             }}
