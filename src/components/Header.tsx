@@ -41,7 +41,14 @@ const Header: React.FC = () => {
           if (error) throw error;
           
           // Use talent profile name if available, otherwise fall back to user.full_name
-          setDisplayName(data?.full_name || user.full_name);
+          const finalName = data?.full_name || user.full_name;
+          setDisplayName(finalName);
+          
+          console.log('📝 Header - Name sources:');
+          console.log('  - talent_profiles.full_name:', data?.full_name);
+          console.log('  - users.full_name (fallback):', user.full_name);
+          console.log('  - Final display name:', finalName);
+          console.log('  - First name shown:', finalName?.split(' ')[0]);
         } catch (error) {
           console.error('Error fetching talent profile name:', error);
           setDisplayName(user.full_name);

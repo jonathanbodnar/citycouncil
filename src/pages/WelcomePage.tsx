@@ -150,13 +150,16 @@ const WelcomePage: React.FC = () => {
         const userFullName = userData?.full_name; // users.full_name
         
         // Priority: talent_profiles.full_name > users.full_name > user?.full_name
-        setTalentFullName(talentProfileName || userFullName || user?.full_name || '');
+        const finalName = talentProfileName || userFullName || user?.full_name || '';
+        setTalentFullName(finalName);
         setAvatarUrl(userData?.avatar_url || user?.avatar_url || '');
         
-        console.log('📝 Name sources:');
+        console.log('📝 WelcomePage - Name sources:');
         console.log('  - talent_profiles.full_name:', talentProfileName);
         console.log('  - users.full_name:', userFullName);
-        console.log('  - Final name used:', talentProfileName || userFullName || user?.full_name);
+        console.log('  - user?.full_name:', user?.full_name);
+        console.log('  - Final name set to state:', finalName);
+        console.log('  - First name will be:', finalName?.split(' ')[0]);
       }
     } catch (error) {
       console.error('Error fetching talent profile:', error);
