@@ -1,4 +1,5 @@
 # Build stage
+# Updated CSP configuration for Railway deployment - 2024-11-10
 FROM node:18-alpine AS build
 
 WORKDIR /app
