@@ -148,7 +148,7 @@ const WelcomePage: React.FC = () => {
             Welcome, {firstName}! 👋
           </h1>
           <div 
-            className="inline-flex items-center gap-2 px-4 py-2 glass-strong rounded-full border border-white/30"
+            className="inline-flex items-center gap-2 px-4 py-2 glass-strong rounded-full border border-white/30 shadow-modern"
             style={{
               boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
             }}
@@ -163,7 +163,7 @@ const WelcomePage: React.FC = () => {
         {/* Main Grid - Desktop: 3 boxes left, 1 tall box right | Mobile: Single column stacked */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Pending Orders */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-1 lg:order-1 lg:col-span-1">
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-1 lg:col-span-1">
               <div className="flex items-center gap-3 mb-4">
                 <ClipboardDocumentIcon className="h-6 w-6 text-blue-400" />
                 <h2 className="text-2xl font-bold text-white">Pending Orders</h2>
@@ -205,7 +205,7 @@ const WelcomePage: React.FC = () => {
           </div>
 
           {/* Media Center */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-3 lg:order-2 lg:col-span-1">
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-3 lg:col-span-1">
               <div className="flex items-center gap-3 mb-4">
                 <ArrowDownTrayIcon className="h-6 w-6 text-green-400" />
                 <h2 className="text-2xl font-bold text-white">Media Center</h2>
@@ -236,7 +236,7 @@ const WelcomePage: React.FC = () => {
           </div>
 
           {/* Bonus & Promo Package */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-4 lg:order-3 lg:col-span-1">
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-4 lg:col-span-1">
               <div className="flex items-center gap-3 mb-4">
                 <GiftIcon className="h-6 w-6 text-yellow-400" />
                 <h2 className="text-2xl font-bold text-white">Bonus & Promo Package</h2>
@@ -283,7 +283,7 @@ const WelcomePage: React.FC = () => {
           </div>
 
           {/* Right Column - Welcome Video & Quick Start Tips (spans 2 columns on desktop) */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-2 lg:order-4 lg:col-span-2 lg:row-span-3">
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 order-2 lg:col-span-2 lg:row-span-3">
             <div className="flex items-center gap-3 mb-4">
               <VideoCameraIcon className="h-6 w-6 text-purple-400" />
               <h2 className="text-2xl font-bold text-white">Welcome Video</h2>
