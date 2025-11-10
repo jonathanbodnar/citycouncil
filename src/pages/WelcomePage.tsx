@@ -280,7 +280,6 @@ const WelcomePage: React.FC = () => {
                   View Full Details
                 </Link>
               </div>
-            </div>
           </div>
 
           {/* Right Column - Welcome Video & Quick Start Tips (spans 2 columns on desktop) */}
