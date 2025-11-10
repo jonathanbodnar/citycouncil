@@ -145,11 +145,8 @@ const WelcomePage: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-2 glass-strong rounded-full border border-white/30">
             <ClockIcon className="h-5 w-5 text-blue-400" />
             <span className="text-white font-medium">
-              Soft Launch Countdown - Nov 24th 2025
+              Soft Launch Countdown - Nov 24th 2025 · {timeUntilLaunch}
             </span>
-          </div>
-          <div className="mt-2 text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-            {timeUntilLaunch}
           </div>
         </div>
 
