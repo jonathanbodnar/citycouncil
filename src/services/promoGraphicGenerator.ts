@@ -139,6 +139,7 @@ async function loadAndDrawOverlay(
 /**
  * Draw talent name text with TT Ramillas font
  * Text: "Get your personalized ShoutOut video from [talent name]"
+ * LEFT-ALIGNED to match mockup exactly
  */
 async function drawTalentNameText(
   ctx: CanvasRenderingContext2D,
@@ -151,21 +152,22 @@ async function drawTalentNameText(
   
   // Text configuration based on mockup
   const text = `Get your personalized ShoutOut video from ${talentName}`;
-  const fontSize = 52; // Large, bold text
-  const lineHeight = 68;
-  const maxWidth = 900; // Max width for text wrapping
+  const fontSize = 56; // Large, bold text
+  const lineHeight = 72;
+  const leftMargin = 100; // Left margin for text
+  const maxWidth = canvasWidth - (leftMargin * 2); // Max width for text wrapping
   
   // Set font - TT Ramillas (or Playfair Display fallback), white color
   ctx.font = `700 ${fontSize}px "TT Ramillas", "Playfair Display", serif`; // 700 = bold
   ctx.fillStyle = '#ffffff'; // White text
-  ctx.textAlign = 'center';
+  ctx.textAlign = 'left'; // LEFT-ALIGNED
   ctx.textBaseline = 'top';
   
   // Enable text shadow for better readability
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-  ctx.shadowBlur = 8;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 12;
   ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 2;
+  ctx.shadowOffsetY = 3;
   
   // Word wrap
   const words = text.split(' ');
@@ -186,9 +188,9 @@ async function drawTalentNameText(
   }
   lines.push(currentLine);
   
-  // Position text in the bottom purple section (centered)
-  const textY = canvasHeight * 0.72; // Start at ~72% down
-  const textX = canvasWidth / 2;
+  // Position text in the bottom purple section (LEFT-ALIGNED)
+  const textY = canvasHeight * 0.715; // Start at ~71.5% down
+  const textX = leftMargin;
   
   lines.forEach((line, index) => {
     ctx.fillText(line, textX, textY + (index * lineHeight));
@@ -215,20 +217,32 @@ async function drawProfileUrlText(
   await loadFonts();
   
   // Text configuration
-  const fontSize = 28;
+  const fontSize = 32;
   
-  // Set font - Open Sans, light/medium weight, white color
+  // Set font - Open Sans, regular weight, white color
   ctx.font = `400 ${fontSize}px "Open Sans", sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // Slightly transparent white
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; // White with slight transparency
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
   
+  // Add subtle shadow for readability
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
+  
   // Position text in bottom left, next to icon
   // Based on mockup, icon is at ~100px from left, ~100px from bottom
-  const textX = 160; // Leave space for ShoutOut icon
-  const textY = canvasHeight - 80; // 80px from bottom
+  const textX = 180; // Leave space for ShoutOut icon (80px icon + 20px gap)
+  const textY = canvasHeight - 90; // 90px from bottom
   
   ctx.fillText(profileUrl, textX, textY);
+  
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 }
 
 /**

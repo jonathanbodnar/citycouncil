@@ -29,6 +29,7 @@ const WelcomePage: React.FC = () => {
   const [profileUrl, setProfileUrl] = useState('');
   const [promoVideoUrl, setPromoVideoUrl] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [talentFullName, setTalentFullName] = useState('');
   const [generatingGraphic, setGeneratingGraphic] = useState(false);
 
   // Soft launch date: November 24th, 2025
@@ -103,7 +104,14 @@ const WelcomePage: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('talent_profiles')
-        .select('username, promo_video_url')
+        .select(`
+          username, 
+          promo_video_url,
+          users!talent_profiles_user_id_fkey (
+            full_name,
+            avatar_url
+          )
+        `)
         .eq('user_id', user?.id)
         .single();
 
@@ -116,8 +124,10 @@ const WelcomePage: React.FC = () => {
         setProfileUrl(url);
         setPromoVideoUrl(data.promo_video_url || '');
         
-        // Avatar is stored on the users table, not talent_profiles
-        setAvatarUrl(user?.avatar_url || '');
+        // Get full name and avatar from the joined users table
+        const userData = data.users as any;
+        setTalentFullName(userData?.full_name || user?.full_name || '');
+        setAvatarUrl(userData?.avatar_url || user?.avatar_url || '');
       }
     } catch (error) {
       console.error('Error fetching talent profile:', error);
@@ -152,18 +162,25 @@ const WelcomePage: React.FC = () => {
     setGeneratingGraphic(true);
     
     try {
-      // Extract just the profile path (e.g., "ShoutOut.us/username")
-      const profilePath = profileUrl.replace(/^https?:\/\//, '').replace('www.', '');
+      // Clean up the profile URL to just domain/path (e.g., "shoutout.us/username")
+      let cleanUrl = profileUrl.replace(/^https?:\/\//, '').replace('www.', '');
+      // Remove any port numbers for local dev
+      cleanUrl = cleanUrl.replace(/:\d+/, '');
+      // Convert to lowercase for consistency
+      cleanUrl = cleanUrl.toLowerCase();
+      
+      // Use the talent's full name from the profile (e.g., "Jonathan Bodnar")
+      const displayName = talentFullName || user?.full_name || 'You';
       
       // Generate the graphic
       const blob = await generatePromoGraphic({
         avatarUrl,
-        talentName: user?.full_name || 'You',
-        profileUrl: profilePath,
+        talentName: displayName,
+        profileUrl: cleanUrl,
       });
 
       // Download the graphic
-      const filename = `ShoutOut-${user?.full_name?.replace(/\s+/g, '-') || 'promo'}.png`;
+      const filename = `ShoutOut-${displayName.replace(/\s+/g, '-')}.png`;
       downloadPromoGraphic(blob, filename);
 
       toast.success('Promo graphic downloaded!');
