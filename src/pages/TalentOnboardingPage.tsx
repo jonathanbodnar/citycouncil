@@ -104,6 +104,22 @@ const TalentOnboardingPage: React.FC = () => {
     }
   };
 
+  // Update current step in database for admin tracking
+  const updateOnboardingStep = async (step: number) => {
+    if (!onboardingData?.talent_id) return;
+    
+    try {
+      await supabase
+        .from('talent_profiles')
+        .update({ current_onboarding_step: step })
+        .eq('id', onboardingData.talent_id);
+      
+      console.log(`✅ Onboarding step updated to ${step}`);
+    } catch (error) {
+      console.error('Error updating onboarding step:', error);
+    }
+  };
+
   // Save progress to localStorage after each step
   const saveProgress = () => {
     try {
@@ -410,6 +426,7 @@ const TalentOnboardingPage: React.FC = () => {
 
       toast.success('Account created successfully!');
       setCurrentStep(2);
+      updateOnboardingStep(2);
 
     } catch (error: any) {
       console.error('Error creating account:', error);
@@ -640,6 +657,7 @@ const TalentOnboardingPage: React.FC = () => {
 
       toast.success('Profile updated successfully!');
       setCurrentStep(3);
+      updateOnboardingStep(3);
 
     } catch (error: any) {
       console.error('Error updating profile:', error);
@@ -654,6 +672,7 @@ const TalentOnboardingPage: React.FC = () => {
     // Skip payout information - talent can add it later in dashboard
     // Just move to the next step
     setCurrentStep(4);
+    updateOnboardingStep(4);
   };
 
   const handleStep4Submit = async (e: React.FormEvent) => {
@@ -1522,6 +1541,7 @@ const TalentOnboardingPage: React.FC = () => {
                       .from('talent_profiles')
                       .update({
                         onboarding_completed: true,
+                        current_onboarding_step: 5,
                         is_active: true,
                         onboarding_token: null,
                         onboarding_expires_at: null

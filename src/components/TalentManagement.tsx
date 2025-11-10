@@ -1061,7 +1061,16 @@ const TalentManagement: React.FC = () => {
                         {!talent.onboarding_completed ? (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 font-medium">
                             <ClockIcon className="h-3 w-3" />
-                            Onboarding: {talent.onboarding_completed === false ? 'In Progress' : 'Not Started'}
+                            {(() => {
+                              const stepNames = {
+                                1: 'Step 1: Account Setup',
+                                2: 'Step 2: Profile Details',
+                                3: 'Step 3: Payout Info',
+                                4: 'Step 4: Promo Video',
+                                5: 'Completing...'
+                              };
+                              return stepNames[talent.current_onboarding_step as keyof typeof stepNames] || 'Not Started';
+                            })()}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 font-medium">
