@@ -106,13 +106,13 @@ const TalentOnboardingPage: React.FC = () => {
 
   // Update current step in database for admin tracking
   const updateOnboardingStep = async (step: number) => {
-    if (!onboardingData?.talent_id) return;
+    if (!onboardingData?.talent?.id) return;
     
     try {
       await supabase
         .from('talent_profiles')
         .update({ current_onboarding_step: step })
-        .eq('id', onboardingData.talent_id);
+        .eq('id', onboardingData.talent.id);
       
       console.log(`✅ Onboarding step updated to ${step}`);
     } catch (error) {
