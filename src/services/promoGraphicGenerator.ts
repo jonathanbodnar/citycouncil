@@ -189,7 +189,8 @@ async function drawTalentNameText(
   lines.push(currentLine);
   
   // Position text in the bottom purple section (LEFT-ALIGNED)
-  const textY = canvasHeight * 0.715; // Start at ~71.5% down
+  // Space evenly between white box bottom (~70%) and icon area (~90%)
+  const textY = canvasHeight * 0.75; // Moved down to 75% (centered in gradient section)
   const textX = leftMargin;
   
   lines.forEach((line, index) => {
@@ -232,9 +233,9 @@ async function drawProfileUrlText(
   ctx.shadowOffsetY = 2;
   
   // Position text in bottom left, next to icon
-  // Based on mockup, icon is at ~100px from left, ~100px from bottom
+  // Align vertically with the ShoutOut icon
   const textX = 180; // Leave space for ShoutOut icon (80px icon + 20px gap)
-  const textY = canvasHeight - 90; // 90px from bottom
+  const textY = canvasHeight - 100; // Raised to align with icon (100px from bottom)
   
   ctx.fillText(profileUrl, textX, textY);
   
