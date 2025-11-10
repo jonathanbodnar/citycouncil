@@ -5,9 +5,7 @@
 /* Custom Fonts */
 @font-face {
   font-family: 'TT Ramillas';
-  src: url('/fonts/TT-Ramillas-Bold.woff2') format('woff2'),
-       url('/fonts/TT-Ramillas-Bold.woff') format('woff'),
-       url('/fonts/TT-Ramillas-Bold.ttf') format('truetype');
+  src: url('/fonts/TT Ramillas Trial Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
