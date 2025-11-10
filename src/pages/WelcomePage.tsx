@@ -135,7 +135,7 @@ const WelcomePage: React.FC = () => {
   const firstName = user?.full_name?.split(' ')[0] || 'there';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -202,7 +202,7 @@ const WelcomePage: React.FC = () => {
             </div>
             
             {/* Welcome Video Embed - Placeholder for now */}
-            <div className="aspect-video bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-2xl mb-4 flex items-center justify-center border border-white/20">
+            <div className="aspect-video bg-gradient-to-br from-blue-900/50 to-red-900/50 rounded-2xl mb-4 flex items-center justify-center border border-white/20">
               <div className="text-center">
                 <VideoCameraIcon className="h-16 w-16 text-white/50 mx-auto mb-2" />
                 <p className="text-white/70 text-sm">Welcome video coming soon...</p>
