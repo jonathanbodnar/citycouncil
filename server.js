@@ -54,6 +54,7 @@ app.use(helmet({
       ],
       connectSrc: [
         "'self'", 
+        "https://*.railway.app", // Railway deployment domains
         "https://*.supabase.co", 
         "wss://*.supabase.co",
         "https://api.fortis.tech",
@@ -76,7 +77,8 @@ app.use(helmet({
         "https://*.searchatlas.com"
       ],
       frameSrc: [
-        "'self'", 
+        "'self'",
+        "https://*.railway.app", // Railway deployment domains
         "https://www.facebook.com",
         "https://*.facebook.com",
         "https://js.fortis.tech",
@@ -86,6 +88,7 @@ app.use(helmet({
       ],
       formAction: [
         "'self'",
+        "https://*.railway.app", // Railway deployment domains
         "https://js.fortis.tech",
         "https://*.fortis.tech",
         "https://www.facebook.com"
