@@ -170,7 +170,7 @@ async function drawTalentNameText(
   // Text configuration based on mockup
   const text = `Get your personalized ShoutOut video from ${talentName}`;
   const fontSize = 56; // Large, bold text
-  const lineHeight = 72;
+  const lineHeight = 62; // Reduced from 72 to 62 for tighter spacing
   const leftMargin = 100; // Left margin for text
   const maxWidth = canvasWidth - (leftMargin * 2); // Max width for text wrapping
   
@@ -180,11 +180,11 @@ async function drawTalentNameText(
   ctx.textAlign = 'left'; // LEFT-ALIGNED
   ctx.textBaseline = 'top';
   
-  // Enable text shadow for better readability
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 12;
+  // NO SHADOW - removed for cleaner look
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 3;
+  ctx.shadowOffsetY = 0;
   
   // Word wrap
   const words = text.split(' ');
@@ -214,11 +214,7 @@ async function drawTalentNameText(
     ctx.fillText(line, textX, textY + (index * lineHeight));
   });
   
-  // Reset shadow for next drawing operations
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
+  // No shadow to reset (already set to transparent above)
 }
 
 /**
@@ -250,9 +246,9 @@ async function drawProfileUrlText(
   ctx.shadowOffsetY = 2;
   
   // Position text in bottom left, next to icon
-  // Fixed position at 1214px from top
+  // Fixed position at 1270px from top (much lower)
   const textX = 180; // Leave space for ShoutOut icon (80px icon + 20px gap)
-  const textY = 1214; // Fixed position at 1214px from top
+  const textY = 1270; // Fixed position at 1270px from top (80px from bottom)
   
   ctx.fillText(profileUrl, textX, textY);
   
