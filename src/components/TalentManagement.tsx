@@ -25,6 +25,7 @@ interface TalentWithUser extends TalentProfile {
     avatar_url?: string;
     email?: string;
     phone?: string;
+    last_login?: string;
   };
   temp_phone?: string; // For editing phone number
 }
@@ -134,7 +135,8 @@ const TalentManagement: React.FC = () => {
             full_name,
             avatar_url,
             email,
-            phone
+            phone,
+            last_login
           )
         `)
         .order('created_at', { ascending: false });
@@ -1048,6 +1050,44 @@ const TalentManagement: React.FC = () => {
                             <span>•</span>
                             <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
                               0% FEE ({talent.fulfilled_orders}/10 orders)
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Onboarding Status & Last Login */}
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-2 flex-wrap">
+                        {/* Onboarding Step */}
+                        {!talent.onboarding_completed ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 font-medium">
+                            <ClockIcon className="h-3 w-3" />
+                            Onboarding: {talent.onboarding_completed === false ? 'In Progress' : 'Not Started'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 font-medium">
+                            <CheckCircleIcon className="h-3 w-3" />
+                            Setup Complete
+                          </span>
+                        )}
+                        
+                        {/* Last Login */}
+                        {talent.users?.last_login && (
+                          <>
+                            <span>•</span>
+                            <span title={new Date(talent.users.last_login).toLocaleString()}>
+                              Last login: {(() => {
+                                const lastLogin = new Date(talent.users.last_login);
+                                const now = new Date();
+                                const diffMs = now.getTime() - lastLogin.getTime();
+                                const diffMins = Math.floor(diffMs / 60000);
+                                const diffHours = Math.floor(diffMs / 3600000);
+                                const diffDays = Math.floor(diffMs / 86400000);
+                                
+                                if (diffMins < 60) return `${diffMins}m ago`;
+                                if (diffHours < 24) return `${diffHours}h ago`;
+                                if (diffDays < 7) return `${diffDays}d ago`;
+                                return lastLogin.toLocaleDateString();
+                              })()}
                             </span>
                           </>
                         )}

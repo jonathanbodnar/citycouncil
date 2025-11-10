@@ -205,6 +205,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
+      // Update last_login timestamp
+      if (data.user) {
+        await supabase
+          .from('users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', data.user.id);
+      }
+
       // The auth state change listener will handle profile fetching
       return data;
     } catch (error) {
