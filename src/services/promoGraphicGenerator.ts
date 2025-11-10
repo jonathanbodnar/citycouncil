@@ -71,10 +71,12 @@ async function loadAndDrawAvatar(
   canvasHeight: number
 ): Promise<void> {
   return new Promise((resolve, reject) => {
+    console.log('📸 Loading avatar from:', avatarUrl);
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
     img.onload = () => {
+      console.log('✅ Avatar loaded successfully');
       // White space area is approximately 70% of canvas height (top portion)
       const whiteSpaceHeight = canvasHeight * 0.7;
       
@@ -108,7 +110,11 @@ async function loadAndDrawAvatar(
       resolve();
     };
     
-    img.onerror = () => reject(new Error('Failed to load avatar'));
+    img.onerror = (error) => {
+      console.error('❌ Failed to load avatar:', error);
+      console.error('❌ Avatar URL was:', avatarUrl);
+      reject(new Error('Failed to load avatar'));
+    };
     img.src = avatarUrl;
   });
 }

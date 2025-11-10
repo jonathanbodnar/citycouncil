@@ -154,6 +154,13 @@ const WelcomePage: React.FC = () => {
   };
 
   const handleGeneratePromoGraphic = async () => {
+    // Debug logging
+    console.log('🎨 Generating promo graphic...');
+    console.log('Avatar URL:', avatarUrl);
+    console.log('Talent Full Name:', talentFullName);
+    console.log('User Full Name:', user?.full_name);
+    console.log('Profile URL:', profileUrl);
+    
     if (!avatarUrl) {
       toast.error('No profile photo available. Please add a profile photo first.');
       return;
@@ -172,6 +179,10 @@ const WelcomePage: React.FC = () => {
       // Use the talent's full name from the profile (e.g., "Jonathan Bodnar")
       const displayName = talentFullName || user?.full_name || 'You';
       
+      console.log('✅ Using display name:', displayName);
+      console.log('✅ Using clean URL:', cleanUrl);
+      console.log('✅ Using avatar URL:', avatarUrl);
+      
       // Generate the graphic
       const blob = await generatePromoGraphic({
         avatarUrl,
@@ -185,7 +196,7 @@ const WelcomePage: React.FC = () => {
 
       toast.success('Promo graphic downloaded!');
     } catch (error) {
-      console.error('Error generating promo graphic:', error);
+      console.error('❌ Error generating promo graphic:', error);
       toast.error('Failed to generate promo graphic. Please try again.');
     } finally {
       setGeneratingGraphic(false);
