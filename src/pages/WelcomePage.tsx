@@ -150,16 +150,18 @@ const WelcomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Grid - Responsive */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Pending Orders */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <ClipboardDocumentIcon className="h-6 w-6 text-blue-400" />
-              <h2 className="text-2xl font-bold text-white">Pending Orders</h2>
-            </div>
-            
-            <div className="space-y-3 max-h-[500px] overflow-y-auto">
+        {/* Main Grid - Desktop: 3 boxes left, 1 tall box right | Mobile: Single column stacked */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - 3 stacked boxes on desktop */}
+          <div className="space-y-6 lg:col-span-1 order-1 lg:order-1">
+            {/* Pending Orders */}
+            <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <ClipboardDocumentIcon className="h-6 w-6 text-blue-400" />
+                <h2 className="text-2xl font-bold text-white">Pending Orders</h2>
+              </div>
+              
+              <div className="space-y-3 max-h-[300px] overflow-y-auto">
               {loading ? (
                 <div className="text-center py-8 text-gray-400">Loading orders...</div>
               ) : pendingOrders.length > 0 ? (
@@ -192,10 +194,89 @@ const WelcomePage: React.FC = () => {
                 </div>
               )}
             </div>
+            </div>
+
+            {/* Media Center */}
+            <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <ArrowDownTrayIcon className="h-6 w-6 text-green-400" />
+                <h2 className="text-2xl font-bold text-white">Media Center</h2>
+              </div>
+
+              <p className="text-gray-300 text-sm mb-4">
+                Here are some custom branded media promoting your profile ready for download and posting!
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={downloadPromoVideo}
+                  className="w-full glass rounded-xl p-4 border border-white/20 hover:border-green-400 transition-all hover:scale-[1.02] text-white font-medium flex items-center justify-center gap-2"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  Download your promo video
+                </button>
+
+                <button
+                  className="w-full glass rounded-xl p-4 border border-white/20 hover:border-green-400 transition-all hover:scale-[1.02] text-white font-medium flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+                  disabled
+                >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    Download your promo graphic
+                    <span className="text-xs text-gray-400">(coming soon)</span>
+                  </button>
+                </div>
+            </div>
+
+            {/* Bonus & Promo Package */}
+            <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <GiftIcon className="h-6 w-6 text-yellow-400" />
+                <h2 className="text-2xl font-bold text-white">Bonus & Promo Package</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">🎉</div>
+                  <div>
+                    <h3 className="font-semibold text-white mb-1">Zero Fees on First 10 Orders</h3>
+                    <p className="text-gray-300 text-sm">
+                      We've waived ShoutOut's 25% fee on your first 10 orders to help you get started!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">💰</div>
+                  <div>
+                    <h3 className="font-semibold text-white mb-1">$250 Launch Bonus</h3>
+                    <p className="text-gray-300 text-sm">
+                      Complete your first 10 orders within 30 days of launch and receive a $250 bonus!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">🚀</div>
+                  <div>
+                    <h3 className="font-semibold text-white mb-1">Free Ad Spend Credit</h3>
+                    <p className="text-gray-300 text-sm">
+                      Get advertising credit added to your account to promote your ShoutOut profile and boost your bookings!
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  to="/dashboard?tab=promotion"
+                  className="block w-full text-center px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-xl hover:scale-105 transition-transform mt-4"
+                >
+                  View Full Details
+                </Link>
+              </div>
+            </div>
           </div>
 
-          {/* Welcome Video & Quick Start Tips */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
+          {/* Right Column - Welcome Video & Quick Start Tips (spans 2 columns on desktop) */}
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 lg:col-span-2 order-2 lg:order-2">
             <div className="flex items-center gap-3 mb-4">
               <VideoCameraIcon className="h-6 w-6 text-purple-400" />
               <h2 className="text-2xl font-bold text-white">Welcome Video</h2>
@@ -255,84 +336,6 @@ const WelcomePage: React.FC = () => {
                   you'll receive a <strong className="text-green-400">$250 bonus</strong>!
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Media Center */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <ArrowDownTrayIcon className="h-6 w-6 text-green-400" />
-              <h2 className="text-2xl font-bold text-white">Media Center</h2>
-            </div>
-
-            <p className="text-gray-300 text-sm mb-4">
-              Here are some custom branded media promoting your profile ready for download and posting!
-            </p>
-
-            <div className="space-y-3">
-              <button
-                onClick={downloadPromoVideo}
-                className="w-full glass rounded-xl p-4 border border-white/20 hover:border-green-400 transition-all hover:scale-[1.02] text-white font-medium flex items-center justify-center gap-2"
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                Download your promo video
-              </button>
-
-              <button
-                className="w-full glass rounded-xl p-4 border border-white/20 hover:border-green-400 transition-all hover:scale-[1.02] text-white font-medium flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
-                disabled
-              >
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                  Download your promo graphic
-                  <span className="text-xs text-gray-400">(coming soon)</span>
-                </button>
-              </div>
-            </div>
-
-          {/* Bonus & Promo Package */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <GiftIcon className="h-6 w-6 text-yellow-400" />
-              <h2 className="text-2xl font-bold text-white">Bonus & Promo Package</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">🎉</div>
-                <div>
-                  <h3 className="font-semibold text-white mb-1">Zero Fees on First 10 Orders</h3>
-                  <p className="text-gray-300 text-sm">
-                    We've waived ShoutOut's 25% fee on your first 10 orders to help you get started!
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">💰</div>
-                <div>
-                  <h3 className="font-semibold text-white mb-1">$250 Launch Bonus</h3>
-                  <p className="text-gray-300 text-sm">
-                    Complete your first 10 orders within 30 days of launch and receive a $250 bonus!
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">🚀</div>
-                <div>
-                  <h3 className="font-semibold text-white mb-1">Free Ad Spend Credit</h3>
-                  <p className="text-gray-300 text-sm">
-                    Get advertising credit added to your account to promote your ShoutOut profile and boost your bookings!
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                to="/dashboard?tab=promotion"
-                className="block w-full text-center px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-xl hover:scale-105 transition-transform mt-4"
-              >
-                View Full Details
-              </Link>
             </div>
           </div>
         </div>
