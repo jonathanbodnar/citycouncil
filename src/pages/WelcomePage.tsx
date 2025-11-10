@@ -213,18 +213,18 @@ const WelcomePage: React.FC = () => {
             </div>
 
             {/* Quick Start Tips */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h3 className="font-semibold text-white text-lg">Quick Start Tips:</h3>
               
-              <div className="space-y-2 text-sm text-gray-300">
+              <div className="space-y-3 text-base text-gray-300">
                 <div>
                   <strong className="text-white">1. Fulfilling orders:</strong> we will text you from{' '}
-                  <a href="tel:+12175898027" className="text-blue-400 hover:text-blue-300">
+                  <a href="tel:+12175898027" className="text-blue-400 hover:text-blue-300 font-medium">
                     (217) 589-8027
                   </a>{' '}
                   with a link when you get an order, follow the link to fulfill the order.
                   <br />
-                  <span className="text-xs text-gray-400">
+                  <span className="text-sm text-gray-400 italic">
                     (tip: you can respond to texts we send through that number for help or just to say hi! 
                     We will use this number to text you about platform updates, so please save it!)
                   </span>
@@ -234,9 +234,9 @@ const WelcomePage: React.FC = () => {
                   <strong className="text-white">2. Share your link:</strong>{' '}
                   <button
                     onClick={copyProfileUrl}
-                    className="text-blue-400 hover:text-blue-300 underline"
+                    className="text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer"
                   >
-                    [click-to-copy profile url]
+                    {profileUrl || 'Loading...'}
                   </button>
                 </div>
 
@@ -244,9 +244,9 @@ const WelcomePage: React.FC = () => {
                   <strong className="text-white">3. Setup Payouts:</strong>{' '}
                   <Link 
                     to="/dashboard?tab=payouts" 
-                    className="text-blue-400 hover:text-blue-300 underline"
+                    className="text-blue-400 hover:text-blue-300 underline font-medium"
                   >
-                    ["click here" - link to payouts]
+                    Click here
                   </Link>{' '}
                   to securely setup your payouts and receive payments for your orders.
                 </div>
