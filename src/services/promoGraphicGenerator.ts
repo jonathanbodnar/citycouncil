@@ -39,8 +39,9 @@ export async function generatePromoGraphic(options: PromoGraphicOptions): Promis
   // Load and draw the avatar (fitted to white space, using featured card alignment)
   await loadAndDrawAvatar(ctx, avatarUrl, width, height);
 
-  // Load and draw the overlay (BackgroundNew.png frame)
-  await loadAndDrawOverlay(ctx, '/BackgroundNew.png', width, height);
+  // Load and draw the overlay (BackgroundNew.png frame) with cache-busting
+  const cacheBuster = Date.now();
+  await loadAndDrawOverlay(ctx, `/BackgroundNew.png?v=${cacheBuster}`, width, height);
 
   // Add talent name text (TT Ramillas)
   await drawTalentNameText(ctx, talentName, width, height);
