@@ -17,8 +17,43 @@ const Header: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [displayName, setDisplayName] = useState<string>('');
   const navigate = useNavigate();
   const notificationRef = React.useRef<HTMLDivElement>(null);
+
+  // Fetch display name (prioritize talent_profiles.full_name for talent users)
+  useEffect(() => {
+    const fetchDisplayName = async () => {
+      if (!user) {
+        setDisplayName('');
+        return;
+      }
+
+      // For talent users, fetch from talent_profiles
+      if (user.user_type === 'talent') {
+        try {
+          const { data, error } = await supabase
+            .from('talent_profiles')
+            .select('full_name')
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) throw error;
+          
+          // Use talent profile name if available, otherwise fall back to user.full_name
+          setDisplayName(data?.full_name || user.full_name);
+        } catch (error) {
+          console.error('Error fetching talent profile name:', error);
+          setDisplayName(user.full_name);
+        }
+      } else {
+        // For non-talent users, use user.full_name
+        setDisplayName(user.full_name);
+      }
+    };
+
+    fetchDisplayName();
+  }, [user]);
 
   // Fetch notifications on mount and when user changes
   useEffect(() => {
@@ -269,7 +304,7 @@ const Header: React.FC = () => {
                       <UserCircleIcon className="h-6 w-6 text-white" />
                     </div>
                     <span className="hidden md:block text-sm font-medium text-white">
-                      {user.full_name}
+                      {displayName || user.full_name}
                     </span>
                   </Menu.Button>
 

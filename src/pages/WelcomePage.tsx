@@ -396,9 +396,9 @@ const WelcomePage: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <div className="text-3xl">🚀</div>
                   <div>
-                    <h3 className="font-semibold text-white mb-1">Free Ad Spend Credit</h3>
+                    <h3 className="font-semibold text-white mb-1">We'll spend to market your profile!</h3>
                     <p className="text-gray-300 text-sm">
-                      Get advertising credit added to your account to promote your ShoutOut profile and boost your bookings!
+                      Learn how to unlock $300/mo in free adspend we will use to promote your ShoutOut profile and boost your bookings!
                     </p>
                   </div>
                 </div>
