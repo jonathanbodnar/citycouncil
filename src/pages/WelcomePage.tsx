@@ -224,12 +224,9 @@ const WelcomePage: React.FC = () => {
             Welcome, {firstName}! 👋
           </h1>
           <div 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/30"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/30"
             style={{
-              background: 'rgba(255, 255, 255, 0.15)',
-              backdropFilter: 'blur(25px) saturate(200%)',
-              WebkitBackdropFilter: 'blur(25px) saturate(200%)',
-              boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.4)'
+              boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
             }}
           >
             <ClockIcon className="h-5 w-5 text-blue-400" />
