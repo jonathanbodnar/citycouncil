@@ -187,7 +187,13 @@ const WelcomePage: React.FC = () => {
       cleanUrl = cleanUrl.toLowerCase();
       
       // Use the talent's full name from the profile (e.g., "Jonathan Bodnar")
-      const displayName = talentFullName || user?.full_name || 'You';
+      let displayName = talentFullName || user?.full_name || 'You';
+      
+      // TEMPORARY FIX: Fix "Jonathanbodnar" to "Jonathan Bodnar"
+      if (displayName === 'Jonathanbodnar' || displayName === 'Joanthan') {
+        displayName = 'Jonathan Bodnar';
+        console.log('🔧 Fixed name from', talentFullName || user?.full_name, 'to', displayName);
+      }
       
       console.log('✅ Using display name:', displayName);
       console.log('✅ Using clean URL:', cleanUrl);

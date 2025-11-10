@@ -101,6 +101,11 @@ async function loadAndDrawAvatar(
       }
       
       // Draw avatar in the white space area (full width, top 70%)
+      console.log('🎨 Drawing avatar:');
+      console.log('  - Canvas size:', canvasWidth, 'x', canvasHeight);
+      console.log('  - White space height:', whiteSpaceHeight);
+      console.log('  - Drawing to: 0, 0,', canvasWidth, 'x', whiteSpaceHeight);
+      
       ctx.drawImage(
         img,
         srcX, srcY, srcWidth, srcHeight,  // Source (cropped)
