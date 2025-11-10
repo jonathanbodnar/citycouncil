@@ -36,6 +36,7 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 const EmailTestPage = lazy(() => import('./pages/EmailTestPage'));
 const InstagramCallbackPage = lazy(() => import('./pages/InstagramCallbackPage'));
+const WelcomePage = lazy(() => import('./pages/WelcomePage'));
 
 function App() {
   return (
@@ -75,6 +76,11 @@ function App() {
               <Route path="/order/:talentId" element={
                 <ProtectedRoute>
                   <OrderPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/welcome" element={
+                <ProtectedRoute requiredUserType="talent">
+                  <WelcomePage />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={

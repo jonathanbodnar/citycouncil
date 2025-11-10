@@ -60,9 +60,9 @@ const OrderFulfillmentPage: React.FC = () => {
         return;
       }
 
-      // Redirect to talent dashboard with the order highlighted
+      // Redirect to welcome page (which will then redirect to dashboard with order)
       toast.success('Loading your order...');
-      navigate(`/dashboard?order=${orderData.id}`);
+      navigate(`/welcome?order=${orderData.id}`);
       
     } catch (error) {
       console.error('Error verifying token:', error);
