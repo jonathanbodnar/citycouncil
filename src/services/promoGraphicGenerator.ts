@@ -174,8 +174,8 @@ async function drawTalentNameText(
   const leftMargin = 100; // Left margin for text
   const maxWidth = canvasWidth - (leftMargin * 2); // Max width for text wrapping
   
-  // Set font - TT Ramillas (or Playfair Display fallback), white color, semi-bold
-  ctx.font = `600 ${fontSize}px "TT Ramillas", "Playfair Display", serif`; // 600 = semi-bold (changed from 700)
+  // Set font - TT Ramillas (or Playfair Display fallback), white color, regular weight
+  ctx.font = `400 ${fontSize}px "TT Ramillas", "Playfair Display", serif`; // 400 = regular (not bold)
   ctx.fillStyle = '#ffffff'; // White text
   ctx.textAlign = 'left'; // LEFT-ALIGNED
   ctx.textBaseline = 'top';
@@ -263,9 +263,31 @@ async function drawProfileUrlText(
  * Load TT Ramillas and Open Sans fonts
  */
 async function loadFonts(): Promise<void> {
-  // TT Ramillas and Open Sans should be loaded in the main app CSS
-  // Wait for fonts to be ready
-  await document.fonts.ready;
+  try {
+    // Check if TT Ramillas is already loaded
+    const ttRamillasLoaded = document.fonts.check('56px "TT Ramillas"');
+    
+    if (!ttRamillasLoaded) {
+      console.log('🔤 Loading TT Ramillas font from file...');
+      
+      // Load TT Ramillas from the public/fonts directory
+      const ttRamillasFontFace = new FontFace(
+        'TT Ramillas',
+        `url(${process.env.PUBLIC_URL || ''}/fonts/TT%20Ramillas%20Trial%20Bold.ttf)`
+      );
+      
+      const loadedFont = await ttRamillasFontFace.load();
+      document.fonts.add(loadedFont);
+      console.log('✅ TT Ramillas font loaded successfully');
+    }
+    
+    // Open Sans should already be loaded from Google Fonts
+    await document.fonts.ready;
+    console.log('✅ All fonts ready');
+  } catch (error) {
+    console.error('❌ Error loading fonts:', error);
+    // Continue anyway - will fall back to system fonts
+  }
 }
 
 /**
