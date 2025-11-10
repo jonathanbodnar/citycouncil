@@ -103,7 +103,7 @@ const WelcomePage: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('talent_profiles')
-        .select('username, promo_video_url, avatar_url')
+        .select('username, promo_video_url')
         .eq('user_id', user?.id)
         .single();
 
@@ -115,7 +115,9 @@ const WelcomePage: React.FC = () => {
           : `${window.location.origin}/talent/${user?.id}`;
         setProfileUrl(url);
         setPromoVideoUrl(data.promo_video_url || '');
-        setAvatarUrl(data.avatar_url || '');
+        
+        // Avatar is stored on the users table, not talent_profiles
+        setAvatarUrl(user?.avatar_url || '');
       }
     } catch (error) {
       console.error('Error fetching talent profile:', error);
