@@ -304,7 +304,7 @@ const Header: React.FC = () => {
                       <UserCircleIcon className="h-6 w-6 text-white" />
                     </div>
                     <span className="hidden md:block text-sm font-medium text-white">
-                      {displayName || user.full_name}
+                      {(displayName || user.full_name)?.split(' ')[0]}
                     </span>
                   </Menu.Button>
 

@@ -240,7 +240,8 @@ const WelcomePage: React.FC = () => {
     }
   };
 
-  const firstName = user?.full_name?.split(' ')[0] || 'there';
+  // Use talent profile name for first name (already fetched in talentFullName state)
+  const firstName = talentFullName?.split(' ')[0] || user?.full_name?.split(' ')[0] || 'there';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
