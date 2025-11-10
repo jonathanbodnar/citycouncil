@@ -28,6 +28,7 @@ interface TalentWithUser extends TalentProfile {
     last_login?: string;
   };
   temp_phone?: string; // For editing phone number
+  current_onboarding_step?: number; // Tracks which onboarding step the talent is on (1-5)
 }
 
 const TalentManagement: React.FC = () => {
