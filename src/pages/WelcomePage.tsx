@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { Order } from '../types';
 import toast from 'react-hot-toast';
+import { generatePromoGraphic, downloadPromoGraphic } from '../services/promoGraphicGenerator';
 
 interface PendingOrder extends Order {
   users: {
@@ -27,6 +28,8 @@ const WelcomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [profileUrl, setProfileUrl] = useState('');
   const [promoVideoUrl, setPromoVideoUrl] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [generatingGraphic, setGeneratingGraphic] = useState(false);
 
   // Soft launch date: November 24th, 2025
   const softLaunchDate = new Date('2025-11-24T00:00:00');
@@ -100,7 +103,7 @@ const WelcomePage: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('talent_profiles')
-        .select('username, promo_video_url')
+        .select('username, promo_video_url, avatar_url')
         .eq('user_id', user?.id)
         .single();
 
@@ -112,6 +115,7 @@ const WelcomePage: React.FC = () => {
           : `${window.location.origin}/talent/${user?.id}`;
         setProfileUrl(url);
         setPromoVideoUrl(data.promo_video_url || '');
+        setAvatarUrl(data.avatar_url || '');
       }
     } catch (error) {
       console.error('Error fetching talent profile:', error);
@@ -134,6 +138,38 @@ const WelcomePage: React.FC = () => {
       toast.success('Opening promo video...');
     } else {
       toast.error('No promo video available');
+    }
+  };
+
+  const handleGeneratePromoGraphic = async () => {
+    if (!avatarUrl) {
+      toast.error('No profile photo available. Please add a profile photo first.');
+      return;
+    }
+
+    setGeneratingGraphic(true);
+    
+    try {
+      // Extract just the profile path (e.g., "ShoutOut.us/username")
+      const profilePath = profileUrl.replace(/^https?:\/\//, '').replace('www.', '');
+      
+      // Generate the graphic
+      const blob = await generatePromoGraphic({
+        avatarUrl,
+        talentName: user?.full_name || 'You',
+        profileUrl: profilePath,
+      });
+
+      // Download the graphic
+      const filename = `ShoutOut-${user?.full_name?.replace(/\s+/g, '-') || 'promo'}.png`;
+      downloadPromoGraphic(blob, filename);
+
+      toast.success('Promo graphic downloaded!');
+    } catch (error) {
+      console.error('Error generating promo graphic:', error);
+      toast.error('Failed to generate promo graphic. Please try again.');
+    } finally {
+      setGeneratingGraphic(false);
     }
   };
 
@@ -228,13 +264,20 @@ const WelcomePage: React.FC = () => {
                 </button>
 
                 <button
-                  className="w-full glass rounded-xl p-4 border border-white/20 hover:border-green-400 transition-all hover:scale-[1.02] text-white font-medium flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
-                  disabled
+                  onClick={handleGeneratePromoGraphic}
+                  disabled={generatingGraphic || !avatarUrl}
+                  className={`w-full glass rounded-xl p-4 border border-white/20 transition-all text-white font-medium flex items-center justify-center gap-2 ${
+                    generatingGraphic || !avatarUrl
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:border-green-400 hover:scale-[1.02]'
+                  }`}
                 >
-                    <ArrowDownTrayIcon className="h-5 w-5" />
-                    Download your promo graphic
-                    <span className="text-xs text-gray-400">(coming soon)</span>
-                  </button>
+                  <ArrowDownTrayIcon className={`h-5 w-5 ${generatingGraphic ? 'animate-bounce' : ''}`} />
+                  {generatingGraphic ? 'Generating...' : 'Download your promo graphic'}
+                  {!avatarUrl && !generatingGraphic && (
+                    <span className="text-xs text-gray-400">(add profile photo first)</span>
+                  )}
+                </button>
                 </div>
           </div>
 

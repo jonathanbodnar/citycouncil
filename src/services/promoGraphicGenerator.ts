@@ -1,0 +1,256 @@
+/**
+ * Promo Graphic Generator
+ * 
+ * Generates a promotional graphic by:
+ * 1. Loading the talent's avatar and fitting it to white space
+ * 2. Overlaying the BackgroundNew.png transparent frame
+ * 3. Adding talent name with TT Ramillas font
+ * 4. Adding profile URL with Open Sans font
+ */
+
+interface PromoGraphicOptions {
+  avatarUrl: string;
+  talentName: string;
+  profileUrl: string; // e.g., "ShoutOut.us/username"
+}
+
+/**
+ * Generates a promotional graphic for a talent
+ * @param options Configuration for the graphic generation
+ * @returns Promise<Blob> The generated image as a blob
+ */
+export async function generatePromoGraphic(options: PromoGraphicOptions): Promise<Blob> {
+  const { avatarUrl, talentName, profileUrl } = options;
+
+  // Canvas dimensions (Instagram post 4:5 ratio to match mockup)
+  const width = 1080;
+  const height = 1350;
+
+  // Create canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
+
+  // Load and draw the avatar (fitted to white space, using featured card alignment)
+  await loadAndDrawAvatar(ctx, avatarUrl, width, height);
+
+  // Load and draw the overlay (BackgroundNew.png frame)
+  await loadAndDrawOverlay(ctx, '/BackgroundNew.png', width, height);
+
+  // Add talent name text (TT Ramillas)
+  await drawTalentNameText(ctx, talentName, width, height);
+
+  // Add profile URL text (Open Sans, bottom left)
+  await drawProfileUrlText(ctx, profileUrl, width, height);
+
+  // Convert canvas to blob
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error('Failed to convert canvas to blob'));
+      }
+    }, 'image/png');
+  });
+}
+
+/**
+ * Load and draw the avatar, fitting it to the white space area (top portion of canvas)
+ * Uses featured card face alignment (top-center crop)
+ */
+async function loadAndDrawAvatar(
+  ctx: CanvasRenderingContext2D,
+  avatarUrl: string,
+  canvasWidth: number,
+  canvasHeight: number
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      // White space area is approximately 70% of canvas height (top portion)
+      const whiteSpaceHeight = canvasHeight * 0.7;
+      
+      // Calculate dimensions to match featured card alignment
+      // Featured cards use object-cover with object-top for face-focused cropping
+      const aspectRatio = img.width / img.height;
+      const targetAspectRatio = canvasWidth / whiteSpaceHeight;
+      
+      let srcX = 0;
+      let srcY = 0;
+      let srcWidth = img.width;
+      let srcHeight = img.height;
+      
+      if (aspectRatio > targetAspectRatio) {
+        // Image is wider than target - crop sides (center horizontally)
+        srcWidth = img.height * targetAspectRatio;
+        srcX = (img.width - srcWidth) / 2;
+      } else {
+        // Image is taller than target - crop from top (featured card alignment)
+        srcHeight = img.width / targetAspectRatio;
+        srcY = 0; // Crop from top to keep face visible
+      }
+      
+      // Draw avatar in the white space area (full width, top 70%)
+      ctx.drawImage(
+        img,
+        srcX, srcY, srcWidth, srcHeight,  // Source (cropped)
+        0, 0, canvasWidth, whiteSpaceHeight // Destination (white space area)
+      );
+      
+      resolve();
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load avatar'));
+    img.src = avatarUrl;
+  });
+}
+
+/**
+ * Load and draw the transparent border overlay
+ */
+async function loadAndDrawOverlay(
+  ctx: CanvasRenderingContext2D,
+  overlayUrl: string,
+  canvasWidth: number,
+  canvasHeight: number
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+      resolve();
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load overlay'));
+    img.src = overlayUrl;
+  });
+}
+
+/**
+ * Draw talent name text with TT Ramillas font
+ * Text: "Get your personalized ShoutOut video from [talent name]"
+ */
+async function drawTalentNameText(
+  ctx: CanvasRenderingContext2D,
+  talentName: string,
+  canvasWidth: number,
+  canvasHeight: number
+): Promise<void> {
+  // Load fonts if not already loaded
+  await loadFonts();
+  
+  // Text configuration based on mockup
+  const text = `Get your personalized ShoutOut video from ${talentName}`;
+  const fontSize = 52; // Large, bold text
+  const lineHeight = 68;
+  const maxWidth = 900; // Max width for text wrapping
+  
+  // Set font - TT Ramillas (or Playfair Display fallback), white color
+  ctx.font = `700 ${fontSize}px "TT Ramillas", "Playfair Display", serif`; // 700 = bold
+  ctx.fillStyle = '#ffffff'; // White text
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  
+  // Enable text shadow for better readability
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
+  
+  // Word wrap
+  const words = text.split(' ');
+  let lines: string[] = [];
+  let currentLine = words[0];
+  
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const testLine = currentLine + ' ' + word;
+    const metrics = ctx.measureText(testLine);
+    
+    if (metrics.width > maxWidth) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  lines.push(currentLine);
+  
+  // Position text in the bottom purple section (centered)
+  const textY = canvasHeight * 0.72; // Start at ~72% down
+  const textX = canvasWidth / 2;
+  
+  lines.forEach((line, index) => {
+    ctx.fillText(line, textX, textY + (index * lineHeight));
+  });
+  
+  // Reset shadow for next drawing operations
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+}
+
+/**
+ * Draw profile URL text with Open Sans font
+ * Positioned in bottom left next to ShoutOut icon
+ */
+async function drawProfileUrlText(
+  ctx: CanvasRenderingContext2D,
+  profileUrl: string,
+  canvasWidth: number,
+  canvasHeight: number
+): Promise<void> {
+  // Load fonts if not already loaded
+  await loadFonts();
+  
+  // Text configuration
+  const fontSize = 28;
+  
+  // Set font - Open Sans, light/medium weight, white color
+  ctx.font = `400 ${fontSize}px "Open Sans", sans-serif`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // Slightly transparent white
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  
+  // Position text in bottom left, next to icon
+  // Based on mockup, icon is at ~100px from left, ~100px from bottom
+  const textX = 160; // Leave space for ShoutOut icon
+  const textY = canvasHeight - 80; // 80px from bottom
+  
+  ctx.fillText(profileUrl, textX, textY);
+}
+
+/**
+ * Load TT Ramillas and Open Sans fonts
+ */
+async function loadFonts(): Promise<void> {
+  // TT Ramillas and Open Sans should be loaded in the main app CSS
+  // Wait for fonts to be ready
+  await document.fonts.ready;
+}
+
+/**
+ * Download the generated graphic
+ */
+export function downloadPromoGraphic(blob: Blob, filename: string = 'promo-graphic.png'): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
