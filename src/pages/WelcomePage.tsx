@@ -107,6 +107,7 @@ const WelcomePage: React.FC = () => {
         .select(`
           username, 
           promo_video_url,
+          full_name,
           users!talent_profiles_user_id_fkey (
             full_name,
             avatar_url
@@ -124,10 +125,19 @@ const WelcomePage: React.FC = () => {
         setProfileUrl(url);
         setPromoVideoUrl(data.promo_video_url || '');
         
-        // Get full name and avatar from the joined users table
+        // Get full name - prefer talent_profiles.full_name (legal name) over users.full_name
         const userData = data.users as any;
-        setTalentFullName(userData?.full_name || user?.full_name || '');
+        const talentProfileName = (data as any).full_name; // talent_profiles.full_name
+        const userFullName = userData?.full_name; // users.full_name
+        
+        // Priority: talent_profiles.full_name > users.full_name > user?.full_name
+        setTalentFullName(talentProfileName || userFullName || user?.full_name || '');
         setAvatarUrl(userData?.avatar_url || user?.avatar_url || '');
+        
+        console.log('📝 Name sources:');
+        console.log('  - talent_profiles.full_name:', talentProfileName);
+        console.log('  - users.full_name:', userFullName);
+        console.log('  - Final name used:', talentProfileName || userFullName || user?.full_name);
       }
     } catch (error) {
       console.error('Error fetching talent profile:', error);
