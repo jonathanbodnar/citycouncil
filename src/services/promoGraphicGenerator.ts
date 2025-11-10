@@ -77,13 +77,18 @@ async function loadAndDrawAvatar(
     
     img.onload = () => {
       console.log('✅ Avatar loaded successfully');
-      // White space area is approximately 70% of canvas height (top portion)
-      const whiteSpaceHeight = canvasHeight * 0.7;
+      
+      // BackgroundNew.png transparent area dimensions:
+      // Starts at 63px from top, ends at 1040px from top
+      // Height: 977px (1040 - 63)
+      const transparentAreaTop = 63;
+      const transparentAreaBottom = 1040;
+      const transparentAreaHeight = transparentAreaBottom - transparentAreaTop; // 977px
       
       // Calculate dimensions to match featured card alignment
       // Featured cards use object-cover with object-top for face-focused cropping
       const aspectRatio = img.width / img.height;
-      const targetAspectRatio = canvasWidth / whiteSpaceHeight;
+      const targetAspectRatio = canvasWidth / transparentAreaHeight;
       
       let srcX = 0;
       let srcY = 0;
@@ -100,16 +105,16 @@ async function loadAndDrawAvatar(
         srcY = 0; // Crop from top to keep face visible
       }
       
-      // Draw avatar in the white space area (full width, top 70%)
+      // Draw avatar in the transparent area (63px from top, 977px tall)
       console.log('🎨 Drawing avatar:');
       console.log('  - Canvas size:', canvasWidth, 'x', canvasHeight);
-      console.log('  - White space height:', whiteSpaceHeight);
-      console.log('  - Drawing to: 0, 0,', canvasWidth, 'x', whiteSpaceHeight);
+      console.log('  - Transparent area: 63px to 1040px (height: 977px)');
+      console.log('  - Drawing to:', 0, transparentAreaTop, canvasWidth, 'x', transparentAreaHeight);
       
       ctx.drawImage(
         img,
         srcX, srcY, srcWidth, srcHeight,  // Source (cropped)
-        0, 0, canvasWidth, whiteSpaceHeight // Destination (white space area)
+        0, transparentAreaTop, canvasWidth, transparentAreaHeight // Destination (transparent area)
       );
       
       resolve();
