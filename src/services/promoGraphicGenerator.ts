@@ -233,9 +233,9 @@ async function drawProfileUrlText(
   // Text configuration
   const fontSize = 32;
   
-  // Set font - Open Sans, regular weight, white color
+  // Set font - Open Sans, regular weight, white color with 70% opacity
   ctx.font = `400 ${fontSize}px "Open Sans", sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; // White with slight transparency
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // White with 70% opacity
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
   

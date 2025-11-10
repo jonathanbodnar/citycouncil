@@ -183,6 +183,8 @@ const WelcomePage: React.FC = () => {
       let cleanUrl = profileUrl.replace(/^https?:\/\//, '').replace('www.', '');
       // Remove any port numbers for local dev
       cleanUrl = cleanUrl.replace(/:\d+/, '');
+      // Replace any railway domain with shoutout.us
+      cleanUrl = cleanUrl.replace(/frontend.*?\.railway\.app/gi, 'shoutout.us');
       // Convert to lowercase for consistency
       cleanUrl = cleanUrl.toLowerCase();
       
