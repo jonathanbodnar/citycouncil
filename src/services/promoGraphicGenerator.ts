@@ -233,8 +233,8 @@ async function drawProfileUrlText(
   // Text configuration
   const fontSize = 32;
   
-  // Set font - Open Sans, regular weight, white color with 70% opacity
-  ctx.font = `400 ${fontSize}px "Open Sans", sans-serif`;
+  // Set font - Open Sans, semi-bold (600), white color with 70% opacity
+  ctx.font = `600 ${fontSize}px "Open Sans", sans-serif`; // Changed from 400 to 600 (semi-bold)
   ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // White with 70% opacity
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
@@ -246,9 +246,9 @@ async function drawProfileUrlText(
   ctx.shadowOffsetY = 2;
   
   // Position text in bottom left, next to icon
-  // Fixed position at 1241px from top (1270 - 29)
+  // Moved up a bit more (1230px from top)
   const textX = 180; // Leave space for ShoutOut icon (80px icon + 20px gap)
-  const textY = 1241; // Fixed position at 1241px from top
+  const textY = 1230; // Moved up from 1241px to 1230px
   
   ctx.fillText(profileUrl, textX, textY);
   
