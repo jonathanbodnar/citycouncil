@@ -14,7 +14,7 @@ import { logger } from '../utils/logger';
 
 interface MediaCenterProps {
   talentId: string;
-  talentUsername: string;
+  talentUsername?: string;
   talentFullName: string;
   avatarUrl?: string;
   promoVideoUrl?: string;
@@ -109,6 +109,11 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       return;
     }
 
+    if (!talentUsername) {
+      toast.error('Username not found.');
+      return;
+    }
+
     setGeneratingGraphic(true);
     try {
       const profileUrl = `ShoutOut.us/${talentUsername}`;
@@ -141,6 +146,11 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   const handleDownloadPromoVideo = async () => {
     if (!promoVideoUrl) {
       toast.error('No promo video available');
+      return;
+    }
+
+    if (!talentUsername) {
+      toast.error('Username not found.');
       return;
     }
 
