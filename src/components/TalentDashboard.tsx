@@ -921,7 +921,7 @@ const TalentDashboard: React.FC = () => {
           talentUsername={talentProfile.username}
           talentFullName={talentProfile.full_name}
           avatarUrl={user?.avatar_url}
-          promoVideoUrl={talentProfile.welcome_video_url}
+          promoVideoUrl={talentProfile.promo_video_url}
         />
       )}
 
