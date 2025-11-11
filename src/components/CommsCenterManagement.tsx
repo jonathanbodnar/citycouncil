@@ -244,7 +244,25 @@ const CommsCenterManagement: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const { data, error} = await supabase
+      
+      // First, get all talent user IDs
+      const { data: talentUsers, error: talentError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('user_type', 'talent');
+
+      if (talentError) throw talentError;
+
+      const talentUserIds = talentUsers?.map(u => u.id) || [];
+
+      if (talentUserIds.length === 0) {
+        setNotifications([]);
+        setLoading(false);
+        return;
+      }
+
+      // Then fetch notifications for those users
+      const { data, error } = await supabase
         .from('notifications')
         .select(`
           id,
@@ -260,7 +278,7 @@ const CommsCenterManagement: React.FC = () => {
             user_type
           )
         `)
-        .eq('users.user_type', 'talent')
+        .in('user_id', talentUserIds)
         .order('created_at', { ascending: false })
         .limit(500);
 
