@@ -4,7 +4,7 @@
  * Generates a promotional graphic by:
  * 1. Loading the talent's avatar and fitting it to white space
  * 2. Overlaying the BackgroundNew.png transparent frame
- * 3. Adding talent name with TT Ramillas font
+ * 3. Adding talent name with Montserrat SemiBold font
  * 4. Adding profile URL with Open Sans font
  */
 
@@ -43,7 +43,7 @@ export async function generatePromoGraphic(options: PromoGraphicOptions): Promis
   const cacheBuster = Date.now();
   await loadAndDrawOverlay(ctx, `/BackgroundNew.png?v=${cacheBuster}`, width, height);
 
-  // Add talent name text (TT Ramillas)
+  // Add talent name text (Montserrat SemiBold)
   await drawTalentNameText(ctx, talentName, width, height);
 
   // Add profile URL text (Open Sans, bottom left)
@@ -183,7 +183,7 @@ async function loadAndDrawOverlay(
 }
 
 /**
- * Draw talent name text with TT Ramillas font
+ * Draw talent name text with Montserrat SemiBold font
  * Text: "Get your personalized ShoutOut video from [talent name]"
  * LEFT-ALIGNED to match mockup exactly
  */
@@ -203,8 +203,8 @@ async function drawTalentNameText(
   const leftMargin = 100; // Left margin for text
   const maxWidth = canvasWidth - (leftMargin * 2); // Max width for text wrapping
   
-  // Set font - TT Ramillas (or Playfair Display fallback), white color, regular weight
-  ctx.font = `400 ${fontSize}px "TT Ramillas", "Playfair Display", serif`; // 400 = regular (not bold)
+  // Set font - Montserrat SemiBold, white color
+  ctx.font = `600 ${fontSize}px "Montserrat", sans-serif`; // 600 = SemiBold
   ctx.fillStyle = '#ffffff'; // White text
   ctx.textAlign = 'left'; // LEFT-ALIGNED
   ctx.textBaseline = 'top';
@@ -289,25 +289,26 @@ async function drawProfileUrlText(
 }
 
 /**
- * Load TT Ramillas and Open Sans fonts
+ * Load Montserrat SemiBold and Open Sans fonts
  */
 async function loadFonts(): Promise<void> {
   try {
-    // Check if TT Ramillas is already loaded
-    const ttRamillasLoaded = document.fonts.check('56px "TT Ramillas"');
+    // Check if Montserrat SemiBold is already loaded
+    const montLoaded = document.fonts.check('600 56px "Montserrat"');
     
-    if (!ttRamillasLoaded) {
-      console.log('🔤 Loading TT Ramillas font from file...');
+    if (!montLoaded) {
+      console.log('🔤 Loading Montserrat SemiBold font from file...');
       
-      // Load TT Ramillas from the public/fonts directory
-      const ttRamillasFontFace = new FontFace(
-        'TT Ramillas',
-        `url(${process.env.PUBLIC_URL || ''}/fonts/TT%20Ramillas%20Trial%20Bold.ttf)`
+      // Load Montserrat SemiBold from the public/fonts directory
+      const montFontFace = new FontFace(
+        'Montserrat',
+        `url(${process.env.PUBLIC_URL || ''}/fonts/MontSemiBold/font.woff2)`,
+        { weight: '600' }
       );
       
-      const loadedFont = await ttRamillasFontFace.load();
+      const loadedFont = await montFontFace.load();
       document.fonts.add(loadedFont);
-      console.log('✅ TT Ramillas font loaded successfully');
+      console.log('✅ Montserrat SemiBold font loaded successfully');
     }
     
     // Open Sans should already be loaded from Google Fonts
