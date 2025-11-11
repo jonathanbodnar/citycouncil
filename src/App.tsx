@@ -37,6 +37,7 @@ const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 const EmailTestPage = lazy(() => import('./pages/EmailTestPage'));
 const InstagramCallbackPage = lazy(() => import('./pages/InstagramCallbackPage'));
 const WelcomePage = lazy(() => import('./pages/WelcomePage'));
+const ShortLinkRedirectPage = lazy(() => import('./pages/ShortLinkRedirectPage'));
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
+            <Route path="/s/:code" element={<ShortLinkRedirectPage />} />
             <Route path="/fulfill/:token" element={<OrderFulfillmentPage />} />
             <Route path="/talent/:slug" element={<TalentProfilePage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />

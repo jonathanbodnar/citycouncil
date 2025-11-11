@@ -88,7 +88,7 @@ export const notificationService = {
         return;
       }
 
-      // Get order details for fulfillment link
+      // Get order details and short link
       const { data: order } = await supabase
         .from('orders')
         .select('fulfillment_token')
@@ -98,13 +98,30 @@ export const notificationService = {
       // Build template variables
       const firstName = user.full_name?.split(' ')[0] || 'there';
       
-      // Generate fulfillment link with magic auth (one-click login)
+      // Get short link for SMS (much shorter URLs!)
       let orderLink = `${window.location.origin}/dashboard?order=${orderId}`;
       if (order?.fulfillment_token) {
         try {
-          orderLink = await magicAuthService.generateFulfillmentUrl(orderId, order.fulfillment_token);
+          // Check if a short link exists for this order
+          const { data: shortLink } = await supabase
+            .from('short_links')
+            .select('short_code')
+            .eq('order_id', orderId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (shortLink?.short_code) {
+            // Use short link: shoutout.us/s/ABC123
+            orderLink = `${window.location.origin}/s/${shortLink.short_code}`;
+            logger.log('✅ Using short link:', orderLink);
+          } else {
+            // Fallback to full URL with magic auth
+            orderLink = await magicAuthService.generateFulfillmentUrl(orderId, order.fulfillment_token);
+            logger.log('⚠️ No short link found, using full URL');
+          }
         } catch (error) {
-          logger.error('Error generating magic auth URL, using fallback:', error);
+          logger.error('Error getting short link, using fallback:', error);
           orderLink = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
         }
       }
