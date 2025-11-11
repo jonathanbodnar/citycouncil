@@ -121,6 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string, userType: 'user' | 'talent', phoneNumber?: string) => {
     try {
+      console.log('🔍 signUp called with:', { email, fullName, userType, phoneNumber });
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -154,6 +156,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Note: The database trigger (handle_new_user) automatically creates the user
       // but we'll use UPSERT here to ensure the data is correct and avoid race conditions
       if (data.user) {
+        console.log('📱 Saving user with phone:', phoneNumber ? '(has phone)' : '(no phone)');
+        
         const { error: profileError } = await supabase
           .from('users')
           .upsert([
@@ -172,6 +176,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (profileError) {
           console.error('Error upserting user profile:', profileError);
           // Don't throw - the trigger may have already created it
+        } else {
+          console.log('✅ User profile saved successfully');
         }
 
         // Create additional profile based on user type

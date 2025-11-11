@@ -47,6 +47,8 @@ const SignupPage: React.FC = () => {
       return;
     }
 
+    console.log('📝 Form data before signup:', formData);
+
     setLoading(true);
 
     try {
