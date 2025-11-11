@@ -7,7 +7,8 @@ import {
   ChatBubbleLeftRightIcon,
   BellIcon,
   BanknotesIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 import { 
   HomeIcon as HomeIconSolid, 
@@ -16,7 +17,8 @@ import {
   ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconSolid,
   BellIcon as BellIconSolid,
   BanknotesIcon as BanknotesIconSolid,
-  ChartBarIcon as ChartBarIconSolid
+  ChartBarIcon as ChartBarIconSolid,
+  PhotoIcon as PhotoIconSolid
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext';
 
@@ -59,10 +61,10 @@ const MobileNavigation: React.FC = () => {
       iconSolid: BanknotesIconSolid,
     },
     {
-      name: 'Help',
-      href: '/help',
-      icon: ChatBubbleLeftRightIcon,
-      iconSolid: ChatBubbleLeftRightIconSolid,
+      name: 'Media',
+      href: '/dashboard?tab=media',
+      icon: PhotoIcon,
+      iconSolid: PhotoIconSolid,
     },
     {
       name: 'Profile',

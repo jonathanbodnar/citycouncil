@@ -26,6 +26,7 @@ import PayoutsDashboard from './PayoutsDashboard';
 import InstagramConnect from './InstagramConnect';
 import MFASettings from './MFASettings';
 import PhoneNumberPrompt from './PhoneNumberPrompt';
+import MediaCenter from './MediaCenter';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import { emailService } from '../services/emailService';
 import { notificationService } from '../services/notificationService';
@@ -51,7 +52,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media'>('orders');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -63,8 +64,8 @@ const TalentDashboard: React.FC = () => {
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
   useEffect(() => {
-    if (tabParam && ['orders', 'analytics', 'profile', 'payouts', 'promotion'].includes(tabParam)) {
-      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion');
+    if (tabParam && ['orders', 'analytics', 'profile', 'payouts', 'promotion', 'media'].includes(tabParam)) {
+      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media');
     } else {
       // Default to orders when no tab parameter
       setActiveTab('orders');
@@ -460,6 +461,7 @@ const TalentDashboard: React.FC = () => {
             {[
               { key: 'orders', label: 'Orders', count: orders.length },
               { key: 'analytics', label: 'Analytics', count: null },
+              { key: 'media', label: 'Media Center', count: null },
               { key: 'payouts', label: 'Payouts', count: null, icon: BanknotesIcon },
               { key: 'promotion', label: 'Promotion 🎁', count: null },
               { key: 'profile', label: 'Profile Settings', count: null },
@@ -910,6 +912,17 @@ const TalentDashboard: React.FC = () => {
       {/* Payouts Tab */}
       {activeTab === 'payouts' && (
         <PayoutsDashboard />
+      )}
+
+      {/* Media Center Tab */}
+      {activeTab === 'media' && talentProfile && (
+        <MediaCenter
+          talentId={talentProfile.id}
+          talentUsername={talentProfile.username}
+          talentFullName={talentProfile.full_name}
+          avatarUrl={user?.avatar_url}
+          promoVideoUrl={talentProfile.welcome_video_url}
+        />
       )}
 
       {/* Promotion Tab */}
