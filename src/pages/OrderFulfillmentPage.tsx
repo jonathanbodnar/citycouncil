@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 const OrderFulfillmentPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
-  const { user, refreshAuth } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<any>(null);
@@ -49,10 +49,11 @@ const OrderFulfillmentPage: React.FC = () => {
 
             if (!error) {
               toast.success('Authenticated! Loading your order...', { icon: '✨' });
-              // Wait a moment for auth to propagate
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              await refreshAuth?.();
-              // Continue to verify order below
+              // Wait a moment for auth to propagate, then reload the page
+              // This will trigger the useEffect in AuthContext to fetch the user profile
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              window.location.reload();
+              return;
             } else {
               logger.error('Magic auth sign-in failed:', error);
               toast.error('Authentication failed. Please log in manually.');
