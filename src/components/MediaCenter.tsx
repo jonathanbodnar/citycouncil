@@ -112,9 +112,23 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     setGeneratingGraphic(true);
     try {
       const profileUrl = `ShoutOut.us/${talentUsername}`;
-      const canvas = await generatePromoGraphic(avatarUrl, talentFullName, profileUrl);
+      const blob = await generatePromoGraphic({
+        avatarUrl,
+        talentName: talentFullName,
+        profileUrl
+      });
       const filename = `${talentUsername}-promo.png`;
-      downloadPromoGraphic(canvas, filename);
+      
+      // Download the blob
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       toast.success('Promo graphic downloaded!');
     } catch (error) {
       logger.error('Error generating promo graphic:', error);

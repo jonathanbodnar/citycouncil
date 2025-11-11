@@ -322,7 +322,8 @@ const WelcomePage: React.FC = () => {
           >
             <ClockIcon className="h-5 w-5 text-blue-400" />
             <span className="text-white font-medium">
-              Soft Launch Countdown - Nov 24th 2025 · {timeUntilLaunch}
+              <span className="hidden sm:inline">Soft Launch Countdown - Nov 24th 2025 · {timeUntilLaunch}</span>
+              <span className="sm:hidden">Soft Launch - Nov 24th · {timeUntilLaunch}</span>
             </span>
           </div>
         </div>
