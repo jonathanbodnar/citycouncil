@@ -71,62 +71,77 @@ async function loadAndDrawAvatar(
   canvasWidth: number,
   canvasHeight: number
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    console.log('📸 Loading avatar from:', avatarUrl);
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      console.log('✅ Avatar loaded successfully');
+  return new Promise(async (resolve, reject) => {
+    try {
+      console.log('📸 Loading avatar from:', avatarUrl);
       
-      // BackgroundNew.png transparent area dimensions:
-      // Starts at 63px from top, ends at 1040px from top
-      // Height: 977px (1040 - 63)
-      const transparentAreaTop = 63;
-      const transparentAreaBottom = 1040;
-      const transparentAreaHeight = transparentAreaBottom - transparentAreaTop; // 977px
+      // Fetch the image as a blob to avoid CORS issues
+      const response = await fetch(avatarUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       
-      // Calculate dimensions to match featured card alignment
-      // Featured cards use object-cover with object-top for face-focused cropping
-      const aspectRatio = img.width / img.height;
-      const targetAspectRatio = canvasWidth / transparentAreaHeight;
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
       
-      let srcX = 0;
-      let srcY = 0;
-      let srcWidth = img.width;
-      let srcHeight = img.height;
+      const img = new Image();
       
-      if (aspectRatio > targetAspectRatio) {
-        // Image is wider than target - crop sides (center horizontally)
-        srcWidth = img.height * targetAspectRatio;
-        srcX = (img.width - srcWidth) / 2;
-      } else {
-        // Image is taller than target - crop from top (featured card alignment)
-        srcHeight = img.width / targetAspectRatio;
-        srcY = 0; // Crop from top to keep face visible
-      }
+      img.onload = () => {
+        console.log('✅ Avatar loaded successfully');
+        
+        // BackgroundNew.png transparent area dimensions:
+        // Starts at 63px from top, ends at 1040px from top
+        // Height: 977px (1040 - 63)
+        const transparentAreaTop = 63;
+        const transparentAreaBottom = 1040;
+        const transparentAreaHeight = transparentAreaBottom - transparentAreaTop; // 977px
+        
+        // Calculate dimensions to match featured card alignment
+        // Featured cards use object-cover with object-top for face-focused cropping
+        const aspectRatio = img.width / img.height;
+        const targetAspectRatio = canvasWidth / transparentAreaHeight;
+        
+        let srcX = 0;
+        let srcY = 0;
+        let srcWidth = img.width;
+        let srcHeight = img.height;
+        
+        if (aspectRatio > targetAspectRatio) {
+          // Image is wider than target - crop sides (center horizontally)
+          srcWidth = img.height * targetAspectRatio;
+          srcX = (img.width - srcWidth) / 2;
+        } else {
+          // Image is taller than target - crop from top (featured card alignment)
+          srcHeight = img.width / targetAspectRatio;
+          srcY = 0; // Crop from top to keep face visible
+        }
+        
+        // Draw avatar in the transparent area (63px from top, 977px tall)
+        console.log('🎨 Drawing avatar:');
+        console.log('  - Canvas size:', canvasWidth, 'x', canvasHeight);
+        console.log('  - Transparent area: 63px to 1040px (height: 977px)');
+        console.log('  - Drawing to:', 0, transparentAreaTop, canvasWidth, 'x', transparentAreaHeight);
+        
+        ctx.drawImage(
+          img,
+          srcX, srcY, srcWidth, srcHeight,  // Source (cropped)
+          0, transparentAreaTop, canvasWidth, transparentAreaHeight // Destination (transparent area)
+        );
+        
+        // Clean up blob URL
+        URL.revokeObjectURL(blobUrl);
+        resolve();
+      };
       
-      // Draw avatar in the transparent area (63px from top, 977px tall)
-      console.log('🎨 Drawing avatar:');
-      console.log('  - Canvas size:', canvasWidth, 'x', canvasHeight);
-      console.log('  - Transparent area: 63px to 1040px (height: 977px)');
-      console.log('  - Drawing to:', 0, transparentAreaTop, canvasWidth, 'x', transparentAreaHeight);
+      img.onerror = (error) => {
+        console.error('❌ Failed to load avatar:', error);
+        URL.revokeObjectURL(blobUrl);
+        reject(new Error('Failed to load avatar'));
+      };
       
-      ctx.drawImage(
-        img,
-        srcX, srcY, srcWidth, srcHeight,  // Source (cropped)
-        0, transparentAreaTop, canvasWidth, transparentAreaHeight // Destination (transparent area)
-      );
-      
-      resolve();
-    };
-    
-    img.onerror = (error) => {
-      console.error('❌ Failed to load avatar:', error);
-      console.error('❌ Avatar URL was:', avatarUrl);
-      reject(new Error('Failed to load avatar'));
-    };
-    img.src = avatarUrl;
+      img.src = blobUrl;
+    } catch (error) {
+      console.error('❌ Failed to fetch avatar:', error);
+      reject(error);
+    }
   });
 }
 

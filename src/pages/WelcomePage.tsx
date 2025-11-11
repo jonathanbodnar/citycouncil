@@ -196,12 +196,34 @@ const WelcomePage: React.FC = () => {
     toast.success('Phone number copied to clipboard!');
   };
 
-  const downloadPromoVideo = () => {
-    if (promoVideoUrl) {
-      window.open(promoVideoUrl, '_blank');
-      toast.success('Opening promo video...');
-    } else {
+  const downloadPromoVideo = async () => {
+    if (!promoVideoUrl) {
       toast.error('No promo video available');
+      return;
+    }
+
+    try {
+      // Fetch the video as a blob to force download instead of opening in new tab
+      toast.loading('Downloading video...');
+      const response = await fetch(promoVideoUrl);
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${talentFullName?.replace(/\s+/g, '-') || 'ShoutOut'}-promo-video.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.dismiss();
+      toast.success('Video downloaded!');
+    } catch (error) {
+      console.error('Error downloading video:', error);
+      toast.dismiss();
+      toast.error('Failed to download video');
     }
   };
 
