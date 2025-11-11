@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { CalendarIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { logger } from '../utils/logger';
 
 interface BlockedDate {
   id: string;
@@ -40,7 +41,7 @@ const BlockedAvailability: React.FC<BlockedAvailabilityProps> = ({ talentId, tal
       if (error) throw error;
       setBlockedDates(data || []);
     } catch (error) {
-      console.error('Error fetching blocked dates:', error);
+      logger.error('Error fetching blocked dates:', error);
       toast.error('Failed to load blocked dates');
     } finally {
       setLoading(false);
@@ -79,7 +80,7 @@ const BlockedAvailability: React.FC<BlockedAvailabilityProps> = ({ talentId, tal
       setReason('');
       fetchBlockedDates();
     } catch (error) {
-      console.error('Error adding blocked dates:', error);
+      logger.error('Error adding blocked dates:', error);
       toast.error('Failed to add blocked dates');
     } finally {
       setAdding(false);
@@ -100,7 +101,7 @@ const BlockedAvailability: React.FC<BlockedAvailabilityProps> = ({ talentId, tal
       toast.success('Blocked dates removed');
       fetchBlockedDates();
     } catch (error) {
-      console.error('Error deleting blocked dates:', error);
+      logger.error('Error deleting blocked dates:', error);
       toast.error('Failed to remove blocked dates');
     }
   };

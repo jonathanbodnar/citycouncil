@@ -293,19 +293,16 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
                   Fulfillment Time (hours) *
                 </label>
                 <input
-                  type="text"
-                  inputMode="numeric"
+                  type="number"
+                  min="1"
+                  step="1"
                   {...register('fulfillment_time_hours', { 
                     required: 'Fulfillment time is required',
-                    pattern: {
-                      value: /^\d+$/,
-                      message: 'Must be a valid number'
+                    min: {
+                      value: 1,
+                      message: 'Must be at least 1 hour'
                     },
-                    validate: (value: any) => {
-                      const num = typeof value === 'string' ? parseInt(value, 10) : value;
-                      return num > 0 || 'Must be greater than 0';
-                    },
-                    setValueAs: (value: string) => parseInt(value, 10) || 0
+                    valueAsNumber: true
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="e.g., 48"
