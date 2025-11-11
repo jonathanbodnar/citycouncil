@@ -109,7 +109,8 @@ export const notificationService = {
       message = message.replace(/\{\{hours\}\}/g, variables.hours || '');
 
       // Send SMS via Twilio Edge Function
-      console.log('📱 Sending SMS:', { to: user.phone, message });
+      const maskedPhone = user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+      console.log('📱 Sending SMS to:', maskedPhone);
       const { error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: user.phone,
@@ -120,7 +121,7 @@ export const notificationService = {
       if (error) {
         console.error('Error sending SMS:', error);
       } else {
-        console.log('✅ SMS sent successfully');
+        console.log('✅ SMS sent successfully to:', maskedPhone);
       }
     } catch (error) {
       console.error('Error in sendSMSIfEnabled:', error);
