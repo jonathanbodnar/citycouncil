@@ -27,21 +27,36 @@ class RefundService {
         throw new Error('Denial reason is required');
       }
 
-      // Step 2: Process refund via Fortis Edge Function
-      console.log('Processing Fortis refund:', request);
-      const { data: refundData, error: refundError } = await supabase.functions.invoke('fortis-refund', {
-        body: {
-          transaction_id: request.transactionId,
-          amount: request.amount,
-          reason: request.reason,
-        },
-      });
+      // Step 1.5: Check if this is a demo order (no real payment, skip refund)
+      const isDemoOrder = request.transactionId?.startsWith('DEMO_ORDER_');
+      let refundData = null;
 
-      if (refundError || !refundData?.success) {
-        throw new Error(refundError?.message || refundData?.error || 'Refund failed');
+      if (isDemoOrder) {
+        console.log('Skipping refund for demo order:', request.orderId);
+        refundData = {
+          success: true,
+          refund_id: null,
+          refund_amount: 0,
+          is_demo: true,
+        };
+      } else {
+        // Step 2: Process refund via Fortis Edge Function (real orders only)
+        console.log('Processing Fortis refund:', request);
+        const { data: fortisData, error: refundError } = await supabase.functions.invoke('fortis-refund', {
+          body: {
+            transaction_id: request.transactionId,
+            amount: request.amount,
+            reason: request.reason,
+          },
+        });
+
+        if (refundError || !fortisData?.success) {
+          throw new Error(refundError?.message || fortisData?.error || 'Refund failed');
+        }
+
+        refundData = fortisData;
+        console.log('Fortis refund successful:', refundData);
       }
-
-      console.log('Fortis refund successful:', refundData);
 
       // Step 3: Update order status to 'denied'
       console.log('Updating order status to denied for order:', request.orderId);
