@@ -71,13 +71,29 @@ async function loadAndDrawAvatar(
   canvasWidth: number,
   canvasHeight: number
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    console.log('📸 Loading avatar from:', avatarUrl);
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      console.log('✅ Avatar loaded successfully');
+  return new Promise(async (resolve, reject) => {
+    try {
+      console.log('📸 Loading avatar from:', avatarUrl);
+      
+      // Use Supabase proxy to bypass CORS (Wasabi isn't returning proper headers)
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
+      const proxyUrl = `${supabaseUrl}/functions/v1/proxy-image?url=${encodeURIComponent(avatarUrl)}`;
+      
+      console.log('🔄 Using proxy:', proxyUrl);
+      
+      // Fetch through proxy
+      const response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error(`Proxy failed: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const img = new Image();
+      
+      img.onload = () => {
+        console.log('✅ Avatar loaded successfully via proxy');
         
         // BackgroundNew.png transparent area dimensions:
         // Starts at 63px from top, ends at 1040px from top
@@ -118,16 +134,22 @@ async function loadAndDrawAvatar(
           0, transparentAreaTop, canvasWidth, transparentAreaHeight // Destination (transparent area)
         );
         
+        // Clean up blob URL
+        URL.revokeObjectURL(blobUrl);
         resolve();
       };
       
       img.onerror = (error) => {
-        console.error('❌ Failed to load avatar:', error);
-        console.error('❌ Avatar URL was:', avatarUrl);
+        console.error('❌ Failed to load avatar from blob:', error);
+        URL.revokeObjectURL(blobUrl);
         reject(new Error('Failed to load avatar'));
       };
       
-      img.src = avatarUrl;
+      img.src = blobUrl;
+    } catch (error) {
+      console.error('❌ Failed to fetch avatar via proxy:', error);
+      reject(error);
+    }
   });
 }
 
