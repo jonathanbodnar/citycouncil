@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
 // Twilio credentials and Messaging Service SID for link shortening
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -87,6 +88,36 @@ serve(async (req) => {
 
     const twilioData = await twilioResponse.json();
     console.log('SMS sent successfully:', twilioData.sid);
+
+    // Log SMS to database if talentId is provided (for Comms Center conversation tracking)
+    if (talentId) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+        const { error: dbError } = await supabase
+          .from('sms_messages')
+          .insert({
+            talent_id: talentId,
+            from_admin: false, // Mark as system message (not from admin manually)
+            message: message,
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+            read_by_admin: true, // Auto-mark as read since admin doesn't need to respond
+          });
+
+        if (dbError) {
+          console.error('Error logging SMS to database:', dbError);
+          // Don't fail the SMS send if logging fails
+        } else {
+          console.log('✓ SMS logged to sms_messages table for talent:', talentId);
+        }
+      } catch (dbLogError) {
+        console.error('Error in database logging:', dbLogError);
+        // Don't fail the SMS send if logging fails
+      }
+    }
 
     return new Response(
       JSON.stringify({
