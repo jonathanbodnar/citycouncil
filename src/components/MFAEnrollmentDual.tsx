@@ -91,6 +91,29 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
 
     setLoading(true);
     try {
+      // Check if phone MFA is already enrolled
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const existingPhoneFactor = factors?.all?.find((f: any) => f.factor_type === 'phone');
+      
+      if (existingPhoneFactor) {
+        console.log('Phone MFA already enrolled, using existing factor:', existingPhoneFactor);
+        
+        // If it's verified, just complete onboarding
+        if (existingPhoneFactor.status === 'verified') {
+          toast.success('Phone MFA already set up!');
+          onComplete();
+          return;
+        }
+        
+        // If it's unverified, unenroll it first
+        try {
+          await supabase.auth.mfa.unenroll({ factorId: existingPhoneFactor.id });
+          console.log('Removed existing unverified phone factor');
+        } catch (unenrollError) {
+          console.error('Failed to unenroll existing factor:', unenrollError);
+        }
+      }
+      
       // Format phone to E.164 format (+1XXXXXXXXXX)
       const formattedPhone = `+1${phoneNumber.replace(/\D/g, '')}`;
       

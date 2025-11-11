@@ -789,8 +789,8 @@ const TalentOnboardingPage: React.FC = () => {
     try {
       let finalVideoUrl = welcomeVideoUrl;
       
-      // Upload video if file is selected
-      if (welcomeVideoFile) {
+      // Only upload if we have a new file AND haven't uploaded it yet
+      if (welcomeVideoFile && !welcomeVideoUrl) {
         setUploadingVideo(true);
         console.log('Uploading welcome video to Wasabi...');
         
@@ -802,7 +802,9 @@ const TalentOnboardingPage: React.FC = () => {
           
           if (uploadResult.success && uploadResult.videoUrl) {
             finalVideoUrl = uploadResult.videoUrl;
+            setWelcomeVideoUrl(uploadResult.videoUrl); // Save URL so we don't re-upload
             console.log('Welcome video uploaded successfully:', finalVideoUrl);
+            toast.success('Video uploaded successfully!');
           } else {
             console.warn('Video upload failed, but continuing onboarding:', uploadResult.error);
             toast.error('Video upload failed. You can add it later from your dashboard.');
@@ -812,6 +814,8 @@ const TalentOnboardingPage: React.FC = () => {
           console.error('Video upload error:', uploadError);
           toast.error('Video upload failed. You can add it later from your dashboard.');
           // Don't throw - allow onboarding to complete without video
+        } finally {
+          setUploadingVideo(false);
         }
       }
 
@@ -826,13 +830,12 @@ const TalentOnboardingPage: React.FC = () => {
       if (videoError) throw videoError;
 
       toast.success('Promo video saved! One more step: Enable MFA security');
+      await updateOnboardingStep(5);
       setCurrentStep(5);
 
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       toast.error(error.message || 'Failed to complete onboarding');
-    } finally {
-      setUploadingVideo(false);
     }
   };
 
@@ -1583,11 +1586,11 @@ const TalentOnboardingPage: React.FC = () => {
                     >
                       <VideoCameraIcon className="h-5 w-5 text-white" />
                       <span className="font-medium text-white">
-                        {welcomeVideoFile ? welcomeVideoFile.name : 'Choose Video File'}
+                        {welcomeVideoUrl ? '✓ Video Uploaded' : welcomeVideoFile ? welcomeVideoFile.name : 'Choose Video File'}
                       </span>
                     </label>
                     <p className="mt-2 text-sm text-gray-400 text-center">
-                      Supported formats: MP4, MOV, AVI • Max size: 100MB
+                      {welcomeVideoUrl ? 'Video already uploaded. You can change it by selecting a new file.' : 'Supported formats: MP4, MOV, AVI • Max size: 100MB'}
                     </p>
                   </div>
 
@@ -1622,10 +1625,10 @@ const TalentOnboardingPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={!welcomeVideoFile || uploadingVideo}
+                  disabled={(!welcomeVideoFile && !welcomeVideoUrl) || uploadingVideo}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-red-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-red-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {uploadingVideo ? 'Uploading...' : 'Continue to Security Setup'}
+                  {uploadingVideo ? 'Uploading...' : welcomeVideoUrl ? 'Continue to Security Setup' : 'Upload & Continue'}
                 </button>
               </div>
             </form>
