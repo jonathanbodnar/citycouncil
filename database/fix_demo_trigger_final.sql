@@ -9,6 +9,7 @@ DECLARE
   demo_request TEXT;
   demo_name TEXT;
   demo_email TEXT;
+  created_order_id UUID;
   excluded_talent_ids UUID[] := ARRAY[
     (SELECT id FROM talent_profiles WHERE full_name = 'Nick Di Palo'),
     (SELECT id FROM talent_profiles WHERE full_name = 'Shawn Farash'),
@@ -31,19 +32,22 @@ BEGIN
     -- Hardcoded demo data (since demo tables don't exist)
     demo_request := 'Wish my mother, Linda a happy 90th birthday! Make it heartfelt and mention how proud we are of her accomplishments.';
     demo_name := 'Michael Thompson';
-    demo_email := 'demo_order_customer@shoutout.us';
+    demo_email := 'demo_customer_' || NEW.id || '@shoutout.us';
     
-    -- Use an existing user as demo customer (to avoid FK constraint issues)
+    -- Check if demo user already exists
     SELECT id INTO demo_user_id
     FROM users
-    WHERE user_type = 'user'
-      AND id != NEW.user_id
+    WHERE email = demo_email
     LIMIT 1;
     
-    -- If no existing user, just skip demo order creation
+    -- Create a dedicated demo customer user if doesn't exist
     IF demo_user_id IS NULL THEN
-      RAISE NOTICE 'No existing users to use as demo customer, skipping demo order';
-      RETURN NEW;
+      demo_user_id := gen_random_uuid();
+      INSERT INTO users (id, email, full_name, user_type, created_at, updated_at)
+      VALUES (
+        demo_user_id, demo_email, demo_name, 'user', NOW(), NOW()
+      );
+      RAISE NOTICE 'Created demo customer user: %', demo_name;
     END IF;
 
     -- Create demo order with correct column names and 0.01 amount (to pass check constraint)
@@ -69,7 +73,7 @@ BEGIN
       NEW.id,
       demo_request,
       'demo',
-      0.01, -- Minimum amount to pass check constraint
+      1, -- $0.01 (stored in cents) - minimum to pass check constraint
       0,
       'pending',
       NOW() + INTERVAL '48 hours',
@@ -79,25 +83,26 @@ BEGIN
       'approved',
       NOW(),
       NOW()
-    );
+    )
+    RETURNING id INTO created_order_id;
 
-    -- Create notification for talent
+    -- Create notification for talent (store order_id for linking)
     INSERT INTO notifications (
       id,
       user_id,
       type,
       title,
       message,
-      link,
+      order_id,
       created_at,
-      read
+      is_read
     ) VALUES (
       gen_random_uuid(),
       NEW.user_id,
-      'order_received',
+      'order_placed',
       'Demo Order - Get Started!',
       'Hey ' || SPLIT_PART(NEW.full_name, ' ', 1) || ', here''s your demo order! Please fulfill it to activate live orders and start earning.',
-      '/orders',
+      created_order_id,
       NOW(),
       false
     );
