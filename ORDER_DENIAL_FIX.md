@@ -8,11 +8,11 @@ Admin and talent "Deny Order" buttons were giving errors instead of processing r
 ### 1. ❌ Wrong Edge Function Name (CRITICAL)
 ```typescript
 // ❌ BEFORE - Calling wrong function
-supabase.functions.invoke('fortis-refundS', { ... })
+supabase.functions.invoke('S', { ... })
 // Function doesn't exist!
 
 // ✅ AFTER - Correct function name
-supabase.functions.invoke('fortis-refund', { ... })
+supabase.functions.invoke('', { ... })
 // Function found and executed
 ```
 
@@ -50,7 +50,7 @@ supabase.functions.invoke('fortis-refund', { ... })
    └─ Check reason is provided (frontend + backend)
 
 2. REFUND VIA FORTIS
-   └─ Call fortis-refund Edge Function
+   └─ Call  Edge Function
    └─ Fortis processes refund to customer's card
    └─ Returns refund_id
 
@@ -129,7 +129,7 @@ Expected:
 
 | File | Change | Why |
 |------|--------|-----|
-| `src/services/refundService.ts` | Fixed function name | Was calling 'fortis-refundS' instead of 'fortis-refund' |
+| `src/services/refundService.ts` | Fixed function name | Was calling 'S' instead of '' |
 | `src/services/refundService.ts` | Added reason validation | Extra safety check at service level |
 | `src/services/refundService.ts` | Updated comments | Clarified 5-step process |
 
@@ -213,10 +213,10 @@ If a customer asks why their order was denied:
 ## Summary
 
 **What was broken:**
-- Wrong Edge Function name: `'fortis-refundS'` (doesn't exist)
+- Wrong Edge Function name: `'S'` (doesn't exist)
 
 **What got fixed:**
-- Correct Edge Function name: `'fortis-refund'` ✅
+- Correct Edge Function name: `''` ✅
 - Added validation for denial reason ✅
 - Clarified code comments ✅
 

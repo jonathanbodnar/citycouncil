@@ -3,6 +3,7 @@
 import { supabase } from './supabase';
 import { Notification } from '../types';
 import { logger } from '../utils/logger';
+import { magicAuthService } from './magicAuthService';
 
 export const notificationService = {
   // Create a new notification
@@ -96,9 +97,17 @@ export const notificationService = {
 
       // Build template variables
       const firstName = user.full_name?.split(' ')[0] || 'there';
-      const orderLink = order?.fulfillment_token 
-        ? `${window.location.origin}/fulfill/${order.fulfillment_token}`
-        : `${window.location.origin}/dashboard?order=${orderId}`;
+      
+      // Generate fulfillment link with magic auth (one-click login)
+      let orderLink = `${window.location.origin}/dashboard?order=${orderId}`;
+      if (order?.fulfillment_token) {
+        try {
+          orderLink = await magicAuthService.generateFulfillmentUrl(orderId, order.fulfillment_token);
+        } catch (error) {
+          logger.error('Error generating magic auth URL, using fallback:', error);
+          orderLink = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
+        }
+      }
 
       // Replace template variables
       let message = setting.sms_template;
@@ -159,6 +168,11 @@ export const notificationService = {
       { order_id: orderId }
     );
     logger.log('📢 Order confirmed notification result:', result);
+
+    // Send SMS notification to user
+    await this.sendSMSIfEnabled('user_order_placed', userId, orderId, {
+      talent_name: talentName
+    });
   },
 
   async notifyOrderApproved(userId: string, orderId: string, talentName: string): Promise<void> {

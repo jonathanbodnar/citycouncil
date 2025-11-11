@@ -16,6 +16,7 @@ import FortisPaymentForm from '../components/FortisPaymentForm';
 import { lunarPayService } from '../services/lunarPayService';
 import { emailService } from '../services/emailService';
 import { notificationService } from '../services/notificationService';
+import { logger } from '../utils/logger';
 import toast from 'react-hot-toast';
 import { verifyFortisTransaction } from '../services/fortisCommerceService';
 
@@ -67,9 +68,9 @@ const OrderPage: React.FC = () => {
   
   // Debug pricing updates
   useEffect(() => {
-    console.log('isForBusiness changed:', isForBusiness);
-    console.log('Watch value:', watchedValue);
-    console.log('Watch type:', typeof watchedValue);
+    logger.log('isForBusiness changed:', isForBusiness);
+    logger.log('Watch value:', watchedValue);
+    logger.log('Watch type:', typeof watchedValue);
   }, [isForBusiness, watchedValue]);
 
   useEffect(() => {
@@ -98,7 +99,7 @@ const OrderPage: React.FC = () => {
       if (error) throw error;
       setTalent(data);
     } catch (error) {
-      console.error('Error fetching talent:', error);
+      logger.error('Error fetching talent:', error);
       toast.error('Failed to load talent information');
       navigate('/');
     } finally {
@@ -153,22 +154,22 @@ const OrderPage: React.FC = () => {
   };
 
   const handlePaymentSuccess = async (paymentResult: any) => {
-    console.log('handlePaymentSuccess called with', paymentResult);
+    logger.log('handlePaymentSuccess called with', paymentResult);
     if (!talent || !user || !orderData) return;
 
     setSubmitting(true);
     try {
       const pricing = calculatePricing();
-      console.log('pricing for order', pricing);
+      logger.log('pricing for order', pricing);
       // Verify Fortis transaction server-side before recording order
       const transactionId = paymentResult?.id || paymentResult?.transaction_id;
-      console.log('transactionId', transactionId);
+      logger.log('transactionId', transactionId);
       if (transactionId) {
         try {
           const verify = await verifyFortisTransaction(transactionId);
-          console.log('Fortis verify status:', verify.statusCode);
+          logger.log('Fortis verify status:', verify.statusCode);
         } catch (e) {
-          console.warn('Fortis verification failed:', e);
+          logger.warn('Fortis verification failed:', e);
         }
       }
       
@@ -186,7 +187,7 @@ const OrderPage: React.FC = () => {
       }
 
       // Create order in database with payment info
-      console.log('🔄 Inserting order…', {
+      logger.log('🔄 Inserting order…', {
         userId: user.id,
         userEmail: user.email,
         talentId: talent.id,
@@ -222,7 +223,7 @@ const OrderPage: React.FC = () => {
         .select()
         .single();
 
-      console.log('✅ Order insert result:', { 
+      logger.log('✅ Order insert result:', { 
         success: !orderError,
         orderId: order?.id,
         error: orderError,
@@ -280,7 +281,7 @@ const OrderPage: React.FC = () => {
           talent.temp_full_name || talent.users.full_name
         );
       } catch (notifError) {
-        console.error('Error sending notifications:', notifError);
+        logger.error('Error sending notifications:', notifError);
         // Don't fail the order if notifications fail
       }
 
@@ -292,7 +293,7 @@ const OrderPage: React.FC = () => {
       navigate('/dashboard');
 
     } catch (error) {
-      console.error('Error processing order:', error);
+      logger.error('Error processing order:', error);
       toast.error('Failed to process order. Please contact support.');
     } finally {
       setSubmitting(false);

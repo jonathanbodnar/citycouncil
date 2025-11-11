@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
+import { magicAuthService } from '../services/magicAuthService';
 import toast from 'react-hot-toast';
+import { logger } from '../utils/logger';
 
 const OrderFulfillmentPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, refreshAuth } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<any>(null);
@@ -19,16 +22,61 @@ const OrderFulfillmentPage: React.FC = () => {
 
   const verifyTokenAndLoadOrder = async () => {
     try {
-      // If user is not logged in, redirect to login FIRST
-      // Don't try to verify the token yet (RLS will block it)
-      if (!user) {
-        console.log('OrderFulfillmentPage: User not logged in, storing token:', token);
+      // Check for magic auth token in URL
+      const magicToken = searchParams.get('auth');
+      
+      // If user is not logged in but we have a magic token, try auto-login
+      if (!user && magicToken) {
+        logger.log('🔐 Attempting magic link authentication...');
+        const authResult = await magicAuthService.verifyAndConsumeMagicToken(magicToken);
+        
+        if (authResult) {
+          // Get user's email and create an OTP session
+          const { data: userData } = await supabase
+            .from('users')
+            .select('email')
+            .eq('id', authResult.userId)
+            .single();
+
+          if (userData?.email) {
+            // Sign in using Supabase magic link (OTP)
+            const { error } = await supabase.auth.signInWithOtp({
+              email: userData.email,
+              options: {
+                shouldCreateUser: false,
+              }
+            });
+
+            if (!error) {
+              toast.success('Authenticated! Loading your order...', { icon: '✨' });
+              // Wait a moment for auth to propagate
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              await refreshAuth?.();
+              // Continue to verify order below
+            } else {
+              logger.error('Magic auth sign-in failed:', error);
+              toast.error('Authentication failed. Please log in manually.');
+              sessionStorage.setItem('fulfillment_redirect_token', token!);
+              navigate('/login');
+              return;
+            }
+          }
+        } else {
+          logger.log('Invalid or expired magic token');
+          toast('Please log in to fulfill this order', { icon: '🔐' });
+          sessionStorage.setItem('fulfillment_redirect_token', token!);
+          navigate('/login');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // If user is not logged in and no magic token, redirect to login
+      if (!user && !magicToken) {
+        logger.log('OrderFulfillmentPage: User not logged in, storing token:', token);
         toast('Please log in to fulfill this order', { icon: '🔐' });
-        // Store the token in session storage so we can redirect back after login
         if (token) {
           sessionStorage.setItem('fulfillment_redirect_token', token);
-          console.log('OrderFulfillmentPage: Token stored in sessionStorage');
-          console.log('OrderFulfillmentPage: Verification:', sessionStorage.getItem('fulfillment_redirect_token'));
         }
         navigate('/login');
         setLoading(false);
