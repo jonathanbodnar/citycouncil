@@ -679,6 +679,35 @@ const UserDashboard: React.FC = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={user?.phone || ''}
+                  placeholder="Not provided"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                  readOnly
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Used for SMS notifications about your orders
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Type
+                </label>
+                <input
+                  type="text"
+                  value="Customer"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                  readOnly
+                />
+              </div>
+            </div>
+
             {/* Payment Methods - Temporarily disabled */}
             {/* 
             <div className="pt-6 border-t border-gray-200">

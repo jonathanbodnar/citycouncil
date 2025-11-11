@@ -162,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: data.user.email,
               full_name: fullName,
               user_type: userType,
+              phone: phoneNumber || null, // Save phone number to database
             },
           ], {
             onConflict: 'id',
