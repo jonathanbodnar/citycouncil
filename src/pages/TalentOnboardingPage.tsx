@@ -350,6 +350,14 @@ const TalentOnboardingPage: React.FC = () => {
     }
 
     try {
+      // First, check if this talent profile is already linked to a user
+      if (onboardingData?.talent.user_id) {
+        toast.error('This profile is already linked to an account. Please use the login form below.');
+        setLoginData({ email: accountData.email, password: '' });
+        await fetchOnboardingData();
+        return;
+      }
+
       // Create user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: accountData.email,
@@ -453,6 +461,15 @@ const TalentOnboardingPage: React.FC = () => {
 
       if (userInsertError) {
         console.error('Failed to create/update user record:', userInsertError);
+        
+        // If it's a phone number conflict, provide a helpful message
+        if (userInsertError.message?.includes('phone') || userInsertError.message?.includes('unique')) {
+          toast.error('This phone number is already registered. Please use a different phone number or contact support.', {
+            duration: 8000
+          });
+          return;
+        }
+        
         throw new Error('Failed to set up user account. Please contact support.');
       }
 
