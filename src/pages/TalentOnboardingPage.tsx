@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  CheckCircleIcon, 
+  CheckCircleIcon,
+  CheckIcon,
   UserIcon, 
   CreditCardIcon, 
   EyeIcon, 
@@ -75,7 +76,8 @@ const TalentOnboardingPage: React.FC = () => {
 
   // Step 4: Promo Video
   const [welcomeVideoFile, setWelcomeVideoFile] = useState<File | null>(null);
-  const [welcomeVideoUrl, setWelcomeVideoUrl] = useState('');
+  const [welcomeVideoUrl, setWelcomeVideoUrl] = useState(''); // Wasabi URL after upload
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState(''); // Blob URL for preview
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [hasMFAEnrolled, setHasMFAEnrolled] = useState(false);
 
@@ -1573,12 +1575,12 @@ const TalentOnboardingPage: React.FC = () => {
                         const file = e.target.files?.[0];
                         if (file) {
                           setWelcomeVideoFile(file);
+                          setWelcomeVideoUrl(''); // Clear Wasabi URL so it re-uploads
                           const url = URL.createObjectURL(file);
-                          setWelcomeVideoUrl(url);
+                          setVideoPreviewUrl(url);
                         }
                       }}
                       className="hidden"
-                      required
                     />
                     <label
                       htmlFor="promo-video-upload"
@@ -1594,15 +1596,15 @@ const TalentOnboardingPage: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Video Preview */}
-                  {welcomeVideoUrl && (
+                  {/* Video Preview - Only show if we have a local preview URL */}
+                  {videoPreviewUrl && (
                     <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-white mb-2">
                         Video Preview
                       </label>
-                      <div className="relative rounded-xl overflow-hidden bg-gray-100 max-w-md mx-auto">
+                      <div className="relative rounded-xl overflow-hidden bg-gray-900 max-w-md mx-auto">
                         <video
-                          src={welcomeVideoUrl}
+                          src={videoPreviewUrl}
                           controls
                           className="w-full h-auto"
                           style={{ maxHeight: '300px' }}
@@ -1610,6 +1612,19 @@ const TalentOnboardingPage: React.FC = () => {
                           Your browser does not support the video tag.
                         </video>
                       </div>
+                    </div>
+                  )}
+                  
+                  {/* Show message if video is already uploaded to Wasabi */}
+                  {welcomeVideoUrl && !videoPreviewUrl && (
+                    <div className="mt-4 p-4 glass-strong rounded-xl border border-green-500/30 text-center">
+                      <CheckIcon className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                      <p className="text-sm text-white font-medium">
+                        Video successfully uploaded to server!
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        You can continue to the next step or upload a different video.
+                      </p>
                     </div>
                   )}
                 </div>
