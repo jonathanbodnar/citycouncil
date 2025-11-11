@@ -10,6 +10,8 @@ DECLARE
   demo_name TEXT;
   demo_email TEXT;
   created_order_id UUID;
+  talent_phone TEXT;
+  sms_is_enabled BOOLEAN;
   excluded_talent_ids UUID[] := ARRAY[
     (SELECT id FROM talent_profiles WHERE full_name = 'Nick Di Palo'),
     (SELECT id FROM talent_profiles WHERE full_name = 'Shawn Farash'),
@@ -106,6 +108,41 @@ BEGIN
       NOW(),
       false
     );
+
+    -- Get talent phone number
+    SELECT phone INTO talent_phone
+    FROM users
+    WHERE id = NEW.user_id;
+    
+    -- Check if SMS is enabled for this notification type
+    SELECT sms_enabled INTO sms_is_enabled
+    FROM notification_settings
+    WHERE notification_type = 'talent_new_order';
+    
+    -- Send SMS notification if phone number exists and SMS is enabled
+    IF talent_phone IS NOT NULL AND sms_is_enabled = true THEN
+      BEGIN
+        -- Call send-sms Edge Function via HTTP
+        -- Requires: Supabase HTTP extension (pg_net)
+        PERFORM net.http_post(
+          url := current_setting('app.supabase_url', true) || '/functions/v1/send-sms',
+          headers := jsonb_build_object(
+            'Content-Type', 'application/json',
+            'Authorization', 'Bearer ' || current_setting('app.supabase_anon_key', true)
+          ),
+          body := jsonb_build_object(
+            'to', talent_phone,
+            'message', 'New demo ShoutOut order! Check your dashboard to fulfill it: https://shoutout.us/orders'
+          )::text
+        );
+        
+        RAISE NOTICE 'SMS sent to: %', talent_phone;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Log error but don't fail the trigger
+          RAISE NOTICE 'Failed to send SMS: %', SQLERRM;
+      END;
+    END IF;
 
     RAISE NOTICE 'Demo order created for talent: %', NEW.full_name;
   
