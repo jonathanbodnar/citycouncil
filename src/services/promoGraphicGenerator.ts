@@ -77,12 +77,18 @@ async function loadAndDrawAvatar(
       
       // Use Supabase proxy to bypass CORS (Wasabi isn't returning proper headers)
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
+      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY!;
       const proxyUrl = `${supabaseUrl}/functions/v1/proxy-image?url=${encodeURIComponent(avatarUrl)}`;
       
       console.log('🔄 Using proxy:', proxyUrl);
       
-      // Fetch through proxy
-      const response = await fetch(proxyUrl);
+      // Fetch through proxy with authorization
+      const response = await fetch(proxyUrl, {
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'apikey': supabaseAnonKey
+        }
+      });
       if (!response.ok) {
         throw new Error(`Proxy failed: ${response.status}`);
       }
