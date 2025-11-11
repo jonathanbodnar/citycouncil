@@ -325,10 +325,34 @@ const OrdersManagement: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {order.fulfillment_token ? (
                         <button
-                          onClick={() => {
-                            const link = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
-                            navigator.clipboard.writeText(link);
-                            toast.success('Link copied to clipboard!');
+                          onClick={async () => {
+                            try {
+                              // Try to get short link first
+                              const { data: shortLink } = await supabase
+                                .from('short_links')
+                                .select('short_code')
+                                .eq('order_id', order.id)
+                                .order('created_at', { ascending: false })
+                                .limit(1)
+                                .single();
+
+                              let link: string;
+                              if (shortLink?.short_code) {
+                                // Use short link
+                                link = `${window.location.origin}/s/${shortLink.short_code}`;
+                                logger.log('📋 Using short link:', link);
+                              } else {
+                                // Fallback to full link
+                                link = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
+                                logger.log('📋 Using full link (no short link found)');
+                              }
+                              
+                              await navigator.clipboard.writeText(link);
+                              toast.success('Link copied to clipboard!');
+                            } catch (error) {
+                              logger.error('Error copying link:', error);
+                              toast.error('Failed to copy link');
+                            }
                           }}
                           className="text-blue-600 hover:text-blue-800 hover:underline"
                           title="Click to copy fulfillment link"
