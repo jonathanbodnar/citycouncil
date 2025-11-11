@@ -42,7 +42,7 @@ class RefundService {
       } else {
         // Step 2: Process refund via Fortis Edge Function (real orders only)
         console.log('Processing Fortis refund:', request);
-        const { data: fortisData, error: refundError } = await supabase.functions.invoke('fortis-refund', {
+        const { data: fortisData, error: refundError } = await supabase.functions.invoke('fortis-refunds', {
           body: {
             transaction_id: request.transactionId,
             amount: request.amount,
