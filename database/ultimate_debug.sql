@@ -76,49 +76,67 @@ WHERE tgrelid = 'talent_profiles'::regclass
 ORDER BY tgname;
 
 -- 7. Try to manually create a demo order for testingauto
-INSERT INTO orders (
-  id,
-  user_id,
-  talent_id,
-  request_details,
-  order_type,
-  amount,
-  admin_fee,
-  status,
-  fulfillment_deadline,
-  payment_transaction_id,
-  is_corporate,
-  is_corporate_order,
-  approval_status,
-  created_at,
-  updated_at
-)
+DO $$
+DECLARE
+  demo_user_id UUID;
+  demo_talent_id UUID;
+  demo_email TEXT;
+  created_order_id UUID;
+BEGIN
+  -- Get testingauto talent ID
+  SELECT id INTO demo_talent_id
+  FROM talent_profiles
+  WHERE full_name ILIKE '%testingauto%'
+  LIMIT 1;
+  
+  IF demo_talent_id IS NOT NULL THEN
+    demo_email := 'demo_customer_' || demo_talent_id || '@shoutout.us';
+    
+    -- Check if demo user exists
+    SELECT id INTO demo_user_id
+    FROM users
+    WHERE email = demo_email;
+    
+    -- Create demo user if doesn't exist
+    IF demo_user_id IS NULL THEN
+      demo_user_id := gen_random_uuid();
+      INSERT INTO users (id, email, full_name, user_type, created_at, updated_at)
+      VALUES (demo_user_id, demo_email, 'Michael Thompson', 'user', NOW(), NOW());
+    END IF;
+    
+    -- Create demo order if doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM orders WHERE talent_id = demo_talent_id AND order_type = 'demo') THEN
+      INSERT INTO orders (
+        id, user_id, talent_id, request_details, order_type, amount, admin_fee, status,
+        fulfillment_deadline, payment_transaction_id, is_corporate, is_corporate_order,
+        approval_status, created_at, updated_at
+      ) VALUES (
+        gen_random_uuid(), demo_user_id, demo_talent_id,
+        'TEST: Manual demo order creation - Wish my mother Linda a happy 90th birthday!',
+        'demo', 1, 0, 'pending', NOW() + INTERVAL '48 hours',
+        'MANUAL_DEMO_' || demo_talent_id, false, false, 'approved', NOW(), NOW()
+      )
+      RETURNING id INTO created_order_id;
+      
+      RAISE NOTICE '✅ Created demo order: %', created_order_id;
+    ELSE
+      RAISE NOTICE 'ℹ️ Demo order already exists for testingauto';
+    END IF;
+  END IF;
+END $$;
+
+-- Show result of manual creation
 SELECT 
-  gen_random_uuid(),
-  (SELECT gen_random_uuid()), -- temp user
-  tp.id,
-  'TEST: Manual demo order creation',
-  'demo',
-  1, -- $0.01
-  0,
-  'pending',
-  NOW() + INTERVAL '48 hours',
-  'MANUAL_DEMO_' || tp.id,
-  false,
-  false,
-  'approved',
-  NOW(),
-  NOW()
-FROM talent_profiles tp
-WHERE tp.full_name ILIKE '%testingauto%'
-AND NOT EXISTS (SELECT 1 FROM orders WHERE talent_id = tp.id AND order_type = 'demo')
-LIMIT 1
-RETURNING 
   '7. MANUAL DEMO ORDER CREATION' as step,
-  '✅ Created demo order manually' as status,
-  id as order_id,
-  order_type,
-  amount;
+  CASE 
+    WHEN COUNT(*) > 0 THEN '✅ Demo order exists'
+    ELSE '❌ Failed to create demo order'
+  END as status,
+  COUNT(*) as demo_order_count
+FROM orders o
+JOIN talent_profiles tp ON tp.id = o.talent_id
+WHERE tp.full_name ILIKE '%testingauto%'
+AND o.order_type = 'demo';
 
 -- 8. Final order list for testingauto
 SELECT 
