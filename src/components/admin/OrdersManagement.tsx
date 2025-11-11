@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { refundService } from '../../services/refundService';
 import toast from 'react-hot-toast';
+import { logger } from '../../utils/logger';
 import {
   MagnifyingGlassIcon,
   XCircleIcon,
@@ -53,7 +54,7 @@ const OrdersManagement: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      console.log('🔍 [ADMIN] Fetching all orders...');
+      logger.log('🔍 [ADMIN] Fetching all orders...');
       
       const { data, error } = await supabase
         .from('orders')
@@ -72,7 +73,7 @@ const OrdersManagement: React.FC = () => {
         `)
         .order('created_at', { ascending: false });
 
-      console.log('📦 [ADMIN] Orders query result:', {
+      logger.log('📦 [ADMIN] Orders query result:', {
         count: data?.length || 0,
         error: error,
         ordersByUser: data?.reduce((acc: any, order: any) => {
@@ -85,7 +86,7 @@ const OrdersManagement: React.FC = () => {
       if (error) throw error;
       setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      logger.error('Error fetching orders:', error);
       toast.error('Failed to load orders');
     } finally {
       setLoading(false);
@@ -122,7 +123,7 @@ const OrdersManagement: React.FC = () => {
         toast.error(result.error || 'Failed to process refund');
       }
     } catch (error: any) {
-      console.error('Error denying order:', error);
+      logger.error('Error denying order:', error);
       toast.error(error.message || 'Failed to deny order');
     } finally {
       setProcessing(false);
@@ -171,7 +172,7 @@ const OrdersManagement: React.FC = () => {
         toast.error(result.error || 'Failed to process refund');
       }
     } catch (error: any) {
-      console.error('Error processing refund:', error);
+      logger.error('Error processing refund:', error);
       toast.error(error.message || 'Failed to process refund');
     } finally {
       setProcessing(false);
