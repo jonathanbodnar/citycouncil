@@ -15,10 +15,16 @@ JOIN talent_profiles tp ON tp.id = o.talent_id
 WHERE o.order_type = 'demo'
 ORDER BY o.created_at DESC;
 
--- 2. Delete ALL existing demo orders
+-- 2. Delete notifications for demo orders first (to avoid FK constraint)
+DELETE FROM notifications 
+WHERE order_id IN (
+  SELECT id FROM orders WHERE order_type = 'demo'
+);
+
+-- 3. Delete ALL existing demo orders
 DELETE FROM orders WHERE order_type = 'demo';
 
--- 3. Get list of all onboarded talents (excluding the 3 specific ones)
+-- 4. Get list of all onboarded talents (excluding the 3 specific ones)
 SELECT 
   'Talents that should have demo orders' as status,
   id,
@@ -29,7 +35,7 @@ WHERE onboarding_completed = true
 AND full_name NOT IN ('Nick Di Palo', 'Shawn Farash', 'Gerald Morgan')
 ORDER BY full_name;
 
--- 4. Create demo orders for ALL eligible talents using john@example.com
+-- 5. Create demo orders for ALL eligible talents using john@example.com
 INSERT INTO orders (
   id,
   user_id,
@@ -75,7 +81,7 @@ RETURNING
   id,
   talent_id;
 
--- 5. Create notifications for all these demo orders
+-- 6. Create notifications for all these demo orders
 INSERT INTO notifications (
   id,
   user_id,
@@ -108,7 +114,7 @@ RETURNING
   type,
   title;
 
--- 6. Show final demo orders (after fix)
+-- 7. Show final demo orders (after fix)
 SELECT 
   'AFTER: All Demo Orders Now Use John Smith' as status,
   o.id,
