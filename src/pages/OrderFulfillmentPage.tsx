@@ -103,7 +103,7 @@ const OrderFulfillmentPage: React.FC = () => {
       // Verify the logged-in user is the talent for this order
       const talentUserId = orderData.talent_profiles?.user_id;
       
-      if (user.id !== talentUserId) {
+      if (!user || user.id !== talentUserId) {
         toast.error('This order is not assigned to you');
         navigate('/');
         return;
