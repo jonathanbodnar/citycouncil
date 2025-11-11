@@ -5,7 +5,9 @@ import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
   CheckCircleIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  BellIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
@@ -34,7 +36,23 @@ interface Message {
   status: 'sent' | 'delivered' | 'failed';
 }
 
+interface SystemNotification {
+  id: string;
+  created_at: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  users: {
+    full_name: string;
+    email: string;
+    user_type: string;
+  };
+}
+
 const CommsCenterManagement: React.FC = () => {
+  const [activeView, setActiveView] = useState<'sms' | 'notifications'>('sms');
   const [talents, setTalents] = useState<TalentWithPhone[]>([]);
   const [filteredTalents, setFilteredTalents] = useState<TalentWithPhone[]>([]);
   const [selectedTalent, setSelectedTalent] = useState<TalentWithPhone | null>(null);
@@ -46,13 +64,20 @@ const CommsCenterManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | 'live' | 'coming_soon' | 'other'>('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [notifications, setNotifications] = useState<SystemNotification[]>([]);
+  const [notificationSearch, setNotificationSearch] = useState('');
+  const [notificationTypeFilter, setNotificationTypeFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchTalentsWithPhone();
-    // Poll for unread counts every 5 seconds
-    const interval = setInterval(() => fetchUnreadCounts(), 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (activeView === 'sms') {
+      fetchTalentsWithPhone();
+      // Poll for unread counts every 5 seconds
+      const interval = setInterval(() => fetchUnreadCounts(), 5000);
+      return () => clearInterval(interval);
+    } else {
+      fetchNotifications();
+    }
+  }, [activeView]);
 
   useEffect(() => {
     if (selectedTalent) {
@@ -216,6 +241,39 @@ const CommsCenterManagement: React.FC = () => {
     }
   };
 
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const { data, error} = await supabase
+        .from('notifications')
+        .select(`
+          id,
+          created_at,
+          user_id,
+          type,
+          title,
+          message,
+          is_read,
+          users!notifications_user_id_fkey (
+            full_name,
+            email,
+            user_type
+          )
+        `)
+        .eq('users.user_type', 'talent')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (error) throw error;
+      setNotifications(data as unknown as SystemNotification[] || []);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast.error('Failed to load notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!messageText.trim() || !selectedTalent) return;
 
@@ -319,6 +377,22 @@ const CommsCenterManagement: React.FC = () => {
     );
   }
 
+  // Filter notifications based on search and type
+  const filteredNotifications = notifications.filter(notif => {
+    const matchesSearch = 
+      notif.users.full_name.toLowerCase().includes(notificationSearch.toLowerCase()) ||
+      notif.users.email.toLowerCase().includes(notificationSearch.toLowerCase()) ||
+      notif.title.toLowerCase().includes(notificationSearch.toLowerCase()) ||
+      notif.message.toLowerCase().includes(notificationSearch.toLowerCase());
+    
+    const matchesType = notificationTypeFilter === 'all' || notif.type === notificationTypeFilter;
+    
+    return matchesSearch && matchesType;
+  });
+
+  // Get unique notification types for filter
+  const notificationTypes = ['all', ...Array.from(new Set(notifications.map(n => n.type)))];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -326,7 +400,9 @@ const CommsCenterManagement: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Communications Center</h2>
-            <p className="text-gray-600">Send SMS messages to talent</p>
+            <p className="text-gray-600">
+              {activeView === 'sms' ? 'Send SMS messages to talent' : 'View system notifications sent to talent'}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -354,7 +430,34 @@ const CommsCenterManagement: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Filter Tabs */}
+        {/* View Toggle */}
+        <div className="flex items-center gap-2 border-b border-gray-200 pb-4">
+          <button
+            onClick={() => setActiveView('sms')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeView === 'sms'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <ChatBubbleLeftRightIcon className="h-5 w-5" />
+            SMS Messages
+          </button>
+          <button
+            onClick={() => setActiveView('notifications')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeView === 'notifications'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <BellIcon className="h-5 w-5" />
+            System Notifications
+          </button>
+        </div>
+
+        {/* Status Filter Tabs (only for SMS view) */}
+        {activeView === 'sms' && (
         <div className="flex items-center gap-2 border-b border-gray-200">
           <button
             onClick={() => setStatusFilter('all')}
@@ -397,10 +500,11 @@ const CommsCenterManagement: React.FC = () => {
             Other ({talents.filter(t => (t as any).is_active === false && !(t as any).is_coming_soon).length})
           </button>
         </div>
+        )}
       </div>
 
       {/* Mass Message Modal */}
-      {showMassMessage && (
+      {activeView === 'sms' && showMassMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-lg w-full">
             <div className="flex items-center justify-between mb-4">
@@ -446,7 +550,8 @@ const CommsCenterManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Content - SMS View */}
+      {activeView === 'sms' && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Talent List */}
         <div className="md:col-span-1 glass rounded-2xl shadow-modern border border-gray-200 p-4">
@@ -635,6 +740,152 @@ const CommsCenterManagement: React.FC = () => {
           )}
         </div>
       </div>
+      )}
+
+      {/* Main Content - Notifications View */}
+      {activeView === 'notifications' && (
+        <div className="space-y-4">
+          {/* Search and Filter */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search notifications..."
+                value={notificationSearch}
+                onChange={(e) => setNotificationSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <select
+              value={notificationTypeFilter}
+              onChange={(e) => setNotificationTypeFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {notificationTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type === 'all' ? 'All Types' : type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={fetchNotifications}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              title="Refresh notifications"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+              Refresh
+            </button>
+          </div>
+
+          {/* Notifications Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="glass rounded-lg p-4">
+              <div className="text-sm text-gray-600">Total</div>
+              <div className="text-2xl font-bold text-gray-900">{notifications.length}</div>
+            </div>
+            <div className="glass rounded-lg p-4">
+              <div className="text-sm text-gray-600">Unread</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {notifications.filter(n => !n.is_read).length}
+              </div>
+            </div>
+            <div className="glass rounded-lg p-4">
+              <div className="text-sm text-gray-600">Read</div>
+              <div className="text-2xl font-bold text-green-600">
+                {notifications.filter(n => n.is_read).length}
+              </div>
+            </div>
+            <div className="glass rounded-lg p-4">
+              <div className="text-sm text-gray-600">Types</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {new Set(notifications.map(n => n.type)).size}
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications Table */}
+          <div className="glass rounded-2xl shadow-modern border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date/Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Talent
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Message
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredNotifications.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                        <BellIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                        <p>No notifications found</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredNotifications.map((notif) => (
+                      <tr key={notif.id} className={!notif.is_read ? 'bg-blue-50' : ''}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(notif.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{notif.users.full_name}</div>
+                          <div className="text-sm text-gray-500">{notif.users.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                            {notif.type.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {notif.title}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-md truncate">
+                          {notif.message}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {notif.is_read ? (
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                              <CheckCircleIcon className="h-4 w-4 mr-1" />
+                              Read
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                              <BellIcon className="h-4 w-4 mr-1" />
+                              Unread
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="text-sm text-gray-600 text-center">
+            Showing {filteredNotifications.length} of {notifications.length} notifications
+          </div>
+        </div>
+      )}
     </div>
   );
 };
