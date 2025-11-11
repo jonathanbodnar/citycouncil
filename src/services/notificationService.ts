@@ -77,11 +77,11 @@ export const notificationService = {
       // Get user details
       const { data: user } = await supabase
         .from('users')
-        .select('full_name, phone_number')
+        .select('full_name, phone')
         .eq('id', userId)
         .single();
 
-      if (!user || !user.phone_number) {
+      if (!user || !user.phone) {
         console.log('User phone not found for SMS');
         return;
       }
@@ -109,10 +109,10 @@ export const notificationService = {
       message = message.replace(/\{\{hours\}\}/g, variables.hours || '');
 
       // Send SMS via Twilio Edge Function
-      console.log('📱 Sending SMS:', { to: user.phone_number, message });
+      console.log('📱 Sending SMS:', { to: user.phone, message });
       const { error } = await supabase.functions.invoke('send-sms', {
         body: {
-          to: user.phone_number,
+          to: user.phone,
           message: message
         }
       });
