@@ -77,6 +77,7 @@ const TalentOnboardingPage: React.FC = () => {
   const [welcomeVideoFile, setWelcomeVideoFile] = useState<File | null>(null);
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState('');
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [hasMFAEnrolled, setHasMFAEnrolled] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -84,6 +85,56 @@ const TalentOnboardingPage: React.FC = () => {
       loadSavedProgress();
     }
   }, [token]);
+
+  // Check if user already has MFA enrolled when reaching step 5
+  useEffect(() => {
+    const checkExistingMFA = async () => {
+      if (currentStep === 5) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          const hasVerifiedFactor = factors?.all?.some((f: any) => f.status === 'verified');
+          
+          console.log('📱 MFA Status Check:', {
+            hasVerifiedFactor,
+            factors: factors?.all
+          });
+
+          if (hasVerifiedFactor) {
+            console.log('✅ User already has MFA enrolled, skipping enrollment step');
+            setHasMFAEnrolled(true);
+            
+            // Auto-complete onboarding since MFA is already set up
+            const { error: completeError } = await supabase
+              .from('talent_profiles')
+              .update({
+                onboarding_completed: true,
+                current_onboarding_step: 5,
+                is_active: true,
+                onboarding_token: null,
+                onboarding_expires_at: null
+              })
+              .eq('id', onboardingData?.talent.id);
+
+            if (completeError) throw completeError;
+
+            // Clear saved progress
+            const savedKey = `admin_onboarding_progress_${token}`;
+            localStorage.removeItem(savedKey);
+
+            toast.success('Welcome back! Your account is already secured with 2FA.');
+            navigate('/welcome');
+          }
+        } catch (error) {
+          console.error('Error checking MFA status:', error);
+        }
+      }
+    };
+
+    checkExistingMFA();
+  }, [currentStep, onboardingData, token, navigate]);
 
   // Load saved progress from localStorage
   const loadSavedProgress = () => {
@@ -1571,7 +1622,7 @@ const TalentOnboardingPage: React.FC = () => {
                     }
 
                     toast.success('Welcome to ShoutOut! Your account is now fully secured.');
-                    navigate('/dashboard');
+                    navigate('/welcome');
                   } catch (error: any) {
                     console.error('Error completing onboarding:', error);
                     toast.error('Failed to complete onboarding');
