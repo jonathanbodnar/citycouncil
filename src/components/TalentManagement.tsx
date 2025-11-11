@@ -639,48 +639,93 @@ const TalentManagement: React.FC = () => {
         if (!confirmDelete) return;
       }
 
-      // Delete related records first (in order to avoid foreign key constraints)
+      // Delete related records first (in correct order to avoid foreign key constraints)
       
-      // 1. Delete reviews
-      await supabase
-        .from('reviews')
-        .delete()
-        .eq('talent_id', talentId);
-
-      // 2. Delete notifications related to orders
       if (orders && orders.length > 0) {
         const orderIds = orders.map(o => o.id);
-        await supabase
+        
+        // 1. Delete reviews (references orders)
+        const { error: reviewsError } = await supabase
+          .from('reviews')
+          .delete()
+          .in('order_id', orderIds);
+        
+        if (reviewsError) console.error('Error deleting reviews:', reviewsError);
+
+        // 2. Delete notifications (references orders)
+        const { error: notificationsError } = await supabase
           .from('notifications')
           .delete()
           .in('order_id', orderIds);
+        
+        if (notificationsError) console.error('Error deleting notifications:', notificationsError);
+
+        // 3. Delete short links (references orders)
+        const { error: shortLinksError } = await supabase
+          .from('short_links')
+          .delete()
+          .in('order_id', orderIds);
+        
+        if (shortLinksError) console.error('Error deleting short links:', shortLinksError);
+
+        // 4. Delete fulfillment auth tokens (references orders)
+        const { error: authTokensError } = await supabase
+          .from('fulfillment_auth_tokens')
+          .delete()
+          .in('order_id', orderIds);
+        
+        if (authTokensError) console.error('Error deleting auth tokens:', authTokensError);
+
+        // 5. Delete magic auth tokens (references orders)
+        const { error: magicTokensError } = await supabase
+          .from('magic_auth_tokens')
+          .delete()
+          .in('order_id', orderIds);
+        
+        if (magicTokensError) console.error('Error deleting magic tokens:', magicTokensError);
       }
 
-      // 3. Delete orders
-      await supabase
+      // 6. Delete reviews by talent_id (talent reviews)
+      const { error: talentReviewsError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('talent_id', talentId);
+      
+      if (talentReviewsError) console.error('Error deleting talent reviews:', talentReviewsError);
+
+      // 7. Delete orders (now that all references are cleared)
+      const { error: ordersDeleteError } = await supabase
         .from('orders')
         .delete()
         .eq('talent_id', talentId);
 
-      // 4. Delete promotional videos
-      await supabase
+      if (ordersDeleteError) throw ordersDeleteError;
+
+      // 8. Delete promotional videos
+      const { error: videosError } = await supabase
         .from('promotional_videos')
         .delete()
         .eq('talent_id', talentId);
+      
+      if (videosError) console.error('Error deleting promotional videos:', videosError);
 
-      // 5. Delete social accounts
-      await supabase
+      // 9. Delete social accounts
+      const { error: socialError } = await supabase
         .from('social_accounts')
         .delete()
         .eq('talent_profile_id', talentId);
+      
+      if (socialError) console.error('Error deleting social accounts:', socialError);
 
-      // 6. Delete blocked availability
-      await supabase
+      // 10. Delete blocked availability
+      const { error: availabilityError } = await supabase
         .from('blocked_availability')
         .delete()
         .eq('talent_id', talentId);
+      
+      if (availabilityError) console.error('Error deleting blocked availability:', availabilityError);
 
-      // 7. Finally, delete the talent profile
+      // 11. Finally, delete the talent profile
       const { error } = await supabase
         .from('talent_profiles')
         .delete()
