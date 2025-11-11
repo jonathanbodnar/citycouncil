@@ -619,11 +619,68 @@ const TalentManagement: React.FC = () => {
   };
 
   const deleteTalent = async (talentId: string, talentName: string) => {
-    if (!window.confirm(`Are you sure you want to delete ${talentName}? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to delete ${talentName}? This action cannot be undone and will also delete all related data (orders, reviews, etc.).`)) {
       return;
     }
 
     try {
+      // Check if talent has any orders
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('talent_id', talentId);
+
+      if (ordersError) throw ordersError;
+
+      if (orders && orders.length > 0) {
+        const confirmDelete = window.confirm(
+          `This talent has ${orders.length} order(s). Deleting the profile will also delete all orders, reviews, and notifications. Are you ABSOLUTELY sure?`
+        );
+        if (!confirmDelete) return;
+      }
+
+      // Delete related records first (in order to avoid foreign key constraints)
+      
+      // 1. Delete reviews
+      await supabase
+        .from('reviews')
+        .delete()
+        .eq('talent_id', talentId);
+
+      // 2. Delete notifications related to orders
+      if (orders && orders.length > 0) {
+        const orderIds = orders.map(o => o.id);
+        await supabase
+          .from('notifications')
+          .delete()
+          .in('order_id', orderIds);
+      }
+
+      // 3. Delete orders
+      await supabase
+        .from('orders')
+        .delete()
+        .eq('talent_id', talentId);
+
+      // 4. Delete promotional videos
+      await supabase
+        .from('promotional_videos')
+        .delete()
+        .eq('talent_id', talentId);
+
+      // 5. Delete social accounts
+      await supabase
+        .from('social_accounts')
+        .delete()
+        .eq('talent_profile_id', talentId);
+
+      // 6. Delete blocked availability
+      await supabase
+        .from('blocked_availability')
+        .delete()
+        .eq('talent_id', talentId);
+
+      // 7. Finally, delete the talent profile
       const { error } = await supabase
         .from('talent_profiles')
         .delete()
@@ -631,12 +688,12 @@ const TalentManagement: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Talent profile deleted successfully');
+      toast.success('Talent profile and all related data deleted successfully');
       fetchTalents();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting talent:', error);
-      toast.error('Failed to delete talent profile');
+      toast.error(`Failed to delete talent profile: ${error.message || 'Unknown error'}`);
     }
   };
 
