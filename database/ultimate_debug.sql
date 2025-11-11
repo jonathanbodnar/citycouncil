@@ -7,7 +7,7 @@ SELECT
     WHEN COUNT(*) > 0 THEN '✅ Trigger EXISTS'
     ELSE '❌ Trigger MISSING'
   END as status,
-  STRING_AGG(tgname || ' (enabled: ' || tgenabled || ')', ', ') as details
+  STRING_AGG(tgname::text || ' (enabled: ' || tgenabled::text || ')', ', ') as details
 FROM pg_trigger
 WHERE tgname = 'on_talent_onboarded';
 
