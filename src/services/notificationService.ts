@@ -2,6 +2,7 @@
 
 import { supabase } from './supabase';
 import { Notification } from '../types';
+import { logger } from '../utils/logger';
 
 export const notificationService = {
   // Create a new notification
@@ -30,14 +31,14 @@ export const notificationService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error creating notification:', error);
+      logger.error('Error creating notification:', error);
       return false;
     }
   },
 
   // Talent notifications
   async notifyNewOrder(talentUserId: string, orderId: string, userName: string, amount: number): Promise<void> {
-    console.log('📢 Creating new order notification for talent:', { talentUserId, orderId, userName, amount });
+    logger.log('📢 Creating new order notification for talent:', { talentUserId, orderId, userName, amount });
     const result = await this.createNotification(
       talentUserId,
       'order_placed',
@@ -45,7 +46,7 @@ export const notificationService = {
       `${userName} ordered a ShoutOut for $${amount.toFixed(2)}`,
       { order_id: orderId }
     );
-    console.log('📢 New order notification result:', result);
+    logger.log('📢 New order notification result:', result);
 
     // Check if SMS is enabled for this notification type
     await this.sendSMSIfEnabled('talent_new_order', talentUserId, orderId, {
@@ -70,7 +71,7 @@ export const notificationService = {
         .single();
 
       if (!setting || !setting.sms_enabled || !setting.sms_template) {
-        console.log(`SMS not enabled for ${notificationType}`);
+        logger.log(`SMS not enabled for ${notificationType}`);
         return;
       }
 
@@ -82,7 +83,7 @@ export const notificationService = {
         .single();
 
       if (!user || !user.phone) {
-        console.log('User phone not found for SMS');
+        logger.log('User phone not found for SMS');
         return;
       }
 
@@ -110,7 +111,7 @@ export const notificationService = {
 
       // Send SMS via Twilio Edge Function
       const maskedPhone = user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-      console.log('📱 Sending SMS to:', maskedPhone);
+      logger.log('📱 Sending SMS to:', maskedPhone);
       const { error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: user.phone,
@@ -119,12 +120,12 @@ export const notificationService = {
       });
 
       if (error) {
-        console.error('Error sending SMS:', error);
+        logger.error('Error sending SMS:', error);
       } else {
-        console.log('✅ SMS sent successfully to:', maskedPhone);
+        logger.log('✅ SMS sent successfully to:', maskedPhone);
       }
     } catch (error) {
-      console.error('Error in sendSMSIfEnabled:', error);
+      logger.error('Error in sendSMSIfEnabled:', error);
     }
   },
 
@@ -149,7 +150,7 @@ export const notificationService = {
 
   // User notifications
   async notifyOrderConfirmed(userId: string, orderId: string, talentName: string): Promise<void> {
-    console.log('📢 Creating order confirmed notification for user:', { userId, orderId, talentName });
+    logger.log('📢 Creating order confirmed notification for user:', { userId, orderId, talentName });
     const result = await this.createNotification(
       userId,
       'order_placed',
@@ -157,11 +158,11 @@ export const notificationService = {
       `Your ShoutOut from ${talentName} is confirmed and being created!`,
       { order_id: orderId }
     );
-    console.log('📢 Order confirmed notification result:', result);
+    logger.log('📢 Order confirmed notification result:', result);
   },
 
   async notifyOrderApproved(userId: string, orderId: string, talentName: string): Promise<void> {
-    console.log('📢 Creating order approved notification for user:', { userId, orderId, talentName });
+    logger.log('📢 Creating order approved notification for user:', { userId, orderId, talentName });
     
     // In-app notification
     const result = await this.createNotification(
@@ -171,7 +172,7 @@ export const notificationService = {
       `Great news! ${talentName} approved your ShoutOut order and will start working on it soon.`,
       { order_id: orderId }
     );
-    console.log('📢 Order approved notification result:', result);
+    logger.log('📢 Order approved notification result:', result);
 
     // SMS notification
     await this.sendSMSIfEnabled('user_order_approved', userId, orderId, {
@@ -180,7 +181,7 @@ export const notificationService = {
   },
 
   async notifyOrderDelivered(userId: string, orderId: string, talentName: string): Promise<void> {
-    console.log('📢 Creating order delivered notification for user:', { userId, orderId, talentName });
+    logger.log('📢 Creating order delivered notification for user:', { userId, orderId, talentName });
     
     // In-app notification
     const result = await this.createNotification(
@@ -190,7 +191,7 @@ export const notificationService = {
       `${talentName} has completed your personalized video. Watch it now!`,
       { order_id: orderId }
     );
-    console.log('📢 Order delivered notification result:', result);
+    logger.log('📢 Order delivered notification result:', result);
 
     // SMS notification
     await this.sendSMSIfEnabled('user_order_completed', userId, orderId, {
@@ -209,7 +210,7 @@ export const notificationService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      logger.error('Error marking notification as read:', error);
       return false;
     }
   },
@@ -226,7 +227,7 @@ export const notificationService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error marking all as read:', error);
+      logger.error('Error marking all as read:', error);
       return false;
     }
   }

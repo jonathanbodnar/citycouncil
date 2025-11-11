@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { emailService } from './emailService';
 import { notificationService } from './notificationService';
+import { logger } from '../utils/logger';
 
 export interface RefundRequest {
   orderId: string;
@@ -32,7 +33,7 @@ class RefundService {
       let refundData = null;
 
       if (isDemoOrder) {
-        console.log('Skipping refund for demo order:', request.orderId);
+        logger.log('Skipping refund for demo order:', request.orderId);
         refundData = {
           success: true,
           refund_id: null,
@@ -41,7 +42,7 @@ class RefundService {
         };
       } else {
         // Step 2: Process refund via Fortis Edge Function (real orders only)
-        console.log('Processing Fortis refund:', request);
+        logger.log('Processing Fortis refund:', request);
         const { data: fortisData, error: refundError } = await supabase.functions.invoke('fortis-refunds', {
           body: {
             transaction_id: request.transactionId,
@@ -55,11 +56,11 @@ class RefundService {
         }
 
         refundData = fortisData;
-        console.log('Fortis refund successful:', refundData);
+        logger.log('Fortis refund successful:', refundData);
       }
 
       // Step 3: Update order status to 'denied'
-      console.log('Updating order status to denied for order:', request.orderId);
+      logger.log('Updating order status to denied for order:', request.orderId);
       const { data: updateData, error: updateError } = await supabase
         .from('orders')
         .update({
@@ -73,19 +74,19 @@ class RefundService {
         .eq('id', request.orderId)
         .select();
 
-      console.log('Order update result:', { updateData, updateError });
+      logger.log('Order update result:', { updateData, updateError });
 
       if (updateError) {
-        console.error('Failed to update order status:', updateError);
+        logger.error('Failed to update order status:', updateError);
         throw new Error('Refund processed but failed to update order status');
       }
 
       if (!updateData || updateData.length === 0) {
-        console.error('Order not found or not updated:', request.orderId);
+        logger.error('Order not found or not updated:', request.orderId);
         throw new Error('Order not found or update failed');
       }
 
-      console.log('Order status updated successfully to denied');
+      logger.log('Order status updated successfully to denied');
 
       // Step 4: Get order details for notifications
       const { data: order, error: orderError } = await supabase
@@ -107,7 +108,7 @@ class RefundService {
         .single();
 
       if (orderError || !order) {
-        console.warn('Could not fetch order for notifications:', orderError);
+        logger.warn('Could not fetch order for notifications:', orderError);
         // Don't fail the refund if notification fails
         return {
           success: true,
@@ -123,7 +124,7 @@ class RefundService {
         refundId: refundData.refund_id,
       };
     } catch (error: any) {
-      console.error('Refund service error:', error);
+      logger.error('Refund service error:', error);
       return {
         success: false,
         error: error.message || 'Failed to process refund',
@@ -210,9 +211,9 @@ class RefundService {
         html: emailHtml
       });
 
-      console.log('Denial notifications sent successfully');
+      logger.log('Denial notifications sent successfully');
     } catch (error) {
-      console.error('Failed to send denial notifications:', error);
+      logger.error('Failed to send denial notifications:', error);
       // Don't throw - notifications are not critical
     }
   }
