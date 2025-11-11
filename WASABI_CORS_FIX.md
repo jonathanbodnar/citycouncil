@@ -1,82 +1,75 @@
-# Fix Wasabi CORS Issues
+# Fix Wasabi CORS for Promo Graphic Generator
 
-## The Problem
+## The Issue
+Images hosted on Wasabi S3 are being blocked by CORS when loaded in the browser canvas for promo graphic generation.
 
-Videos are showing this error:
-```
-Access to video at 'https://shoutoutorders.s3.us-central-1.wasabisys.com/...' 
-from origin 'https://shoutout.us' has been blocked by CORS policy: 
-No 'Access-Control-Allow-Origin' header is present on the requested resource.
-```
+## Solution: Configure CORS on Wasabi Buckets
 
-## The Solution
+### Method 1: Wasabi Console (Easiest)
 
-Add CORS configuration to your Wasabi bucket.
+1. Go to [Wasabi Console](https://console.wasabisys.com/)
+2. Click on your bucket: **`shoutout-assets`**
+3. Go to **Settings** → **CORS Configuration**
+4. Add this CORS policy:
 
-### Steps to Fix
-
-1. **Log into Wasabi Console**
-   - Go to: https://console.wasabisys.com/
-   - Navigate to your `shoutoutorders` bucket
-
-2. **Set CORS Configuration**
-   - Click on the bucket name
-   - Go to "Settings" tab
-   - Find "CORS Configuration" section
-   - Click "Edit"
-
-3. **Add This CORS Policy**
-
-```json
-[
-  {
-    "AllowedHeaders": [
-      "*"
-    ],
-    "AllowedMethods": [
-      "GET",
-      "HEAD"
-    ],
-    "AllowedOrigins": [
-      "https://shoutout.us",
-      "http://localhost:3000"
-    ],
-    "ExposeHeaders": [
-      "ETag"
-    ],
-    "MaxAgeSeconds": 3000
-  }
-]
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <CORSRule>
+    <AllowedOrigin>https://shoutout.us</AllowedOrigin>
+    <AllowedOrigin>https://*.railway.app</AllowedOrigin>
+    <AllowedOrigin>http://localhost:3000</AllowedOrigin>
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>HEAD</AllowedMethod>
+    <AllowedHeader>*</AllowedHeader>
+    <ExposeHeader>ETag</ExposeHeader>
+    <ExposeHeader>Content-Length</ExposeHeader>
+    <MaxAgeSeconds>3600</MaxAgeSeconds>
+  </CORSRule>
+</CORSConfiguration>
 ```
 
-4. **Save the Configuration**
+5. Click **Save**
 
-### What This Does
+### Method 2: AWS CLI (if you have it configured)
 
-- **AllowedOrigins**: Allows requests from `shoutout.us` and localhost (for development)
-- **AllowedMethods**: Allows GET and HEAD requests (needed for video loading)
-- **AllowedHeaders**: Allows all headers
-- **MaxAgeSeconds**: Browsers cache this policy for 3000 seconds
+```bash
+# Create a file: cors-config.json
+cat > cors-config.json << EOF
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": ["https://shoutout.us", "https://*.railway.app", "http://localhost:3000"],
+      "AllowedMethods": ["GET", "HEAD"],
+      "AllowedHeaders": ["*"],
+      "ExposeHeaders": ["ETag", "Content-Length"],
+      "MaxAgeSeconds": 3600
+    }
+  ]
+}
+EOF
 
-### Testing
+# Apply to bucket
+aws s3api put-bucket-cors \
+  --bucket shoutout-assets \
+  --cors-configuration file://cors-config.json \
+  --endpoint-url=https://s3.us-central-1.wasabisys.com
+```
 
-After adding CORS policy:
+### What This Does:
+- ✅ Allows `https://shoutout.us` to load images in canvas
+- ✅ Allows Railway preview URLs for testing
+- ✅ Allows localhost for development
+- ✅ Only allows safe methods (GET, HEAD)
+- ✅ Caches CORS preflight for 1 hour
 
-1. Clear browser cache or open incognito window
-2. Go to https://shoutout.us
-3. Videos should now load properly
-4. Check console - CORS errors should be gone
+### Test After Setup:
+Try generating the promo graphic again - it should work!
 
-### Also Add CORS to `shoutout-assets` Bucket
+## Alternative: If CORS Still Doesn't Work
 
-Repeat the same steps for the `shoutout-assets` bucket (used for images).
+If Wasabi CORS config doesn't work for some reason, we can:
+1. Use the Edge Function proxy we created (`proxy-image`)
+2. Or serve images through Cloudflare (which adds proper CORS headers)
 
-## Alternative: Use CloudFlare (Later)
-
-Once you set up CloudFlare CDN properly:
-- CloudFlare will handle CORS for you
-- Videos will load through `videos.shoutout.us`
-- Better performance and caching
-
-But for now, direct Wasabi access with CORS policy will work fine!
-
+But configuring CORS directly on Wasabi is the cleanest solution.

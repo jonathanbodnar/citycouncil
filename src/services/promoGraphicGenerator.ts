@@ -71,27 +71,13 @@ async function loadAndDrawAvatar(
   canvasWidth: number,
   canvasHeight: number
 ): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      console.log('📸 Loading avatar from:', avatarUrl);
-      
-      // Use Supabase Edge Function proxy to bypass CORS
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
-      const proxyUrl = `${supabaseUrl}/functions/v1/proxy-image?url=${encodeURIComponent(avatarUrl)}`;
-      
-      console.log('🔄 Using proxy:', proxyUrl);
-      
-      // Fetch the image through the proxy
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      
-      const img = new Image();
-      
-      img.onload = () => {
-        console.log('✅ Avatar loaded successfully');
+  return new Promise((resolve, reject) => {
+    console.log('📸 Loading avatar from:', avatarUrl);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      console.log('✅ Avatar loaded successfully');
         
         // BackgroundNew.png transparent area dimensions:
         // Starts at 63px from top, ends at 1040px from top
@@ -132,22 +118,16 @@ async function loadAndDrawAvatar(
           0, transparentAreaTop, canvasWidth, transparentAreaHeight // Destination (transparent area)
         );
         
-        // Clean up blob URL
-        URL.revokeObjectURL(blobUrl);
         resolve();
       };
       
       img.onerror = (error) => {
         console.error('❌ Failed to load avatar:', error);
-        URL.revokeObjectURL(blobUrl);
+        console.error('❌ Avatar URL was:', avatarUrl);
         reject(new Error('Failed to load avatar'));
       };
       
-      img.src = blobUrl;
-    } catch (error) {
-      console.error('❌ Failed to fetch avatar:', error);
-      reject(error);
-    }
+      img.src = avatarUrl;
   });
 }
 
