@@ -65,17 +65,19 @@ export default function SitemapPage() {
   </url>\n`;
       });
 
-      // Individual talent profiles
+      // Individual talent profiles - use username (e.g., shoutout.us/shawnfarash)
       talents?.forEach(talent => {
-        const slug = talent.slug || talent.full_name.toLowerCase().replace(/\s+/g, '-');
         const lastMod = talent.updated_at ? new Date(talent.updated_at).toISOString().split('T')[0] : now;
         
-        sitemapXml += `  <url>
-    <loc>${baseUrl}/talent/${slug}</loc>
+        // Only include talents with a username (skip old /profile/ URLs)
+        if (talent.slug) {
+          sitemapXml += `  <url>
+    <loc>${baseUrl}/${talent.slug}</loc>
     <lastmod>${lastMod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>\n`;
+        }
       });
 
       sitemapXml += '</urlset>';

@@ -107,10 +107,84 @@ const TalentProfilePage: React.FC = () => {
       updateTwitterTag('twitter:image', imageUrl);
       updateTwitterTag('twitter:image:alt', `${talentName} profile picture`);
 
+      // SEO Keywords - comprehensive for Google search
+      const generateKeywords = () => {
+        const baseKeywords = [
+          talentName,
+          `${talentName} video`,
+          `${talentName} shoutout`,
+          `${talentName} cameo`,
+          `${talentName} personalized video`,
+          'conservative gifts',
+          'conservative shoutouts',
+          'conservative video messages',
+          'cameo christmas',
+          'christmas video message',
+          'custom video message',
+          'personalized shoutout',
+          'celebrity video',
+          'get a custom video',
+          'order video message',
+          'personalized video greeting',
+          'conservative christmas gifts',
+          'republican gifts',
+          'patriotic gifts'
+        ];
+
+        // Add category-specific keywords
+        const category = talent.category?.toLowerCase() || '';
+        if (category.includes('political') || category.includes('commentator')) {
+          baseKeywords.push(
+            'political commentator video',
+            'conservative political figure',
+            'republican personality',
+            'political video message'
+          );
+        }
+        if (category.includes('faith')) {
+          baseKeywords.push(
+            'christian video message',
+            'faith leader video',
+            'religious greeting',
+            'christian conservative gift'
+          );
+        }
+        if (category.includes('patriot')) {
+          baseKeywords.push(
+            'patriotic video message',
+            'american patriot video',
+            'conservative patriot gift'
+          );
+        }
+
+        // Add bio keywords (extract important terms)
+        if (talent.bio) {
+          const bioWords = talent.bio.toLowerCase().split(/\s+/);
+          const importantTerms = ['host', 'author', 'speaker', 'founder', 'ceo', 'president', 'judge', 'senator', 'congressman'];
+          bioWords.forEach(word => {
+            if (importantTerms.some(term => word.includes(term))) {
+              baseKeywords.push(`${talentName} ${word}`);
+            }
+          });
+        }
+
+        return baseKeywords.join(', ');
+      };
+
+      // Update keywords meta tag
+      let keywordsTag = document.querySelector('meta[name="keywords"]') as HTMLMetaElement;
+      if (!keywordsTag) {
+        keywordsTag = document.createElement('meta');
+        keywordsTag.setAttribute('name', 'keywords');
+        document.head.appendChild(keywordsTag);
+      }
+      keywordsTag.content = generateKeywords();
+
       console.log('📱 Meta tags updated:', {
         title: `${talentName} - Personalized Video ShoutOuts`,
         image: imageUrl,
-        description: description.substring(0, 50) + '...'
+        description: description.substring(0, 50) + '...',
+        keywords: generateKeywords().split(', ').slice(0, 5).join(', ') + '...'
       });
 
       // Return cleanup function
