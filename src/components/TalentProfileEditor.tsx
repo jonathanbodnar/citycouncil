@@ -301,7 +301,7 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
                       value: /^\d+$/,
                       message: 'Must be a valid number'
                     },
-                    validate: value => parseInt(value) > 0 || 'Must be greater than 0'
+                    validate: (value: string) => parseInt(value, 10) > 0 || 'Must be greater than 0'
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="e.g., 48"
