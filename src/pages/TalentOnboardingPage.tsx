@@ -451,41 +451,67 @@ const TalentOnboardingPage: React.FC = () => {
         full_name: onboardingData?.talent.temp_full_name
       });
 
-      // Create user record via Edge Function (bypasses RLS issues)
-      const { data: createUserData, error: createUserError } = await supabase.functions.invoke(
-        'create-onboarding-user',
-        {
-          body: {
-            userId: authData.user.id,
-            email: authData.user.email,
-            phone: formattedPhone,
-            fullName: onboardingData?.talent.temp_full_name || 'Talent Member',
-            avatarUrl: onboardingData?.talent.temp_avatar_url
-          }
-        }
-      );
+      // Create user record in public.users table
+      // First check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
 
-      if (createUserError || createUserData?.error) {
-        const errorMsg = createUserError?.message || createUserData?.error;
-        console.error('❌ Failed to create user record:', errorMsg);
-        console.error('Error details:', createUserData?.details);
-        
-        // If it's a phone number conflict, provide a helpful message
-        if (errorMsg?.includes('phone') || errorMsg?.includes('unique')) {
-          toast.error('This phone number is already registered. Please use a different phone number or contact support.', {
-            duration: 8000
+      if (!existingUser) {
+        // User doesn't exist, create new record
+        const { error: userInsertError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email,
+            user_type: 'talent',
+            phone: formattedPhone,
+            full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
+            avatar_url: onboardingData?.talent.temp_avatar_url
+          });
+
+        if (userInsertError) {
+          console.error('❌ Failed to create user record:', userInsertError);
+          
+          // If it's a phone number conflict, provide a helpful message
+          if (userInsertError.message?.includes('phone') || userInsertError.message?.includes('unique')) {
+            toast.error('This phone number is already registered. Please use a different phone number or contact support.', {
+              duration: 8000
+            });
+            return;
+          }
+          
+          // Show the actual error message to help debug
+          toast.error(`Database error: ${userInsertError.message || 'Failed to save user'}`, {
+            duration: 10000
           });
           return;
         }
-        
-        // Show the actual error message to help debug
-        toast.error(`Database error: ${errorMsg || 'Failed to save user'}`, {
-          duration: 10000
-        });
-        return;
+      } else {
+        // User exists, update their info
+        const { error: userUpdateError } = await supabase
+          .from('users')
+          .update({
+            email: authData.user.email,
+            user_type: 'talent',
+            phone: formattedPhone,
+            full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
+            avatar_url: onboardingData?.talent.temp_avatar_url
+          })
+          .eq('id', authData.user.id);
+
+        if (userUpdateError) {
+          console.error('❌ Failed to update user record:', userUpdateError);
+          toast.error(`Database error: ${userUpdateError.message || 'Failed to update user'}`, {
+            duration: 10000
+          });
+          return;
+        }
       }
 
-      console.log('✅ User record created successfully:', createUserData);
+      console.log('✅ User record created/updated successfully');
 
       // Update talent profile with user ID and copy temp_full_name to full_name
       const { error: talentUpdateError } = await supabase
