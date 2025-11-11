@@ -301,7 +301,7 @@ const WelcomePage: React.FC = () => {
                   <Link
                     key={order.id}
                     to={`/dashboard?tab=orders&order=${order.id}`}
-                    className="block glass rounded-2xl p-4 border border-white/20 hover:border-blue-400 transition-all hover:scale-[1.02]"
+                    className="block glass rounded-2xl p-4 border border-white/20 hover:border-blue-400 transition-all"
                   >
                     <div className="flex items-center justify-between">
                       <div>
