@@ -460,7 +460,13 @@ const TalentOnboardingPage: React.FC = () => {
         });
 
       if (userInsertError) {
-        console.error('Failed to create/update user record:', userInsertError);
+        console.error('❌ Failed to create/update user record:', userInsertError);
+        console.error('Error details:', {
+          message: userInsertError.message,
+          details: userInsertError.details,
+          hint: userInsertError.hint,
+          code: userInsertError.code
+        });
         
         // If it's a phone number conflict, provide a helpful message
         if (userInsertError.message?.includes('phone') || userInsertError.message?.includes('unique')) {
@@ -470,7 +476,11 @@ const TalentOnboardingPage: React.FC = () => {
           return;
         }
         
-        throw new Error('Failed to set up user account. Please contact support.');
+        // Show the actual error message to help debug
+        toast.error(`Database error: ${userInsertError.message || 'Failed to save user'}`, {
+          duration: 10000
+        });
+        return;
       }
 
       // Update talent profile with user ID and copy temp_full_name to full_name
