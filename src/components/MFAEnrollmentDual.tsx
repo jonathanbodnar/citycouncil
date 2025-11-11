@@ -267,7 +267,19 @@ const MFAEnrollmentDual: React.FC<MFAEnrollmentDualProps> = ({ onComplete, onSki
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => setStep('phone-entry')}
+              onClick={async () => {
+                // Check if phone MFA is already enrolled before showing phone entry
+                const { data: factors } = await supabase.auth.mfa.listFactors();
+                const existingPhoneFactor = factors?.all?.find((f: any) => f.factor_type === 'phone');
+                
+                if (existingPhoneFactor && existingPhoneFactor.status === 'verified') {
+                  toast.success('Phone MFA already set up!');
+                  onComplete();
+                  return;
+                }
+                
+                setStep('phone-entry');
+              }}
               className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
               Enable SMS 2FA
