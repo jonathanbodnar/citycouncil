@@ -75,8 +75,14 @@ async function loadAndDrawAvatar(
     try {
       console.log('📸 Loading avatar from:', avatarUrl);
       
-      // Fetch the image as a blob to avoid CORS issues
-      const response = await fetch(avatarUrl);
+      // Use Supabase Edge Function proxy to bypass CORS
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
+      const proxyUrl = `${supabaseUrl}/functions/v1/proxy-image?url=${encodeURIComponent(avatarUrl)}`;
+      
+      console.log('🔄 Using proxy:', proxyUrl);
+      
+      // Fetch the image through the proxy
+      const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       
       const blob = await response.blob();
