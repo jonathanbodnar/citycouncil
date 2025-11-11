@@ -644,45 +644,50 @@ const TalentManagement: React.FC = () => {
       if (orders && orders.length > 0) {
         const orderIds = orders.map(o => o.id);
         
-        // 1. Delete reviews (references orders)
-        const { error: reviewsError } = await supabase
-          .from('reviews')
-          .delete()
-          .in('order_id', orderIds);
-        
-        if (reviewsError) console.error('Error deleting reviews:', reviewsError);
+        // Delete each order's dependencies individually to avoid any filtering issues
+        for (const orderId of orderIds) {
+          // 1. Delete reviews for this order
+          await supabase
+            .from('reviews')
+            .delete()
+            .eq('order_id', orderId);
 
-        // 2. Delete notifications (references orders)
-        const { error: notificationsError } = await supabase
-          .from('notifications')
-          .delete()
-          .in('order_id', orderIds);
-        
-        if (notificationsError) console.error('Error deleting notifications:', notificationsError);
+          // 2. Delete notifications for this order
+          await supabase
+            .from('notifications')
+            .delete()
+            .eq('order_id', orderId);
 
-        // 3. Delete short links (references orders)
-        const { error: shortLinksError } = await supabase
-          .from('short_links')
-          .delete()
-          .in('order_id', orderIds);
-        
-        if (shortLinksError) console.error('Error deleting short links:', shortLinksError);
+          // 3. Delete short links for this order
+          await supabase
+            .from('short_links')
+            .delete()
+            .eq('order_id', orderId);
 
-        // 4. Delete fulfillment auth tokens (references orders)
-        const { error: authTokensError } = await supabase
-          .from('fulfillment_auth_tokens')
-          .delete()
-          .in('order_id', orderIds);
-        
-        if (authTokensError) console.error('Error deleting auth tokens:', authTokensError);
+          // 4. Delete fulfillment auth tokens for this order
+          await supabase
+            .from('fulfillment_auth_tokens')
+            .delete()
+            .eq('order_id', orderId);
 
-        // 5. Delete magic auth tokens (references orders)
-        const { error: magicTokensError } = await supabase
-          .from('magic_auth_tokens')
-          .delete()
-          .in('order_id', orderIds);
-        
-        if (magicTokensError) console.error('Error deleting magic tokens:', magicTokensError);
+          // 5. Delete magic auth tokens for this order
+          await supabase
+            .from('magic_auth_tokens')
+            .delete()
+            .eq('order_id', orderId);
+
+          // 6. Delete payouts for this order
+          await supabase
+            .from('payouts')
+            .delete()
+            .eq('order_id', orderId);
+
+          // 7. Delete payout errors for this order
+          await supabase
+            .from('payout_errors')
+            .delete()
+            .eq('order_id', orderId);
+        }
       }
 
       // 6. Delete reviews by talent_id (talent reviews)

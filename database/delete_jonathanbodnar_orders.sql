@@ -29,8 +29,8 @@ WHERE o.talent_id IN (
 )
 ORDER BY o.created_at DESC;
 
--- Step 3: Delete notifications related to these orders
-DELETE FROM notifications
+-- Step 3: Delete reviews for these orders (if any)
+DELETE FROM reviews
 WHERE order_id IN (
   SELECT o.id 
   FROM orders o
@@ -39,8 +39,8 @@ WHERE order_id IN (
   )
 );
 
--- Step 4: Delete reviews for these orders (if any)
-DELETE FROM reviews
+-- Step 4: Delete notifications related to these orders
+DELETE FROM notifications
 WHERE order_id IN (
   SELECT o.id 
   FROM orders o
@@ -69,7 +69,37 @@ WHERE order_id IN (
   )
 );
 
--- Step 7: Finally, delete all orders
+-- Step 7: Delete magic auth tokens for these orders
+DELETE FROM magic_auth_tokens
+WHERE order_id IN (
+  SELECT o.id 
+  FROM orders o
+  WHERE o.talent_id IN (
+    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
+  )
+);
+
+-- Step 8: Delete payouts for these orders
+DELETE FROM payouts
+WHERE order_id IN (
+  SELECT o.id 
+  FROM orders o
+  WHERE o.talent_id IN (
+    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
+  )
+);
+
+-- Step 9: Delete payout errors for these orders
+DELETE FROM payout_errors
+WHERE order_id IN (
+  SELECT o.id 
+  FROM orders o
+  WHERE o.talent_id IN (
+    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
+  )
+);
+
+-- Step 10: Finally, delete all orders
 DELETE FROM orders
 WHERE talent_id IN (
   SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
