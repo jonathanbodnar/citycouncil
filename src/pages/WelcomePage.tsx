@@ -203,9 +203,30 @@ const WelcomePage: React.FC = () => {
     }
 
     try {
-      // Fetch the video as a blob to force download instead of opening in new tab
-      toast.loading('Downloading video...');
-      const response = await fetch(promoVideoUrl);
+      // Apply watermark before downloading
+      toast.loading('Preparing video for download...', { id: 'watermark' });
+      
+      const { data: watermarkData, error: watermarkError } = await supabase.functions.invoke('watermark-video', {
+        body: { 
+          videoUrl: promoVideoUrl,
+          orderId: `promo-${user?.id}`,
+          talentName: talentFullName || user?.full_name || 'ShoutOut'
+        }
+      });
+
+      const finalVideoUrl = (!watermarkError && watermarkData?.watermarkedUrl) 
+        ? watermarkData.watermarkedUrl 
+        : promoVideoUrl;
+
+      if (watermarkError) {
+        console.warn('Watermarking failed, using original video:', watermarkError);
+      }
+
+      toast.dismiss('watermark');
+      toast.loading('Downloading video...', { id: 'download' });
+
+      // Fetch the video as a blob to force download
+      const response = await fetch(finalVideoUrl);
       const blob = await response.blob();
       
       // Create download link
@@ -218,7 +239,7 @@ const WelcomePage: React.FC = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.dismiss();
+      toast.dismiss('download');
       toast.success('Video downloaded!');
     } catch (error) {
       console.error('Error downloading video:', error);
