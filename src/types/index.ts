@@ -4,7 +4,8 @@ export interface User {
   full_name: string;
   user_type: 'user' | 'talent' | 'admin';
   avatar_url?: string;
-  phone_number?: string; // E.164 format (+1XXXXXXXXXX)
+  phone?: string; // E.164 format (+1XXXXXXXXXX)
+  phone_number?: string; // Alias for backwards compatibility
   created_at: string;
   updated_at: string;
 }
