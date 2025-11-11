@@ -53,6 +53,9 @@ const WelcomePage: React.FC = () => {
     } else if (user) {
       // Redirect non-talent users to their appropriate dashboard
       navigate('/home');
+    } else if (!user) {
+      // Redirect unauthenticated users to login with returnTo parameter
+      navigate('/login?returnTo=/welcome', { replace: true });
     }
   }, [user, navigate, searchParams]);
 
@@ -98,6 +101,21 @@ const WelcomePage: React.FC = () => {
 
   const fetchPendingOrders = async () => {
     try {
+      // First, get the talent profile ID
+      const { data: talentProfile, error: talentError } = await supabase
+        .from('talent_profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (talentError) throw talentError;
+      if (!talentProfile) {
+        console.log('No talent profile found for user');
+        setLoading(false);
+        return;
+      }
+
+      // Now fetch orders using the talent profile ID
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -106,11 +124,13 @@ const WelcomePage: React.FC = () => {
             full_name
           )
         `)
-        .eq('talent_id', user?.id)
+        .eq('talent_id', talentProfile.id)
         .in('status', ['pending', 'in_progress'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('📦 Pending orders fetched:', data?.length || 0);
       setPendingOrders(data || []);
     } catch (error) {
       console.error('Error fetching pending orders:', error);
