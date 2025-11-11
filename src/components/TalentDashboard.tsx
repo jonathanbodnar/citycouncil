@@ -518,6 +518,11 @@ const TalentDashboard: React.FC = () => {
                         <div>
                           <h4 className="font-semibold text-white flex items-center gap-2">
                             {order.users.full_name}
+                            {order.order_type === 'demo' && (
+                              <span className="text-xs glass-strong text-yellow-400 px-2 py-1 rounded-full border border-yellow-500/30 font-semibold">
+                                🎯 Demo Order
+                              </span>
+                            )}
                             {order.is_corporate_order && (
                               <span className="text-xs glass-strong text-blue-400 px-2 py-1 rounded-full border border-blue-500/30">
                                 🏢 Business
@@ -646,7 +651,14 @@ const TalentDashboard: React.FC = () => {
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-white">{order.users.full_name}</h4>
+                          <h4 className="font-semibold text-white flex items-center gap-2">
+                            {order.users.full_name}
+                            {order.order_type === 'demo' && (
+                              <span className="text-xs glass-strong text-yellow-400 px-2 py-1 rounded-full border border-yellow-500/30 font-semibold">
+                                🎯 Demo Order
+                              </span>
+                            )}
+                          </h4>
                           <p className="text-sm text-gray-300">
                             ${(order.amount / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                           </p>
@@ -710,7 +722,14 @@ const TalentDashboard: React.FC = () => {
                             </span>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-white">{order.users.full_name}</h4>
+                            <h4 className="font-semibold text-white flex items-center gap-2">
+                              {order.users.full_name}
+                              {order.order_type === 'demo' && (
+                                <span className="text-xs glass-strong text-yellow-400 px-2 py-1 rounded-full border border-yellow-500/30 font-semibold">
+                                  🎯 Demo Order
+                                </span>
+                              )}
+                            </h4>
                             <p className="text-sm text-gray-300">
                               ${(order.amount / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                             </p>
