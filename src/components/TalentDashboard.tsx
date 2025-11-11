@@ -543,19 +543,19 @@ const TalentDashboard: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         {order.is_corporate_order && order.approval_status === 'pending' ? (
                           <>
                             <button
                               onClick={() => handleApproveOrder(order.id)}
-                              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl font-medium hover:from-green-700 hover:to-green-800 shadow-modern transition-all duration-300 flex items-center gap-2"
+                              className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl font-medium hover:from-green-700 hover:to-green-800 shadow-modern transition-all duration-300 flex items-center justify-center gap-2"
                             >
                               <CheckCircleIcon className="h-4 w-4" />
                               Approve
                             </button>
                             <button
                               onClick={() => setRejectingOrderId(order.id)}
-                              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center gap-2"
+                              className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center justify-center gap-2"
                             >
                               <XCircleIcon className="h-4 w-4" />
                               Reject & Refund
@@ -566,7 +566,7 @@ const TalentDashboard: React.FC = () => {
                             {/* Show Deny button for non-corporate pending/in_progress orders */}
                             <button
                               onClick={() => setRejectingOrderId(order.id)}
-                              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center gap-2 text-sm"
+                              className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center justify-center gap-2 text-sm"
                             >
                               <XCircleIcon className="h-4 w-4" />
                               Deny & Refund
@@ -576,7 +576,7 @@ const TalentDashboard: React.FC = () => {
                         {(order.status === 'pending' || order.status === 'in_progress') && (
                           <button
                             onClick={() => handleAcceptOrder(order.id)}
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern transition-all duration-300"
+                            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern transition-all duration-300"
                           >
                             Accept Order
                           </button>

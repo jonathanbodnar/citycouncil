@@ -28,48 +28,34 @@ const OrderFulfillmentPage: React.FC = () => {
       // If user is not logged in but we have a magic token, try auto-login
       if (!user && magicToken) {
         logger.log('🔐 Attempting magic link authentication...');
-        const authResult = await magicAuthService.verifyAndConsumeMagicToken(magicToken);
         
-        if (authResult) {
-          // Get user's email and create an OTP session
-          const { data: userData } = await supabase
-            .from('users')
-            .select('email')
-            .eq('id', authResult.userId)
-            .single();
+        // Call Edge Function to handle magic auth (bypasses RLS with service role)
+        const { data: authData, error: authError } = await supabase.functions.invoke('magic-auth', {
+          body: { magicToken }
+        });
 
-          if (userData?.email) {
-            // Sign in using Supabase magic link (OTP)
-            const { error } = await supabase.auth.signInWithOtp({
-              email: userData.email,
-              options: {
-                shouldCreateUser: false,
-              }
-            });
-
-            if (!error) {
-              toast.success('Authenticated! Loading your order...', { icon: '✨' });
-              // Wait a moment for auth to propagate, then reload the page
-              // This will trigger the useEffect in AuthContext to fetch the user profile
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              window.location.reload();
-              return;
-            } else {
-              logger.error('Magic auth sign-in failed:', error);
-              toast.error('Authentication failed. Please log in manually.');
-              sessionStorage.setItem('fulfillment_redirect_token', token!);
-              navigate('/login');
-              return;
-            }
-          }
-        } else {
-          logger.log('Invalid or expired magic token');
+        if (authError || !authData?.success) {
+          logger.error('Magic auth failed:', authError);
           toast('Please log in to fulfill this order', { icon: '🔐' });
           sessionStorage.setItem('fulfillment_redirect_token', token!);
           navigate('/login');
           setLoading(false);
           return;
         }
+
+        // If we have an auth URL, use it to sign in
+        if (authData.auth_url) {
+          toast.success('Authenticated! Loading your order...', { icon: '✨' });
+          // Navigate to the auth URL to complete sign-in
+          window.location.href = authData.auth_url + `&redirect_to=${encodeURIComponent(window.location.href.split('?')[0])}`;
+          return;
+        }
+
+        // If auth succeeded but no URL, just reload (user might already be logged in)
+        toast.success('Authenticated! Loading your order...', { icon: '✨' });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        window.location.reload();
+        return;
       }
       
       // If user is not logged in and no magic token, redirect to login
