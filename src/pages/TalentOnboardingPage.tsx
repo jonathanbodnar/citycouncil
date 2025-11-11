@@ -444,6 +444,13 @@ const TalentOnboardingPage: React.FC = () => {
       // Format phone to E.164 (+1XXXXXXXXXX)
       const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
 
+      console.log('📝 Attempting to create user record:', {
+        userId: authData.user.id,
+        email: authData.user.email,
+        phone: formattedPhone,
+        full_name: onboardingData?.talent.temp_full_name
+      });
+
       // Create user record in public.users table
       // Use upsert to handle case where record might already exist
       const { error: userInsertError } = await supabase
