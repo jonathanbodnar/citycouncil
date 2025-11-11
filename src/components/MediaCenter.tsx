@@ -15,7 +15,7 @@ import { logger } from '../utils/logger';
 interface MediaCenterProps {
   talentId: string;
   talentUsername?: string;
-  talentFullName: string;
+  talentFullName?: string;
   avatarUrl?: string;
   promoVideoUrl?: string;
 }
@@ -111,6 +111,11 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
 
     if (!talentUsername) {
       toast.error('Username not found.');
+      return;
+    }
+
+    if (!talentFullName) {
+      toast.error('Talent name not found.');
       return;
     }
 
