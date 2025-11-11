@@ -99,6 +99,7 @@ export interface Order {
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded' | 'denied';
   approval_status: 'pending' | 'approved' | 'rejected';
   is_corporate_order: boolean;
+  order_type?: 'standard' | 'demo';
   event_description?: string;
   event_audience?: string;
   video_setting_request?: string;

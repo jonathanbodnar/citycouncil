@@ -71,7 +71,7 @@ BEGIN
     WHERE id = talent_user_id;
     
     -- Check SMS settings
-    SELECT sms_enabled INTO sms_enabled
+    SELECT notification_settings.sms_enabled INTO sms_enabled
     FROM notification_settings
     WHERE notification_type = 'talent_new_order';
     
