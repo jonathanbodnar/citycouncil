@@ -8,6 +8,7 @@ import {
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
 import ProfilePictureUpload from './ProfilePictureUpload';
+import BlockedAvailability from './BlockedAvailability';
 import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
@@ -292,9 +293,18 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
                   Fulfillment Time (hours) *
                 </label>
                 <input
-                  type="number"
-                  {...register('fulfillment_time_hours', { required: 'Fulfillment time is required', min: 1 })}
+                  type="text"
+                  inputMode="numeric"
+                  {...register('fulfillment_time_hours', { 
+                    required: 'Fulfillment time is required',
+                    pattern: {
+                      value: /^\d+$/,
+                      message: 'Must be a valid number'
+                    },
+                    validate: value => parseInt(value) > 0 || 'Must be greater than 0'
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="e.g., 48"
                 />
                 {errors.fulfillment_time_hours && (
                   <p className="mt-1 text-sm text-red-600">{errors.fulfillment_time_hours.message}</p>
@@ -378,6 +388,14 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
                 </label>
               </div>
             </div>
+          </div>
+
+          {/* Blocked Availability Section */}
+          <div className="pt-6 border-t border-gray-200">
+            <BlockedAvailability 
+              talentId={talent.id} 
+              talentUserId={talent.user_id}
+            />
           </div>
 
           {/* Action Buttons */}
