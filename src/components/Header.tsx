@@ -324,7 +324,7 @@ const Header: React.FC = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right glass-strong rounded-2xl shadow-modern-xl ring-1 ring-white/20 focus:outline-none z-[1501] overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(25px)' }}>
+                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-2xl shadow-modern-xl ring-1 ring-white/20 focus:outline-none z-[1501] overflow-hidden" style={{ background: 'rgba(17, 24, 39, 0.95)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }}>
                       <div className="py-1">
                         <Menu.Item>
                           {({ active }) => (
