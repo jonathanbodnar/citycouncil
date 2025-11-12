@@ -5,7 +5,7 @@
 SELECT 
   tp.id,
   tp.username,
-  tp.full_name,
+  COALESCE(u.full_name, tp.temp_full_name) as full_name,
   tp.admin_fee_percentage,
   tp.is_active,
   tp.onboarding_completed,
@@ -15,7 +15,8 @@ SELECT
     ELSE '❌ INCORRECT (' || tp.admin_fee_percentage || '%)'
   END AS status
 FROM public.talent_profiles tp
-ORDER BY tp.admin_fee_percentage NULLS FIRST, tp.full_name;
+LEFT JOIN public.users u ON u.id = tp.user_id
+ORDER BY tp.admin_fee_percentage NULLS FIRST, COALESCE(u.full_name, tp.temp_full_name);
 
 -- 2. Summary counts
 SELECT 
@@ -57,9 +58,10 @@ SELECT
   '⚠️ TALENT NEEDING CORRECTION:' AS info
 UNION ALL
 SELECT 
-  '  ' || COALESCE(username, full_name, 'ID: ' || id::TEXT) || 
-  ' (currently: ' || COALESCE(admin_fee_percentage::TEXT, 'NULL') || '%)' AS info
-FROM public.talent_profiles
-WHERE admin_fee_percentage IS NULL OR admin_fee_percentage != 25
-ORDER BY full_name;
+  '  ' || COALESCE(tp.username, u.full_name, tp.temp_full_name, 'ID: ' || tp.id::TEXT) || 
+  ' (currently: ' || COALESCE(tp.admin_fee_percentage::TEXT, 'NULL') || '%)' AS info
+FROM public.talent_profiles tp
+LEFT JOIN public.users u ON u.id = tp.user_id
+WHERE tp.admin_fee_percentage IS NULL OR tp.admin_fee_percentage != 25
+ORDER BY COALESCE(u.full_name, tp.temp_full_name);
 
