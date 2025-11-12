@@ -13,6 +13,7 @@ import { supabase } from '../services/supabase';
 import { Order } from '../types';
 import toast from 'react-hot-toast';
 import { generatePromoGraphic, downloadPromoGraphic } from '../services/promoGraphicGenerator';
+import VideoPlayer from '../components/VideoPlayer';
 
 interface PendingOrder extends Order {
   users: {
@@ -485,19 +486,12 @@ const WelcomePage: React.FC = () => {
             {/* Welcome Video Embed */}
             <div className="mb-4 flex justify-center">
               {welcomeVideoUrl ? (
-                <video
-                  src={welcomeVideoUrl}
-                  controls
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="auto"
-                  className="rounded-2xl border border-white/20 shadow-lg max-h-[600px] w-auto"
-                  style={{ maxWidth: '100%' }}
-                >
-                  Your browser does not support the video tag.
-                </video>
+                <div className="rounded-2xl overflow-hidden border border-white/20 shadow-lg max-h-[600px] w-auto" style={{ maxWidth: '100%' }}>
+                  <VideoPlayer 
+                    videoUrl={welcomeVideoUrl}
+                    className="w-full h-full"
+                  />
+                </div>
               ) : (
                 <div className="aspect-video w-full bg-gradient-to-br from-blue-900/50 to-red-900/50 rounded-2xl flex items-center justify-center border border-white/20">
                   <div className="text-center">
