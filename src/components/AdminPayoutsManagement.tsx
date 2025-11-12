@@ -135,10 +135,11 @@ export default function AdminPayoutsManagement() {
 
           const ordersResults = await Promise.all(ordersPromises);
           
-          // Extract successful results
+          // Extract successful results and filter out nulls
           const ordersData = ordersResults
             .filter(result => !result.error && result.data)
-            .map(result => result.data);
+            .map(result => result.data)
+            .filter((o): o is NonNullable<typeof o> => o !== null && o !== undefined);
 
           console.log('📦 Orders fetched:', ordersData.length);
 
