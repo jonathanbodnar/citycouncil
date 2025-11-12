@@ -94,6 +94,7 @@ export interface Order {
   user_id: string;
   talent_id: string;
   request_details: string;
+  recipient_name?: string; // Who's it for field
   amount: number;
   admin_fee: number;
   charity_amount?: number;

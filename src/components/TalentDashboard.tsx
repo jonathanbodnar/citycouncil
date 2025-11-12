@@ -588,7 +588,18 @@ const TalentDashboard: React.FC = () => {
                     
                     <div className="glass-strong p-4 rounded-md mb-4 border border-white/20">
                       <h5 className="font-medium text-white mb-2">Request:</h5>
-                      <p className="text-gray-300">{order.request_details}</p>
+                      {order.recipient_name && (
+                        <div className="mb-3 pb-3 border-b border-white/10">
+                          <span className="text-blue-300 font-medium">Who's it for:</span>
+                          <span className="text-white ml-2">{order.recipient_name}</span>
+                        </div>
+                      )}
+                      <p className="text-gray-300 mb-3">{order.request_details}</p>
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <p className="text-sm text-yellow-300 italic">
+                          💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
+                        </p>
+                      </div>
                     </div>
 
                     {order.is_corporate_order && (
@@ -691,7 +702,18 @@ const TalentDashboard: React.FC = () => {
                     </div>
                     <div className="glass-strong p-4 rounded-md border border-white/20">
                       <h5 className="font-medium text-white mb-2">Request:</h5>
-                      <p className="text-gray-300">{order.request_details}</p>
+                      {order.recipient_name && (
+                        <div className="mb-3 pb-3 border-b border-white/10">
+                          <span className="text-blue-300 font-medium">Who's it for:</span>
+                          <span className="text-white ml-2">{order.recipient_name}</span>
+                        </div>
+                      )}
+                      <p className="text-gray-300 mb-3">{order.request_details}</p>
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <p className="text-sm text-yellow-300 italic">
+                          💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}

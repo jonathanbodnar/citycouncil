@@ -23,7 +23,7 @@ import { verifyFortisTransaction } from '../services/fortisCommerceService';
 interface OrderFormData {
   requestDetails: string;
   isForBusiness: boolean;
-  recipientName?: string;
+  recipientName: string; // Made required
   businessName?: string;
   occasion?: string;
   specialInstructions?: string;
@@ -488,15 +488,20 @@ const OrderPage: React.FC = () => {
 
                 <div>
                   <label htmlFor="recipientName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Recipient Name {!isForBusiness && '(Optional)'}
+                    Who's it for? <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     id="recipientName"
-                    {...register('recipientName')}
+                    {...register('recipientName', { 
+                      required: "Recipient name is required" 
+                    })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Who is this ShoutOut for?"
+                    placeholder="Enter the recipient's name"
                   />
+                  {errors.recipientName && (
+                    <p className="mt-1 text-sm text-red-600">{errors.recipientName.message}</p>
+                  )}
                 </div>
 
                 {!isForBusiness && (
