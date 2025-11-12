@@ -1746,6 +1746,7 @@ const TalentOnboardingPage: React.FC = () => {
                   }
                 }}
                 required={true}
+                initialPhone={accountData.phone}
               />
             </div>
           )}
