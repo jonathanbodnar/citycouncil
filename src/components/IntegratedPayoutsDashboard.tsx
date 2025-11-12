@@ -366,7 +366,7 @@ const IntegratedPayoutsDashboard: React.FC = () => {
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900">{bankInfo.bank_name}</h3>
                 <p className="text-sm text-gray-600">
-                  {bankInfo.account_type} •••• {bankInfo.account_number_masked.slice(-4)}
+                  {bankInfo.account_type} •••• {bankInfo.account_number_masked?.slice(-4)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{bankInfo.account_holder_name}</p>
               </div>
