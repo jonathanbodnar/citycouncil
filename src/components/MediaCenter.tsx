@@ -415,7 +415,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
               className="w-full glass-hover p-3 rounded-lg flex items-center justify-between transition-all duration-300"
             >
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${social.color} flex items-center justify-center text-white`}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400">
                   {social.icon}
                 </div>
                 <div className="text-left">

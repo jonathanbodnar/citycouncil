@@ -488,15 +488,11 @@ const WelcomePage: React.FC = () => {
                 <video
                   src={welcomeVideoUrl}
                   controls
-                  preload="auto"
+                  preload="metadata"
                   playsInline
+                  poster={welcomeVideoUrl + '#t=0.5'}
                   className="rounded-2xl border border-white/20 shadow-lg max-h-[600px] w-auto"
                   style={{ maxWidth: '100%' }}
-                  onLoadedMetadata={(e) => {
-                    // Force poster frame to show
-                    const video = e.currentTarget;
-                    video.currentTime = 0.1;
-                  }}
                 >
                   Your browser does not support the video tag.
                 </video>
