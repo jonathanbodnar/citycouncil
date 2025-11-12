@@ -171,6 +171,11 @@ const OrderPage: React.FC = () => {
       return;
     }
 
+    if (!user) {
+      setCouponError('Please log in to use coupons');
+      return;
+    }
+
     setCouponLoading(true);
     setCouponError('');
 
@@ -181,13 +186,21 @@ const OrderPage: React.FC = () => {
       const { data, error } = await supabase
         .rpc('validate_and_apply_coupon', {
           p_coupon_code: couponCode.trim(),
-          p_user_id: user?.id,
+          p_user_id: user.id,
           p_order_amount: pricing.total + (appliedCoupon ? pricing.discount : 0) // Use pre-discount total
         });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('RPC Error:', error);
+        throw new Error(error.message || 'Database function error');
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No response from validation');
+      }
 
       const result = data[0];
+      logger.log('Coupon validation result:', result);
       
       if (!result.valid) {
         setCouponError(result.message);
@@ -202,14 +215,19 @@ const OrderPage: React.FC = () => {
         .eq('id', result.coupon_id)
         .single();
 
-      if (couponFetchError) throw couponFetchError;
+      if (couponFetchError) {
+        logger.error('Coupon fetch error:', couponFetchError);
+        throw new Error('Failed to fetch coupon details');
+      }
 
       setAppliedCoupon(couponData);
       toast.success(result.message);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error validating coupon:', error);
-      setCouponError('Failed to validate coupon');
+      const errorMessage = error?.message || 'Failed to validate coupon';
+      setCouponError(errorMessage);
       setAppliedCoupon(null);
+      toast.error(errorMessage);
     } finally {
       setCouponLoading(false);
     }
