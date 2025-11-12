@@ -817,38 +817,36 @@ const OrderPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Have a coupon code?
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="Enter code"
-                    disabled={!!appliedCoupon}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm disabled:bg-gray-100"
-                  />
-                  {!appliedCoupon ? (
-                    <button
-                      type="button"
-                      onClick={validateCoupon}
-                      disabled={couponLoading || !couponCode.trim()}
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                    >
-                      {couponLoading ? 'Checking...' : 'Apply'}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAppliedCoupon(null);
-                        setCouponCode('');
-                        setCouponError('');
-                      }}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Enter code"
+                  disabled={!!appliedCoupon}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm disabled:bg-gray-100"
+                />
+                {!appliedCoupon ? (
+                  <button
+                    type="button"
+                    onClick={validateCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    {couponLoading ? 'Checking...' : 'Apply'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAppliedCoupon(null);
+                      setCouponCode('');
+                      setCouponError('');
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                  >
+                    Remove
+                  </button>
+                )}
                 
                 {couponError && (
                   <p className="text-xs text-red-600">{couponError}</p>
