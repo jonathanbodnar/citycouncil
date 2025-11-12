@@ -235,6 +235,16 @@
   background: rgba(156, 163, 175, 0.8);
 }
 
+/* Hide scrollbar for mobile category scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 /* Dark Theme Text Overrides */
 .text-gray-900,
 .text-gray-800,

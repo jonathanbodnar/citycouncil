@@ -308,10 +308,10 @@ const HomePage: React.FC = () => {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
               selectedCategory === 'all'
                 ? 'glass-strong text-white shadow-lg border-white/30'
                 : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
@@ -321,7 +321,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => setSelectedCategory('coming_soon')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
               selectedCategory === 'coming_soon'
                 ? 'glass-strong text-white shadow-lg border-white/30'
                 : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
@@ -335,7 +335,7 @@ const HomePage: React.FC = () => {
               <button
                 key={category.key}
                 onClick={() => setSelectedCategory(category.key as TalentCategory)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
                   selectedCategory === category.key
                     ? 'glass-strong text-white shadow-lg border-white/30'
                     : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
