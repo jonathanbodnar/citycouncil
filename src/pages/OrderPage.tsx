@@ -7,7 +7,8 @@ import {
   ShieldCheckIcon,
   CreditCardIcon,
   BuildingOfficeIcon,
-  UserIcon
+  UserIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
@@ -66,6 +67,12 @@ const OrderPage: React.FC = () => {
   const watchedValue = watch('isForBusiness');
   const isForBusiness = watchedValue === true || (typeof watchedValue === 'string' && watchedValue === 'true');
   
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  
   // Debug pricing updates
   useEffect(() => {
     logger.log('isForBusiness changed:', isForBusiness);
@@ -108,7 +115,7 @@ const OrderPage: React.FC = () => {
   };
 
   const calculatePricing = () => {
-    if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, total: 0 };
+    if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, discount: 0, total: 0 };
 
     // Use corporate pricing if it's a business order, otherwise use regular pricing
     const basePrice = isForBusiness 
@@ -137,9 +144,75 @@ const OrderPage: React.FC = () => {
       : 0;
     
     // Customer total is just the subtotal (admin fee comes out of talent's earnings)
-    const total = subtotal;
+    let total = subtotal;
+    let discount = 0;
 
-    return { subtotal, adminFee, charityAmount, total, isPromoActive };
+    // Apply coupon if valid
+    if (appliedCoupon) {
+      if (appliedCoupon.discount_type === 'percentage') {
+        discount = (total * appliedCoupon.discount_value / 100);
+        if (appliedCoupon.max_discount_amount && discount > appliedCoupon.max_discount_amount) {
+          discount = appliedCoupon.max_discount_amount;
+        }
+      } else {
+        discount = appliedCoupon.discount_value;
+      }
+      
+      if (discount > total) discount = total;
+      total = total - discount;
+    }
+
+    return { subtotal, adminFee, charityAmount, discount, total, isPromoActive };
+  };
+
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError('');
+
+    try {
+      const pricing = calculatePricing();
+      
+      // Call validation function
+      const { data, error } = await supabase
+        .rpc('validate_and_apply_coupon', {
+          p_coupon_code: couponCode.trim(),
+          p_user_id: user?.id,
+          p_order_amount: pricing.total + (appliedCoupon ? pricing.discount : 0) // Use pre-discount total
+        });
+
+      if (error) throw error;
+
+      const result = data[0];
+      
+      if (!result.valid) {
+        setCouponError(result.message);
+        setAppliedCoupon(null);
+        return;
+      }
+
+      // Get full coupon details
+      const { data: couponData, error: couponFetchError } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('id', result.coupon_id)
+        .single();
+
+      if (couponFetchError) throw couponFetchError;
+
+      setAppliedCoupon(couponData);
+      toast.success(result.message);
+    } catch (error) {
+      logger.error('Error validating coupon:', error);
+      setCouponError('Failed to validate coupon');
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
   const [showPayment, setShowPayment] = useState(false);
@@ -195,7 +268,7 @@ const OrderPage: React.FC = () => {
         transactionId: paymentResult?.id || paymentResult?.transaction_id,
         amount: pricing.total,
       });
-      const { data: order, error: orderError } = await supabase
+      const { data: order, error: orderError} = await supabase
         .from('orders')
         .insert([
           {
@@ -203,6 +276,10 @@ const OrderPage: React.FC = () => {
             talent_id: talent.id,
             request_details: orderData.requestDetails,
             amount: Math.round(pricing.total * 100), // Store in cents
+            original_amount: appliedCoupon ? Math.round((pricing.total + pricing.discount) * 100) : null,
+            discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
+            coupon_id: appliedCoupon?.id || null,
+            coupon_code: appliedCoupon?.code || null,
             admin_fee: Math.round(pricing.adminFee * 100), // Store in cents
             charity_amount: Math.round(pricing.charityAmount * 100), // Store in cents
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
@@ -231,6 +308,28 @@ const OrderPage: React.FC = () => {
       });
 
       if (orderError) throw orderError;
+
+      // Track coupon usage if coupon was applied
+      if (appliedCoupon) {
+        try {
+          // Track coupon usage
+          await supabase.from('coupon_usage').insert({
+            coupon_id: appliedCoupon.id,
+            user_id: user.id,
+            order_id: order.id
+          });
+
+          // Increment used count
+          await supabase.from('coupons')
+            .update({ used_count: appliedCoupon.used_count + 1 })
+            .eq('id', appliedCoupon.id);
+          
+          logger.log('✅ Coupon usage tracked');
+        } catch (couponError) {
+          logger.error('Error tracking coupon usage:', couponError);
+          // Don't fail the order if coupon tracking fails
+        }
+      }
 
       // Send notifications and emails
       try {
@@ -694,6 +793,72 @@ const OrderPage: React.FC = () => {
                   </span>
                 </div>
               )}
+              
+              {/* Coupon Code Input */}
+              <div className="border-t border-gray-200 pt-3 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Have a coupon code?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Enter code"
+                    disabled={!!appliedCoupon}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm disabled:bg-gray-100"
+                  />
+                  {!appliedCoupon ? (
+                    <button
+                      type="button"
+                      onClick={validateCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    >
+                      {couponLoading ? 'Checking...' : 'Apply'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAppliedCoupon(null);
+                        setCouponCode('');
+                        setCouponError('');
+                      }}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                
+                {couponError && (
+                  <p className="text-xs text-red-600">{couponError}</p>
+                )}
+                
+                {appliedCoupon && (
+                  <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <TagIcon className="h-4 w-4 text-green-600" />
+                    <span className="text-xs text-green-800 font-medium">
+                      Coupon "{appliedCoupon.code}" applied!
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Show discount if coupon applied */}
+              {pricing.discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span className="flex items-center">
+                    <TagIcon className="h-4 w-4 mr-1" />
+                    Coupon Discount
+                  </span>
+                  <span className="font-medium">
+                    -${pricing.discount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
               <div className="border-t border-gray-200 pt-3">
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold text-gray-900">Total</span>
