@@ -233,33 +233,7 @@ DROP POLICY IF EXISTS "Service role full access to payout batches" ON public.pay
 CREATE POLICY "Service role full access to payout batches" ON public.payout_batches
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
--- 6. Helpful view for talent payout dashboard
-CREATE OR REPLACE VIEW talent_payout_summary AS
-SELECT 
-  p.talent_id,
-  tp.username as talent_username,
-  COALESCE(u.full_name, tp.temp_full_name) as talent_name,
-  p.week_start_date,
-  p.week_end_date,
-  COUNT(DISTINCT p.id) as total_payouts,
-  COUNT(DISTINCT CASE WHEN p.is_refunded THEN p.id END) as refunded_count,
-  SUM(p.payout_amount) as total_payout_amount,
-  SUM(CASE WHEN p.is_refunded THEN p.payout_amount ELSE 0 END) as total_refunded_amount,
-  SUM(CASE WHEN NOT p.is_refunded THEN p.payout_amount ELSE 0 END) as net_payout_amount,
-  p.status,
-  p.batch_id
-FROM payouts p
-JOIN talent_profiles tp ON tp.id = p.talent_id
-LEFT JOIN users u ON u.id = tp.user_id
-GROUP BY 
-  p.talent_id, 
-  tp.username,
-  u.full_name,
-  tp.temp_full_name,
-  p.week_start_date, 
-  p.week_end_date,
-  p.status,
-  p.batch_id;
+-- 6. Success message (view removed for now, can be added later if needed)
 
 SELECT '✅ Payout system setup complete!' AS result;
 SELECT 'Triggers created: on_order_completed_create_payout, on_order_refunded_update_payout' AS info;
