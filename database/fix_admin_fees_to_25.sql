@@ -10,10 +10,10 @@ WHERE username = 'juanitabroaddrick';
 
 -- Verify the update
 SELECT 
-  username,
+  tp.username,
   COALESCE(u.full_name, tp.temp_full_name) as full_name,
-  admin_fee_percentage,
-  updated_at
+  tp.admin_fee_percentage,
+  tp.updated_at
 FROM public.talent_profiles tp
 LEFT JOIN public.users u ON u.id = tp.user_id
 WHERE tp.username = 'juanitabroaddrick';
