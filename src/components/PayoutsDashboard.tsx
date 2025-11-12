@@ -299,12 +299,12 @@ const PayoutsDashboard: React.FC = () => {
   }
 
   const totalEarnings = payouts
-    .filter(p => p.status === 'processed')
-    .reduce((sum, p) => sum + p.amount, 0)
+    .filter(p => p.status === 'paid')
+    .reduce((sum, p) => sum + p.payout_amount, 0)
 
   const pendingEarnings = payouts
     .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + p.amount, 0)
+    .reduce((sum, p) => sum + p.payout_amount, 0)
 
   if (loading) {
     return (
