@@ -115,22 +115,36 @@ export default function AdminPayoutsManagement() {
 
       // Fetch related orders separately
       if (payoutsData && payoutsData.length > 0) {
-        const orderIds = payoutsData.map(p => p.order_id);
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('id, request_details, recipient_name, created_at, status')
-          .in('id', orderIds);
+        const orderIds = payoutsData.map(p => p.order_id).filter(id => id); // Filter out null/undefined
+        
+        if (orderIds.length > 0) {
+          // Use .in() for multiple IDs, or .eq() for single ID to avoid API issues
+          let ordersQuery = supabase
+            .from('orders')
+            .select('id, request_details, recipient_name, created_at, status');
+          
+          if (orderIds.length === 1) {
+            ordersQuery = ordersQuery.eq('id', orderIds[0]);
+          } else {
+            ordersQuery = ordersQuery.in('id', orderIds);
+          }
 
-        if (ordersError) throw ordersError;
+          const { data: ordersData, error: ordersError } = await ordersQuery;
 
-        // Merge order data into payouts
-        const ordersMap = new Map(ordersData?.map(o => [o.id, o]) || []);
-        const enrichedPayouts = payoutsData.map(payout => ({
-          ...payout,
-          orders: ordersMap.get(payout.order_id)
-        }));
+          if (ordersError) throw ordersError;
 
-        setBatchPayouts(enrichedPayouts);
+          // Merge order data into payouts
+          const ordersMap = new Map((ordersData || []).map(o => [o.id, o]));
+          const enrichedPayouts = payoutsData.map(payout => ({
+            ...payout,
+            orders: ordersMap.get(payout.order_id)
+          }));
+
+          setBatchPayouts(enrichedPayouts);
+        } else {
+          // No valid order IDs, just set payouts without order data
+          setBatchPayouts(payoutsData.map(p => ({ ...p, orders: undefined })));
+        }
       } else {
         setBatchPayouts([]);
       }
