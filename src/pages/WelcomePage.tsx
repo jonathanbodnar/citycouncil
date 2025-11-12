@@ -23,18 +23,35 @@ interface PendingOrder extends Order {
 
 // Custom video player component that matches home page style
 const WelcomeVideoPlayer: React.FC<{ videoUrl: string }> = ({ videoUrl }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayingWithSound, setIsPlayingWithSound] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Auto-start video preview when component mounts
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(err => {
+        console.log('Auto-play prevented:', err);
+      });
+    }
+  }, [videoUrl]);
+
   const handlePlayClick = () => {
     if (videoRef.current) {
-      if (isPlaying) {
+      if (isPlayingWithSound) {
+        // Pause and mute
         videoRef.current.pause();
-      } else {
+        videoRef.current.muted = true;
+        videoRef.current.currentTime = 0;
         videoRef.current.play();
+        setIsPlayingWithSound(false);
+      } else {
+        // Play with sound
+        videoRef.current.muted = false;
+        videoRef.current.currentTime = 0;
+        videoRef.current.play();
+        setIsPlayingWithSound(true);
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -45,29 +62,30 @@ const WelcomeVideoPlayer: React.FC<{ videoUrl: string }> = ({ videoUrl }) => {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Video Element */}
+      {/* Video Element - Auto-plays muted and looping as preview */}
       <video
         ref={videoRef}
         src={videoUrl}
         className="w-full h-full object-cover"
         playsInline
-        preload="metadata"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        loop
+        muted
+        autoPlay
+        preload="auto"
         style={{ aspectRatio: '9/16', maxHeight: '600px' }}
       />
 
-      {/* Play Button Overlay */}
-      {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 transition-opacity">
+      {/* Play Button Overlay - Always shown when not playing with sound */}
+      {!isPlayingWithSound && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 transition-opacity">
           <div className={`bg-white rounded-full p-4 transition-transform ${isHovering ? 'scale-110' : 'scale-100'}`}>
             <PlayIcon className="h-12 w-12 text-gray-900" />
           </div>
         </div>
       )}
 
-      {/* Show controls overlay when hovering during playback */}
-      {isPlaying && isHovering && (
+      {/* Show pause button when playing with sound and hovering */}
+      {isPlayingWithSound && isHovering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 transition-opacity">
           <div className="bg-white bg-opacity-90 rounded-full p-3">
             <svg className="h-8 w-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
