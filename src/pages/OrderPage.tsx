@@ -115,7 +115,7 @@ const OrderPage: React.FC = () => {
   };
 
   const calculatePricing = () => {
-    if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, discount: 0, total: 0 };
+    if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, discount: 0, processingFee: 0, total: 0 };
 
     // Use corporate pricing if it's a business order, otherwise use regular pricing
     const basePrice = isForBusiness 
@@ -139,11 +139,13 @@ const OrderPage: React.FC = () => {
     
     // Admin fee is deducted from talent earnings, NOT added to customer total
     const adminFee = subtotal * (adminFeePercentage / 100);
-    const charityAmount = talent.charity_percentage 
+    
+    // Only calculate charity if charity is actually active (percentage > 0 and has name)
+    const charityAmount = (talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name)
       ? subtotal * (talent.charity_percentage / 100) 
       : 0;
     
-    // Customer total is just the subtotal (admin fee comes out of talent's earnings)
+    // Customer total starts with subtotal
     let total = subtotal;
     let discount = 0;
 
@@ -162,7 +164,11 @@ const OrderPage: React.FC = () => {
       total = total - discount;
     }
 
-    return { subtotal, adminFee, charityAmount, discount, total, isPromoActive };
+    // Add 2.9% processing fee to final total
+    const processingFee = total * 0.029;
+    total = total + processingFee;
+
+    return { subtotal, adminFee, charityAmount, discount, processingFee, total, isPromoActive };
   };
 
   const validateCoupon = async () => {
@@ -875,6 +881,12 @@ const OrderPage: React.FC = () => {
                 </div>
               )}
 
+              {/* Processing Fee */}
+              <div className="flex justify-between text-gray-600 text-sm">
+                <span>Processing Fee (2.9%)</span>
+                <span>${pricing.processingFee.toFixed(2)}</span>
+              </div>
+
               <div className="border-t border-gray-200 pt-3">
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold text-gray-900">Total</span>
@@ -902,7 +914,7 @@ const OrderPage: React.FC = () => {
             </div>
 
             {/* Charity Info */}
-            {talent.charity_name && (
+            {(talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0) && (
               <div className="mt-6 p-4 bg-red-50 rounded-lg">
                 <div className="flex items-center text-red-800">
                   <HeartIcon className="h-5 w-5 mr-2" />
