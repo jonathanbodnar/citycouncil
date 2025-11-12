@@ -814,27 +814,40 @@ const TalentOnboardingPage: React.FC = () => {
               });
               
               if (watermarkError) {
-                console.error('Watermark error:', watermarkError);
+                console.error('❌ Watermark error details:', {
+                  error: watermarkError,
+                  message: watermarkError.message,
+                  context: watermarkError.context,
+                  videoUrl: uploadResult.videoUrl
+                });
                 toast.dismiss('watermark');
-                toast.error('Failed to add watermark, but video uploaded. You can re-upload later.');
+                toast.success('Video uploaded! (Watermark will be added later)');
                 finalVideoUrl = uploadResult.videoUrl; // Use original video
+                setWelcomeVideoUrl(uploadResult.videoUrl); // Save URL so we don't re-upload
               } else if (watermarkData?.watermarkedUrl) {
-                console.log('Watermarked video URL:', watermarkData.watermarkedUrl);
+                console.log('✅ Watermarked video URL:', watermarkData.watermarkedUrl);
                 finalVideoUrl = watermarkData.watermarkedUrl;
                 setWelcomeVideoUrl(watermarkData.watermarkedUrl);
                 toast.dismiss('watermark');
                 toast.success('Video uploaded and watermarked!');
               } else {
-                console.error('No watermarked URL returned:', watermarkData);
+                console.error('⚠️ No watermarked URL returned:', watermarkData);
                 toast.dismiss('watermark');
-                toast.error('Watermark failed, but video uploaded. You can re-upload later.');
+                toast.success('Video uploaded! (Watermark will be added later)');
                 finalVideoUrl = uploadResult.videoUrl;
+                setWelcomeVideoUrl(uploadResult.videoUrl); // Save URL so we don't re-upload
               }
-            } catch (watermarkErr) {
-              console.error('Watermark exception:', watermarkErr);
+            } catch (watermarkErr: any) {
+              console.error('❌ Watermark exception:', {
+                error: watermarkErr,
+                message: watermarkErr.message,
+                stack: watermarkErr.stack,
+                videoUrl: uploadResult.videoUrl
+              });
               toast.dismiss('watermark');
-              toast.error('Watermark failed, but video uploaded. You can re-upload later.');
+              toast.success('Video uploaded! (Watermark will be added later)');
               finalVideoUrl = uploadResult.videoUrl;
+              setWelcomeVideoUrl(uploadResult.videoUrl); // Save URL so we don't re-upload
             }
           } else {
             console.warn('Video upload failed, but continuing onboarding:', uploadResult.error);

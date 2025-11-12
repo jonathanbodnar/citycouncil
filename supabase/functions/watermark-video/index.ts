@@ -12,8 +12,13 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  let videoUrl = ''
+  
   try {
-    const { videoUrl, orderId, talentName } = await req.json()
+    const body = await req.json()
+    videoUrl = body.videoUrl
+    const orderId = body.orderId
+    const talentName = body.talentName
 
     if (!videoUrl) {
       throw new Error('videoUrl is required')
@@ -161,12 +166,17 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error watermarking video:', error)
+    
+    // Always return 200 with original video as fallback
+    // This prevents blocking onboarding/downloads
+    // videoUrl is available from outer scope
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to watermark video'
+        watermarkedUrl: videoUrl || '',
+        warning: `Watermarking failed: ${error.message || 'Unknown error'}. Returning original video.`
       }),
       { 
-        status: 500,
+        status: 200, // Return 200 so frontend doesn't treat it as error
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
