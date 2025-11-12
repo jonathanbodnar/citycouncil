@@ -251,8 +251,8 @@ const PayoutsDashboard: React.FC = () => {
           `"${payout.orders.request_details.substring(0, 50)}..."`,
           `$${payout.payout_amount.toFixed(2)}`,
           payout.status,
-          payout.processed_at
-            ? new Date(payout.processed_at).toLocaleDateString()
+          payout.updated_at
+            ? new Date(payout.updated_at).toLocaleDateString()
             : 'N/A'
         ].join(',')
       )
@@ -514,10 +514,10 @@ const PayoutsDashboard: React.FC = () => {
                     >
                       {payout.status}
                     </span>
-                    {payout.processed_at && (
+                    {payout.status === 'paid' && payout.updated_at && (
                       <p className='text-xs text-gray-500 mt-1'>
                         Processed{' '}
-                        {new Date(payout.processed_at).toLocaleDateString()}
+                        {new Date(payout.updated_at).toLocaleDateString()}
                       </p>
                     )}
                   </div>
