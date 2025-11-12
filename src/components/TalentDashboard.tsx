@@ -22,7 +22,7 @@ import ProfilePictureUpload from './ProfilePictureUpload';
 import SocialAccountsManager from './SocialAccountsManager';
 import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
-import PayoutsDashboard from './PayoutsDashboard';
+import TalentPayoutsDashboard from './TalentPayoutsDashboard';
 import MFASettings from './MFASettings';
 import PhoneNumberPrompt from './PhoneNumberPrompt';
 import MediaCenter from './MediaCenter';
@@ -925,8 +925,8 @@ const TalentDashboard: React.FC = () => {
       )}
 
       {/* Payouts Tab */}
-      {activeTab === 'payouts' && (
-        <PayoutsDashboard />
+      {activeTab === 'payouts' && talentProfile && (
+        <TalentPayoutsDashboard talentId={talentProfile.id} />
       )}
 
       {/* Media Center Tab */}

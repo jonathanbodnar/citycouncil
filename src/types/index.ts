@@ -57,6 +57,7 @@ export interface TalentProfile {
   total_orders: number;
   fulfilled_orders: number;
   average_rating: number;
+  total_earnings?: number; // Total earnings from completed orders (after admin fees)
   is_active: boolean;
   is_coming_soon?: boolean; // Marks talent as "Coming Soon" - not visible on /home yet
   display_order?: number | null; // Controls order on /home (lower = higher on page, NULL = sort by created_at DESC)
@@ -224,14 +225,41 @@ export interface Payout {
   id: string;
   talent_id: string;
   order_id: string;
-  amount: number;
-  vendor_id: string;
-  status: 'pending' | 'processed' | 'failed' | 'cancelled';
+  order_amount: number;
+  admin_fee_percentage: number;
+  admin_fee_amount: number;
+  payout_amount: number;
+  status: 'pending' | 'batched' | 'processing' | 'paid' | 'failed';
+  week_start_date: string;
+  week_end_date: string;
+  batch_id?: string;
+  is_refunded: boolean;
+  refunded_at?: string;
+  refund_reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PayoutBatch {
+  id: string;
+  talent_id: string;
+  week_start_date: string;
+  week_end_date: string;
+  total_orders: number;
+  total_payout_amount: number;
+  total_refunded_amount: number;
+  net_payout_amount: number;
+  status: 'pending' | 'processing' | 'paid' | 'failed';
+  moov_transfer_id?: string;
+  moov_transfer_status?: string;
   processed_at?: string;
   created_at: string;
   updated_at: string;
-  fortis_transaction_id?: string;
-  error_message?: string;
+}
+
+export interface PayoutWithDetails extends Payout {
+  order?: Order;
+  talent?: TalentProfile;
 }
 
 export interface PayoutError {

@@ -23,6 +23,7 @@ import OrdersManagement from './admin/OrdersManagement';
 import CommsCenterManagement from './CommsCenterManagement';
 import NotificationSettings from './admin/NotificationSettings';
 import CouponManagement from './CouponManagement';
+import AdminPayoutsManagement from './AdminPayoutsManagement';
 import toast from 'react-hot-toast';
 
 interface StatsCardProps {
@@ -56,7 +57,7 @@ interface AdminManagementTabsProps {
 }
 
 const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
-  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons';
+  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'payouts' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons';
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -478,6 +479,11 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
       {/* Coupons Tab */}
       {activeTab === 'coupons' && (
         <CouponManagement />
+      )}
+
+      {/* Payouts Tab */}
+      {activeTab === 'payouts' && (
+        <AdminPayoutsManagement />
       )}
 
     </div>

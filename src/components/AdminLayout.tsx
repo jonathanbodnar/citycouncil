@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
   { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
   { key: 'orders', label: 'Orders', icon: ShoppingCartIcon },
   { key: 'talent', label: 'Talent', icon: UsersIcon },
+  { key: 'payouts', label: 'Payouts', icon: CurrencyDollarIcon },
   { key: 'coupons', label: 'Coupons', icon: TagIcon },
   { key: 'comms', label: 'Comms Center', icon: DevicePhoneMobileIcon },
   { key: 'notifications', label: 'Notifications', icon: BellIcon },
