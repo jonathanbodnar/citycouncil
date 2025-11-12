@@ -13,8 +13,11 @@ const PlatformSettings: React.FC = () => {
   const [settings, setSettings] = useState<PlatformSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [welcomeVideoFile, setWelcomeVideoFile] = useState<File | null>(null);
+  const [welcomeVideoUrl, setWelcomeVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -35,6 +38,12 @@ const PlatformSettings: React.FC = () => {
       const logoSetting = data?.find(s => s.setting_key === 'platform_logo_url');
       if (logoSetting?.setting_value) {
         setLogoPreview(logoSetting.setting_value);
+      }
+
+      // Set current welcome video URL
+      const videoSetting = data?.find(s => s.setting_key === 'welcome_video_url');
+      if (videoSetting?.setting_value) {
+        setWelcomeVideoUrl(videoSetting.setting_value);
       }
 
     } catch (error) {
@@ -128,6 +137,102 @@ const PlatformSettings: React.FC = () => {
       toast.error('Failed to upload logo');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast.error('Please select a video file');
+      return;
+    }
+
+    // Validate file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error('Video must be less than 100MB');
+      return;
+    }
+
+    setWelcomeVideoFile(file);
+  };
+
+  const uploadWelcomeVideo = async () => {
+    if (!welcomeVideoFile || !user) return;
+
+    try {
+      setUploadingVideo(true);
+
+      // Upload to Supabase Storage
+      const fileExt = welcomeVideoFile.name.split('.').pop();
+      const fileName = `welcome-video-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('platform-assets')
+        .upload(`videos/${fileName}`, welcomeVideoFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        if (uploadError.message.includes('Bucket not found')) {
+          throw new Error('Storage bucket "platform-assets" not found. Please create it in Supabase Storage.');
+        }
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('platform-assets')
+        .getPublicUrl(`videos/${fileName}`);
+
+      const videoUrl = urlData.publicUrl;
+
+      // Update or create platform setting
+      const { data: existing } = await supabase
+        .from('platform_settings')
+        .select('id')
+        .eq('setting_key', 'welcome_video_url')
+        .single();
+
+      if (existing) {
+        // Update existing
+        const { error: settingError } = await supabase
+          .from('platform_settings')
+          .update({
+            setting_value: videoUrl,
+            updated_by: user.id
+          })
+          .eq('setting_key', 'welcome_video_url');
+
+        if (settingError) throw settingError;
+      } else {
+        // Create new
+        const { error: settingError } = await supabase
+          .from('platform_settings')
+          .insert({
+            setting_key: 'welcome_video_url',
+            setting_value: videoUrl,
+            setting_type: 'string',
+            description: 'Welcome page video URL',
+            updated_by: user.id
+          });
+
+        if (settingError) throw settingError;
+      }
+
+      toast.success('Welcome video uploaded successfully!');
+      setWelcomeVideoUrl(videoUrl);
+      setWelcomeVideoFile(null);
+      fetchSettings();
+
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      toast.error('Failed to upload video');
+    } finally {
+      setUploadingVideo(false);
     }
   };
 
@@ -240,13 +345,89 @@ const PlatformSettings: React.FC = () => {
         </div>
       </div>
 
+      {/* Welcome Video Upload Section */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Welcome Page Video</h3>
+        
+        <div className="space-y-4">
+          {/* Current Video Preview */}
+          {welcomeVideoUrl && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Video
+              </label>
+              <video
+                src={welcomeVideoUrl}
+                controls
+                className="w-full max-w-md rounded-lg border border-gray-300"
+              />
+            </div>
+          )}
+          
+          {/* Upload Controls */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload New Welcome Video
+            </label>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleVideoSelect}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              MP4, MOV, or WebM. Max 100MB. This video will appear on the /welcome page.
+            </p>
+          </div>
+          
+          {welcomeVideoFile && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={uploadWelcomeVideo}
+                disabled={uploadingVideo}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {uploadingVideo ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <CloudArrowUpIcon className="h-4 w-4" />
+                    Upload Video
+                  </>
+                )}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setWelcomeVideoFile(null);
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              
+              <span className="text-sm text-gray-600">
+                {welcomeVideoFile.name} ({(welcomeVideoFile.size / (1024 * 1024)).toFixed(2)} MB)
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Other Settings */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">General Settings</h3>
         
         <div className="space-y-4">
           {settings
-            .filter(setting => setting.setting_key !== 'platform_logo_url')
+            .filter(setting => 
+              setting.setting_key !== 'platform_logo_url' && 
+              setting.setting_key !== 'welcome_video_url'
+            )
             .map((setting) => (
               <div key={setting.id}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
