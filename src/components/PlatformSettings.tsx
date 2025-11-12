@@ -150,9 +150,9 @@ const PlatformSettings: React.FC = () => {
       return;
     }
 
-    // Validate file size (max 100MB)
-    if (file.size > 100 * 1024 * 1024) {
-      toast.error('Video must be less than 100MB');
+    // Validate file size (max 750MB)
+    if (file.size > 750 * 1024 * 1024) {
+      toast.error('Video must be less than 750MB');
       return;
     }
 
@@ -376,7 +376,7 @@ const PlatformSettings: React.FC = () => {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             <p className="text-xs text-gray-500 mt-1">
-              MP4, MOV, or WebM. Max 100MB. This video will appear on the /welcome page.
+              MP4, MOV, or WebM. Max 750MB. This video will appear on the /welcome page.
             </p>
           </div>
           
