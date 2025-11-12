@@ -488,7 +488,7 @@ const OrderPage: React.FC = () => {
 
                 <div>
                   <label htmlFor="recipientName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Who's it for? <span className="text-red-500">*</span>
+                    Who is this video for? (Please enter a name) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
