@@ -200,15 +200,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION handle_payout_refund()
 RETURNS TRIGGER AS $$
 DECLARE
-  v_payout RECORD;
+  v_payout_amount DECIMAL(10,2);
   v_week_start DATE;
-  v_week_end DATE;
 BEGIN
   -- Only process when order status changes to 'refunded'
   IF NEW.status = 'refunded' AND (OLD.status IS NULL OR OLD.status != 'refunded') THEN
     
-    -- Find the payout for this order
-    SELECT * INTO v_payout
+    -- Get payout details for this order
+    SELECT payout_amount, week_start_date 
+    INTO v_payout_amount, v_week_start
     FROM payouts
     WHERE order_id = NEW.id;
     
@@ -225,18 +225,18 @@ BEGIN
       -- Subtract from talent's total earnings
       UPDATE talent_profiles
       SET 
-        total_earnings = GREATEST(COALESCE(total_earnings, 0) - v_payout.payout_amount, 0),
+        total_earnings = GREATEST(COALESCE(total_earnings, 0) - v_payout_amount, 0),
         updated_at = NOW()
       WHERE id = NEW.talent_id;
       
       -- Update the weekly batch to reflect refund
       UPDATE payout_batches
       SET 
-        total_refunded_amount = total_refunded_amount + v_payout.payout_amount,
-        net_payout_amount = total_payout_amount - (total_refunded_amount + v_payout.payout_amount),
+        total_refunded_amount = total_refunded_amount + v_payout_amount,
+        net_payout_amount = total_payout_amount - (total_refunded_amount + v_payout_amount),
         updated_at = NOW()
       WHERE talent_id = NEW.talent_id 
-        AND week_start_date = v_payout.week_start_date;
+        AND week_start_date = v_week_start;
     END IF;
   END IF;
   
