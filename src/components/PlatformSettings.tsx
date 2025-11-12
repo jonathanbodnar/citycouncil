@@ -86,31 +86,33 @@ const PlatformSettings: React.FC = () => {
     try {
       setUploading(true);
 
-      // Upload to Supabase Storage
+      // Upload to Wasabi S3 (shoutout-assets bucket)
+      const AWS = (await import('aws-sdk')).default;
+      
+      const wasabi = new AWS.S3({
+        endpoint: 's3.us-central-1.wasabisys.com',
+        accessKeyId: process.env.REACT_APP_WASABI_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY!,
+        region: 'us-central-1',
+        s3ForcePathStyle: true,
+        signatureVersion: 'v4'
+      });
+
       const fileExt = logoFile.name.split('.').pop();
-      const fileName = `logo-${Date.now()}.${fileExt}`;
+      const fileName = `platform/logo-${Date.now()}.${fileExt}`;
+      
+      const uploadParams = {
+        Bucket: 'shoutout-assets',
+        Key: fileName,
+        Body: logoFile,
+        ContentType: logoFile.type,
+        ACL: 'public-read' as const,
+      };
 
-      const { error: uploadError } = await supabase.storage
-        .from('platform-assets')
-        .upload(`logos/${fileName}`, logoFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        // If bucket doesn't exist, provide helpful error
-        if (uploadError.message.includes('Bucket not found')) {
-          throw new Error('Storage bucket "platform-assets" not found. Please create it in Supabase Storage.');
-        }
-        throw uploadError;
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('platform-assets')
-        .getPublicUrl(`logos/${fileName}`);
-
-      const logoUrl = urlData.publicUrl;
+      await wasabi.upload(uploadParams).promise();
+      
+      // Use direct Wasabi URL
+      const logoUrl = `https://shoutout-assets.s3.us-central-1.wasabisys.com/${fileName}`;
 
       // Update platform setting
       const { error: settingError } = await supabase
@@ -165,30 +167,33 @@ const PlatformSettings: React.FC = () => {
     try {
       setUploadingVideo(true);
 
-      // Upload to Supabase Storage
+      // Upload to Wasabi S3 (shoutout-assets bucket)
+      const AWS = (await import('aws-sdk')).default;
+      
+      const wasabi = new AWS.S3({
+        endpoint: 's3.us-central-1.wasabisys.com',
+        accessKeyId: process.env.REACT_APP_WASABI_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY!,
+        region: 'us-central-1',
+        s3ForcePathStyle: true,
+        signatureVersion: 'v4'
+      });
+
       const fileExt = welcomeVideoFile.name.split('.').pop();
-      const fileName = `welcome-video-${Date.now()}.${fileExt}`;
+      const fileName = `platform/welcome-video-${Date.now()}.${fileExt}`;
+      
+      const uploadParams = {
+        Bucket: 'shoutout-assets',
+        Key: fileName,
+        Body: welcomeVideoFile,
+        ContentType: welcomeVideoFile.type,
+        ACL: 'public-read' as const,
+      };
 
-      const { error: uploadError } = await supabase.storage
-        .from('platform-assets')
-        .upload(`videos/${fileName}`, welcomeVideoFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        if (uploadError.message.includes('Bucket not found')) {
-          throw new Error('Storage bucket "platform-assets" not found. Please create it in Supabase Storage.');
-        }
-        throw uploadError;
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('platform-assets')
-        .getPublicUrl(`videos/${fileName}`);
-
-      const videoUrl = urlData.publicUrl;
+      await wasabi.upload(uploadParams).promise();
+      
+      // Use direct Wasabi URL
+      const videoUrl = `https://shoutout-assets.s3.us-central-1.wasabisys.com/${fileName}`;
 
       // Update or create platform setting
       const { data: existing } = await supabase
@@ -376,7 +381,7 @@ const PlatformSettings: React.FC = () => {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             <p className="text-xs text-gray-500 mt-1">
-              MP4, MOV, or WebM. Max 750MB. This video will appear on the /welcome page.
+              MP4, MOV, or WebM. Max 750MB. Uploads to Wasabi (shoutout-assets). This video will appear on the /welcome page.
             </p>
           </div>
           
