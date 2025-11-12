@@ -509,7 +509,6 @@ const WelcomePage: React.FC = () => {
                   controls
                   preload="auto"
                   playsInline
-                  muted
                   className="rounded-2xl border border-white/20 shadow-lg max-h-[600px] w-auto"
                   style={{ maxWidth: '100%' }}
                   onLoadedMetadata={(e) => {
