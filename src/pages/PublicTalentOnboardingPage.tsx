@@ -51,6 +51,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
     pricing: 50,
     fulfillmentTime: 72,
     avatarUrl: '',
+    instagramHandle: '',
+    tiktokHandle: '',
+    facebookHandle: '',
+    twitterHandle: '',
   });
 
   // Step 3: Charity (optional)
@@ -493,6 +497,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
           pricing: profileData.pricing,
           fulfillment_time_hours: profileData.fulfillmentTime,
           temp_avatar_url: profileData.avatarUrl,
+          instagram_handle: profileData.instagramHandle || null,
+          tiktok_handle: profileData.tiktokHandle || null,
+          facebook_handle: profileData.facebookHandle || null,
+          twitter_handle: profileData.twitterHandle || null,
         })
         .eq('id', talentProfileId);
 
@@ -1017,6 +1025,61 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   <p className="text-xs text-gray-400 mt-1">
                     24h = 1 day, 72h = 3 days
                   </p>
+                </div>
+
+                {/* Social Media Handles (Optional) */}
+                <div className="pt-3 border-t border-white/20">
+                  <h3 className="text-sm font-semibold text-white mb-2">Social Media (Optional)</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs font-medium text-white mb-1">
+                        Instagram Handle
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.instagramHandle}
+                        onChange={(e) => setProfileData({ ...profileData, instagramHandle: e.target.value })}
+                        className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="@yourhandle"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-white mb-1">
+                        TikTok Handle
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.tiktokHandle}
+                        onChange={(e) => setProfileData({ ...profileData, tiktokHandle: e.target.value })}
+                        className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="@yourhandle"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-white mb-1">
+                        Facebook Handle
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.facebookHandle}
+                        onChange={(e) => setProfileData({ ...profileData, facebookHandle: e.target.value })}
+                        className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="@yourhandle"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-white mb-1">
+                        X (Twitter) Handle
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.twitterHandle}
+                        onChange={(e) => setProfileData({ ...profileData, twitterHandle: e.target.value })}
+                        className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="@yourhandle"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

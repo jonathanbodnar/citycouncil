@@ -45,7 +45,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     { platform: 'Instagram', handle: '@shoutoutvoice', color: 'from-purple-600 to-pink-600' },
     { platform: 'TikTok', handle: '@shoutoutvoice', color: 'from-black to-gray-800' },
     { platform: 'Facebook', handle: '@shoutoutvoice', color: 'from-blue-600 to-blue-700' },
-    { platform: 'X (Twitter)', handle: '@shoutoutvoice', color: 'from-gray-800 to-black' }
+    { platform: 'X (Twitter)', handle: '@shoutoutvoices', color: 'from-gray-800 to-black' }
   ];
 
   useEffect(() => {

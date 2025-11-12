@@ -17,7 +17,6 @@ import PlatformSettings from './PlatformSettings';
 import AdminHelpDesk from './AdminHelpDesk';
 import PromotionalVideosManagement from './PromotionalVideosManagement';
 import LandingVideoUpload from './LandingVideoUpload';
-import SocialMediaTracking from './SocialMediaTracking';
 import BulkVideoUpload from './BulkVideoUpload';
 import OrdersManagement from './admin/OrdersManagement';
 import CommsCenterManagement from './CommsCenterManagement';
@@ -55,7 +54,7 @@ interface AdminManagementTabsProps {
 }
 
 const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
-  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'social-tracking' | 'bulk-upload' | 'comms' | 'notifications';
+  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications';
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -448,10 +447,6 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         <LandingVideoUpload />
       )}
 
-      {/* Social Media Tracking Tab */}
-      {activeTab === 'social-tracking' && (
-        <SocialMediaTracking />
-      )}
 
       {/* Platform Settings Tab */}
       {activeTab === 'settings' && (

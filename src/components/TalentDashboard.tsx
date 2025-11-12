@@ -23,7 +23,6 @@ import SocialAccountsManager from './SocialAccountsManager';
 import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
 import PayoutsDashboard from './PayoutsDashboard';
-import InstagramConnect from './InstagramConnect';
 import MFASettings from './MFASettings';
 import PhoneNumberPrompt from './PhoneNumberPrompt';
 import MediaCenter from './MediaCenter';
@@ -1064,17 +1063,6 @@ const TalentDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Instagram Connection */}
-            {talentProfile && (
-              <div className="mt-6">
-                <InstagramConnect
-                  talentId={talentProfile.id}
-                  currentUsername={talentProfile.instagram_username}
-                  onConnectionChange={fetchTalentData}
-                />
-              </div>
-            )}
-
             {/* Claim Button */}
             {!talentProfile?.is_participating_in_promotion ? (
               <button
@@ -1321,6 +1309,61 @@ const TalentDashboard: React.FC = () => {
               />
             </div>
 
+            {/* Social Media Handles */}
+            <div className="pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Social Media Handles (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Instagram Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={talentProfile.instagram_handle || ''}
+                    onChange={(e) => setTalentProfile({ ...talentProfile, instagram_handle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    TikTok Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={talentProfile.tiktok_handle || ''}
+                    onChange={(e) => setTalentProfile({ ...talentProfile, tiktok_handle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Facebook Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={talentProfile.facebook_handle || ''}
+                    onChange={(e) => setTalentProfile({ ...talentProfile, facebook_handle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    X (Twitter) Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={talentProfile.twitter_handle || ''}
+                    onChange={(e) => setTalentProfile({ ...talentProfile, twitter_handle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Social Media Accounts */}
             <div className="pt-6 border-t border-gray-200">
               <SocialAccountsManager talentId={talentProfile.id} />
@@ -1377,6 +1420,10 @@ const TalentDashboard: React.FC = () => {
                         pricing: talentProfile.pricing,
                         corporate_pricing: talentProfile.corporate_pricing,
                         fulfillment_time_hours: talentProfile.fulfillment_time_hours,
+                        instagram_handle: talentProfile.instagram_handle || null,
+                        tiktok_handle: talentProfile.tiktok_handle || null,
+                        facebook_handle: talentProfile.facebook_handle || null,
+                        twitter_handle: talentProfile.twitter_handle || null,
                       })
                       .eq('id', talentProfile.id);
 

@@ -57,7 +57,11 @@ const TalentManagement: React.FC = () => {
     is_verified: false,
     charity_percentage: 5,
     charity_name: '',
-    admin_fee_percentage: 25 // Will be updated from platform settings
+    admin_fee_percentage: 25, // Will be updated from platform settings
+    instagram_handle: '',
+    tiktok_handle: '',
+    facebook_handle: '',
+    twitter_handle: ''
   });
   
   // Charity donation toggle for admin creation
@@ -204,6 +208,10 @@ const TalentManagement: React.FC = () => {
         charity_percentage: newTalent.charity_percentage,
         charity_name: newTalent.charity_name,
         admin_fee_percentage: newTalent.admin_fee_percentage,
+        instagram_handle: newTalent.instagram_handle || null,
+        tiktok_handle: newTalent.tiktok_handle || null,
+        facebook_handle: newTalent.facebook_handle || null,
+        twitter_handle: newTalent.twitter_handle || null,
         onboarding_token: onboardingToken,
         onboarding_completed: false,
         onboarding_expires_at: expiryDate.toISOString(),
@@ -991,6 +999,61 @@ const TalentManagement: React.FC = () => {
                   onChange={(e) => setNewTalent({...newTalent, admin_fee_percentage: parseFloat(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+            </div>
+            
+            {/* Social Media Handles (Optional) */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Social Media Handles (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Instagram Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={newTalent.instagram_handle}
+                    onChange={(e) => setNewTalent({...newTalent, instagram_handle: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    TikTok Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={newTalent.tiktok_handle}
+                    onChange={(e) => setNewTalent({...newTalent, tiktok_handle: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Facebook Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={newTalent.facebook_handle}
+                    onChange={(e) => setNewTalent({...newTalent, facebook_handle: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    X (Twitter) Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={newTalent.twitter_handle}
+                    onChange={(e) => setNewTalent({...newTalent, twitter_handle: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="@yourhandle"
+                  />
+                </div>
               </div>
             </div>
             
