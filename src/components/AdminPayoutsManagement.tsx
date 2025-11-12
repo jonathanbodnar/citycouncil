@@ -117,24 +117,33 @@ export default function AdminPayoutsManagement() {
       if (payoutsData && payoutsData.length > 0) {
         const orderIds = payoutsData.map(p => p.order_id).filter(id => id); // Filter out null/undefined
         
+        console.log('📊 Fetching orders for payouts:', {
+          payoutsCount: payoutsData.length,
+          orderIds: orderIds,
+          orderIdsCount: orderIds.length
+        });
+        
         if (orderIds.length > 0) {
-          // Use .in() for multiple IDs, or .eq() for single ID to avoid API issues
-          let ordersQuery = supabase
-            .from('orders')
-            .select('id, request_details, recipient_name, created_at, status');
+          // Fetch orders one by one to avoid .in() issues
+          const ordersPromises = orderIds.map(orderId => 
+            supabase
+              .from('orders')
+              .select('id, request_details, recipient_name, created_at, status')
+              .eq('id', orderId)
+              .single()
+          );
+
+          const ordersResults = await Promise.all(ordersPromises);
           
-          if (orderIds.length === 1) {
-            ordersQuery = ordersQuery.eq('id', orderIds[0]);
-          } else {
-            ordersQuery = ordersQuery.in('id', orderIds);
-          }
+          // Extract successful results
+          const ordersData = ordersResults
+            .filter(result => !result.error && result.data)
+            .map(result => result.data);
 
-          const { data: ordersData, error: ordersError } = await ordersQuery;
-
-          if (ordersError) throw ordersError;
+          console.log('📦 Orders fetched:', ordersData.length);
 
           // Merge order data into payouts
-          const ordersMap = new Map((ordersData || []).map(o => [o.id, o]));
+          const ordersMap = new Map(ordersData.map(o => [o.id, o]));
           const enrichedPayouts = payoutsData.map(payout => ({
             ...payout,
             orders: ordersMap.get(payout.order_id)
