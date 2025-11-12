@@ -142,7 +142,7 @@ const CouponManagement: React.FC = () => {
   };
 
   const handleDelete = async (couponId: string) => {
-    if (!confirm('Are you sure you want to delete this coupon?')) return;
+    if (!window.confirm('Are you sure you want to delete this coupon?')) return;
 
     try {
       const { error } = await supabase
