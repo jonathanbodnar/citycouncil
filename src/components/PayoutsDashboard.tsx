@@ -249,7 +249,7 @@ const PayoutsDashboard: React.FC = () => {
           new Date(payout.created_at).toLocaleDateString(),
           payout.order_id,
           `"${payout.orders.request_details.substring(0, 50)}..."`,
-          `$${payout.amount.toFixed(2)}`,
+          `$${payout.payout_amount.toFixed(2)}`,
           payout.status,
           payout.processed_at
             ? new Date(payout.processed_at).toLocaleDateString()
@@ -505,7 +505,7 @@ const PayoutsDashboard: React.FC = () => {
 
                   <div className='text-right'>
                     <p className='font-semibold text-gray-900'>
-                      ${payout.amount.toFixed(2)}
+                      ${payout.payout_amount.toFixed(2)}
                     </p>
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
