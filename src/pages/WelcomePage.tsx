@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ClipboardDocumentIcon,
@@ -6,19 +6,79 @@ import {
   GiftIcon,
   ArrowDownTrayIcon,
   CheckCircleIcon,
-  ClockIcon
+  ClockIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { Order } from '../types';
 import toast from 'react-hot-toast';
 import { generatePromoGraphic, downloadPromoGraphic } from '../services/promoGraphicGenerator';
-import VideoPlayer from '../components/VideoPlayer';
 
 interface PendingOrder extends Order {
   users: {
     full_name: string;
   };
+}
+
+// Custom video player component that matches home page style
+const WelcomeVideoPlayer: React.FC<{ videoUrl: string }> = ({ videoUrl }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handlePlayClick = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  return (
+    <div 
+      className="relative rounded-2xl overflow-hidden border border-white/20 shadow-lg w-full max-w-md mx-auto cursor-pointer"
+      onClick={handlePlayClick}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      {/* Video Element */}
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        className="w-full h-full object-cover"
+        playsInline
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        style={{ aspectRatio: '9/16', maxHeight: '600px' }}
+      />
+
+      {/* Play Button Overlay */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 transition-opacity">
+          <div className={`bg-white rounded-full p-4 transition-transform ${isHovering ? 'scale-110' : 'scale-100'}`}>
+            <PlayIcon className="h-12 w-12 text-gray-900" />
+          </div>
+        </div>
+      )}
+
+      {/* Show controls overlay when hovering during playback */}
+      {isPlaying && isHovering && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 transition-opacity">
+          <div className="bg-white bg-opacity-90 rounded-full p-3">
+            <svg className="h-8 w-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+              <rect x="6" y="5" width="4" height="14" rx="1" />
+              <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 const WelcomePage: React.FC = () => {
@@ -486,12 +546,7 @@ const WelcomePage: React.FC = () => {
             {/* Welcome Video Embed */}
             <div className="mb-4 flex justify-center">
               {welcomeVideoUrl ? (
-                <div className="rounded-2xl overflow-hidden border border-white/20 shadow-lg max-h-[600px] w-auto" style={{ maxWidth: '100%' }}>
-                  <VideoPlayer 
-                    videoUrl={welcomeVideoUrl}
-                    className="w-full h-full"
-                  />
-                </div>
+                <WelcomeVideoPlayer videoUrl={welcomeVideoUrl} />
               ) : (
                 <div className="aspect-video w-full bg-gradient-to-br from-blue-900/50 to-red-900/50 rounded-2xl flex items-center justify-center border border-white/20">
                   <div className="text-center">
