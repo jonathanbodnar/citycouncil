@@ -223,30 +223,11 @@ const WelcomePage: React.FC = () => {
     }
 
     try {
-      // Apply watermark before downloading
-      toast.loading('Preparing video for download...', { id: 'watermark' });
-      
-      const { data: watermarkData, error: watermarkError } = await supabase.functions.invoke('watermark-video', {
-        body: { 
-          videoUrl: promoVideoUrl,
-          orderId: `promo-${user?.id}`,
-          talentName: talentFullName || user?.full_name || 'ShoutOut'
-        }
-      });
-
-      const finalVideoUrl = (!watermarkError && watermarkData?.watermarkedUrl) 
-        ? watermarkData.watermarkedUrl 
-        : promoVideoUrl;
-
-      if (watermarkError) {
-        console.warn('Watermarking failed, using original video:', watermarkError);
-      }
-
-      toast.dismiss('watermark');
+      // Video is already watermarked during upload - just download it directly
       toast.loading('Downloading video...', { id: 'download' });
 
       // Fetch the video as a blob to force download
-      const response = await fetch(finalVideoUrl);
+      const response = await fetch(promoVideoUrl);
       const blob = await response.blob();
       
       // Create download link

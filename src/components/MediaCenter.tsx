@@ -203,30 +203,13 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
 
     setDownloadingVideo(true);
     try {
-      logger.log('Starting promo video download with watermark:', promoVideoUrl);
+      logger.log('Downloading promo video (already watermarked):', promoVideoUrl);
 
-      // Call watermark-video Edge Function
-      const { data, error } = await supabase.functions.invoke('watermark-video', {
-        body: { videoUrl: promoVideoUrl }
-      });
-
-      if (error) {
-        logger.error('Watermark function error:', error);
-        throw new Error(`Watermark error: ${error.message || 'Unknown error'}`);
-      }
-
-      if (!data?.watermarkedUrl) {
-        logger.error('No watermarked URL in response:', data);
-        throw new Error('No watermarked URL returned');
-      }
-
-      logger.log('Watermarked URL received:', data.watermarkedUrl);
-
-      // Fetch the watermarked video
-      const response = await fetch(data.watermarkedUrl);
+      // Video is already watermarked during upload - just fetch it directly
+      const response = await fetch(promoVideoUrl);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch watermarked video: ${response.status}`);
+        throw new Error(`Failed to fetch video: ${response.status}`);
       }
 
       const blob = await response.blob();
