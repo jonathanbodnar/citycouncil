@@ -103,25 +103,37 @@ export default function AdminPayoutsManagement() {
     try {
       setLoadingPayouts(true);
 
-      const { data, error } = await supabase
+      // Fetch payouts
+      const { data: payoutsData, error: payoutsError } = await supabase
         .from('payouts')
-        .select(`
-          *,
-          orders!payouts_order_id_fkey (
-            id,
-            request_details,
-            recipient_name,
-            created_at,
-            status
-          )
-        `)
+        .select('*')
         .eq('talent_id', talentId)
         .eq('week_start_date', weekStart)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (payoutsError) throw payoutsError;
 
-      setBatchPayouts(data || []);
+      // Fetch related orders separately
+      if (payoutsData && payoutsData.length > 0) {
+        const orderIds = payoutsData.map(p => p.order_id);
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('id, request_details, recipient_name, created_at, status')
+          .in('id', orderIds);
+
+        if (ordersError) throw ordersError;
+
+        // Merge order data into payouts
+        const ordersMap = new Map(ordersData?.map(o => [o.id, o]) || []);
+        const enrichedPayouts = payoutsData.map(payout => ({
+          ...payout,
+          orders: ordersMap.get(payout.order_id)
+        }));
+
+        setBatchPayouts(enrichedPayouts);
+      } else {
+        setBatchPayouts([]);
+      }
 
     } catch (error: any) {
       console.error('Error fetching batch payouts:', error);
