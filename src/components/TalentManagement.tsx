@@ -261,7 +261,11 @@ const TalentManagement: React.FC = () => {
         is_verified: false,
         charity_percentage: 5,
         charity_name: '',
-        admin_fee_percentage: defaultAdminFee // Use platform settings default
+        admin_fee_percentage: defaultAdminFee, // Use platform settings default
+        instagram_handle: '',
+        tiktok_handle: '',
+        facebook_handle: '',
+        twitter_handle: ''
       });
       fetchTalents();
 
