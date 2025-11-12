@@ -51,17 +51,22 @@ FROM public.talent_profiles
 WHERE admin_fee_percentage IS NOT NULL AND admin_fee_percentage != 25;
 
 -- 3. List talent that need correction (not 25%)
-SELECT 
-  '========================' AS info
-UNION ALL
-SELECT 
-  '⚠️ TALENT NEEDING CORRECTION:' AS info
-UNION ALL
-SELECT 
-  '  ' || COALESCE(tp.username, u.full_name, tp.temp_full_name, 'ID: ' || tp.id::TEXT) || 
-  ' (currently: ' || COALESCE(tp.admin_fee_percentage::TEXT, 'NULL') || '%)' AS info
-FROM public.talent_profiles tp
-LEFT JOIN public.users u ON u.id = tp.user_id
-WHERE tp.admin_fee_percentage IS NULL OR tp.admin_fee_percentage != 25
-ORDER BY COALESCE(u.full_name, tp.temp_full_name);
+SELECT * FROM (
+  SELECT 
+    '========================' AS info,
+    0 AS sort_order
+  UNION ALL
+  SELECT 
+    '⚠️ TALENT NEEDING CORRECTION:' AS info,
+    1 AS sort_order
+  UNION ALL
+  SELECT 
+    '  ' || COALESCE(tp.username, u.full_name, tp.temp_full_name, 'ID: ' || tp.id::TEXT) || 
+    ' (currently: ' || COALESCE(tp.admin_fee_percentage::TEXT, 'NULL') || '%)' AS info,
+    2 AS sort_order
+  FROM public.talent_profiles tp
+  LEFT JOIN public.users u ON u.id = tp.user_id
+  WHERE tp.admin_fee_percentage IS NULL OR tp.admin_fee_percentage != 25
+) AS results
+ORDER BY sort_order, info;
 
