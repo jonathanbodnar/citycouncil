@@ -53,10 +53,6 @@ export interface TalentProfile {
   instagram_user_id?: string; // Instagram user ID from Meta API
   instagram_access_token?: string; // OAuth access token for Instagram API
   instagram_token_expires_at?: string; // When the Instagram access token expires
-  instagram_handle?: string; // Instagram handle (e.g., @username)
-  tiktok_handle?: string; // TikTok handle (e.g., @username)
-  facebook_handle?: string; // Facebook handle (e.g., @username)
-  twitter_handle?: string; // Twitter/X handle (e.g., @username)
   full_name?: string; // Legal full name (used for Moov/Plaid onboarding)
   total_orders: number;
   fulfilled_orders: number;
