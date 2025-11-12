@@ -14,7 +14,8 @@ import {
   ArrowUpTrayIcon,
   ShoppingCartIcon,
   DevicePhoneMobileIcon,
-  BellIcon
+  BellIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import Logo from './Logo';
 
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
   { key: 'orders', label: 'Orders', icon: ShoppingCartIcon },
   { key: 'talent', label: 'Talent', icon: UsersIcon },
+  { key: 'coupons', label: 'Coupons', icon: TagIcon },
   { key: 'comms', label: 'Comms Center', icon: DevicePhoneMobileIcon },
   { key: 'notifications', label: 'Notifications', icon: BellIcon },
   { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },

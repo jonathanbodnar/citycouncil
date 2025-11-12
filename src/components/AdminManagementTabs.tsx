@@ -8,7 +8,8 @@ import {
   StarIcon,
   ClockIcon,
   VideoCameraIcon,
-  HashtagIcon
+  HashtagIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { HelpMessage, AdminStats } from '../types';
@@ -21,6 +22,7 @@ import BulkVideoUpload from './BulkVideoUpload';
 import OrdersManagement from './admin/OrdersManagement';
 import CommsCenterManagement from './CommsCenterManagement';
 import NotificationSettings from './admin/NotificationSettings';
+import CouponManagement from './CouponManagement';
 import toast from 'react-hot-toast';
 
 interface StatsCardProps {
@@ -54,7 +56,7 @@ interface AdminManagementTabsProps {
 }
 
 const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
-  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications';
+  const activeTab = activeTabProp as 'analytics' | 'orders' | 'talent' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons';
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -471,6 +473,11 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
       {/* Notifications Tab */}
       {activeTab === 'notifications' && (
         <NotificationSettings />
+      )}
+
+      {/* Coupons Tab */}
+      {activeTab === 'coupons' && (
+        <CouponManagement />
       )}
 
     </div>
