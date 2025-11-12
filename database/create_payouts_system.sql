@@ -123,7 +123,7 @@ BEGIN
     v_payout_amount := NEW.amount - v_admin_fee_amount;
     
     -- Get week dates for this order
-    SELECT * INTO v_week_start, v_week_end
+    SELECT week_start, week_end INTO v_week_start, v_week_end
     FROM get_week_dates(NEW.updated_at::DATE);
     
     -- Create payout record

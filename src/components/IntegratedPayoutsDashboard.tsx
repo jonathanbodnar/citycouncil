@@ -308,7 +308,7 @@ const IntegratedPayoutsDashboard: React.FC = () => {
           <p className="text-sm text-gray-600 mb-4">
             Create your Moov account to receive payments for your completed videos.
           </p>
-          <MoovOnboard onComplete={fetchPayoutData} />
+          <MoovOnboard />
         </div>
       )}
 
