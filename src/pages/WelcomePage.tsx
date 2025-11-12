@@ -507,6 +507,8 @@ const WelcomePage: React.FC = () => {
                 <video
                   src={welcomeVideoUrl}
                   controls
+                  preload="metadata"
+                  playsInline
                   className="rounded-2xl border border-white/20 shadow-lg max-h-[600px] w-auto"
                   style={{ maxWidth: '100%' }}
                 >

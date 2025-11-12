@@ -432,12 +432,6 @@ const TalentDashboard: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-4 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Talent Dashboard</h1>
-        <p className="text-gray-600">Welcome back, {user?.full_name}!</p>
-        
-        {/* Mobile Promotion Button */}
-      </div>
 
       {/* Phone Number Prompt (if missing) */}
       {showPhonePrompt && !userHasPhone && (
@@ -1138,14 +1132,31 @@ const TalentDashboard: React.FC = () => {
 
       {/* Profile Tab */}
       {activeTab === 'profile' && (
-        <div className="glass rounded-2xl shadow-modern border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Talent Profile</h2>
-            <button className="flex items-center space-x-2 text-primary-600 hover:text-primary-700">
-              <PencilIcon className="h-4 w-4" />
-              <span>Edit Profile</span>
+        <div className="space-y-6">
+          {/* Sub-tabs for Profile (Mobile) */}
+          <div className="md:hidden flex gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium whitespace-nowrap"
+            >
+              Profile
+            </button>
+            <button
+              onClick={() => setActiveTab('payouts')}
+              className="px-4 py-2 rounded-lg bg-gray-700 text-white font-medium whitespace-nowrap"
+            >
+              Payouts
             </button>
           </div>
+
+          <div className="glass rounded-2xl shadow-modern border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Talent Profile</h2>
+              <button className="flex items-center space-x-2 text-primary-600 hover:text-primary-700">
+                <PencilIcon className="h-4 w-4" />
+                <span>Edit Profile</span>
+              </button>
+            </div>
 
           <div className="space-y-6">
             {/* Profile Photo Section */}
@@ -1395,6 +1406,7 @@ const TalentDashboard: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
         </div>
       )}
 

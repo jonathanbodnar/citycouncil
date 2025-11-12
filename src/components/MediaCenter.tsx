@@ -85,7 +85,8 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       setShareableVideos(formatted);
     } catch (error) {
       logger.error('Error fetching shareable videos:', error);
-      toast.error('Failed to load shareable videos');
+      // Don't show error toast - just show empty state
+      setShareableVideos([]);
     } finally {
       setLoadingVideos(false);
     }
@@ -129,7 +130,24 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       });
       const filename = `${talentUsername}-promo.png`;
       
-      // Download the blob
+      // Try to use native share API on mobile (saves to camera roll)
+      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([blob], filename, { type: 'image/png' });
+          await navigator.share({
+            files: [file],
+            title: 'ShoutOut Promo Graphic',
+            text: 'My ShoutOut promo graphic'
+          });
+          toast.success('Graphic saved!');
+          return;
+        } catch (shareError) {
+          // Fall through to download if share fails
+          logger.log('Share failed, falling back to download:', shareError);
+        }
+      }
+      
+      // Fallback: Traditional download for desktop
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -172,13 +190,32 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         throw new Error('No watermarked URL returned');
       }
 
-      // Fetch the watermarked video and trigger download
+      // Fetch the watermarked video
       const response = await fetch(data.watermarkedUrl);
       const blob = await response.blob();
+      const filename = `${talentUsername}-promo-video.mp4`;
+
+      // Try to use native share API on mobile (saves to camera roll)
+      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([blob], filename, { type: 'video/mp4' });
+          await navigator.share({
+            files: [file],
+            title: 'ShoutOut Promo Video',
+            text: 'My ShoutOut promo video'
+          });
+          toast.success('Video saved!');
+          return;
+        } catch (shareError) {
+          logger.log('Share failed, falling back to download:', shareError);
+        }
+      }
+
+      // Fallback: Traditional download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${talentUsername}-promo-video.mp4`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -206,13 +243,32 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         throw new Error('No watermarked URL returned');
       }
 
-      // Fetch and download
+      // Fetch the video
       const response = await fetch(data.watermarkedUrl);
       const blob = await response.blob();
+      const filename = `shoutout-${orderId.slice(0, 8)}.mp4`;
+
+      // Try to use native share API on mobile (saves to camera roll)
+      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([blob], filename, { type: 'video/mp4' });
+          await navigator.share({
+            files: [file],
+            title: 'ShoutOut Video',
+            text: 'My ShoutOut video'
+          });
+          toast.success('Video saved!');
+          return;
+        } catch (shareError) {
+          logger.log('Share failed, falling back to download:', shareError);
+        }
+      }
+
+      // Fallback: Traditional download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `shoutout-${orderId.slice(0, 8)}.mp4`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -232,6 +288,28 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         <h2 className="text-2xl font-bold text-white mb-2">Media Center</h2>
         <p className="text-gray-400">Download your promo materials and shareable content</p>
       </div>
+
+      {/* Profile URL - Click to Copy */}
+      {talentUsername && (
+        <div className="glass p-4 rounded-xl">
+          <label className="block text-sm font-medium text-gray-400 mb-2">
+            Your Profile URL
+          </label>
+          <button
+            onClick={() => handleCopyToClipboard(`https://shoutout.us/${talentUsername}`, 'Profile URL')}
+            className="w-full glass-hover p-3 rounded-lg flex items-center justify-between transition-all duration-300"
+          >
+            <span className="text-white font-mono text-sm">
+              shoutout.us/{talentUsername}
+            </span>
+            {copiedItem === 'Profile URL' ? (
+              <CheckIcon className="h-5 w-5 text-green-400" />
+            ) : (
+              <ClipboardDocumentIcon className="h-5 w-5 text-gray-400" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Promo Materials */}
       <div className="glass p-6 rounded-xl">

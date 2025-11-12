@@ -8,7 +8,7 @@ import {
   BellIcon,
   BanknotesIcon,
   ChartBarIcon,
-  PhotoIcon
+  ShareIcon
 } from '@heroicons/react/24/outline';
 import { 
   HomeIcon as HomeIconSolid, 
@@ -18,7 +18,7 @@ import {
   BellIcon as BellIconSolid,
   BanknotesIcon as BanknotesIconSolid,
   ChartBarIcon as ChartBarIconSolid,
-  PhotoIcon as PhotoIconSolid
+  ShareIcon as ShareIconSolid
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext';
 
@@ -55,16 +55,10 @@ const MobileNavigation: React.FC = () => {
       iconSolid: ChartBarIconSolid,
     },
     {
-      name: 'Payouts',
-      href: '/dashboard?tab=payouts',
-      icon: BanknotesIcon,
-      iconSolid: BanknotesIconSolid,
-    },
-    {
-      name: 'Media',
+      name: 'Share Profile',
       href: '/dashboard?tab=media',
-      icon: PhotoIcon,
-      iconSolid: PhotoIconSolid,
+      icon: ShareIcon,
+      iconSolid: ShareIconSolid,
     },
     {
       name: 'Profile',
@@ -143,7 +137,7 @@ const MobileNavigation: React.FC = () => {
         zIndex: 9999 
       }}
     >
-      <div className={`grid py-2 ${user ? 'grid-cols-5' : 'grid-cols-2'}`}>
+      <div className={`grid py-2 ${user ? 'grid-cols-4' : 'grid-cols-2'}`}>
         {navigation.map((item) => {
           // Better active detection for routes with query params
           const isActive = location.pathname === item.href || 
