@@ -32,6 +32,7 @@ const WelcomePage: React.FC = () => {
   const [talentFullName, setTalentFullName] = useState('');
   const [generatingGraphic, setGeneratingGraphic] = useState(false);
   const [payoutsEnabled, setPayoutsEnabled] = useState(false);
+  const [welcomeVideoUrl, setWelcomeVideoUrl] = useState('');
 
   // Soft launch date: November 24th, 2025
   const softLaunchDate = new Date('2025-11-24T00:00:00');
@@ -50,6 +51,7 @@ const WelcomePage: React.FC = () => {
       fetchPendingOrders();
       fetchTalentProfile();
       fetchPayoutsEnabledSetting();
+      fetchWelcomeVideo();
     } else if (user) {
       // Redirect non-talent users to their appropriate dashboard
       navigate('/home');
@@ -96,6 +98,24 @@ const WelcomePage: React.FC = () => {
       console.error('Error fetching payouts enabled setting:', error);
       // Default to false if setting doesn't exist
       setPayoutsEnabled(false);
+    }
+  };
+
+  const fetchWelcomeVideo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'welcome_video_url')
+        .single();
+
+      if (error) throw error;
+      if (data?.setting_value) {
+        setWelcomeVideoUrl(data.setting_value);
+      }
+    } catch (error) {
+      console.error('Error fetching welcome video URL:', error);
+      // Video is optional, so just log the error
     }
   };
 
@@ -481,12 +501,25 @@ const WelcomePage: React.FC = () => {
               <h2 className="text-2xl font-bold text-white">Welcome Video</h2>
             </div>
             
-            {/* Welcome Video Embed - Placeholder for now */}
-            <div className="aspect-video bg-gradient-to-br from-blue-900/50 to-red-900/50 rounded-2xl mb-4 flex items-center justify-center border border-white/20">
-              <div className="text-center">
-                <VideoCameraIcon className="h-16 w-16 text-white/50 mx-auto mb-2" />
-                <p className="text-white/70 text-sm">Welcome video coming soon...</p>
-              </div>
+            {/* Welcome Video Embed */}
+            <div className="mb-4 flex justify-center">
+              {welcomeVideoUrl ? (
+                <video
+                  src={welcomeVideoUrl}
+                  controls
+                  className="rounded-2xl border border-white/20 shadow-lg max-h-[600px] w-auto"
+                  style={{ maxWidth: '100%' }}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="aspect-video w-full bg-gradient-to-br from-blue-900/50 to-red-900/50 rounded-2xl flex items-center justify-center border border-white/20">
+                  <div className="text-center">
+                    <VideoCameraIcon className="h-16 w-16 text-white/50 mx-auto mb-2" />
+                    <p className="text-white/70 text-sm">Welcome video coming soon...</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Start Tips */}
