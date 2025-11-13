@@ -35,6 +35,7 @@ const TalentManagement: React.FC = () => {
   const [talents, setTalents] = useState<TalentWithUser[]>([]);
   const [filteredTalents, setFilteredTalents] = useState<TalentWithUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'incomplete' | 'no-login'>('all');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const talentsPerPage = 10;
@@ -105,21 +106,50 @@ const TalentManagement: React.FC = () => {
   }, [defaultAdminFee]);
 
   useEffect(() => {
-    // Filter talents based on search query
-    if (!searchQuery.trim()) {
-      setFilteredTalents(talents);
-    } else {
+    // Filter talents based on search query AND status filter
+    let filtered = talents;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      const filtered = talents.filter(talent => 
+      filtered = filtered.filter(talent => 
         (talent.users?.full_name?.toLowerCase().includes(query)) ||
         (talent.temp_full_name?.toLowerCase().includes(query)) ||
         (talent.username?.toLowerCase().includes(query)) ||
         (talent.bio?.toLowerCase().includes(query)) ||
         (talent.category?.toLowerCase().includes(query))
       );
-      setFilteredTalents(filtered);
     }
-  }, [talents, searchQuery]);
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(talent => {
+        const hasCompletedProfile = !!(
+          talent.username && 
+          talent.bio && 
+          talent.avatar_url && 
+          talent.promo_video_url
+        );
+        const hasLoggedIn = !!(talent.users?.last_login);
+        
+        switch (statusFilter) {
+          case 'active':
+            // Has completed profile and logged in
+            return hasCompletedProfile && hasLoggedIn;
+          case 'incomplete':
+            // Profile is incomplete
+            return !hasCompletedProfile;
+          case 'no-login':
+            // Has never logged in or no login recorded
+            return !hasLoggedIn;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    setFilteredTalents(filtered);
+  }, [talents, searchQuery, statusFilter]);
 
   const fetchTalents = async () => {
     try {
@@ -1106,13 +1136,67 @@ const TalentManagement: React.FC = () => {
         </div>
       )}
 
+      {/* Status Filter Buttons */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={() => setStatusFilter('all')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            statusFilter === 'all'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          All Talent ({talents.length})
+        </button>
+        <button
+          onClick={() => setStatusFilter('active')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            statusFilter === 'active'
+              ? 'bg-green-600 text-white'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <CheckCircleIcon className="h-4 w-4 inline mr-1" />
+          Active ({talents.filter(t => {
+            const hasCompleteProfile = !!(t.username && t.bio && t.avatar_url && t.promo_video_url);
+            const hasLoggedIn = !!(t.users?.last_login);
+            return hasCompleteProfile && hasLoggedIn;
+          }).length})
+        </button>
+        <button
+          onClick={() => setStatusFilter('incomplete')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            statusFilter === 'incomplete'
+              ? 'bg-amber-600 text-white'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <ClockIcon className="h-4 w-4 inline mr-1" />
+          Incomplete Profile ({talents.filter(t => {
+            const hasCompleteProfile = !!(t.username && t.bio && t.avatar_url && t.promo_video_url);
+            return !hasCompleteProfile;
+          }).length})
+        </button>
+        <button
+          onClick={() => setStatusFilter('no-login')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            statusFilter === 'no-login'
+              ? 'bg-red-600 text-white'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <XCircleIcon className="h-4 w-4 inline mr-1" />
+          No Login ({talents.filter(t => !t.users?.last_login).length})
+        </button>
+      </div>
+
       {/* Talents List */}
       <div className="glass rounded-2xl shadow-modern">
         <div className="px-6 py-4 border-b border-white/20">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <UserGroupIcon className="h-5 w-5" />
-              Talent Profiles ({filteredTalents.length}{searchQuery ? ` of ${talents.length}` : ''})
+              Talent Profiles ({filteredTalents.length}{searchQuery || statusFilter !== 'all' ? ` of ${talents.length}` : ''})
             </h3>
           </div>
         </div>
