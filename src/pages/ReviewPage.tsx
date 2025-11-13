@@ -74,12 +74,21 @@ const ReviewPage: React.FC = () => {
   };
 
   const onSubmit = async (data: ReviewFormData) => {
+    // Early validation checks
     if (!order || selectedRating === 0) {
       toast.error('Please select a rating');
       return;
     }
 
+    // Prevent double submissions
+    if (submitting) {
+      console.log('Review already submitting, ignoring duplicate click');
+      return;
+    }
+
     setSubmitting(true);
+    console.log('Submitting review:', { orderId: order.id, rating: selectedRating });
+    
     try {
       const { error } = await supabase
         .from('reviews')
@@ -89,22 +98,30 @@ const ReviewPage: React.FC = () => {
             user_id: user?.id,
             talent_id: order.talent_id,
             rating: selectedRating,
-            comment: data.comment.trim() || null,
+            comment: data.comment?.trim() || null,
           },
         ]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Review submission error:', error);
+        throw error;
+      }
 
+      console.log('Review submitted successfully');
       toast.success('Review submitted successfully!');
-      navigate('/dashboard');
+      
+      // Small delay before navigation to ensure toast is visible
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
     } catch (error: any) {
+      console.error('Review error:', error);
       if (error.code === '23505') {
         toast.error('You have already reviewed this order');
       } else {
-        toast.error('Failed to submit review');
+        toast.error('Failed to submit review. Please try again.');
       }
-    } finally {
-      setSubmitting(false);
+      setSubmitting(false); // Only reset on error
     }
   };
 
