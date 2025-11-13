@@ -55,14 +55,29 @@ const IntegratedPayoutsDashboard: React.FC = () => {
     try {
       setLoading(true);
 
+      console.log('🔍 Fetching payout data for user:', user?.id);
+
       // Get talent profile
-      const { data: talentProfile } = await supabase
+      const { data: talentProfile, error: talentError } = await supabase
         .from('talent_profiles')
         .select('id, moov_account_id')
         .eq('user_id', user?.id)
         .single();
 
-      if (!talentProfile) return;
+      if (talentError) {
+        console.error('❌ Error fetching talent profile:', talentError);
+        throw talentError;
+      }
+
+      if (!talentProfile) {
+        console.error('❌ No talent profile found for user:', user?.id);
+        return;
+      }
+
+      console.log('✅ Talent profile found:', {
+        talentId: talentProfile.id,
+        moovAccountId: talentProfile.moov_account_id
+      });
 
       setTalentId(talentProfile.id);
       const currentMoovId = talentProfile.moov_account_id || null;
