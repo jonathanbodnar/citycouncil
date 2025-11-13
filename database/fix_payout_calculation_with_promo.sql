@@ -126,43 +126,7 @@ CREATE TRIGGER on_order_completed_create_payout
   FOR EACH ROW
   EXECUTE FUNCTION create_payout_on_order_completion();
 
--- 3. Now recalculate ALL existing payouts with correct admin fee logic
--- This will fix payouts that were calculated with wrong fee percentage
-
--- Clear existing payouts and batches to recalculate from scratch
-TRUNCATE TABLE payouts CASCADE;
-TRUNCATE TABLE payout_batches CASCADE;
-
--- Reset total_earnings for all talent
-UPDATE talent_profiles
-SET total_earnings = 0;
-
--- Re-trigger payout creation for all completed orders with videos
--- This will use the updated logic with first 10 orders promo
-DO $$
-DECLARE
-  order_record RECORD;
-BEGIN
-  FOR order_record IN 
-    SELECT id, talent_id, amount, status, updated_at, video_url
-    FROM orders
-    WHERE status = 'completed'
-    AND video_url IS NOT NULL
-    AND video_url != ''
-    ORDER BY updated_at ASC -- Process in chronological order
-  LOOP
-    -- Manually trigger the payout creation by simulating the update
-    -- We need to manually call the function since we can't re-trigger updates
-    PERFORM create_payout_on_order_completion_manual(
-      order_record.id,
-      order_record.talent_id,
-      order_record.amount,
-      order_record.updated_at
-    );
-  END LOOP;
-END $$;
-
--- 4. Create manual payout creation helper function
+-- 3. Create manual payout creation helper function FIRST (before using it)
 CREATE OR REPLACE FUNCTION create_payout_on_order_completion_manual(
   p_order_id UUID,
   p_talent_id UUID,
@@ -273,7 +237,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 5. Actually run the manual recalculation
+-- 4. Now recalculate ALL existing payouts with correct admin fee logic
+-- This will fix payouts that were calculated with wrong fee percentage
+
+-- Clear existing payouts and batches to recalculate from scratch
+TRUNCATE TABLE payouts CASCADE;
+TRUNCATE TABLE payout_batches CASCADE;
+
+-- Reset total_earnings for all talent
+UPDATE talent_profiles
+SET total_earnings = 0;
+
+-- 5. Actually run the manual recalculation for all completed orders
 DO $$
 DECLARE
   order_record RECORD;
