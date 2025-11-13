@@ -83,19 +83,10 @@ const IntegratedPayoutsDashboard: React.FC = () => {
       const currentMoovId = talentProfile.moov_account_id || null;
       setMoovAccountId(currentMoovId);
 
-      // Fetch payouts from new system
+      // Fetch payouts from new system (without foreign key joins to avoid RLS issues)
       const { data: payoutsData, error: payoutsError } = await supabase
         .from('payouts')
-        .select(`
-          *,
-          orders:order_id (
-            id,
-            request_details,
-            recipient_name,
-            created_at,
-            updated_at
-          )
-        `)
+        .select('*')
         .eq('talent_id', talentProfile.id)
         .order('created_at', { ascending: false });
 
