@@ -699,7 +699,7 @@ const TalentDashboard: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col items-end space-y-2">
                         <label className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 cursor-pointer">
                           {uploadingVideo === order.id ? (
                             <span>Uploading...</span>
@@ -720,6 +720,15 @@ const TalentDashboard: React.FC = () => {
                             disabled={uploadingVideo === order.id}
                           />
                         </label>
+                        {(() => {
+                          const dueDate = new Date(new Date(order.created_at).getTime() + (talentProfile?.fulfillment_time_hours || 72) * 60 * 60 * 1000);
+                          const isPastDue = new Date() > dueDate;
+                          return isPastDue && (
+                            <span className="text-xs text-yellow-400">
+                              ⏰ Past due - upload still accepted
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                     <div className="glass-strong p-4 rounded-md border border-white/20">
