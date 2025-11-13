@@ -84,7 +84,15 @@ const IntegratedPayoutsDashboard: React.FC = () => {
         .eq('talent_id', talentProfile.id)
         .order('created_at', { ascending: false });
 
-      if (payoutsError) throw payoutsError;
+      if (payoutsError) {
+        console.error('Error fetching payouts:', payoutsError);
+        throw payoutsError;
+      }
+      
+      console.log('💰 Payouts fetched:', {
+        count: payoutsData?.length || 0,
+        data: payoutsData
+      });
       setPayouts(payoutsData || []);
 
       // Fetch weekly batches
@@ -94,7 +102,15 @@ const IntegratedPayoutsDashboard: React.FC = () => {
         .eq('talent_id', talentProfile.id)
         .order('week_start_date', { ascending: false });
 
-      if (batchesError) throw batchesError;
+      if (batchesError) {
+        console.error('Error fetching batches:', batchesError);
+        throw batchesError;
+      }
+      
+      console.log('📦 Batches fetched:', {
+        count: batchesData?.length || 0,
+        data: batchesData
+      });
       setBatches(batchesData || []);
 
       // Fetch bank info if Moov account exists
