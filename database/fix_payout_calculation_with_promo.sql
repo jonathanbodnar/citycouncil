@@ -295,35 +295,49 @@ BEGIN
   END LOOP;
 END $$;
 
--- 6. Verify the results
+-- 6. Verify the results for ALL talent with payouts
 SELECT 
     tp.username,
     tp.temp_full_name,
     tp.fulfilled_orders,
     tp.first_orders_promo_active,
     tp.admin_fee_percentage,
-    pb.week_start_date,
-    pb.total_orders as orders_in_batch,
-    pb.total_payout_amount,
-    pb.net_payout_amount
+    tp.total_earnings,
+    COUNT(DISTINCT pb.id) as total_batches,
+    COALESCE(SUM(pb.total_orders), 0) as total_orders_in_batches,
+    COALESCE(SUM(pb.total_payout_amount), 0) as total_payout_amount
 FROM talent_profiles tp
 LEFT JOIN payout_batches pb ON pb.talent_id = tp.id
-WHERE tp.username IN ('shawnfarash', 'joshfirestine', 'jonathanbodnar')
-ORDER BY tp.username, pb.week_start_date DESC;
+GROUP BY tp.id, tp.username, tp.temp_full_name, tp.fulfilled_orders, tp.first_orders_promo_active, tp.admin_fee_percentage, tp.total_earnings
+HAVING COUNT(DISTINCT pb.id) > 0 -- Only show talent with payouts
+ORDER BY tp.username;
 
--- Show individual payouts with admin fee details
+-- Show weekly batches for all talent
 SELECT 
     tp.username,
-    o.id as order_id,
+    pb.week_start_date,
+    pb.week_end_date,
+    pb.total_orders as orders_in_batch,
+    pb.total_payout_amount,
+    pb.net_payout_amount,
+    pb.status
+FROM talent_profiles tp
+JOIN payout_batches pb ON pb.talent_id = tp.id
+ORDER BY tp.username, pb.week_start_date DESC;
+
+-- Show individual payouts with admin fee details for all talent
+SELECT 
+    tp.username,
+    SUBSTRING(o.id::text, 1, 8) as order_short_id,
     p.order_amount,
     p.admin_fee_percentage,
     p.admin_fee_amount,
     p.payout_amount,
+    p.is_refunded,
     p.week_start_date,
-    p.created_at
+    p.created_at::date as payout_date
 FROM payouts p
 JOIN talent_profiles tp ON tp.id = p.talent_id
 JOIN orders o ON o.id = p.order_id
-WHERE tp.username IN ('shawnfarash', 'joshfirestine', 'jonathanbodnar')
 ORDER BY tp.username, p.created_at ASC;
 
