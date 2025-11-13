@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   PlayIcon,
   PauseIcon,
@@ -17,27 +17,36 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   thumbnailUrl, 
   className = '' 
 }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [videoError, setVideoError] = useState(false);
 
+  // Reset playing state when videoUrl changes
+  useEffect(() => {
+    setIsPlaying(false);
+    setVideoError(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [videoUrl]);
+
   const handlePlayPause = () => {
-    const video = document.getElementById('video-player') as HTMLVideoElement;
-    if (video) {
+    if (videoRef.current) {
       if (isPlaying) {
-        video.pause();
+        videoRef.current.pause();
       } else {
-        video.play();
+        videoRef.current.play();
       }
       setIsPlaying(!isPlaying);
     }
   };
 
   const handleMute = () => {
-    const video = document.getElementById('video-player') as HTMLVideoElement;
-    if (video) {
-      video.muted = !isMuted;
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
   };
@@ -45,7 +54,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   return (
     <div className={`relative bg-black rounded-lg overflow-hidden ${className}`}>
       <video
-        id="video-player"
+        ref={videoRef}
         className="w-full h-full object-contain"
         poster={thumbnailUrl}
         onPlay={() => setIsPlaying(true)}
