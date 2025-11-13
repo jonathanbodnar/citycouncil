@@ -127,7 +127,7 @@ const TalentManagement: React.FC = () => {
         const hasCompletedProfile = !!(
           talent.username && 
           talent.bio && 
-          talent.avatar_url && 
+          (talent.temp_avatar_url || talent.users?.avatar_url) && 
           talent.promo_video_url
         );
         const hasLoggedIn = !!(talent.users?.last_login);
@@ -1158,7 +1158,7 @@ const TalentManagement: React.FC = () => {
         >
           <CheckCircleIcon className="h-4 w-4 inline mr-1" />
           Active ({talents.filter(t => {
-            const hasCompleteProfile = !!(t.username && t.bio && t.avatar_url && t.promo_video_url);
+            const hasCompleteProfile = !!(t.username && t.bio && (t.temp_avatar_url || t.users?.avatar_url) && t.promo_video_url);
             const hasLoggedIn = !!(t.users?.last_login);
             return hasCompleteProfile && hasLoggedIn;
           }).length})
@@ -1173,7 +1173,7 @@ const TalentManagement: React.FC = () => {
         >
           <ClockIcon className="h-4 w-4 inline mr-1" />
           Incomplete Profile ({talents.filter(t => {
-            const hasCompleteProfile = !!(t.username && t.bio && t.avatar_url && t.promo_video_url);
+            const hasCompleteProfile = !!(t.username && t.bio && (t.temp_avatar_url || t.users?.avatar_url) && t.promo_video_url);
             return !hasCompleteProfile;
           }).length})
         </button>
