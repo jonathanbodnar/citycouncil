@@ -41,7 +41,7 @@ export interface TalentProfile {
   admin_fee_percentage?: number;
   first_orders_promo_active?: boolean; // 0% admin fee for first 10 orders
   social_accounts: SocialAccount[];
-  payout_details?: StripeConnectAccount;
+  payout_details?: PayoutAccount;
   fortis_vendor_id?: string; // Fortis vendor ID for payouts
   username?: string; // Unique username for profile URL
   onboarding_token?: string; // Token for onboarding signup
@@ -155,14 +155,14 @@ export interface BankDetails {
 
 export interface PaymentMethod {
   id: string;
-  stripe_payment_method_id: string;
+  payment_method_id: string;
   type: 'card' | 'apple_pay' | 'google_pay';
   last_four?: string;
   brand?: string;
   is_default: boolean;
 }
 
-export interface StripeConnectAccount {
+export interface PayoutAccount {
   account_id: string;
   is_verified: boolean;
   details_submitted: boolean;

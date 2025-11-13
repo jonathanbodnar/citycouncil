@@ -108,7 +108,7 @@ const HelpDesk: React.FC = () => {
     }
     
     if (message.includes('payment') || message.includes('billing')) {
-      return "For payment and billing questions, you can manage your payment methods in your profile settings. We accept all major credit cards and use secure Stripe processing. If you're having trouble with a payment, please let me know the specific issue!";
+      return "For payment and billing questions, you can manage your payment methods in your profile settings. We accept all major credit cards and process payments securely. If you're having trouble with a payment, please let me know the specific issue!";
     }
     
     return "Thank you for reaching out! I'm here to help with any questions about ShoutOut. I can assist with orders, payments, account settings, and general platform questions. For talent-specific inquiries, I'll connect you with our human support team. How can I help you today?";

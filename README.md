@@ -9,7 +9,7 @@ A Cameo-style PWA that allows users to order personalized video shoutouts from c
 - Order personalized video shoutouts
 - Corporate ordering options
 - 100% money-back satisfaction guarantee
-- Secure payment processing with Stripe
+- Secure payment processing with Fortis
 - Order tracking and management
 - Review and rating system
 
@@ -19,7 +19,7 @@ A Cameo-style PWA that allows users to order personalized video shoutouts from c
 - Charity donation options
 - Order management dashboard
 - Video upload and delivery
-- Stripe Connect integration for payouts
+- Moov/Plaid integration for payouts
 - Social media integration
 
 ### For Admins
@@ -36,7 +36,8 @@ A Cameo-style PWA that allows users to order personalized video shoutouts from c
 - **Styling**: Tailwind CSS + Headless UI
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
-- **Payments**: Stripe + Stripe Connect
+- **Payments**: Fortis Commerce.js
+- **Payouts**: Moov + Plaid
 - **Storage**: Wasabi S3 (for videos/images)
 - **Email**: Mailgun
 - **Deployment**: Railway
@@ -86,7 +87,7 @@ src/
 ### Supporting Tables
 - `social_accounts` - Talent social media links
 - `payment_methods` - User payment information
-- `stripe_connect_accounts` - Talent payout accounts
+- `vendor_bank_info` - Talent payout accounts (Moov/Plaid)
 - `help_messages` - Customer support system
 - `app_settings` - Global platform settings
 
@@ -96,7 +97,7 @@ src/
 - Node.js 18+
 - npm or yarn
 - Supabase account
-- Stripe account
+- Fortis account (for payments)
 
 ### Installation
 
@@ -162,7 +163,7 @@ The following test accounts are available for development:
 - **Test Data**: Complete sample data with users, orders, reviews
 
 ### 🚧 Ready for Integration
-- **Stripe Payments**: Order flow ready, needs API keys
+- **Fortis Payments**: Order flow ready, needs API keys
 - **Video Storage**: Wasabi S3 integration ready
 - **Email Notifications**: Mailgun integration ready
 
@@ -179,7 +180,7 @@ The following test accounts are available for development:
 - Role-based access control
 - Secure authentication with Supabase
 - Multi-factor authentication (MFA) for talent accounts
-- Payment security with Stripe
+- Payment security with Fortis Commerce.js
 - Input validation and sanitization
 - AES-256-GCM encryption for sensitive data
 - GDPR, CCPA, and privacy law compliance

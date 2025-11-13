@@ -61,7 +61,7 @@ const TermsOfServicePage: React.FC = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment and Refunds</h2>
             <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>All payments are processed securely through Stripe</li>
+              <li>All payments are processed securely through our payment processor</li>
               <li>We offer a 100% money-back satisfaction guarantee</li>
               <li>Refunds are processed within 5-7 business days</li>
               <li>Orders not delivered on time are eligible for automatic refunds</li>
