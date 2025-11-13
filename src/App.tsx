@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -39,6 +39,12 @@ const InstagramCallbackPage = lazy(() => import('./pages/InstagramCallbackPage')
 const WelcomePage = lazy(() => import('./pages/WelcomePage'));
 const ShortLinkRedirectPage = lazy(() => import('./pages/ShortLinkRedirectPage'));
 
+// Redirect component for old /profile/ URLs
+const ProfileRedirect: React.FC = () => {
+  const { username } = useParams<{ username: string }>();
+  return <Navigate to={`/${username}`} replace />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -61,6 +67,9 @@ function App() {
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
             <Route path="/s/:code" element={<ShortLinkRedirectPage />} />
             <Route path="/fulfill/:token" element={<OrderFulfillmentPage />} />
+            
+            {/* Redirect old /profile/ URLs to new format */}
+            <Route path="/profile/:username" element={<ProfileRedirect />} />
             <Route path="/talent/:slug" element={<TalentProfilePage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/seed" element={<SeedDataPage />} />
