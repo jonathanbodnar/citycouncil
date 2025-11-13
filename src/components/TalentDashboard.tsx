@@ -285,7 +285,36 @@ const TalentDashboard: React.FC = () => {
       }
 
       toast.success('Video uploaded and order completed!');
-      fetchTalentData();
+      
+      // Refresh data first
+      await fetchTalentData();
+      
+      // Check if there are any remaining pending or in-progress orders
+      const { data: remainingOrders, error: ordersCheckError } = await supabase
+        .from('orders')
+        .select('id, status')
+        .eq('talent_id', talentProfile?.id)
+        .in('status', ['pending', 'in_progress']);
+      
+      if (!ordersCheckError && remainingOrders) {
+        const hasMoreOrders = remainingOrders.length > 0;
+        
+        console.log('📊 Remaining orders check:', {
+          totalRemaining: remainingOrders.length,
+          hasMore: hasMoreOrders,
+          willRedirect: !hasMoreOrders
+        });
+        
+        // If no more pending/in-progress orders, redirect to welcome page
+        if (!hasMoreOrders) {
+          toast.success('All orders completed! 🎉', { duration: 2000 });
+          setTimeout(() => {
+            window.location.href = '/welcome';
+          }, 1500);
+        } else {
+          toast.success(`${remainingOrders.length} order(s) remaining`, { duration: 3000 });
+        }
+      }
     } catch (error: any) {
       console.error('❌ Video upload error:', {
         orderId,
