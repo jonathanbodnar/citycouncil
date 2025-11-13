@@ -86,18 +86,32 @@ export const uploadVideoToWasabi = async (
       code: error?.code,
       statusCode: error?.statusCode,
       name: error?.name,
-      stack: error?.stack
+      stack: error?.stack,
+      requestId: error?.requestId,
+      region: error?.region,
+      hostname: error?.hostname,
+      retryable: error?.retryable,
+      time: error?.time
     });
     
     // Provide more specific error messages
     let errorMessage = 'Upload failed';
     
     if (error?.code === 'NetworkingError' || error?.message?.includes('Network')) {
-      errorMessage = 'Network error - check your internet connection';
+      // Network error is often CORS or connectivity issue
+      console.error('🔴 NETWORK ERROR - Possible causes:', {
+        cors: 'Wasabi CORS policy may be blocking mobile browsers',
+        dns: 'DNS resolution failed for Wasabi endpoint',
+        connectivity: 'Cannot reach Wasabi servers',
+        endpoint: 's3.us-central-1.wasabisys.com'
+      });
+      errorMessage = 'Network error - please try again or contact support';
     } else if (error?.code === 'RequestTimeout' || error?.message?.includes('timeout')) {
       errorMessage = 'Upload timeout - file may be too large for your connection';
-    } else if (error?.statusCode === 403) {
+    } else if (error?.statusCode === 403 || error?.code === 'AccessDenied') {
       errorMessage = 'Access denied - please contact support';
+    } else if (error?.statusCode === 400 || error?.code === 'InvalidRequest') {
+      errorMessage = 'Invalid request - please try a different video file';
     } else if (error?.message) {
       errorMessage = `Upload failed: ${error.message}`;
     }
