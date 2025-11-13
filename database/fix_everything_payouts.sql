@@ -85,10 +85,11 @@ CREATE TRIGGER on_order_completed_create_payout
   FOR EACH ROW
   EXECUTE FUNCTION create_payout_on_order_completion();
 
--- STEP 2: Fix order amounts (divide by 100 if over $1000)
+-- STEP 2: Fix order amounts (divide by 100 if over $100)
+-- Most talent orders should be $25-$300, so anything over $100 is likely 100x too high
 UPDATE orders
 SET amount = ROUND(amount / 100, 2), updated_at = NOW()
-WHERE amount > 1000;
+WHERE amount > 100;
 
 -- STEP 3: Clear and recalculate all payouts
 TRUNCATE TABLE payouts CASCADE;
