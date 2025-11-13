@@ -184,12 +184,30 @@ const TalentDashboard: React.FC = () => {
     setUploadingVideo(orderId);
     
     try {
+      // Log upload attempt details
+      console.log('📹 Video upload starting:', {
+        orderId,
+        fileName: file.name,
+        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        fileType: file.type,
+        talentUsername: talentProfile?.username,
+        timestamp: new Date().toISOString()
+      });
+
       // Step 1: Upload video to Wasabi S3
       toast.loading('Uploading video...', { id: 'upload' });
       const uploadResult = await uploadVideoToWasabi(file, orderId);
       
+      console.log('📹 Wasabi upload result:', {
+        success: uploadResult.success,
+        videoUrl: uploadResult.videoUrl,
+        error: uploadResult.error
+      });
+      
       if (!uploadResult.success) {
-        toast.error(uploadResult.error || 'Upload failed', { id: 'upload' });
+        const errorMsg = uploadResult.error || 'Upload failed';
+        console.error('❌ Upload failed:', errorMsg);
+        toast.error(errorMsg, { id: 'upload' });
         return;
       }
       toast.success('Video uploaded!', { id: 'upload' });
@@ -268,9 +286,20 @@ const TalentDashboard: React.FC = () => {
 
       toast.success('Video uploaded and order completed!');
       fetchTalentData();
-    } catch (error) {
-      console.error('Error uploading video:', error);
-      toast.error('Failed to upload video');
+    } catch (error: any) {
+      console.error('❌ Video upload error:', {
+        orderId,
+        error: error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        talentUsername: talentProfile?.username,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Show more specific error message to user
+      const userMessage = error?.message || error?.toString() || 'Failed to upload video. Please try again.';
+      toast.error(userMessage);
     } finally {
       setUploadingVideo(null);
     }
