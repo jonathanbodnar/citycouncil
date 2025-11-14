@@ -7,10 +7,12 @@ import {
   CheckCircleIcon,
   ArrowPathIcon,
   BellIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  PhoneIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
+import SMSManagement from './admin/SMSManagement';
 
 interface TalentWithPhone {
   id: string;
@@ -52,7 +54,7 @@ interface SystemNotification {
 }
 
 const CommsCenterManagement: React.FC = () => {
-  const [activeView, setActiveView] = useState<'sms' | 'notifications'>('sms');
+  const [activeView, setActiveView] = useState<'talent-sms' | 'user-sms' | 'notifications'>('talent-sms');
   const [talents, setTalents] = useState<TalentWithPhone[]>([]);
   const [filteredTalents, setFilteredTalents] = useState<TalentWithPhone[]>([]);
   const [selectedTalent, setSelectedTalent] = useState<TalentWithPhone | null>(null);
@@ -69,14 +71,15 @@ const CommsCenterManagement: React.FC = () => {
   const [notificationTypeFilter, setNotificationTypeFilter] = useState<string>('all');
 
   useEffect(() => {
-    if (activeView === 'sms') {
+    if (activeView === 'talent-sms') {
       fetchTalentsWithPhone();
       // Poll for unread counts every 5 seconds
       const interval = setInterval(() => fetchUnreadCounts(), 5000);
       return () => clearInterval(interval);
-    } else {
+    } else if (activeView === 'notifications') {
       fetchNotifications();
     }
+    // user-sms view handled by SMSManagement component
   }, [activeView]);
 
   useEffect(() => {
@@ -419,7 +422,9 @@ const CommsCenterManagement: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Communications Center</h2>
             <p className="text-gray-600">
-              {activeView === 'sms' ? 'Send SMS messages to talent' : 'View system notifications sent to talent'}
+              {activeView === 'talent-sms' && 'Send SMS messages to talent'}
+              {activeView === 'user-sms' && 'Send mass SMS campaigns to users'}
+              {activeView === 'notifications' && 'View system notifications sent to talent'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -451,15 +456,26 @@ const CommsCenterManagement: React.FC = () => {
         {/* View Toggle */}
         <div className="flex items-center gap-2 border-b border-gray-200 pb-4">
           <button
-            onClick={() => setActiveView('sms')}
+            onClick={() => setActiveView('talent-sms')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeView === 'sms'
+              activeView === 'talent-sms'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             <ChatBubbleLeftRightIcon className="h-5 w-5" />
-            SMS Messages
+            Talent SMS
+          </button>
+          <button
+            onClick={() => setActiveView('user-sms')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeView === 'user-sms'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <PhoneIcon className="h-5 w-5" />
+            User SMS
           </button>
           <button
             onClick={() => setActiveView('notifications')}
@@ -474,8 +490,8 @@ const CommsCenterManagement: React.FC = () => {
           </button>
         </div>
 
-        {/* Status Filter Tabs (only for SMS view) */}
-        {activeView === 'sms' && (
+        {/* Status Filter Tabs (only for Talent SMS view) */}
+        {activeView === 'talent-sms' && (
         <div className="flex items-center gap-2 border-b border-gray-200">
           <button
             onClick={() => setStatusFilter('all')}
@@ -521,8 +537,13 @@ const CommsCenterManagement: React.FC = () => {
         )}
       </div>
 
+      {/* User SMS View */}
+      {activeView === 'user-sms' && (
+        <SMSManagement />
+      )}
+
       {/* Mass Message Modal */}
-      {activeView === 'sms' && showMassMessage && (
+      {activeView === 'talent-sms' && showMassMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-lg w-full">
             <div className="flex items-center justify-between mb-4">
@@ -568,8 +589,8 @@ const CommsCenterManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content - SMS View */}
-      {activeView === 'sms' && (
+      {/* Main Content - Talent SMS View */}
+      {activeView === 'talent-sms' && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Talent List */}
         <div className="md:col-span-1 glass rounded-2xl shadow-modern border border-gray-200 p-4">
