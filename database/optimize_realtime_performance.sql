@@ -64,11 +64,15 @@ AND relname IN ('orders', 'notifications', 'talent_profiles', 'users')
 ORDER BY dead_tuple_percent DESC;
 
 -- Solution 7: Vacuum tables with high dead tuple ratio
--- Run this if dead_tuple_percent > 10%
-VACUUM ANALYZE orders;
-VACUUM ANALYZE notifications;
-VACUUM ANALYZE talent_profiles;
-VACUUM ANALYZE users;
+-- NOTE: VACUUM cannot run in a transaction block
+-- If dead_tuple_percent > 10%, run these commands separately:
+-- 
+--   VACUUM ANALYZE orders;
+--   VACUUM ANALYZE notifications;
+--   VACUUM ANALYZE talent_profiles;
+--   VACUUM ANALYZE users;
+--
+-- See vacuum_tables.sql for a separate script
 
 -- Solution 8: Check realtime publication settings
 -- See which columns are being replicated
