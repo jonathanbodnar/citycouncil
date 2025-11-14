@@ -122,43 +122,46 @@ RETURNS TABLE (
   user_tags TEXT[]
 ) AS $$
 BEGIN
-  RETURN QUERY
-  CASE segment
-    WHEN 'beta' THEN
-      SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
-      FROM users u
-      WHERE 'beta' = ANY(u.user_tags)
-      AND u.sms_subscribed = true
-      AND u.phone_number IS NOT NULL
-      AND u.user_type = 'user';
-      
-    WHEN 'registered' THEN
-      SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
-      FROM users u
-      WHERE u.sms_subscribed = true
-      AND u.phone_number IS NOT NULL
-      AND u.user_type = 'user'
-      AND NOT ('beta' = ANY(u.user_tags));
-      
-    WHEN 'all' THEN
-      SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
-      FROM users u
-      WHERE u.sms_subscribed = true
-      AND u.phone_number IS NOT NULL
-      AND u.user_type = 'user';
-      
-    WHEN 'talent' THEN
-      SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
-      FROM users u
-      WHERE u.phone_number IS NOT NULL
-      AND u.user_type = 'talent';
-      
-    ELSE
-      -- Return empty set for invalid segment
-      SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
-      FROM users u
-      WHERE false;
-  END CASE;
+  IF segment = 'beta' THEN
+    RETURN QUERY
+    SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
+    FROM users u
+    WHERE 'beta' = ANY(u.user_tags)
+    AND u.sms_subscribed = true
+    AND u.phone_number IS NOT NULL
+    AND u.user_type = 'user';
+    
+  ELSIF segment = 'registered' THEN
+    RETURN QUERY
+    SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
+    FROM users u
+    WHERE u.sms_subscribed = true
+    AND u.phone_number IS NOT NULL
+    AND u.user_type = 'user'
+    AND NOT ('beta' = ANY(u.user_tags));
+    
+  ELSIF segment = 'all' THEN
+    RETURN QUERY
+    SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
+    FROM users u
+    WHERE u.sms_subscribed = true
+    AND u.phone_number IS NOT NULL
+    AND u.user_type = 'user';
+    
+  ELSIF segment = 'talent' THEN
+    RETURN QUERY
+    SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
+    FROM users u
+    WHERE u.phone_number IS NOT NULL
+    AND u.user_type = 'talent';
+    
+  ELSE
+    -- Return empty set for invalid segment
+    RETURN QUERY
+    SELECT u.id, u.full_name, u.email, u.phone_number, u.user_tags
+    FROM users u
+    WHERE false;
+  END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
