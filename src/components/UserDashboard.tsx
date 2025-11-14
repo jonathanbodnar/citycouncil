@@ -225,17 +225,16 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  // Actually download the video
-  const downloadVideo = async (order: OrderWithTalent) => {
+  // Show caption modal first, then download
+  const [showCaptionModal, setShowCaptionModal] = useState(false);
+  const [pendingDownloadOrder, setPendingDownloadOrder] = useState<OrderWithTalent | null>(null);
+
+  // Actually download the video (called after caption modal)
+  const performDownload = async (order: OrderWithTalent) => {
     try {
       const response = await fetch(order.video_url!);
       const blob = await response.blob();
       const filename = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
-      const talentName = order.talent_profiles.users.full_name;
-      const talentUsername = order.talent_profiles.username;
-
-      // Suggested caption for social media
-      const suggestedCaption = `Just got my personalized ShoutOut from ${talentName}! 🎉 Get yours at ShoutOut.us/${talentUsername} 🎥 @shoutoutvoices`;
 
       // Try to use native share API on mobile (saves to camera roll/Photos)
       if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -244,36 +243,13 @@ const UserDashboard: React.FC = () => {
           await navigator.share({
             files: [file],
             title: 'My ShoutOut Video',
-            text: suggestedCaption
+            text: `Just got my personalized ShoutOut from ${order.talent_profiles.users.full_name}!`
           });
-          
-          // Show caption copy helper after successful share
-          toast.success('Video saved!', { duration: 2000 });
-          setTimeout(() => {
-            toast((t) => (
-              <div className="flex flex-col gap-2">
-                <p className="font-semibold text-sm">📱 Posting on social media?</p>
-                <p className="text-xs text-gray-600">Copy this caption:</p>
-                <div className="bg-gray-100 p-2 rounded text-xs">
-                  {suggestedCaption}
-                </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(suggestedCaption);
-                    toast.success('Caption copied!');
-                    toast.dismiss(t.id);
-                  }}
-                  className="bg-primary-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-primary-700"
-                >
-                  Copy Caption
-                </button>
-              </div>
-            ), { duration: 10000 });
-          }, 2000);
+          toast.success('Video saved!');
           return;
         } catch (shareError) {
-          // Fall through to download if share fails
-          console.log('Share failed, falling back to download:', shareError);
+          console.log('Share cancelled or failed:', shareError);
+          return;
         }
       }
 
@@ -287,33 +263,44 @@ const UserDashboard: React.FC = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       toast.success('Video downloaded!');
-      
-      // Show caption helper for desktop too
-      setTimeout(() => {
-        toast((t) => (
-          <div className="flex flex-col gap-2">
-            <p className="font-semibold text-sm">📱 Share on social media!</p>
-            <p className="text-xs text-gray-600">Suggested caption:</p>
-            <div className="bg-gray-100 p-2 rounded text-xs">
-              {suggestedCaption}
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(suggestedCaption);
-                toast.success('Caption copied!');
-                toast.dismiss(t.id);
-              }}
-              className="bg-primary-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-primary-700"
-            >
-              Copy Caption
-            </button>
-          </div>
-        ), { duration: 10000 });
-      }, 1000);
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video');
     }
+  };
+
+  // Show caption modal when download is clicked
+  const downloadVideo = async (order: OrderWithTalent) => {
+    setPendingDownloadOrder(order);
+    setShowCaptionModal(true);
+  };
+
+  // Handle copy caption and download
+  const handleCopyCaptionAndDownload = async () => {
+    if (!pendingDownloadOrder) return;
+    
+    const talentName = pendingDownloadOrder.talent_profiles.users.full_name;
+    const talentUsername = pendingDownloadOrder.talent_profiles.username;
+    const suggestedCaption = `Just got my personalized ShoutOut from ${talentName}! 🎉 Get yours at ShoutOut.us/${talentUsername} 🎥 @shoutoutvoices`;
+    
+    try {
+      await navigator.clipboard.writeText(suggestedCaption);
+      toast.success('Caption copied to clipboard!');
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+    
+    setShowCaptionModal(false);
+    await performDownload(pendingDownloadOrder);
+    setPendingDownloadOrder(null);
+  };
+
+  // Handle skip and download
+  const handleSkipAndDownload = async () => {
+    if (!pendingDownloadOrder) return;
+    setShowCaptionModal(false);
+    await performDownload(pendingDownloadOrder);
+    setPendingDownloadOrder(null);
   };
 
   // Start editing request details
@@ -825,6 +812,74 @@ const UserDashboard: React.FC = () => {
           }}
           videoUrl={shareOrderData.video_url}
         />
+      )}
+
+      {/* Caption Modal - Shown BEFORE download */}
+      {showCaptionModal && pendingDownloadOrder && (
+        <div className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
+            {/* Background overlay */}
+            <div 
+              className="fixed inset-0 transition-opacity bg-black bg-opacity-75"
+              onClick={() => {
+                setShowCaptionModal(false);
+                setPendingDownloadOrder(null);
+              }}
+            />
+
+            {/* Modal panel - BIGGER and CENTERED */}
+            <div className="relative inline-block bg-white rounded-2xl px-8 pt-8 pb-8 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="flex-shrink-0">
+                  <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600">
+                    <ShareIcon className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    📱 Share on social media!
+                  </h3>
+                  <p className="text-base text-gray-600">
+                    Copy this caption to share your ShoutOut and help spread the word!
+                  </p>
+                </div>
+              </div>
+
+              {/* Caption Box */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Suggested caption:
+                </label>
+                <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+                  <p className="text-base text-gray-900 leading-relaxed">
+                    Just got my personalized ShoutOut from {pendingDownloadOrder.talent_profiles.users.full_name}! 🎉 Get yours at ShoutOut.us/{pendingDownloadOrder.talent_profiles.username} 🎥 @shoutoutvoices
+                  </p>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={handleCopyCaptionAndDownload}
+                  className="flex-1 inline-flex items-center justify-center rounded-xl border border-transparent shadow-lg px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-lg font-semibold text-white hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy Caption
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSkipAndDownload}
+                  className="flex-1 inline-flex items-center justify-center rounded-xl border-2 border-gray-300 shadow-sm px-6 py-4 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Review Prompt Modal */}
