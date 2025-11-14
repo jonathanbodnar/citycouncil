@@ -26,7 +26,9 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://www.google-analytics.com",
         "https://dashboard.searchatlas.com",
-        "https://*.searchatlas.com"
+        "https://*.searchatlas.com",
+        "https://storage.googleapis.com", // SearchAtlas static assets
+        "https://*.googleapis.com" // Google storage services
       ],
       styleSrc: [
         "'self'", 
