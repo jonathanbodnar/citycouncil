@@ -67,7 +67,7 @@ USING (
   EXISTS (
     SELECT 1 FROM users
     WHERE users.id = auth.uid()
-    AND users.is_admin = true
+    AND users.user_type = 'admin'
   )
 );
 
@@ -78,7 +78,7 @@ WITH CHECK (
   EXISTS (
     SELECT 1 FROM users
     WHERE users.id = auth.uid()
-    AND users.is_admin = true
+    AND users.user_type = 'admin'
   )
 );
 
@@ -89,7 +89,7 @@ USING (
   EXISTS (
     SELECT 1 FROM users
     WHERE users.id = auth.uid()
-    AND users.is_admin = true
+    AND users.user_type = 'admin'
   )
 );
 
@@ -103,7 +103,7 @@ USING (
   EXISTS (
     SELECT 1 FROM users
     WHERE users.id = auth.uid()
-    AND users.is_admin = true
+    AND users.user_type = 'admin'
   )
 );
 
