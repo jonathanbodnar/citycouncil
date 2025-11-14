@@ -50,8 +50,8 @@ SELECT
 -- Solution 6: Check for table bloat (can slow realtime queries)
 SELECT 
     schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as total_size,
+    relname as tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||relname)) as total_size,
     n_dead_tup as dead_tuples,
     CASE 
         WHEN n_live_tup > 0 
@@ -60,7 +60,7 @@ SELECT
     END as dead_tuple_percent
 FROM pg_stat_user_tables
 WHERE schemaname = 'public'
-AND tablename IN ('orders', 'notifications', 'talent_profiles', 'users')
+AND relname IN ('orders', 'notifications', 'talent_profiles', 'users')
 ORDER BY dead_tuple_percent DESC;
 
 -- Solution 7: Vacuum tables with high dead tuple ratio
@@ -122,7 +122,7 @@ LIMIT 10;
 -- Check table statistics
 SELECT 
     schemaname,
-    tablename,
+    relname as tablename,
     seq_scan as sequential_scans,
     seq_tup_read as rows_read_sequentially,
     idx_scan as index_scans,
