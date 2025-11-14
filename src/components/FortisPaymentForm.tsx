@@ -144,6 +144,20 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         hideAgreementCheckbox: false,
         hideTotal: false,
         digitalWallets: ['ApplePay', 'GooglePay'],
+        paymentMethods: ['cc', 'ApplePay', 'GooglePay'], // Remove 'ach' to disable ACH
+        digitalWalletOptions: {
+          ApplePay: {
+            enabled: true,
+            buttonStyle: 'black', // 'black', 'white', 'white-outline'
+            buttonType: 'plain', // 'plain', 'buy', 'donate', 'check-out', 'book', 'subscribe'
+          },
+          GooglePay: {
+            enabled: true,
+            buttonStyle: 'black', // 'black', 'white'
+            buttonType: 'plain', // 'plain', 'buy', 'donate', 'book', 'subscribe', 'order', 'pay'
+            buttonSizeMode: 'fill', // Make Google Pay button fill available space (smaller than default)
+          },
+        },
       });
 
       setCommerceInstance(elements);
@@ -170,7 +184,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-white mb-2">Payment Info</label>
-            <p className="text-xs text-slate-300 mb-4">All major cards, Apple Pay, and Google Pay are supported.</p>
+            <p className="text-xs text-slate-300 mb-4">Credit/debit cards, Apple Pay, and Google Pay accepted. ACH payments are not available.</p>
           </div>
 
           {error && (
