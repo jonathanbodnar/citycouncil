@@ -59,13 +59,13 @@ const ComingSoonPage: React.FC = () => {
   const fetchSpotsRemaining = async () => {
     try {
       const { count, error } = await supabase
-        .from('email_waitlist')
+        .from('beta_signups')
         .select('*', { count: 'exact', head: true });
 
       if (error) throw error;
       
-      console.log('📊 Email waitlist count:', count);
-      const remaining = Math.max(0, 197 - (count || 0));
+      console.log('📊 Beta signups count:', count);
+      const remaining = Math.max(0, 250 - (count || 0));
       console.log('📊 Spots remaining:', remaining);
       
       setSpotsRemaining(remaining);
@@ -89,42 +89,23 @@ const ComingSoonPage: React.FC = () => {
     try {
       const formattedPhone = `+1${cleaned}`;
       
-      // Check if phone already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id, user_tags')
+      // Check if phone already exists in beta_signups
+      const { data: existingSignup } = await supabase
+        .from('beta_signups')
+        .select('id')
         .eq('phone_number', formattedPhone)
         .single();
 
-      if (existingUser) {
-        // Update existing user to add 'beta' tag if not present
-        const currentTags = existingUser.user_tags || [];
-        if (!currentTags.includes('beta')) {
-          await supabase
-            .from('users')
-            .update({
-              user_tags: [...currentTags, 'beta'],
-              sms_subscribed: true,
-              sms_subscribed_at: new Date().toISOString()
-            })
-            .eq('id', existingUser.id);
-        }
-        
+      if (existingSignup) {
         setSubmitted(true);
         toast.success('You\'re already on the list! 🎉');
       } else {
-        // Create new user with beta tag
+        // Create new beta signup
         const { error } = await supabase
-          .from('users')
+          .from('beta_signups')
           .insert({
             phone_number: formattedPhone,
-            user_tags: ['beta'],
-            sms_subscribed: true,
-            sms_subscribed_at: new Date().toISOString(),
-            user_type: 'user',
-            full_name: '',
-            email: '',
-            created_at: new Date().toISOString()
+            source: 'landing_page'
           });
 
         if (error) {
