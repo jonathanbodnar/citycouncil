@@ -30,6 +30,7 @@ interface OrderWithTalent extends Order {
     };
     pricing: number;
     category: string;
+    username: string;
   };
 }
 
