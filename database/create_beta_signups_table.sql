@@ -73,7 +73,7 @@ BEGIN
     
     SELECT u.id, u.full_name, u.email, u.phone as phone_number, u.user_tags
     FROM users u
-    WHERE 'beta' = ANY(u.user_tags)
+    WHERE 'beta' = ANY(COALESCE(u.user_tags, ARRAY[]::TEXT[]))
     AND u.sms_subscribed = true
     AND u.phone IS NOT NULL;
     
@@ -84,7 +84,7 @@ BEGIN
     WHERE u.sms_subscribed = true
     AND u.phone IS NOT NULL
     AND u.user_type = 'user'
-    AND NOT ('beta' = ANY(u.user_tags));
+    AND NOT ('beta' = ANY(COALESCE(u.user_tags, ARRAY[]::TEXT[])));
     
   ELSIF segment = 'all' THEN
     -- Return ALL: beta_signups + users with sms_subscribed
@@ -140,8 +140,9 @@ BEGIN
     (SELECT COALESCE(SUM(failed_count), 0)::INT FROM sms_campaigns),
     -- Beta = beta_signups + users with 'beta' tag
     ((SELECT COUNT(*)::INT FROM beta_signups) + 
-     (SELECT COUNT(*)::INT FROM users WHERE 'beta' = ANY(user_tags) AND sms_subscribed = true)),
-    (SELECT COUNT(*)::INT FROM users WHERE sms_subscribed = true AND user_type = 'user' AND NOT ('beta' = ANY(user_tags))),
+     (SELECT COUNT(*)::INT FROM users WHERE 'beta' = ANY(COALESCE(user_tags, ARRAY[]::TEXT[])) AND sms_subscribed = true)),
+    -- Registered = users without 'beta' tag (including NULL user_tags)
+    (SELECT COUNT(*)::INT FROM users WHERE sms_subscribed = true AND user_type = 'user' AND NOT ('beta' = ANY(COALESCE(user_tags, ARRAY[]::TEXT[])))),
     -- Total = beta_signups + all sms_subscribed users
     ((SELECT COUNT(*)::INT FROM beta_signups) +
      (SELECT COUNT(*)::INT FROM users WHERE sms_subscribed = true));
