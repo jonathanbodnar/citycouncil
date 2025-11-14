@@ -61,6 +61,8 @@ app.use(helmet({
         "wss://utafetamgwukkbrlezev.supabase.co",
         "https://api.fortis.tech",
         "https://*.fortis.tech",
+        "https://mpc-prod-11-sbu1130pusaco.a.run.app", // Fortis MPC service
+        "https://dome-1.conversionsapi.getway.com", // Fortis conversions API
         "https://*.wasabisys.com",
         "https://s3.us-central-1.wasabisys.com",
         "https://www.facebook.com",
