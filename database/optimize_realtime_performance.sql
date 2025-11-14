@@ -78,11 +78,8 @@ ORDER BY dead_tuple_percent DESC;
 -- See which columns are being replicated
 SELECT 
     schemaname,
-    tablename,
-    attnames as replicated_columns
-FROM pg_publication_tables pt
-LEFT JOIN pg_publication_rel pr ON pt.schemaname = pr.prnamespace::regnamespace::text
-    AND pt.tablename = pr.prrelid::regclass::text
+    tablename
+FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime'
 ORDER BY tablename;
 
