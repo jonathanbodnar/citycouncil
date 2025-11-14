@@ -74,75 +74,93 @@ const ComingSoonPage: React.FC = () => {
     }
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !email.includes('@')) {
-      toast.error('Please enter a valid email address');
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    
+    if (cleaned.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
       return;
     }
 
     setLoading(true);
     
     try {
-      // Add to database
-      const { error } = await supabase
-        .from('email_waitlist')
-        .insert({
-          email: email.toLowerCase().trim(),
-          source: 'landing_page',
-          discount_code: '25OFF',
-          created_at: new Date().toISOString()
-        });
+      const formattedPhone = `+1${cleaned}`;
+      
+      // Check if phone already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id, user_tags')
+        .eq('phone_number', formattedPhone)
+        .single();
 
-      if (error) {
-        if (error.code === '23505') {
-          setSubmitted(true);
-          toast.success('You\'re already on the list! 🎉');
-        } else {
+      if (existingUser) {
+        // Update existing user to add 'beta' tag if not present
+        const currentTags = existingUser.user_tags || [];
+        if (!currentTags.includes('beta')) {
+          await supabase
+            .from('users')
+            .update({
+              user_tags: [...currentTags, 'beta'],
+              sms_subscribed: true,
+              sms_subscribed_at: new Date().toISOString()
+            })
+            .eq('id', existingUser.id);
+        }
+        
+        setSubmitted(true);
+        toast.success('You\'re already on the list! 🎉');
+      } else {
+        // Create new user with beta tag
+        const { error } = await supabase
+          .from('users')
+          .insert({
+            phone_number: formattedPhone,
+            user_tags: ['beta'],
+            sms_subscribed: true,
+            sms_subscribed_at: new Date().toISOString(),
+            user_type: 'user',
+            full_name: '',
+            email: '',
+            created_at: new Date().toISOString()
+          });
+
+        if (error) {
           throw error;
         }
-      } else {
-        console.log('✅ Email added to database successfully');
         
-        // Add to ActiveCampaign (don't fail if this errors)
-        try {
-          console.log('📧 Adding to ActiveCampaign:', email);
-          const acResult = await addToActiveCampaign(email);
-          console.log('📧 ActiveCampaign result:', acResult);
-          if (!acResult.success) {
-            console.error('❌ ActiveCampaign failed:', acResult.error);
-          }
-        } catch (acError) {
-          console.error('❌ ActiveCampaign error:', acError);
-          // Continue anyway - don't block user signup
-        }
-        
-        // Refresh spots remaining from database
-        console.log('🔄 Refreshing spots count...');
+        // Refresh spots remaining
         await fetchSpotsRemaining();
-        console.log('✅ Spots count refreshed');
         
-        // Track Meta Pixel Lead event
+        // Track conversion
         if (typeof window !== 'undefined' && (window as any).fbq) {
-          console.log('📊 Tracking Meta Pixel Lead event');
           (window as any).fbq('track', 'Lead', {
-            content_name: 'Beta Waitlist Signup',
+            content_name: 'Beta SMS Signup',
             content_category: 'Landing Page',
-            value: 0.00,
+            value: 50,
             currency: 'USD'
           });
         }
         
         setSubmitted(true);
-        setEmail('');
+        setPhoneNumber('');
+        toast.success('You\'re on the list! We\'ll text you when we launch. 📱');
       }
     } catch (error: any) {
-      console.error('Error adding to waitlist:', error);
+      console.error('Error adding to beta list:', error);
       toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatPhoneNumber = (value: string): string => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
   };
 
   const nextVideo = () => {
@@ -181,12 +199,13 @@ const ComingSoonPage: React.FC = () => {
             
             {!submitted ? (
               <>
-                <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4">
+                <form onSubmit={handlePhoneSubmit} className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4">
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                    placeholder="(123) 456-7890"
+                    maxLength={14}
                     className="px-6 py-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/30 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none w-full sm:w-auto sm:min-w-96 backdrop-blur-sm"
                     disabled={loading}
                   />
@@ -210,7 +229,7 @@ const ComingSoonPage: React.FC = () => {
             ) : (
               <div className="py-6">
                 <p className="text-green-400 text-xl font-semibold">
-                  Thank you! We'll let you know when the app is ready for beta orders!
+                  Thank you! We'll text you when the app is ready for beta orders! 📱
                 </p>
               </div>
             )}
