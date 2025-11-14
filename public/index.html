@@ -28,6 +28,9 @@
     
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="%PUBLIC_URL%/logo192.png" />
+    
+    <!-- Preload Fortis Commerce JS for faster payment form loading -->
+    <link rel="preload" href="https://js.fortis.tech/commercejs-v1.0.0.min.js" as="script" />
     <link rel="icon" type="image/png" sizes="512x512" href="%PUBLIC_URL%/logo512.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -81,8 +84,8 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!-- Fortis Commerce JS (Sandbox). Replace with production URL in live envs. -->
-    <script src=" https://js.fortis.tech/commercejs-v1.0.0.min.js" async></script>
+    <!-- Fortis Commerce JS - loaded with defer for optimal performance -->
+    <script src="https://js.fortis.tech/commercejs-v1.0.0.min.js" defer></script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.

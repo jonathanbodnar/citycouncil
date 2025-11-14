@@ -73,6 +73,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       // Step 2: Ensure Commerce is loaded (added in index.html as async script)
       const waitForCommerce = () => new Promise<void>((resolve, reject) => {
+        // Check immediately first (might already be loaded)
+        if ((window as any).Commerce?.elements) {
+          resolve();
+          return;
+        }
+        
         let attempts = 0;
         const i = setInterval(() => {
           attempts++;
@@ -80,7 +86,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             clearInterval(i);
             resolve();
           }
-          if (attempts > 100) {
+          if (attempts > 50) { // Reduced from 100 to 50 (5 seconds max instead of 10)
             clearInterval(i);
             reject(new Error('Fortis Commerce JS failed to load'));
           }
