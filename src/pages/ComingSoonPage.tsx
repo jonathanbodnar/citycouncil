@@ -14,7 +14,7 @@ import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 
 const ComingSoonPage: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [spotsRemaining, setSpotsRemaining] = useState(197);
