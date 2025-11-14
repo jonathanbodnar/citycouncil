@@ -121,6 +121,15 @@ if (process.env.PRERENDER_TOKEN) {
   console.warn('⚠️  PRERENDER_TOKEN not set - social media previews may not work');
 }
 
+// Apple Pay domain verification - must come before static files
+app.get('/.well-known/apple-developer-merchantid-domain-association', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', '.well-known', 'apple-developer-merchantid-domain-association'), {
+    headers: {
+      'Content-Type': 'application/octet-stream'
+    }
+  });
+});
+
 // Sitemap.xml route - must come before static files
 app.get('/sitemap.xml', async (req, res) => {
   try {
