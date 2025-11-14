@@ -162,9 +162,12 @@ DECLARE
   beta_record RECORD;
 BEGIN
   -- Check if this phone number exists in beta_signups
+  -- Handle both +1XXXXXXXXXX and XXXXXXXXXX formats
   SELECT * INTO beta_record
   FROM beta_signups
-  WHERE phone_number = NEW.phone;
+  WHERE phone_number = NEW.phone
+     OR phone_number = '+1' || NEW.phone
+     OR REPLACE(phone_number, '+1', '') = NEW.phone;
   
   IF FOUND THEN
     -- User was a beta signup! Add 'beta' tag and enable SMS
@@ -182,7 +185,7 @@ BEGIN
     -- Delete the beta_signup record (no longer needed)
     DELETE FROM beta_signups WHERE id = beta_record.id;
     
-    RAISE NOTICE '✅ Merged beta signup into user account';
+    RAISE NOTICE '✅ Merged beta signup into user account (phone: %)', NEW.phone;
   END IF;
   
   RETURN NEW;
@@ -206,7 +209,9 @@ BEGIN
   IF NEW.phone IS NOT NULL AND (OLD.phone IS NULL OR OLD.phone != NEW.phone) THEN
     SELECT * INTO beta_record
     FROM beta_signups
-    WHERE phone_number = NEW.phone;
+    WHERE phone_number = NEW.phone
+       OR phone_number = '+1' || NEW.phone
+       OR REPLACE(phone_number, '+1', '') = NEW.phone;
     
     IF FOUND THEN
       NEW.user_tags := COALESCE(NEW.user_tags, ARRAY[]::TEXT[]);
@@ -218,7 +223,7 @@ BEGIN
         NEW.sms_subscribed_at := beta_record.subscribed_at;
       END IF;
       DELETE FROM beta_signups WHERE id = beta_record.id;
-      RAISE NOTICE '✅ Merged beta signup on phone update';
+      RAISE NOTICE '✅ Merged beta signup on phone update (phone: %)', NEW.phone;
     END IF;
   END IF;
   RETURN NEW;
