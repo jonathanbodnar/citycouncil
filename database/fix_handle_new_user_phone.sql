@@ -23,9 +23,9 @@ BEGIN
     full_name,
     avatar_url,
     user_type,
-    phone,  -- ✅ ADD PHONE HERE!
-    sms_subscribed,  -- ✅ ADD SMS_SUBSCRIBED!
-    sms_subscribed_at,  -- ✅ ADD TIMESTAMP!
+    phone,
+    sms_subscribed,
+    sms_subscribed_at,
     created_at,
     updated_at
   )
@@ -34,20 +34,20 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
-    COALESCE(NEW.raw_user_meta_data->>'user_type', 'user'),  -- Get user_type from metadata
-    NEW.raw_user_meta_data->>'phone_number',  -- ✅ GET PHONE FROM METADATA!
+    COALESCE(NEW.raw_user_meta_data->>'user_type', 'user'),
+    NEW.raw_user_meta_data->>'phone_number',
     CASE 
       WHEN NEW.raw_user_meta_data->>'phone_number' IS NOT NULL 
         AND NEW.raw_user_meta_data->>'phone_number' != '' 
       THEN true 
       ELSE false 
-    END,  -- ✅ AUTO-SUBSCRIBE IF PHONE EXISTS!
+    END,
     CASE 
       WHEN NEW.raw_user_meta_data->>'phone_number' IS NOT NULL 
         AND NEW.raw_user_meta_data->>'phone_number' != '' 
       THEN NOW() 
       ELSE NULL 
-    END,  -- ✅ SET TIMESTAMP IF PHONE EXISTS!
+    END,
     NOW(),
     NOW()
   )
@@ -56,9 +56,9 @@ BEGIN
     full_name = COALESCE(EXCLUDED.full_name, public.users.full_name),
     avatar_url = COALESCE(EXCLUDED.avatar_url, public.users.avatar_url),
     user_type = COALESCE(EXCLUDED.user_type, public.users.user_type),
-    phone = COALESCE(EXCLUDED.phone, public.users.phone),  -- ✅ UPDATE PHONE!
-    sms_subscribed = COALESCE(EXCLUDED.sms_subscribed, public.users.sms_subscribed),  -- ✅ UPDATE SMS_SUBSCRIBED!
-    sms_subscribed_at = COALESCE(EXCLUDED.sms_subscribed_at, public.users.sms_subscribed_at),  -- ✅ UPDATE TIMESTAMP!
+    phone = COALESCE(EXCLUDED.phone, public.users.phone),
+    sms_subscribed = COALESCE(EXCLUDED.sms_subscribed, public.users.sms_subscribed),
+    sms_subscribed_at = COALESCE(EXCLUDED.sms_subscribed_at, public.users.sms_subscribed_at),
     updated_at = NOW();
   
   RETURN NEW;
