@@ -28,14 +28,18 @@ UNION ALL
 SELECT 'Payout Batches', COUNT(*)
 FROM payout_batches WHERE talent_id IN (SELECT id FROM talent_profiles WHERE username = 'barney')
 UNION ALL
-SELECT 'Notifications', COUNT(*)
-FROM notifications WHERE talent_id IN (SELECT id FROM talent_profiles WHERE username = 'barney');
+SELECT 'Notifications (via orders)', COUNT(*)
+FROM notifications WHERE order_id IN (
+    SELECT id FROM orders WHERE talent_id IN (SELECT id FROM talent_profiles WHERE username = 'barney')
+);
 
 -- 3. Delete in correct order (respecting foreign keys)
 
--- Delete notifications
+-- Delete notifications (linked to orders)
 DELETE FROM notifications 
-WHERE talent_id IN (SELECT id FROM talent_profiles WHERE username = 'barney');
+WHERE order_id IN (
+    SELECT id FROM orders WHERE talent_id IN (SELECT id FROM talent_profiles WHERE username = 'barney')
+);
 
 -- Delete payout batches
 DELETE FROM payout_batches 
