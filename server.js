@@ -62,7 +62,10 @@ app.use(helmet({
         "https://api.fortis.tech",
         "https://*.fortis.tech",
         "https://mpc-prod-11-sbu1130pusaco.a.run.app", // Fortis MPC service
+        "https://*.run.app", // Google Cloud Run (Fortis services)
         "https://dome-1.conversionsapi.getway.com", // Fortis conversions API
+        "https://*.conversionsapi.getway.com", // Fortis conversions API wildcard
+        "https://*.getway.com", // Fortis gateway services
         "https://*.wasabisys.com",
         "https://s3.us-central-1.wasabisys.com",
         "https://www.facebook.com",
