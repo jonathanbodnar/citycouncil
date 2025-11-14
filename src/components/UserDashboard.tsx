@@ -229,6 +229,11 @@ const UserDashboard: React.FC = () => {
       const response = await fetch(order.video_url!);
       const blob = await response.blob();
       const filename = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
+      const talentName = order.talent_profiles.users.full_name;
+      const talentUsername = order.talent_profiles.username;
+
+      // Suggested caption for social media
+      const suggestedCaption = `Just got my personalized ShoutOut from ${talentName}! 🎉 Get yours at ShoutOut.us/${talentUsername} 🎥 @shoutoutvoices`;
 
       // Try to use native share API on mobile (saves to camera roll/Photos)
       if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -236,10 +241,33 @@ const UserDashboard: React.FC = () => {
           const file = new File([blob], filename, { type: 'video/mp4' });
           await navigator.share({
             files: [file],
-            title: 'ShoutOut Video',
-            text: `My ShoutOut from ${order.talent_profiles.users.full_name}`
+            title: 'My ShoutOut Video',
+            text: suggestedCaption
           });
-          toast.success('Video saved!');
+          
+          // Show caption copy helper after successful share
+          toast.success('Video saved!', { duration: 2000 });
+          setTimeout(() => {
+            toast((t) => (
+              <div className="flex flex-col gap-2">
+                <p className="font-semibold text-sm">📱 Posting on social media?</p>
+                <p className="text-xs text-gray-600">Copy this caption:</p>
+                <div className="bg-gray-100 p-2 rounded text-xs">
+                  {suggestedCaption}
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(suggestedCaption);
+                    toast.success('Caption copied!');
+                    toast.dismiss(t.id);
+                  }}
+                  className="bg-primary-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-primary-700"
+                >
+                  Copy Caption
+                </button>
+              </div>
+            ), { duration: 10000 });
+          }, 2000);
           return;
         } catch (shareError) {
           // Fall through to download if share fails
@@ -257,6 +285,29 @@ const UserDashboard: React.FC = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       toast.success('Video downloaded!');
+      
+      // Show caption helper for desktop too
+      setTimeout(() => {
+        toast((t) => (
+          <div className="flex flex-col gap-2">
+            <p className="font-semibold text-sm">📱 Share on social media!</p>
+            <p className="text-xs text-gray-600">Suggested caption:</p>
+            <div className="bg-gray-100 p-2 rounded text-xs">
+              {suggestedCaption}
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(suggestedCaption);
+                toast.success('Caption copied!');
+                toast.dismiss(t.id);
+              }}
+              className="bg-primary-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-primary-700"
+            >
+              Copy Caption
+            </button>
+          </div>
+        ), { duration: 10000 });
+      }, 1000);
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video');
