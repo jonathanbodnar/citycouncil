@@ -3,7 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
 const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
+// Use separate phone number for user SMS campaigns
+// Falls back to TWILIO_PHONE_NUMBER if USER_SMS_PHONE_NUMBER is not set
+const USER_SMS_PHONE_NUMBER = Deno.env.get('USER_SMS_PHONE_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -107,7 +109,7 @@ serve(async (req) => {
             },
             body: new URLSearchParams({
               To: recipient.phone_number,
-              From: TWILIO_PHONE_NUMBER!,
+              From: USER_SMS_PHONE_NUMBER!,
               Body: message
             })
           }
