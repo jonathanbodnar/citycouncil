@@ -90,65 +90,50 @@ const SupportChatWidget: React.FC<SupportChatWidgetProps> = ({
   useEffect(() => {
     if (isOpen && user) {
       fetchMessages();
+      
       // Set up real-time subscription for new messages and updates
-      console.log('Setting up real-time subscription for user:', user.id);
+      // Only subscribes when chat is open to reduce DB load
       const subscription = supabase
         .channel(`help_messages_${user.id}`)
         .on('postgres_changes', 
           { 
-            event: '*', 
+            event: 'INSERT',  // Only listen for new messages
             schema: 'public', 
             table: 'help_messages',
             filter: `user_id=eq.${user.id}`
           }, 
           (payload) => {
-            console.log('Talent real-time update received:', payload);
-            
-            // Handle different event types for smoother updates
-            console.log('Payload event type:', payload.eventType, 'Payload:', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              // Add new message directly to state
-              const newMessage = payload.new as HelpMessage;
-              console.log('Adding new message to talent chat:', newMessage);
-              setMessages(prev => {
-                // Avoid duplicates
-                if (prev.find(msg => msg.id === newMessage.id)) {
-                  return prev;
-                }
-                return [...prev, newMessage];
-              });
-            } else if (payload.eventType === 'UPDATE') {
-              // Update existing message (admin response)
-              const updatedMessage = payload.new as HelpMessage;
-              console.log('Updating message in talent chat:', updatedMessage);
-              setMessages(prev => 
-                prev.map(msg => 
-                  msg.id === updatedMessage.id ? updatedMessage : msg
-                )
-              );
-              
-              // Show notification for new admin responses
-              if (!isOpen && updatedMessage.response) {
-                setHasNewMessage(true);
-                toast.success('💬 Admin replied to your message!', {
-                  duration: 4000,
-                  position: 'bottom-right',
-                });
+            // Add new message directly to state
+            const newMessage = payload.new as HelpMessage;
+            setMessages(prev => {
+              // Avoid duplicates
+              if (prev.find(msg => msg.id === newMessage.id)) {
+                return prev;
               }
-            } else {
-              // Fallback to full refetch for DELETE or other events
-              console.log('Falling back to fetchMessages for event:', payload.eventType);
-              fetchMessages();
-            }
+              return [...prev, newMessage];
+            });
           }
         )
-        .subscribe((status) => {
-          console.log('Talent chat subscription status:', status);
-        });
+        .on('postgres_changes', 
+          { 
+            event: 'UPDATE',  // Separate listener for updates (admin responses)
+            schema: 'public', 
+            table: 'help_messages',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            // Update existing message (admin response)
+            const updatedMessage = payload.new as HelpMessage;
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === updatedMessage.id ? updatedMessage : msg
+              )
+            );
+          }
+        )
+        .subscribe();
 
       return () => {
-        console.log('Unsubscribing talent chat subscription');
         subscription.unsubscribe();
       };
     }

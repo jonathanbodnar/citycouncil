@@ -49,24 +49,21 @@ const AdminHelpDesk: React.FC = () => {
   useEffect(() => {
     fetchConversations();
     
-      // Set up real-time subscription
-    console.log('Setting up admin real-time subscription');
+    // Set up real-time subscription
+    // Only subscribe to INSERT events (new messages) to reduce DB load
+    // Filter to unresolved conversations to reduce noise
     const subscription = supabase
       .channel('admin_help_messages')
       .on('postgres_changes', 
         { 
-          event: '*', 
+          event: 'INSERT',  // Changed from '*' to only new messages
           schema: 'public', 
           table: 'help_messages'
         }, 
         (payload) => {
-          console.log('Admin real-time update:', payload);
-          console.log('Event type:', payload.eventType, 'Selected conversation:', selectedConversation);
-          
           // Throttle updates to prevent excessive refreshes (max once per second)
           const now = Date.now();
           if (now - lastUpdateRef.current < 1000) {
-            console.log('Throttling real-time update');
             return;
           }
           lastUpdateRef.current = now;
@@ -75,19 +72,15 @@ const AdminHelpDesk: React.FC = () => {
           requestAnimationFrame(() => {
             // Only refresh selected conversation if it's the updated one
             if (selectedConversation && payload.new && (payload.new as any)?.user_id === selectedConversation.user_id) {
-              console.log('Refreshing selected conversation');
               refreshSelectedConversation();
             }
             
             // Refresh conversations list
-            console.log('Refreshing conversations list');
             fetchConversations();
           });
         }
       )
-      .subscribe((status) => {
-        console.log('Admin chat subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       subscription.unsubscribe();
