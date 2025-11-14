@@ -75,14 +75,16 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         const [
           { data: orders },
           { data: users },
-          { data: talent }
+          { data: talent },
+          { data: payouts }
         ] = await Promise.all([
           supabase.from('orders').select('*'),
           supabase.from('users').select('*'),
           supabase.from('talent_profiles').select(`
             *,
             users!talent_profiles_user_id_fkey (full_name, avatar_url)
-          `)
+          `),
+          supabase.from('payouts').select('*')
         ]);
 
         // Calculate comprehensive stats
@@ -93,10 +95,17 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         const corporateOrders = orders?.filter(o => o.is_corporate_order) || [];
         const pendingApprovalOrders = orders?.filter(o => o.approval_status === 'pending') || [];
         
-        const grossGenerated = (orders?.reduce((sum, order) => sum + order.amount, 0) || 0) / 100;
-        const grossEarnings = (orders?.reduce((sum, order) => sum + order.admin_fee, 0) || 0) / 100;
+        // Orders are stored in dollars, not cents - no division needed
+        const grossGenerated = orders?.reduce((sum, order) => sum + order.amount, 0) || 0;
+        
+        // Calculate platform earnings from payouts (admin_fee_amount)
+        // This correctly accounts for 0% promo fee and refunds
+        const grossEarnings = payouts
+          ?.filter(p => !p.is_refunded)
+          .reduce((sum, payout) => sum + (payout.admin_fee_amount || 0), 0) || 0;
+        
         const refundedOrders = orders?.filter(o => o.status === 'refunded') || [];
-        const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0) / 100;
+        const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0);
         
         const totalUsers = users?.filter(u => u.user_type === 'user').length || 0;
         const activeTalent = talent?.filter(t => t.is_active).length || 0;
