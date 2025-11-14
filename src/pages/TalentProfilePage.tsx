@@ -44,6 +44,10 @@ const TalentProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (id || username) {
+      // Reset state when route changes to prevent showing previous talent's data
+      setTalent(null);
+      setRelatedTalent([]);
+      setLoading(true);
       fetchTalentProfile();
     }
   }, [id, username]); // eslint-disable-line react-hooks/exhaustive-deps
