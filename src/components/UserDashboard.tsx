@@ -81,6 +81,7 @@ const UserDashboard: React.FC = () => {
           talent_profiles!orders_talent_id_fkey (
             pricing,
             category,
+            username,
             users!talent_profiles_user_id_fkey (
               full_name,
               avatar_url
