@@ -93,12 +93,6 @@ const MobileNavigation: React.FC = () => {
       icon: ChatBubbleLeftRightIcon,
       iconSolid: ChatBubbleLeftRightIconSolid,
     },
-    {
-      name: 'Profile',
-      href: '/dashboard?tab=profile',
-      icon: UserCircleIcon,
-      iconSolid: UserCircleIconSolid,
-    },
   ];
 
   // Navigation for non-logged-in users
@@ -137,7 +131,7 @@ const MobileNavigation: React.FC = () => {
         zIndex: 9999 
       }}
     >
-      <div className={`grid py-2 ${user ? 'grid-cols-4' : 'grid-cols-2'}`}>
+      <div className={`grid py-2 ${user ? (user.user_type === 'talent' ? 'grid-cols-4' : 'grid-cols-4') : 'grid-cols-2'}`}>
         {navigation.map((item) => {
           // Better active detection for routes with query params
           const isActive = location.pathname === item.href || 

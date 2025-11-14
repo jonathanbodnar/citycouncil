@@ -228,10 +228,30 @@ const UserDashboard: React.FC = () => {
     try {
       const response = await fetch(order.video_url!);
       const blob = await response.blob();
+      const filename = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
+
+      // Try to use native share API on mobile (saves to camera roll/Photos)
+      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([blob], filename, { type: 'video/mp4' });
+          await navigator.share({
+            files: [file],
+            title: 'ShoutOut Video',
+            text: `My ShoutOut from ${order.talent_profiles.users.full_name}`
+          });
+          toast.success('Video saved!');
+          return;
+        } catch (shareError) {
+          // Fall through to download if share fails
+          console.log('Share failed, falling back to download:', shareError);
+        }
+      }
+
+      // Fallback: Traditional download for desktop
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
