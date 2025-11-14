@@ -134,7 +134,7 @@ serve(async (req) => {
           console.error(`Failed to send SMS to ${recipient.phone_number}:`, twilioData);
         }
 
-        // Rate limit: 1 message per 100ms (10/second, well under Twilio's limit)
+        // Rate limit: 1 message per 100ms (10/second)
         await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (error) {
@@ -183,4 +183,3 @@ serve(async (req) => {
     });
   }
 });
-
