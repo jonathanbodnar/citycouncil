@@ -422,7 +422,9 @@ const CommsCenterManagement: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Communications Center</h2>
             <p className="text-gray-600">
-              {activeView === 'sms' ? 'Send SMS messages to talent' : 'View system notifications sent to talent'}
+              {activeView === 'talent-sms' && 'Send SMS messages to talent'}
+              {activeView === 'user-sms' && 'Send mass SMS campaigns to users'}
+              {activeView === 'notifications' && 'View system notifications sent to talent'}
             </p>
           </div>
           <div className="flex items-center gap-3">
