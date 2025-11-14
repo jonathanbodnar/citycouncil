@@ -148,6 +148,89 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- ============================================
+-- AUTOMATIC MERGE: Beta Signup → Full User
+-- ============================================
+-- When a user signs up with a beta phone number:
+-- 1. Auto-add 'beta' tag
+-- 2. Enable SMS subscription
+-- 3. Delete beta_signup record (prevent duplicates)
+
+CREATE OR REPLACE FUNCTION merge_beta_signup_to_user()
+RETURNS TRIGGER AS $$
+DECLARE
+  beta_record RECORD;
+BEGIN
+  -- Check if this phone number exists in beta_signups
+  SELECT * INTO beta_record
+  FROM beta_signups
+  WHERE phone_number = NEW.phone;
+  
+  IF FOUND THEN
+    -- User was a beta signup! Add 'beta' tag and enable SMS
+    NEW.user_tags := COALESCE(NEW.user_tags, ARRAY[]::TEXT[]);
+    
+    -- Add 'beta' tag if not already present
+    IF NOT ('beta' = ANY(NEW.user_tags)) THEN
+      NEW.user_tags := array_append(NEW.user_tags, 'beta');
+    END IF;
+    
+    -- Enable SMS subscription (they already opted in)
+    NEW.sms_subscribed := true;
+    NEW.sms_subscribed_at := beta_record.subscribed_at;
+    
+    -- Delete the beta_signup record (no longer needed)
+    DELETE FROM beta_signups WHERE id = beta_record.id;
+    
+    RAISE NOTICE '✅ Merged beta signup into user account';
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger for INSERT (new user signup)
+DROP TRIGGER IF EXISTS trigger_merge_beta_signup ON users;
+CREATE TRIGGER trigger_merge_beta_signup
+  BEFORE INSERT ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION merge_beta_signup_to_user();
+
+-- Trigger for UPDATE (phone added later)
+CREATE OR REPLACE FUNCTION merge_beta_signup_on_phone_update()
+RETURNS TRIGGER AS $$
+DECLARE
+  beta_record RECORD;
+BEGIN
+  -- Only if phone was just added/changed
+  IF NEW.phone IS NOT NULL AND (OLD.phone IS NULL OR OLD.phone != NEW.phone) THEN
+    SELECT * INTO beta_record
+    FROM beta_signups
+    WHERE phone_number = NEW.phone;
+    
+    IF FOUND THEN
+      NEW.user_tags := COALESCE(NEW.user_tags, ARRAY[]::TEXT[]);
+      IF NOT ('beta' = ANY(NEW.user_tags)) THEN
+        NEW.user_tags := array_append(NEW.user_tags, 'beta');
+      END IF;
+      NEW.sms_subscribed := true;
+      IF NEW.sms_subscribed_at IS NULL THEN
+        NEW.sms_subscribed_at := beta_record.subscribed_at;
+      END IF;
+      DELETE FROM beta_signups WHERE id = beta_record.id;
+      RAISE NOTICE '✅ Merged beta signup on phone update';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_merge_beta_signup_on_update ON users;
+CREATE TRIGGER trigger_merge_beta_signup_on_update
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION merge_beta_signup_on_phone_update();
+
 -- Verify setup
 SELECT 
   'Beta signups table created!' as status,
