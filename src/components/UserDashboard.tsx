@@ -228,17 +228,22 @@ const UserDashboard: React.FC = () => {
   // Show caption modal first, then download
   const [showCaptionModal, setShowCaptionModal] = useState(false);
   const [pendingDownloadOrder, setPendingDownloadOrder] = useState<OrderWithTalent | null>(null);
+  const [downloadStarted, setDownloadStarted] = useState(false);
 
-  // Actually download the video (called after caption modal)
+  // Actually download the video - optimized for speed
   const performDownload = async (order: OrderWithTalent) => {
+    if (downloadStarted) return; // Prevent duplicate downloads
+    setDownloadStarted(true);
+    
     try {
-      const response = await fetch(order.video_url!);
-      const blob = await response.blob();
       const filename = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // Try to use native share API on mobile (saves to camera roll/Photos)
-      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      // Mobile: Need blob for native share API
+      if (isMobile && navigator.share) {
         try {
+          const response = await fetch(order.video_url!);
+          const blob = await response.blob();
           const file = new File([blob], filename, { type: 'video/mp4' });
           await navigator.share({
             files: [file],
@@ -253,29 +258,32 @@ const UserDashboard: React.FC = () => {
         }
       }
 
-      // Fallback: Traditional download for desktop
-      const url = window.URL.createObjectURL(blob);
+      // Desktop: Direct download without blob conversion (faster!)
       const a = document.createElement('a');
-      a.href = url;
+      a.href = order.video_url!;
       a.download = filename;
+      a.target = '_blank'; // Helps with CORS issues
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
       toast.success('Video downloaded!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video');
+    } finally {
+      setDownloadStarted(false);
     }
   };
 
-  // Show caption modal when download is clicked
+  // Show caption modal AND START DOWNLOAD IMMEDIATELY (in parallel)
   const downloadVideo = async (order: OrderWithTalent) => {
     setPendingDownloadOrder(order);
     setShowCaptionModal(true);
+    // Start download immediately in parallel (don't await)
+    performDownload(order);
   };
 
-  // Handle copy caption and download
+  // Handle copy caption (download already started in parallel)
   const handleCopyCaptionAndDownload = async () => {
     if (!pendingDownloadOrder) return;
     
@@ -290,16 +298,16 @@ const UserDashboard: React.FC = () => {
       console.error('Failed to copy:', error);
     }
     
+    // Just close modal - download already started
     setShowCaptionModal(false);
-    await performDownload(pendingDownloadOrder);
     setPendingDownloadOrder(null);
   };
 
-  // Handle skip and download
+  // Handle skip (download already started in parallel)
   const handleSkipAndDownload = async () => {
     if (!pendingDownloadOrder) return;
+    // Just close modal - download already started
     setShowCaptionModal(false);
-    await performDownload(pendingDownloadOrder);
     setPendingDownloadOrder(null);
   };
 
@@ -840,7 +848,7 @@ const UserDashboard: React.FC = () => {
                     📱 Share on social media!
                   </h3>
                   <p className="text-base text-gray-600">
-                    Copy this caption to share your ShoutOut and help spread the word!
+                    Your video is downloading! Copy this caption to share your ShoutOut and help spread the word!
                   </p>
                 </div>
               </div>
