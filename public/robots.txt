@@ -3,8 +3,9 @@
 
 User-agent: *
 Allow: /
-Allow: /talent/*
-Allow: /category/*
+Disallow: /profile/*
+Disallow: /category/*
+Disallow: /talent/*
 Disallow: /dashboard
 Disallow: /admin
 Disallow: /login

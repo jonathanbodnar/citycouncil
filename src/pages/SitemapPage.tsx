@@ -45,27 +45,8 @@ export default function SitemapPage() {
     <priority>1.0</priority>
   </url>\n`;
 
-      // Category pages
-      const categories = [
-        'political-commentators',
-        'faith-leaders',
-        'conservative-voices',
-        'patriots',
-        'sports',
-        'entertainment',
-        'business'
-      ];
-
-      categories.forEach(cat => {
-        sitemapXml += `  <url>
-    <loc>${baseUrl}/category/${cat}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>\n`;
-      });
-
-      // Individual talent profiles - use username (e.g., shoutout.us/shawnfarash)
+      // Individual talent profiles - use slug format (e.g., shoutout.us/shawnfarash)
+      // Categories are browseable on the homepage, not separate pages
       talents?.forEach(talent => {
         const lastMod = talent.updated_at ? new Date(talent.updated_at).toISOString().split('T')[0] : now;
         
