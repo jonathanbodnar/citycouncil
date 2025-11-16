@@ -230,7 +230,7 @@ const UserDashboard: React.FC = () => {
   const [pendingDownloadOrder, setPendingDownloadOrder] = useState<OrderWithTalent | null>(null);
   const [downloadStarted, setDownloadStarted] = useState(false);
 
-  // Actually download the video - optimized for instant downloads
+  // Actually download the video - works reliably on all browsers
   const performDownload = async (order: OrderWithTalent) => {
     if (downloadStarted) return; // Prevent duplicate downloads
     setDownloadStarted(true);
@@ -258,19 +258,28 @@ const UserDashboard: React.FC = () => {
         }
       }
 
-      // Desktop: Instant download using hidden iframe (works on all browsers)
-      // This bypasses CORS and lets the browser handle the download natively
-      toast.success('Video download started!');
+      // Desktop: Fetch and download using blob (most reliable cross-browser method)
+      toast.info('Preparing download...', { autoClose: 1000 });
       
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = order.video_url!;
-      document.body.appendChild(iframe);
+      const response = await fetch(order.video_url!);
+      if (!response.ok) throw new Error('Failed to fetch video');
       
-      // Remove iframe after download starts
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
       setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 2000);
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success('Video downloaded!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video');
