@@ -259,7 +259,7 @@ const UserDashboard: React.FC = () => {
       }
 
       // Desktop: Fetch and download using blob (most reliable cross-browser method)
-      toast.info('Preparing download...', { autoClose: 1000 });
+      toast.loading('Preparing download...', { duration: 1000 });
       
       const response = await fetch(order.video_url!);
       if (!response.ok) throw new Error('Failed to fetch video');
