@@ -10,6 +10,7 @@ import {
   UserIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
+import { FireIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -52,6 +53,7 @@ const OrderPage: React.FC = () => {
   const [talent, setTalent] = useState<TalentWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   
   const {
     register,
@@ -105,6 +107,17 @@ const OrderPage: React.FC = () => {
 
       if (error) throw error;
       setTalent(data);
+
+      // Fetch pricing urgency data
+      const { data: urgencyData, error: urgencyError } = await supabase
+        .from('talent_pricing_urgency')
+        .select('orders_remaining_at_price')
+        .eq('id', talentId)
+        .single();
+
+      if (!urgencyError && urgencyData) {
+        setOrdersRemaining(urgencyData.orders_remaining_at_price);
+      }
     } catch (error) {
       logger.error('Error fetching talent:', error);
       toast.error('Failed to load talent information');
@@ -797,6 +810,16 @@ const OrderPage: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Pricing Urgency Indicator */}
+            {ordersRemaining <= 10 && (
+              <div className="mb-4 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/50 rounded-xl px-3 py-2.5 animate-pulse">
+                <FireIcon className="h-4 w-4 text-orange-400 flex-shrink-0" />
+                <span className="text-xs font-bold text-orange-100 text-center">
+                  Only {ordersRemaining} more {ordersRemaining === 1 ? 'order' : 'orders'} at this price!
+                </span>
+              </div>
+            )}
 
             {/* Pricing Breakdown */}
             <div className="space-y-3 border-t border-gray-200 pt-4">
