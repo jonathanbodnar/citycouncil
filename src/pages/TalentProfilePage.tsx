@@ -6,7 +6,8 @@ import {
   ClockIcon, 
   PlayIcon,
   ShareIcon,
-  CheckBadgeIcon 
+  CheckBadgeIcon,
+  FireIcon
 } from '@heroicons/react/24/solid';
 import { 
   StarIcon as StarOutline
@@ -41,6 +42,7 @@ const TalentProfilePage: React.FC = () => {
   const [relatedTalent, setRelatedTalent] = useState<TalentWithDetails[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
+  const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
 
   useEffect(() => {
     if (id || username) {
@@ -262,6 +264,17 @@ const TalentProfilePage: React.FC = () => {
         .limit(6);
 
       if (videosError) throw videosError;
+
+      // Fetch pricing urgency data
+      const { data: urgencyData, error: urgencyError } = await supabase
+        .from('talent_pricing_urgency')
+        .select('orders_remaining_at_price')
+        .eq('id', talentData.id)
+        .single();
+
+      if (!urgencyError && urgencyData) {
+        setOrdersRemaining(urgencyData.orders_remaining_at_price);
+      }
 
       // Fetch related talent (same category)
       const { data: relatedData, error: relatedError } = await supabase
@@ -543,6 +556,16 @@ const TalentProfilePage: React.FC = () => {
                 </div>
               </div>
             ) : null}
+
+            {/* Pricing Urgency Indicator - Above Order Button */}
+            {ordersRemaining <= 10 && (
+              <div className="mb-3 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/50 rounded-xl px-4 py-3 animate-pulse">
+                <FireIcon className="h-5 w-5 text-orange-400" />
+                <span className="text-sm font-bold text-orange-100">
+                  Only {ordersRemaining} more {ordersRemaining === 1 ? 'order' : 'orders'} available at this price!
+                </span>
+              </div>
+            )}
 
             {/* CTA Button */}
             <Link
