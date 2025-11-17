@@ -87,10 +87,10 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-purple-600/10" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
@@ -105,7 +105,7 @@ export default function AboutPage() {
 
       {/* Mission Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 sm:p-12 shadow-2xl border border-gray-700">
+        <div className="glass rounded-2xl p-8 sm:p-12 shadow-2xl">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 text-center">
             Our Mission
           </h2>
@@ -135,7 +135,7 @@ export default function AboutPage() {
           {stats.map((stat, index) => (
             <div 
               key={index}
-              className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl p-6 text-center border border-blue-500/30"
+              className="glass-strong rounded-xl p-6 text-center border border-white/20"
             >
               <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
                 {stat.value}
@@ -155,10 +155,10 @@ export default function AboutPage() {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <div 
-                key={index}
-                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 hover:border-blue-500/50 transition-all duration-300 hover:transform hover:scale-105"
-              >
+            <div 
+              key={index}
+              className="glass rounded-xl p-6 hover:glass-strong transition-all duration-300 hover:transform hover:scale-105"
+            >
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-white" />
                 </div>
@@ -176,7 +176,7 @@ export default function AboutPage() {
 
       {/* How It Works Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 sm:p-12 shadow-2xl border border-gray-700">
+        <div className="glass rounded-2xl p-8 sm:p-12 shadow-2xl">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-12 text-center">
             How ShoutOut Works
           </h2>
@@ -224,38 +224,38 @@ export default function AboutPage() {
           Our Values
         </h2>
         <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 border border-gray-700">
+          <div className="glass rounded-xl p-8">
             <h3 className="text-2xl font-semibold text-white mb-4">
               🇺🇸 Patriotism & Freedom
             </h3>
-            <p className="text-gray-400 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed">
               We celebrate American values, constitutional principles, and the freedom to express conservative viewpoints 
               in a marketplace that often silences them. ShoutOut is a platform where these voices thrive.
             </p>
           </div>
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 border border-gray-700">
+          <div className="glass rounded-xl p-8">
             <h3 className="text-2xl font-semibold text-white mb-4">
               ✝️ Faith & Family
             </h3>
-            <p className="text-gray-400 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed">
               Faith and family are the foundation of our community. We provide a platform for religious leaders, 
               faith-based content creators, and those who prioritize family values to share their messages of hope.
             </p>
           </div>
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 border border-gray-700">
+          <div className="glass rounded-xl p-8">
             <h3 className="text-2xl font-semibold text-white mb-4">
               💼 Integrity & Excellence
             </h3>
-            <p className="text-gray-400 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed">
               We hold ourselves to the highest standards of integrity in everything we do. From secure payments to 
               quality content, we're committed to delivering excellence in every interaction.
             </p>
           </div>
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 border border-gray-700">
+          <div className="glass rounded-xl p-8">
             <h3 className="text-2xl font-semibold text-white mb-4">
               🤝 Community & Connection
             </h3>
-            <p className="text-gray-400 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed">
               We're building more than a platform—we're building a community of like-minded individuals who support 
               each other, share common values, and believe in making genuine connections.
             </p>
