@@ -489,7 +489,7 @@ const OrderPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Order Form */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 order-2 lg:order-1">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Step 1: Order Type */}
             <div className="glass rounded-2xl shadow-modern p-6">
@@ -781,7 +781,7 @@ const OrderPage: React.FC = () => {
         </div>
 
         {/* Order Summary */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 order-1 lg:order-2">
           <div className="glass rounded-2xl shadow-modern p-6 sticky top-8">
             {/* Talent Info */}
             <div className="flex items-center mb-6">
