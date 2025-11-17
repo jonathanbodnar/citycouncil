@@ -229,11 +229,13 @@ const UserDashboard: React.FC = () => {
   const [showCaptionModal, setShowCaptionModal] = useState(false);
   const [pendingDownloadOrder, setPendingDownloadOrder] = useState<OrderWithTalent | null>(null);
   const [downloadStarted, setDownloadStarted] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  // Actually download the video - optimized for instant downloads
+  // Actually download the video - works reliably on all browsers
   const performDownload = async (order: OrderWithTalent) => {
     if (downloadStarted) return; // Prevent duplicate downloads
     setDownloadStarted(true);
+    setIsDownloading(true);
     
     try {
       const filename = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
@@ -258,24 +260,32 @@ const UserDashboard: React.FC = () => {
         }
       }
 
-      // Desktop: Instant download using hidden iframe (works on all browsers)
-      // This bypasses CORS and lets the browser handle the download natively
-      toast.success('Video download started!');
+      // Desktop: Fetch and download using blob (most reliable cross-browser method)
+      const response = await fetch(order.video_url!);
+      if (!response.ok) throw new Error('Failed to fetch video');
       
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = order.video_url!;
-      document.body.appendChild(iframe);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
       
-      // Remove iframe after download starts
+      // Cleanup
       setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 2000);
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success('Video downloaded!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video');
     } finally {
       setDownloadStarted(false);
+      setIsDownloading(false);
     }
   };
 
@@ -293,26 +303,30 @@ const UserDashboard: React.FC = () => {
     
     const talentName = pendingDownloadOrder.talent_profiles.users.full_name;
     const talentUsername = pendingDownloadOrder.talent_profiles.username;
-    const suggestedCaption = `Just got my personalized ShoutOut from ${talentName}! 🎉 Get yours at ShoutOut.us/${talentUsername} 🎥 @shoutoutvoices`;
+    const suggestedCaption = `Just got my personalized ShoutOut from ${talentName}! 🎉 Get yours at ShoutOut.us/${talentUsername} 🎥 @shoutoutvoice`;
     
     try {
       await navigator.clipboard.writeText(suggestedCaption);
-      toast.success('Caption copied to clipboard!');
+      toast.success('Caption copied! Check your DMs for your 20% off coupon! 🎉');
     } catch (error) {
       console.error('Failed to copy:', error);
     }
     
-    // Just close modal - download already started
-    setShowCaptionModal(false);
-    setPendingDownloadOrder(null);
+    // Keep modal open while downloading if still in progress
+    if (!isDownloading) {
+      setShowCaptionModal(false);
+      setPendingDownloadOrder(null);
+    }
   };
 
   // Handle skip (download already started in parallel)
   const handleSkipAndDownload = async () => {
     if (!pendingDownloadOrder) return;
-    // Just close modal - download already started
-    setShowCaptionModal(false);
-    setPendingDownloadOrder(null);
+    // Keep modal open while downloading if still in progress
+    if (!isDownloading) {
+      setShowCaptionModal(false);
+      setPendingDownloadOrder(null);
+    }
   };
 
   // Start editing request details
@@ -828,19 +842,27 @@ const UserDashboard: React.FC = () => {
 
       {/* Caption Modal - Shown BEFORE download */}
       {showCaptionModal && pendingDownloadOrder && (
-        <div className="fixed z-50 inset-0 overflow-y-auto">
+        <div className="fixed z-50 inset-0 overflow-y-auto backdrop-blur-sm">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
-            {/* Background overlay */}
+            {/* Background overlay - Less transparent */}
             <div 
-              className="fixed inset-0 transition-opacity bg-black bg-opacity-75"
+              className="fixed inset-0 transition-opacity bg-black bg-opacity-90"
               onClick={() => {
-                setShowCaptionModal(false);
-                setPendingDownloadOrder(null);
+                if (!isDownloading) {
+                  setShowCaptionModal(false);
+                  setPendingDownloadOrder(null);
+                }
               }}
             />
 
             {/* Modal panel - BIGGER and CENTERED */}
             <div className="relative inline-block bg-white rounded-2xl px-8 pt-8 pb-8 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+              {isDownloading && (
+                <div className="absolute top-4 right-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                </div>
+              )}
+              
               <div className="flex items-start gap-4 mb-6">
                 <div className="flex-shrink-0">
                   <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600">
@@ -849,10 +871,10 @@ const UserDashboard: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    📱 Share on social media!
+                    📱 Share on social media for 20% off your next order!
                   </h3>
                   <p className="text-base text-gray-600">
-                    Your video is downloading! Copy this caption to share your ShoutOut and help spread the word!
+                    Copy this caption to share your ShoutOut and we'll DM you a 20% off coupon for your next order!
                   </p>
                 </div>
               </div>
@@ -864,7 +886,7 @@ const UserDashboard: React.FC = () => {
                 </label>
                 <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
                   <p className="text-base text-gray-900 leading-relaxed">
-                    Just got my personalized ShoutOut from {pendingDownloadOrder.talent_profiles.users.full_name}! 🎉 Get yours at ShoutOut.us/{pendingDownloadOrder.talent_profiles.username} 🎥 @shoutoutvoices
+                    Just got my personalized ShoutOut from {pendingDownloadOrder.talent_profiles.users.full_name}! 🎉 Get yours at ShoutOut.us/{pendingDownloadOrder.talent_profiles.username} 🎥 @shoutoutvoice
                   </p>
                 </div>
               </div>
@@ -874,19 +896,33 @@ const UserDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCopyCaptionAndDownload}
-                  className="flex-1 inline-flex items-center justify-center rounded-xl border border-transparent shadow-lg px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-lg font-semibold text-white hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all"
+                  disabled={isDownloading}
+                  className="flex-1 inline-flex items-center justify-center rounded-xl border border-transparent shadow-lg px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-lg font-semibold text-white hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy Caption
+                  {isDownloading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy Caption
+                    </>
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={handleSkipAndDownload}
-                  className="flex-1 inline-flex items-center justify-center rounded-xl border-2 border-gray-300 shadow-sm px-6 py-4 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all"
+                  disabled={isDownloading}
+                  className="flex-1 inline-flex items-center justify-center rounded-xl border-2 border-gray-300 shadow-sm px-6 py-4 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Skip
+                  {isDownloading ? 'Downloading...' : 'Skip'}
                 </button>
               </div>
             </div>
