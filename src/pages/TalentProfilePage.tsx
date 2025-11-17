@@ -518,15 +518,6 @@ const TalentProfilePage: React.FC = () => {
                   {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
                     <div className="text-sm font-semibold text-gray-400">${talent.corporate_pricing} Corp</div>
                   )}
-                  {/* Pricing Urgency Indicator */}
-                  {ordersRemaining <= 10 && (
-                    <div className="flex items-center justify-center gap-1.5 mt-2 text-orange-400 animate-pulse">
-                      <FireIcon className="h-4 w-4" />
-                      <span className="text-xs font-bold">
-                        {ordersRemaining} more {ordersRemaining === 1 ? 'order' : 'orders'} available at this price
-                      </span>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="flex-1 border-l border-white/30">
@@ -565,6 +556,16 @@ const TalentProfilePage: React.FC = () => {
                 </div>
               </div>
             ) : null}
+
+            {/* Pricing Urgency Indicator - Above Order Button */}
+            {ordersRemaining <= 10 && (
+              <div className="mb-3 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/50 rounded-xl px-4 py-3 animate-pulse">
+                <FireIcon className="h-5 w-5 text-orange-400" />
+                <span className="text-sm font-bold text-orange-100">
+                  Only {ordersRemaining} more {ordersRemaining === 1 ? 'order' : 'orders'} available at this price!
+                </span>
+              </div>
+            )}
 
             {/* CTA Button */}
             <Link
