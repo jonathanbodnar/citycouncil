@@ -6,6 +6,7 @@
 | URL Pattern | Page | Purpose | SEO Priority |
 |------------|------|---------|--------------|
 | `/` | ComingSoonPage | Homepage/Landing page | 1.0 (Highest) |
+| `/about` | AboutPage | About ShoutOut platform (with header/footer) | 0.8 (High) |
 | `/:username` | TalentProfilePage | Individual talent profiles (e.g., /shawnfarash, /nickdipaolo) | 0.9 (Very High) |
 
 ### 📄 Static Public Pages (Consider Adding to Sitemap):

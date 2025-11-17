@@ -45,6 +45,14 @@ export default function SitemapPage() {
     <priority>1.0</priority>
   </url>\n`;
 
+      // About page - important public content
+      sitemapXml += `  <url>
+    <loc>${baseUrl}/about</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>\n`;
+
       // Individual talent profiles - use slug format (e.g., shoutout.us/shawnfarash)
       // Categories are browseable on the homepage, not separate pages
       talents?.forEach(talent => {
