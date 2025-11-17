@@ -6,7 +6,8 @@ import {
   ClockIcon, 
   PlayIcon,
   ShareIcon,
-  CheckBadgeIcon 
+  CheckBadgeIcon,
+  FireIcon
 } from '@heroicons/react/24/solid';
 import { 
   StarIcon as StarOutline
@@ -41,6 +42,7 @@ const TalentProfilePage: React.FC = () => {
   const [relatedTalent, setRelatedTalent] = useState<TalentWithDetails[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
+  const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
 
   useEffect(() => {
     if (id || username) {
@@ -262,6 +264,17 @@ const TalentProfilePage: React.FC = () => {
         .limit(6);
 
       if (videosError) throw videosError;
+
+      // Fetch pricing urgency data
+      const { data: urgencyData, error: urgencyError } = await supabase
+        .from('talent_pricing_urgency')
+        .select('orders_remaining_at_price')
+        .eq('id', talentData.id)
+        .single();
+
+      if (!urgencyError && urgencyData) {
+        setOrdersRemaining(urgencyData.orders_remaining_at_price);
+      }
 
       // Fetch related talent (same category)
       const { data: relatedData, error: relatedError } = await supabase
@@ -504,6 +517,15 @@ const TalentProfilePage: React.FC = () => {
                   <div className="text-xs text-gray-600 font-medium">Personal</div>
                   {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
                     <div className="text-sm font-semibold text-gray-400">${talent.corporate_pricing} Corp</div>
+                  )}
+                  {/* Pricing Urgency Indicator */}
+                  {ordersRemaining <= 10 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-2 text-orange-400 animate-pulse">
+                      <FireIcon className="h-4 w-4" />
+                      <span className="text-xs font-bold">
+                        {ordersRemaining} more {ordersRemaining === 1 ? 'order' : 'orders'} available at this price
+                      </span>
+                    </div>
                   )}
                 </div>
                 
