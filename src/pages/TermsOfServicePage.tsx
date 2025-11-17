@@ -22,7 +22,7 @@ const TermsOfServicePage: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Service Description</h2>
             <p className="text-gray-700 mb-4">
               ShoutOut is a platform that connects customers with conservative talent to create 
-              personalized video messages. We facilitate:
+              personalized video messages. We procure videos from talent and provide:
             </p>
             <ul className="list-disc list-inside text-gray-700 space-y-2">
               <li>Custom video message orders</li>
@@ -56,7 +56,7 @@ const TermsOfServicePage: React.FC = () => {
               <li>Talent are responsible for their own taxes, insurance, and business operations</li>
               <li>Talent have no authority to bind ShoutOut to any agreements or obligations</li>
               <li>Talent do not receive employee benefits from ShoutOut</li>
-              <li>The relationship is solely for the purpose of facilitating video message services through the platform</li>
+              <li>The relationship is solely for ShoutOut to procure video message services from talent through the platform</li>
             </ul>
           </section>
 
