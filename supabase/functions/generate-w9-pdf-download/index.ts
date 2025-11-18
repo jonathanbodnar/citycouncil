@@ -406,7 +406,7 @@ function generateW9Html(w9Data: any): string {
     <!-- Line 5: Address -->
     <div class="field-box">
       <span class="field-label">5  Address (number, street, and apt. or suite no.) See instructions.</span>
-      <div class="field-value">${w9Data.address || ''}</div>
+      <div class="field-value">${w9Data.address_line1 || ''}${w9Data.address_line2 ? ', ' + w9Data.address_line2 : ''}</div>
     </div>
 
     <!-- Line 6: City, state, ZIP -->
