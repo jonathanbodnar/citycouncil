@@ -34,13 +34,13 @@ serve(async (req) => {
     }
 
     // Verify user is admin
-    const { data: userData, error: userDataError } = await supabaseClient
+    const { data: adminData, error: adminDataError } = await supabaseClient
       .from('users')
       .select('user_type')
       .eq('id', user.id)
       .single()
 
-    if (userDataError || userData?.user_type !== 'admin') {
+    if (adminDataError || adminData?.user_type !== 'admin') {
       throw new Error('Unauthorized - Admin access required')
     }
 
@@ -77,14 +77,14 @@ serve(async (req) => {
     }
 
     // Fetch user data
-    const { data: userData, error: userError } = await supabaseClient
+    const { data: userData, error: userDataError } = await supabaseClient
       .from('users')
       .select('full_name, email')
       .eq('id', talentData.user_id)
       .single()
 
-    if (userError || !userData) {
-      console.error('Error fetching user:', userError)
+    if (userDataError || !userData) {
+      console.error('Error fetching user:', userDataError)
       throw new Error('User not found')
     }
 
