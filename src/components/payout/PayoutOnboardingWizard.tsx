@@ -3,7 +3,7 @@ import { CheckIcon } from '@heroicons/react/24/solid'
 import toast from 'react-hot-toast'
 import supabase from '../../services/supabase'
 import { useAuth } from '../../context/AuthContext'
-import W9Form, { W9FormData } from './W9Form'
+import W9FormSignatureAPI from './W9FormSignatureAPI'
 import MoovOnboardingStep from './MoovOnboardingStep'
 import PlaidBankStep from './PlaidBankStep'
 
@@ -91,55 +91,19 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
     }
   }
 
-  const handleW9Submit = async (formData: W9FormData, signatureDataUrl: string) => {
-    setLoading(true)
+  const handleW9Complete = async () => {
     try {
-      // Validate talentId is loaded
-      if (!talentId) {
-        throw new Error('Talent profile not loaded. Please refresh the page and try again.')
-      }
-
-      console.log('Submitting W-9 with data:', {
-        ...formData,
-        taxId: '[REDACTED]',
-        signatureDataUrl: '[REDACTED]',
-        talentId
-      })
-
-      // Submit W-9 to edge function for PDF generation
-      const { data, error } = await supabase.functions.invoke('generate-w9-pdf', {
-        body: {
-          ...formData,
-          signatureDataUrl,
-          talentId
-        }
-      })
-
-      console.log('Edge function response:', { data, error })
-
-      if (error) {
-        console.error('Edge function error:', error)
-        // Try to extract the actual error message from the response
-        const errorMessage = error.message || data?.error || 'Failed to submit W-9'
-        throw new Error(errorMessage)
-      }
-
-      if (data?.error) {
-        throw new Error(data.error)
-      }
-
-      toast.success('W-9 submitted successfully!')
-      
-      // Mark step 1 as completed
+      // Mark step as complete
       setCompletedSteps(prev => [...prev, 1])
-      setCurrentStep(2)
-      await updateProgress(2)
       
+      // Move to next step
+      setCurrentStep(2)
+      await saveProgress(2)
+      
+      toast.success('W-9 completed successfully!')
     } catch (error: any) {
-      console.error('Error submitting W-9:', error)
-      toast.error(error.message || 'Failed to submit W-9. Please try again.')
-    } finally {
-      setLoading(false)
+      console.error('Error completing W-9:', error)
+      toast.error(error.message || 'Failed to complete W-9. Please try again.')
     }
   }
 
@@ -275,21 +239,18 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
 
           {/* Step Content */}
           <div className="px-8 py-8 max-h-[calc(100vh-400px)] overflow-y-auto">
-            {currentStep === 1 && (
+            {currentStep === 1 && talentId && (
               <div>
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Your W-9</h3>
-                  <p className="text-gray-600">
-                    We need your tax information to issue 1099s at year-end. This information is encrypted and secure.
-                  </p>
-                </div>
-                <W9Form
-                  onSubmit={handleW9Submit}
-                  initialData={prefillData ? {
-                    name: prefillData.fullName,
-                  } : undefined}
-                  isLoading={loading}
+                <W9FormSignatureAPI
+                  talentId={talentId}
+                  onComplete={handleW9Complete}
                 />
+              </div>
+            )}
+            
+            {currentStep === 1 && !talentId && (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
             )}
 
