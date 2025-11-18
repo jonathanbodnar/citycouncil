@@ -24,15 +24,11 @@ const PlaidBankStep: React.FC<PlaidBankStepProps> = ({ onComplete, moovAccountId
       
       try {
         // Exchange public token and link to Moov
-        const { data, error } = await supabase.functions.invoke('moov-plaid-link-secure', {
+        const { data, error } = await supabase.functions.invoke('moov-plaid-link-account', {
           body: {
-            publicToken: public_token,
-            moovAccountId: moovAccountId,
-            userId: user?.id,
-            accountId: metadata.accounts?.[0]?.id,
-            institutionName: metadata.institution?.name,
-            accountName: metadata.accounts?.[0]?.name,
-            accountMask: metadata.accounts?.[0]?.mask
+            public_token: public_token,
+            account_id: metadata.accounts?.[0]?.id,
+            moov_account_id: moovAccountId
           }
         })
 
@@ -69,18 +65,16 @@ const PlaidBankStep: React.FC<PlaidBankStepProps> = ({ onComplete, moovAccountId
     toast.loading('Preparing Plaid Link...', { id: 'plaid-link' })
     
     try {
-      const { data, error } = await supabase.functions.invoke('moov-plaid-link-secure', {
+      const { data, error } = await supabase.functions.invoke('plaid-create-link-token', {
         body: {
-          action: 'create_link_token',
-          moovAccountId: moovAccountId,
           userId: user?.id
         }
       })
 
       if (error) throw error
 
-      if (data?.linkToken) {
-        setLinkToken(data.linkToken)
+      if (data?.link_token) {
+        setLinkToken(data.link_token)
         toast.success('Ready to connect bank', { id: 'plaid-link' })
       } else {
         throw new Error('No link token received')
