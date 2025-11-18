@@ -12,7 +12,7 @@ import { supabase } from '../services/supabase'
 import { useAuth } from '../context/AuthContext'
 import { Payout, VendorBankInfo } from '../types'
 import toast from 'react-hot-toast'
-import MoovOnboard from '../pages/MoovOnboard'
+import PayoutOnboardingWizard from './payout/PayoutOnboardingWizard'
 
 interface PayoutWithOrder extends Payout {
   orders: {
@@ -31,6 +31,8 @@ const PayoutsDashboard: React.FC = () => {
   const [moovAccountId, setMoovAccountId] = useState<string | null>(null)
   const [isLinkingBank, setIsLinkingBank] = useState(false)
   const [payoutsEnabled, setPayoutsEnabled] = useState(false)
+  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false)
+  const [payoutOnboardingCompleted, setPayoutOnboardingCompleted] = useState(false)
 
   useEffect(() => {
     if (user?.user_type === 'talent') {
@@ -63,7 +65,7 @@ const PayoutsDashboard: React.FC = () => {
       // Get talent profile to get talent ID and moov account id
       const { data: talentProfile } = await supabase
         .from('talent_profiles')
-        .select('id, moov_account_id')
+        .select('id, moov_account_id, payout_onboarding_completed, bank_account_linked')
         .eq('user_id', user?.id)
         .single()
 
@@ -71,6 +73,7 @@ const PayoutsDashboard: React.FC = () => {
 
       const currentMoovId = talentProfile.moov_account_id || null
       setMoovAccountId(currentMoovId)
+      setPayoutOnboardingCompleted(talentProfile.payout_onboarding_completed || false)
 
       // Fetch payouts
       const { data: payoutsData, error: payoutsError } = await supabase
@@ -323,32 +326,70 @@ const PayoutsDashboard: React.FC = () => {
 
   return (
     <div className='space-y-4 md:space-y-6 pb-20 md:pb-0'>
+      {/* Onboarding Wizard Modal */}
+      {showOnboardingWizard && (
+        <PayoutOnboardingWizard
+          onComplete={() => {
+            setShowOnboardingWizard(false)
+            setPayoutOnboardingCompleted(true)
+            fetchPayoutData()
+          }}
+          onClose={() => setShowOnboardingWizard(false)}
+        />
+      )}
+
       <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3'>
         <h2 className='text-xl md:text-2xl font-bold text-gray-900'>Payouts</h2>
         <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center'>
-          <div className='hidden sm:block'>
-            <div className={!payoutsEnabled ? 'opacity-50 pointer-events-none' : ''}>
-              <MoovOnboard />
-            </div>
-          </div>
+          {!payoutOnboardingCompleted && (
+            <button
+              onClick={() => setShowOnboardingWizard(true)}
+              disabled={!payoutsEnabled}
+              className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed font-semibold'
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className='whitespace-nowrap'>Setup Payouts</span>
+            </button>
+          )}
 
-          <button
-            onClick={exportPayouts}
-            className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base'
-          >
-            <ArrowDownTrayIcon className='h-4 w-4' />
-            <span className='whitespace-nowrap'>Export CSV</span>
-          </button>
-          <button
-            onClick={linkBankViaPlaid}
-            disabled={isLinkingBank || !payoutsEnabled}
-            className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed'
-          >
-            <PlusIcon className='h-4 w-4' />
-            <span className='whitespace-nowrap'>{isLinkingBank ? 'Opening Plaid…' : 'Link Bank'}</span>
-          </button>
+          {payoutOnboardingCompleted && (
+            <button
+              onClick={exportPayouts}
+              className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base'
+            >
+              <ArrowDownTrayIcon className='h-4 w-4' />
+              <span className='whitespace-nowrap'>Export CSV</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Onboarding Required Notice */}
+      {payoutsEnabled && !payoutOnboardingCompleted && (
+        <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+          <div className='flex items-start gap-3'>
+            <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className='text-sm font-semibold text-blue-900 mb-1'>
+                Complete Payout Setup
+              </h3>
+              <p className='text-sm text-blue-800'>
+                To receive payouts, please complete the onboarding process. This includes submitting your W-9, verifying your identity, and linking your bank account.
+              </p>
+              <button
+                onClick={() => setShowOnboardingWizard(true)}
+                className='mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors'
+              >
+                Get Started →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payouts Disabled Notice */}
       {!payoutsEnabled && (
