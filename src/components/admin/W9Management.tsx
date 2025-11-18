@@ -68,7 +68,7 @@ const W9Management: React.FC = () => {
       toast.loading('Generating W-9 HTML...', { id: 'download-w9' })
       
       // Get the Supabase function URL
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
       const functionUrl = `${supabaseUrl}/functions/v1/generate-w9-pdf-download?w9Id=${w9.id}`
       
       // Open in new tab
