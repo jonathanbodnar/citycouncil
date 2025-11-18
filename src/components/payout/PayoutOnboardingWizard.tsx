@@ -94,6 +94,18 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
   const handleW9Submit = async (formData: W9FormData, signatureDataUrl: string) => {
     setLoading(true)
     try {
+      // Validate talentId is loaded
+      if (!talentId) {
+        throw new Error('Talent profile not loaded. Please refresh the page and try again.')
+      }
+
+      console.log('Submitting W-9 with data:', {
+        ...formData,
+        taxId: '[REDACTED]',
+        signatureDataUrl: '[REDACTED]',
+        talentId
+      })
+
       // Submit W-9 to edge function for PDF generation
       const { data, error } = await supabase.functions.invoke('generate-w9-pdf', {
         body: {
@@ -102,6 +114,8 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
           talentId
         }
       })
+
+      console.log('Edge function response:', { data, error })
 
       if (error) {
         console.error('Edge function error:', error)

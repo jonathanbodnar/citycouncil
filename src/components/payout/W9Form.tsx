@@ -132,19 +132,19 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Header */}
-      <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Form W-9</h3>
-        <p className="text-sm text-gray-700">
+      <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg p-6 border border-white/20">
+        <h3 className="text-2xl font-bold text-white mb-2">Form W-9</h3>
+        <p className="text-sm text-gray-300">
           Request for Taxpayer Identification Number and Certification
         </p>
-        <p className="text-xs text-gray-600 mt-2">
+        <p className="text-xs text-gray-400 mt-2">
           This information is required by the IRS for tax reporting purposes. Your information is encrypted and secure.
         </p>
       </div>
 
       {/* Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Name (as shown on your income tax return) <span className="text-red-500">*</span>
         </label>
         <input
@@ -161,7 +161,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
 
       {/* Business Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Business name/disregarded entity name (if different from above)
         </label>
         <input
@@ -176,7 +176,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
 
       {/* Tax Classification */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Federal Tax Classification <span className="text-red-500">*</span>
         </label>
         <select
@@ -247,7 +247,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
 
       {/* Address */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Address <span className="text-red-500">*</span>
         </label>
         <input
@@ -323,7 +323,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
 
       {/* Tax ID (SSN/EIN) */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Taxpayer Identification Number <span className="text-red-500">*</span>
         </label>
         <div className="flex gap-4 mb-3">
@@ -366,8 +366,8 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
           required
         />
         {errors.taxId && <p className="mt-1 text-sm text-red-500">{errors.taxId}</p>}
-        <p className="mt-2 text-xs text-gray-500 flex items-start gap-2">
-          <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <p className="mt-2 text-xs text-green-300 flex items-start gap-2 bg-green-900/30 border border-green-500/30 rounded-lg p-3 backdrop-blur-sm">
+          <svg className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
           </svg>
           <span>This information is encrypted and NOT stored in our database. It's only used to generate your W-9 PDF.</span>
@@ -376,7 +376,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
 
       {/* Signature */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Signature <span className="text-red-500">*</span>
         </label>
         <div className="border-2 border-gray-300 rounded-lg bg-white">
@@ -402,8 +402,8 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
       </div>
 
       {/* Certification */}
-      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300">
-        <p className="text-xs text-gray-700 leading-relaxed">
+      <div className="bg-gray-900/50 rounded-lg p-4 border border-white/20 backdrop-blur-sm">
+        <p className="text-xs text-gray-300 leading-relaxed">
           <strong>Certification:</strong> Under penalties of perjury, I certify that:
           <br /><br />
           1. The number shown on this form is my correct taxpayer identification number, and
@@ -421,7 +421,10 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
         <button
           type="submit"
           disabled={isLoading}
-          className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: 'linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)'
+          }}
         >
           {isLoading ? 'Processing...' : 'Sign & Submit W-9'}
         </button>

@@ -51,9 +51,19 @@ serve(async (req) => {
       talentId,
     } = await req.json()
 
-    // Validate required fields
-    if (!name || !addressLine1 || !city || !state || !zipCode || !taxId || !signatureDataUrl || !talentId) {
-      throw new Error('Missing required fields')
+    // Validate required fields with detailed error message
+    const missingFields = []
+    if (!name) missingFields.push('name')
+    if (!addressLine1) missingFields.push('addressLine1')
+    if (!city) missingFields.push('city')
+    if (!state) missingFields.push('state')
+    if (!zipCode) missingFields.push('zipCode')
+    if (!taxId) missingFields.push('taxId')
+    if (!signatureDataUrl) missingFields.push('signatureDataUrl')
+    if (!talentId) missingFields.push('talentId')
+    
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
     }
 
     // Verify talent belongs to user
