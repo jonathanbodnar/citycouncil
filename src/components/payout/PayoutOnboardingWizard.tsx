@@ -236,12 +236,15 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
                             ${isStepCompleted(step.id)
                               ? 'bg-green-600 text-white'
                               : isStepCurrent(step.id)
-                              ? 'bg-blue-600 text-white ring-4 ring-blue-100'
+                              ? 'text-white ring-4 ring-pink-100'
                               : isStepAccessible(step.id)
                               ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             }
                           `}
+                          style={isStepCurrent(step.id) ? {
+                            background: 'linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)'
+                          } : undefined}
                         >
                           {isStepCompleted(step.id) ? (
                             <CheckIcon className="h-6 w-6" />
