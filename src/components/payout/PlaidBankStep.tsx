@@ -29,10 +29,10 @@ const PlaidBankStep: React.FC<PlaidBankStepProps> = ({ onComplete, moovAccountId
             publicToken: public_token,
             moovAccountId: moovAccountId,
             userId: user?.id,
-            accountId: metadata.account_id,
+            accountId: metadata.accounts?.[0]?.id,
             institutionName: metadata.institution?.name,
-            accountName: metadata.account?.name,
-            accountMask: metadata.account?.mask
+            accountName: metadata.accounts?.[0]?.name,
+            accountMask: metadata.accounts?.[0]?.mask
           }
         })
 
