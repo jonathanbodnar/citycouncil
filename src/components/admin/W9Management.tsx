@@ -67,12 +67,37 @@ const W9Management: React.FC = () => {
     try {
       toast.loading('Generating W-9 HTML...', { id: 'download-w9' })
       
-      // Get the Supabase function URL
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+      
+      // Get the Supabase function URL with auth
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
       const functionUrl = `${supabaseUrl}/functions/v1/generate-w9-pdf-download?w9Id=${w9.id}`
       
-      // Open in new tab
-      window.open(functionUrl, '_blank')
+      // Fetch with auth header
+      const response = await fetch(functionUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY || ''
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to download W-9: ${response.statusText}`)
+      }
+      
+      // Get the HTML and open in new window
+      const html = await response.text()
+      const newWindow = window.open('', '_blank')
+      if (newWindow) {
+        newWindow.document.write(html)
+        newWindow.document.close()
+      }
+      
       toast.success('W-9 opened in new tab', { id: 'download-w9' })
     } catch (error: any) {
       console.error('Error downloading W-9:', error)
