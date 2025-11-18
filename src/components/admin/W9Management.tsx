@@ -65,22 +65,15 @@ const W9Management: React.FC = () => {
 
   const downloadW9 = async (w9: W9Form) => {
     try {
-      toast.loading('Generating W-9 PDF...', { id: 'download-w9' })
+      toast.loading('Generating W-9 HTML...', { id: 'download-w9' })
       
-      // Call edge function to generate PDF
-      const { data, error } = await supabase.functions.invoke('generate-w9-pdf-download', {
-        body: { w9Id: w9.id }
-      })
-
-      if (error) throw error
-
-      if (data?.pdfUrl) {
-        // Open PDF in new tab
-        window.open(data.pdfUrl, '_blank')
-        toast.success('W-9 PDF downloaded', { id: 'download-w9' })
-      } else {
-        throw new Error('No PDF URL returned')
-      }
+      // Get the Supabase function URL
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+      const functionUrl = `${supabaseUrl}/functions/v1/generate-w9-pdf-download?w9Id=${w9.id}`
+      
+      // Open in new tab
+      window.open(functionUrl, '_blank')
+      toast.success('W-9 opened in new tab', { id: 'download-w9' })
     } catch (error: any) {
       console.error('Error downloading W-9:', error)
       toast.error('Failed to download W-9', { id: 'download-w9' })

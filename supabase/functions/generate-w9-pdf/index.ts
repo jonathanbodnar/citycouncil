@@ -89,6 +89,10 @@ serve(async (req) => {
       throw new Error('W-9 already exists for this talent')
     }
 
+    // Get IP address (handle comma-separated proxy IPs by taking the first one)
+    const forwardedFor = req.headers.get('x-forwarded-for') || ''
+    const ipAddress = forwardedFor.split(',')[0].trim() || null
+
     // Store W-9 data in database (WITHOUT the SSN/EIN)
     const { data: w9Record, error: w9Error } = await supabaseClient
       .from('w9_forms')
@@ -107,8 +111,8 @@ serve(async (req) => {
         zip_code: zipCode,
         signature_data_url: signatureDataUrl,
         signature_date: new Date().toISOString(),
-        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-        user_agent: req.headers.get('user-agent') || 'unknown',
+        ip_address: ipAddress,
+        user_agent: req.headers.get('user-agent') || null,
       })
       .select()
       .single()
