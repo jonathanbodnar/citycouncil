@@ -368,58 +368,83 @@ const OrderPage: React.FC = () => {
         }
       }
 
-      // Send notifications and emails
-      try {
+      // Send notifications and emails asynchronously (don't block redirect)
+      // Fire and forget - these will complete in the background
+      Promise.all([
         // Notify talent of new order (email + in-app)
-        if (talent.users?.email && talent.users?.full_name) {
-          await emailService.sendNewOrderNotification(
-            talent.users.email,
-            talent.users.full_name,
-            {
-              userName: user.full_name,
-              amount: pricing.total,
-              requestDetails: orderData.requestDetails,
-              deadline: new Date(fulfillmentDeadline).toLocaleDateString()
+        (async () => {
+          if (talent.users?.email && talent.users?.full_name) {
+            try {
+              await emailService.sendNewOrderNotification(
+                talent.users.email,
+                talent.users.full_name,
+                {
+                  userName: user.full_name,
+                  amount: pricing.total,
+                  requestDetails: orderData.requestDetails,
+                  deadline: new Date(fulfillmentDeadline).toLocaleDateString()
+                }
+              );
+            } catch (e) {
+              logger.error('Error sending talent email:', e);
             }
-          );
-        }
-
-        if (talent.user_id) {
-          await notificationService.notifyNewOrder(
-            talent.user_id,
-            order.id,
-            user.full_name,
-            pricing.total
-          );
-        }
+          }
+        })(),
+        
+        (async () => {
+          if (talent.user_id) {
+            try {
+              await notificationService.notifyNewOrder(
+                talent.user_id,
+                order.id,
+                user.full_name,
+                pricing.total
+              );
+            } catch (e) {
+              logger.error('Error notifying talent:', e);
+            }
+          }
+        })(),
 
         // Send user order confirmation email with receipt
-        if (user.email) {
-          await emailService.sendOrderConfirmation(
-            user.email,
-            user.full_name,
-            {
-              talentName: talent.temp_full_name || talent.users.full_name,
-              amount: pricing.subtotal,
-              adminFee: pricing.adminFee,
-              charityAmount: pricing.charityAmount,
-              total: pricing.total,
-              requestDetails: orderData.requestDetails,
-              estimatedDelivery: new Date(fulfillmentDeadline).toLocaleDateString()
+        (async () => {
+          if (user.email) {
+            try {
+              await emailService.sendOrderConfirmation(
+                user.email,
+                user.full_name,
+                {
+                  talentName: talent.temp_full_name || talent.users.full_name,
+                  amount: pricing.subtotal,
+                  adminFee: pricing.adminFee,
+                  charityAmount: pricing.charityAmount,
+                  total: pricing.total,
+                  requestDetails: orderData.requestDetails,
+                  estimatedDelivery: new Date(fulfillmentDeadline).toLocaleDateString()
+                }
+              );
+            } catch (e) {
+              logger.error('Error sending user email:', e);
             }
-          );
-        }
+          }
+        })(),
 
         // Create in-app notification for user
-        await notificationService.notifyOrderConfirmed(
-          user.id,
-          order.id,
-          talent.temp_full_name || talent.users.full_name
-        );
-      } catch (notifError) {
-        logger.error('Error sending notifications:', notifError);
+        (async () => {
+          try {
+            await notificationService.notifyOrderConfirmed(
+              user.id,
+              order.id,
+              talent.temp_full_name || talent.users.full_name
+            );
+          } catch (e) {
+            logger.error('Error notifying user:', e);
+          }
+        })()
+      ]).catch(error => {
+        logger.error('Error in notification batch:', error);
         // Don't fail the order if notifications fail
-      }
+      });
 
       // Note: Payouts are now handled through Moov/Plaid integration
       // Talent will receive payouts directly to their connected bank account
