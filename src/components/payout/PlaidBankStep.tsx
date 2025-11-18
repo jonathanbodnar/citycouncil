@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 import toast from 'react-hot-toast'
 import supabase from '../../services/supabase'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
 interface PlaidBankStepProps {
   onComplete: () => void

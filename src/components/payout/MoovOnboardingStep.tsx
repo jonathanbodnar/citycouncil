@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import supabase from '../../services/supabase'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 import OnboardingForm from '../moov/OnboardingForm'
 
 interface MoovOnboardingStepProps {
