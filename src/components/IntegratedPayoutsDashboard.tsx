@@ -13,7 +13,7 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Payout, PayoutBatch, VendorBankInfo } from '../types';
 import toast from 'react-hot-toast';
-import MoovOnboard from '../pages/MoovOnboard';
+import PayoutOnboardingWizard from './payout/PayoutOnboardingWizard';
 import { format, parseISO } from 'date-fns';
 
 const IntegratedPayoutsDashboard: React.FC = () => {
@@ -27,6 +27,8 @@ const IntegratedPayoutsDashboard: React.FC = () => {
   const [payoutsEnabled, setPayoutsEnabled] = useState(false);
   const [talentId, setTalentId] = useState<string | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
+  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
+  const [payoutOnboardingCompleted, setPayoutOnboardingCompleted] = useState(false);
 
   useEffect(() => {
     if (user?.user_type === 'talent') {
@@ -60,7 +62,7 @@ const IntegratedPayoutsDashboard: React.FC = () => {
       // Get talent profile
       const { data: talentProfile, error: talentError } = await supabase
         .from('talent_profiles')
-        .select('id, moov_account_id')
+        .select('id, moov_account_id, payout_onboarding_completed, bank_account_linked')
         .eq('user_id', user?.id)
         .single();
 
@@ -76,12 +78,14 @@ const IntegratedPayoutsDashboard: React.FC = () => {
 
       console.log('✅ Talent profile found:', {
         talentId: talentProfile.id,
-        moovAccountId: talentProfile.moov_account_id
+        moovAccountId: talentProfile.moov_account_id,
+        onboardingCompleted: talentProfile.payout_onboarding_completed
       });
 
       setTalentId(talentProfile.id);
       const currentMoovId = talentProfile.moov_account_id || null;
       setMoovAccountId(currentMoovId);
+      setPayoutOnboardingCompleted(talentProfile.payout_onboarding_completed || false);
 
       // Fetch payouts from new system (without foreign key joins to avoid RLS issues)
       const { data: payoutsData, error: payoutsError } = await supabase
@@ -306,6 +310,18 @@ const IntegratedPayoutsDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Onboarding Wizard Modal */}
+      {showOnboardingWizard && (
+        <PayoutOnboardingWizard
+          onComplete={() => {
+            setShowOnboardingWizard(false);
+            setPayoutOnboardingCompleted(true);
+            fetchPayoutData();
+          }}
+          onClose={() => setShowOnboardingWizard(false)}
+        />
+      )}
+
       {/* Payouts Notice */}
       {!payoutsEnabled && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
@@ -323,62 +339,37 @@ const IntegratedPayoutsDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Moov Account Setup */}
-      {!moovAccountId && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Set Up Your Payout Account</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Create your Moov account to receive payments for your completed videos.
-          </p>
-          <MoovOnboard />
-        </div>
-      )}
-
-      {/* Bank Account Linking */}
-      {moovAccountId && !bankInfo && payoutsEnabled && (
+      {/* Payout Onboarding Setup */}
+      {!payoutOnboardingCompleted && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Link Your Bank Account</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Complete Payout Setup</h3>
               <p className="text-sm text-gray-600 mt-1">
-                Securely connect your bank account using Plaid to receive payouts.
+                Set up your payouts in 3 easy steps: W-9 form, identity verification, and bank account linking.
               </p>
             </div>
           </div>
           <button
-            onClick={linkBankViaPlaid}
-            disabled={isLinkingBank || !payoutsEnabled}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setShowOnboardingWizard(true)}
+            disabled={!payoutsEnabled}
+            className="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            {isLinkingBank ? 'Connecting...' : 'Link Bank Account via Plaid'}
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Setup Payouts
           </button>
-        </div>
-      )}
-
-      {/* Bank Account Linking - Disabled State */}
-      {moovAccountId && !bankInfo && !payoutsEnabled && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Link Your Bank Account</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Securely connect your bank account using Plaid to receive payouts.
-              </p>
-            </div>
-          </div>
-          <button
-            disabled
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-400 cursor-not-allowed opacity-50"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            Link Bank Account via Plaid
-          </button>
+          {!payoutsEnabled && (
+            <p className="text-xs text-gray-500 mt-2">
+              This button will be enabled when payouts are activated before soft launch.
+            </p>
+          )}
         </div>
       )}
 
       {/* Connected Bank Info */}
-      {bankInfo && (
+      {payoutOnboardingCompleted && bankInfo && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
