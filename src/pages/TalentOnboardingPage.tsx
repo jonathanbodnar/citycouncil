@@ -1702,6 +1702,7 @@ const TalentOnboardingPage: React.FC = () => {
               </p>
 
               <MFAEnrollmentDual
+                initialPhone={accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : undefined}
                 onComplete={async () => {
                   // Complete onboarding after MFA is enabled
                   try {
