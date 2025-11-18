@@ -133,6 +133,16 @@ function generateW9Html(w9Data: any): string {
     other: 'Other',
   }
 
+  // Pre-calculate checkbox states
+  const isIndividual = w9Data.tax_classification === 'individual'
+  const isCCorp = w9Data.tax_classification === 'c_corporation'
+  const isSCorp = w9Data.tax_classification === 's_corporation'
+  const isPartnership = w9Data.tax_classification === 'partnership'
+  const isTrustEstate = w9Data.tax_classification === 'trust_estate'
+  const isLLC = ['llc_c', 'llc_s', 'llc_p'].includes(w9Data.tax_classification)
+  const isOther = w9Data.tax_classification === 'other'
+  const llcType = w9Data.tax_classification === 'llc_c' ? 'C' : w9Data.tax_classification === 'llc_s' ? 'S' : w9Data.tax_classification === 'llc_p' ? 'P' : ''
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -322,39 +332,39 @@ function generateW9Html(w9Data: any): string {
           <div class="tax-classification">
             <div class="checkbox-group">
               <div class="checkbox-item">
-                <span class="checkbox ${w9Data.tax_classification === 'individual' ? 'checked' : ''}">✓</span>
+                <span class="checkbox ${isIndividual ? 'checked' : ''}">✓</span>
                 <span>Individual/sole proprietor or single-member LLC</span>
               </div>
               <div class="checkbox-item">
-                <span class="checkbox ${w9Data.tax_classification === 'c_corporation' ? 'checked' : ''}">✓</span>
+                <span class="checkbox ${isCCorp ? 'checked' : ''}">✓</span>
                 <span>C Corporation</span>
               </div>
               <div class="checkbox-item">
-                <span class="checkbox ${w9Data.tax_classification === 's_corporation' ? 'checked' : ''}">✓</span>
+                <span class="checkbox ${isSCorp ? 'checked' : ''}">✓</span>
                 <span>S Corporation</span>
               </div>
               <div class="checkbox-item">
-                <span class="checkbox ${w9Data.tax_classification === 'partnership' ? 'checked' : ''}">✓</span>
+                <span class="checkbox ${isPartnership ? 'checked' : ''}">✓</span>
                 <span>Partnership</span>
               </div>
               <div class="checkbox-item">
-                <span class="checkbox ${w9Data.tax_classification === 'trust_estate' ? 'checked' : ''}">✓</span>
+                <span class="checkbox ${isTrustEstate ? 'checked' : ''}">✓</span>
                 <span>Trust/estate</span>
               </div>
             </div>
             <div style="margin-top: 5px;">
               <div class="checkbox-item">
-                <span class="checkbox ${['llc_c', 'llc_s', 'llc_p'].includes(w9Data.tax_classification) ? 'checked' : ''}">✓</span>
+                <span class="checkbox ${isLLC ? 'checked' : ''}">✓</span>
                 <span>Limited liability company. Enter the tax classification (C=C corporation, S=S corporation, P=Partnership) ▶</span>
                 <span style="border-bottom: 1px solid #000; padding: 2px 10px;">
-                  ${w9Data.tax_classification === 'llc_c' ? 'C' : w9Data.tax_classification === 'llc_s' ? 'S' : w9Data.tax_classification === 'llc_p' ? 'P' : ''}
+                  ${llcType}
                 </span>
               </div>
             </div>
             ${w9Data.other_tax_classification ? `
             <div style="margin-top: 5px;">
               <div class="checkbox-item">
-                <span class="checkbox ${w9Data.tax_classification === 'other' ? 'checked' : ''}">✓</span>
+                <span class="checkbox ${isOther ? 'checked' : ''}">✓</span>
                 <span>Other (see instructions) ▶</span>
                 <span style="border-bottom: 1px solid #000; padding: 2px 10px;">${w9Data.other_tax_classification}</span>
               </div>
