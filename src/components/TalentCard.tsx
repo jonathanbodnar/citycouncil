@@ -31,7 +31,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
 
   const cardContent = (
     <div 
-      className={`glass rounded-2xl sm:rounded-3xl shadow-modern transition-all duration-300 overflow-hidden group ${
+      className={`glass rounded-2xl sm:rounded-3xl shadow-modern transition-all duration-300 overflow-hidden group h-full flex flex-col ${
         isComingSoon 
           ? 'opacity-90 cursor-default' 
           : 'hover:glass-strong hover:shadow-modern-lg hover:scale-[1.02] cursor-pointer'
@@ -77,7 +77,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
       </div>
 
       {/* Content */}
-      <div className="p-3 sm:p-6">
+      <div className="p-3 sm:p-6 flex flex-col flex-grow">
         <h3 className="text-sm sm:text-lg font-bold text-white mb-2 sm:mb-3 group-hover:text-blue-400 transition-colors duration-200 flex items-center gap-1 sm:gap-2">
           <span className="truncate">{talent.temp_full_name || talent.users.full_name}</span>
           {talent.is_verified && (
@@ -129,13 +129,13 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           </span>
         </div>
 
-        {/* Bio Preview - Hidden on mobile, shown on sm+ */}
-        <p className="hidden sm:block text-sm text-gray-300 mb-3 line-clamp-2">
+        {/* Bio Preview - Hidden on mobile, shown on sm+ - Fixed height to prevent stretching */}
+        <p className="hidden sm:block text-sm text-gray-300 mb-3 line-clamp-2 overflow-hidden">
           {talent.bio}
         </p>
 
-        {/* Price and Charity */}
-        <div className="flex items-center justify-between mt-2 sm:mt-0">
+        {/* Price and Charity - Push to bottom */}
+        <div className="flex items-center justify-between mt-auto">
           <div>
             <div className="text-xl sm:text-3xl font-bold text-white">
               ${talent.pricing}
