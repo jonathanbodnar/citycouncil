@@ -63,9 +63,9 @@ const W9Management: React.FC = () => {
     }
   }
 
-  const downloadW9 = async (w9: W9Form) => {
+  const downloadW9Html = async (w9: W9Form) => {
     try {
-      toast.loading('Generating W-9 HTML...', { id: 'download-w9' })
+      toast.loading('Generating W-9 HTML preview...', { id: 'download-w9' })
       
       // Get current session
       const { data: { session } } = await supabase.auth.getSession()
@@ -98,10 +98,58 @@ const W9Management: React.FC = () => {
         newWindow.document.close()
       }
       
-      toast.success('W-9 opened in new tab', { id: 'download-w9' })
+      toast.success('W-9 preview opened in new tab', { id: 'download-w9' })
     } catch (error: any) {
       console.error('Error downloading W-9:', error)
       toast.error('Failed to download W-9', { id: 'download-w9' })
+    }
+  }
+
+  const downloadOfficialPDF = async (w9: W9Form) => {
+    try {
+      toast.loading('Generating official IRS W-9 PDF...', { id: 'download-pdf' })
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+      
+      // Get the Supabase function URL with auth
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+      const functionUrl = `${supabaseUrl}/functions/v1/generate-w9-official-pdf?w9Id=${w9.id}`
+      
+      // Fetch the PDF
+      const response = await fetch(functionUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY || ''
+        }
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Failed to generate PDF: ${response.statusText}`)
+      }
+      
+      // Get the PDF blob
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `W9_${w9.name.replace(/[^a-z0-9]/gi, '_')}_${w9.id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      toast.success('Official W-9 PDF downloaded', { id: 'download-pdf' })
+    } catch (error: any) {
+      console.error('Error downloading official PDF:', error)
+      toast.error(error.message || 'Failed to download official W-9 PDF', { id: 'download-pdf' })
     }
   }
 
@@ -298,13 +346,27 @@ const W9Management: React.FC = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => downloadW9(form)}
-                        className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
-                        Download
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => downloadOfficialPDF(form)}
+                          className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-semibold shadow-md"
+                          title="Download official IRS W-9 PDF"
+                        >
+                          <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
+                          Official PDF
+                        </button>
+                        <button
+                          onClick={() => downloadW9Html(form)}
+                          className="inline-flex items-center px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                          title="View HTML preview"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          Preview
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
