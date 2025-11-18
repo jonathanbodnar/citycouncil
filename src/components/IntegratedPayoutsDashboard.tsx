@@ -340,7 +340,7 @@ const IntegratedPayoutsDashboard: React.FC = () => {
       )}
 
       {/* Payout Onboarding Setup */}
-      {!payoutOnboardingCompleted && payoutsEnabled && (
+      {!payoutOnboardingCompleted && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -352,13 +352,19 @@ const IntegratedPayoutsDashboard: React.FC = () => {
           </div>
           <button
             onClick={() => setShowOnboardingWizard(true)}
-            className="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
+            disabled={!payoutsEnabled}
+            className="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Setup Payouts
           </button>
+          {!payoutsEnabled && (
+            <p className="text-xs text-gray-500 mt-2">
+              This button will be enabled when payouts are activated before soft launch.
+            </p>
+          )}
         </div>
       )}
 
