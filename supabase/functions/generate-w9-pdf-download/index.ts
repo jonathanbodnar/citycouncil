@@ -55,21 +55,43 @@ serve(async (req) => {
     // Fetch W-9 data
     const { data: w9Data, error: w9Error } = await supabaseClient
       .from('w9_forms')
-      .select(`
-        *,
-        talent_profiles!inner(
-          id,
-          users!inner(
-            full_name,
-            email
-          )
-        )
-      `)
+      .select('*')
       .eq('id', w9Id)
       .single()
 
     if (w9Error || !w9Data) {
+      console.error('Error fetching W-9:', w9Error)
       throw new Error('W-9 not found')
+    }
+
+    // Fetch talent profile separately
+    const { data: talentData, error: talentError } = await supabaseClient
+      .from('talent_profiles')
+      .select('id, user_id')
+      .eq('id', w9Data.talent_id)
+      .single()
+
+    if (talentError || !talentData) {
+      console.error('Error fetching talent:', talentError)
+      throw new Error('Talent profile not found')
+    }
+
+    // Fetch user data
+    const { data: userData, error: userError } = await supabaseClient
+      .from('users')
+      .select('full_name, email')
+      .eq('id', talentData.user_id)
+      .single()
+
+    if (userError || !userData) {
+      console.error('Error fetching user:', userError)
+      throw new Error('User not found')
+    }
+
+    // Combine the data
+    w9Data.talent_profiles = {
+      id: talentData.id,
+      users: userData
     }
 
     // Generate HTML for W-9
