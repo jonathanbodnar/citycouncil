@@ -103,7 +103,16 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
         }
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Edge function error:', error)
+        // Try to extract the actual error message from the response
+        const errorMessage = error.message || data?.error || 'Failed to submit W-9'
+        throw new Error(errorMessage)
+      }
+
+      if (data?.error) {
+        throw new Error(data.error)
+      }
 
       toast.success('W-9 submitted successfully!')
       
@@ -114,7 +123,7 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
       
     } catch (error: any) {
       console.error('Error submitting W-9:', error)
-      toast.error(error.message || 'Failed to submit W-9')
+      toast.error(error.message || 'Failed to submit W-9. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -227,10 +236,10 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
                           )}
                         </button>
                         <div className="ml-3 text-left hidden sm:block">
-                          <p className={`text-sm font-semibold ${isStepCurrent(step.id) ? 'text-blue-600' : 'text-gray-700'}`}>
+                          <p className={`text-sm font-semibold ${isStepCurrent(step.id) ? 'text-blue-700' : 'text-gray-900'}`}>
                             {step.name}
                           </p>
-                          <p className="text-xs text-gray-500">{step.description}</p>
+                          <p className="text-xs text-gray-600">{step.description}</p>
                         </div>
                       </div>
                       

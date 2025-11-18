@@ -132,12 +132,12 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+      <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Form W-9</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-700">
           Request for Taxpayer Identification Number and Certification
         </p>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-600 mt-2">
           This information is required by the IRS for tax reporting purposes. Your information is encrypted and secure.
         </p>
       </div>
@@ -152,7 +152,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
           name="name"
           value={formData.name}
           onChange={handleInputChange}
-          className={`w-full px-4 py-3 rounded-lg border ${errors.name ? 'border-red-300' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+          className={`w-full px-4 py-3 rounded-lg border ${errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'} text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           placeholder="Individual: First name, middle initial, last name"
           required
         />
@@ -169,7 +169,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
           name="businessName"
           value={formData.businessName}
           onChange={handleInputChange}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Leave blank if same as name"
         />
       </div>
@@ -183,7 +183,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
           name="taxClassification"
           value={formData.taxClassification}
           onChange={handleInputChange}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           required
         >
           <option value="individual">Individual/Sole Proprietor or Single-member LLC</option>
@@ -226,7 +226,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
             name="exemptPayeeCode"
             value={formData.exemptPayeeCode}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Optional"
           />
         </div>
@@ -239,7 +239,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
             name="exemptionFromFatcaCode"
             value={formData.exemptionFromFatcaCode}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Optional"
           />
         </div>
@@ -264,7 +264,7 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
           name="addressLine2"
           value={formData.addressLine2}
           onChange={handleInputChange}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Apt, suite, etc. (optional)"
         />
       </div>
@@ -402,8 +402,8 @@ const W9Form: React.FC<W9FormProps> = ({ onSubmit, initialData, isLoading = fals
       </div>
 
       {/* Certification */}
-      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <p className="text-xs text-gray-600 leading-relaxed">
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300">
+        <p className="text-xs text-gray-700 leading-relaxed">
           <strong>Certification:</strong> Under penalties of perjury, I certify that:
           <br /><br />
           1. The number shown on this form is my correct taxpayer identification number, and
