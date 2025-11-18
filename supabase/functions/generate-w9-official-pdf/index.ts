@@ -100,12 +100,12 @@ serve(async (req) => {
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-    // Fill in the form fields
+    // Fill in the form fields (coordinates adjusted for official IRS PDF)
     // Line 1: Name
     firstPage.drawText(w9Data.name || '', {
-      x: 130,
-      y: height - 193,
-      size: 10,
+      x: 135,
+      y: height - 186,
+      size: 11,
       font: helveticaFont,
       color: rgb(0, 0, 0),
     })
@@ -113,24 +113,21 @@ serve(async (req) => {
     // Line 2: Business name
     if (w9Data.business_name) {
       firstPage.drawText(w9Data.business_name, {
-        x: 130,
-        y: height - 217,
-        size: 10,
+        x: 135,
+        y: height - 211,
+        size: 11,
         font: helveticaFont,
         color: rgb(0, 0, 0),
       })
     }
 
     // Line 3a: Tax classification checkboxes
-    const checkboxSize = 8
-    let checkboxY = height - 255
-    
-    // Individual
+    // Individual/sole proprietor
     if (w9Data.tax_classification === 'individual') {
       firstPage.drawText('X', {
-        x: 128,
-        y: checkboxY,
-        size: 10,
+        x: 155,
+        y: height - 238,
+        size: 11,
         font: helveticaBold,
         color: rgb(0, 0, 0),
       })
@@ -139,9 +136,9 @@ serve(async (req) => {
     // C Corporation
     if (w9Data.tax_classification === 'c_corporation') {
       firstPage.drawText('X', {
-        x: 128,
-        y: checkboxY - 13,
-        size: 10,
+        x: 243,
+        y: height - 238,
+        size: 11,
         font: helveticaBold,
         color: rgb(0, 0, 0),
       })
@@ -150,9 +147,9 @@ serve(async (req) => {
     // S Corporation
     if (w9Data.tax_classification === 's_corporation') {
       firstPage.drawText('X', {
-        x: 128,
-        y: checkboxY - 26,
-        size: 10,
+        x: 327,
+        y: height - 238,
+        size: 11,
         font: helveticaBold,
         color: rgb(0, 0, 0),
       })
@@ -161,9 +158,9 @@ serve(async (req) => {
     // Partnership
     if (w9Data.tax_classification === 'partnership') {
       firstPage.drawText('X', {
-        x: 128,
-        y: checkboxY - 39,
-        size: 10,
+        x: 411,
+        y: height - 238,
+        size: 11,
         font: helveticaBold,
         color: rgb(0, 0, 0),
       })
@@ -172,9 +169,9 @@ serve(async (req) => {
     // Trust/estate
     if (w9Data.tax_classification === 'trust_estate') {
       firstPage.drawText('X', {
-        x: 128,
-        y: checkboxY - 52,
-        size: 10,
+        x: 505,
+        y: height - 238,
+        size: 11,
         font: helveticaBold,
         color: rgb(0, 0, 0),
       })
@@ -183,9 +180,9 @@ serve(async (req) => {
     // LLC
     if (['llc_c', 'llc_s', 'llc_p'].includes(w9Data.tax_classification)) {
       firstPage.drawText('X', {
-        x: 128,
-        y: checkboxY - 65,
-        size: 10,
+        x: 135,
+        y: height - 254,
+        size: 11,
         font: helveticaBold,
         color: rgb(0, 0, 0),
       })
@@ -194,9 +191,9 @@ serve(async (req) => {
       const llcType = w9Data.tax_classification === 'llc_c' ? 'C' : 
                       w9Data.tax_classification === 'llc_s' ? 'S' : 'P'
       firstPage.drawText(llcType, {
-        x: 595,
-        y: checkboxY - 65,
-        size: 10,
+        x: 530,
+        y: height - 254,
+        size: 11,
         font: helveticaFont,
         color: rgb(0, 0, 0),
       })
@@ -205,17 +202,17 @@ serve(async (req) => {
     // Other
     if (w9Data.tax_classification === 'other') {
       firstPage.drawText('X', {
-        x: 128,
-        y: checkboxY - 78,
-        size: 10,
+        x: 135,
+        y: height - 270,
+        size: 11,
         font: helveticaBold,
         color: rgb(0, 0, 0),
       })
       if (w9Data.other_tax_classification) {
         firstPage.drawText(w9Data.other_tax_classification, {
-          x: 290,
-          y: checkboxY - 78,
-          size: 9,
+          x: 250,
+          y: height - 270,
+          size: 10,
           font: helveticaFont,
           color: rgb(0, 0, 0),
         })
@@ -228,18 +225,18 @@ serve(async (req) => {
       : w9Data.address_line1
     
     firstPage.drawText(addressText || '', {
-      x: 130,
-      y: height - 387,
-      size: 10,
+      x: 135,
+      y: height - 329,
+      size: 11,
       font: helveticaFont,
       color: rgb(0, 0, 0),
     })
 
     // Line 6: City, State, ZIP
     firstPage.drawText(`${w9Data.city || ''}, ${w9Data.state || ''} ${w9Data.zip_code || ''}`, {
-      x: 130,
-      y: height - 413,
-      size: 10,
+      x: 135,
+      y: height - 355,
+      size: 11,
       font: helveticaFont,
       color: rgb(0, 0, 0),
     })
@@ -261,10 +258,10 @@ serve(async (req) => {
         }
 
         if (signatureImage) {
-          const signatureDims = signatureImage.scale(0.3)
+          const signatureDims = signatureImage.scale(0.25)
           firstPage.drawImage(signatureImage, {
-            x: 150,
-            y: height - 755,
+            x: 160,
+            y: height - 720,
             width: signatureDims.width,
             height: signatureDims.height,
           })
@@ -282,17 +279,17 @@ serve(async (req) => {
     })
     
     firstPage.drawText(formattedDate, {
-      x: 730,
-      y: height - 740,
-      size: 10,
+      x: 485,
+      y: height - 705,
+      size: 11,
       font: helveticaFont,
       color: rgb(0, 0, 0),
     })
 
     // Add a small footer note about electronic submission
     firstPage.drawText(`Electronic submission via ShoutOut - ${userData.full_name} - ${new Date(w9Data.created_at).toLocaleDateString()}`, {
-      x: 50,
-      y: 30,
+      x: 100,
+      y: 25,
       size: 7,
       font: helveticaFont,
       color: rgb(0.5, 0.5, 0.5),
