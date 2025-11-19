@@ -168,8 +168,31 @@ const W9FormSignNow: React.FC<W9FormSignNowProps> = ({ talentId, onComplete }) =
           Open W-9 Form
         </button>
         
+        <button
+          onClick={async () => {
+            // Manually mark as complete and move to next step
+            try {
+              const { error } = await supabase
+                .from('w9_envelopes')
+                .update({ status: 'completed', completed_at: new Date().toISOString() })
+                .eq('talent_id', talentId)
+              
+              if (error) throw error
+              
+              toast.success('W-9 marked as complete!')
+              onComplete()
+            } catch (err: any) {
+              console.error('Error marking W-9 complete:', err)
+              toast.error('Failed to mark as complete')
+            }
+          }}
+          className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:bg-green-700 mb-4"
+        >
+          I've Completed the W-9
+        </button>
+        
         <p className="text-sm text-gray-400 text-center max-w-md">
-          After completing the form, this page will automatically detect completion and move to the next step.
+          After completing the form in the popup window, click "I've Completed the W-9" above to continue.
         </p>
         
         {/* Status indicator */}
