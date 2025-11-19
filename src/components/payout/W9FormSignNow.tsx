@@ -146,22 +146,37 @@ const W9FormSignNow: React.FC<W9FormSignNowProps> = ({ talentId, onComplete }) =
         </ul>
       </div>
 
-      {/* Embedded SignNow iframe */}
-      <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg border border-white/20 overflow-hidden">
-        <iframe
-          src={signingUrl}
-          className="w-full border-0"
-          style={{ minHeight: '800px', height: '80vh' }}
-          title="W-9 Form Signing"
-          allow="camera; microphone; geolocation; display-capture"
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
-        />
-      </div>
-
-      {/* Status indicator */}
-      <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-        <div className="animate-pulse h-2 w-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full"></div>
-        <span>Waiting for form completion...</span>
+      {/* Open SignNow in new window */}
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="mb-8">
+          <svg className="w-24 h-24 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        
+        <h3 className="text-2xl font-bold text-white mb-4">W-9 Form Ready</h3>
+        
+        <p className="text-gray-300 text-center max-w-md mb-8">
+          Click the button below to open your W-9 form in a new window. Fill it out, sign it, and click "Finish" to complete this step.
+        </p>
+        
+        <button
+          onClick={() => window.open(signingUrl, '_blank', 'width=1200,height=800')}
+          className="px-8 py-4 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl mb-4"
+          style={{ background: 'linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)' }}
+        >
+          Open W-9 Form
+        </button>
+        
+        <p className="text-sm text-gray-400 text-center max-w-md">
+          After completing the form, this page will automatically detect completion and move to the next step.
+        </p>
+        
+        {/* Status indicator */}
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-400 mt-6">
+          <div className="animate-pulse h-2 w-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full"></div>
+          <span>Waiting for form completion...</span>
+        </div>
       </div>
     </div>
   )
