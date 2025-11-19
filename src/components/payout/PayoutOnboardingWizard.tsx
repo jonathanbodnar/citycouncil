@@ -3,7 +3,7 @@ import { CheckIcon } from '@heroicons/react/24/solid'
 import toast from 'react-hot-toast'
 import supabase from '../../services/supabase'
 import { useAuth } from '../../context/AuthContext'
-import W9FormSignatureAPI from './W9FormSignatureAPI'
+import W9FormSignNow from './W9FormSignNow'
 import MoovOnboardingStep from './MoovOnboardingStep'
 import PlaidBankStep from './PlaidBankStep'
 
@@ -239,14 +239,14 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
 
           {/* Step Content */}
           <div className="px-8 py-8 max-h-[calc(100vh-400px)] overflow-y-auto">
-            {currentStep === 1 && talentId && (
-              <div>
-                <W9FormSignatureAPI
-                  talentId={talentId}
-                  onComplete={handleW9Complete}
+        {currentStep === 1 && talentId && (
+            <div>
+                <W9FormSignNow
+                    talentId={talentId}
+                    onComplete={handleW9Complete}
                 />
-              </div>
-            )}
+            </div>
+        )}
             
             {currentStep === 1 && !talentId && (
               <div className="flex items-center justify-center py-12">
