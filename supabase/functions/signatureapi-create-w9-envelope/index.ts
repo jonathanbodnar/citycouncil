@@ -114,7 +114,7 @@ serve(async (req) => {
             url_variant: 'standard',
             authentication: [
               {
-                type: 'none', // No authentication required for embedded signing
+                type: 'email_link',
               },
             ],
           },
