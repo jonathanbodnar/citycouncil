@@ -64,7 +64,8 @@ serve(async (req) => {
     }
 
     // Use the pre-uploaded IRS W-9 PDF from SignatureAPI
-    const w9UploadId = 'upl_4qnXJABtI3xLZDAjUhTV1j'
+    // The upload URL from SignatureAPI: https://api.signatureapi.com/v1/uploads/upl_4qnXJABtI3xLZDAjUhTV1j
+    const w9UploadUrl = 'https://api.signatureapi.com/v1/uploads/upl_4qnXJABtI3xLZDAjUhTV1j'
 
     const requestBody = {
       title: `Form W-9 - ${userData?.full_name || user.email}`,
@@ -75,7 +76,8 @@ serve(async (req) => {
       },
       documents: [
         {
-          uploadId: w9UploadId,
+          url: w9UploadUrl,
+          format: 'pdf',
         },
       ],
       recipients: [
