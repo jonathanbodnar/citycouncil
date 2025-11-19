@@ -139,43 +139,7 @@ serve(async (req) => {
     const { id: documentId } = await createDocResponse.json()
     console.log('Document created:', documentId)
 
-    // Create embedded signing invite
-    console.log('Creating embedded signing invite...')
-    
-    const inviteResponse = await fetch(`https://api.signnow.com/document/${documentId}/invite`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: [
-          {
-            email: userData?.email || user.email,
-            role_id: '',
-            role: 'Signer',
-            order: 1,
-            authentication_type: 'none',
-            expiration_days: 30,
-            reminder: 0,
-          },
-        ],
-        from: 'noreply@shoutout.us',
-        subject: 'Please complete your W-9 form',
-        message: 'Please review and sign the W-9 form.',
-      }),
-    })
-
-    if (!inviteResponse.ok) {
-      const errorText = await inviteResponse.text()
-      console.error('SignNow invite error:', errorText)
-      throw new Error(`Failed to create signing invite: ${inviteResponse.statusText}`)
-    }
-
-    const inviteData = await inviteResponse.json()
-    console.log('Invite created:', inviteData)
-
-    // Generate embedded signing link
+    // Generate embedded signing link directly (no invite needed for embedded)
     console.log('Generating embedded signing link...')
     
     const linkResponse = await fetch(`https://api.signnow.com/link`, {
