@@ -134,9 +134,11 @@ serve(async (req) => {
     )
   } catch (error: any) {
     console.error('Error creating W-9 envelope:', error)
+    console.error('Error stack:', error.stack)
     return new Response(
       JSON.stringify({
         error: error.message,
+        details: error.stack || error.toString(),
       }),
       {
         status: 400,

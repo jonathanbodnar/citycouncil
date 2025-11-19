@@ -63,7 +63,8 @@ const W9FormSignatureAPI: React.FC<W9FormSignatureAPIProps> = ({ onComplete, tal
       }
 
       if (data.error) {
-        throw new Error(data.error)
+        console.error('Edge function error details:', data)
+        throw new Error(data.error + (data.details ? `\n${data.details}` : ''))
       }
 
       setEnvelopeId(data.envelopeId)

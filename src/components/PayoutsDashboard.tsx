@@ -355,13 +355,13 @@ const PayoutsDashboard: React.FC = () => {
           )}
 
           {payoutOnboardingCompleted && (
-            <button
-              onClick={exportPayouts}
-              className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base'
-            >
-              <ArrowDownTrayIcon className='h-4 w-4' />
-              <span className='whitespace-nowrap'>Export CSV</span>
-            </button>
+          <button
+            onClick={exportPayouts}
+            className='flex h-12 md:h-14 text-center justify-center items-center gap-2 px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm md:text-base'
+          >
+            <ArrowDownTrayIcon className='h-4 w-4' />
+            <span className='whitespace-nowrap'>Export CSV</span>
+          </button>
           )}
         </div>
       </div>
