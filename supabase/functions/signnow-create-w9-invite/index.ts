@@ -58,16 +58,62 @@ serve(async (req) => {
       .single()
 
     // Get SignNow credentials
-    // For SignNow, we need a user access token, not client credentials
-    // You should generate this token from your SignNow account and store it as an env var
-    const accessToken = Deno.env.get('SIGNNOW_ACCESS_TOKEN')
+    const signNowEmail = Deno.env.get('SIGNNOW_EMAIL')
+    const signNowPassword = Deno.env.get('SIGNNOW_PASSWORD')
+    const signNowClientId = Deno.env.get('SIGNNOW_CLIENT_ID')
+    const signNowClientSecret = Deno.env.get('SIGNNOW_CLIENT_SECRET')
     const templateId = Deno.env.get('SIGNNOW_TEMPLATE_ID')
 
-    if (!accessToken || !templateId) {
-      throw new Error('SignNow access token or template ID not configured')
+    if (!signNowEmail || !signNowPassword || !signNowClientId || !signNowClientSecret || !templateId) {
+      throw new Error('SignNow credentials not configured. Need: SIGNNOW_EMAIL, SIGNNOW_PASSWORD, SIGNNOW_CLIENT_ID, SIGNNOW_CLIENT_SECRET, and SIGNNOW_TEMPLATE_ID')
     }
 
-    console.log('Using SignNow access token')
+    console.log('Authenticating with SignNow...')
+    console.log('Using email:', signNowEmail)
+    console.log('Client ID length:', signNowClientId?.length)
+    console.log('Client Secret length:', signNowClientSecret?.length)
+    
+    // Create Basic Auth header for client credentials
+    const basicAuth = btoa(`${signNowClientId}:${signNowClientSecret}`)
+    
+    const authBody = new URLSearchParams({
+      grant_type: 'password',
+      username: signNowEmail,
+      password: signNowPassword,
+    })
+    
+    console.log('Auth request body:', authBody.toString())
+    
+    // Get access token via OAuth password grant with client credentials
+    const authResponse = await fetch('https://api.signnow.com/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: authBody,
+    })
+
+    console.log('Auth response status:', authResponse.status)
+    
+    if (!authResponse.ok) {
+      const errorText = await authResponse.text()
+      console.error('SignNow auth error response:', errorText)
+      console.error('Auth response headers:', Object.fromEntries(authResponse.headers.entries()))
+      throw new Error(`Failed to authenticate with SignNow (${authResponse.status}): ${errorText}`)
+    }
+
+    const authData = await authResponse.json()
+    console.log('Auth response keys:', Object.keys(authData))
+    
+    const accessToken = authData.access_token
+    if (!accessToken) {
+      console.error('No access_token in response:', authData)
+      throw new Error('No access token received from SignNow')
+    }
+    
+    console.log('Successfully authenticated with SignNow')
+    console.log('Access token length:', accessToken.length)
     console.log('Template ID:', templateId)
 
     // Create document from template
@@ -93,43 +139,7 @@ serve(async (req) => {
     const { id: documentId } = await createDocResponse.json()
     console.log('Document created:', documentId)
 
-    // Create embedded signing invite
-    console.log('Creating embedded signing invite...')
-    
-    const inviteResponse = await fetch(`https://api.signnow.com/document/${documentId}/invite`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: [
-          {
-            email: userData?.email || user.email,
-            role_id: '',
-            role: 'Signer',
-            order: 1,
-            authentication_type: 'none',
-            expiration_days: 30,
-            reminder: 0,
-          },
-        ],
-        from: 'noreply@shoutout.us',
-        subject: 'Please complete your W-9 form',
-        message: 'Please review and sign the W-9 form.',
-      }),
-    })
-
-    if (!inviteResponse.ok) {
-      const errorText = await inviteResponse.text()
-      console.error('SignNow invite error:', errorText)
-      throw new Error(`Failed to create signing invite: ${inviteResponse.statusText}`)
-    }
-
-    const inviteData = await inviteResponse.json()
-    console.log('Invite created:', inviteData)
-
-    // Generate embedded signing link
+    // Generate embedded signing link directly (no invite needed for embedded)
     console.log('Generating embedded signing link...')
     
     const linkResponse = await fetch(`https://api.signnow.com/link`, {
@@ -153,18 +163,26 @@ serve(async (req) => {
     const { url: signingUrl } = await linkResponse.json()
     console.log('Signing URL generated:', signingUrl)
 
-    // Store document reference in database
-    const { error: insertError } = await supabaseClient
+    // Store document reference in database (upsert to handle existing records)
+    // Use service role client to bypass RLS for upsert
+    const supabaseServiceClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    const { error: upsertError } = await supabaseServiceClient
       .from('w9_envelopes')
-      .insert({
+      .upsert({
         talent_id: talentId,
         envelope_id: documentId,
         status: 'pending',
         signing_url: signingUrl,
+      }, {
+        onConflict: 'talent_id'
       })
 
-    if (insertError) {
-      console.error('Error storing document:', insertError)
+    if (upsertError) {
+      console.error('Error storing document:', upsertError)
       throw new Error('Failed to store document reference')
     }
 

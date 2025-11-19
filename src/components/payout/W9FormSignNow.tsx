@@ -153,6 +153,8 @@ const W9FormSignNow: React.FC<W9FormSignNowProps> = ({ talentId, onComplete }) =
           className="w-full border-0"
           style={{ minHeight: '800px', height: '80vh' }}
           title="W-9 Form Signing"
+          allow="camera; microphone; geolocation; display-capture"
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
         />
       </div>
 
