@@ -1614,6 +1614,18 @@ const TalentManagement: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                  {editingTalent.users?.email || 'No email'}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Email cannot be changed from this panel
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Position <span className="text-gray-500">(Optional)</span>
                 </label>
                 <input
