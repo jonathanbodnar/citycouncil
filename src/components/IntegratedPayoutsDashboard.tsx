@@ -39,6 +39,12 @@ const IntegratedPayoutsDashboard: React.FC = () => {
 
   const fetchPayoutsEnabledSetting = async () => {
     try {
+      // Always enable for jb@apollo.inc (jonathanbodnar) for testing
+      if (user?.email === 'jb@apollo.inc') {
+        setPayoutsEnabled(true);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('platform_settings')
         .select('setting_value')
