@@ -720,7 +720,7 @@ const CommsCenterManagement: React.FC = () => {
                             : 'bg-gray-200 text-gray-900'
                         }`}
                       >
-                        <p className="text-sm">{msg.message}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                         <div className={`text-xs mt-1 ${msg.from_admin ? 'text-blue-100' : 'text-gray-500'}`}>
                           {new Date(msg.sent_at).toLocaleTimeString()}
                           {msg.from_admin && (

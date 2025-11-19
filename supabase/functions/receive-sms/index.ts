@@ -37,8 +37,19 @@ serve(async (req) => {
     }
     
     const from = formData.get('From') as string; // Phone number that sent the message
-    const body = formData.get('Body') as string; // Message content
+    let body = formData.get('Body') as string; // Message content
     const messageSid = formData.get('MessageSid') as string; // Twilio message ID
+
+    // Decode URL-encoded characters (including emojis)
+    // Twilio may send emojis as URL-encoded UTF-8
+    if (body) {
+      try {
+        body = decodeURIComponent(body);
+      } catch (e) {
+        // If decoding fails, use original
+        console.warn('⚠️ Could not decode message body:', e);
+      }
+    }
 
     console.log('📩 Incoming SMS:', { from, body, messageSid });
 
