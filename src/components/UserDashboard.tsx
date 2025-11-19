@@ -511,7 +511,7 @@ const UserDashboard: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+                      <p className="text-gray-700 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">
                         {order.request_details}
                       </p>
                     )}
