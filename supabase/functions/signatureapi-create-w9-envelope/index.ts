@@ -64,18 +64,43 @@ serve(async (req) => {
     }
 
     // Use the pre-uploaded IRS W-9 PDF from SignatureAPI
-    const w9UploadId = 'upl_4qnXJABtI3xLZDAjUhTV1j'
+    // The upload URL from SignatureAPI: https://api.signatureapi.com/v1/uploads/upl_4qnXJABtI3xLZDAjUhTV1j
+    const w9UploadUrl = 'https://api.signatureapi.com/v1/uploads/upl_4qnXJABtI3xLZDAjUhTV1j'
 
     const requestBody = {
       title: `Form W-9 - ${userData?.full_name || user.email}`,
       routing: 'sequential',
-      sender: {
-        name: 'ShoutOut',
-        email: 'noreply@shoutout.us',
-      },
+      // Note: sender field removed - will use default sender from SignatureAPI account
       documents: [
         {
-          uploadId: w9UploadId,
+          url: w9UploadUrl,
+          format: 'pdf',
+          places: [
+            {
+              key: 'signature',
+              type: 'signature',
+              recipient_key: 'talent',
+            },
+            {
+              key: 'date',
+              type: 'recipient_completed_date',
+              recipient_key: 'talent',
+            },
+          ],
+          fixed_positions: [
+            {
+              place_key: 'signature',
+              page: 1,
+              left: 100,
+              top: 650,
+            },
+            {
+              place_key: 'date',
+              page: 1,
+              left: 450,
+              top: 650,
+            },
+          ],
         },
       ],
       recipients: [
@@ -84,6 +109,27 @@ serve(async (req) => {
           key: 'talent',
           name: userData?.full_name || 'Talent',
           email: userData?.email || user.email,
+          ceremony: {
+            embeddable_in: ['*'], // Allow embedding in any domain
+            url_variant: 'standard',
+            authentication: [
+              {
+                type: 'email_link',
+              },
+            ],
+          },
+          fields: [
+            {
+              key: 'signature',
+              type: 'signature',
+              required: true,
+            },
+            {
+              key: 'date',
+              type: 'recipient_completed_date',
+              required: true,
+            },
+          ],
         },
       ],
       metadata: {
@@ -112,6 +158,41 @@ serve(async (req) => {
     }
 
     const envelopeData = await signatureApiResponse.json()
+    console.log('SignatureAPI envelope response:', JSON.stringify(envelopeData, null, 2))
+
+    // Get the recipient's ceremony URL
+    const recipient = envelopeData.recipients?.[0]
+    const ceremonyUrl = recipient?.ceremony?.url
+    
+    // If URL is null, we need to fetch it from the recipient endpoint
+    let signingUrl = ceremonyUrl
+    
+    if (!signingUrl && recipient?.id) {
+      console.log('Ceremony URL is null, fetching from recipient endpoint...')
+      const recipientResponse = await fetch(
+        `https://api.signatureapi.com/v1/recipients/${recipient.id}`,
+        {
+          headers: {
+            'X-API-Key': signatureApiKey,
+          },
+        }
+      )
+      
+      if (recipientResponse.ok) {
+        const recipientData = await recipientResponse.json()
+        signingUrl = recipientData.ceremony?.url
+        console.log('Fetched ceremony URL:', signingUrl)
+      }
+    }
+    
+    // Add embedded query parameters if URL exists
+    if (signingUrl) {
+      const url = new URL(signingUrl)
+      url.searchParams.set('embedded', 'true')
+      url.searchParams.set('event_delivery', 'message')
+      signingUrl = url.toString()
+      console.log('Final signing URL with params:', signingUrl)
+    }
 
     // Store envelope reference in database
     const { error: insertError } = await supabaseClient
@@ -120,7 +201,7 @@ serve(async (req) => {
         talent_id: talentId,
         envelope_id: envelopeData.id,
         status: 'pending',
-        signing_url: envelopeData.signingUrl || envelopeData.signing_url,
+        signing_url: signingUrl,
       })
 
     if (insertError) {
@@ -131,7 +212,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         envelopeId: envelopeData.id,
-        signingUrl: envelopeData.signingUrl || envelopeData.signing_url,
+        signingUrl: signingUrl,
       }),
       {
         headers: {
