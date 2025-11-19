@@ -63,44 +63,50 @@ serve(async (req) => {
       throw new Error('SignatureAPI key not configured')
     }
 
+    const requestBody = {
+      title: `Form W-9 - ${userData?.full_name || user.email}`,
+      routing: 'sequential',
+      sender: {
+        name: 'ShoutOut',
+        email: 'noreply@shoutout.us',
+      },
+      documents: [
+        {
+          url: 'https://www.irs.gov/pub/irs-pdf/fw9.pdf',
+          format: 'pdf',
+        },
+      ],
+      recipients: [
+        {
+          type: 'signer',
+          key: 'talent',
+          name: userData?.full_name || 'Talent',
+          email: userData?.email || user.email,
+        },
+      ],
+      metadata: {
+        talent_id: talentId,
+        user_id: user.id,
+      },
+    }
+
+    console.log('Creating SignatureAPI envelope with body:', JSON.stringify(requestBody, null, 2))
+
     const signatureApiResponse = await fetch('https://api.signatureapi.com/v1/envelopes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': signatureApiKey,
       },
-      body: JSON.stringify({
-        title: `Form W-9 - ${userData?.full_name || user.email}`,
-        routing: 'sequential',
-        sender: {
-          name: 'ShoutOut',
-          email: 'noreply@shoutout.us',
-        },
-        documents: [
-          {
-            url: 'https://www.irs.gov/pub/irs-pdf/fw9.pdf',
-            format: 'pdf',
-          },
-        ],
-        recipients: [
-          {
-            type: 'signer',
-            key: 'talent',
-            name: userData?.full_name || 'Talent',
-            email: userData?.email || user.email,
-          },
-        ],
-        metadata: {
-          talent_id: talentId,
-          user_id: user.id,
-        },
-      }),
+      body: JSON.stringify(requestBody),
     })
+
+    console.log('SignatureAPI response status:', signatureApiResponse.status)
 
     if (!signatureApiResponse.ok) {
       const errorData = await signatureApiResponse.text()
-      console.error('SignatureAPI error:', errorData)
-      throw new Error(`SignatureAPI error: ${signatureApiResponse.statusText}`)
+      console.error('SignatureAPI error response:', errorData)
+      throw new Error(`SignatureAPI error (${signatureApiResponse.status}): ${errorData}`)
     }
 
     const envelopeData = await signatureApiResponse.json()
