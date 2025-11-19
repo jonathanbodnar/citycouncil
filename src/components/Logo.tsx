@@ -8,31 +8,22 @@ interface LogoProps {
   theme?: 'light' | 'dark';
 }
 
-const Logo: React.FC<LogoProps> = ({ 
-  size = 'md', 
-  showText = false,
-  theme = 'light', 
-  className = '' 
-}) => {
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+// Cache logo URL globally to avoid repeated fetches
+let cachedLogoUrl: string | null = null;
+let logoPromise: Promise<string> | null = null;
 
-  const sizes = {
-    sm: { height: 'h-8', width: 'w-auto' },
-    md: { height: 'h-10', width: 'w-auto' },
-    lg: { height: 'h-16', width: 'w-auto' },
-  };
+// Default/fallback logo URL
+const defaultLogoUrl = "https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png";
 
-  const sizeClasses = sizes[size];
-
-  // Default/fallback logo URL
-  const defaultLogoUrl = "https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png";
-
-  useEffect(() => {
-    fetchLogo();
-  }, []);
-
-  const fetchLogo = async () => {
+const fetchLogoUrl = async (): Promise<string> => {
+  // Return cached value if available
+  if (cachedLogoUrl) return cachedLogoUrl;
+  
+  // Return ongoing promise if fetch is in progress
+  if (logoPromise) return logoPromise;
+  
+  // Start new fetch
+  logoPromise = (async () => {
     try {
       const { data, error } = await supabase
         .from('platform_settings')
@@ -42,20 +33,53 @@ const Logo: React.FC<LogoProps> = ({
 
       if (error) throw error;
 
-      if (data?.setting_value) {
-        setLogoUrl(data.setting_value);
-      } else {
-        setLogoUrl(defaultLogoUrl);
-      }
+      cachedLogoUrl = data?.setting_value || defaultLogoUrl;
+      return cachedLogoUrl;
     } catch (error) {
       console.error('Error fetching logo:', error);
-      setLogoUrl(defaultLogoUrl);
+      cachedLogoUrl = defaultLogoUrl;
+      return defaultLogoUrl;
     } finally {
-      setLoading(false);
+      logoPromise = null;
     }
+  })();
+  
+  return logoPromise;
+};
+
+const Logo: React.FC<LogoProps> = ({ 
+  size = 'md', 
+  showText = false,
+  theme = 'light', 
+  className = '' 
+}) => {
+  const [logoUrl, setLogoUrl] = useState<string>(cachedLogoUrl || defaultLogoUrl);
+  const [loading, setLoading] = useState(!cachedLogoUrl);
+
+  const sizes = {
+    sm: { height: 'h-8', width: 'w-auto' },
+    md: { height: 'h-10', width: 'w-auto' },
+    lg: { height: 'h-16', width: 'w-auto' },
   };
 
-  const currentLogoUrl = logoUrl || defaultLogoUrl;
+  const sizeClasses = sizes[size];
+
+  useEffect(() => {
+    // If we already have cached logo, no need to fetch
+    if (cachedLogoUrl) {
+      setLogoUrl(cachedLogoUrl);
+      setLoading(false);
+      return;
+    }
+    
+    // Otherwise fetch it
+    fetchLogoUrl().then((url) => {
+      setLogoUrl(url);
+      setLoading(false);
+    });
+  }, []);
+
+  const currentLogoUrl = logoUrl;
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
