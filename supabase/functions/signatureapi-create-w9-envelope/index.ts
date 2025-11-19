@@ -75,26 +75,18 @@ serve(async (req) => {
         {
           url: w9UploadUrl,
           format: 'pdf',
-          fields: [
+          fixed_positions: [
             {
-              type: 'signature',
-              recipient: 'talent',
+              place_key: 'signature',
               page: 1,
               x: 100,
               y: 650,
-              width: 200,
-              height: 50,
-              required: true,
             },
             {
-              type: 'date_signed',
-              recipient: 'talent',
+              place_key: 'date',
               page: 1,
               x: 450,
               y: 650,
-              width: 100,
-              height: 30,
-              required: true,
             },
           ],
         },
@@ -105,6 +97,18 @@ serve(async (req) => {
           key: 'talent',
           name: userData?.full_name || 'Talent',
           email: userData?.email || user.email,
+          fields: [
+            {
+              key: 'signature',
+              type: 'signature',
+              required: true,
+            },
+            {
+              key: 'date',
+              type: 'date_signed',
+              required: true,
+            },
+          ],
         },
       ],
       metadata: {
