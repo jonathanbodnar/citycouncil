@@ -163,18 +163,20 @@ serve(async (req) => {
     const { url: signingUrl } = await linkResponse.json()
     console.log('Signing URL generated:', signingUrl)
 
-    // Store document reference in database
-    const { error: insertError } = await supabaseClient
+    // Store document reference in database (upsert to handle existing records)
+    const { error: upsertError } = await supabaseClient
       .from('w9_envelopes')
-      .insert({
+      .upsert({
         talent_id: talentId,
         envelope_id: documentId,
         status: 'pending',
         signing_url: signingUrl,
+      }, {
+        onConflict: 'talent_id'
       })
 
-    if (insertError) {
-      console.error('Error storing document:', insertError)
+    if (upsertError) {
+      console.error('Error storing document:', upsertError)
       throw new Error('Failed to store document reference')
     }
 
