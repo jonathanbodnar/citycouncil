@@ -160,6 +160,40 @@ serve(async (req) => {
     const envelopeData = await signatureApiResponse.json()
     console.log('SignatureAPI envelope response:', JSON.stringify(envelopeData, null, 2))
 
+    // Get the recipient's ceremony URL
+    const recipient = envelopeData.recipients?.[0]
+    const ceremonyUrl = recipient?.ceremony?.url
+    
+    // If URL is null, we need to fetch it from the recipient endpoint
+    let signingUrl = ceremonyUrl
+    
+    if (!signingUrl && recipient?.id) {
+      console.log('Ceremony URL is null, fetching from recipient endpoint...')
+      const recipientResponse = await fetch(
+        `https://api.signatureapi.com/v1/recipients/${recipient.id}`,
+        {
+          headers: {
+            'X-API-Key': signatureApiKey,
+          },
+        }
+      )
+      
+      if (recipientResponse.ok) {
+        const recipientData = await recipientResponse.json()
+        signingUrl = recipientData.ceremony?.url
+        console.log('Fetched ceremony URL:', signingUrl)
+      }
+    }
+    
+    // Add embedded query parameters if URL exists
+    if (signingUrl) {
+      const url = new URL(signingUrl)
+      url.searchParams.set('embedded', 'true')
+      url.searchParams.set('event_delivery', 'message')
+      signingUrl = url.toString()
+      console.log('Final signing URL with params:', signingUrl)
+    }
+
     // Store envelope reference in database
     const { error: insertError } = await supabaseClient
       .from('w9_envelopes')
@@ -167,7 +201,7 @@ serve(async (req) => {
         talent_id: talentId,
         envelope_id: envelopeData.id,
         status: 'pending',
-        signing_url: envelopeData.signingUrl || envelopeData.signing_url,
+        signing_url: signingUrl,
       })
 
     if (insertError) {
@@ -178,7 +212,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         envelopeId: envelopeData.id,
-        signingUrl: envelopeData.signingUrl || envelopeData.signing_url,
+        signingUrl: signingUrl,
       }),
       {
         headers: {
