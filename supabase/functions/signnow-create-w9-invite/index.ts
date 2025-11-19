@@ -164,7 +164,13 @@ serve(async (req) => {
     console.log('Signing URL generated:', signingUrl)
 
     // Store document reference in database (upsert to handle existing records)
-    const { error: upsertError } = await supabaseClient
+    // Use service role client to bypass RLS for upsert
+    const supabaseServiceClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    const { error: upsertError } = await supabaseServiceClient
       .from('w9_envelopes')
       .upsert({
         talent_id: talentId,
