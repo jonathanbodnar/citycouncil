@@ -63,6 +63,18 @@ serve(async (req) => {
       throw new Error('SignatureAPI key not configured')
     }
 
+    // Download the IRS W-9 PDF
+    console.log('Downloading IRS W-9 PDF...')
+    const pdfResponse = await fetch('https://www.irs.gov/pub/irs-pdf/fw9.pdf')
+    if (!pdfResponse.ok) {
+      throw new Error('Failed to download IRS W-9 form')
+    }
+    
+    const pdfBuffer = await pdfResponse.arrayBuffer()
+    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)))
+    
+    console.log('PDF downloaded, size:', pdfBuffer.byteLength, 'bytes')
+
     const requestBody = {
       title: `Form W-9 - ${userData?.full_name || user.email}`,
       routing: 'sequential',
@@ -72,8 +84,9 @@ serve(async (req) => {
       },
       documents: [
         {
-          url: 'https://www.irs.gov/pub/irs-pdf/fw9.pdf',
+          name: 'fw9.pdf',
           format: 'pdf',
+          content: pdfBase64,
         },
       ],
       recipients: [
@@ -90,7 +103,7 @@ serve(async (req) => {
       },
     }
 
-    console.log('Creating SignatureAPI envelope with body:', JSON.stringify(requestBody, null, 2))
+    console.log('Creating SignatureAPI envelope with document size:', pdfBase64.length, 'base64 chars')
 
     const signatureApiResponse = await fetch('https://api.signatureapi.com/v1/envelopes', {
       method: 'POST',
