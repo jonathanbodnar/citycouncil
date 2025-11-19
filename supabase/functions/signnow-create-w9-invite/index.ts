@@ -60,18 +60,24 @@ serve(async (req) => {
     // Get SignNow credentials
     const signNowEmail = Deno.env.get('SIGNNOW_EMAIL')
     const signNowPassword = Deno.env.get('SIGNNOW_PASSWORD')
+    const signNowClientId = Deno.env.get('SIGNNOW_CLIENT_ID')
+    const signNowClientSecret = Deno.env.get('SIGNNOW_CLIENT_SECRET')
     const templateId = Deno.env.get('SIGNNOW_TEMPLATE_ID')
 
-    if (!signNowEmail || !signNowPassword || !templateId) {
-      throw new Error('SignNow credentials or template ID not configured. Need SIGNNOW_EMAIL, SIGNNOW_PASSWORD, and SIGNNOW_TEMPLATE_ID')
+    if (!signNowEmail || !signNowPassword || !signNowClientId || !signNowClientSecret || !templateId) {
+      throw new Error('SignNow credentials not configured. Need: SIGNNOW_EMAIL, SIGNNOW_PASSWORD, SIGNNOW_CLIENT_ID, SIGNNOW_CLIENT_SECRET, and SIGNNOW_TEMPLATE_ID')
     }
 
     console.log('Authenticating with SignNow...')
     
-    // Get access token via OAuth password grant
+    // Create Basic Auth header for client credentials
+    const basicAuth = btoa(`${signNowClientId}:${signNowClientSecret}`)
+    
+    // Get access token via OAuth password grant with client credentials
     const authResponse = await fetch('https://api.signnow.com/oauth2/token', {
       method: 'POST',
       headers: {
+        'Authorization': `Basic ${basicAuth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
