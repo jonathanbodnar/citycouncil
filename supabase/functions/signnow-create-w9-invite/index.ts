@@ -58,41 +58,17 @@ serve(async (req) => {
       .single()
 
     // Get SignNow credentials
-    const clientId = Deno.env.get('SIGNNOW_CLIENT_ID')
-    const clientSecret = Deno.env.get('SIGNNOW_CLIENT_SECRET')
+    // For SignNow, we need a user access token, not client credentials
+    // You should generate this token from your SignNow account and store it as an env var
+    const accessToken = Deno.env.get('SIGNNOW_ACCESS_TOKEN')
     const templateId = Deno.env.get('SIGNNOW_TEMPLATE_ID')
 
-    if (!clientId || !clientSecret || !templateId) {
-      throw new Error('SignNow credentials not configured')
+    if (!accessToken || !templateId) {
+      throw new Error('SignNow access token or template ID not configured')
     }
 
-    console.log('Getting SignNow access token...')
-    console.log('Client ID configured:', !!clientId)
+    console.log('Using SignNow access token')
     console.log('Template ID:', templateId)
-
-    // Get access token using OAuth
-    const tokenResponse = await fetch('https://api.signnow.com/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-      },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        scope: '*',
-      }),
-    })
-
-    console.log('Token response status:', tokenResponse.status)
-
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text()
-      console.error('SignNow token error response:', errorText)
-      throw new Error(`Failed to get SignNow access token (${tokenResponse.status}): ${errorText}`)
-    }
-
-    const { access_token } = await tokenResponse.json()
-    console.log('Access token obtained')
 
     // Create document from template
     console.log('Creating document from template:', templateId)
@@ -100,7 +76,7 @@ serve(async (req) => {
     const createDocResponse = await fetch(`https://api.signnow.com/template/${templateId}/copy`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -123,7 +99,7 @@ serve(async (req) => {
     const inviteResponse = await fetch(`https://api.signnow.com/document/${documentId}/invite`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -159,7 +135,7 @@ serve(async (req) => {
     const linkResponse = await fetch(`https://api.signnow.com/link`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
