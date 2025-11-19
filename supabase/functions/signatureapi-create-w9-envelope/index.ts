@@ -79,14 +79,14 @@ serve(async (req) => {
             {
               place_key: 'signature',
               page: 1,
-              x: 100,
-              y: 650,
+              left: 100,
+              top: 650,
             },
             {
               place_key: 'date',
               page: 1,
-              x: 450,
-              y: 650,
+              left: 450,
+              top: 650,
             },
           ],
         },
