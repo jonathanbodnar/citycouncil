@@ -448,7 +448,7 @@ const UserDashboard: React.FC = () => {
                           {order.talent_profiles.users.full_name}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          {order.talent_profiles.category} • ${Number(order.amount).toFixed(2)}
+                          {order.talent_profiles.category} • ${(Number(order.amount) / 100).toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-500">
                           Ordered {new Date(order.created_at).toLocaleDateString()}
