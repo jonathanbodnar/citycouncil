@@ -67,6 +67,8 @@ serve(async (req) => {
     }
 
     console.log('Getting SignNow access token...')
+    console.log('Client ID configured:', !!clientId)
+    console.log('Template ID:', templateId)
 
     // Get access token using OAuth
     const tokenResponse = await fetch('https://api.signnow.com/oauth2/token', {
@@ -81,10 +83,12 @@ serve(async (req) => {
       }),
     })
 
+    console.log('Token response status:', tokenResponse.status)
+
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text()
-      console.error('SignNow token error:', errorText)
-      throw new Error(`Failed to get SignNow access token: ${tokenResponse.statusText}`)
+      console.error('SignNow token error response:', errorText)
+      throw new Error(`Failed to get SignNow access token (${tokenResponse.status}): ${errorText}`)
     }
 
     const { access_token } = await tokenResponse.json()
