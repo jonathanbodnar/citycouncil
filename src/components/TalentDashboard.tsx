@@ -645,7 +645,7 @@ const TalentDashboard: React.FC = () => {
                           <span className="text-white ml-2">{order.recipient_name}</span>
                         </div>
                       )}
-                      <p className="text-gray-300 mb-3">{order.request_details}</p>
+                      <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <p className="text-sm text-yellow-300 italic">
                           💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
@@ -768,7 +768,7 @@ const TalentDashboard: React.FC = () => {
                           <span className="text-white ml-2">{order.recipient_name}</span>
                         </div>
                       )}
-                      <p className="text-gray-300 mb-3">{order.request_details}</p>
+                      <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <p className="text-sm text-yellow-300 italic">
                           💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
@@ -848,7 +848,7 @@ const TalentDashboard: React.FC = () => {
 
                       <div className="glass-strong p-4 rounded-md border border-white/20">
                         <h5 className="font-medium text-white mb-2">Request:</h5>
-                        <p className="text-gray-300">{order.request_details}</p>
+                        <p className="text-gray-300 whitespace-pre-wrap">{order.request_details}</p>
                       </div>
                     </div>
                   );
