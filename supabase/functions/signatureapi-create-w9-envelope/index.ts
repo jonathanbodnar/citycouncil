@@ -70,10 +70,7 @@ serve(async (req) => {
     const requestBody = {
       title: `Form W-9 - ${userData?.full_name || user.email}`,
       routing: 'sequential',
-      sender: {
-        name: 'ShoutOut',
-        email: 'noreply@shoutout.us',
-      },
+      // Note: sender field removed - will use default sender from SignatureAPI account
       documents: [
         {
           url: w9UploadUrl,
