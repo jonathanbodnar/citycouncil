@@ -207,16 +207,14 @@ const TalentProfileEditor: React.FC<TalentProfileEditorProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
+                  Email Address
                 </label>
-                <input
-                  type="email"
-                  {...register('email', { required: 'Email is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                )}
+                <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
+                  {talent.users.email}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Email cannot be changed from this panel
+                </p>
               </div>
             </div>
 
