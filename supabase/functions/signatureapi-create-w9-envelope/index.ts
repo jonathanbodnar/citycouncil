@@ -83,7 +83,7 @@ serve(async (req) => {
             },
             {
               key: 'date',
-              type: 'date_signed',
+              type: 'recipient_completed_date',
               recipient_key: 'talent',
             },
           ],
@@ -117,7 +117,7 @@ serve(async (req) => {
             },
             {
               key: 'date',
-              type: 'date_signed',
+              type: 'recipient_completed_date',
               required: true,
             },
           ],
