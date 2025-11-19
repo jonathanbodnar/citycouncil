@@ -460,7 +460,7 @@ const AdminHelpDesk: React.FC = () => {
                           {selectedConversation.user_type}
                         </span>
                       </div>
-                      <p className="text-gray-800">{message.message}</p>
+                      <p className="text-gray-800 whitespace-pre-wrap break-words">{message.message}</p>
                       <p className="text-xs text-gray-500 mt-2">
                         {new Date(message.created_at).toLocaleString()}
                       </p>
@@ -477,7 +477,7 @@ const AdminHelpDesk: React.FC = () => {
                             Support
                           </span>
                         </div>
-                        <p>{message.response}</p>
+                        <p className="whitespace-pre-wrap break-words">{message.response}</p>
                         <p className="text-xs text-blue-100 mt-2">
                           {message.updated_at ? new Date(message.updated_at).toLocaleString() : ''}
                         </p>
