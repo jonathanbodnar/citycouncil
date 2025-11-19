@@ -75,6 +75,18 @@ serve(async (req) => {
         {
           url: w9UploadUrl,
           format: 'pdf',
+          places: [
+            {
+              key: 'signature',
+              type: 'signature',
+              recipient_key: 'talent',
+            },
+            {
+              key: 'date',
+              type: 'date_signed',
+              recipient_key: 'talent',
+            },
+          ],
           fixed_positions: [
             {
               place_key: 'signature',
