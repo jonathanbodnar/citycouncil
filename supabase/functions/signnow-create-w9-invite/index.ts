@@ -69,9 +69,20 @@ serve(async (req) => {
     }
 
     console.log('Authenticating with SignNow...')
+    console.log('Using email:', signNowEmail)
+    console.log('Client ID length:', signNowClientId?.length)
+    console.log('Client Secret length:', signNowClientSecret?.length)
     
     // Create Basic Auth header for client credentials
     const basicAuth = btoa(`${signNowClientId}:${signNowClientSecret}`)
+    
+    const authBody = new URLSearchParams({
+      grant_type: 'password',
+      username: signNowEmail,
+      password: signNowPassword,
+    })
+    
+    console.log('Auth request body:', authBody.toString())
     
     // Get access token via OAuth password grant with client credentials
     const authResponse = await fetch('https://api.signnow.com/oauth2/token', {
@@ -80,21 +91,29 @@ serve(async (req) => {
         'Authorization': `Basic ${basicAuth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        grant_type: 'password',
-        username: signNowEmail,
-        password: signNowPassword,
-      }),
+      body: authBody,
     })
 
+    console.log('Auth response status:', authResponse.status)
+    
     if (!authResponse.ok) {
       const errorText = await authResponse.text()
-      console.error('SignNow auth error:', errorText)
-      throw new Error(`Failed to authenticate with SignNow: ${authResponse.statusText}`)
+      console.error('SignNow auth error response:', errorText)
+      console.error('Auth response headers:', Object.fromEntries(authResponse.headers.entries()))
+      throw new Error(`Failed to authenticate with SignNow (${authResponse.status}): ${errorText}`)
     }
 
-    const { access_token: accessToken } = await authResponse.json()
+    const authData = await authResponse.json()
+    console.log('Auth response keys:', Object.keys(authData))
+    
+    const accessToken = authData.access_token
+    if (!accessToken) {
+      console.error('No access_token in response:', authData)
+      throw new Error('No access token received from SignNow')
+    }
+    
     console.log('Successfully authenticated with SignNow')
+    console.log('Access token length:', accessToken.length)
     console.log('Template ID:', templateId)
 
     // Create document from template
