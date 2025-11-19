@@ -98,7 +98,7 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
       
       // Move to next step
       setCurrentStep(2)
-      await saveProgress(2)
+      await updateProgress(2)
       
       toast.success('W-9 completed successfully!')
     } catch (error: any) {
