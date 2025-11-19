@@ -697,7 +697,7 @@ const OrderPage: React.FC = () => {
                     {...register('requestDetails', { 
                       required: 'Please describe what you want in your ShoutOut',
                       minLength: { value: 20, message: 'Please provide more details (at least 20 characters)' },
-                      maxLength: { value: 500, message: 'Please keep your request under 500 characters' }
+                      maxLength: { value: 1000, message: 'Please keep your request under 1,000 characters' }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Tell us what you'd like included in your ShoutOut. Be specific about names, details, and the tone you want. The more information you provide, the better your video will be!"
@@ -706,7 +706,7 @@ const OrderPage: React.FC = () => {
                     <p className="mt-1 text-sm text-red-600">{errors.requestDetails.message}</p>
                   )}
                   <p className="mt-1 text-sm text-gray-500">
-                    Characters: {watch('requestDetails')?.length || 0}/500
+                    Characters: {watch('requestDetails')?.length || 0}/1,000
                   </p>
                 </div>
 
