@@ -58,16 +58,37 @@ serve(async (req) => {
       .single()
 
     // Get SignNow credentials
-    // For SignNow, we need a user access token, not client credentials
-    // You should generate this token from your SignNow account and store it as an env var
-    const accessToken = Deno.env.get('SIGNNOW_ACCESS_TOKEN')
+    const signNowEmail = Deno.env.get('SIGNNOW_EMAIL')
+    const signNowPassword = Deno.env.get('SIGNNOW_PASSWORD')
     const templateId = Deno.env.get('SIGNNOW_TEMPLATE_ID')
 
-    if (!accessToken || !templateId) {
-      throw new Error('SignNow access token or template ID not configured')
+    if (!signNowEmail || !signNowPassword || !templateId) {
+      throw new Error('SignNow credentials or template ID not configured. Need SIGNNOW_EMAIL, SIGNNOW_PASSWORD, and SIGNNOW_TEMPLATE_ID')
     }
 
-    console.log('Using SignNow access token')
+    console.log('Authenticating with SignNow...')
+    
+    // Get access token via OAuth password grant
+    const authResponse = await fetch('https://api.signnow.com/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'password',
+        username: signNowEmail,
+        password: signNowPassword,
+      }),
+    })
+
+    if (!authResponse.ok) {
+      const errorText = await authResponse.text()
+      console.error('SignNow auth error:', errorText)
+      throw new Error(`Failed to authenticate with SignNow: ${authResponse.statusText}`)
+    }
+
+    const { access_token: accessToken } = await authResponse.json()
+    console.log('Successfully authenticated with SignNow')
     console.log('Template ID:', templateId)
 
     // Create document from template
