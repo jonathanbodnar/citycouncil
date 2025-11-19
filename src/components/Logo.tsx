@@ -58,27 +58,32 @@ const Logo: React.FC<LogoProps> = ({
   const currentLogoUrl = logoUrl || defaultLogoUrl;
 
   return (
-    <div className={`flex items-center ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       {loading ? (
         <div className={`${sizeClasses.height} ${sizeClasses.width} bg-gray-200 animate-pulse rounded`} />
       ) : (
-        <img
-          src={currentLogoUrl}
-          alt="ShoutOut Logo"
-          className={`${sizeClasses.height} ${sizeClasses.width} object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
-          onError={(e) => {
-            // Fallback to default logo if custom logo fails to load
-            const target = e.target as HTMLImageElement;
-            if (target.src !== defaultLogoUrl) {
-              target.src = defaultLogoUrl;
-            } else {
-              // If even default fails, show text logo
-              target.style.display = 'none';
-              const fallback = target.nextElementSibling as HTMLElement;
-              if (fallback) fallback.style.display = 'block';
-            }
-          }}
-        />
+        <>
+          <img
+            src={currentLogoUrl}
+            alt="ShoutOut Logo"
+            className={`${sizeClasses.height} ${sizeClasses.width} object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
+            onError={(e) => {
+              // Fallback to default logo if custom logo fails to load
+              const target = e.target as HTMLImageElement;
+              if (target.src !== defaultLogoUrl) {
+                target.src = defaultLogoUrl;
+              } else {
+                // If even default fails, show text logo
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'block';
+              }
+            }}
+          />
+          <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+            beta
+          </span>
+        </>
       )}
       
       {/* Fallback text logo (hidden by default) */}
