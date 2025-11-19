@@ -130,7 +130,16 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         </div>
 
         {/* Bio Preview - Hidden on mobile, shown on sm+ - Fixed height to prevent stretching */}
-        <p className="hidden sm:block text-sm text-gray-300 mb-3 line-clamp-2 overflow-hidden">
+        <p 
+          className="hidden sm:block text-sm text-gray-300 mb-3 overflow-hidden"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
           {talent.bio}
         </p>
 
