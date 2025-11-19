@@ -109,6 +109,11 @@ serve(async (req) => {
           key: 'talent',
           name: userData?.full_name || 'Talent',
           email: userData?.email || user.email,
+          ceremony_creation: 'automatic',
+          ceremony: {
+            embeddable_in: ['*'], // Allow embedding in any domain
+            url_variant: 'standard',
+          },
           fields: [
             {
               key: 'signature',
