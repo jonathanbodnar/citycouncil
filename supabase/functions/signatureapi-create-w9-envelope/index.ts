@@ -149,6 +149,7 @@ serve(async (req) => {
     }
 
     const envelopeData = await signatureApiResponse.json()
+    console.log('SignatureAPI envelope response:', JSON.stringify(envelopeData, null, 2))
 
     // Store envelope reference in database
     const { error: insertError } = await supabaseClient

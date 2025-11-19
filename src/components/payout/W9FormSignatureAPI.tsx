@@ -67,6 +67,9 @@ const W9FormSignatureAPI: React.FC<W9FormSignatureAPIProps> = ({ onComplete, tal
         throw new Error(data.error + (data.details ? `\n${data.details}` : ''))
       }
 
+      console.log('Envelope created successfully:', data)
+      console.log('Signing URL:', data.signingUrl)
+      
       setEnvelopeId(data.envelopeId)
       setSigningUrl(data.signingUrl)
       setLoading(false)
