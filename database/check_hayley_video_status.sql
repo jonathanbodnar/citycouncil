@@ -43,37 +43,49 @@ WHERE o.talent_id IN (
 )
 ORDER BY o.created_at DESC;
 
--- Step 3: Check for any video files in storage (if exists)
--- This checks if video was uploaded but video_url wasn't saved
+-- Step 3: Check if Hayley's orders have any file references
+-- Look for order IDs in video filenames
 SELECT 
-  'Recent Video Uploads' AS check_type,
-  name AS file_name,
-  id AS file_id,
-  created_at AS uploaded_at,
-  metadata,
+  'Video Files Matching Hayley Orders' AS check_type,
+  o.id AS order_id,
+  o.status AS order_status,
+  o.video_url,
+  o.updated_at AS order_last_updated,
+  so.name AS storage_filename,
+  so.created_at AS file_uploaded_at,
   CASE 
-    WHEN name ILIKE '%hayley%' THEN '✅ Likely Hayley''s video'
-    ELSE 'Other talent'
-  END AS match_status
+    WHEN o.video_url IS NOT NULL THEN '✅ Video URL saved'
+    WHEN so.name IS NOT NULL THEN '⚠️ File exists but not linked!'
+    ELSE '📝 No file found'
+  END AS sync_status
+FROM orders o
+LEFT JOIN storage.objects so ON (
+  so.bucket_id = 'videos' 
+  AND so.name ILIKE '%' || o.id::text || '%'
+)
+WHERE o.talent_id IN (
+  SELECT id FROM talent_profiles 
+  WHERE temp_full_name ILIKE '%hayley%caronia%'
+)
+ORDER BY o.created_at DESC;
+
+-- Step 4: Check storage bucket for recent video uploads
+-- Look for videos uploaded recently (might not be linked to orders yet)
+SELECT 
+  'Storage Videos (Last 7 Days)' AS check_type,
+  name AS video_filename,
+  created_at AS uploaded_at,
+  updated_at AS last_modified,
+  metadata->>'size' AS file_size_bytes,
+  CASE 
+    WHEN metadata->>'mimetype' LIKE '%video%' THEN '✅ Video file'
+    ELSE '⚠️ Not a video'
+  END AS file_type
 FROM storage.objects
 WHERE bucket_id = 'videos'
   AND created_at > NOW() - INTERVAL '7 days'
 ORDER BY created_at DESC
 LIMIT 20;
-
--- Step 4: Check for watermark jobs or Edge Function logs
--- Look for recent watermark attempts
-SELECT 
-  'Edge Function Invocations' AS check_type,
-  id,
-  created_at,
-  request_id,
-  metadata
-FROM supabase_functions.hooks
-WHERE function_name = 'watermark-video'
-  AND created_at > NOW() - INTERVAL '7 days'
-ORDER BY created_at DESC
-LIMIT 10;
 
 -- Step 5: Check if order was manually marked as completed without video
 SELECT 
