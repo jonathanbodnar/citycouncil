@@ -814,9 +814,35 @@ const TalentDashboard: React.FC = () => {
                                 </span>
                               )}
                             </h4>
-                            <p className="text-sm text-gray-300">
-                              ${Number(order.amount).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
-                            </p>
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-300">
+                                ${(Number(order.amount) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                              </p>
+                              {(() => {
+                                const basePrice = Number(order.amount) / 100 / 1.029;
+                                const isPromo = talentProfile?.first_orders_promo_active && (talentProfile?.fulfilled_orders || 0) < 10;
+                                const adminFeePercentage = isPromo ? 0 : (order.admin_fee || talentProfile?.admin_fee_percentage || 25);
+                                const netPayout = basePrice - (basePrice * (adminFeePercentage / 100));
+                                
+                                return (
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-xs text-green-400 font-medium">
+                                      Net: ${netPayout.toFixed(2)}
+                                    </p>
+                                    {isPromo && (
+                                      <span className="text-xs glass-strong text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 font-semibold">
+                                        🎉 0% Fee
+                                      </span>
+                                    )}
+                                    {!isPromo && adminFeePercentage > 0 && (
+                                      <span className="text-xs text-gray-400">
+                                        ({adminFeePercentage}% platform fee)
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
