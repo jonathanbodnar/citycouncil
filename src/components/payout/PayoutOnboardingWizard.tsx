@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import supabase from '../../services/supabase'
 import { useAuth } from '../../context/AuthContext'
 import W9FormSignNow from './W9FormSignNow'
+import VeriffKYCStep from './VeriffKYCStep'
 import MoovOnboardingStep from './MoovOnboardingStep'
 import PlaidBankStep from './PlaidBankStep'
 
@@ -14,8 +15,9 @@ interface PayoutOnboardingWizardProps {
 
 const STEPS = [
   { id: 1, name: 'W-9 Form', description: 'Tax information' },
-  { id: 2, name: 'Moov Account', description: 'Identity verification' },
-  { id: 3, name: 'Bank Account', description: 'Link your bank' },
+  { id: 2, name: 'ID Verification', description: 'Verify your identity' },
+  { id: 3, name: 'Moov Account', description: 'Payment account setup' },
+  { id: 4, name: 'Bank Account', description: 'Link your bank' },
 ]
 
 const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onComplete, onClose }) => {
@@ -107,14 +109,28 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
     }
   }
 
-  const handleMoovComplete = async (accountId: string) => {
+  const handleVeriffComplete = async () => {
     try {
-      setMoovAccountId(accountId)
-      
       // Mark step 2 as completed
       setCompletedSteps(prev => [...prev, 2])
       setCurrentStep(3)
       await updateProgress(3)
+      
+      toast.success('Identity verification complete!')
+    } catch (error: any) {
+      console.error('Error completing Veriff step:', error)
+      toast.error(error.message || 'Failed to complete verification. Please try again.')
+    }
+  }
+
+  const handleMoovComplete = async (accountId: string) => {
+    try {
+      setMoovAccountId(accountId)
+      
+      // Mark step 3 as completed
+      setCompletedSteps(prev => [...prev, 3])
+      setCurrentStep(4)
+      await updateProgress(4)
       
       toast.success('Moov account verified!')
     } catch (error) {
@@ -129,7 +145,7 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
       const { error } = await supabase
         .from('talent_profiles')
         .update({
-          payout_onboarding_step: 4,
+          payout_onboarding_step: 5,
           payout_onboarding_completed: true,
           bank_account_linked: true
         })
@@ -139,8 +155,8 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
 
       toast.success('Payout setup complete! 🎉')
       
-      // Mark step 3 as completed
-      setCompletedSteps(prev => [...prev, 3])
+      // Mark step 4 as completed
+      setCompletedSteps(prev => [...prev, 4])
       
       // Call onComplete callback
       setTimeout(() => {
@@ -254,12 +270,27 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
               </div>
             )}
 
-            {currentStep === 2 && (
+            {currentStep === 2 && talentId && (
               <div>
                 <div className="mb-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Verify Your Identity</h3>
                   <p className="text-gray-600">
-                    Create your Moov account to verify your identity for payments.
+                    Complete ID verification using Veriff to comply with KYC requirements.
+                  </p>
+                </div>
+                <VeriffKYCStep
+                  talentId={talentId}
+                  onComplete={handleVeriffComplete}
+                />
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div>
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Payment Account Setup</h3>
+                  <p className="text-gray-600">
+                    Create your Moov account to enable payment processing.
                   </p>
                 </div>
                 <MoovOnboardingStep
@@ -270,7 +301,7 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
               </div>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 4 && (
               <div>
                 <div className="mb-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Link Your Bank Account</h3>
