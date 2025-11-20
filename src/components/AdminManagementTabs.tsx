@@ -96,17 +96,19 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         const corporateOrders = orders?.filter(o => o.is_corporate_order) || [];
         const pendingApprovalOrders = orders?.filter(o => o.approval_status === 'pending') || [];
         
-        // Orders are stored in dollars, not cents - no division needed
-        const grossGenerated = orders?.reduce((sum, order) => sum + order.amount, 0) || 0;
+        // Calculate gross revenue (all money collected by platform)
+        // orders.amount is in CENTS, so divide by 100
+        const grossGenerated = (orders?.reduce((sum, order) => sum + order.amount, 0) || 0) / 100;
         
-        // Calculate platform earnings from payouts (admin_fee_amount)
+        // Calculate platform earnings from payouts (admin_fee_amount from non-refunded orders)
         // This correctly accounts for 0% promo fee and refunds
+        // payout.admin_fee_amount is already in dollars
         const grossEarnings = payouts
           ?.filter(p => !p.is_refunded)
           .reduce((sum, payout) => sum + (payout.admin_fee_amount || 0), 0) || 0;
         
         const refundedOrders = orders?.filter(o => o.status === 'refunded') || [];
-        const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0);
+        const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0) / 100;
         
         const totalUsers = users?.filter(u => u.user_type === 'user').length || 0;
         const activeTalent = talent?.filter(t => t.is_active).length || 0;
