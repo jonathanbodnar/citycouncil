@@ -815,7 +815,7 @@ const TalentDashboard: React.FC = () => {
                               )}
                             </h4>
                             <p className="text-sm text-gray-300">
-                              ${(Number(order.amount) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                              ${(Number(order.amount) / 100 / 1.029).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>

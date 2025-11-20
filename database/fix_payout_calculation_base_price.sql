@@ -81,7 +81,7 @@ BEGIN
       net_payout_amount = payout_batches.total_payout_amount + v_payout_amount - payout_batches.total_refunded_amount,
       updated_at = NOW();
       
-    RAISE NOTICE 'Payout created: Total $% -> Base $% (minus $% processing fee) -> Admin fee: $% (%%) -> Talent gets: $%', 
+    RAISE NOTICE 'Payout created: Order total $% = Base $% (after removing $% processing fee) | Admin fee: $% (% percent) | Talent payout: $%', 
       v_order_amount_dollars, v_base_price, v_processing_fee, v_admin_fee_amount, v_admin_fee_pct, v_payout_amount;
   END IF;
   
@@ -154,7 +154,7 @@ BEGIN
     WHERE id = v_payout.talent_id;
     
     IF ABS(v_payout_delta) > 0.01 THEN  -- Only log if significant change
-      RAISE NOTICE 'Payout %: Order total $% -> Base $% (-%$ fee) -> Talent $% (was $%)',
+      RAISE NOTICE 'Fixed payout %: Order total $% -> Base $% (removed $% fee) -> Talent $% (was $%)',
         v_payout.order_id::text, v_order_total_dollars, v_base_price, v_processing_fee, v_correct_payout, v_old_payout_amount;
     END IF;
   END LOOP;
