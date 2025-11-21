@@ -58,6 +58,38 @@ const DemoPage: React.FC = () => {
     setUserInteracted(true);
   };
 
+  // Shuffle videos ensuring no back-to-back repeats of same talent
+  const shuffleWithoutBackToBack = (items: VideoFeedItem[]): VideoFeedItem[] => {
+    if (items.length <= 1) return items;
+    
+    // First, do a random shuffle
+    const shuffled = [...items].sort(() => Math.random() - 0.5);
+    
+    // Then fix any back-to-back duplicates
+    const result: VideoFeedItem[] = [shuffled[0]];
+    const remaining = shuffled.slice(1);
+    
+    while (remaining.length > 0) {
+      const lastTalentId = result[result.length - 1].talent.id;
+      
+      // Find the first video that's not from the same talent
+      const nextIndex = remaining.findIndex(v => v.talent.id !== lastTalentId);
+      
+      if (nextIndex === -1) {
+        // All remaining videos are from the same talent
+        // Just add them (unavoidable if we only have one talent's videos left)
+        result.push(...remaining);
+        break;
+      }
+      
+      // Add the different talent's video and remove it from remaining
+      result.push(remaining[nextIndex]);
+      remaining.splice(nextIndex, 1);
+    }
+    
+    return result;
+  };
+
   useEffect(() => {
     fetchVideosAndTalent();
   }, []);
@@ -161,8 +193,8 @@ const DemoPage: React.FC = () => {
         }
       });
 
-      // Shuffle videos for variety
-      const shuffledVideos = videoItems.sort(() => Math.random() - 0.5);
+      // Shuffle videos while preventing same talent back-to-back
+      const shuffledVideos = shuffleWithoutBackToBack(videoItems);
       setVideos(shuffledVideos);
     } catch (error) {
       console.error('Error fetching videos:', error);
