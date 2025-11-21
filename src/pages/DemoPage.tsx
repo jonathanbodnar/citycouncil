@@ -9,6 +9,7 @@ import ReelsVideoPlayer from '../components/ReelsVideoPlayer';
 import TalentPanel from '../components/TalentPanel';
 import OrdersPanel from '../components/OrdersPanel';
 import ProfilePanel from '../components/ProfilePanel';
+import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
@@ -309,14 +310,9 @@ const DemoPage: React.FC = () => {
       onWheel={handleWheel}
     >
       {/* Top Navigation Menu */}
-      <div className="absolute top-0 left-0 right-0 z-20 bg-black/40 backdrop-blur-md border-b border-white/10">
+      <div className="absolute top-0 left-0 right-0 z-20">
         <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-            </svg>
-            <span className="text-white text-lg font-bold">ShoutOut</span>
-          </div>
+          <Logo size="sm" theme="dark" />
           
           {/* Tab indicators */}
           <div className="flex gap-4 text-sm">
