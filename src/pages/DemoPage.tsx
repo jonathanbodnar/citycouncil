@@ -514,8 +514,8 @@ const DemoPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Navigation arrows - left side */}
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 pointer-events-auto z-10">
+                  {/* Navigation arrows - left side (desktop only) */}
+                  <div className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 flex-col gap-4 pointer-events-auto z-10">
                     {/* Up arrow - previous video */}
                     <button
                       onClick={() => {
