@@ -11,6 +11,7 @@ const ReelsVideoPlayer: React.FC<ReelsVideoPlayerProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
 
   useEffect(() => {
     const video = videoRef.current;
@@ -20,17 +21,29 @@ const ReelsVideoPlayer: React.FC<ReelsVideoPlayerProps> = ({
     video.load();
 
     if (isActive) {
-      // Auto-play when active with a small delay to ensure video is ready
+      // Auto-play when active - start muted to bypass browser restrictions
       const playTimeout = setTimeout(() => {
-        video.play().catch(err => {
-          console.error('Error playing video:', err);
-        });
+        video.muted = true; // Ensure muted for autoplay
+        video.play()
+          .then(() => {
+            // Once playing, unmute after a brief moment
+            setTimeout(() => {
+              if (video && !video.paused) {
+                video.muted = false;
+                setIsMuted(false);
+              }
+            }, 100);
+          })
+          .catch(err => {
+            console.error('Error playing video:', err);
+          });
       }, 100);
       
       return () => clearTimeout(playTimeout);
     } else {
       // Pause when not active
       video.pause();
+      setIsMuted(true); // Reset to muted when not active
     }
   }, [isActive]);
 
@@ -39,14 +52,26 @@ const ReelsVideoPlayer: React.FC<ReelsVideoPlayerProps> = ({
     if (!video) return;
 
     setIsLoading(true);
+    setIsMuted(true); // Reset to muted for new video
     // Reset video when URL changes
     video.currentTime = 0;
+    video.muted = true;
     video.load(); // Preload new video
     
     if (isActive) {
-      video.play().catch(err => {
-        console.error('Error playing video:', err);
-      });
+      video.play()
+        .then(() => {
+          // Unmute after starting
+          setTimeout(() => {
+            if (video && !video.paused) {
+              video.muted = false;
+              setIsMuted(false);
+            }
+          }, 100);
+        })
+        .catch(err => {
+          console.error('Error playing video:', err);
+        });
     }
   }, [videoUrl, isActive]);
 
@@ -58,26 +83,29 @@ const ReelsVideoPlayer: React.FC<ReelsVideoPlayerProps> = ({
         className="w-full h-full object-cover"
         loop
         playsInline
-        muted={false}
+        muted={isMuted}
         autoPlay
         controls={false}
         preload="auto"
         onLoadedData={() => {
           setIsLoading(false);
-          // Auto-play when data is loaded
+          // Auto-play when data is loaded (muted to bypass restrictions)
           if (isActive && videoRef.current) {
-            videoRef.current.play().catch(err => {
-              console.error('Error playing video:', err);
-            });
-          }
-        }}
-        onCanPlay={() => {
-          setIsLoading(false);
-          // Auto-play when video can play
-          if (isActive && videoRef.current) {
-            videoRef.current.play().catch(err => {
-              console.error('Error playing video:', err);
-            });
+            const video = videoRef.current;
+            video.muted = true;
+            video.play()
+              .then(() => {
+                // Unmute after starting
+                setTimeout(() => {
+                  if (video && !video.paused) {
+                    video.muted = false;
+                    setIsMuted(false);
+                  }
+                }, 100);
+              })
+              .catch(err => {
+                console.error('Error playing video:', err);
+              });
           }
         }}
         onClick={() => {
