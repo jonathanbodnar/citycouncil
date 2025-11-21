@@ -196,6 +196,9 @@ const DemoPage: React.FC = () => {
 
       // Add order videos with real like counts - manually match talent
       let orderVideoCount = 0;
+      let skippedOrders = 0;
+      let missingTalent: string[] = [];
+      
       (orderVideos || []).forEach((order: any) => {
         // Find the matching talent profile from our already-fetched talent list
         const talentProfile = talentWithUsers.find(t => t.id === order.talent_id);
@@ -210,10 +213,16 @@ const DemoPage: React.FC = () => {
             likes: order.like_count || 0,
             isLiked: false,
           });
+        } else {
+          skippedOrders++;
+          if (!talentProfile) {
+            missingTalent.push(order.talent_id);
+          }
         }
       });
       
       console.log(`📊 Order videos with valid talent & video_url: ${orderVideoCount}`);
+      console.log(`⚠️ Skipped orders: ${skippedOrders}, Missing talent IDs: ${missingTalent.join(', ')}`);
 
       console.log(`📊 TOTAL video items before shuffle: ${videoItems.length}`);
       
@@ -233,7 +242,7 @@ const DemoPage: React.FC = () => {
       // Alert on mobile to see the count
       if ('ontouchstart' in window) {
         setTimeout(() => {
-          alert(`Videos loaded: ${shuffledVideos.length}\nBefore shuffle: ${videoItems.length}\nPromo: ${promoVideoCount}\nOrders: ${orderVideoCount}`);
+          alert(`Videos loaded: ${shuffledVideos.length}\nBefore shuffle: ${videoItems.length}\nPromo: ${promoVideoCount}\nOrders: ${orderVideoCount}\nSkipped: ${skippedOrders}\nOrder Videos Fetched: ${orderVideos?.length || 0}\nTalent Profiles: ${talentWithUsers.length}`);
         }, 1000);
       }
     } catch (error) {
