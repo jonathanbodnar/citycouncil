@@ -172,18 +172,68 @@ const DemoPage: React.FC = () => {
     }
   };
 
-  const handleLike = (videoId: string) => {
+  const handleLike = async (videoId: string) => {
+    const video = videos.find(v => v.id === videoId);
+    if (!video) return;
+
+    const isCurrentlyLiked = video.isLiked;
+    const newLikeCount = isCurrentlyLiked ? video.likes - 1 : video.likes + 1;
+
+    // Optimistically update UI
     setVideos(prev =>
-      prev.map(video =>
-        video.id === videoId
+      prev.map(v =>
+        v.id === videoId
           ? {
-              ...video,
-              isLiked: !video.isLiked,
-              likes: video.isLiked ? video.likes - 1 : video.likes + 1,
+              ...v,
+              isLiked: !isCurrentlyLiked,
+              likes: newLikeCount,
             }
-          : video
+          : v
       )
     );
+
+    // Save to database if it's an order video (not a promo video)
+    if (video.order_id) {
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ like_count: newLikeCount })
+          .eq('id', video.order_id);
+
+        if (error) {
+          console.error('Error updating like count:', error);
+          // Revert optimistic update on error
+          setVideos(prev =>
+            prev.map(v =>
+              v.id === videoId
+                ? {
+                    ...v,
+                    isLiked: isCurrentlyLiked,
+                    likes: video.likes,
+                  }
+                : v
+            )
+          );
+          toast.error('Failed to save like');
+        }
+      } catch (error) {
+        console.error('Error saving like:', error);
+        // Revert on error
+        setVideos(prev =>
+          prev.map(v =>
+            v.id === videoId
+              ? {
+                  ...v,
+                  isLiked: isCurrentlyLiked,
+                  likes: video.likes,
+                }
+              : v
+          )
+        );
+      }
+    }
+    // For promo videos (no order_id), we could store in a separate table
+    // For now, just update locally without persisting
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
