@@ -59,7 +59,7 @@ const DemoPage: React.FC = () => {
           )
         `)
         .eq('is_active', true)
-        .order('display_order', { ascending: true, nullsLast: true });
+        .order('display_order', { ascending: true, nullsFirst: false });
 
       if (talentError) throw talentError;
 
