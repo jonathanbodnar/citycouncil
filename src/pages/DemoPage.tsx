@@ -371,19 +371,19 @@ const DemoPage: React.FC = () => {
         }}
       >
         {/* Feed Panel */}
-        <div className="w-screen h-full relative flex-shrink-0 flex items-center justify-center">
+        <div className="w-screen h-full relative flex-shrink-0 flex items-start justify-center pt-16">
           {currentVideo && (
             <>
               {/* Video Container - Bordered and contained */}
-              <div className="relative w-full h-full max-w-md mx-auto flex items-center justify-center">
+              <div className="relative w-full h-full max-w-md mx-auto">
                 <div 
                   className="relative rounded-3xl overflow-hidden border-4 border-white/20 shadow-2xl"
                   style={{
                     width: '90%',
                     maxWidth: '500px',
-                    height: 'calc(100vh - 180px)',
-                    maxHeight: '800px',
-                    marginTop: '80px'
+                    height: 'calc(100vh - 80px)',
+                    maxHeight: '900px',
+                    margin: '0 auto'
                   }}
                 >
                   <ReelsVideoPlayer
@@ -449,7 +449,7 @@ const DemoPage: React.FC = () => {
                           {currentVideo.talent.position}
                         </div>
                         <Link
-                          to={`/order/${currentVideo.talent.id}`}
+                          to={`/${currentVideo.talent.username || currentVideo.talent.id}`}
                           className="bg-blue-600/90 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/90 transition-colors shadow-lg"
                         >
                           Order now: {currentVideo.talent.temp_full_name ||
