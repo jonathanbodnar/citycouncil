@@ -158,36 +158,12 @@ const DemoPage: React.FC = () => {
 
       setTalent(talentWithUsers);
 
-      // Fetch promotional videos with real like counts
-      // 1. Get completed orders with promotional use allowed - FETCH IN BATCHES for mobile compatibility
-      let orderVideos: any[] = [];
-      let hasMore = true;
-      let page = 0;
-      const pageSize = 100;
-      
-      while (hasMore && page < 20) { // Max 20 pages = 2000 records
-        const start = page * pageSize;
-        const end = start + pageSize - 1;
-        
-        const { data: batch, error: orderError } = await supabase
-          .from('orders')
-          .select('id, video_url, talent_id, like_count')
-          .eq('status', 'completed')
-          .eq('allow_promotional_use', true)
-          .not('video_url', 'is', null)
-          .order('created_at', { ascending: false })
-          .range(start, end);
-
-        if (orderError) throw orderError;
-        
-        if (batch && batch.length > 0) {
-          orderVideos = [...orderVideos, ...batch];
-          hasMore = batch.length === pageSize; // If we got a full page, there might be more
-          page++;
-        } else {
-          hasMore = false;
-        }
-      }
+      // Fetch promotional videos - SIMPLEST POSSIBLE QUERY
+      const { data: orderVideos, error: orderError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', 'completed')
+        .eq('allow_promotional_use', true);
       
       console.log(`📊 Loaded ${orderVideos?.length || 0} order videos (simplified query)`);
       console.log(`📊 Total talent profiles fetched: ${talentWithUsers.length}`);
@@ -217,12 +193,20 @@ const DemoPage: React.FC = () => {
       let orderVideoCount = 0;
       let skippedOrders = 0;
       let missingTalent: string[] = [];
+      let noVideoUrl = 0;
+      
+      console.log(`🔍 RAW orderVideos from DB: ${JSON.stringify(orderVideos?.length)}`);
       
       (orderVideos || []).forEach((order: any) => {
+        if (!order.video_url) {
+          noVideoUrl++;
+          return;
+        }
+        
         // Find the matching talent profile from our already-fetched talent list
         const talentProfile = talentWithUsers.find(t => t.id === order.talent_id);
         
-        if (talentProfile && order.video_url) {
+        if (talentProfile) {
           orderVideoCount++;
           videoItems.push({
             id: order.id,
@@ -234,14 +218,12 @@ const DemoPage: React.FC = () => {
           });
         } else {
           skippedOrders++;
-          if (!talentProfile) {
-            missingTalent.push(order.talent_id);
-          }
+          missingTalent.push(order.talent_id);
         }
       });
       
       console.log(`📊 Order videos with valid talent & video_url: ${orderVideoCount}`);
-      console.log(`⚠️ Skipped orders: ${skippedOrders}, Missing talent IDs: ${missingTalent.join(', ')}`);
+      console.log(`⚠️ No video_url: ${noVideoUrl}, Skipped orders: ${skippedOrders}, Missing talent IDs: ${missingTalent.join(', ')}`);
 
       console.log(`📊 TOTAL video items before shuffle: ${videoItems.length}`);
       
