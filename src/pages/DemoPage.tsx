@@ -111,6 +111,14 @@ const DemoPage: React.FC = () => {
     fetchVideosAndTalent();
   }, []);
 
+  // Log current video info whenever it changes
+  useEffect(() => {
+    if (videos.length > 0 && currentVideoIndex < videos.length) {
+      const video = videos[currentVideoIndex];
+      console.log(`🎬 Video ${currentVideoIndex + 1}/${videos.length}: ${video.talent.temp_full_name || video.talent.users.full_name} (ID: ${video.id})`);
+    }
+  }, [currentVideoIndex, videos]);
+
   const fetchVideosAndTalent = async () => {
     try {
       setLoading(true);
