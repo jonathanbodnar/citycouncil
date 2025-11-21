@@ -579,12 +579,15 @@ const DemoPage: React.FC = () => {
 
                   {/* Bottom CTA */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none pb-6">
-                    <div className="text-white">
+                    <div className="text-white flex justify-center">
                       <Link
                         to={`/${currentVideo.talent.username || currentVideo.talent.id}`}
-                        className="bg-blue-600/90 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/90 transition-colors shadow-lg"
+                        className="relative bg-white/20 backdrop-blur-lg border border-white/30 rounded-full px-6 py-3 text-center font-bold text-base inline-flex items-center gap-3 pointer-events-auto hover:bg-white/30 transition-all shadow-2xl hover:scale-105"
                       >
-                        Order now - ${currentVideo.talent.pricing}
+                        <span className="text-white drop-shadow-lg">Order Personalized Video</span>
+                        <span className="bg-white/90 text-black px-3 py-1 rounded-full text-sm font-black shadow-lg">
+                          ${currentVideo.talent.pricing}
+                        </span>
                       </Link>
                     </div>
                   </div>
