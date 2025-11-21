@@ -127,7 +127,7 @@ const DemoPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch all talent profiles
+      // Fetch all talent profiles (including inactive ones for order matching)
       const { data: talentData, error: talentError } = await supabase
         .from('talent_profiles')
         .select(`
@@ -138,7 +138,6 @@ const DemoPage: React.FC = () => {
             avatar_url
           )
         `)
-        .eq('is_active', true)
         .order('display_order', { ascending: true, nullsFirst: false });
 
       if (talentError) throw talentError;
@@ -177,10 +176,11 @@ const DemoPage: React.FC = () => {
       // 2. Get talent promo videos
       const videoItems: VideoFeedItem[] = [];
       
-      // Add promo videos from talent profiles (use total_orders as proxy for popularity)
+      // Add promo videos from ACTIVE talent profiles only (use total_orders as proxy for popularity)
       let promoVideoCount = 0;
       talentWithUsers.forEach((talentProfile: any) => {
-        if (talentProfile.promo_video_url) {
+        // Only show promo videos from active talent
+        if (talentProfile.promo_video_url && talentProfile.is_active) {
           promoVideoCount++;
           videoItems.push({
             id: `promo-${talentProfile.id}`,
@@ -192,7 +192,7 @@ const DemoPage: React.FC = () => {
         }
       });
       
-      console.log(`📊 Talent with promo_video_url: ${promoVideoCount}`);
+      console.log(`📊 Active talent with promo_video_url: ${promoVideoCount}`);
 
       // Add order videos with real like counts - manually match talent
       let orderVideoCount = 0;
