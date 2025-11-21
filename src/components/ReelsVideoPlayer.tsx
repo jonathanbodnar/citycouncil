@@ -20,10 +20,14 @@ const ReelsVideoPlayer: React.FC<ReelsVideoPlayerProps> = ({
     video.load();
 
     if (isActive) {
-      // Auto-play when active
-      video.play().catch(err => {
-        console.error('Error playing video:', err);
-      });
+      // Auto-play when active with a small delay to ensure video is ready
+      const playTimeout = setTimeout(() => {
+        video.play().catch(err => {
+          console.error('Error playing video:', err);
+        });
+      }, 100);
+      
+      return () => clearTimeout(playTimeout);
     } else {
       // Pause when not active
       video.pause();
@@ -55,10 +59,27 @@ const ReelsVideoPlayer: React.FC<ReelsVideoPlayerProps> = ({
         loop
         playsInline
         muted={false}
+        autoPlay
         controls={false}
         preload="auto"
-        onLoadedData={() => setIsLoading(false)}
-        onCanPlay={() => setIsLoading(false)}
+        onLoadedData={() => {
+          setIsLoading(false);
+          // Auto-play when data is loaded
+          if (isActive && videoRef.current) {
+            videoRef.current.play().catch(err => {
+              console.error('Error playing video:', err);
+            });
+          }
+        }}
+        onCanPlay={() => {
+          setIsLoading(false);
+          // Auto-play when video can play
+          if (isActive && videoRef.current) {
+            videoRef.current.play().catch(err => {
+              console.error('Error playing video:', err);
+            });
+          }
+        }}
         onClick={() => {
           // Toggle play/pause on tap
           if (videoRef.current) {
