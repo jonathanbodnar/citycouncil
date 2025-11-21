@@ -60,8 +60,6 @@ const DemoPage: React.FC = () => {
 
   // Shuffle videos ensuring no back-to-back repeats of same talent
   const shuffleWithoutBackToBack = (items: VideoFeedItem[]): VideoFeedItem[] => {
-    console.log(`🔀 Shuffle input: ${items.length} videos`);
-    
     if (items.length <= 1) return items;
     
     // First, do a random shuffle
@@ -69,39 +67,26 @@ const DemoPage: React.FC = () => {
     
     // Then fix any back-to-back duplicates
     const result: VideoFeedItem[] = [shuffled[0]];
-    const remaining = [...shuffled.slice(1)]; // Make a copy to avoid mutation issues
+    const remaining = [...shuffled.slice(1)];
     
     let iterations = 0;
     while (remaining.length > 0) {
       iterations++;
       if (iterations > items.length * 2) {
-        console.error('⚠️ Infinite loop detected in shuffle, breaking');
         result.push(...remaining);
         break;
       }
       
       const lastTalentId = result[result.length - 1].talent.id;
-      
-      // Find the first video that's not from the same talent
       const nextIndex = remaining.findIndex(v => v.talent.id !== lastTalentId);
       
       if (nextIndex === -1) {
-        // All remaining videos are from the same talent
-        // Just add them (unavoidable if we only have one talent's videos left)
-        console.log(`ℹ️ Adding final ${remaining.length} videos from same talent`);
         result.push(...remaining);
         break;
       }
       
-      // Add the different talent's video and remove it from remaining
       result.push(remaining[nextIndex]);
       remaining.splice(nextIndex, 1);
-    }
-    
-      console.log(`✅ Shuffle output: ${result.length} videos (iterations: ${iterations})`);
-    
-    if (result.length !== items.length) {
-      console.error(`❌ VIDEO COUNT MISMATCH! Input: ${items.length}, Output: ${result.length}`);
     }
     
     return result;
@@ -111,13 +96,6 @@ const DemoPage: React.FC = () => {
     fetchVideosAndTalent();
   }, []);
 
-  // Log current video info whenever it changes
-  useEffect(() => {
-    if (videos.length > 0 && currentVideoIndex < videos.length) {
-      const video = videos[currentVideoIndex];
-      console.log(`🎬 Video ${currentVideoIndex + 1}/${videos.length}: ${video.talent.temp_full_name || video.talent.users.full_name} (ID: ${video.id})`);
-    }
-  }, [currentVideoIndex, videos]);
 
   const fetchVideosAndTalent = async () => {
     try {
@@ -160,9 +138,6 @@ const DemoPage: React.FC = () => {
         .select('*')
         .eq('status', 'completed')
         .eq('allow_promotional_use', true);
-      
-      console.log(`📊 Loaded ${orderVideos?.length || 0} order videos (simplified query)`);
-      console.log(`📊 Total talent profiles fetched: ${talentWithUsers.length}`);
 
       // 2. Get talent promo videos
       const videoItems: VideoFeedItem[] = [];
@@ -182,22 +157,12 @@ const DemoPage: React.FC = () => {
           });
         }
       });
-      
-      console.log(`📊 Active talent with promo_video_url: ${promoVideoCount}`);
 
       // Add order videos with real like counts - manually match talent
       let orderVideoCount = 0;
-      let skippedOrders = 0;
-      let missingTalent: string[] = [];
-      let noVideoUrl = 0;
-      
-      console.log(`🔍 RAW orderVideos from DB: ${JSON.stringify(orderVideos?.length)}`);
       
       (orderVideos || []).forEach((order: any) => {
-        if (!order.video_url) {
-          noVideoUrl++;
-          return;
-        }
+        if (!order.video_url) return;
         
         // Find the matching talent profile from our already-fetched talent list
         const talentProfile = talentWithUsers.find(t => t.id === order.talent_id);
@@ -212,32 +177,12 @@ const DemoPage: React.FC = () => {
             likes: order.like_count || 0,
             isLiked: false,
           });
-        } else {
-          skippedOrders++;
-          missingTalent.push(order.talent_id);
         }
       });
-      
-      console.log(`📊 Order videos with valid talent & video_url: ${orderVideoCount}`);
-      console.log(`⚠️ No video_url: ${noVideoUrl}, Skipped orders: ${skippedOrders}, Missing talent IDs: ${missingTalent.join(', ')}`);
 
-      console.log(`📊 TOTAL video items before shuffle: ${videoItems.length}`);
-      
-      // Check for duplicate video IDs
-      const videoIds = videoItems.map(v => v.id);
-      const uniqueIds = new Set(videoIds);
-      if (videoIds.length !== uniqueIds.size) {
-        console.warn(`⚠️ Found ${videoIds.length - uniqueIds.size} duplicate video IDs!`);
-      }
-      
       // Shuffle videos while preventing same talent back-to-back
       const shuffledVideos = shuffleWithoutBackToBack(videoItems);
       setVideos(shuffledVideos);
-      
-      console.log(`✅ Final shuffled videos loaded: ${shuffledVideos.length}`);
-      
-      // Log final counts
-      console.log(`✅ FINAL: ${shuffledVideos.length} videos total (${promoVideoCount} promo + ${orderVideoCount} orders)`);
     } catch (error) {
       console.error('Error fetching videos:', error);
       toast.error('Failed to load videos');
@@ -333,19 +278,15 @@ const DemoPage: React.FC = () => {
     const deltaX = touchEndX - touchStartX.current;
     const deltaY = touchEndY - touchStartY.current;
 
-    console.log(`📱 Touch: deltaX=${deltaX.toFixed(0)}, deltaY=${deltaY.toFixed(0)}, currentIndex=${currentVideoIndex}`);
-
     // Determine if swipe is more horizontal or vertical
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       // Horizontal swipe
       if (Math.abs(deltaX) > 50) {
-        console.log(`↔️ Horizontal swipe detected`);
         handleHorizontalSwipe(deltaX);
       }
     } else {
       // Vertical swipe
       if (Math.abs(deltaY) > 50) {
-        console.log(`↕️ Vertical swipe detected (up: ${deltaY < 0})`);
         handleVerticalSwipe(deltaY);
       }
     }
@@ -387,18 +328,10 @@ const DemoPage: React.FC = () => {
 
     if (deltaY < 0) {
       // Swipe up - next video
-      setCurrentVideoIndex(prev => {
-        const nextIndex = prev < videos.length - 1 ? prev + 1 : prev;
-        console.log(`⬆️ Swiped up: ${prev} -> ${nextIndex} (total: ${videos.length})`);
-        return nextIndex;
-      });
+      setCurrentVideoIndex(prev => prev < videos.length - 1 ? prev + 1 : prev);
     } else {
       // Swipe down - previous video
-      setCurrentVideoIndex(prev => {
-        const nextIndex = prev > 0 ? prev - 1 : 0;
-        console.log(`⬇️ Swiped down: ${prev} -> ${nextIndex}`);
-        return nextIndex;
-      });
+      setCurrentVideoIndex(prev => prev > 0 ? prev - 1 : 0);
     }
   };
 
@@ -409,18 +342,10 @@ const DemoPage: React.FC = () => {
     e.preventDefault();
     if (e.deltaY > 0) {
       // Scroll down - next video
-      setCurrentVideoIndex(prev => {
-        const nextIndex = prev < videos.length - 1 ? prev + 1 : prev;
-        console.log(`🖱️ Wheel down: ${prev} -> ${nextIndex} (total: ${videos.length})`);
-        return nextIndex;
-      });
+      setCurrentVideoIndex(prev => prev < videos.length - 1 ? prev + 1 : prev);
     } else {
       // Scroll up - previous video
-      setCurrentVideoIndex(prev => {
-        const nextIndex = prev > 0 ? prev - 1 : 0;
-        console.log(`🖱️ Wheel up: ${prev} -> ${nextIndex}`);
-        return nextIndex;
-      });
+      setCurrentVideoIndex(prev => prev > 0 ? prev - 1 : 0);
     }
   };
 
