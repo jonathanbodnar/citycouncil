@@ -132,7 +132,7 @@ const DemoPage: React.FC = () => {
 
       // Fetch promotional videos with real like counts
       // 1. Get completed orders with promotional use allowed
-      const { data: orderVideos, error: orderError } = await supabase
+      const { data: orderVideos, error: orderError, count } = await supabase
         .from('orders')
         .select(`
           id,
@@ -147,13 +147,16 @@ const DemoPage: React.FC = () => {
               avatar_url
             )
           )
-        `)
+        `, { count: 'exact' })
         .eq('status', 'completed')
         .eq('allow_promotional_use', true)
         .not('video_url', 'is', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(1000); // Set explicit high limit
 
       if (orderError) throw orderError;
+      
+      console.log(`Loaded ${orderVideos?.length || 0} order videos out of ${count} total promotional orders`);
 
       // 2. Get talent promo videos
       const videoItems: VideoFeedItem[] = [];
@@ -193,9 +196,15 @@ const DemoPage: React.FC = () => {
         }
       });
 
+      console.log(`Total video items before shuffle: ${videoItems.length}`);
+      console.log(`Promo videos: ${talentWithUsers.filter(t => t.promo_video_url).length}`);
+      console.log(`Order videos: ${orderVideos?.length || 0}`);
+      
       // Shuffle videos while preventing same talent back-to-back
       const shuffledVideos = shuffleWithoutBackToBack(videoItems);
       setVideos(shuffledVideos);
+      
+      console.log(`Final shuffled videos: ${shuffledVideos.length}`);
     } catch (error) {
       console.error('Error fetching videos:', error);
       toast.error('Failed to load videos');
