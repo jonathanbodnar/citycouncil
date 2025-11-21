@@ -181,7 +181,7 @@ const DemoPage: React.FC = () => {
         .eq('allow_promotional_use', true)
         .not('video_url', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(1000); // Set explicit high limit
+        .range(0, 999); // Explicitly fetch rows 0-999 (up to 1000 videos)
 
       if (orderError) throw orderError;
       
