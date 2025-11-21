@@ -297,9 +297,12 @@ const DemoPage: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="h-screen w-screen overflow-hidden relative"
+      className="fixed inset-0 overflow-hidden"
       style={{
-        background: 'linear-gradient(to bottom right, #a70809, #3c108b)'
+        background: 'linear-gradient(to bottom right, #a70809, #3c108b)',
+        height: '100vh',
+        width: '100vw',
+        touchAction: 'none'
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -368,12 +371,21 @@ const DemoPage: React.FC = () => {
         }}
       >
         {/* Feed Panel */}
-        <div className="w-screen h-full relative flex-shrink-0 flex items-center justify-center pt-20 pb-32">
+        <div className="w-screen h-full relative flex-shrink-0 flex items-center justify-center">
           {currentVideo && (
             <>
               {/* Video Container - Bordered and contained */}
-              <div className="relative w-full max-w-md mx-auto h-full">
-                <div className="absolute inset-4 rounded-3xl overflow-hidden border-4 border-white/20 shadow-2xl">
+              <div className="relative w-full h-full max-w-md mx-auto flex items-center justify-center">
+                <div 
+                  className="relative rounded-3xl overflow-hidden border-4 border-white/20 shadow-2xl"
+                  style={{
+                    width: '90%',
+                    maxWidth: '500px',
+                    height: 'calc(100vh - 180px)',
+                    maxHeight: '800px',
+                    marginTop: '80px'
+                  }}
+                >
                   <ReelsVideoPlayer
                     videoUrl={currentVideo.video_url}
                     isActive={currentPanel === 'feed'}
@@ -426,9 +438,9 @@ const DemoPage: React.FC = () => {
                       </Link>
                     </div>
 
-                    {/* Bottom info */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent pointer-events-none">
-                      <div className="text-white mb-20">
+                    {/* Bottom info - overlapping with circles */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none pb-24">
+                      <div className="text-white">
                         <div className="font-bold mb-1">
                           {currentVideo.talent.temp_full_name ||
                             currentVideo.talent.users.full_name}
@@ -438,7 +450,7 @@ const DemoPage: React.FC = () => {
                         </div>
                         <Link
                           to={`/order/${currentVideo.talent.id}`}
-                          className="bg-blue-600/80 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/80 transition-colors"
+                          className="bg-blue-600/90 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/90 transition-colors shadow-lg"
                         >
                           Order now: {currentVideo.talent.temp_full_name ||
                             currentVideo.talent.users.full_name} - $
@@ -446,30 +458,33 @@ const DemoPage: React.FC = () => {
                         </Link>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Talent circles at bottom - Fixed positioning with horizontal scroll */}
-              <div className="absolute bottom-4 left-0 right-0 px-4 z-10 talent-circles-container">
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 scroll-smooth touch-pan-x">
-                  {talent.map(t => (
-                    <Link
-                      key={t.id}
-                      to={`/${t.username || t.id}`}
-                      className="flex-shrink-0"
-                    >
-                      <img
-                        src={
-                          t.temp_avatar_url ||
-                          t.users.avatar_url ||
-                          '/default-avatar.png'
-                        }
-                        alt={t.temp_full_name || t.users.full_name}
-                        className="w-16 h-16 rounded-full border-3 border-white/70 object-cover hover:border-blue-400 hover:scale-110 transition-all shadow-lg"
-                      />
-                    </Link>
-                  ))}
+                    {/* Talent circles - overlapping bottom of video */}
+                    <div className="absolute bottom-2 left-0 right-0 px-4 z-20 talent-circles-container pointer-events-auto">
+                      <div 
+                        className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 scroll-smooth"
+                        style={{ touchAction: 'pan-x' }}
+                      >
+                        {talent.map(t => (
+                          <Link
+                            key={t.id}
+                            to={`/${t.username || t.id}`}
+                            className="flex-shrink-0"
+                          >
+                            <img
+                              src={
+                                t.temp_avatar_url ||
+                                t.users.avatar_url ||
+                                '/default-avatar.png'
+                              }
+                              alt={t.temp_full_name || t.users.full_name}
+                              className="w-16 h-16 rounded-full border-3 border-white/90 object-cover hover:border-blue-400 hover:scale-110 transition-all shadow-xl"
+                            />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </>
