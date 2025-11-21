@@ -60,6 +60,8 @@ const DemoPage: React.FC = () => {
 
   // Shuffle videos ensuring no back-to-back repeats of same talent
   const shuffleWithoutBackToBack = (items: VideoFeedItem[]): VideoFeedItem[] => {
+    console.log(`🔀 Shuffle input: ${items.length} videos`);
+    
     if (items.length <= 1) return items;
     
     // First, do a random shuffle
@@ -67,9 +69,17 @@ const DemoPage: React.FC = () => {
     
     // Then fix any back-to-back duplicates
     const result: VideoFeedItem[] = [shuffled[0]];
-    const remaining = shuffled.slice(1);
+    const remaining = [...shuffled.slice(1)]; // Make a copy to avoid mutation issues
     
+    let iterations = 0;
     while (remaining.length > 0) {
+      iterations++;
+      if (iterations > items.length * 2) {
+        console.error('⚠️ Infinite loop detected in shuffle, breaking');
+        result.push(...remaining);
+        break;
+      }
+      
       const lastTalentId = result[result.length - 1].talent.id;
       
       // Find the first video that's not from the same talent
@@ -78,6 +88,7 @@ const DemoPage: React.FC = () => {
       if (nextIndex === -1) {
         // All remaining videos are from the same talent
         // Just add them (unavoidable if we only have one talent's videos left)
+        console.log(`ℹ️ Adding final ${remaining.length} videos from same talent`);
         result.push(...remaining);
         break;
       }
@@ -85,6 +96,12 @@ const DemoPage: React.FC = () => {
       // Add the different talent's video and remove it from remaining
       result.push(remaining[nextIndex]);
       remaining.splice(nextIndex, 1);
+    }
+    
+    console.log(`✅ Shuffle output: ${result.length} videos (iterations: ${iterations})`);
+    
+    if (result.length !== items.length) {
+      console.error(`❌ VIDEO COUNT MISMATCH! Input: ${items.length}, Output: ${result.length}`);
     }
     
     return result;
