@@ -47,7 +47,7 @@ const DemoPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch all talent profiles
+      // Fetch all talent profiles with their recent videos
       const { data: talentData, error: talentError } = await supabase
         .from('talent_profiles')
         .select(`
@@ -79,49 +79,40 @@ const DemoPage: React.FC = () => {
 
       setTalent(talentWithUsers);
 
-      // Fetch completed orders with videos for the feed
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          video_url,
-          talent_id,
-          talent_profiles!orders_talent_id_fkey (
-            *,
-            users!talent_profiles_user_id_fkey (
-              id,
-              full_name,
-              avatar_url
-            )
-          )
-        `)
-        .eq('status', 'completed')
-        .not('video_url', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(20);
+      // Create video feed from talent's recent_videos and promo_video_url
+      const videoItems: VideoFeedItem[] = [];
+      
+      talentWithUsers.forEach((talentProfile: any) => {
+        // Add promo video if exists
+        if (talentProfile.promo_video_url) {
+          videoItems.push({
+            id: `promo-${talentProfile.id}`,
+            video_url: talentProfile.promo_video_url,
+            talent: talentProfile,
+            likes: Math.floor(Math.random() * 500) + 50,
+            isLiked: false,
+          });
+        }
 
-      if (ordersError) throw ordersError;
-
-      // Transform orders into video feed items
-      const videoItems: VideoFeedItem[] = (ordersData || []).map(order => {
-        const talentProfile = order.talent_profiles as any;
-        return {
-          id: order.id,
-          video_url: order.video_url!,
-          talent: {
-            ...talentProfile,
-            users: talentProfile.users || {
-              id: talentProfile.user_id,
-              full_name: talentProfile.temp_full_name || 'Unknown',
-              avatar_url: talentProfile.temp_avatar_url,
-            },
-          },
-          likes: Math.floor(Math.random() * 500) + 50, // Mock likes for now
-          isLiked: false,
-        };
+        // Add recent videos if they exist
+        if (talentProfile.recent_videos && Array.isArray(talentProfile.recent_videos)) {
+          talentProfile.recent_videos.forEach((videoUrl: string, index: number) => {
+            if (videoUrl) {
+              videoItems.push({
+                id: `recent-${talentProfile.id}-${index}`,
+                video_url: videoUrl,
+                talent: talentProfile,
+                likes: Math.floor(Math.random() * 500) + 50,
+                isLiked: false,
+              });
+            }
+          });
+        }
       });
 
-      setVideos(videoItems);
+      // Shuffle videos for variety
+      const shuffledVideos = videoItems.sort(() => Math.random() - 0.5);
+      setVideos(shuffledVideos);
     } catch (error) {
       console.error('Error fetching videos:', error);
       toast.error('Failed to load videos');
