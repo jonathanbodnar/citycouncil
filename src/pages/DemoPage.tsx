@@ -26,6 +26,7 @@ interface VideoFeedItem {
   talent: TalentWithUser;
   likes: number;
   isLiked: boolean;
+  order_id?: string; // For tracking real likes
 }
 
 type PanelView = 'feed' | 'talent' | 'orders' | 'profile';
@@ -81,7 +82,7 @@ const DemoPage: React.FC = () => {
 
       setTalent(talentWithUsers);
 
-      // Fetch promotional videos (same as admin promo tab)
+      // Fetch promotional videos with real like counts
       // 1. Get completed orders with promotional use allowed
       const { data: orderVideos, error: orderError } = await supabase
         .from('orders')
@@ -89,6 +90,7 @@ const DemoPage: React.FC = () => {
           id,
           video_url,
           talent_id,
+          like_count,
           talent_profiles!orders_talent_id_fkey (
             *,
             users!talent_profiles_user_id_fkey (
@@ -108,25 +110,26 @@ const DemoPage: React.FC = () => {
       // 2. Get talent promo videos
       const videoItems: VideoFeedItem[] = [];
       
-      // Add promo videos from talent profiles
+      // Add promo videos from talent profiles (use total_orders as proxy for popularity)
       talentWithUsers.forEach((talentProfile: any) => {
         if (talentProfile.promo_video_url) {
           videoItems.push({
             id: `promo-${talentProfile.id}`,
             video_url: talentProfile.promo_video_url,
             talent: talentProfile,
-            likes: Math.floor(Math.random() * 500) + 50,
+            likes: talentProfile.total_orders || 0,
             isLiked: false,
           });
         }
       });
 
-      // Add order videos
+      // Add order videos with real like counts
       (orderVideos || []).forEach((order: any) => {
         const talentProfile = order.talent_profiles;
         if (talentProfile) {
           videoItems.push({
             id: order.id,
+            order_id: order.id,
             video_url: order.video_url,
             talent: {
               ...talentProfile,
@@ -136,7 +139,7 @@ const DemoPage: React.FC = () => {
                 avatar_url: talentProfile.temp_avatar_url,
               },
             },
-            likes: Math.floor(Math.random() * 500) + 50,
+            likes: order.like_count || 0,
             isLiked: false,
           });
         }
@@ -387,6 +390,19 @@ const DemoPage: React.FC = () => {
 
                 {/* Overlay UI */}
                 <div className="absolute inset-0 pointer-events-none">
+                  {/* Top right - Talent name */}
+                  <div className="absolute top-4 right-4 text-right pointer-events-none">
+                    <div className="text-white font-bold text-lg drop-shadow-lg">
+                      {currentVideo.talent.temp_full_name ||
+                        currentVideo.talent.users.full_name}
+                    </div>
+                    {currentVideo.talent.position && (
+                      <div className="text-white/90 text-sm drop-shadow-lg">
+                        {currentVideo.talent.position}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Center - Swipe indicator */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-white/30 text-center animate-bounce">
@@ -432,16 +448,9 @@ const DemoPage: React.FC = () => {
                     </Link>
                   </div>
 
-                  {/* Bottom info */}
+                  {/* Bottom CTA */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none pb-6">
                     <div className="text-white">
-                      <div className="font-bold mb-1">
-                        {currentVideo.talent.temp_full_name ||
-                          currentVideo.talent.users.full_name}
-                      </div>
-                      <div className="text-sm text-white/80 mb-3">
-                        {currentVideo.talent.position}
-                      </div>
                       <Link
                         to={`/${currentVideo.talent.username || currentVideo.talent.id}`}
                         className="bg-blue-600/90 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/90 transition-colors shadow-lg"
