@@ -39,6 +39,7 @@ const DemoPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [showSwipeIndicator, setShowSwipeIndicator] = useState(true);
+  const [userInteracted, setUserInteracted] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,6 +52,11 @@ const DemoPage: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Handle initial user interaction for autoplay
+  const handleInitialInteraction = () => {
+    setUserInteracted(true);
+  };
 
   useEffect(() => {
     fetchVideosAndTalent();
@@ -318,10 +324,30 @@ const DemoPage: React.FC = () => {
         width: '100vw',
         touchAction: 'none'
       }}
-      onTouchStart={handleTouchStart}
+      onTouchStart={(e) => {
+        handleInitialInteraction();
+        handleTouchStart(e);
+      }}
       onTouchEnd={handleTouchEnd}
       onWheel={handleWheel}
+      onClick={handleInitialInteraction}
     >
+      {/* Initial tap prompt for autoplay with sound */}
+      {!userInteracted && !loading && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={handleInitialInteraction}
+        >
+          <div className="text-center px-6 py-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20">
+            <div className="text-white text-2xl font-bold mb-2">
+              Tap to Start
+            </div>
+            <div className="text-white/80 text-sm">
+              Enable sound and video playback
+            </div>
+          </div>
+        </div>
+      )}
       {/* Top Navigation Menu */}
       <div className="absolute top-0 left-0 right-0 z-20">
         <div className="flex items-center justify-between p-4">
@@ -395,7 +421,7 @@ const DemoPage: React.FC = () => {
               >
                 <ReelsVideoPlayer
                   videoUrl={currentVideo.video_url}
-                  isActive={currentPanel === 'feed'}
+                  isActive={currentPanel === 'feed' && userInteracted}
                 />
 
                 {/* Overlay UI */}
