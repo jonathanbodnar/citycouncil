@@ -373,121 +373,118 @@ const DemoPage: React.FC = () => {
         {/* Feed Panel */}
         <div className="w-screen h-full relative flex-shrink-0 flex items-start justify-center pt-16">
           {currentVideo && (
-            <>
+            <div className="relative w-full h-full max-w-md mx-auto">
               {/* Video Container - Bordered and contained */}
-              <div className="relative w-full h-full max-w-md mx-auto">
-                <div 
-                  className="relative rounded-3xl overflow-hidden border-4 border-white/20 shadow-2xl"
-                  style={{
-                    width: '90%',
-                    maxWidth: '500px',
-                    height: 'calc(100vh - 80px)',
-                    maxHeight: '900px',
-                    margin: '0 auto'
-                  }}
-                >
-                  <ReelsVideoPlayer
-                    videoUrl={currentVideo.video_url}
-                    isActive={currentPanel === 'feed'}
-                  />
+              <div 
+                className="relative rounded-3xl overflow-hidden border-4 border-white/20 shadow-2xl mx-auto"
+                style={{
+                  width: '90%',
+                  maxWidth: '500px',
+                  height: 'calc(100vh - 160px)',
+                  maxHeight: '800px'
+                }}
+              >
+                <ReelsVideoPlayer
+                  videoUrl={currentVideo.video_url}
+                  isActive={currentPanel === 'feed'}
+                />
 
-                  {/* Overlay UI */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    {/* Center - Swipe indicator */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-white/30 text-center animate-bounce">
-                        <div className="text-4xl mb-2">↑</div>
-                        <div className="text-sm">swipe up</div>
-                      </div>
+                {/* Overlay UI */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Center - Swipe indicator */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-white/30 text-center animate-bounce">
+                      <div className="text-4xl mb-2">↑</div>
+                      <div className="text-sm">swipe up</div>
                     </div>
+                  </div>
 
-                    {/* Right side actions */}
-                    <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 pointer-events-auto z-10">
-                      {/* Like button */}
-                      <button
-                        onClick={() => handleLike(currentVideo.id)}
-                        className="flex flex-col items-center"
-                      >
-                        {currentVideo.isLiked ? (
-                          <HeartIcon className="w-10 h-10 text-red-500 drop-shadow-lg animate-pulse" />
-                        ) : (
-                          <HeartOutline className="w-10 h-10 text-white drop-shadow-lg" />
-                        )}
-                        <span className="text-white text-xs mt-1 font-bold drop-shadow-lg">
-                          {currentVideo.likes}
-                        </span>
-                      </button>
+                  {/* Right side actions */}
+                  <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 pointer-events-auto z-10">
+                    {/* Like button */}
+                    <button
+                      onClick={() => handleLike(currentVideo.id)}
+                      className="flex flex-col items-center"
+                    >
+                      {currentVideo.isLiked ? (
+                        <HeartIcon className="w-10 h-10 text-red-500 drop-shadow-lg animate-pulse" />
+                      ) : (
+                        <HeartOutline className="w-10 h-10 text-white drop-shadow-lg" />
+                      )}
+                      <span className="text-white text-xs mt-1 font-bold drop-shadow-lg">
+                        {currentVideo.likes}
+                      </span>
+                    </button>
 
-                      {/* Talent avatar - links to profile */}
+                    {/* Talent avatar - links to profile */}
+                    <Link
+                      to={`/${currentVideo.talent.username || currentVideo.talent.id}`}
+                      className="relative"
+                    >
+                      <img
+                        src={
+                          currentVideo.talent.temp_avatar_url ||
+                          currentVideo.talent.users.avatar_url ||
+                          '/default-avatar.png'
+                        }
+                        alt={
+                          currentVideo.talent.temp_full_name ||
+                          currentVideo.talent.users.full_name
+                        }
+                        className="w-12 h-12 rounded-full border-2 border-white object-cover"
+                      />
+                    </Link>
+                  </div>
+
+                  {/* Bottom info */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none pb-6">
+                    <div className="text-white">
+                      <div className="font-bold mb-1">
+                        {currentVideo.talent.temp_full_name ||
+                          currentVideo.talent.users.full_name}
+                      </div>
+                      <div className="text-sm text-white/80 mb-3">
+                        {currentVideo.talent.position}
+                      </div>
                       <Link
                         to={`/${currentVideo.talent.username || currentVideo.talent.id}`}
-                        className="relative"
+                        className="bg-blue-600/90 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/90 transition-colors shadow-lg"
                       >
-                        <img
-                          src={
-                            currentVideo.talent.temp_avatar_url ||
-                            currentVideo.talent.users.avatar_url ||
-                            '/default-avatar.png'
-                          }
-                          alt={
-                            currentVideo.talent.temp_full_name ||
-                            currentVideo.talent.users.full_name
-                          }
-                          className="w-12 h-12 rounded-full border-2 border-white object-cover"
-                        />
+                        Order now: {currentVideo.talent.temp_full_name ||
+                          currentVideo.talent.users.full_name} - $
+                        {currentVideo.talent.pricing}
                       </Link>
-                    </div>
-
-                    {/* Bottom info - overlapping with circles */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none pb-24">
-                      <div className="text-white">
-                        <div className="font-bold mb-1">
-                          {currentVideo.talent.temp_full_name ||
-                            currentVideo.talent.users.full_name}
-                        </div>
-                        <div className="text-sm text-white/80 mb-3">
-                          {currentVideo.talent.position}
-                        </div>
-                        <Link
-                          to={`/${currentVideo.talent.username || currentVideo.talent.id}`}
-                          className="bg-blue-600/90 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/90 transition-colors shadow-lg"
-                        >
-                          Order now: {currentVideo.talent.temp_full_name ||
-                            currentVideo.talent.users.full_name} - $
-                          {currentVideo.talent.pricing}
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* Talent circles - overlapping bottom of video */}
-                    <div className="absolute bottom-2 left-0 right-0 px-4 z-20 talent-circles-container pointer-events-auto">
-                      <div 
-                        className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 scroll-smooth"
-                        style={{ touchAction: 'pan-x' }}
-                      >
-                        {talent.map(t => (
-                          <Link
-                            key={t.id}
-                            to={`/${t.username || t.id}`}
-                            className="flex-shrink-0"
-                          >
-                            <img
-                              src={
-                                t.temp_avatar_url ||
-                                t.users.avatar_url ||
-                                '/default-avatar.png'
-                              }
-                              alt={t.temp_full_name || t.users.full_name}
-                              className="w-16 h-16 rounded-full border-3 border-white/90 object-cover hover:border-blue-400 hover:scale-110 transition-all shadow-xl"
-                            />
-                          </Link>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </>
+
+              {/* Talent circles - positioned below video container */}
+              <div className="absolute bottom-4 left-0 right-0 px-4 z-20 talent-circles-container pointer-events-auto">
+                <div 
+                  className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 scroll-smooth justify-center"
+                  style={{ touchAction: 'pan-x' }}
+                >
+                  {talent.map(t => (
+                    <Link
+                      key={t.id}
+                      to={`/${t.username || t.id}`}
+                      className="flex-shrink-0"
+                    >
+                      <img
+                        src={
+                          t.temp_avatar_url ||
+                          t.users.avatar_url ||
+                          '/default-avatar.png'
+                        }
+                        alt={t.temp_full_name || t.users.full_name}
+                        className="w-16 h-16 rounded-full border-3 border-white/90 object-cover hover:border-blue-400 hover:scale-110 transition-all shadow-xl"
+                      />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
