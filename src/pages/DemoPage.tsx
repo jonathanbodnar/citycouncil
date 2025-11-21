@@ -102,10 +102,6 @@ const DemoPage: React.FC = () => {
     
     if (result.length !== items.length) {
       console.error(`❌ VIDEO COUNT MISMATCH! Input: ${items.length}, Output: ${result.length}`);
-      // Alert on mobile for debugging
-      if ('ontouchstart' in window) {
-        alert(`VIDEO MISMATCH! Input: ${items.length}, Output: ${result.length}`);
-      }
     }
     
     return result;
@@ -240,12 +236,8 @@ const DemoPage: React.FC = () => {
       
       console.log(`✅ Final shuffled videos loaded: ${shuffledVideos.length}`);
       
-      // Alert on mobile to see the count
-      if ('ontouchstart' in window) {
-        setTimeout(() => {
-          alert(`Videos loaded: ${shuffledVideos.length}\nBefore shuffle: ${videoItems.length}\nPromo: ${promoVideoCount}\nOrders: ${orderVideoCount}\nSkipped: ${skippedOrders}\nOrder Videos Fetched: ${orderVideos?.length || 0}\nTalent Profiles: ${talentWithUsers.length}`);
-        }, 1000);
-      }
+      // Log final counts
+      console.log(`✅ FINAL: ${shuffledVideos.length} videos total (${promoVideoCount} promo + ${orderVideoCount} orders)`);
     } catch (error) {
       console.error('Error fetching videos:', error);
       toast.error('Failed to load videos');
@@ -574,12 +566,6 @@ const DemoPage: React.FC = () => {
 
                 {/* Overlay UI */}
                 <div className="absolute inset-0 pointer-events-none">
-                  {/* Top left - Debug counter (visible on screen) */}
-                  <div className="absolute top-4 left-4 bg-black/60 text-white px-3 py-2 rounded-lg font-mono text-sm border border-white/30">
-                    <div className="font-bold text-lg">{currentVideoIndex + 1} / {videos.length}</div>
-                    <div className="text-xs text-white/80">Video ID: {currentVideo.id.substring(0, 8)}</div>
-                  </div>
-
                   {/* Top right - Talent name */}
                   <div className="absolute top-4 right-4 text-right pointer-events-none">
                     <div className="text-white font-bold text-lg drop-shadow-lg">
