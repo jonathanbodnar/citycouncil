@@ -232,6 +232,13 @@ const DemoPage: React.FC = () => {
 
       console.log(`📊 TOTAL video items before shuffle: ${videoItems.length}`);
       
+      // Check for duplicate video IDs
+      const videoIds = videoItems.map(v => v.id);
+      const uniqueIds = new Set(videoIds);
+      if (videoIds.length !== uniqueIds.size) {
+        console.warn(`⚠️ Found ${videoIds.length - uniqueIds.size} duplicate video IDs!`);
+      }
+      
       // Shuffle videos while preventing same talent back-to-back
       const shuffledVideos = shuffleWithoutBackToBack(videoItems);
       setVideos(shuffledVideos);
@@ -332,15 +339,19 @@ const DemoPage: React.FC = () => {
     const deltaX = touchEndX - touchStartX.current;
     const deltaY = touchEndY - touchStartY.current;
 
+    console.log(`📱 Touch: deltaX=${deltaX.toFixed(0)}, deltaY=${deltaY.toFixed(0)}, currentIndex=${currentVideoIndex}`);
+
     // Determine if swipe is more horizontal or vertical
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       // Horizontal swipe
       if (Math.abs(deltaX) > 50) {
+        console.log(`↔️ Horizontal swipe detected`);
         handleHorizontalSwipe(deltaX);
       }
     } else {
       // Vertical swipe
       if (Math.abs(deltaY) > 50) {
+        console.log(`↕️ Vertical swipe detected (up: ${deltaY < 0})`);
         handleVerticalSwipe(deltaY);
       }
     }
