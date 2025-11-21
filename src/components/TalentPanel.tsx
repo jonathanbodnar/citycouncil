@@ -21,29 +21,11 @@ interface TalentPanelProps {
 const TalentPanel: React.FC<TalentPanelProps> = ({ talent, onBack, onNext }) => {
   return (
     <div 
-      className="h-full overflow-y-auto"
+      className="h-full overflow-y-auto pt-16"
       style={{
         background: 'linear-gradient(to bottom right, #a70809, #3c108b)'
       }}
     >
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/40 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center justify-between p-4">
-          <button
-            onClick={onBack}
-            className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <ChevronLeftIcon className="w-6 h-6" />
-          </button>
-          <h1 className="text-white text-xl font-bold">Browse Talent</h1>
-          <button
-            onClick={onNext}
-            className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <ChevronRightIcon className="w-6 h-6" />
-          </button>
-        </div>
-      </div>
 
       {/* Talent Grid */}
       <div className="p-4">
@@ -59,16 +41,6 @@ const TalentPanel: React.FC<TalentPanelProps> = ({ talent, onBack, onNext }) => 
         </div>
       </div>
 
-      {/* Swipe hint at bottom */}
-      <div className="sticky bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-        <div className="text-center text-white/60 text-sm">
-          <div className="flex items-center justify-center gap-2">
-            <ChevronLeftIcon className="w-4 h-4" />
-            <span>Swipe to navigate</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

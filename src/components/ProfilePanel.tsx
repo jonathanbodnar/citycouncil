@@ -30,24 +30,11 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({ onBack }) => {
 
   return (
     <div 
-      className="h-full overflow-y-auto"
+      className="h-full overflow-y-auto pt-16"
       style={{
         background: 'linear-gradient(to bottom right, #a70809, #3c108b)'
       }}
     >
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/40 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center justify-between p-4">
-          <button
-            onClick={onBack}
-            className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <ChevronLeftIcon className="w-6 h-6" />
-          </button>
-          <h1 className="text-white text-xl font-bold">Profile</h1>
-          <div className="w-10"></div>
-        </div>
-      </div>
 
       {/* Content */}
       <div className="p-4">
