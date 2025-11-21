@@ -446,9 +446,7 @@ const DemoPage: React.FC = () => {
                         to={`/${currentVideo.talent.username || currentVideo.talent.id}`}
                         className="bg-blue-600/90 backdrop-blur-sm rounded-full px-6 py-3 text-center font-bold text-lg inline-block pointer-events-auto hover:bg-blue-700/90 transition-colors shadow-lg"
                       >
-                        Order now: {currentVideo.talent.temp_full_name ||
-                          currentVideo.talent.users.full_name} - $
-                        {currentVideo.talent.pricing}
+                        Order now - ${currentVideo.talent.pricing}
                       </Link>
                     </div>
                   </div>
