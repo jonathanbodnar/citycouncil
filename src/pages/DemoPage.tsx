@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { HeartIcon } from '@heroicons/react/24/solid';
+import { HeartIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, Order } from '../types';
@@ -583,6 +583,48 @@ const DemoPage: React.FC = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Navigation arrows - left side */}
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 pointer-events-auto z-10">
+                    {/* Up arrow - previous video */}
+                    <button
+                      onClick={() => {
+                        if (currentVideoIndex > 0) {
+                          setCurrentVideoIndex(prev => prev - 1);
+                        }
+                      }}
+                      disabled={currentVideoIndex === 0}
+                      className={`p-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-lg transition-all ${
+                        currentVideoIndex === 0
+                          ? 'opacity-30 cursor-not-allowed'
+                          : 'hover:bg-white/30 hover:scale-110'
+                      }`}
+                    >
+                      <ChevronUpIcon className="w-6 h-6 text-white" />
+                    </button>
+
+                    {/* Down arrow - next video */}
+                    <button
+                      onClick={() => {
+                        if (currentVideoIndex < videos.length - 1) {
+                          setCurrentVideoIndex(prev => prev + 1);
+                        }
+                      }}
+                      disabled={currentVideoIndex >= videos.length - 1}
+                      className={`p-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-lg transition-all ${
+                        currentVideoIndex >= videos.length - 1
+                          ? 'opacity-30 cursor-not-allowed'
+                          : 'hover:bg-white/30 hover:scale-110'
+                      }`}
+                    >
+                      <ChevronDownIcon className="w-6 h-6 text-white" />
+                    </button>
+
+                    {/* Video counter */}
+                    <div className="text-white text-xs text-center font-bold drop-shadow-lg bg-black/30 px-2 py-1 rounded-full">
+                      {currentVideoIndex + 1}/{videos.length}
+                    </div>
+                  </div>
 
                   {/* Right side actions */}
                   <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 pointer-events-auto z-10">
