@@ -17,6 +17,7 @@ const PageLoader = () => (
 
 // Lazy load all pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'));
+const DemoPage = lazy(() => import('./pages/DemoPage'));
 const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const TalentOnboardingPage = lazy(() => import('./pages/TalentOnboardingPage'));
 const PublicTalentOnboardingPage = lazy(() => import('./pages/PublicTalentOnboardingPage'));
@@ -63,6 +64,10 @@ function App() {
             <Routes>
             {/* Coming Soon page without layout */}
             <Route index element={<ComingSoonPage />} />
+            
+            {/* Demo page - standalone without header/footer */}
+            <Route path="/demo" element={<DemoPage />} />
+            
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
