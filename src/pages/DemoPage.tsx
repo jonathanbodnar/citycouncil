@@ -98,10 +98,14 @@ const DemoPage: React.FC = () => {
       remaining.splice(nextIndex, 1);
     }
     
-    console.log(`✅ Shuffle output: ${result.length} videos (iterations: ${iterations})`);
+      console.log(`✅ Shuffle output: ${result.length} videos (iterations: ${iterations})`);
     
     if (result.length !== items.length) {
       console.error(`❌ VIDEO COUNT MISMATCH! Input: ${items.length}, Output: ${result.length}`);
+      // Alert on mobile for debugging
+      if ('ontouchstart' in window) {
+        alert(`VIDEO MISMATCH! Input: ${items.length}, Output: ${result.length}`);
+      }
     }
     
     return result;
@@ -244,6 +248,13 @@ const DemoPage: React.FC = () => {
       setVideos(shuffledVideos);
       
       console.log(`✅ Final shuffled videos loaded: ${shuffledVideos.length}`);
+      
+      // Alert on mobile to see the count
+      if ('ontouchstart' in window) {
+        setTimeout(() => {
+          alert(`Videos loaded: ${shuffledVideos.length}\nBefore shuffle: ${videoItems.length}\nPromo: ${promoVideoCount}\nOrders: ${orderVideoCount}`);
+        }, 1000);
+      }
     } catch (error) {
       console.error('Error fetching videos:', error);
       toast.error('Failed to load videos');
