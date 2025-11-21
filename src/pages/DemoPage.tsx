@@ -159,16 +159,35 @@ const DemoPage: React.FC = () => {
       setTalent(talentWithUsers);
 
       // Fetch promotional videos with real like counts
-      // 1. Get completed orders with promotional use allowed - SIMPLIFIED QUERY
-      const { data: orderVideos, error: orderError } = await supabase
-        .from('orders')
-        .select('id, video_url, talent_id, like_count')
-        .eq('status', 'completed')
-        .eq('allow_promotional_use', true)
-        .not('video_url', 'is', null)
-        .order('created_at', { ascending: false });
+      // 1. Get completed orders with promotional use allowed - FETCH IN BATCHES for mobile compatibility
+      let orderVideos: any[] = [];
+      let hasMore = true;
+      let page = 0;
+      const pageSize = 100;
+      
+      while (hasMore && page < 20) { // Max 20 pages = 2000 records
+        const start = page * pageSize;
+        const end = start + pageSize - 1;
+        
+        const { data: batch, error: orderError } = await supabase
+          .from('orders')
+          .select('id, video_url, talent_id, like_count')
+          .eq('status', 'completed')
+          .eq('allow_promotional_use', true)
+          .not('video_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .range(start, end);
 
-      if (orderError) throw orderError;
+        if (orderError) throw orderError;
+        
+        if (batch && batch.length > 0) {
+          orderVideos = [...orderVideos, ...batch];
+          hasMore = batch.length === pageSize; // If we got a full page, there might be more
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
       
       console.log(`📊 Loaded ${orderVideos?.length || 0} order videos (simplified query)`);
       console.log(`📊 Total talent profiles fetched: ${talentWithUsers.length}`);
