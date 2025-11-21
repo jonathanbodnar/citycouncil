@@ -156,14 +156,17 @@ const DemoPage: React.FC = () => {
 
       if (orderError) throw orderError;
       
-      console.log(`Loaded ${orderVideos?.length || 0} order videos out of ${count} total promotional orders`);
+      console.log(`📊 Loaded ${orderVideos?.length || 0} order videos out of ${count} total promotional orders`);
+      console.log(`📊 Total talent profiles fetched: ${talentWithUsers.length}`);
 
       // 2. Get talent promo videos
       const videoItems: VideoFeedItem[] = [];
       
       // Add promo videos from talent profiles (use total_orders as proxy for popularity)
+      let promoVideoCount = 0;
       talentWithUsers.forEach((talentProfile: any) => {
         if (talentProfile.promo_video_url) {
+          promoVideoCount++;
           videoItems.push({
             id: `promo-${talentProfile.id}`,
             video_url: talentProfile.promo_video_url,
@@ -173,11 +176,15 @@ const DemoPage: React.FC = () => {
           });
         }
       });
+      
+      console.log(`📊 Talent with promo_video_url: ${promoVideoCount}`);
 
       // Add order videos with real like counts
+      let orderVideoCount = 0;
       (orderVideos || []).forEach((order: any) => {
         const talentProfile = order.talent_profiles;
-        if (talentProfile) {
+        if (talentProfile && order.video_url) {
+          orderVideoCount++;
           videoItems.push({
             id: order.id,
             order_id: order.id,
@@ -195,16 +202,16 @@ const DemoPage: React.FC = () => {
           });
         }
       });
+      
+      console.log(`📊 Order videos with valid talent & video_url: ${orderVideoCount}`);
 
-      console.log(`Total video items before shuffle: ${videoItems.length}`);
-      console.log(`Promo videos: ${talentWithUsers.filter(t => t.promo_video_url).length}`);
-      console.log(`Order videos: ${orderVideos?.length || 0}`);
+      console.log(`📊 TOTAL video items before shuffle: ${videoItems.length}`);
       
       // Shuffle videos while preventing same talent back-to-back
       const shuffledVideos = shuffleWithoutBackToBack(videoItems);
       setVideos(shuffledVideos);
       
-      console.log(`Final shuffled videos: ${shuffledVideos.length}`);
+      console.log(`✅ Final shuffled videos loaded: ${shuffledVideos.length}`);
     } catch (error) {
       console.error('Error fetching videos:', error);
       toast.error('Failed to load videos');
