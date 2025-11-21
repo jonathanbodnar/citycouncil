@@ -38,9 +38,19 @@ const DemoPage: React.FC = () => {
   const [currentPanel, setCurrentPanel] = useState<PanelView>('feed');
   const [loading, setLoading] = useState(true);
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
+  const [showSwipeIndicator, setShowSwipeIndicator] = useState(true);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Hide swipe indicator after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSwipeIndicator(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     fetchVideosAndTalent();
@@ -403,13 +413,15 @@ const DemoPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Center - Swipe indicator */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-white/30 text-center animate-bounce">
-                      <div className="text-4xl mb-2">↑</div>
-                      <div className="text-sm">swipe up</div>
+                  {/* Center - Swipe indicator (fades out after 5 seconds) */}
+                  {showSwipeIndicator && (
+                    <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-1000">
+                      <div className="text-white/30 text-center animate-bounce">
+                        <div className="text-4xl mb-2">↑</div>
+                        <div className="text-sm">swipe up</div>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Right side actions */}
                   <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 pointer-events-auto z-10">
