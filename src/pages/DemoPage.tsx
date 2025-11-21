@@ -357,12 +357,18 @@ const DemoPage: React.FC = () => {
 
     if (deltaY < 0) {
       // Swipe up - next video
-      setCurrentVideoIndex(prev =>
-        prev < videos.length - 1 ? prev + 1 : prev
-      );
+      setCurrentVideoIndex(prev => {
+        const nextIndex = prev < videos.length - 1 ? prev + 1 : prev;
+        console.log(`⬆️ Swiped up: ${prev} -> ${nextIndex} (total: ${videos.length})`);
+        return nextIndex;
+      });
     } else {
       // Swipe down - previous video
-      setCurrentVideoIndex(prev => (prev > 0 ? prev - 1 : 0));
+      setCurrentVideoIndex(prev => {
+        const nextIndex = prev > 0 ? prev - 1 : 0;
+        console.log(`⬇️ Swiped down: ${prev} -> ${nextIndex}`);
+        return nextIndex;
+      });
     }
   };
 
@@ -373,12 +379,18 @@ const DemoPage: React.FC = () => {
     e.preventDefault();
     if (e.deltaY > 0) {
       // Scroll down - next video
-      setCurrentVideoIndex(prev =>
-        prev < videos.length - 1 ? prev + 1 : prev
-      );
+      setCurrentVideoIndex(prev => {
+        const nextIndex = prev < videos.length - 1 ? prev + 1 : prev;
+        console.log(`🖱️ Wheel down: ${prev} -> ${nextIndex} (total: ${videos.length})`);
+        return nextIndex;
+      });
     } else {
       // Scroll up - previous video
-      setCurrentVideoIndex(prev => (prev > 0 ? prev - 1 : 0));
+      setCurrentVideoIndex(prev => {
+        const nextIndex = prev > 0 ? prev - 1 : 0;
+        console.log(`🖱️ Wheel up: ${prev} -> ${nextIndex}`);
+        return nextIndex;
+      });
     }
   };
 
