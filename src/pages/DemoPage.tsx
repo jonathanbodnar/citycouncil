@@ -160,32 +160,18 @@ const DemoPage: React.FC = () => {
       setTalent(talentWithUsers);
 
       // Fetch promotional videos with real like counts
-      // 1. Get completed orders with promotional use allowed
-      const { data: orderVideos, error: orderError, count } = await supabase
+      // 1. Get completed orders with promotional use allowed - SIMPLIFIED QUERY
+      const { data: orderVideos, error: orderError } = await supabase
         .from('orders')
-        .select(`
-          id,
-          video_url,
-          talent_id,
-          like_count,
-          talent_profiles!orders_talent_id_fkey (
-            *,
-            users!talent_profiles_user_id_fkey (
-              id,
-              full_name,
-              avatar_url
-            )
-          )
-        `, { count: 'exact' })
+        .select('id, video_url, talent_id, like_count')
         .eq('status', 'completed')
         .eq('allow_promotional_use', true)
         .not('video_url', 'is', null)
-        .order('created_at', { ascending: false })
-        .range(0, 999); // Explicitly fetch rows 0-999 (up to 1000 videos)
+        .order('created_at', { ascending: false });
 
       if (orderError) throw orderError;
       
-      console.log(`📊 Loaded ${orderVideos?.length || 0} order videos out of ${count} total promotional orders`);
+      console.log(`📊 Loaded ${orderVideos?.length || 0} order videos (simplified query)`);
       console.log(`📊 Total talent profiles fetched: ${talentWithUsers.length}`);
 
       // 2. Get talent promo videos
@@ -208,24 +194,19 @@ const DemoPage: React.FC = () => {
       
       console.log(`📊 Talent with promo_video_url: ${promoVideoCount}`);
 
-      // Add order videos with real like counts
+      // Add order videos with real like counts - manually match talent
       let orderVideoCount = 0;
       (orderVideos || []).forEach((order: any) => {
-        const talentProfile = order.talent_profiles;
+        // Find the matching talent profile from our already-fetched talent list
+        const talentProfile = talentWithUsers.find(t => t.id === order.talent_id);
+        
         if (talentProfile && order.video_url) {
           orderVideoCount++;
           videoItems.push({
             id: order.id,
             order_id: order.id,
             video_url: order.video_url,
-            talent: {
-              ...talentProfile,
-              users: talentProfile.users || {
-                id: talentProfile.user_id,
-                full_name: talentProfile.temp_full_name || 'Unknown',
-                avatar_url: talentProfile.temp_avatar_url,
-              },
-            },
+            talent: talentProfile,
             likes: order.like_count || 0,
             isLiked: false,
           });
