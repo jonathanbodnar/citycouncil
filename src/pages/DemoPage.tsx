@@ -167,11 +167,23 @@ const DemoPage: React.FC = () => {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Don't start swipe tracking if touching the talent circles
+    const target = e.target as HTMLElement;
+    if (target.closest('.talent-circles-container')) {
+      return;
+    }
+    
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    // Don't process swipe if touching the talent circles
+    const target = e.target as HTMLElement;
+    if (target.closest('.talent-circles-container')) {
+      return;
+    }
+    
     const touchEndX = e.changedTouches[0].clientX;
     const touchEndY = e.changedTouches[0].clientY;
     const deltaX = touchEndX - touchStartX.current;
@@ -285,7 +297,10 @@ const DemoPage: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="h-screen w-screen bg-gradient-to-br from-gray-900 via-blue-900 to-red-900 overflow-hidden relative"
+      className="h-screen w-screen overflow-hidden relative"
+      style={{
+        background: 'linear-gradient(to bottom right, #a70809, #3c108b)'
+      }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onWheel={handleWheel}
@@ -436,8 +451,8 @@ const DemoPage: React.FC = () => {
               </div>
 
               {/* Talent circles at bottom - Fixed positioning with horizontal scroll */}
-              <div className="absolute bottom-4 left-0 right-0 px-4 z-10">
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 scroll-smooth">
+              <div className="absolute bottom-4 left-0 right-0 px-4 z-10 talent-circles-container">
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 scroll-smooth touch-pan-x">
                   {talent.map(t => (
                     <Link
                       key={t.id}

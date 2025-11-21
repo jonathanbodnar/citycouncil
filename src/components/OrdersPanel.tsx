@@ -96,7 +96,12 @@ const OrdersPanel: React.FC<OrdersPanelProps> = ({ onBack, onNext }) => {
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 overflow-y-auto">
+    <div 
+      className="h-full overflow-y-auto"
+      style={{
+        background: 'linear-gradient(to bottom right, #a70809, #3c108b)'
+      }}
+    >
       {/* Header */}
       <div className="sticky top-0 z-10 bg-black/40 backdrop-blur-md border-b border-white/10">
         <div className="flex items-center justify-between p-4">
