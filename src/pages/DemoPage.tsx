@@ -585,7 +585,7 @@ const DemoPage: React.FC = () => {
                         className="relative bg-white/20 backdrop-blur-lg border border-white/30 rounded-full px-6 py-3 text-center font-bold text-base inline-flex items-center gap-3 pointer-events-auto hover:bg-white/30 transition-all shadow-2xl hover:scale-105"
                       >
                         <span className="text-white drop-shadow-lg">Order Personalized Video</span>
-                        <span className="bg-white/90 text-black px-3 py-1 rounded-full text-sm font-black shadow-lg">
+                        <span className="bg-white/30 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-black shadow-lg border border-white/40">
                           ${currentVideo.talent.pricing}
                         </span>
                       </Link>
