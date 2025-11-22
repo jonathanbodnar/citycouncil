@@ -9,7 +9,7 @@ import MFAVerification from '../components/MFAVerification';
 const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const returnTo = searchParams.get('returnTo') || '/home';
+  const returnTo = searchParams.get('returnTo') || '/';
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -278,7 +278,7 @@ const LoginPage: React.FC = () => {
           <p className="mt-2 text-center text-sm text-gray-300">
             Or{' '}
             <Link
-              to={`/signup${returnTo !== '/home' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
+              to={`/signup${returnTo !== '/' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
               className="font-medium text-blue-400 hover:text-blue-300"
             >
               create a new account

@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 const SignupPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const returnTo = searchParams.get('returnTo') || '/home';
+  const returnTo = searchParams.get('returnTo') || '/';
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -77,7 +77,7 @@ const SignupPage: React.FC = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              to={`/login${returnTo !== '/home' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
+              to={`/login${returnTo !== '/' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
               className="font-medium text-primary-600 hover:text-primary-500"
             >
               sign in to your existing account
