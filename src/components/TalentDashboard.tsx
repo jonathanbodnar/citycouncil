@@ -250,17 +250,29 @@ const TalentDashboard: React.FC = () => {
 
       // Send delivery notifications
       try {
-        const { data: orderData } = await supabase
+        console.log('🔔 Fetching order data for delivery notifications...', orderId);
+        const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .select('user_id, users!orders_user_id_fkey (email, full_name)')
           .eq('id', orderId)
           .single();
 
+        if (orderError) {
+          console.error('❌ Error fetching order data for notifications:', orderError);
+          throw orderError;
+        }
+
         if (orderData) {
           const userData = (orderData as any).users;
+          console.log('📧 User data for notifications:', { 
+            userId: (orderData as any).user_id, 
+            email: userData?.email,
+            name: userData?.full_name 
+          });
           
           // Email user that ShoutOut is ready
           if (userData?.email && uploadResult.videoUrl) {
+            console.log('📧 Sending delivery email to:', userData.email);
             await emailService.sendOrderDelivered(
               userData.email,
               userData.full_name,
@@ -269,19 +281,28 @@ const TalentDashboard: React.FC = () => {
                 videoUrl: uploadResult.videoUrl
               }
             );
+            console.log('✅ Delivery email sent');
           }
 
           // In-app notification for user
           if ((orderData as any).user_id) {
+            console.log('🔔 Creating in-app notification for user:', (orderData as any).user_id);
             await notificationService.notifyOrderDelivered(
               (orderData as any).user_id,
               orderId,
               user?.full_name || 'Your talent'
             );
+            console.log('✅ In-app notification created');
+          } else {
+            console.warn('⚠️ No user_id found in order data');
           }
+        } else {
+          console.warn('⚠️ No order data returned');
         }
       } catch (notifError) {
-        console.error('Error sending delivery notifications:', notifError);
+        console.error('❌ Error sending delivery notifications:', notifError);
+        // Don't let notification errors stop the upload process
+        toast.error('Video uploaded but notifications failed. Please contact support.');
       }
 
       toast.success('Video uploaded and order completed!');
