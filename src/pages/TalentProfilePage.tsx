@@ -355,7 +355,7 @@ const TalentProfilePage: React.FC = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Talent Not Found</h1>
           <p className="text-gray-600">The talent profile you're looking for doesn't exist.</p>
-          <Link to="/home" className="mt-4 inline-block bg-primary-600 text-white px-4 py-2 rounded-md">
+          <Link to="/" className="mt-4 inline-block bg-primary-600 text-white px-4 py-2 rounded-md">
             Browse All Talent
           </Link>
         </div>

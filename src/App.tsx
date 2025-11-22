@@ -18,7 +18,6 @@ const PageLoader = () => (
 // Lazy load all pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'));
 const DemoPage = lazy(() => import('./pages/DemoPage'));
-const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const TalentOnboardingPage = lazy(() => import('./pages/TalentOnboardingPage'));
 const PublicTalentOnboardingPage = lazy(() => import('./pages/PublicTalentOnboardingPage'));
 const OrderFulfillmentPage = lazy(() => import('./pages/OrderFulfillmentPage'));
@@ -62,9 +61,6 @@ function App() {
           />
           <Suspense fallback={<PageLoader />}>
             <Routes>
-            {/* Coming Soon page without layout */}
-            <Route index element={<ComingSoonPage />} />
-            
             {/* Demo page - standalone without header/footer */}
             <Route path="/demo" element={<DemoPage />} />
             
@@ -87,7 +83,7 @@ function App() {
             
             {/* Main app routes with layout */}
             <Route path="/" element={<Layout />}>
-              <Route path="/home" element={<HomePage />} />
+              <Route index element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/:username" element={<TalentProfilePage />} />
               <Route path="/talent/:id" element={<TalentProfilePage />} />

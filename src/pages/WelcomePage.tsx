@@ -133,7 +133,7 @@ const WelcomePage: React.FC = () => {
       fetchWelcomeVideo();
     } else if (user) {
       // Redirect non-talent users to their appropriate dashboard
-      navigate('/home');
+      navigate('/');
     } else if (!user) {
       // Redirect unauthenticated users to login with returnTo parameter
       navigate('/login?returnTo=/welcome', { replace: true });

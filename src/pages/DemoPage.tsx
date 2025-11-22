@@ -367,7 +367,7 @@ const DemoPage: React.FC = () => {
           <div className="text-white text-2xl font-bold mb-4">No videos available yet</div>
           <p className="text-white/60 mb-6">Check back soon for amazing content!</p>
           <a
-            href="/home"
+            href="/"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-700 transition-colors"
           >
             Browse Talent
