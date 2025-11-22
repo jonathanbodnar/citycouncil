@@ -33,8 +33,7 @@ BEGIN
       message,
       is_read,
       order_id,
-      created_at,
-      updated_at
+      created_at
     ) VALUES (
       completed_order.user_id,
       'order_fulfilled',
@@ -42,7 +41,6 @@ BEGIN
       COALESCE(completed_order.talent_name, completed_order.talent_full_name, 'Your talent') || ' has completed your personalized video. Watch it now!',
       false,
       completed_order.order_id,
-      NOW(),
       NOW()
     );
     
