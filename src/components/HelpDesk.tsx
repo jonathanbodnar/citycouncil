@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
-  UserIcon,
-  ComputerDesktopIcon
+  UserIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -63,24 +62,7 @@ const HelpDesk: React.FC = () => {
 
       setMessages(prev => [...prev, data]);
       setNewMessage('');
-
-      // Simulate AI response (in production, this would call your AI service)
-      setTimeout(async () => {
-        const aiResponse = generateAIResponse(newMessage);
-        
-        const { data: responseData, error: responseError } = await supabase
-          .from('help_messages')
-          .update({ response: aiResponse })
-          .eq('id', data.id)
-          .select()
-          .single();
-
-        if (!responseError) {
-          setMessages(prev => 
-            prev.map(msg => msg.id === data.id ? responseData : msg)
-          );
-        }
-      }, 1500);
+      toast.success('Message sent! Our support team will respond soon.');
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -90,46 +72,6 @@ const HelpDesk: React.FC = () => {
     }
   };
 
-  const generateAIResponse = (userMessage: string): string => {
-    const message = userMessage.toLowerCase();
-    
-    // Route talent-related questions to human
-    if (message.includes('talent') || message.includes('creator') || message.includes('payment') || message.includes('payout')) {
-      return "Thank you for your message! This appears to be a talent-related inquiry. I'm connecting you with our human support team who can better assist you with talent-specific questions. Someone will respond within 24 hours.";
-    }
-    
-    // General responses for common questions
-    if (message.includes('order') || message.includes('shoutout')) {
-      return "I'd be happy to help with your order! You can track your order status in your dashboard, and you'll receive email notifications when your ShoutOut is ready. Orders typically take 24-48 hours to fulfill. Is there something specific about your order I can help with?";
-    }
-    
-    if (message.includes('refund') || message.includes('cancel')) {
-      return "We offer a 100% money-back guarantee! If you're not satisfied with your ShoutOut or if it's not delivered on time, you can request a refund. For orders past their fulfillment deadline, you can cancel directly from your dashboard. Would you like me to help you with a specific order?";
-    }
-    
-    if (message.includes('payment') || message.includes('billing')) {
-      return "For payment and billing questions, you can manage your payment methods in your profile settings. We accept all major credit cards and process payments securely. If you're having trouble with a payment, please let me know the specific issue!";
-    }
-    
-    return "Thank you for reaching out! I'm here to help with any questions about ShoutOut. I can assist with orders, payments, account settings, and general platform questions. For talent-specific inquiries, I'll connect you with our human support team. How can I help you today?";
-  };
-
-  const requestHumanTakeover = async (messageId: string) => {
-    try {
-      const { error } = await supabase
-        .from('help_messages')
-        .update({ is_human_takeover: true })
-        .eq('id', messageId);
-
-      if (error) throw error;
-
-      toast.success('Connected to human support. Someone will respond within 24 hours.');
-      fetchMessages();
-    } catch (error) {
-      console.error('Error requesting human takeover:', error);
-      toast.error('Failed to connect to human support');
-    }
-  };
 
   if (loading) {
     return (
@@ -171,32 +113,15 @@ const HelpDesk: React.FC = () => {
                 </div>
               </div>
 
-              {/* AI/Human Response */}
+              {/* Support Team Response */}
               {message.response && (
                 <div className="flex justify-start">
                   <div className="max-w-xs lg:max-w-md bg-gray-100 rounded-lg px-4 py-2">
                     <div className="flex items-center space-x-2 mb-2">
-                      {message.is_human_takeover ? (
-                        <>
-                          <UserIcon className="h-4 w-4 text-blue-600" />
-                          <span className="text-xs font-medium text-blue-600">Human Support</span>
-                        </>
-                      ) : (
-                        <>
-                          <ComputerDesktopIcon className="h-4 w-4 text-gray-600" />
-                          <span className="text-xs font-medium text-gray-600">AI Assistant</span>
-                        </>
-                      )}
+                      <UserIcon className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs font-medium text-blue-600">Support Team</span>
                     </div>
-                    <p className="text-sm text-gray-800">{message.response}</p>
-                    {!message.is_human_takeover && !message.is_resolved && (
-                      <button
-                        onClick={() => requestHumanTakeover(message.id)}
-                        className="text-xs text-primary-600 hover:text-primary-700 mt-2 underline"
-                      >
-                        Connect to human support
-                      </button>
-                    )}
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{message.response}</p>
                   </div>
                 </div>
               )}

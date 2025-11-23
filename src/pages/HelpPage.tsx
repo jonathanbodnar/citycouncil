@@ -48,7 +48,7 @@ const HelpPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">Email</p>
-                  <p className="text-sm text-gray-600">support@shoutout.com</p>
+                  <p className="text-sm text-gray-600">hello@shoutout.us</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
