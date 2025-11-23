@@ -182,6 +182,7 @@ export interface Notification {
 
 export interface AdminStats {
   total_orders: number;
+  orders_this_month: number;
   completed_orders: number;
   pending_orders: number;
   corporate_orders: number;
