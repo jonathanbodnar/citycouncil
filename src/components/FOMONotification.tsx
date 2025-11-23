@@ -78,7 +78,7 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
       }`}
     >
       <div className="glass-strong rounded-xl px-4 py-3 shadow-modern-lg border border-white/30 flex items-center gap-2 backdrop-blur-xl">
-        <CheckBadgeIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+        <CheckBadgeIcon className="h-4 w-4 flex-shrink-0" style={{ color: '#3a86ff' }} />
         <p className="text-sm font-medium text-white whitespace-nowrap">
           {currentName} just ordered a ShoutOut.
         </p>

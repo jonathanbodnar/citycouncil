@@ -122,17 +122,17 @@ const MobileNavigation: React.FC = () => {
   console.log('✅ Rendering mobile nav with', navigation.length, 'items', user ? '(authenticated)' : '(guest)');
 
   return (
-    <div 
-      className="fixed left-0 right-0 border-t border-white/20 md:hidden" 
+    <nav 
+      className="fixed left-0 right-0 bottom-0 border-t border-white/20 md:hidden" 
       style={{ 
-        bottom: 0,
         background: 'rgba(17, 24, 39, 0.95)', 
         backdropFilter: 'blur(40px)',
         WebkitBackdropFilter: 'blur(40px)',
         zIndex: 9999,
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        // Force the element to stay at the bottom even when browser UI collapses
-        position: 'fixed'
+        paddingBottom: 'max(env(safe-area-inset-bottom), 0px)',
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+        willChange: 'transform'
       }}
     >
       <div className={`grid py-2 ${user ? (user.user_type === 'talent' ? 'grid-cols-4' : 'grid-cols-4') : 'grid-cols-2'}`}>
@@ -162,7 +162,7 @@ const MobileNavigation: React.FC = () => {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };
 
