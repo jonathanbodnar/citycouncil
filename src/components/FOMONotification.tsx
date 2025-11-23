@@ -71,11 +71,16 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
 
   return (
     <div
-      className={`fixed right-6 bottom-20 md:bottom-6 z-[60] transition-all duration-500 ease-in-out transform ${
+      className={`fixed right-6 z-[60] transition-all duration-500 ease-in-out transform ${
         visible 
           ? 'translate-y-0 opacity-100' 
           : 'translate-y-4 opacity-0 pointer-events-none'
       }`}
+      style={{
+        // On mobile: always stay 100px from bottom to clear the menu
+        // On desktop: 24px from bottom
+        bottom: window.innerWidth < 768 ? '100px' : '24px'
+      }}
     >
       <div className="glass-strong rounded-xl px-4 py-3 shadow-modern-lg border border-white/30 flex items-center gap-2 backdrop-blur-xl">
         <CheckBadgeIcon className="h-4 w-4 flex-shrink-0" style={{ color: '#3a86ff' }} />

@@ -15,6 +15,19 @@
   }
 }
 
+/* Ensure mobile navigation stays at bottom */
+@media (max-width: 767px) {
+  /* Add extra padding at bottom of pages for mobile nav */
+  body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  /* Prevent content from being hidden behind mobile nav */
+  main {
+    margin-bottom: 70px;
+  }
+}
+
 /* Dark Glass Morphism Design System - macOS Inspired */
 
 /* Custom animations */
