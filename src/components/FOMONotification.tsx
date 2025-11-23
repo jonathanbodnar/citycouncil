@@ -41,7 +41,7 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
     const initialTimer = setTimeout(() => {
       const name = getRandomUnusedName();
       setCurrentName(name);
-      setUsedNames(prev => new Set([...prev, name]));
+      setUsedNames(prev => new Set(Array.from(prev).concat(name)));
       setVisible(true);
 
       // Hide after 4 seconds
@@ -54,7 +54,7 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
     const recurringTimer = setInterval(() => {
       const name = getRandomUnusedName();
       setCurrentName(name);
-      setUsedNames(prev => new Set([...prev, name]));
+      setUsedNames(prev => new Set(Array.from(prev).concat(name)));
       setVisible(true);
 
       // Hide after 4 seconds
