@@ -17,6 +17,7 @@ import { TalentProfile, Review, SocialAccount } from '../types';
 import { useAuth } from '../context/AuthContext';
 import VideoPlayer from '../components/VideoPlayer';
 import ShareModal from '../components/ShareModal';
+import FOMONotification from '../components/FOMONotification';
 import toast from 'react-hot-toast';
 
 interface TalentWithDetails extends TalentProfile {
@@ -743,6 +744,9 @@ const TalentProfilePage: React.FC = () => {
           }}
         />
       )}
+
+      {/* FOMO Notification - Shows fake recent orders */}
+      {talent && <FOMONotification interval={8000} />}
     </div>
   );
 };
