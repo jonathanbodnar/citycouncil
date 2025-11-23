@@ -70,7 +70,7 @@ const MobileNavigation: React.FC = () => {
     // Regular User Navigation
     {
       name: 'Home',
-      href: '/home',
+      href: '/',
       icon: HomeIcon,
       iconSolid: HomeIconSolid,
     },
@@ -105,7 +105,7 @@ const MobileNavigation: React.FC = () => {
   }> = [
     {
       name: 'Home',
-      href: '/home',
+      href: '/',
       icon: HomeIcon,
       iconSolid: HomeIconSolid,
     },
