@@ -65,7 +65,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         const { count, error } = await supabase
           .from('help_messages')
           .select('*', { count: 'exact', head: true })
-          .is('response', null);
+          .eq('is_read', false);
 
         if (!error && count !== null) {
           setUnreadHelpMessages(count);

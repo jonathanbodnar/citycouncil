@@ -209,6 +209,7 @@ export interface HelpMessage {
   response?: string;
   is_resolved: boolean;
   is_human_takeover: boolean;
+  is_read: boolean;
   created_at: string;
   updated_at: string;
 }

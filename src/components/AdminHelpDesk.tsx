@@ -95,6 +95,28 @@ const AdminHelpDesk: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const markConversationAsRead = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('help_messages')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .eq('is_read', false);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
+  };
+
+  const handleSelectConversation = async (conversation: ConversationGroup) => {
+    setSelectedConversation(conversation);
+    // Mark all messages in this conversation as read
+    await markConversationAsRead(conversation.user_id);
+    // Refresh conversations to update unread count
+    fetchConversations();
+  };
+
   const fetchConversations = async () => {
     try {
       setLoading(true);
@@ -325,7 +347,7 @@ const AdminHelpDesk: React.FC = () => {
             filteredConversations.map((conversation) => (
               <button
                 key={conversation.user_id}
-                onClick={() => setSelectedConversation(conversation)}
+                onClick={() => handleSelectConversation(conversation)}
                 className={`w-full text-left p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                   selectedConversation?.user_id === conversation.user_id ? 'bg-blue-50 border-blue-200' : ''
                 }`}
