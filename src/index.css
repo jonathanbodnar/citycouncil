@@ -6,22 +6,11 @@
 /* TT Ramillas font is loaded in public/index.html instead of CSS for better build compatibility */
 
 /* Mobile viewport fix for collapsing browser UI */
-html {
-  height: 100%;
-  overflow: hidden;
-}
-
-body {
-  height: 100%;
-  overflow: auto;
-  /* Use dvh (dynamic viewport height) if supported, fallback to 100vh */
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
+/* Keep it minimal - only what's needed for safe-area on iOS */
 @supports (-webkit-touch-callout: none) {
   /* iOS specific fixes */
   body {
+    min-height: 100vh;
     min-height: -webkit-fill-available;
   }
 }
