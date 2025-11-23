@@ -71,7 +71,7 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-40 transition-all duration-500 ease-in-out transform ${
+      className={`fixed bottom-6 right-6 z-[60] transition-all duration-500 ease-in-out transform ${
         visible 
           ? 'translate-y-0 opacity-100' 
           : 'translate-y-4 opacity-0 pointer-events-none'
