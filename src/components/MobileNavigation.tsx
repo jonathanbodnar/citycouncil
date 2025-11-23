@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   HomeIcon, 
@@ -25,27 +25,8 @@ import { useAuth } from '../context/AuthContext';
 const MobileNavigation: React.FC = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
 
   console.log('🔍 MobileNavigation rendering, user:', user?.email, 'loading:', loading);
-
-  // Track visual viewport height changes (when browser UI collapses/expands)
-  useEffect(() => {
-    const handleResize = () => {
-      // Use visualViewport if available (more accurate for mobile)
-      const height = window.visualViewport?.height || window.innerHeight;
-      setViewportHeight(height);
-    };
-
-    // Listen to both resize and visualViewport events
-    window.addEventListener('resize', handleResize);
-    window.visualViewport?.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.visualViewport?.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   // Don't render anything while auth is loading
   if (loading) {
@@ -141,15 +122,14 @@ const MobileNavigation: React.FC = () => {
   console.log('✅ Rendering mobile nav with', navigation.length, 'items', user ? '(authenticated)' : '(guest)');
 
   return (
-    <nav 
-      className="fixed left-0 right-0 border-t border-white/20 md:hidden" 
+    <div 
+      className="fixed bottom-0 left-0 right-0 border-t border-white/20 md:hidden" 
       style={{ 
-        top: `${viewportHeight - 64}px`, // 64px is approximate nav height
         background: 'rgba(17, 24, 39, 0.95)', 
         backdropFilter: 'blur(40px)',
         WebkitBackdropFilter: 'blur(40px)',
         zIndex: 9999,
-        paddingBottom: 'max(env(safe-area-inset-bottom), 0px)'
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
     >
       <div className={`grid py-2 ${user ? (user.user_type === 'talent' ? 'grid-cols-4' : 'grid-cols-4') : 'grid-cols-2'}`}>
@@ -179,7 +159,7 @@ const MobileNavigation: React.FC = () => {
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 };
 

@@ -15,17 +15,6 @@
   }
 }
 
-/* Force mobile nav to use visual viewport bottom (not layout viewport) */
-@media (max-width: 767px) {
-  nav[style*="bottom: 0"] {
-    position: fixed !important;
-    bottom: 0 !important;
-    /* Stick to visual viewport */
-    position: -webkit-sticky !important;
-    position: sticky !important;
-  }
-}
-
 /* Dark Glass Morphism Design System - macOS Inspired */
 
 /* Custom animations */
