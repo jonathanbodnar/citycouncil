@@ -123,12 +123,16 @@ const MobileNavigation: React.FC = () => {
 
   return (
     <div 
-      className="fixed bottom-0 left-0 right-0 border-t border-white/20 md:hidden" 
+      className="fixed left-0 right-0 border-t border-white/20 md:hidden" 
       style={{ 
+        bottom: 0,
         background: 'rgba(17, 24, 39, 0.95)', 
         backdropFilter: 'blur(40px)',
         WebkitBackdropFilter: 'blur(40px)',
-        zIndex: 9999 
+        zIndex: 9999,
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        // Force the element to stay at the bottom even when browser UI collapses
+        position: 'fixed'
       }}
     >
       <div className={`grid py-2 ${user ? (user.user_type === 'talent' ? 'grid-cols-4' : 'grid-cols-4') : 'grid-cols-2'}`}>
