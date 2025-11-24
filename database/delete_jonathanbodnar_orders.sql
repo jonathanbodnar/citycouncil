@@ -1,6 +1,7 @@
 -- Script to delete all orders for jonathanbodnar user
 
 -- STEP 1: Find the user ID for jonathanbodnar
+-- Checks email, full_name, and if you have a username column
 SELECT 
     id,
     email,
@@ -10,7 +11,9 @@ SELECT
 FROM 
     users
 WHERE 
-    email LIKE '%jonathanbodnar%' OR full_name LIKE '%Jonathan%Bodnar%';
+    email LIKE '%jonathanbodnar%' 
+    OR email = 'hi@gmail.com'
+    OR full_name LIKE '%Jonathan%Bodnar%';
 
 -- STEP 2: Check how many orders they have
 SELECT 
@@ -24,7 +27,7 @@ FROM
 JOIN 
     users u ON o.user_id = u.id
 WHERE 
-    u.email LIKE '%jonathanbodnar%';
+    (u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com');
 
 -- STEP 3: Show all orders for jonathanbodnar (for verification)
 SELECT 
@@ -80,7 +83,7 @@ FROM
 JOIN 
     users u ON o.user_id = u.id
 WHERE 
-    u.email LIKE '%jonathanbodnar%';
+    (u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com');
 
 -- STEP 7: Update talent profiles total_orders count (recalculate)
 -- This ensures the analytics show correct counts after deletion
