@@ -34,6 +34,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
   { key: 'orders', label: 'Orders', icon: ShoppingCartIcon },
+  { key: 'users', label: 'Users', icon: UsersIcon },
   { key: 'talent', label: 'Talent', icon: UsersIcon },
   { key: 'payouts', label: 'Payouts', icon: CurrencyDollarIcon },
   { key: 'w9s', label: 'W-9 Forms', icon: DocumentTextIcon },
