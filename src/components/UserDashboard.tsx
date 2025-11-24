@@ -936,44 +936,32 @@ const UserDashboard: React.FC = () => {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
             <div 
-              className="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-50 backdrop-blur-sm"
+              className="fixed inset-0 transition-opacity bg-black bg-opacity-75"
               onClick={() => {
                 setShowReviewPrompt(false);
                 setDownloadOrderId(null);
               }}
             />
 
-            {/* Modal panel - Dark background for better visibility */}
-            <div className="relative inline-block align-bottom bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 z-10 border border-gray-700">
+            {/* Modal panel - Solid dark background like download modal */}
+            <div className="relative inline-block align-bottom bg-gray-800 rounded-2xl px-6 pt-6 pb-6 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full z-10">
               <div>
-                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-500/20">
-                  <StarIcon className="h-6 w-6 text-yellow-400" />
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100">
+                  <StarIcon className="h-8 w-8 text-yellow-500" />
                 </div>
-                <div className="mt-3 text-center sm:mt-5">
-                  <h3 className="text-lg leading-6 font-medium text-white">
+                <div className="mt-4 text-center">
+                  <h3 className="text-xl font-semibold text-white mb-3">
                     Leave a Review First?
                   </h3>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-300">
-                      We'd love to hear your feedback! Would you like to leave a review for this ShoutOut before downloading?
-                    </p>
-                  </div>
+                  <p className="text-sm text-gray-300">
+                    We'd love to hear your feedback! Would you like to leave a review for this ShoutOut before downloading?
+                  </p>
                 </div>
               </div>
-              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                <Link
-                  to={`/review/${downloadOrderId}`}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-base font-medium text-white hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm"
-                  onClick={() => {
-                    setShowReviewPrompt(false);
-                    setDownloadOrderId(null);
-                  }}
-                >
-                  Leave Review
-                </Link>
+              <div className="mt-6 flex flex-col-reverse sm:flex-row sm:gap-3">
                 <button
                   type="button"
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-600 shadow-sm px-4 py-2 bg-gray-700 text-base font-medium text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                  className="w-full inline-flex justify-center items-center rounded-xl px-6 py-3 bg-gray-700 text-base font-medium text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors mt-3 sm:mt-0"
                   onClick={async () => {
                     const order = orders.find(o => o.id === downloadOrderId);
                     if (order) {
@@ -983,8 +971,18 @@ const UserDashboard: React.FC = () => {
                     setDownloadOrderId(null);
                   }}
                 >
-                  Download Now
+                  Skip
                 </button>
+                <Link
+                  to={`/review/${downloadOrderId}`}
+                  className="w-full inline-flex justify-center items-center rounded-xl px-6 py-3 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  onClick={() => {
+                    setShowReviewPrompt(false);
+                    setDownloadOrderId(null);
+                  }}
+                >
+                  Leave Review
+                </Link>
               </div>
             </div>
           </div>
