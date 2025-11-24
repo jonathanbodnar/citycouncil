@@ -696,7 +696,7 @@ const OrderPage: React.FC = () => {
                     rows={6}
                     {...register('requestDetails', { 
                       required: 'Please describe what you want in your ShoutOut',
-                      minLength: { value: 20, message: 'Please provide more details (at least 20 characters)' },
+                      minLength: { value: 25, message: 'Please provide more details (at least 25 characters)' },
                       maxLength: { value: 1000, message: 'Please keep your request under 1,000 characters' }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
