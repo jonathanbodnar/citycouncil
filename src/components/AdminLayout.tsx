@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../services/supabase';
 import {
   UsersIcon,
   Cog6ToothIcon,
@@ -49,12 +50,62 @@ const navItems: NavItem[] = [
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadHelpMessages, setUnreadHelpMessages] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
 
   // Get active tab from URL query params
   const searchParams = new URLSearchParams(location.search);
   const activeTab = searchParams.get('tab') || 'analytics';
+
+  // Fetch unread help messages count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('help_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_read', false);
+
+        if (!error && count !== null) {
+          setUnreadHelpMessages(count);
+        }
+      } catch (error) {
+        console.error('Error fetching unread help messages:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Subscribe to new messages
+    const subscription = supabase
+      .channel('admin_help_notifications')
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'help_messages'
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .on('postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'help_messages'
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleNavigation = (key: string) => {
     navigate(`/admin?tab=${key}`);
@@ -98,7 +149,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <button
                 key={item.key}
                 onClick={() => handleNavigation(item.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                     : 'text-gray-300 hover:bg-white/10 hover:text-white'
@@ -106,7 +157,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
                 <span className="font-medium">{item.label}</span>
-                {isActive && (
+                {item.key === 'helpdesk' && unreadHelpMessages > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {unreadHelpMessages > 9 ? '9+' : unreadHelpMessages}
+                  </span>
+                )}
+                {isActive && item.key !== 'helpdesk' && (
+                  <div className="ml-auto w-2 h-2 rounded-full bg-white" />
+                )}
+                {isActive && item.key === 'helpdesk' && unreadHelpMessages === 0 && (
                   <div className="ml-auto w-2 h-2 rounded-full bg-white" />
                 )}
               </button>

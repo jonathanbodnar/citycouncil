@@ -17,6 +17,7 @@ import { TalentProfile, Review, SocialAccount } from '../types';
 import { useAuth } from '../context/AuthContext';
 import VideoPlayer from '../components/VideoPlayer';
 import ShareModal from '../components/ShareModal';
+import FOMONotification from '../components/FOMONotification';
 import toast from 'react-hot-toast';
 
 interface TalentWithDetails extends TalentProfile {
@@ -355,7 +356,7 @@ const TalentProfilePage: React.FC = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Talent Not Found</h1>
           <p className="text-gray-600">The talent profile you're looking for doesn't exist.</p>
-          <Link to="/home" className="mt-4 inline-block bg-primary-600 text-white px-4 py-2 rounded-md">
+          <Link to="/" className="mt-4 inline-block bg-primary-600 text-white px-4 py-2 rounded-md">
             Browse All Talent
           </Link>
         </div>
@@ -743,6 +744,9 @@ const TalentProfilePage: React.FC = () => {
           }}
         />
       )}
+
+      {/* FOMO Notification - Shows fake recent orders */}
+      {talent && <FOMONotification interval={8000} />}
     </div>
   );
 };

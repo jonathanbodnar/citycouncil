@@ -70,7 +70,7 @@ const MobileNavigation: React.FC = () => {
     // Regular User Navigation
     {
       name: 'Home',
-      href: '/home',
+      href: '/',
       icon: HomeIcon,
       iconSolid: HomeIconSolid,
     },
@@ -105,7 +105,7 @@ const MobileNavigation: React.FC = () => {
   }> = [
     {
       name: 'Home',
-      href: '/home',
+      href: '/',
       icon: HomeIcon,
       iconSolid: HomeIconSolid,
     },
@@ -128,7 +128,8 @@ const MobileNavigation: React.FC = () => {
         background: 'rgba(17, 24, 39, 0.95)', 
         backdropFilter: 'blur(40px)',
         WebkitBackdropFilter: 'blur(40px)',
-        zIndex: 9999 
+        zIndex: 9999,
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
     >
       <div className={`grid py-2 ${user ? (user.user_type === 'talent' ? 'grid-cols-4' : 'grid-cols-4') : 'grid-cols-2'}`}>

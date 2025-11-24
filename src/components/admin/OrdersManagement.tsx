@@ -18,6 +18,7 @@ interface Order {
   amount: number;
   status: string;
   payment_transaction_id: string;
+  request_details: string;
   fulfillment_token?: string;
   denial_reason?: string;
   denied_by?: string;
@@ -285,6 +286,9 @@ const OrdersManagement: React.FC = () => {
                   Talent
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Message
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -301,7 +305,7 @@ const OrdersManagement: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                     No orders found
                   </td>
                 </tr>
@@ -317,6 +321,11 @@ const OrdersManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {order.talent_profiles.users.full_name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
+                      <div className="truncate" title={order.request_details}>
+                        {order.request_details}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       ${(order.amount / 100).toFixed(2)}

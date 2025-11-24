@@ -5,6 +5,29 @@
 /* Custom Fonts */
 /* TT Ramillas font is loaded in public/index.html instead of CSS for better build compatibility */
 
+/* Mobile viewport fix for collapsing browser UI */
+/* Keep it minimal - only what's needed for safe-area on iOS */
+@supports (-webkit-touch-callout: none) {
+  /* iOS specific fixes */
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Ensure mobile navigation stays at bottom */
+@media (max-width: 767px) {
+  /* Add extra padding at bottom of pages for mobile nav */
+  body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  /* Prevent content from being hidden behind mobile nav */
+  main {
+    margin-bottom: 70px;
+  }
+}
+
 /* Dark Glass Morphism Design System - macOS Inspired */
 
 /* Custom animations */

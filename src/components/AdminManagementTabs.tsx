@@ -96,6 +96,15 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         const corporateOrders = orders?.filter(o => o.is_corporate_order) || [];
         const pendingApprovalOrders = orders?.filter(o => o.approval_status === 'pending') || [];
         
+        // Calculate orders for current month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const ordersThisMonth = orders?.filter(o => {
+          const orderDate = new Date(o.created_at);
+          return orderDate >= firstDayOfMonth;
+        }) || [];
+        const ordersThisMonthCount = ordersThisMonth.length;
+        
         // Calculate gross revenue (all money collected by platform)
         // orders.amount is in CENTS, so divide by 100
         const grossGenerated = (orders?.reduce((sum, order) => sum + order.amount, 0) || 0) / 100;
@@ -144,6 +153,7 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
 
         setStats({
           total_orders: totalOrders,
+          orders_this_month: ordersThisMonthCount,
           completed_orders: completedOrders.length,
           pending_orders: pendingOrders.length,
           corporate_orders: corporateOrders.length,
@@ -264,6 +274,12 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                 value={stats.total_orders.toLocaleString()}
                 icon={ChartBarIcon}
                 color="text-blue-600"
+              />
+              <StatsCard
+                title="Orders This Month"
+                value={stats.orders_this_month.toLocaleString()}
+                icon={ChartBarIcon}
+                color="text-indigo-600"
               />
               <StatsCard
                 title="Gross Revenue"
