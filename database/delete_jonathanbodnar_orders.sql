@@ -1,119 +1,94 @@
--- Delete all orders for jonathanbodnar talent profile
--- This will cascade delete related notifications and other records
+-- Script to delete all orders for jonathanbodnar user
 
--- Step 1: Find jonathanbodnar's talent profile ID
+-- STEP 1: Find the user ID for jonathanbodnar
 SELECT 
-  tp.id as talent_id,
-  tp.username,
-  u.full_name,
-  COUNT(o.id) as order_count
-FROM talent_profiles tp
-LEFT JOIN users u ON tp.user_id = u.id
-LEFT JOIN orders o ON o.talent_id = tp.id
-WHERE tp.username = 'jonathanbodnar'
-GROUP BY tp.id, tp.username, u.full_name;
+    id,
+    email,
+    full_name,
+    user_type,
+    created_at
+FROM 
+    users
+WHERE 
+    email LIKE '%jonathanbodnar%' OR full_name LIKE '%Jonathan%Bodnar%';
 
--- Step 2: Show orders that will be deleted
+-- STEP 2: Check how many orders they have
 SELECT 
-  o.id,
-  o.created_at,
-  o.amount,
-  o.status,
-  o.order_type,
-  u.email as customer_email,
-  u.full_name as customer_name
-FROM orders o
-JOIN users u ON o.user_id = u.id
-WHERE o.talent_id IN (
-  SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-)
-ORDER BY o.created_at DESC;
+    COUNT(*) as total_orders,
+    COUNT(*) FILTER (WHERE status = 'pending') as pending_orders,
+    COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_orders,
+    COUNT(*) FILTER (WHERE status = 'completed') as completed_orders,
+    SUM(amount) / 100.0 as total_amount_dollars
+FROM 
+    orders o
+JOIN 
+    users u ON o.user_id = u.id
+WHERE 
+    u.email LIKE '%jonathanbodnar%';
 
--- Step 3: Delete reviews for these orders (if any)
-DELETE FROM reviews
-WHERE order_id IN (
-  SELECT o.id 
-  FROM orders o
-  WHERE o.talent_id IN (
-    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-  )
-);
-
--- Step 4: Delete notifications related to these orders
-DELETE FROM notifications
-WHERE order_id IN (
-  SELECT o.id 
-  FROM orders o
-  WHERE o.talent_id IN (
-    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-  )
-);
-
--- Step 5: Delete short links for these orders
-DELETE FROM short_links
-WHERE order_id IN (
-  SELECT o.id 
-  FROM orders o
-  WHERE o.talent_id IN (
-    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-  )
-);
-
--- Step 6: Delete fulfillment auth tokens for these orders
-DELETE FROM fulfillment_auth_tokens
-WHERE order_id IN (
-  SELECT o.id 
-  FROM orders o
-  WHERE o.talent_id IN (
-    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-  )
-);
-
--- Step 7: Delete magic auth tokens for these orders
-DELETE FROM magic_auth_tokens
-WHERE order_id IN (
-  SELECT o.id 
-  FROM orders o
-  WHERE o.talent_id IN (
-    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-  )
-);
-
--- Step 8: Delete payouts for these orders
-DELETE FROM payouts
-WHERE order_id IN (
-  SELECT o.id 
-  FROM orders o
-  WHERE o.talent_id IN (
-    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-  )
-);
-
--- Step 9: Delete payout errors for these orders
-DELETE FROM payout_errors
-WHERE order_id IN (
-  SELECT o.id 
-  FROM orders o
-  WHERE o.talent_id IN (
-    SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-  )
-);
-
--- Step 10: Finally, delete all orders
-DELETE FROM orders
-WHERE talent_id IN (
-  SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar'
-);
-
--- Verify deletion
+-- STEP 3: Show all orders for jonathanbodnar (for verification)
 SELECT 
-  tp.username,
-  COUNT(o.id) as remaining_orders
-FROM talent_profiles tp
-LEFT JOIN orders o ON o.talent_id = tp.id
-WHERE tp.username = 'jonathanbodnar'
-GROUP BY tp.username;
+    o.id,
+    o.created_at,
+    o.status,
+    o.amount / 100.0 as amount_dollars,
+    tp.full_name as talent_name,
+    o.request_details
+FROM 
+    orders o
+JOIN 
+    users u ON o.user_id = u.id
+LEFT JOIN 
+    talent_profiles tp ON o.talent_id = tp.id
+WHERE 
+    u.email LIKE '%jonathanbodnar%'
+ORDER BY 
+    o.created_at DESC;
 
--- Show success message
-SELECT '✅ All orders for jonathanbodnar have been deleted' as result;
+-- STEP 4: Delete related records first (to avoid foreign key constraints)
+-- Delete notifications related to these orders
+DELETE FROM notifications 
+WHERE order_id IN (
+    SELECT o.id 
+    FROM orders o
+    JOIN users u ON o.user_id = u.id
+    WHERE u.email LIKE '%jonathanbodnar%'
+);
 
+-- Delete payouts related to these orders
+DELETE FROM payouts 
+WHERE order_id IN (
+    SELECT o.id 
+    FROM orders o
+    JOIN users u ON o.user_id = u.id
+    WHERE u.email LIKE '%jonathanbodnar%'
+);
+
+-- STEP 5: Delete the orders themselves
+DELETE FROM orders 
+WHERE user_id IN (
+    SELECT id 
+    FROM users 
+    WHERE email LIKE '%jonathanbodnar%'
+);
+
+-- STEP 6: Verify deletion
+SELECT 
+    COUNT(*) as remaining_orders
+FROM 
+    orders o
+JOIN 
+    users u ON o.user_id = u.id
+WHERE 
+    u.email LIKE '%jonathanbodnar%';
+
+-- STEP 7: Update talent profiles total_orders count (recalculate)
+-- This ensures the analytics show correct counts after deletion
+UPDATE talent_profiles tp
+SET total_orders = (
+    SELECT COUNT(*)
+    FROM orders o
+    WHERE o.talent_id = tp.id
+);
+
+SELECT '✅ All orders for jonathanbodnar have been deleted and analytics updated.' AS status;
