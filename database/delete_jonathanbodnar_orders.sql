@@ -1,21 +1,25 @@
--- Script to delete all orders for jonathanbodnar user
+-- Script to delete all orders FOR the talent jonathanbodnar
+-- (Orders placed TO this talent, not orders placed BY them as a user)
 
--- STEP 1: Find the user ID for jonathanbodnar
--- Checks email, full_name, and if you have a username column
+-- STEP 1: Find the talent profile ID for jonathanbodnar
 SELECT 
-    id,
-    email,
-    full_name,
-    user_type,
-    created_at
+    tp.id as talent_id,
+    tp.full_name,
+    tp.username,
+    u.email,
+    tp.total_orders,
+    tp.is_active
 FROM 
-    users
+    talent_profiles tp
+JOIN 
+    users u ON tp.user_id = u.id
 WHERE 
-    email LIKE '%jonathanbodnar%' 
-    OR email = 'hi@gmail.com'
-    OR full_name LIKE '%Jonathan%Bodnar%';
+    u.email LIKE '%jonathanbodnar%' 
+    OR u.email = 'hi@gmail.com'
+    OR tp.username LIKE '%jonathanbodnar%'
+    OR tp.full_name LIKE '%Jonathan%Bodnar%';
 
--- STEP 2: Check how many orders they have
+-- STEP 2: Check how many orders this talent has received
 SELECT 
     COUNT(*) as total_orders,
     COUNT(*) FILTER (WHERE status = 'pending') as pending_orders,
@@ -25,26 +29,32 @@ SELECT
 FROM 
     orders o
 JOIN 
-    users u ON o.user_id = u.id
+    talent_profiles tp ON o.talent_id = tp.id
+JOIN 
+    users u ON tp.user_id = u.id
 WHERE 
-    (u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com');
+    (u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com' OR tp.username LIKE '%jonathanbodnar%');
 
--- STEP 3: Show all orders for jonathanbodnar (for verification)
+-- STEP 3: Show all orders for this talent (for verification)
 SELECT 
     o.id,
     o.created_at,
     o.status,
     o.amount / 100.0 as amount_dollars,
     tp.full_name as talent_name,
+    customer.full_name as customer_name,
+    customer.email as customer_email,
     o.request_details
 FROM 
     orders o
 JOIN 
-    users u ON o.user_id = u.id
-LEFT JOIN 
     talent_profiles tp ON o.talent_id = tp.id
+JOIN 
+    users u ON tp.user_id = u.id
+JOIN 
+    users customer ON o.user_id = customer.id
 WHERE 
-    u.email LIKE '%jonathanbodnar%'
+    (u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com' OR tp.username LIKE '%jonathanbodnar%')
 ORDER BY 
     o.created_at DESC;
 
@@ -54,8 +64,9 @@ DELETE FROM notifications
 WHERE order_id IN (
     SELECT o.id 
     FROM orders o
-    JOIN users u ON o.user_id = u.id
-    WHERE u.email LIKE '%jonathanbodnar%'
+    JOIN talent_profiles tp ON o.talent_id = tp.id
+    JOIN users u ON tp.user_id = u.id
+    WHERE u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com' OR tp.username LIKE '%jonathanbodnar%'
 );
 
 -- Delete payouts related to these orders
@@ -63,16 +74,18 @@ DELETE FROM payouts
 WHERE order_id IN (
     SELECT o.id 
     FROM orders o
-    JOIN users u ON o.user_id = u.id
-    WHERE u.email LIKE '%jonathanbodnar%'
+    JOIN talent_profiles tp ON o.talent_id = tp.id
+    JOIN users u ON tp.user_id = u.id
+    WHERE u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com' OR tp.username LIKE '%jonathanbodnar%'
 );
 
 -- STEP 5: Delete the orders themselves
 DELETE FROM orders 
-WHERE user_id IN (
-    SELECT id 
-    FROM users 
-    WHERE email LIKE '%jonathanbodnar%'
+WHERE talent_id IN (
+    SELECT tp.id 
+    FROM talent_profiles tp
+    JOIN users u ON tp.user_id = u.id
+    WHERE u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com' OR tp.username LIKE '%jonathanbodnar%'
 );
 
 -- STEP 6: Verify deletion
@@ -81,17 +94,20 @@ SELECT
 FROM 
     orders o
 JOIN 
-    users u ON o.user_id = u.id
+    talent_profiles tp ON o.talent_id = tp.id
+JOIN 
+    users u ON tp.user_id = u.id
 WHERE 
-    (u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com');
+    (u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com' OR tp.username LIKE '%jonathanbodnar%');
 
--- STEP 7: Update talent profiles total_orders count (recalculate)
--- This ensures the analytics show correct counts after deletion
+-- STEP 7: Update this talent's total_orders count to 0
 UPDATE talent_profiles tp
-SET total_orders = (
-    SELECT COUNT(*)
-    FROM orders o
-    WHERE o.talent_id = tp.id
+SET total_orders = 0
+WHERE tp.id IN (
+    SELECT tp2.id 
+    FROM talent_profiles tp2
+    JOIN users u ON tp2.user_id = u.id
+    WHERE u.email LIKE '%jonathanbodnar%' OR u.email = 'hi@gmail.com' OR tp2.username LIKE '%jonathanbodnar%'
 );
 
-SELECT '✅ All orders for jonathanbodnar have been deleted and analytics updated.' AS status;
+SELECT '✅ All orders FOR talent jonathanbodnar have been deleted and analytics updated.' AS status;
