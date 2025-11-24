@@ -346,6 +346,24 @@ const OrderPage: React.FC = () => {
 
       if (orderError) throw orderError;
 
+      // Track Meta Pixel Purchase event
+      try {
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+          (window as any).fbq('track', 'Purchase', {
+            value: pricing.total,
+            currency: 'USD',
+            content_type: 'product',
+            content_name: `ShoutOut from ${talent.temp_full_name || talent.users.full_name}`,
+            content_ids: [talent.id],
+            num_items: 1
+          });
+          logger.log('✅ Meta Pixel Purchase event tracked');
+        }
+      } catch (pixelError) {
+        logger.error('Error tracking Meta Pixel Purchase:', pixelError);
+        // Don't fail the order if pixel tracking fails
+      }
+
       // Track coupon usage if coupon was applied
       if (appliedCoupon) {
         try {
