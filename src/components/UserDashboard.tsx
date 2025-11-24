@@ -936,7 +936,7 @@ const UserDashboard: React.FC = () => {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
             <div 
-              className="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-95 backdrop-blur-sm"
+              className="fixed inset-0 transition-opacity bg-black bg-opacity-75"
               onClick={() => {
                 setShowReviewPrompt(false);
                 setDownloadOrderId(null);
@@ -944,7 +944,7 @@ const UserDashboard: React.FC = () => {
             />
 
             {/* Modal panel */}
-            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div className="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 z-10">
               <div>
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
                   <StarIcon className="h-6 w-6 text-yellow-600" />
