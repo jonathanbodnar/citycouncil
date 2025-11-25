@@ -13,11 +13,42 @@ const ResetPasswordPage: React.FC = () => {
 
   useEffect(() => {
     // Check if we have a valid reset token
-    supabase.auth.onAuthStateChange((event, session) => {
+    const checkToken = async () => {
+      // First, check if there's a hash in the URL (Supabase sends tokens in URL hash)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
+      
+      console.log('Reset password page loaded', { accessToken: !!accessToken, type });
+      
+      if (accessToken && type === 'recovery') {
+        console.log('Found recovery token in URL');
+        setValidToken(true);
+        return;
+      }
+
+      // Also check current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('Found active session');
+        setValidToken(true);
+        return;
+      }
+    };
+
+    checkToken();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event);
       if (event === 'PASSWORD_RECOVERY') {
         setValidToken(true);
       }
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
