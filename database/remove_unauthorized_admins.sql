@@ -13,6 +13,7 @@ WHERE
     user_type = 'admin'
     AND email NOT IN (
         'admin@shoutout.us',
+        'admin@shoutout.com',
         'jb@apollo.inc'
     );
 
@@ -25,16 +26,17 @@ WHERE
     user_type = 'admin'
     AND email NOT IN (
         'admin@shoutout.us',
+        'admin@shoutout.com',
         'jb@apollo.inc'
     );
 
--- Step 3: Ensure admin@shoutout.us IS admin
+-- Step 3: Ensure both admin emails ARE admin
 UPDATE users
 SET 
     user_type = 'admin',
     updated_at = NOW()
 WHERE 
-    email = 'admin@shoutout.us';
+    email IN ('admin@shoutout.us', 'admin@shoutout.com');
 
 -- Step 4: Show final admin list
 SELECT 
