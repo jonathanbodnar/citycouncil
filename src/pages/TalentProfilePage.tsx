@@ -378,7 +378,7 @@ const TalentProfilePage: React.FC = () => {
           animation: slow-pulse 3s ease-in-out infinite;
         }
       `}</style>
-      <div className="mb-6 rounded-xl p-4 text-center shadow-xl slow-pulse border border-purple-400/50" style={{ background: 'linear-gradient(to right, #a70809, #3c108b)' }}>
+      <div className="mb-6 rounded-xl p-4 text-center shadow-xl slow-pulse" style={{ background: 'linear-gradient(to right, #a70809, #3c108b)' }}>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <span className="text-xl">🦃</span>
           <h2 className="text-lg sm:text-xl font-bold text-white">
