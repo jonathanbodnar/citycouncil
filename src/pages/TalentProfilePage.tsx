@@ -368,6 +368,26 @@ const TalentProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Black Friday Banner */}
+      <div className="mb-6 rounded-2xl bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 p-4 sm:p-6 text-center shadow-2xl animate-pulse border-2 border-yellow-400">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+          <span className="text-2xl sm:text-3xl">🦃</span>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+            Black Friday Deal Is LIVE!
+          </h2>
+          <span className="text-2xl sm:text-3xl">🎉</span>
+        </div>
+        <p className="mt-2 sm:mt-3 text-sm sm:text-base md:text-lg text-white font-semibold">
+          Get <span className="text-yellow-300 text-xl sm:text-2xl font-bold">25% OFF</span> all ShoutOuts with code{' '}
+          <span className="bg-yellow-300 text-red-700 px-2 sm:px-3 py-1 rounded-lg font-mono font-bold text-base sm:text-xl">
+            GOBBLE25
+          </span>
+        </p>
+        <p className="mt-2 text-xs sm:text-sm text-yellow-100 font-medium">
+          ⏰ Ends Monday! Don't miss out!
+        </p>
+      </div>
+
       {/* Hero Section */}
       <div className="gradient-border rounded-3xl shadow-modern-xl mb-8">
         <div className="md:flex rounded-3xl overflow-hidden relative">

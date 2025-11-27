@@ -347,6 +347,26 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Black Friday Banner */}
+      <div className="mb-6 rounded-2xl bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 p-6 text-center shadow-2xl animate-pulse border-2 border-yellow-400">
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <span className="text-3xl">🦃</span>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
+            Black Friday Deal Is LIVE!
+          </h2>
+          <span className="text-3xl">🎉</span>
+        </div>
+        <p className="mt-3 text-base sm:text-lg md:text-xl text-white font-semibold">
+          Get <span className="text-yellow-300 text-2xl font-bold">25% OFF</span> all ShoutOuts with code{' '}
+          <span className="bg-yellow-300 text-red-700 px-3 py-1 rounded-lg font-mono font-bold text-xl">
+            GOBBLE25
+          </span>
+        </p>
+        <p className="mt-2 text-sm sm:text-base text-yellow-100 font-medium">
+          ⏰ Ends Monday! Don't miss out!
+        </p>
+      </div>
+
       {/* Talent Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         {filteredTalent.map(talentProfile => (
