@@ -347,6 +347,33 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Black Friday Banner */}
+      <style>{`
+        @keyframes slow-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.85; }
+        }
+        .slow-pulse {
+          animation: slow-pulse 3s ease-in-out infinite;
+        }
+      `}</style>
+      <div className="mb-6 rounded-xl p-4 text-center shadow-xl slow-pulse border border-purple-400/50" style={{ background: 'linear-gradient(to right, #a70809, #3c108b)' }}>
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <span className="text-xl">🦃</span>
+          <h2 className="text-lg sm:text-xl font-bold text-white">
+            Black Friday Deal Is LIVE!
+          </h2>
+          <span className="text-xl">🎉</span>
+        </div>
+        <p className="mt-2 text-sm sm:text-base text-white font-medium">
+          Get <span className="text-yellow-300 text-lg font-bold">25% OFF</span> all ShoutOuts with code{' '}
+          <span className="bg-yellow-300 text-purple-900 px-2 py-1 rounded font-mono font-bold text-sm sm:text-base">
+            GOBBLE25
+          </span>{' '}
+          <span className="text-yellow-200">⏰ Ends Monday!</span>
+        </p>
+      </div>
+
       {/* Talent Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         {filteredTalent.map(talentProfile => (
