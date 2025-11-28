@@ -368,7 +368,7 @@ const HomePage: React.FC = () => {
         <p className="mt-2 text-sm sm:text-base text-white font-medium">
           Get <span className="text-yellow-300 text-lg font-bold">25% OFF</span> all ShoutOuts with code{' '}
           <span className="bg-yellow-300 text-purple-900 px-2 py-1 rounded font-mono font-bold text-sm sm:text-base">
-            GOBBLE25
+            SANTA25
           </span>
         </p>
       </div>
