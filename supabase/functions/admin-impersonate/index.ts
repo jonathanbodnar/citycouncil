@@ -116,17 +116,51 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Magic link generated')
+    console.log('✅ Magic link generated:', linkData.properties.action_link)
 
     // Extract tokens from the generated link
-    const url = new URL(linkData.properties.action_link)
-    const access_token = url.searchParams.get('access_token')
-    const refresh_token = url.searchParams.get('refresh_token')
+    // Tokens might be in query params or hash fragment
+    const linkUrl = linkData.properties.action_link
+    let access_token = null
+    let refresh_token = null
+
+    // Try query parameters first
+    const url = new URL(linkUrl)
+    access_token = url.searchParams.get('access_token')
+    refresh_token = url.searchParams.get('refresh_token')
+
+    // If not in query params, try hash fragment
+    if (!access_token && url.hash) {
+      const hashParams = new URLSearchParams(url.hash.substring(1))
+      access_token = hashParams.get('access_token')
+      refresh_token = hashParams.get('refresh_token')
+    }
+
+    // If still not found, the link data might contain tokens directly
+    if (!access_token && linkData.properties.hashed_token) {
+      console.log('🔍 Link contains hashed_token, trying different approach...')
+      // For magic links, we need to verify the token to get session
+      const { data: verifyData, error: verifyError } = await supabaseAdmin.auth.verifyOtp({
+        token_hash: linkData.properties.hashed_token,
+        type: 'magiclink'
+      })
+      
+      if (verifyError || !verifyData.session) {
+        console.error('❌ Failed to verify magic link token:', verifyError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to verify magic link', details: verifyError?.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      access_token = verifyData.session.access_token
+      refresh_token = verifyData.session.refresh_token
+    }
 
     if (!access_token || !refresh_token) {
-      console.error('❌ Failed to extract tokens from link')
+      console.error('❌ Failed to extract tokens. Link structure:', { linkUrl, hash: url.hash, linkData })
       return new Response(
-        JSON.stringify({ error: 'Failed to extract tokens from generated link' }),
+        JSON.stringify({ error: 'Failed to extract tokens from generated link', debug: { linkUrl } }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
