@@ -282,7 +282,7 @@ const HomePage: React.FC = () => {
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <span className="text-xl">🎄</span>
           <h2 className="text-lg sm:text-xl font-bold text-white">
-            Say it with a ShoutOut from top conservative voices
+            Say it with a personalized ShoutOut from top conservative voices
           </h2>
           <span className="text-xl">🎅</span>
         </div>
