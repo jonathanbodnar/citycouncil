@@ -164,6 +164,7 @@ const TalentManagement: React.FC = () => {
         .select(`
           *,
           users (
+            id,
             full_name,
             avatar_url,
             email,
