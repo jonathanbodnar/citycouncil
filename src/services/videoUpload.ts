@@ -32,13 +32,13 @@ export const uploadVideoToWasabi = async (
       return { success: false, error: 'Please select a video file (MP4, MOV, WEBM, etc.)' };
     }
 
-    if (file.size > 500 * 1024 * 1024) { // 500MB limit
+    if (file.size > 1000 * 1024 * 1024) { // 1GB limit
       console.error('❌ File too large:', { 
         fileSize: file.size, 
-        maxSize: 500 * 1024 * 1024,
+        maxSize: 1000 * 1024 * 1024,
         sizeMB: (file.size / 1024 / 1024).toFixed(2) 
       });
-      return { success: false, error: 'Video must be less than 500MB' };
+      return { success: false, error: 'Video must be less than 1GB' };
     }
     
     console.log('✅ File validation passed, starting AWS SDK upload...');
