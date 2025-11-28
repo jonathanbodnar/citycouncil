@@ -67,22 +67,24 @@ BEGIN
     RAISE NOTICE '✅ Order created successfully! Order ID: %', _order_id;
 
     -- Create notification for the user (Mark Walker)
-    INSERT INTO public.notifications (user_id, order_id, type, message, is_read)
+    INSERT INTO public.notifications (user_id, order_id, type, title, message, is_read)
     VALUES (
         _user_id,
         _order_id,
         'order_placed',
+        '✅ Order Confirmed',
         'Your ShoutOut order from ' || _talent_full_name || ' has been placed!',
         FALSE
     );
     RAISE NOTICE '✅ Notification created for user %', _customer_full_name;
 
     -- Create notification for the talent (Gerald Morgan)
-    INSERT INTO public.notifications (user_id, order_id, type, message, is_read)
+    INSERT INTO public.notifications (user_id, order_id, type, title, message, is_read)
     VALUES (
         (SELECT user_id FROM public.talent_profiles WHERE id = _talent_id),
         _order_id,
         'order_placed',
+        '🎬 New Order Received!',
         'You have a new ShoutOut order from ' || _customer_full_name || '!',
         FALSE
     );
