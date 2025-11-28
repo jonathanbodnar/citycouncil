@@ -637,10 +637,10 @@ const TalentProfilePage: React.FC = () => {
       {/* Recent Videos Section */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Videos</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
           {talent.recent_videos.length > 0 ? (
-            talent.recent_videos.slice(0, 8).map((videoUrl, index) => (
-              <div key={index} className="relative rounded-xl overflow-hidden bg-gray-100 min-h-[200px] md:min-h-[160px]">
+            talent.recent_videos.map((videoUrl, index) => (
+              <div key={index} className="relative rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 w-48 h-64 md:w-56 md:h-72">
                 <VideoPlayer 
                   videoUrl={videoUrl}
                   className="w-full h-full object-cover"
@@ -650,7 +650,7 @@ const TalentProfilePage: React.FC = () => {
           ) : (
             /* Placeholder for no videos */
             [1, 2, 3, 4].map((i) => (
-              <div key={i} className="relative rounded-xl overflow-hidden bg-gray-100 min-h-[200px] md:min-h-[160px] flex items-center justify-center">
+              <div key={i} className="relative rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 w-48 h-64 md:w-56 md:h-72 flex items-center justify-center">
                 <div className="text-center">
                   <PlayIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
                   <div className="text-sm text-gray-600">No videos yet</div>
