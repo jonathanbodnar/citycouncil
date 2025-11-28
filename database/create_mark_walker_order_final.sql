@@ -71,7 +71,7 @@ BEGIN
     VALUES (
         _user_id,
         _order_id,
-        'order_confirmed',
+        'order_placed',
         'Your ShoutOut order from ' || _talent_full_name || ' has been placed!',
         FALSE
     );
@@ -82,7 +82,7 @@ BEGIN
     VALUES (
         (SELECT user_id FROM public.talent_profiles WHERE id = _talent_id),
         _order_id,
-        'new_order',
+        'order_placed',
         'You have a new ShoutOut order from ' || _customer_full_name || '!',
         FALSE
     );
