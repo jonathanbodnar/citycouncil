@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 
 interface TalentWithUser extends TalentProfile {
   users?: {
+    id: string;
     full_name: string;
     avatar_url?: string;
     email?: string;
