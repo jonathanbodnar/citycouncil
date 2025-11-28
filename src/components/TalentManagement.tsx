@@ -1482,6 +1482,7 @@ const TalentManagement: React.FC = () => {
                           return;
                         }
                         
+                        // eslint-disable-next-line no-restricted-globals
                         if (!confirm(`Login as ${talent.users.full_name || talent.users.email}? You will be logged out of admin.`)) {
                           return;
                         }
