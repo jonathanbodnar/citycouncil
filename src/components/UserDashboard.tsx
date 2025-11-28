@@ -55,6 +55,8 @@ const UserDashboard: React.FC = () => {
   const [shareOrderData, setShareOrderData] = useState<OrderWithTalent | null>(null);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [downloadOrderId, setDownloadOrderId] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [updatingPhone, setUpdatingPhone] = useState(false);
 
   // Handle tab from URL parameter
   useEffect(() => {
@@ -67,6 +69,7 @@ const UserDashboard: React.FC = () => {
   useEffect(() => {
     if (user) {
       fetchUserData();
+      setPhoneNumber(user.phone || '');
     }
   }, [user]);
 
@@ -205,6 +208,41 @@ const UserDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error cancelling order:', error);
       toast.error('Failed to cancel order');
+    }
+  };
+
+  const handlePhoneUpdate = async () => {
+    if (!phoneNumber.trim()) {
+      toast.error('Please enter a phone number');
+      return;
+    }
+
+    setUpdatingPhone(true);
+    try {
+      // Update in public.users table
+      const { error: userError } = await supabase
+        .from('users')
+        .update({ phone: phoneNumber })
+        .eq('id', user?.id);
+
+      if (userError) throw userError;
+
+      // Update in auth.users metadata
+      const { error: metaError } = await supabase.auth.updateUser({
+        data: { phone: phoneNumber }
+      });
+
+      if (metaError) throw metaError;
+
+      toast.success('Phone number updated successfully!');
+      
+      // Refresh user data
+      await updateProfile({});
+    } catch (error: any) {
+      console.error('Error updating phone:', error);
+      toast.error(error.message || 'Failed to update phone number');
+    } finally {
+      setUpdatingPhone(false);
     }
   };
 
@@ -770,13 +808,22 @@ const UserDashboard: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Phone Number
                 </label>
-                <input
-                  type="tel"
-                  value={user?.phone || ''}
-                  placeholder="Not provided"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-                  readOnly
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Enter your phone number"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handlePhoneUpdate}
+                    disabled={updatingPhone || phoneNumber === user?.phone}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {updatingPhone ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
                 <p className="mt-1 text-xs text-gray-500">
                   Used for SMS notifications about your orders
                 </p>
