@@ -1478,22 +1478,23 @@ const TalentManagement: React.FC = () => {
                     
                     <button
                       onClick={async () => {
-                        if (!talent.users?.id) {
-                          toast.error('No user account found for this talent');
+                        // Check if talent has a user_id (linked auth account)
+                        if (!talent.user_id) {
+                          toast.error('This talent has not completed registration yet. They need to finish onboarding first.');
                           return;
                         }
                         
                         // eslint-disable-next-line no-restricted-globals
-                        if (!confirm(`Login as ${talent.users.full_name || talent.users.email}? You will be logged out of admin.`)) {
+                        if (!confirm(`Login as ${talent.users?.full_name || talent.temp_full_name || talent.username}? You will be logged out of admin.`)) {
                           return;
                         }
                         
                         try {
                           toast.loading('Logging in as talent...', { id: 'login-as' });
                           
-                          // Call the admin impersonation edge function
+                          // Call the admin impersonation edge function with user_id
                           const { data, error } = await supabase.functions.invoke('admin-impersonate', {
-                            body: { userId: talent.users.id }
+                            body: { userId: talent.user_id }
                           });
                           
                           if (error) {
@@ -1523,7 +1524,7 @@ const TalentManagement: React.FC = () => {
                             throw sessionError;
                           }
                           
-                          toast.success('Logged in as ' + (talent.users.full_name || 'talent'), { id: 'login-as' });
+                          toast.success('Logged in as ' + (talent.users?.full_name || talent.temp_full_name || 'talent'), { id: 'login-as' });
                           
                           // Redirect to talent dashboard
                           setTimeout(() => {
@@ -1535,8 +1536,13 @@ const TalentManagement: React.FC = () => {
                           toast.error(error.message || 'Failed to login as talent', { id: 'login-as' });
                         }
                       }}
-                      className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                      title="Login as this talent (for testing)"
+                      className={`p-2 rounded-lg transition-colors ${
+                        talent.user_id 
+                          ? 'text-purple-600 hover:bg-purple-50' 
+                          : 'text-gray-400 cursor-not-allowed'
+                      }`}
+                      title={talent.user_id ? 'Login as this talent (for testing)' : 'Talent has not completed registration'}
+                      disabled={!talent.user_id}
                     >
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
