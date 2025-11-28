@@ -175,19 +175,22 @@ serve(async (req) => {
 
     // Log the impersonation for audit trail
     console.log('📊 Logging to audit trail...')
-    await supabaseAdmin
-      .from('admin_audit_log')
-      .insert({
-        admin_id: adminUser.id,
-        action: 'impersonate_user',
-        target_user_id: userId,
-        metadata: {
-          admin_email: adminUser.email,
-          target_email: targetUserData.user.email,
-          timestamp: new Date().toISOString()
-        }
-      })
-      .catch(err => console.error('⚠️ Audit log error (non-fatal):', err))
+    try {
+      await supabaseAdmin
+        .from('admin_audit_log')
+        .insert({
+          admin_id: adminUser.id,
+          action: 'impersonate_user',
+          target_user_id: userId,
+          metadata: {
+            admin_email: adminUser.email,
+            target_email: targetUserData.user.email,
+            timestamp: new Date().toISOString()
+          }
+        })
+    } catch (err) {
+      console.error('⚠️ Audit log error (non-fatal):', err)
+    }
 
     console.log('🎉 Impersonation successful!')
 
