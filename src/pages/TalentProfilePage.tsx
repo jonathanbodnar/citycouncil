@@ -637,7 +637,7 @@ const TalentProfilePage: React.FC = () => {
       {/* Recent Videos Section */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Videos</h2>
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
           {talent.recent_videos.length > 0 ? (
             talent.recent_videos.map((videoUrl, index) => (
               <div key={index} className="relative rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 w-48 h-64 md:w-56 md:h-72">
