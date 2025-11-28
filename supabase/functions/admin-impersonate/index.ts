@@ -77,17 +77,37 @@ serve(async (req) => {
       )
     }
 
-    // Create a new session for the target user
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-      user_id: userId
+    // Generate an access token for the target user
+    // Use the admin API to generate a temporary link that contains tokens
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: targetUserData.user.email!
     })
 
-    if (sessionError) {
-      console.error('Session creation error:', sessionError)
+    if (linkError || !linkData) {
+      console.error('Link generation error:', linkError)
       return new Response(
-        JSON.stringify({ error: 'Failed to create session', details: sessionError.message }),
+        JSON.stringify({ error: 'Failed to generate session', details: linkError?.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Extract tokens from the generated link
+    const url = new URL(linkData.properties.action_link)
+    const access_token = url.searchParams.get('access_token')
+    const refresh_token = url.searchParams.get('refresh_token')
+
+    if (!access_token || !refresh_token) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to extract tokens from generated link' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const sessionData = {
+      access_token,
+      refresh_token,
+      user: targetUserData.user
     }
 
     // Log the impersonation for audit trail
