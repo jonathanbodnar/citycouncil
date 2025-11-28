@@ -1475,6 +1475,72 @@ const TalentManagement: React.FC = () => {
                       <EyeIcon className="h-4 w-4" />
                     </button>
                     
+                    <button
+                      onClick={async () => {
+                        if (!talent.users?.id) {
+                          toast.error('No user account found for this talent');
+                          return;
+                        }
+                        
+                        if (!confirm(`Login as ${talent.users.full_name || talent.users.email}? You will be logged out of admin.`)) {
+                          return;
+                        }
+                        
+                        try {
+                          toast.loading('Logging in as talent...', { id: 'login-as' });
+                          
+                          // Call the admin impersonation edge function
+                          const { data, error } = await supabase.functions.invoke('admin-impersonate', {
+                            body: { userId: talent.users.id }
+                          });
+                          
+                          if (error) {
+                            throw new Error(error.message || 'Failed to impersonate user');
+                          }
+                          
+                          if (!data?.session) {
+                            throw new Error('No session data returned');
+                          }
+                          
+                          // Store admin info for easy return
+                          const { data: { user: currentAdmin } } = await supabase.auth.getUser();
+                          if (currentAdmin) {
+                            localStorage.setItem('admin_return_email', currentAdmin.email || '');
+                          }
+                          
+                          // Sign out current admin
+                          await supabase.auth.signOut();
+                          
+                          // Set the new session for the talent user
+                          const { error: sessionError } = await supabase.auth.setSession({
+                            access_token: data.session.access_token,
+                            refresh_token: data.session.refresh_token
+                          });
+                          
+                          if (sessionError) {
+                            throw sessionError;
+                          }
+                          
+                          toast.success('Logged in as ' + (talent.users.full_name || 'talent'), { id: 'login-as' });
+                          
+                          // Redirect to talent dashboard
+                          setTimeout(() => {
+                            window.location.href = '/dashboard';
+                          }, 500);
+                          
+                        } catch (error: any) {
+                          console.error('Error logging in as talent:', error);
+                          toast.error(error.message || 'Failed to login as talent', { id: 'login-as' });
+                        }
+                      }}
+                      className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="Login as this talent (for testing)"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </button>
+                    
                     {talent.promo_video_url && (
                       <button
                         onClick={async () => {
