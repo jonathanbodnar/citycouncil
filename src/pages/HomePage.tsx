@@ -268,6 +268,32 @@ const HomePage: React.FC = () => {
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white">
 
+      {/* Black Friday Banner */}
+      <style>{`
+        @keyframes slow-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.85; }
+        }
+        .slow-pulse {
+          animation: slow-pulse 3s ease-in-out infinite;
+        }
+      `}</style>
+      <div className="mb-8 rounded-xl p-4 text-center shadow-xl slow-pulse" style={{ background: 'linear-gradient(to right, #a70809, #3c108b)' }}>
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <span className="text-xl">🎄</span>
+          <h2 className="text-lg sm:text-xl font-bold text-white">
+            Say it with a ShoutOut from top conservative voices
+          </h2>
+          <span className="text-xl">🎅</span>
+        </div>
+        <p className="mt-2 text-sm sm:text-base text-white font-medium">
+          Get <span className="text-yellow-300 text-lg font-bold">25% OFF</span> all ShoutOuts with code{' '}
+          <span className="bg-yellow-300 text-purple-900 px-2 py-1 rounded font-mono font-bold text-sm sm:text-base">
+            SANTA25
+          </span>
+        </p>
+      </div>
+
       {/* Featured Talent Carousel */}
       {featuredTalent.length > 0 && (
         <div className="mb-12">
@@ -277,20 +303,6 @@ const HomePage: React.FC = () => {
 
       {/* Category Filter with Search */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Browse by Category</h3>
-        <div className="flex items-center space-x-2">
-         
-            <button
-              onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
-              className="p-2 text-gray-600 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200"
-              title="Search talent"
-            >
-              <MagnifyingGlassIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        
         {/* Expandable Search */}
         {searchQuery !== '' && (
           <div className="mb-4">
@@ -310,10 +322,17 @@ const HomePage: React.FC = () => {
 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
+            onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
+            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 glass text-white/80 hover:glass-strong hover:text-white border-white/10"
+            title="Search talent"
+          >
+            🔍 Search
+          </button>
+          <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
               selectedCategory === 'all'
-                ? 'glass-strong text-white shadow-lg border-white/30'
+                ? 'glass-strong text-white border-white/30'
                 : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
             }`}
           >
@@ -321,9 +340,9 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => setSelectedCategory('coming_soon')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
               selectedCategory === 'coming_soon'
-                ? 'glass-strong text-white shadow-lg border-white/30'
+                ? 'glass-strong text-white border-white/30'
                 : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
             }`}
           >
@@ -335,9 +354,9 @@ const HomePage: React.FC = () => {
               <button
                 key={category.key}
                 onClick={() => setSelectedCategory(category.key as TalentCategory)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
                   selectedCategory === category.key
-                    ? 'glass-strong text-white shadow-lg border-white/30'
+                    ? 'glass-strong text-white border-white/30'
                     : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
                 }`}
               >
@@ -345,32 +364,6 @@ const HomePage: React.FC = () => {
               </button>
             ))}
         </div>
-      </div>
-
-      {/* Black Friday Banner */}
-      <style>{`
-        @keyframes slow-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.85; }
-        }
-        .slow-pulse {
-          animation: slow-pulse 3s ease-in-out infinite;
-        }
-      `}</style>
-      <div className="mb-6 rounded-xl p-4 text-center shadow-xl slow-pulse" style={{ background: 'linear-gradient(to right, #a70809, #3c108b)' }}>
-        <div className="flex items-center justify-center gap-2 flex-wrap">
-          <span className="text-xl">🎄</span>
-          <h2 className="text-lg sm:text-xl font-bold text-white">
-            Say it with a ShoutOut from top conservative voices
-          </h2>
-          <span className="text-xl">🎅</span>
-        </div>
-        <p className="mt-2 text-sm sm:text-base text-white font-medium">
-          Get <span className="text-yellow-300 text-lg font-bold">25% OFF</span> all ShoutOuts with code{' '}
-          <span className="bg-yellow-300 text-purple-900 px-2 py-1 rounded font-mono font-bold text-sm sm:text-base">
-            SANTA25
-          </span>
-        </p>
       </div>
 
       {/* Talent Grid */}
