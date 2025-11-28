@@ -380,18 +380,17 @@ const TalentProfilePage: React.FC = () => {
       `}</style>
       <div className="mb-6 rounded-xl p-4 text-center shadow-xl slow-pulse" style={{ background: 'linear-gradient(to right, #a70809, #3c108b)' }}>
         <div className="flex items-center justify-center gap-2 flex-wrap">
-          <span className="text-xl">🦃</span>
+          <span className="text-xl">🎄</span>
           <h2 className="text-lg sm:text-xl font-bold text-white">
-            Black Friday Deal Is LIVE!
+            Say it with a ShoutOut from top conservative voices
           </h2>
-          <span className="text-xl">🎉</span>
+          <span className="text-xl">🎅</span>
         </div>
         <p className="mt-2 text-sm sm:text-base text-white font-medium">
           Get <span className="text-yellow-300 text-lg font-bold">25% OFF</span> all ShoutOuts with code{' '}
           <span className="bg-yellow-300 text-purple-900 px-2 py-1 rounded font-mono font-bold text-sm sm:text-base">
             GOBBLE25
-          </span>{' '}
-          <span className="text-yellow-200">⏰ Ends Monday!</span>
+          </span>
         </p>
       </div>
 
