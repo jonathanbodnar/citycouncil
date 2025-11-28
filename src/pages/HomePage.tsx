@@ -323,7 +323,7 @@ const HomePage: React.FC = () => {
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
             onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
-            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 glass text-white/80 hover:glass-strong hover:text-white border-white/10"
+            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10"
             title="Search talent"
           >
             🔍 Search
@@ -332,8 +332,8 @@ const HomePage: React.FC = () => {
             onClick={() => setSelectedCategory('all')}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
               selectedCategory === 'all'
-                ? 'glass-strong text-white border-white/30'
-                : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
+                ? 'bg-white/20 backdrop-blur-md text-white border border-white/30'
+                : 'bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10'
             }`}
           >
             All Categories
@@ -342,8 +342,8 @@ const HomePage: React.FC = () => {
             onClick={() => setSelectedCategory('coming_soon')}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
               selectedCategory === 'coming_soon'
-                ? 'glass-strong text-white border-white/30'
-                : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
+                ? 'bg-white/20 backdrop-blur-md text-white border border-white/30'
+                : 'bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10'
             }`}
           >
             ⏳ Coming Soon
@@ -356,8 +356,8 @@ const HomePage: React.FC = () => {
                 onClick={() => setSelectedCategory(category.key as TalentCategory)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
                   selectedCategory === category.key
-                    ? 'glass-strong text-white border-white/30'
-                    : 'glass text-white/80 hover:glass-strong hover:text-white border-white/10'
+                    ? 'bg-white/20 backdrop-blur-md text-white border border-white/30'
+                    : 'bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10'
                 }`}
               >
                 {category.label}
