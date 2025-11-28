@@ -37,7 +37,21 @@ serve(async (req) => {
 
     // Verify the requesting user is an admin
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user: adminUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    
+    // Create a client with the user's token to verify it and get user info
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader
+          }
+        }
+      }
+    )
+    
+    const { data: { user: adminUser }, error: authError } = await supabaseUser.auth.getUser()
 
     if (authError || !adminUser) {
       console.error('❌ Failed to get admin user:', authError)
