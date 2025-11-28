@@ -2,6 +2,7 @@
 <CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <CORSRule>
     <AllowedOrigin>https://shoutout.us</AllowedOrigin>
+    <AllowedOrigin>https://dev.shoutout.us</AllowedOrigin>
     <AllowedOrigin>http://localhost:5173</AllowedOrigin>
     <AllowedOrigin>http://localhost:3000</AllowedOrigin>
     <AllowedOrigin>*</AllowedOrigin>
@@ -13,6 +14,8 @@
     <AllowedHeader>*</AllowedHeader>
     <MaxAgeSeconds>3000</MaxAgeSeconds>
     <ExposeHeader>ETag</ExposeHeader>
+    <ExposeHeader>x-amz-request-id</ExposeHeader>
+    <ExposeHeader>x-amz-id-2</ExposeHeader>
   </CORSRule>
 </CORSConfiguration>
 
