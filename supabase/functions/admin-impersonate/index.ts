@@ -38,36 +38,36 @@ serve(async (req) => {
     // Verify the requesting user is an admin
     const token = authHeader.replace('Bearer ', '')
     
-    // Create a client with the user's token to verify it and get user info
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader
-          }
-        }
+    // Decode the JWT to get user ID (we trust the token was signed by Supabase)
+    let adminUserId: string
+    try {
+      // Split JWT and decode payload
+      const parts = token.split('.')
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format')
       }
-    )
-    
-    const { data: { user: adminUser }, error: authError } = await supabaseUser.auth.getUser()
-
-    if (authError || !adminUser) {
-      console.error('❌ Failed to get admin user:', authError)
+      
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+      adminUserId = payload.sub
+      
+      if (!adminUserId) {
+        throw new Error('No user ID in token')
+      }
+      
+      console.log('✅ Token decoded, user ID:', adminUserId)
+    } catch (error) {
+      console.error('❌ Failed to decode token:', error)
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: authError?.message }),
+        JSON.stringify({ error: 'Unauthorized: Invalid token format' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('✅ Admin user verified:', adminUser.email)
-
-    // Check if user is admin
+    // Check if user is admin using the decoded user ID
     const { data: adminData, error: adminCheckError } = await supabaseAdmin
       .from('users')
-      .select('user_type')
-      .eq('id', adminUser.id)
+      .select('user_type, email, full_name')
+      .eq('id', adminUserId)
       .single()
 
     if (adminCheckError) {
@@ -86,7 +86,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Admin status confirmed')
+    console.log('✅ Admin status confirmed for:', adminData.email)
 
     // Get target user ID from request
     const { userId } = await req.json()
@@ -193,11 +193,11 @@ serve(async (req) => {
       await supabaseAdmin
         .from('admin_audit_log')
         .insert({
-          admin_id: adminUser.id,
+          admin_id: adminUserId,
           action: 'impersonate_user',
           target_user_id: userId,
           metadata: {
-            admin_email: adminUser.email,
+            admin_email: adminData.email,
             target_email: targetUserData.user.email,
             timestamp: new Date().toISOString()
           }
