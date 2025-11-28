@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔍 Admin impersonation request received')
+    
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -26,6 +28,7 @@ serve(async (req) => {
     // Get the authorization header to verify admin
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error('❌ Missing authorization header')
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -37,11 +40,14 @@ serve(async (req) => {
     const { data: { user: adminUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
 
     if (authError || !adminUser) {
+      console.error('❌ Failed to get admin user:', authError)
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', details: authError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('✅ Admin user verified:', adminUser.email)
 
     // Check if user is admin
     const { data: adminData, error: adminCheckError } = await supabaseAdmin
@@ -50,17 +56,30 @@ serve(async (req) => {
       .eq('id', adminUser.id)
       .single()
 
-    if (adminCheckError || adminData?.user_type !== 'admin') {
+    if (adminCheckError) {
+      console.error('❌ Failed to check admin status:', adminCheckError)
       return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
+        JSON.stringify({ error: 'Failed to verify admin status', details: adminCheckError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (adminData?.user_type !== 'admin') {
+      console.error('❌ User is not admin:', adminData?.user_type)
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Admin access required', user_type: adminData?.user_type }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log('✅ Admin status confirmed')
+
     // Get target user ID from request
     const { userId } = await req.json()
+    console.log('🎯 Target user ID:', userId)
 
     if (!userId) {
+      console.error('❌ Missing userId parameter')
       return new Response(
         JSON.stringify({ error: 'Missing userId parameter' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -68,29 +87,36 @@ serve(async (req) => {
     }
 
     // Generate an access token for the target user using admin API
+    console.log('📝 Fetching target user...')
     const { data: targetUserData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
 
     if (userError || !targetUserData.user) {
+      console.error('❌ User not found:', userError)
       return new Response(
-        JSON.stringify({ error: 'User not found' }),
+        JSON.stringify({ error: 'User not found', details: userError?.message }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log('✅ Target user found:', targetUserData.user.email)
+
     // Generate an access token for the target user
     // Use the admin API to generate a temporary link that contains tokens
+    console.log('🔑 Generating magic link...')
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email: targetUserData.user.email!
     })
 
     if (linkError || !linkData) {
-      console.error('Link generation error:', linkError)
+      console.error('❌ Link generation error:', linkError)
       return new Response(
         JSON.stringify({ error: 'Failed to generate session', details: linkError?.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('✅ Magic link generated')
 
     // Extract tokens from the generated link
     const url = new URL(linkData.properties.action_link)
@@ -98,11 +124,14 @@ serve(async (req) => {
     const refresh_token = url.searchParams.get('refresh_token')
 
     if (!access_token || !refresh_token) {
+      console.error('❌ Failed to extract tokens from link')
       return new Response(
         JSON.stringify({ error: 'Failed to extract tokens from generated link' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('✅ Tokens extracted successfully')
 
     const sessionData = {
       access_token,
@@ -111,6 +140,7 @@ serve(async (req) => {
     }
 
     // Log the impersonation for audit trail
+    console.log('📊 Logging to audit trail...')
     await supabaseAdmin
       .from('admin_audit_log')
       .insert({
@@ -123,7 +153,9 @@ serve(async (req) => {
           timestamp: new Date().toISOString()
         }
       })
-      .catch(err => console.error('Audit log error:', err))
+      .catch(err => console.error('⚠️ Audit log error (non-fatal):', err))
+
+    console.log('🎉 Impersonation successful!')
 
     return new Response(
       JSON.stringify({
