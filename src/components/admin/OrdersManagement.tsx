@@ -10,6 +10,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/24/outline';
 
 interface Order {
@@ -47,6 +49,7 @@ const OrdersManagement: React.FC = () => {
   const [showDenyModal, setShowDenyModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState('');
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -402,6 +405,9 @@ const OrdersManagement: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
+                  
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
@@ -412,16 +418,10 @@ const OrdersManagement: React.FC = () => {
                   Talent
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Message
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fulfillment Link
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -431,108 +431,141 @@ const OrdersManagement: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     No orders found
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{order.users.full_name}</div>
-                      <div className="text-sm text-gray-500">{order.users.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.talent_profiles.users.full_name}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 max-w-md">
-                      <div className="whitespace-pre-wrap break-words">
-                        {order.request_details}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ${(order.amount / 100).toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {order.fulfillment_token ? (
-                        <button
-                          onClick={async () => {
-                            try {
-                              // Try to get short link first
-                              const { data: shortLink } = await supabase
-                                .from('short_links')
-                                .select('short_code')
-                                .eq('order_id', order.id)
-                                .order('created_at', { ascending: false })
-                                .limit(1)
-                                .single();
+                filteredOrders.map((order) => {
+                  const isExpanded = expandedOrderId === order.id;
+                  return (
+                    <React.Fragment key={order.id}>
+                      <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {isExpanded ? (
+                            <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                          ) : (
+                            <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{order.users.full_name}</div>
+                          <div className="text-sm text-gray-500">{order.users.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {order.talent_profiles.users.full_name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          ${(order.amount / 100).toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedOrderId(isExpanded ? null : order.id);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            {isExpanded ? 'Hide Details' : 'View Details'}
+                          </button>
+                        </td>
+                      </tr>
 
-                              let link: string;
-                              if (shortLink?.short_code) {
-                                // Use short link
-                                link = `${window.location.origin}/s/${shortLink.short_code}`;
-                                logger.log('📋 Using short link:', link);
-                              } else {
-                                // Fallback to full link
-                                link = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
-                                logger.log('📋 Using full link (no short link found)');
-                              }
-                              
-                              await navigator.clipboard.writeText(link);
-                              toast.success('Link copied to clipboard!');
-                            } catch (error) {
-                              logger.error('Error copying link:', error);
-                              toast.error('Failed to copy link');
-                            }
-                          }}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                          title="Click to copy fulfillment link"
-                        >
-                          Copy Link
-                        </button>
-                      ) : (
-                        <span className="text-gray-400">No token</span>
+                      {/* Expanded Details Row */}
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                            <div className="space-y-4">
+                              {/* Message */}
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Request Message:</h4>
+                                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{order.request_details}</p>
+                                </div>
+                              </div>
+
+                              {/* Actions Section */}
+                              <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                                {/* Copy Fulfillment Link */}
+                                {order.fulfillment_token && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        const { data: shortLink } = await supabase
+                                          .from('short_links')
+                                          .select('short_code')
+                                          .eq('order_id', order.id)
+                                          .order('created_at', { ascending: false })
+                                          .limit(1)
+                                          .single();
+
+                                        let link: string;
+                                        if (shortLink?.short_code) {
+                                          link = `${window.location.origin}/s/${shortLink.short_code}`;
+                                        } else {
+                                          link = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
+                                        }
+                                        
+                                        await navigator.clipboard.writeText(link);
+                                        toast.success('Link copied to clipboard!');
+                                      } catch (error) {
+                                        logger.error('Error copying link:', error);
+                                        toast.error('Failed to copy link');
+                                      }
+                                    }}
+                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                  >
+                                    Copy Fulfillment Link
+                                  </button>
+                                )}
+
+                                {/* Deny & Refund */}
+                                {(order.status === 'pending' || order.status === 'in_progress') && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openDenyModal(order);
+                                    }}
+                                    className="inline-flex items-center px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                                  >
+                                    <XCircleIcon className="h-4 w-4 mr-2" />
+                                    Deny & Refund
+                                  </button>
+                                )}
+                                
+                                {/* Refund Completed */}
+                                {order.status === 'completed' && !order.refund_id && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openRefundModal(order);
+                                    }}
+                                    className="inline-flex items-center px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
+                                  >
+                                    <CurrencyDollarIcon className="h-4 w-4 mr-2" />
+                                    Refund Order
+                                  </button>
+                                )}
+                                
+                                {/* Refunded Badge */}
+                                {(order.status === 'denied' || order.refund_id) && (
+                                  <div className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
+                                    <CheckCircleIcon className="h-4 w-4 mr-2" />
+                                    Refunded
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        {/* Deny & Refund - for pending/in_progress orders */}
-                        {(order.status === 'pending' || order.status === 'in_progress') && (
-                          <button
-                            onClick={() => openDenyModal(order)}
-                            className="inline-flex items-center px-3 py-1.5 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors"
-                          >
-                            <XCircleIcon className="h-4 w-4 mr-1" />
-                            Deny & Refund
-                          </button>
-                        )}
-                        
-                        {/* Refund - for completed orders */}
-                        {order.status === 'completed' && !order.refund_id && (
-                          <button
-                            onClick={() => openRefundModal(order)}
-                            className="inline-flex items-center px-3 py-1.5 border border-orange-300 text-orange-700 rounded-md hover:bg-orange-50 transition-colors"
-                          >
-                            <CurrencyDollarIcon className="h-4 w-4 mr-1" />
-                            Refund
-                          </button>
-                        )}
-                        
-                        {/* Refunded badge */}
-                        {(order.status === 'denied' || order.refund_id) && (
-                          <span className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-600 rounded-md text-xs">
-                            <CheckCircleIcon className="h-4 w-4 mr-1" />
-                            Refunded
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>
