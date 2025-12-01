@@ -84,6 +84,7 @@ function App() {
             {/* Main app routes with layout */}
             <Route path="/" element={<Layout />}>
               <Route index element={<HomePage />} />
+              <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/:username" element={<TalentProfilePage />} />
               <Route path="/talent/:id" element={<TalentProfilePage />} />
