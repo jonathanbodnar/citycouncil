@@ -322,7 +322,7 @@ const OrdersManagement: React.FC = () => {
               {order.request_details && (
                 <div className="pt-2 border-t border-gray-100">
                   <div className="text-xs text-gray-500 mb-1">Message</div>
-                  <p className="text-xs text-gray-700 line-clamp-3">
+                  <p className="text-xs text-gray-700 whitespace-pre-wrap">
                     {order.request_details}
                   </p>
                 </div>
@@ -448,8 +448,8 @@ const OrdersManagement: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {order.talent_profiles.users.full_name}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
-                      <div className="truncate" title={order.request_details}>
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-md">
+                      <div className="whitespace-pre-wrap break-words">
                         {order.request_details}
                       </div>
                     </td>

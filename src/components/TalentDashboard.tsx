@@ -146,8 +146,6 @@ const TalentDashboard: React.FC = () => {
         .from('orders')
         .select(`
           *,
-          recipient_name,
-          recipient_occasion,
           users!orders_user_id_fkey (
             full_name,
             avatar_url
