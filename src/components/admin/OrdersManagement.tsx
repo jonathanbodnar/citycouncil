@@ -462,6 +462,7 @@ const OrdersManagement: React.FC = () => {
                           ${(order.amount / 100).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
