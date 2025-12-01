@@ -312,6 +312,7 @@ const OrderPage: React.FC = () => {
             user_id: user.id,
             talent_id: talent.id,
             request_details: orderData.requestDetails,
+            recipient_name: orderData.recipientName,
             amount: Math.round(pricing.total * 100), // Store in cents
             original_amount: appliedCoupon ? Math.round((pricing.total + pricing.discount) * 100) : null,
             discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
