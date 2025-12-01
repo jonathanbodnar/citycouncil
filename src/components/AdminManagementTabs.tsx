@@ -41,14 +41,14 @@ const StatsCard: React.FC<StatsCardProps> = ({
   icon: Icon, 
   color = 'text-blue-600' 
 }) => (
-  <div className="glass rounded-2xl p-6 hover:glass-strong transition-all duration-300 shadow-modern hover:shadow-modern-lg group">
+  <div className="glass rounded-2xl p-4 sm:p-6 hover:glass-strong transition-all duration-300 shadow-modern hover:shadow-modern-lg group">
     <div className="flex items-center">
-      <div className={`p-3 rounded-xl bg-gradient-to-br from-white/80 to-white/40 border border-white/30 group-hover:scale-110 transition-transform duration-300`}>
-        <Icon className={`h-6 w-6 ${color}`} />
+      <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-br from-white/80 to-white/40 border border-white/30 group-hover:scale-110 transition-transform duration-300`}>
+        <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${color}`} />
       </div>
-      <div className="ml-4">
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+        <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{title}</p>
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{value}</p>
       </div>
     </div>
   </div>
@@ -269,7 +269,7 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         <div className="space-y-8">
           {/* Stats Grid */}
           {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               <StatsCard
                 title="Total Orders"
                 value={stats.total_orders.toLocaleString()}
@@ -365,30 +365,30 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
             {/* Recent Orders */}
             <div className="glass rounded-2xl shadow-modern">
-              <div className="p-6 border-b border-white/20">
-                <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
+              <div className="p-4 sm:p-6 border-b border-white/20">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recent Orders</h2>
               </div>
-              <div className="p-6">
-                <div className="space-y-4">
+              <div className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
                   {recentOrders.slice(0, 5).map((order) => (
-                    <div key={order.id} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">
+                    <div key={order.id} className="flex items-start sm:items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {order.users?.full_name || 'Unknown User'}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs sm:text-sm text-gray-600 truncate">
                           → {order.talent_profiles?.users?.full_name || 'Unknown Talent'}
                         </p>
                         <p className="text-xs text-gray-500">
                           {new Date(order.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">${(order.amount / 100).toFixed(2)}</p>
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-semibold text-gray-900 text-sm sm:text-base whitespace-nowrap">${(order.amount / 100).toFixed(2)}</p>
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                           order.status === 'completed' ? 'bg-green-100 text-green-800' :
                           order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                           order.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
@@ -405,15 +405,15 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
 
             {/* Top Talent */}
             <div className="glass rounded-2xl shadow-modern">
-              <div className="p-6 border-b border-white/20">
-                <h2 className="text-lg font-semibold text-gray-900">Top Talent</h2>
+              <div className="p-4 sm:p-6 border-b border-white/20">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Top Talent</h2>
               </div>
-              <div className="p-6">
-                <div className="space-y-4">
+              <div className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
                   {topTalent.map((talent) => (
-                    <div key={talent.id} className="flex items-center space-x-4">
+                    <div key={talent.id} className="flex items-center space-x-3 sm:space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-100 flex items-center justify-center">
                           {(talent.users?.avatar_url || talent.temp_avatar_url) ? (
                             <img
                               src={talent.users?.avatar_url || talent.temp_avatar_url}
@@ -421,25 +421,25 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <span className="text-primary-600 font-medium">
+                            <span className="text-primary-600 font-medium text-sm">
                               {(talent.users?.full_name || talent.temp_full_name || 'T').charAt(0)}
                             </span>
                           )}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {talent.users?.full_name || talent.temp_full_name || 'Pending Setup'}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-xs sm:text-sm text-gray-600 truncate">
                           ${talent.pricing} • {talent.category}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-gray-900">
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-semibold text-gray-900 text-sm sm:text-base whitespace-nowrap">
                           {talent.total_orders} orders
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
+                        <div className="text-xs sm:text-sm text-gray-600 space-y-1">
                           <div>{(talent.average_rating || 0).toFixed(1)} ⭐</div>
                           <div className="flex items-center justify-end gap-1">
                             <ClockIcon className="h-3 w-3" />

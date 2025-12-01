@@ -125,23 +125,23 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 glass-strong border-r border-white/20 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 sm:w-72 lg:w-64 glass-strong border-r border-white/20 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-white/20">
+        <div className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 border-b border-white/20">
           <Logo size="sm" theme="dark" />
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <XMarkIcon className="h-6 w-6 text-white" />
+            <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">
+        <nav className="p-3 sm:p-4 space-y-1 overflow-y-auto h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)]">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.key;
@@ -150,24 +150,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <button
                 key={item.key}
                 onClick={() => handleNavigation(item.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${
+                className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-200 relative ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                     : 'text-gray-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
-                <span className="font-medium">{item.label}</span>
+                <Icon className={`h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                <span className="font-medium text-sm sm:text-base truncate">{item.label}</span>
                 {item.key === 'helpdesk' && unreadHelpMessages > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  <span className="ml-auto flex-shrink-0 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                     {unreadHelpMessages > 9 ? '9+' : unreadHelpMessages}
                   </span>
                 )}
                 {isActive && item.key !== 'helpdesk' && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-white" />
+                  <div className="ml-auto flex-shrink-0 w-2 h-2 rounded-full bg-white" />
                 )}
                 {isActive && item.key === 'helpdesk' && unreadHelpMessages === 0 && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-white" />
+                  <div className="ml-auto flex-shrink-0 w-2 h-2 rounded-full bg-white" />
                 )}
               </button>
             );
@@ -175,11 +175,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </nav>
 
         {/* Admin Badge */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="glass rounded-xl p-3 border border-white/20">
+        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
+          <div className="glass rounded-xl p-2 sm:p-3 border border-white/20">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm font-medium text-white">Admin Mode</span>
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium text-white">Admin Mode</span>
             </div>
           </div>
         </div>
@@ -188,15 +188,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile header */}
-        <header className="lg:hidden h-16 glass-strong border-b border-white/20 flex items-center justify-between px-4">
+        <header className="lg:hidden h-14 sm:h-16 glass-strong border-b border-white/20 flex items-center justify-between px-3 sm:px-4">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <Bars3Icon className="h-6 w-6 text-white" />
+            <Bars3Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </button>
           <Logo size="sm" theme="dark" />
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="w-8 sm:w-10" /> {/* Spacer for centering */}
         </header>
 
         {/* Page content */}
