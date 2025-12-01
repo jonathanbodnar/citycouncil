@@ -280,122 +280,151 @@ const OrdersManagement: React.FC = () => {
             No orders found
           </div>
         ) : (
-          filteredOrders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow p-4 space-y-3">
-              {/* Header Row */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900 truncate">
-                    {order.users?.full_name || 'Unknown Customer'}
+          filteredOrders.map((order) => {
+            const isExpanded = expandedOrderId === order.id;
+            return (
+              <div key={order.id} className="bg-white rounded-lg shadow">
+                {/* Header - Always Visible */}
+                <div 
+                  className="p-4 cursor-pointer"
+                  onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-gray-900 truncate">
+                        {order.users?.full_name || 'Unknown Customer'}
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">{order.users?.email || 'No email'}</div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {getStatusBadge(order.status)}
+                      {isExpanded ? (
+                        <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 truncate">{order.users?.email || 'No email'}</div>
-                </div>
-                <div className="flex-shrink-0">{getStatusBadge(order.status)}</div>
-              </div>
 
-              {/* Details Grid */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-xs text-gray-500 mb-0.5">Talent</div>
-                  <div className="font-medium text-gray-900 truncate">
-                    {order.talent_profiles?.users?.full_name || 'Unknown'}
+                  {/* Collapsed Info */}
+                  <div className="grid grid-cols-2 gap-3 text-sm mt-3">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Talent</div>
+                      <div className="font-medium text-gray-900 truncate">
+                        {order.talent_profiles?.users?.full_name || 'Unknown'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Amount</div>
+                      <div className="font-semibold text-gray-900">
+                        ${(order.amount / 100).toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-xs text-gray-500 mb-0.5">Date</div>
+                      <div className="text-gray-900 text-xs">
+                        {new Date(order.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 mb-0.5">Amount</div>
-                  <div className="font-semibold text-gray-900">
-                    ${(order.amount / 100).toFixed(2)}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <div className="text-xs text-gray-500 mb-0.5">Date</div>
-                  <div className="text-gray-900">
-                    {new Date(order.created_at).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                </div>
-              </div>
 
-              {/* Message */}
-              {order.request_details && (
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="text-xs text-gray-500 mb-1">Message</div>
-                  <p className="text-xs text-gray-700 whitespace-pre-wrap">
-                    {order.request_details}
-                  </p>
-                </div>
-              )}
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
+                    {/* Message */}
+                    {order.request_details && (
+                      <div className="pt-3">
+                        <div className="text-xs font-semibold text-gray-700 mb-2">Request Message:</div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-700 whitespace-pre-wrap">
+                            {order.request_details}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-              {/* Actions */}
-              <div className="pt-3 border-t border-gray-200 space-y-2">
-                {order.fulfillment_token && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const { data: shortLink } = await supabase
-                          .from('short_links')
-                          .select('short_code')
-                          .eq('order_id', order.id)
-                          .order('created_at', { ascending: false })
-                          .limit(1)
-                          .single();
+                    {/* Actions */}
+                    <div className="pt-2 space-y-2">
+                      {order.fulfillment_token && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              const { data: shortLink } = await supabase
+                                .from('short_links')
+                                .select('short_code')
+                                .eq('order_id', order.id)
+                                .order('created_at', { ascending: false })
+                                .limit(1)
+                                .single();
 
-                        let link: string;
-                        if (shortLink?.short_code) {
-                          link = `${window.location.origin}/s/${shortLink.short_code}`;
-                          logger.log('📋 Using short link:', link);
-                        } else {
-                          link = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
-                          logger.log('📋 Using full link (no short link found)');
-                        }
-                        
-                        await navigator.clipboard.writeText(link);
-                        toast.success('Link copied to clipboard!');
-                      } catch (error) {
-                        logger.error('Error copying link:', error);
-                        toast.error('Failed to copy link');
-                      }
-                    }}
-                    className="w-full px-3 py-2 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
-                  >
-                    Copy Fulfillment Link
-                  </button>
-                )}
+                              let link: string;
+                              if (shortLink?.short_code) {
+                                link = `${window.location.origin}/s/${shortLink.short_code}`;
+                                logger.log('📋 Using short link:', link);
+                              } else {
+                                link = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
+                                logger.log('📋 Using full link (no short link found)');
+                              }
+                              
+                              await navigator.clipboard.writeText(link);
+                              toast.success('Link copied to clipboard!');
+                            } catch (error) {
+                              logger.error('Error copying link:', error);
+                              toast.error('Failed to copy link');
+                            }
+                          }}
+                          className="w-full px-3 py-2 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                        >
+                          Copy Fulfillment Link
+                        </button>
+                      )}
                 
-                {(order.status === 'pending' || order.status === 'in_progress') && (
-                  <button
-                    onClick={() => openDenyModal(order)}
-                    className="w-full inline-flex items-center justify-center px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
-                  >
-                    <XCircleIcon className="h-4 w-4 mr-1" />
-                    Deny & Refund
-                  </button>
-                )}
-                
-                {order.status === 'completed' && !order.refund_id && (
-                  <button
-                    onClick={() => openRefundModal(order)}
-                    className="w-full inline-flex items-center justify-center px-3 py-2 text-sm border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
-                  >
-                    <CurrencyDollarIcon className="h-4 w-4 mr-1" />
-                    Refund Order
-                  </button>
-                )}
-                
-                {(order.status === 'denied' || order.refund_id) && (
-                  <div className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm">
-                    <CheckCircleIcon className="h-4 w-4 mr-1" />
-                    Refunded
+                      {(order.status === 'pending' || order.status === 'in_progress') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDenyModal(order);
+                          }}
+                          className="w-full inline-flex items-center justify-center px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <XCircleIcon className="h-4 w-4 mr-1" />
+                          Deny & Refund
+                        </button>
+                      )}
+                      
+                      {order.status === 'completed' && !order.refund_id && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRefundModal(order);
+                          }}
+                          className="w-full inline-flex items-center justify-center px-3 py-2 text-sm border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
+                        >
+                          <CurrencyDollarIcon className="h-4 w-4 mr-1" />
+                          Refund Order
+                        </button>
+                      )}
+                      
+                      {(order.status === 'denied' || order.refund_id) && (
+                        <div className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm">
+                          <CheckCircleIcon className="h-4 w-4 mr-1" />
+                          Refunded
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
