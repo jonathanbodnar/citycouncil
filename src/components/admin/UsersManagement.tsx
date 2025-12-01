@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -83,6 +83,49 @@ const UsersManagement: React.FC = () => {
     }
   };
 
+  const exportToCSV = () => {
+    try {
+      // Prepare CSV headers
+      const headers = ['Name', 'Email', 'Phone', 'Type', 'Tags', 'SMS Subscribed', 'Created', 'Last Login'];
+      
+      // Prepare CSV rows
+      const rows = filteredUsers.map(user => [
+        user.full_name || '',
+        user.email || '',
+        user.phone || '',
+        user.user_type || '',
+        user.user_tags?.join(', ') || '',
+        user.sms_subscribed ? 'Yes' : 'No',
+        formatDate(user.created_at),
+        formatDate(user.last_login)
+      ]);
+      
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+      
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Exported ${filteredUsers.length} users to CSV`);
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      toast.error('Failed to export users');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -101,6 +144,16 @@ const UsersManagement: React.FC = () => {
             {filteredUsers.length} {filterType !== 'all' ? filterType : ''} user{filteredUsers.length !== 1 ? 's' : ''}
           </p>
         </div>
+        
+        {/* Export Button */}
+        <button
+          onClick={exportToCSV}
+          disabled={filteredUsers.length === 0}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ArrowDownTrayIcon className="h-5 w-5" />
+          Export to CSV
+        </button>
       </div>
 
       {/* Filters */}
