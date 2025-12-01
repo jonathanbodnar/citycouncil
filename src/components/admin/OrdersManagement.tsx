@@ -232,34 +232,34 @@ const OrdersManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Orders Management</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Orders Management</h2>
         <button
           onClick={fetchOrders}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           Refresh
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <div className="flex-1 relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by customer email, name, or talent..."
+            placeholder="Search by customer, email, or talent..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="all">All Statuses</option>
           <option value="pending">Pending</option>
@@ -270,8 +270,126 @@ const OrdersManagement: React.FC = () => {
         </select>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-3">
+        {filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500 text-sm">
+            No orders found
+          </div>
+        ) : (
+          filteredOrders.map((order) => (
+            <div key={order.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+              {/* Header Row */}
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 truncate">
+                    {order.users.full_name}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">{order.users.email}</div>
+                </div>
+                <div className="ml-2 flex-shrink-0">{getStatusBadge(order.status)}</div>
+              </div>
+
+              {/* Details */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Talent:</span>
+                  <span className="font-medium text-gray-900 truncate ml-2">
+                    {order.talent_profiles.users.full_name}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Amount:</span>
+                  <span className="font-semibold text-gray-900">
+                    ${(order.amount / 100).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Date:</span>
+                  <span className="text-gray-900">
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                {order.request_details && (
+                  <div>
+                    <span className="text-gray-600">Message:</span>
+                    <p className="text-xs text-gray-700 mt-1 line-clamp-2">
+                      {order.request_details}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="pt-3 border-t border-gray-200 space-y-2">
+                {order.fulfillment_token && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { data: shortLink } = await supabase
+                          .from('short_links')
+                          .select('short_code')
+                          .eq('order_id', order.id)
+                          .order('created_at', { ascending: false })
+                          .limit(1)
+                          .single();
+
+                        let link: string;
+                        if (shortLink?.short_code) {
+                          link = `${window.location.origin}/s/${shortLink.short_code}`;
+                          logger.log('📋 Using short link:', link);
+                        } else {
+                          link = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
+                          logger.log('📋 Using full link (no short link found)');
+                        }
+                        
+                        await navigator.clipboard.writeText(link);
+                        toast.success('Link copied to clipboard!');
+                      } catch (error) {
+                        logger.error('Error copying link:', error);
+                        toast.error('Failed to copy link');
+                      }
+                    }}
+                    className="w-full px-3 py-2 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    Copy Fulfillment Link
+                  </button>
+                )}
+                
+                {(order.status === 'pending' || order.status === 'in_progress') && (
+                  <button
+                    onClick={() => openDenyModal(order)}
+                    className="w-full inline-flex items-center justify-center px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <XCircleIcon className="h-4 w-4 mr-1" />
+                    Deny & Refund
+                  </button>
+                )}
+                
+                {order.status === 'completed' && !order.refund_id && (
+                  <button
+                    onClick={() => openRefundModal(order)}
+                    className="w-full inline-flex items-center justify-center px-3 py-2 text-sm border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
+                  >
+                    <CurrencyDollarIcon className="h-4 w-4 mr-1" />
+                    Refund Order
+                  </button>
+                )}
+                
+                {(order.status === 'denied' || order.refund_id) && (
+                  <div className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm">
+                    <CheckCircleIcon className="h-4 w-4 mr-1" />
+                    Refunded
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
