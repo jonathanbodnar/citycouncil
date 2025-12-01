@@ -280,45 +280,53 @@ const OrdersManagement: React.FC = () => {
           filteredOrders.map((order) => (
             <div key={order.id} className="bg-white rounded-lg shadow p-4 space-y-3">
               {/* Header Row */}
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-gray-900 truncate">
-                    {order.users.full_name}
+                    {order.users?.full_name || 'Unknown Customer'}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">{order.users.email}</div>
+                  <div className="text-xs text-gray-500 truncate">{order.users?.email || 'No email'}</div>
                 </div>
-                <div className="ml-2 flex-shrink-0">{getStatusBadge(order.status)}</div>
+                <div className="flex-shrink-0">{getStatusBadge(order.status)}</div>
               </div>
 
-              {/* Details */}
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Talent:</span>
-                  <span className="font-medium text-gray-900 truncate ml-2">
-                    {order.talent_profiles.users.full_name}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Amount:</span>
-                  <span className="font-semibold text-gray-900">
-                    ${(order.amount / 100).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Date:</span>
-                  <span className="text-gray-900">
-                    {new Date(order.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                {order.request_details && (
-                  <div>
-                    <span className="text-gray-600">Message:</span>
-                    <p className="text-xs text-gray-700 mt-1 line-clamp-2">
-                      {order.request_details}
-                    </p>
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div className="text-xs text-gray-500 mb-0.5">Talent</div>
+                  <div className="font-medium text-gray-900 truncate">
+                    {order.talent_profiles?.users?.full_name || 'Unknown'}
                   </div>
-                )}
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-0.5">Amount</div>
+                  <div className="font-semibold text-gray-900">
+                    ${(order.amount / 100).toFixed(2)}
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <div className="text-xs text-gray-500 mb-0.5">Date</div>
+                  <div className="text-gray-900">
+                    {new Date(order.created_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
               </div>
+
+              {/* Message */}
+              {order.request_details && (
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="text-xs text-gray-500 mb-1">Message</div>
+                  <p className="text-xs text-gray-700 line-clamp-3">
+                    {order.request_details}
+                  </p>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="pt-3 border-t border-gray-200 space-y-2">
