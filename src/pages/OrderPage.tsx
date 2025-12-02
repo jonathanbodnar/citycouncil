@@ -277,9 +277,12 @@ const OrderPage: React.FC = () => {
       if (transactionId) {
         try {
           const verify = await verifyFortisTransaction(transactionId);
-          logger.log('Fortis verify status:', verify.statusCode);
+          logger.log('✅ Fortis verify status:', verify.statusCode);
         } catch (e) {
-          logger.warn('Fortis verification failed:', e);
+          // Verification is optional - payment already succeeded via Commerce.js
+          // Log the error but don't block the order
+          logger.warn('⚠️ Fortis verification failed (non-blocking):', e);
+          logger.log('📝 Continuing with order creation - payment already captured');
         }
       }
       
