@@ -178,7 +178,8 @@ const CreditsManagement: React.FC = () => {
                 const user = users.find(u => u.id === e.target.value);
                 setSelectedUser(user || null);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 !bg-white !text-gray-900"
+              style={{ backgroundColor: 'white', color: '#111827' }}
             >
               <option value="">Choose a user...</option>
               {users.map(user => (
@@ -200,7 +201,8 @@ const CreditsManagement: React.FC = () => {
               value={creditAmount}
               onChange={(e) => setCreditAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 !bg-white !text-gray-900 placeholder:text-gray-400"
+              style={{ backgroundColor: 'white', color: '#111827' }}
             />
           </div>
 
@@ -213,7 +215,8 @@ const CreditsManagement: React.FC = () => {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Reason for credit..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 !bg-white !text-gray-900 placeholder:text-gray-400"
+              style={{ backgroundColor: 'white', color: '#111827' }}
             />
           </div>
         </div>
@@ -247,7 +250,8 @@ const CreditsManagement: React.FC = () => {
               placeholder="Search users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 !bg-white !text-gray-900 placeholder:text-gray-400"
+              style={{ backgroundColor: 'white', color: '#111827' }}
             />
           </div>
         </div>
