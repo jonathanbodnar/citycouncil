@@ -39,6 +39,7 @@ const navItems: NavItem[] = [
   { key: 'payouts', label: 'Payouts', icon: CurrencyDollarIcon },
   { key: 'w9s', label: 'W-9 Forms', icon: DocumentTextIcon },
   { key: 'coupons', label: 'Coupons', icon: TagIcon },
+  { key: 'credits', label: 'Credits', icon: CurrencyDollarIcon },
   { key: 'comms', label: 'Comms Center', icon: DevicePhoneMobileIcon },
   { key: 'notifications', label: 'Notifications', icon: BellIcon },
   { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },

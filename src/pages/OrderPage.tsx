@@ -75,6 +75,9 @@ const OrderPage: React.FC = () => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
   
+  // Credits state
+  const [userCredits, setUserCredits] = useState<number>(0);
+  
   // Debug pricing updates
   useEffect(() => {
     logger.log('isForBusiness changed:', isForBusiness);
@@ -87,6 +90,30 @@ const OrderPage: React.FC = () => {
       fetchTalent();
     }
   }, [talentId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (user) {
+      fetchUserCredits();
+    }
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchUserCredits = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setUserCredits(data?.credits || 0);
+    } catch (error) {
+      logger.error('Error fetching user credits:', error);
+      // Don't show error to user, just default to 0 credits
+    }
+  };
 
   const fetchTalent = async () => {
     try {
@@ -128,7 +155,7 @@ const OrderPage: React.FC = () => {
   };
 
   const calculatePricing = () => {
-    if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, discount: 0, processingFee: 0, total: 0 };
+    if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, discount: 0, processingFee: 0, total: 0, creditsApplied: 0, amountDue: 0 };
 
     // Use corporate pricing if it's a business order, otherwise use regular pricing
     const basePrice = isForBusiness 
@@ -181,7 +208,11 @@ const OrderPage: React.FC = () => {
     const processingFee = total * 0.029;
     total = total + processingFee;
 
-    return { subtotal, adminFee, charityAmount, discount, processingFee, total, isPromoActive };
+    // Apply user credits (reduce payment amount)
+    const creditsApplied = Math.min(userCredits, total);
+    const amountDue = Math.max(0, total - creditsApplied);
+
+    return { subtotal, adminFee, charityAmount, discount, processingFee, total, isPromoActive, creditsApplied, amountDue };
   };
 
   const validateCoupon = async () => {
@@ -324,7 +355,7 @@ const OrderPage: React.FC = () => {
             admin_fee: Math.round(pricing.adminFee * 100), // Store in cents
             charity_amount: Math.round(pricing.charityAmount * 100), // Store in cents
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
-            payment_transaction_id: paymentResult.id || paymentResult.transaction_id,
+            payment_transaction_id: paymentResult.id || paymentResult.transaction_id || null,
             payment_transaction_payload: paymentResult?.payload ?? null,
             is_corporate: orderData.isForBusiness,
             is_corporate_order: orderData.isForBusiness,
@@ -349,6 +380,30 @@ const OrderPage: React.FC = () => {
       });
 
       if (orderError) throw orderError;
+
+      // Apply user credits if applicable
+      if (pricing.creditsApplied > 0) {
+        try {
+          const { data: creditResult, error: creditError } = await supabase.rpc('use_credits_for_order', {
+            p_user_id: user.id,
+            p_order_id: order.id,
+            p_order_amount_cents: Math.round(pricing.total * 100)
+          });
+
+          if (creditError) {
+            logger.error('Error applying credits:', creditError);
+            // Don't fail the order if credit tracking fails - order already created
+            toast.error('Credits could not be applied, but order was placed successfully');
+          } else if (creditResult?.success) {
+            logger.log('✅ Credits applied:', creditResult);
+            // Refresh user credits in state
+            fetchUserCredits();
+          }
+        } catch (creditErr) {
+          logger.error('Exception applying credits:', creditErr);
+          // Don't fail the order
+        }
+      }
 
       // Track Meta Pixel Purchase event
       try {
@@ -794,7 +849,12 @@ const OrderPage: React.FC = () => {
                     disabled={submitting}
                     className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-blue-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-modern hover:shadow-modern-lg glow-blue"
                   >
-                    {submitting ? 'Processing...' : `Continue to Payment - $${pricing.total.toFixed(2)}`}
+                    {submitting 
+                      ? 'Processing...' 
+                      : pricing.amountDue === 0 
+                        ? 'Place Order (Free with Credits!)' 
+                        : `Continue to Payment - $${pricing.amountDue.toFixed(2)}`
+                    }
                   </button>
                   
                 </div>
@@ -811,10 +871,10 @@ const OrderPage: React.FC = () => {
               )}
             </div>
 
-            {/* Payment Form */}
-            {showPayment && orderData && (
+            {/* Payment Form - Only show if amount due > 0 */}
+            {showPayment && orderData && pricing.amountDue > 0 && (
               <FortisPaymentForm
-                amount={pricing.total}
+                amount={pricing.amountDue}
                 orderId={`order_${Date.now()}_${talent.id}`}
                 customerEmail={user?.email || ''}
                 customerName={user?.full_name || ''}
@@ -823,6 +883,29 @@ const OrderPage: React.FC = () => {
                 onPaymentError={handlePaymentError}
                 loading={submitting}
               />
+            )}
+
+            {/* Free order with credits - show confirmation */}
+            {showPayment && orderData && pricing.amountDue === 0 && (
+              <div className="rounded-2xl px-6 py-8 bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 max-w-3xl mx-auto text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <CurrencyDollarIcon className="h-10 w-10 text-green-600" />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Order Covered by Credits!</h3>
+                <p className="text-gray-600 mb-6">
+                  Your account credits will cover the full cost of this order.
+                  No payment needed!
+                </p>
+                <button
+                  onClick={() => handlePaymentSuccess({ id: 'CREDITS_ONLY', transaction_id: 'CREDITS_ONLY' })}
+                  disabled={submitting}
+                  className="bg-green-600 hover:bg-green-700 text-white py-3 px-8 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {submitting ? 'Placing Order...' : 'Confirm Order'}
+                </button>
+              </div>
             )}
           </form>
         </div>
@@ -962,6 +1045,39 @@ const OrderPage: React.FC = () => {
                     ${pricing.total.toFixed(2)}
                   </span>
                 </div>
+              </div>
+
+              {/* Account Credits */}
+              {userCredits > 0 && (
+                <div className="border-t border-green-100 pt-3 bg-green-50 -mx-6 px-6 py-3">
+                  <div className="flex justify-between text-green-700">
+                    <span className="font-medium flex items-center">
+                      <CurrencyDollarIcon className="h-5 w-5 mr-2" />
+                      Account Credits Applied
+                    </span>
+                    <span className="font-semibold">
+                      -${pricing.creditsApplied.toFixed(2)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-green-600 mt-1">
+                    Balance after order: ${(userCredits - pricing.creditsApplied).toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              {/* Amount Due */}
+              <div className="border-t border-gray-300 pt-3 bg-blue-50 -mx-6 px-6 py-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-bold text-gray-900">Amount Due</span>
+                  <span className="text-2xl font-bold text-blue-600">
+                    ${pricing.amountDue.toFixed(2)}
+                  </span>
+                </div>
+                {pricing.amountDue === 0 && (
+                  <p className="text-sm text-green-600 mt-2 font-medium">
+                    ✓ Fully covered by credits - no payment needed!
+                  </p>
+                )}
               </div>
             </div>
 
