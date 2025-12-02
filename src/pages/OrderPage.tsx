@@ -1047,38 +1047,40 @@ const OrderPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Account Credits */}
+              {/* Account Credits - Only show if user has credits */}
               {userCredits > 0 && (
-                <div className="border-t border-green-100 pt-3 bg-green-50 -mx-6 px-6 py-3">
-                  <div className="flex justify-between text-green-700">
-                    <span className="font-medium flex items-center">
-                      <CurrencyDollarIcon className="h-5 w-5 mr-2" />
-                      Account Credits Applied
-                    </span>
-                    <span className="font-semibold">
-                      -${pricing.creditsApplied.toFixed(2)}
-                    </span>
+                <>
+                  <div className="border-t border-green-100 pt-3 bg-green-50 -mx-6 px-6 py-3">
+                    <div className="flex justify-between text-green-700">
+                      <span className="font-medium flex items-center">
+                        <CurrencyDollarIcon className="h-5 w-5 mr-2" />
+                        Account Credits Applied
+                      </span>
+                      <span className="font-semibold">
+                        -${pricing.creditsApplied.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-green-600 mt-1">
+                      Balance after order: ${(userCredits - pricing.creditsApplied).toFixed(2)}
+                    </p>
                   </div>
-                  <p className="text-xs text-green-600 mt-1">
-                    Balance after order: ${(userCredits - pricing.creditsApplied).toFixed(2)}
-                  </p>
-                </div>
-              )}
 
-              {/* Amount Due */}
-              <div className="border-t border-gray-300 pt-3 bg-blue-50 -mx-6 px-6 py-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold text-gray-900">Amount Due</span>
-                  <span className="text-2xl font-bold text-blue-600">
-                    ${pricing.amountDue.toFixed(2)}
-                  </span>
-                </div>
-                {pricing.amountDue === 0 && (
-                  <p className="text-sm text-green-600 mt-2 font-medium">
-                    ✓ Fully covered by credits - no payment needed!
-                  </p>
-                )}
-              </div>
+                  {/* Amount Due - Only show when credits are applied */}
+                  <div className="border-t border-gray-300 pt-3 bg-blue-50 -mx-6 px-6 py-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xl font-bold text-gray-900">Amount Due</span>
+                      <span className="text-2xl font-bold text-blue-600">
+                        ${pricing.amountDue.toFixed(2)}
+                      </span>
+                    </div>
+                    {pricing.amountDue === 0 && (
+                      <p className="text-sm text-green-600 mt-2 font-medium">
+                        ✓ Fully covered by credits - no payment needed!
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Trust Indicators */}
