@@ -42,6 +42,11 @@ const SignupPage: React.FC = () => {
       return;
     }
 
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === '') {
+      toast.error('Phone number is required');
+      return;
+    }
+
     if (!formData.agreeToTerms) {
       toast.error('Please agree to the terms and conditions');
       return;
@@ -123,12 +128,12 @@ const SignupPage: React.FC = () => {
               <PhoneInput
                 value={formData.phoneNumber}
                 onChange={(value) => setFormData(prev => ({ ...prev, phoneNumber: value }))}
-                label="Phone Number (Optional)"
+                label="Phone Number"
                 placeholder="(555) 123-4567"
-                required={false}
+                required={true}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Get SMS notifications when your video is ready
+                Required for SMS notifications when your video is ready
               </p>
             </div>
 
