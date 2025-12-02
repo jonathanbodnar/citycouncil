@@ -43,16 +43,17 @@ WHERE o.user_id = (SELECT id FROM public.users WHERE email = 'benmoat@hotmail.co
 ORDER BY o.created_at DESC
 LIMIT 10;
 
--- Check for recent payment transactions that might have failed
+-- Check for any notifications (to see if user has been active)
 SELECT 
-    'PAYMENT LOGS' as check_type,
-    created_at,
-    user_id,
-    amount / 100.0 as amount_usd,
-    status,
-    error_message
-FROM public.payment_logs
-WHERE user_id = (SELECT id FROM public.users WHERE email = 'benmoat@hotmail.co.uk')
-ORDER BY created_at DESC
+    'USER NOTIFICATIONS' as check_type,
+    n.id,
+    n.type,
+    n.title,
+    n.message,
+    n.created_at,
+    n.is_read
+FROM public.notifications n
+WHERE n.user_id = (SELECT id FROM public.users WHERE email = 'benmoat@hotmail.co.uk')
+ORDER BY n.created_at DESC
 LIMIT 10;
 
