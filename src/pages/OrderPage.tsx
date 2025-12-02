@@ -8,7 +8,8 @@ import {
   CreditCardIcon,
   BuildingOfficeIcon,
   UserIcon,
-  TagIcon
+  TagIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { FireIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
