@@ -309,9 +309,9 @@ const AdminHelpDesk: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] flex">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] md:h-[700px] flex flex-col md:flex-row">
       {/* Conversations List - Left Side */}
-      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+      <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col h-1/3 md:h-full">
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-3">
@@ -391,12 +391,12 @@ const AdminHelpDesk: React.FC = () => {
                       )}
                     </div>
                     
-                    <p className="text-sm text-gray-600 truncate mt-1">
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                       {conversation.latest_message}
                     </p>
                     
                     <p className="text-xs text-gray-500 mt-1">
-                      {new Date(conversation.latest_message_time).toLocaleDateString()}
+                      {new Date(conversation.latest_message_time).toLocaleDateString()} at {new Date(conversation.latest_message_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
@@ -466,25 +466,31 @@ const AdminHelpDesk: React.FC = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 bg-gray-50">
               {selectedConversation.messages.map((message) => (
                 <div key={message.id} className="space-y-3">
                   {/* User Message */}
                   <div className="flex justify-start">
-                    <div className="bg-gray-100 rounded-lg px-4 py-2 max-w-[70%]">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-medium text-gray-900">
+                    <div className="bg-white rounded-2xl px-4 py-3 max-w-[85%] md:max-w-[70%] shadow-sm border border-gray-200">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-sm font-semibold text-gray-900">
                           {selectedConversation.user_name}
                         </span>
-                        <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           selectedConversation.user_type === 'talent' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
                         }`}>
                           {selectedConversation.user_type}
                         </span>
                       </div>
-                      <p className="text-gray-800 whitespace-pre-wrap break-words">{message.message}</p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {new Date(message.created_at).toLocaleString()}
+                      <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed">{message.message}</p>
+                      <p className="text-xs text-gray-500 mt-3">
+                        {new Date(message.created_at).toLocaleString([], { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric',
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
                       </p>
                     </div>
                   </div>
@@ -492,16 +498,22 @@ const AdminHelpDesk: React.FC = () => {
                   {/* Admin Response */}
                   {message.response && (
                     <div className="flex justify-end">
-                      <div className="bg-blue-600 text-white rounded-lg px-4 py-2 max-w-[70%]">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm font-medium">Admin</span>
-                          <span className="px-1.5 py-0.5 bg-blue-500 rounded text-xs font-medium">
+                      <div className="bg-blue-600 text-white rounded-2xl px-4 py-3 max-w-[85%] md:max-w-[70%] shadow-md">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-sm font-semibold">Admin</span>
+                          <span className="px-2 py-0.5 bg-blue-500 rounded-full text-xs font-medium">
                             Support
                           </span>
                         </div>
-                        <p className="whitespace-pre-wrap break-words">{message.response}</p>
-                        <p className="text-xs text-blue-100 mt-2">
-                          {message.updated_at ? new Date(message.updated_at).toLocaleString() : ''}
+                        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.response}</p>
+                        <p className="text-xs text-blue-100 mt-3">
+                          {message.updated_at ? new Date(message.updated_at).toLocaleString([], { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric',
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          }) : ''}
                         </p>
                       </div>
                     </div>
@@ -513,26 +525,29 @@ const AdminHelpDesk: React.FC = () => {
 
             {/* Message Input */}
             {!selectedConversation.is_resolved && (
-              <div className="p-4 border-t border-gray-200 bg-gray-50">
-                <div className="flex space-x-3">
+              <div className="p-3 md:p-4 border-t border-gray-200 bg-white">
+                <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-3">
                   <textarea
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Type your response..."
-                    className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 resize-none border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     rows={3}
                     maxLength={1000}
                   />
                   <button
                     onClick={sendResponse}
                     disabled={!newMessage.trim() || sending}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg transition-colors flex-shrink-0 self-end"
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl transition-colors flex-shrink-0 self-end font-medium flex items-center justify-center space-x-2 min-h-[48px]"
                   >
                     {sending ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                     ) : (
-                      <PaperAirplaneIcon className="h-5 w-5" />
+                      <>
+                        <PaperAirplaneIcon className="h-5 w-5" />
+                        <span className="hidden md:inline">Send</span>
+                      </>
                     )}
                   </button>
                 </div>
