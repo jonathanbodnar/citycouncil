@@ -424,6 +424,26 @@ const OrderPage: React.FC = () => {
         // Don't fail the order if pixel tracking fails
       }
 
+      // Track Rumble Ads conversion
+      try {
+        if (typeof window !== 'undefined' && typeof (window as any).ratag === 'function') {
+          // Generate unique conversion ID using order ID and timestamp
+          const conversionId = `${order.id}-${Date.now()}`;
+          // Value is 25% of order total (admin fee portion)
+          const conversionValue = pricing.total * 0.25;
+          
+          (window as any).ratag('conversion', {
+            to: 3320,
+            cid: conversionId,
+            value: conversionValue
+          });
+          logger.log('✅ Rumble Ads conversion tracked:', { cid: conversionId, value: conversionValue });
+        }
+      } catch (rumbleError) {
+        logger.error('Error tracking Rumble Ads conversion:', rumbleError);
+        // Don't fail the order if tracking fails
+      }
+
       // Track coupon usage if coupon was applied
       if (appliedCoupon) {
         try {

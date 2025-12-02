@@ -18,3 +18,4 @@ LEFT JOIN talent_profiles tp ON tp.id = o.talent_id
 WHERE o.created_at::date = CURRENT_DATE
 ORDER BY o.created_at DESC;
 
+

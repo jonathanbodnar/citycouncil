@@ -88,3 +88,4 @@ JOIN talent_profiles tp ON tp.id = pb.talent_id
 WHERE tp.username = 'jonathanbodnar'
 ORDER BY pb.week_start_date DESC;
 
+

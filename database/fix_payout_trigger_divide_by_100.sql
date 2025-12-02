@@ -295,3 +295,4 @@ LEFT JOIN payout_batches pb ON pb.talent_id = o.talent_id AND pb.week_start_date
 WHERE o.created_at::date = CURRENT_DATE
 ORDER BY o.created_at DESC;
 
+

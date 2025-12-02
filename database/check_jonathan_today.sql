@@ -34,3 +34,4 @@ WHERE tp.username = 'jonathanbodnar'
   AND o.status = 'completed'
   AND o.created_at::date < CURRENT_DATE;
 
+

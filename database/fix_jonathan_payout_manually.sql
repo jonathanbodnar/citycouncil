@@ -54,3 +54,4 @@ LEFT JOIN payout_batches pb ON pb.talent_id = o.talent_id AND pb.week_start_date
 WHERE tp.username = 'jonathanbodnar'
   AND o.created_at::date = CURRENT_DATE;
 
+
