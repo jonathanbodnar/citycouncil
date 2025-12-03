@@ -357,7 +357,7 @@ const TalentOnboardingPage: React.FC = () => {
       // First, check if this talent profile is already linked to a user
       if (onboardingData?.talent.user_id) {
         toast.error('This profile is already linked to an account. Please use the login form below.');
-        setLoginData({ email: accountData.email, password: '' });
+        setLoginData({ email: accountData.email, password: '', phone: '' });
         await fetchOnboardingData();
         return;
       }
@@ -397,7 +397,7 @@ const TalentOnboardingPage: React.FC = () => {
               
               // Password doesn't match - show login form
               toast.error('An account with this email already exists. Please enter the correct password to continue.');
-              setLoginData({ email: accountData.email, password: '' });
+              setLoginData({ email: accountData.email, password: '', phone: '' });
               
               // Force re-fetch to show login form (don't try to access signInData.user since login failed)
               await fetchOnboardingData();
@@ -1279,7 +1279,7 @@ const TalentOnboardingPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setShowSignInForm(true);
-                      setLoginData({ email: accountData.email, password: '' });
+                      setLoginData({ email: accountData.email, password: '', phone: '' });
                     }}
                     className="text-blue-600 hover:text-blue-800 font-medium"
                   >
