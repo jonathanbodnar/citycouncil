@@ -36,6 +36,8 @@ const TalentOnboardingPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showSignInForm, setShowSignInForm] = useState(false); // Toggle between signup and signin
+  const [needsPhoneNumber, setNeedsPhoneNumber] = useState(false); // Show phone prompt after login if missing
+  const [missingPhoneData, setMissingPhoneData] = useState({ phone: '', userId: '' });
   
   // Step 1: Account Setup
   const [accountData, setAccountData] = useState({
@@ -600,6 +602,21 @@ const TalentOnboardingPage: React.FC = () => {
           return;
         }
 
+        // Check if user has a phone number
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('phone')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (!existingUser?.phone) {
+          console.log('📱 User is missing phone number, prompting for it');
+          setMissingPhoneData({ phone: '', userId: authData.user.id });
+          setNeedsPhoneNumber(true);
+          toast.success('Logged in! Please add your phone number to continue.');
+          return;
+        }
+
         console.log('LOGIN SUCCESS: User authenticated for onboarding:', {
           userId: authData.user.id,
           talentUserId: onboardingData?.talent.user_id,
@@ -613,6 +630,33 @@ const TalentOnboardingPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error logging in:', error);
       toast.error(error.message || 'Failed to log in');
+    }
+  };
+
+  // Handle saving missing phone number
+  const handleSavePhoneNumber = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!missingPhoneData.phone || missingPhoneData.phone.replace(/\D/g, '').length < 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    try {
+      const formattedPhone = `+1${missingPhoneData.phone.replace(/\D/g, '')}`;
+      
+      const { error } = await supabase.from('users').update({
+        phone: formattedPhone
+      }).eq('id', missingPhoneData.userId);
+
+      if (error) throw error;
+
+      toast.success('Phone number saved!');
+      setNeedsPhoneNumber(false);
+      setCurrentStep(2);
+    } catch (error: any) {
+      console.error('Error saving phone:', error);
+      toast.error(error.message || 'Failed to save phone number');
     }
   };
 
@@ -1270,7 +1314,7 @@ const TalentOnboardingPage: React.FC = () => {
           )}
 
           {/* Step 1: Show Sign In form when user clicks "Sign in instead" OR when user_id exists */}
-          {currentStep === 1 && (onboardingData?.talent.user_id || showSignInForm) && (
+          {currentStep === 1 && (onboardingData?.talent.user_id || showSignInForm) && !needsPhoneNumber && (
             <form onSubmit={handleLoginSubmit}>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Step 1: Welcome Back!
@@ -1350,6 +1394,60 @@ const TalentOnboardingPage: React.FC = () => {
                   </p>
                 </div>
               )}
+            </form>
+          )}
+
+          {/* Step 1.5: Phone number prompt (shown after login if phone is missing) */}
+          {currentStep === 1 && needsPhoneNumber && (
+            <form onSubmit={handleSavePhoneNumber}>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Almost There! Add Your Phone Number
+              </h2>
+              
+              <div className="bg-amber-50 rounded-lg p-4 mb-6">
+                <p className="text-amber-800">
+                  We need your phone number for account security and to process payouts. This is required to continue.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={missingPhoneData.phone}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/\D/g, '');
+                      if (cleaned.length <= 10) {
+                        let formatted = cleaned;
+                        if (cleaned.length > 6) {
+                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                        } else if (cleaned.length > 3) {
+                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+                        } else if (cleaned.length > 0) {
+                          formatted = `(${cleaned}`;
+                        }
+                        setMissingPhoneData({...missingPhoneData, phone: formatted});
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="(555) 123-4567"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">For account security & payouts</p>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Save & Continue
+                </button>
+              </div>
             </form>
           )}
 
