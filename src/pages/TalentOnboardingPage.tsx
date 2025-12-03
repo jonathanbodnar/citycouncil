@@ -1369,8 +1369,34 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
 
               </div>
+
+              {/* Forgot Password Link */}
+              <div className="mt-3 text-right">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!loginData.email) {
+                      toast.error('Please enter your email address first');
+                      return;
+                    }
+                    try {
+                      const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
+                        redirectTo: `${window.location.origin}/reset-password`,
+                      });
+                      if (error) throw error;
+                      toast.success('Password reset email sent! Check your inbox.', { duration: 5000 });
+                    } catch (error: any) {
+                      console.error('Error sending reset email:', error);
+                      toast.error(error.message || 'Failed to send reset email');
+                    }
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Forgot password?
+                </button>
+              </div>
               
-              <div className="mt-6">
+              <div className="mt-4">
                 <button
                   type="submit"
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
