@@ -35,6 +35,7 @@ const TalentOnboardingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSignInForm, setShowSignInForm] = useState(false); // Toggle between signup and signin
   
   // Step 1: Account Setup
   const [accountData, setAccountData] = useState({
@@ -557,9 +558,44 @@ const TalentOnboardingPage: React.FC = () => {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Check if talent profile has no user_id (orphaned state) - auto-link it
+        if (!onboardingData?.talent.user_id) {
+          console.log('🔗 Auto-linking orphaned talent profile to user:', {
+            userId: authData.user.id,
+            talentId: onboardingData?.talent.id,
+            email: authData.user.email
+          });
+
+          // Link the user to the talent profile
+          const { error: linkError } = await supabase
+            .from('talent_profiles')
+            .update({ 
+              user_id: authData.user.id,
+              full_name: onboardingData?.talent.temp_full_name || null
+            })
+            .eq('id', onboardingData?.talent.id);
+
+          if (linkError) {
+            console.error('Failed to link user to talent profile:', linkError);
+            toast.error('Failed to link your account. Please contact support.');
+            return;
+          }
+
+          // Update user type to talent
+          await supabase.from('users').update({
+            user_type: 'talent',
+            full_name: onboardingData?.talent.temp_full_name
+          }).eq('id', authData.user.id);
+
+          toast.success('Account linked successfully!');
+          setShowSignInForm(false);
+          setCurrentStep(2);
+          return;
+        }
+
         // Verify this user is associated with the talent profile
         if (authData.user.id !== onboardingData?.talent.user_id) {
-          toast.error('This email is not associated with this talent profile');
+          toast.error('This email is not associated with this talent profile. Please use the email you registered with.');
           return;
         }
 
@@ -1111,7 +1147,8 @@ const TalentOnboardingPage: React.FC = () => {
 
         {/* Step Content - Mobile Optimized */}
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-          {currentStep === 1 && !onboardingData?.talent.user_id && (
+          {/* Step 1: Show Sign Up form when no user_id AND not showing sign-in form */}
+          {currentStep === 1 && !onboardingData?.talent.user_id && !showSignInForm && (
             <form onSubmit={handleStep1Submit}>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Step 1: Create Your Account
@@ -1211,10 +1248,28 @@ const TalentOnboardingPage: React.FC = () => {
                   Create Account & Continue
                 </button>
               </div>
+
+              {/* Toggle to Sign In */}
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-600">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSignInForm(true);
+                      setLoginData({ email: accountData.email, password: '' });
+                    }}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Sign in instead
+                  </button>
+                </p>
+              </div>
             </form>
           )}
 
-          {currentStep === 1 && onboardingData?.talent.user_id && (
+          {/* Step 1: Show Sign In form when user clicks "Sign in instead" OR when user_id exists */}
+          {currentStep === 1 && (onboardingData?.talent.user_id || showSignInForm) && (
             <form onSubmit={handleLoginSubmit}>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Step 1: Welcome Back!
@@ -1277,6 +1332,22 @@ const TalentOnboardingPage: React.FC = () => {
                   Log In & Continue
                 </button>
               </div>
+
+              {/* Toggle back to Sign Up (only if profile has no user_id yet) */}
+              {!onboardingData?.talent.user_id && showSignInForm && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-600">
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setShowSignInForm(false)}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Create one instead
+                    </button>
+                  </p>
+                </div>
+              )}
             </form>
           )}
 
