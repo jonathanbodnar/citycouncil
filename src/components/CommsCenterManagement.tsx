@@ -683,14 +683,47 @@ const CommsCenterManagement: React.FC = () => {
             </p>
             <textarea
               value={massMessageText}
-              onChange={(e) => setMassMessageText(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4"
+              onChange={(e) => {
+                if (e.target.value.length <= MAX_CHAR_LIMIT) {
+                  setMassMessageText(e.target.value);
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
               rows={4}
               placeholder="Type your announcement here..."
-              maxLength={160}
             />
-            <div className="text-xs text-gray-500 mb-4 text-right">
-              {massMessageText.length}/160 characters
+            <div className="mb-4 space-y-1">
+              <div className={`text-xs ${massMessageText.length > SMS_SEGMENT_LIMIT ? 'text-amber-600 font-medium' : 'text-gray-500'} text-right`}>
+                {massMessageText.length}/{MAX_CHAR_LIMIT} characters
+                {massMessageText.length > 0 && (
+                  <span className="ml-2">
+                    ({calculateSegments(massMessageText).segments} SMS segment{calculateSegments(massMessageText).segments !== 1 ? 's' : ''})
+                  </span>
+                )}
+              </div>
+
+              {/* Segment breakdown visualization for mass message */}
+              {massMessageText.length > SMS_SEGMENT_LIMIT && (
+                <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                  <div className="text-xs text-gray-600 mb-1 font-medium">Message will be split into {calculateSegments(massMessageText).segments} segments:</div>
+                  <div className="space-y-1">
+                    {calculateSegments(massMessageText).breakdown.map((segment, index) => (
+                      <div key={index} className="text-xs">
+                        <span className="inline-block bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded mr-2 font-medium">
+                          {index + 1}
+                        </span>
+                        <span className="text-gray-700 break-all">
+                          {segment}
+                          {index < calculateSegments(massMessageText).breakdown.length - 1 && (
+                            <span className="text-red-400 font-bold"> |</span>
+                          )}
+                        </span>
+                        <span className="text-gray-400 ml-1">({segment.length} chars)</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -894,10 +927,50 @@ const CommsCenterManagement: React.FC = () => {
 
               {/* Message Input */}
               <div className="p-4 border-t border-gray-200">
+                {/* Media Preview */}
+                {mediaPreview && (
+                  <div className="mb-3 relative inline-block">
+                    {mediaFile?.type.startsWith('image/') ? (
+                      <img src={mediaPreview} alt="Preview" className="max-h-32 rounded-lg" />
+                    ) : (
+                      <video src={mediaPreview} className="max-h-32 rounded-lg" />
+                    )}
+                    <button
+                      onClick={clearMedia}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex gap-2">
+                  {/* Hidden file input */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleMediaSelect}
+                    accept="image/*,video/*"
+                    className="hidden"
+                  />
+                  
+                  {/* Media button */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingMedia}
+                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    title="Attach image or video"
+                  >
+                    <PhotoIcon className="h-5 w-5 text-gray-600" />
+                  </button>
+
                   <textarea
                     value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value.length <= MAX_CHAR_LIMIT) {
+                        setMessageText(e.target.value);
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -905,21 +978,59 @@ const CommsCenterManagement: React.FC = () => {
                       }
                     }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                    rows={2}
-                    placeholder="Type a message..."
-                    maxLength={160}
+                    rows={3}
+                    placeholder="Type a message... (Shift+Enter for new line)"
                   />
                   <button
                     onClick={sendMessage}
-                    disabled={!messageText.trim() || sending}
+                    disabled={(!messageText.trim() && !mediaFile) || sending || uploadingMedia}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <PaperAirplaneIcon className="h-5 w-5" />
-                    {sending ? 'Sending...' : 'Send'}
+                    {uploadingMedia ? 'Uploading...' : sending ? 'Sending...' : 'Send'}
                   </button>
                 </div>
-                <div className="text-xs text-gray-500 mt-1 text-right">
-                  {messageText.length}/160 characters
+
+                {/* Character count and segment indicator */}
+                <div className="mt-2 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className={`${messageText.length > SMS_SEGMENT_LIMIT ? 'text-amber-600 font-medium' : 'text-gray-500'}`}>
+                      {messageText.length}/{MAX_CHAR_LIMIT} characters
+                      {messageText.length > 0 && (
+                        <span className="ml-2">
+                          ({calculateSegments(messageText).segments} SMS segment{calculateSegments(messageText).segments !== 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </span>
+                    {mediaFile && (
+                      <span className="text-blue-600 font-medium">
+                        📎 {mediaFile.name.length > 20 ? mediaFile.name.substring(0, 20) + '...' : mediaFile.name}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Segment breakdown visualization */}
+                  {messageText.length > SMS_SEGMENT_LIMIT && (
+                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                      <div className="text-xs text-gray-600 mb-1 font-medium">Message will be split into {calculateSegments(messageText).segments} segments:</div>
+                      <div className="space-y-1">
+                        {calculateSegments(messageText).breakdown.map((segment, index) => (
+                          <div key={index} className="text-xs">
+                            <span className="inline-block bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded mr-2 font-medium">
+                              {index + 1}
+                            </span>
+                            <span className="text-gray-700 break-all">
+                              {segment}
+                              {index < calculateSegments(messageText).breakdown.length - 1 && (
+                                <span className="text-red-400 font-bold"> |</span>
+                              )}
+                            </span>
+                            <span className="text-gray-400 ml-1">({segment.length} chars)</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
