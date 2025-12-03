@@ -551,11 +551,6 @@ const TalentProfilePage: React.FC = () => {
                   <div className="text-xs text-gray-600">Delivery</div>
                 </div>
                 
-                <div className="flex-1 border-l border-white/30">
-                  <div className="text-xl font-bold" style={{ color: '#ffffff' }}>{talent.total_orders}</div>
-                  <div className="text-xs text-gray-600 font-medium">Orders</div>
-                </div>
-                
                 {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) ? (
                   <div className="flex-1 border-l border-white/30">
                     <div className="text-xl font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
