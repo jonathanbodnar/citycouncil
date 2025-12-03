@@ -47,7 +47,8 @@ const TalentOnboardingPage: React.FC = () => {
 
   const [loginData, setLoginData] = useState({
     email: '',
-    password: ''
+    password: '',
+    phone: ''
   });
 
   // Step 2: Profile Details
@@ -558,12 +559,16 @@ const TalentOnboardingPage: React.FC = () => {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Format phone if provided
+        const formattedPhone = loginData.phone ? `+1${loginData.phone.replace(/\D/g, '')}` : null;
+
         // Check if talent profile has no user_id (orphaned state) - auto-link it
         if (!onboardingData?.talent.user_id) {
           console.log('🔗 Auto-linking orphaned talent profile to user:', {
             userId: authData.user.id,
             talentId: onboardingData?.talent.id,
-            email: authData.user.email
+            email: authData.user.email,
+            phone: formattedPhone
           });
 
           // Link the user to the talent profile
@@ -581,10 +586,11 @@ const TalentOnboardingPage: React.FC = () => {
             return;
           }
 
-          // Update user type to talent
+          // Update user type to talent and save phone
           await supabase.from('users').update({
             user_type: 'talent',
-            full_name: onboardingData?.talent.temp_full_name
+            full_name: onboardingData?.talent.temp_full_name,
+            phone: formattedPhone
           }).eq('id', authData.user.id);
 
           toast.success('Account linked successfully!');
@@ -597,6 +603,22 @@ const TalentOnboardingPage: React.FC = () => {
         if (authData.user.id !== onboardingData?.talent.user_id) {
           toast.error('This email is not associated with this talent profile. Please use the email you registered with.');
           return;
+        }
+
+        // Update phone if provided and user doesn't have one
+        if (formattedPhone) {
+          const { data: existingUser } = await supabase
+            .from('users')
+            .select('phone')
+            .eq('id', authData.user.id)
+            .single();
+
+          if (!existingUser?.phone) {
+            await supabase.from('users').update({
+              phone: formattedPhone
+            }).eq('id', authData.user.id);
+            console.log('📱 Updated missing phone number for user');
+          }
         }
 
         console.log('LOGIN SUCCESS: User authenticated for onboarding:', {
@@ -1321,6 +1343,34 @@ const TalentOnboardingPage: React.FC = () => {
                       )}
                     </button>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={loginData.phone}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/\D/g, '');
+                      if (cleaned.length <= 10) {
+                        let formatted = cleaned;
+                        if (cleaned.length > 6) {
+                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                        } else if (cleaned.length > 3) {
+                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+                        } else if (cleaned.length > 0) {
+                          formatted = `(${cleaned}`;
+                        }
+                        setLoginData({...loginData, phone: formatted});
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="(555) 123-4567"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">For account security & payouts</p>
                 </div>
               </div>
               
