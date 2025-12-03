@@ -444,6 +444,37 @@ const OrderPage: React.FC = () => {
         // Don't fail the order if tracking fails
       }
 
+      // Send Zapier webhook for new orders (exclude test/admin orders)
+      try {
+        const excludedEmails = ['helloshoutout@shoutout.us'];
+        const isAdminOrder = user.email && excludedEmails.includes(user.email.toLowerCase());
+        
+        if (!isAdminOrder) {
+          const talentName = talent.temp_full_name || talent.users.full_name;
+          const customerName = user.full_name || user.email;
+          
+          fetch('https://hooks.zapier.com/hooks/catch/25578725/ukls8cj/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: order.id,
+              customer_name: customerName,
+              customer_email: user.email,
+              talent_name: talentName,
+              amount: pricing.total,
+              order_date: new Date().toISOString()
+            })
+          }).then(() => {
+            logger.log('✅ Zapier webhook sent');
+          }).catch((err) => {
+            logger.error('Error sending Zapier webhook:', err);
+          });
+        }
+      } catch (zapierError) {
+        logger.error('Error with Zapier webhook:', zapierError);
+        // Don't fail the order if webhook fails
+      }
+
       // Track coupon usage if coupon was applied
       if (appliedCoupon) {
         try {
