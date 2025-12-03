@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   PaperAirplaneIcon, 
   UserGroupIcon, 
@@ -8,11 +8,18 @@ import {
   ArrowPathIcon,
   BellIcon,
   MagnifyingGlassIcon,
-  PhoneIcon
+  PhoneIcon,
+  PhotoIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
 import SMSManagement from './admin/SMSManagement';
+
+// SMS segment limits
+const SMS_SEGMENT_LIMIT = 160; // Standard SMS limit
+const SMS_CONCAT_LIMIT = 153; // When concatenated, each segment is 153 chars (7 chars for header)
+const MAX_CHAR_LIMIT = 1600; // Allow up to ~10 segments
 
 interface TalentWithPhone {
   id: string;
@@ -36,6 +43,7 @@ interface Message {
   message: string;
   sent_at: string;
   status: 'sent' | 'delivered' | 'failed';
+  media_url?: string;
 }
 
 interface SystemNotification {
@@ -69,6 +77,11 @@ const CommsCenterManagement: React.FC = () => {
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [notificationSearch, setNotificationSearch] = useState('');
   const [notificationTypeFilter, setNotificationTypeFilter] = useState<string>('all');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (activeView === 'talent-sms') {
@@ -244,6 +257,100 @@ const CommsCenterManagement: React.FC = () => {
     }
   };
 
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Calculate SMS segments
+  const calculateSegments = (text: string): { segments: number; breakdown: string[] } => {
+    if (!text || text.length === 0) return { segments: 0, breakdown: [] };
+    
+    if (text.length <= SMS_SEGMENT_LIMIT) {
+      return { segments: 1, breakdown: [text] };
+    }
+    
+    // For longer messages, each segment is 153 chars (7 chars reserved for concatenation header)
+    const segments: string[] = [];
+    let remaining = text;
+    
+    while (remaining.length > 0) {
+      if (remaining.length <= SMS_CONCAT_LIMIT) {
+        segments.push(remaining);
+        break;
+      }
+      segments.push(remaining.substring(0, SMS_CONCAT_LIMIT));
+      remaining = remaining.substring(SMS_CONCAT_LIMIT);
+    }
+    
+    return { segments: segments.length, breakdown: segments };
+  };
+
+  // Handle media file selection
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    
+    if (!isImage && !isVideo) {
+      toast.error('Please select an image or video file');
+      return;
+    }
+
+    // Check file size (10MB limit for MMS)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    setMediaFile(file);
+    setMediaPreview(URL.createObjectURL(file));
+  };
+
+  // Upload media to Supabase storage
+  const uploadMedia = async (file: File): Promise<string | null> => {
+    try {
+      setUploadingMedia(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `sms-media/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('public-assets')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('public-assets')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      toast.error('Failed to upload media');
+      return null;
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  // Clear media selection
+  const clearMedia = () => {
+    setMediaFile(null);
+    setMediaPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
@@ -296,16 +403,29 @@ const CommsCenterManagement: React.FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!messageText.trim() || !selectedTalent) return;
+    if ((!messageText.trim() && !mediaFile) || !selectedTalent) return;
 
     setSending(true);
     try {
-      // Call Twilio Edge Function to send SMS
+      let mediaUrl: string | null = null;
+
+      // Upload media if present
+      if (mediaFile) {
+        mediaUrl = await uploadMedia(mediaFile);
+        if (!mediaUrl && !messageText.trim()) {
+          // If media upload failed and no text, abort
+          setSending(false);
+          return;
+        }
+      }
+
+      // Call Twilio Edge Function to send SMS/MMS
       const { data, error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: selectedTalent.users.phone,
-          message: messageText,
-          talentId: selectedTalent.id
+          message: messageText || (mediaUrl ? '📎 Media message' : ''),
+          talentId: selectedTalent.id,
+          mediaUrl: mediaUrl
         }
       });
 
@@ -317,15 +437,17 @@ const CommsCenterManagement: React.FC = () => {
         .insert({
           talent_id: selectedTalent.id,
           from_admin: true,
-          message: messageText,
+          message: messageText || (mediaUrl ? '📎 Media message' : ''),
           status: 'sent',
-          sent_at: new Date().toISOString()
+          sent_at: new Date().toISOString(),
+          media_url: mediaUrl
         });
 
       if (dbError) throw dbError;
 
-      toast.success('Message sent!');
+      toast.success(mediaUrl ? 'MMS sent!' : 'Message sent!');
       setMessageText('');
+      clearMedia();
       fetchMessages(selectedTalent.id);
     } catch (error: any) {
       console.error('Error sending message:', error);
@@ -720,7 +842,38 @@ const CommsCenterManagement: React.FC = () => {
                             : 'bg-gray-200 text-gray-900'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
+                        {/* Media attachment */}
+                        {msg.media_url && (
+                          <div className="mb-2">
+                            {msg.media_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                              <img 
+                                src={msg.media_url} 
+                                alt="Media attachment" 
+                                className="max-w-full rounded-lg cursor-pointer hover:opacity-90"
+                                onClick={() => window.open(msg.media_url, '_blank')}
+                              />
+                            ) : msg.media_url.match(/\.(mp4|mov|webm)$/i) ? (
+                              <video 
+                                src={msg.media_url} 
+                                controls 
+                                className="max-w-full rounded-lg"
+                              />
+                            ) : (
+                              <a 
+                                href={msg.media_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`flex items-center gap-2 underline ${msg.from_admin ? 'text-blue-100' : 'text-blue-600'}`}
+                              >
+                                <PhotoIcon className="h-4 w-4" />
+                                View attachment
+                              </a>
+                            )}
+                          </div>
+                        )}
+                        {msg.message && msg.message !== '📎 Media message' && (
+                          <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
+                        )}
                         <div className={`text-xs mt-1 ${msg.from_admin ? 'text-blue-100' : 'text-gray-500'}`}>
                           {new Date(msg.sent_at).toLocaleTimeString()}
                           {msg.from_admin && (
@@ -736,6 +889,7 @@ const CommsCenterManagement: React.FC = () => {
                     </div>
                   ))
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Message Input */}

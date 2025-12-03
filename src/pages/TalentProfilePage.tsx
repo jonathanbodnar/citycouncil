@@ -625,32 +625,22 @@ const TalentProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* Recent Videos Section */}
-      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Videos</h2>
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-          {talent.recent_videos.length > 0 ? (
-            talent.recent_videos.map((videoUrl, index) => (
+      {/* Recent Orders Section - Only show if there are videos */}
+      {talent.recent_videos.length > 0 && (
+        <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Orders</h2>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            {talent.recent_videos.map((videoUrl, index) => (
               <div key={index} className="relative rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 w-48 h-64 md:w-56 md:h-72">
                 <VideoPlayer 
                   videoUrl={videoUrl}
                   className="w-full h-full object-cover"
                 />
               </div>
-            ))
-          ) : (
-            /* Placeholder for no videos */
-            [1, 2, 3, 4].map((i) => (
-              <div key={i} className="relative rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 w-48 h-64 md:w-56 md:h-72 flex items-center justify-center">
-                <div className="text-center">
-                  <PlayIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <div className="text-sm text-gray-600">No videos yet</div>
-                </div>
-              </div>
-            ))
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Reviews Section */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
