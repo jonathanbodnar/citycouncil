@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 import { supabase } from '../services/supabase';
@@ -9,7 +9,11 @@ const ResetPasswordPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [validToken, setValidToken] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  // Get redirect URL from query params (e.g., ?redirect=/onboard/xyz)
+  const redirectUrl = searchParams.get('redirect');
 
   useEffect(() => {
     // Check if we have a valid reset token
@@ -74,7 +78,13 @@ const ResetPasswordPage: React.FC = () => {
       if (error) throw error;
 
       toast.success('Password updated successfully!');
-      navigate('/login');
+      
+      // Redirect to the original page if specified, otherwise go to login
+      if (redirectUrl) {
+        navigate(redirectUrl);
+      } else {
+        navigate('/login');
+      }
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast.error(error.message || 'Failed to reset password');

@@ -1380,11 +1380,12 @@ const TalentOnboardingPage: React.FC = () => {
                       return;
                     }
                     try {
+                      // Redirect back to this onboarding page after password reset
                       const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
-                        redirectTo: `${window.location.origin}/reset-password`,
+                        redirectTo: `${window.location.origin}/reset-password?redirect=/onboard/${token}`,
                       });
                       if (error) throw error;
-                      toast.success('Password reset email sent! Check your inbox.', { duration: 5000 });
+                      toast.success('Password reset email sent! Check your inbox. After resetting, you\'ll be redirected back here.', { duration: 6000 });
                     } catch (error: any) {
                       console.error('Error sending reset email:', error);
                       toast.error(error.message || 'Failed to send reset email');
