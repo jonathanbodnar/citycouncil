@@ -44,51 +44,69 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     };
     const handleMessageSuccess = (payload: any) => {
       if (successHandledRef.current) return;
-      successHandledRef.current = true;
       console.log('iframe message transaction payload', payload);
+      
+      // Check for error messages in payload
+      const errorMsg = payload?.error || payload?.message || payload?.data?.error || payload?.data?.message;
+      if (errorMsg && typeof errorMsg === 'string' && (errorMsg.toLowerCase().includes('decline') || errorMsg.toLowerCase().includes('fail') || errorMsg.toLowerCase().includes('error'))) {
+        console.error('❌ Payment error in payload:', errorMsg);
+        setError(errorMsg);
+        onPaymentError(errorMsg);
+        return;
+      }
+      
       const txId = payload?.transaction?.id || payload?.data?.id || payload?.id || payload?.value?.id;
       
       // Check for declined/failed status in the payload
-      const statusCode = payload?.data?.status_code || payload?.status_code || payload?.value?.status_code;
-      const reasonCode = payload?.reason_code_id || payload?.data?.reason_code_id || payload?.value?.reason_code_id;
+      const statusCode = payload?.data?.status_code || payload?.status_code || payload?.value?.status_code || payload?.transaction?.status_code;
+      const reasonCode = payload?.reason_code_id || payload?.data?.reason_code_id || payload?.value?.reason_code_id || payload?.transaction?.reason_code_id;
+      
+      console.log('🔍 Transaction status check:', { txId, statusCode, reasonCode });
       
       // Fortis status codes: 101 = approved, 102-199 = declined/failed
       // reason_code_id 1000 = approved, others indicate decline reasons
       if (statusCode && statusCode !== 101 && statusCode !== 100) {
         console.error('❌ Payment declined - status_code:', statusCode, 'reason_code:', reasonCode);
-        successHandledRef.current = false; // Allow retry
         setError('Payment was declined. Please try a different card.');
         onPaymentError('Payment was declined. Please try a different card.');
         return;
       }
       
-      if (txId) {
-        verifyFortisTransaction(txId)
-          .then((verify) => {
-            // Check if verification shows declined status
-            if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
-              console.error('❌ Payment verification shows declined - status:', verify.statusCode);
-              successHandledRef.current = false; // Allow retry
-              setError('Payment was declined. Please try a different card.');
-              onPaymentError('Payment was declined. Please try a different card.');
-              return;
-            }
-            console.log('✅ Payment verified successfully:', verify.statusCode);
-            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
-          })
-          .catch((e) => {
-            console.error('Payment verification failed:', e);
-            // If we can't verify, check the original payload status
-            if (statusCode === 101 || statusCode === 100) {
-              console.log('⚠️ Verification failed but original status was approved, proceeding');
-              setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode, payload }), 0);
-            } else {
-              successHandledRef.current = false; // Allow retry
-              setError('Could not verify payment. Please try again.');
-              onPaymentError('Could not verify payment. Please try again.');
-            }
-          });
+      // Only mark as handled if we have a valid transaction
+      if (!txId) {
+        console.warn('⚠️ No transaction ID in payload, ignoring');
+        return;
       }
+      
+      successHandledRef.current = true;
+      
+      // If status is already approved (101 or 100), proceed without verification
+      if (statusCode === 101 || statusCode === 100) {
+        console.log('✅ Payment approved in payload, proceeding:', statusCode);
+        setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode, payload }), 0);
+        return;
+      }
+      
+      // Otherwise try to verify
+      verifyFortisTransaction(txId)
+        .then((verify) => {
+          // Check if verification shows declined status
+          if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
+            console.error('❌ Payment verification shows declined - status:', verify.statusCode);
+            successHandledRef.current = false; // Allow retry
+            setError('Payment was declined. Please try a different card.');
+            onPaymentError('Payment was declined. Please try a different card.');
+            return;
+          }
+          console.log('✅ Payment verified successfully:', verify.statusCode);
+          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
+        })
+        .catch((e) => {
+          console.error('Payment verification failed:', e);
+          successHandledRef.current = false; // Allow retry
+          setError('Could not verify payment. Please try again.');
+          onPaymentError('Could not verify payment. Please try again.');
+        });
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -194,11 +212,29 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       elements.eventBus.on('transaction_success', handleSuccess as any);
       elements.eventBus.on('transaction.completed', handleSuccess as any);
       elements.eventBus.on('payment_error', (e: any) => {
-        setError(e?.message || 'Payment failed');
-        onPaymentError(e?.message || 'Payment failed');
+        console.error('❌ payment_error event:', e);
+        successHandledRef.current = false; // Allow retry
+        const errorMsg = e?.message || e?.error || 'Payment failed. Please try again.';
+        setError(errorMsg);
+        onPaymentError(errorMsg);
       });
       elements.eventBus.on('error', (e: any) => {
-        setError(e?.message || 'Payment error');
+        console.error('❌ error event:', e);
+        successHandledRef.current = false; // Allow retry
+        setError(e?.message || 'Payment error. Please try again.');
+      });
+      // Listen for declined/failed transactions
+      elements.eventBus.on('transaction_failed', (e: any) => {
+        console.error('❌ transaction_failed event:', e);
+        successHandledRef.current = false; // Allow retry
+        setError('Transaction failed. Please try a different card.');
+        onPaymentError('Transaction failed. Please try a different card.');
+      });
+      elements.eventBus.on('payment_declined', (e: any) => {
+        console.error('❌ payment_declined event:', e);
+        successHandledRef.current = false; // Allow retry
+        setError('Payment was declined. Please try a different card.');
+        onPaymentError('Payment was declined. Please try a different card.');
       });
 
       // Create iframe in our container (pass selector string to avoid null ref timing)
