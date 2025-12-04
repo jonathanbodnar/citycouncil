@@ -13,11 +13,13 @@ type FormState = {
   day: string
   year: string
   ssn: string
+  taxIdType?: 'ssn' | 'ein'
 }
 
 type OnboardingFormProps = {
   form: FormState
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onTaxIdTypeChange?: (type: 'ssn' | 'ein') => void
   onClose: () => void
   onSubmit: (e: React.FormEvent) => void
   isLoading: boolean
@@ -34,6 +36,7 @@ type OnboardingFormProps = {
 const OnboardingForm: React.FC<OnboardingFormProps> = ({
   form,
   onChange,
+  onTaxIdTypeChange,
   onClose,
   onSubmit,
   isLoading,
@@ -46,6 +49,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
   hover,
   setHover,
 }) => {
+  const taxIdType = form.taxIdType || 'ssn'
   return (
     <form style={glassCard} onSubmit={onSubmit}>
       <button
@@ -136,37 +140,87 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
           required
         />
       </div>
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <input
-          name='postalCode'
-          placeholder='Postal Code (5 digits)'
-          value={form.postalCode}
-          onChange={(e) => {
-            if (/^\d{0,5}$/.test(e.target.value)) onChange(e)
-          }}
-          style={inputStyle}
-          required
-        />
-        <input
-          name='ssn'
-          type='password'
-          placeholder='SSN (9 digits)'
-          value={form.ssn}
-          onChange={(e) => {
-            if (/^\d{0,9}$/.test(e.target.value)) onChange(e)
-          }}
-          style={{
-            ...inputStyle,
-            letterSpacing: '0.3em',
-            fontFamily: 'monospace'
-          }}
-          inputMode='numeric'
-          pattern='\d*'
-          maxLength={9}
-          autoComplete='off'
-          required
-        />
+      <input
+        name='postalCode'
+        placeholder='Postal Code (5 digits)'
+        value={form.postalCode}
+        onChange={(e) => {
+          if (/^\d{0,5}$/.test(e.target.value)) onChange(e)
+        }}
+        style={inputStyle}
+        required
+      />
+
+      {/* Tax ID Type Toggle */}
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>
+          Tax ID Type
+        </label>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            cursor: 'pointer',
+            padding: '10px 16px',
+            borderRadius: '8px',
+            border: taxIdType === 'ssn' ? '2px solid #8b5cf6' : '1px solid #d1d5db',
+            background: taxIdType === 'ssn' ? 'rgba(139, 92, 246, 0.1)' : '#fff',
+            transition: 'all 0.2s ease'
+          }}>
+            <input
+              type="radio"
+              name="taxIdType"
+              value="ssn"
+              checked={taxIdType === 'ssn'}
+              onChange={() => onTaxIdTypeChange?.('ssn')}
+              style={{ accentColor: '#8b5cf6' }}
+            />
+            <span style={{ fontSize: '14px', color: '#1f2937' }}>SSN (Individual)</span>
+          </label>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            cursor: 'pointer',
+            padding: '10px 16px',
+            borderRadius: '8px',
+            border: taxIdType === 'ein' ? '2px solid #8b5cf6' : '1px solid #d1d5db',
+            background: taxIdType === 'ein' ? 'rgba(139, 92, 246, 0.1)' : '#fff',
+            transition: 'all 0.2s ease'
+          }}>
+            <input
+              type="radio"
+              name="taxIdType"
+              value="ein"
+              checked={taxIdType === 'ein'}
+              onChange={() => onTaxIdTypeChange?.('ein')}
+              style={{ accentColor: '#8b5cf6' }}
+            />
+            <span style={{ fontSize: '14px', color: '#1f2937' }}>EIN (Business)</span>
+          </label>
+        </div>
       </div>
+
+      <input
+        name='ssn'
+        type='password'
+        placeholder={taxIdType === 'ssn' ? 'Social Security Number (9 digits)' : 'Employer Identification Number (9 digits)'}
+        value={form.ssn}
+        onChange={(e) => {
+          if (/^\d{0,9}$/.test(e.target.value)) onChange(e)
+        }}
+        style={{
+          ...inputStyle,
+          letterSpacing: '0.3em',
+          fontFamily: 'monospace'
+        }}
+        inputMode='numeric'
+        pattern='\d*'
+        maxLength={9}
+        autoComplete='off'
+        required
+      />
       <div style={{ display: 'flex', gap: '10px' }}>
         <input
           name='month'

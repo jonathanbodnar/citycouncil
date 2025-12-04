@@ -328,15 +328,15 @@ const PayoutSetupPage: React.FC = () => {
                     {STEPS.filter(s => s.id > 0).map((step) => {
                       const Icon = step.icon
                       return (
-                        <div key={step.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                          <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-pink-100 to-purple-100 rounded-lg flex items-center justify-center">
-                            <Icon className="w-5 h-5 text-purple-600" />
+                        <div key={step.id} className="flex items-start gap-4 p-4 bg-gray-100 rounded-xl border border-gray-200">
+                          <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
+                            <Icon className="w-5 h-5 text-white" />
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-900">{step.name}</h4>
-                            <p className="text-sm text-gray-500">{step.description}</p>
+                            <p className="text-sm text-gray-600">{step.description}</p>
                             {step.timeEstimate && (
-                              <p className="text-xs text-purple-600 mt-1">~{step.timeEstimate}</p>
+                              <p className="text-xs text-pink-600 font-medium mt-1">~{step.timeEstimate}</p>
                             )}
                           </div>
                         </div>
@@ -349,7 +349,7 @@ const PayoutSetupPage: React.FC = () => {
                     <h4 className="font-semibold text-amber-800 mb-3">📋 Before You Start</h4>
                     <ul className="text-sm text-amber-700 space-y-2">
                       <li>• Have your <strong>government-issued ID</strong> (driver's license or passport) ready</li>
-                      <li>• Know your <strong>Social Security Number</strong> for tax purposes</li>
+                      <li>• Know your <strong>Social Security Number (SSN)</strong> or <strong>Employer Identification Number (EIN)</strong> for tax purposes</li>
                       <li>• Have your <strong>bank account login</strong> credentials handy</li>
                       <li>• Some steps may require <strong>verification time</strong> (usually instant, sometimes up to 24 hours)</li>
                     </ul>

@@ -38,7 +38,8 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
     month: '',
     day: '',
     year: '',
-    ssn: ''
+    ssn: '',
+    taxIdType: 'ssn' as 'ssn' | 'ein'
   })
 
   // Prefill user data
@@ -147,7 +148,7 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
     if (!postalRegex.test(form.postalCode))
       return 'Postal code must be exactly 5 digits'
     if (!ssnRegex.test(form.ssn)) 
-      return 'SSN must be exactly 9 digits'
+      return form.taxIdType === 'ssn' ? 'SSN must be exactly 9 digits' : 'EIN must be exactly 9 digits'
     if (!monthRegex.test(form.month)) 
       return 'Month must be valid (01–12)'
     if (!dayRegex.test(form.day)) 
@@ -304,10 +305,15 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
     )
   }
 
+  const handleTaxIdTypeChange = (type: 'ssn' | 'ein') => {
+    setForm(prev => ({ ...prev, taxIdType: type, ssn: '' }))
+  }
+
   return (
     <OnboardingForm
       form={form}
       onChange={handleFormChange}
+      onTaxIdTypeChange={handleTaxIdTypeChange}
       onClose={() => {}}
       onSubmit={handleCreateAccount}
       isLoading={isLoading}
