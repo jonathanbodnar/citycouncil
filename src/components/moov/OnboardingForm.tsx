@@ -212,7 +212,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
         background: 'rgba(34, 197, 94, 0.1)',
         border: '1px solid rgba(34, 197, 94, 0.3)',
         borderRadius: '8px',
-        color: '#86efac',
+        color: '#16a34a',
         fontSize: '13px'
       }}>
         <svg 

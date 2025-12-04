@@ -245,12 +245,13 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
     padding: '12px 14px',
     borderRadius: '10px',
     border: '1px solid #d1d5db',
-    background: '#ffffff',
+    background: '#f9fafb',
     color: '#1f2937',
     fontSize: '14px',
     outline: 'none',
     marginBottom: '16px',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    WebkitTextFillColor: '#1f2937',
   }
 
   if (accountId) {

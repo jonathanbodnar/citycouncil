@@ -1,0 +1,4 @@
+# Disable JWT verification for this webhook
+# Veriff sends its own HMAC signature for authentication
+verify_jwt = false
+
