@@ -120,23 +120,24 @@ serve(async req => {
       security: { username: MOOV_PUBLIC_KEY, password: MOOV_SECRET_KEY }
     })
 
-    // Get source payment method (ShoutOut's wallet or bank)
+    // Get source payment method (ShoutOut's bank account for ACH debit)
+    // This auto-pulls funds from our linked bank account
     const sourcePaymentMethods = await moov.paymentMethods.list({
       accountID: MOOV_FACILITATOR_ACCOUNT_ID
     })
+    console.log('Source payment methods:', JSON.stringify(sourcePaymentMethods, null, 2))
 
-    const sourceWallet = (sourcePaymentMethods as any)?.result?.find(
-      (pm: any) => pm.paymentMethodType === 'moov-wallet'
-    )
+    // Always use bank account (ACH debit) - this auto-pulls from our bank
     const sourceBankAccount = (sourcePaymentMethods as any)?.result?.find(
       (pm: any) => pm.paymentMethodType === 'ach-debit-fund'
     )
     
-    const sourcePaymentMethodId = sourceWallet?.paymentMethodID || sourceBankAccount?.paymentMethodID
-    
-    if (!sourcePaymentMethodId) {
-      throw new Error('No valid source payment method found for ShoutOut facilitator account')
+    if (!sourceBankAccount?.paymentMethodID) {
+      throw new Error('No bank account linked to ShoutOut facilitator account for ACH debit. Please link a bank account in Moov dashboard.')
     }
+    
+    const sourcePaymentMethodId = sourceBankAccount.paymentMethodID
+    console.log('Using bank account for ACH debit:', sourcePaymentMethodId)
 
     // Get destination payment method (talent's bank account)
     const destPaymentMethods = await moov.paymentMethods.list({
