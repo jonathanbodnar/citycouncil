@@ -605,25 +605,61 @@ const TalentProfilePage: React.FC = () => {
       </div>
 
       {/* Social Media Links */}
-      {talent.social_accounts.length > 0 && (
-        <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Follow {talent.temp_full_name || talent.users.full_name}</h2>
-          <div className="flex flex-wrap gap-4">
-            {talent.social_accounts.map((account) => (
-              <a
-                key={account.platform}
-                href={`https://${account.platform}.com/${account.handle.replace('@', '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
-              >
-                <span className="font-medium capitalize">{account.platform}</span>
-                <span className="text-gray-600">{account.handle}</span>
-              </a>
-            ))}
+      {(() => {
+        // Combine social_accounts with direct handle columns
+        const socialLinks: { platform: string; handle: string; url: string }[] = [];
+        
+        // Add from social_accounts relation
+        if (talent.social_accounts?.length > 0) {
+          talent.social_accounts.forEach(account => {
+            socialLinks.push({
+              platform: account.platform,
+              handle: account.handle,
+              url: `https://${account.platform}.com/${account.handle.replace('@', '')}`
+            });
+          });
+        }
+        
+        // Add from direct columns (if not already present)
+        const directHandles = [
+          { platform: 'twitter', handle: (talent as any).twitter_handle, url: 'https://x.com/' },
+          { platform: 'instagram', handle: (talent as any).instagram_handle, url: 'https://instagram.com/' },
+          { platform: 'facebook', handle: (talent as any).facebook_handle, url: 'https://facebook.com/' },
+          { platform: 'tiktok', handle: (talent as any).tiktok_handle, url: 'https://tiktok.com/@' }
+        ];
+        
+        directHandles.forEach(({ platform, handle, url }) => {
+          if (handle && !socialLinks.find(s => s.platform === platform)) {
+            socialLinks.push({
+              platform,
+              handle: handle.replace('@', ''),
+              url: url + handle.replace('@', '')
+            });
+          }
+        });
+        
+        if (socialLinks.length === 0) return null;
+        
+        return (
+          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Follow {talent.temp_full_name || talent.users.full_name}</h2>
+            <div className="flex flex-wrap gap-4">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.platform}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <span className="font-medium capitalize">{link.platform === 'twitter' ? 'X' : link.platform}</span>
+                  <span className="text-gray-600">@{link.handle}</span>
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Recent Orders Section - Only show if there are videos */}
       {talent.recent_videos.length > 0 && (

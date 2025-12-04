@@ -59,7 +59,12 @@ const TalentManagement: React.FC = () => {
     is_verified: false,
     charity_percentage: 5,
     charity_name: '',
-    admin_fee_percentage: 25 // Will be updated from platform settings
+    admin_fee_percentage: 25, // Will be updated from platform settings
+    // Social links
+    twitter_handle: '',
+    instagram_handle: '',
+    facebook_handle: '',
+    tiktok_handle: ''
   });
   
   // Charity donation toggle for admin creation
@@ -254,6 +259,20 @@ const TalentManagement: React.FC = () => {
         insertData.position = newTalent.position;
       }
 
+      // Add social links if provided
+      if (newTalent.twitter_handle) {
+        insertData.twitter_handle = newTalent.twitter_handle.replace('@', '');
+      }
+      if (newTalent.instagram_handle) {
+        insertData.instagram_handle = newTalent.instagram_handle.replace('@', '');
+      }
+      if (newTalent.facebook_handle) {
+        insertData.facebook_handle = newTalent.facebook_handle.replace('@', '');
+      }
+      if (newTalent.tiktok_handle) {
+        insertData.tiktok_handle = newTalent.tiktok_handle.replace('@', '');
+      }
+
       // Create talent profile without user first (user will be created during onboarding)
       const { error } = await supabase
         .from('talent_profiles')
@@ -285,7 +304,11 @@ const TalentManagement: React.FC = () => {
         is_verified: false,
         charity_percentage: 5,
         charity_name: '',
-        admin_fee_percentage: defaultAdminFee // Use platform settings default
+        admin_fee_percentage: defaultAdminFee, // Use platform settings default
+        twitter_handle: '',
+        instagram_handle: '',
+        facebook_handle: '',
+        tiktok_handle: ''
       });
       fetchTalents();
 
@@ -1117,6 +1140,65 @@ const TalentManagement: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Social Links Section */}
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Social Links (Optional)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Twitter/X</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
+                    <input
+                      type="text"
+                      value={newTalent.twitter_handle}
+                      onChange={(e) => setNewTalent({...newTalent, twitter_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Instagram</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
+                    <input
+                      type="text"
+                      value={newTalent.instagram_handle}
+                      onChange={(e) => setNewTalent({...newTalent, instagram_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Facebook</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
+                    <input
+                      type="text"
+                      value={newTalent.facebook_handle}
+                      onChange={(e) => setNewTalent({...newTalent, facebook_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">TikTok</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
+                    <input
+                      type="text"
+                      value={newTalent.tiktok_handle}
+                      onChange={(e) => setNewTalent({...newTalent, tiktok_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="flex gap-3">
