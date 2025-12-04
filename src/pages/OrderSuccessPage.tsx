@@ -133,7 +133,7 @@ const OrderSuccessPage: React.FC = () => {
           <div className="rounded-xl p-4 mb-6 text-left border border-blue-500/20" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
             <h3 className="font-semibold text-blue-400 mb-2">What happens next?</h3>
             <ul className="text-sm text-gray-300 space-y-1">
-              <li>• You'll receive an email and text confirmation</li>
+              <li>• You'll receive a text confirmation</li>
               <li>• {talentName || 'The talent'} will create your video within {getDeliveryTimeText()}</li>
               <li>• We'll notify you when it's ready!</li>
             </ul>
