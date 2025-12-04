@@ -7,16 +7,19 @@
 
 /* Prevent scrolling past content */
 html {
-  overflow-x: hidden;
-  /* Ensure no extra scroll space */
   height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: scroll; /* Always show scrollbar to prevent layout shift */
 }
 
 body {
-  overflow-x: hidden;
-  min-height: 100%;
   margin: 0;
   padding: 0;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: visible; /* Let html handle scrolling */
 }
 
 /* Mobile viewport fix for collapsing browser UI */
@@ -230,7 +233,7 @@ body {
     #1a1f35 75%,
     #111827 100%);
   background-attachment: fixed;
-  min-height: 100vh;
+  min-height: 100%;
 }
 
 /* Subtle animated gradient overlay */
@@ -239,8 +242,8 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: 
     radial-gradient(circle at 20% 50%, rgba(239, 68, 68, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
