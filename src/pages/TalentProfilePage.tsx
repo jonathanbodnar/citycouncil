@@ -802,7 +802,7 @@ const TalentProfilePage: React.FC = () => {
       )}
 
       {/* FOMO Notification - Shows fake recent orders */}
-      {talent && <FOMONotification interval={8000} />}
+      {talent && <FOMONotification interval={15000} />}
     </div>
   );
 };

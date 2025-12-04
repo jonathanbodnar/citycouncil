@@ -7,6 +7,7 @@ import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import PromoPackageModal from '../components/PromoPackageModal';
 import SEOHelmet from '../components/SEOHelmet';
+import FOMONotification from '../components/FOMONotification';
 
 interface TalentWithUser extends TalentProfile {
   users: {
@@ -371,6 +372,9 @@ const HomePage: React.FC = () => {
       {showPromoModal && isTalent && (
         <PromoPackageModal onClose={() => setShowPromoModal(false)} />
       )}
+
+      {/* FOMO Notification - Shows real reviews */}
+      <FOMONotification interval={15000} />
 
     </div>
     </>
