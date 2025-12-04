@@ -80,7 +80,9 @@ app.use(helmet({
         "https://dashboard.searchatlas.com",
         "https://*.searchatlas.com",
         "https://a.ads.rmbl.ws", // Rumble Ads
-        "https://*.rmbl.ws" // Rumble Ads wildcard
+        "https://*.rmbl.ws", // Rumble Ads wildcard
+        "https://hooks.zapier.com", // Zapier webhooks
+        "https://*.zapier.com" // Zapier wildcard
       ],
       frameSrc: [
         "'self'",

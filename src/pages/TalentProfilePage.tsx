@@ -277,7 +277,8 @@ const TalentProfilePage: React.FC = () => {
         setOrdersRemaining(urgencyData.orders_remaining_at_price);
       }
 
-      // Fetch related talent (same category)
+      // Fetch other talent (random, not just same category)
+      // First try same category, then fill with others if needed
       const { data: relatedData, error: relatedError } = await supabase
         .from('talent_profiles')
         .select(`
@@ -288,15 +289,17 @@ const TalentProfilePage: React.FC = () => {
             avatar_url
           )
         `)
-        .eq('category', talentData.category)
         .eq('is_active', true)
         .neq('id', talentData.id)
-        .limit(4);
+        .limit(8); // Fetch more to shuffle and pick from
 
       if (relatedError) throw relatedError;
+      
+      // Shuffle the results to show random talent each time
+      const shuffled = (relatedData || []).sort(() => Math.random() - 0.5).slice(0, 4);
 
       // Handle incomplete profiles in related talent
-      const relatedWithUsers = (relatedData || []).map(profile => {
+      const relatedWithUsers = shuffled.map(profile => {
         if (!profile.users) {
           return {
             ...profile,
@@ -725,42 +728,73 @@ const TalentProfilePage: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-8">
-            <StarOutline className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No reviews yet. Be the first to order!</p>
+            <div className="text-4xl mb-4">🎬</div>
+            <h3 className="text-xl font-semibold text-white mb-2">
+              Be the first to order from {talent.temp_full_name || talent.users.full_name}!
+            </h3>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              Get a personalized video message for any occasion
+            </p>
+            <div className="flex flex-wrap justify-center gap-3 mb-6">
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm text-gray-300 border border-white/20">
+                🎂 Birthday Wishes
+              </span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm text-gray-300 border border-white/20">
+                🔥 Roasts
+              </span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm text-gray-300 border border-white/20">
+                🎄 Holiday Greetings
+              </span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm text-gray-300 border border-white/20">
+                💪 Motivation
+              </span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm text-gray-300 border border-white/20">
+                🎉 Congratulations
+              </span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm text-gray-300 border border-white/20">
+                ❤️ Anniversary
+              </span>
+            </div>
+            <button
+              onClick={() => setShowOrderForm(true)}
+              className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
+            >
+              Order Now - ${talent.pricing}
+            </button>
           </div>
         )}
       </div>
 
-      {/* Related Talent */}
+      {/* Related Talent - Always show */}
       {relatedTalent.length > 0 && (
         <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            More {getCategoryLabel(talent.category)}s
+            Others like {talent.temp_full_name || talent.users.full_name}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {relatedTalent.map((related) => (
               <Link
                 key={related.id}
                 to={related.username ? `/${related.username}` : `/talent/${related.id}`}
-                className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                className="block bg-white/10 rounded-xl p-4 hover:bg-white/20 transition-colors border border-white/10"
               >
-                <div className="aspect-square bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                  {related.users.avatar_url ? (
+                <div className="aspect-square bg-gray-800 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                  {(related.temp_avatar_url || related.users.avatar_url) ? (
                     <img
-                      src={related.users.avatar_url}
-                      alt={related.users.full_name}
-                      className="w-full h-full object-cover rounded-lg"
+                      src={related.temp_avatar_url || related.users.avatar_url}
+                      alt={related.temp_full_name || related.users.full_name}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-2xl font-bold text-primary-600">
-                      {related.users.full_name.charAt(0)}
+                    <span className="text-2xl font-bold text-white/60">
+                      {(related.temp_full_name || related.users.full_name).charAt(0)}
                     </span>
                   )}
                 </div>
-                <h3 className="font-medium text-gray-900 mb-1">
-                  {related.users.full_name}
+                <h3 className="font-medium text-white mb-1 truncate">
+                  {related.temp_full_name || related.users.full_name}
                 </h3>
-                <div className="text-lg font-bold text-primary-600">
+                <div className="text-lg font-bold text-green-400">
                   ${related.pricing}
                 </div>
               </Link>
