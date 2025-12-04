@@ -107,7 +107,7 @@ serve(async req => {
     console.log('Transfer request:', JSON.stringify(transferRequest, null, 2))
 
     const transferResponse = await moov.transfers.create({
-      xIdempotencyKey: `batch-${batchId}-${Date.now()}`,
+      xIdempotencyKey: crypto.randomUUID(),
       accountID: MOOV_FACILITATOR_ACCOUNT_ID,
       createTransfer: transferRequest
     })
