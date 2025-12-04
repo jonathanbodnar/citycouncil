@@ -127,17 +127,12 @@ const HolidayPromoPopup: React.FC = () => {
           throw insertError;
         }
       } else {
-        // Calculate days left until end of year (or whenever promo ends)
-        const promoEndDate = new Date('2024-12-31T23:59:59');
-        const now = new Date();
-        const daysLeft = Math.ceil((promoEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
         // Send SMS via edge function
         try {
           await supabase.functions.invoke('send-sms', {
             body: {
               to: formattedPhone,
-              message: `Welcome to ShoutOut! 🎄 To get 25% off your first order, use code SANTA25. Offer ends in ${daysLeft} days! Shop now: https://shoutout.us`
+              message: `Welcome to ShoutOut! 🎄 To get 25% off your first order, use code SANTA25. Offer ends in 48 hours! https://shoutout.us`
             }
           });
         } catch (smsError) {
