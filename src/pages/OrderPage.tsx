@@ -406,54 +406,8 @@ const OrderPage: React.FC = () => {
         }
       }
 
-      // Track Meta Pixel Purchase event
-      try {
-        if (typeof window !== 'undefined' && (window as any).fbq) {
-          (window as any).fbq('track', 'Purchase', {
-            value: pricing.total,
-            currency: 'USD',
-            content_type: 'product',
-            content_name: `ShoutOut from ${talent.temp_full_name || talent.users.full_name}`,
-            content_ids: [talent.id],
-            num_items: 1
-          });
-          logger.log('✅ Meta Pixel Purchase event tracked');
-        }
-      } catch (pixelError) {
-        logger.error('Error tracking Meta Pixel Purchase:', pixelError);
-        // Don't fail the order if pixel tracking fails
-      }
-
-      // Track Rumble Ads conversion
-      try {
-        // Get the _raclid from URL params or sessionStorage (captured on landing)
-        // Rumble appends _raclid to URLs when users click on ads
-        const urlParams = new URLSearchParams(window.location.search);
-        const raclid = urlParams.get('_raclid') || sessionStorage.getItem('rumble_raclid');
-        
-        // Value is 25% of order total (admin fee portion)
-        const conversionValue = pricing.total * 0.25;
-        
-        logger.log('🔍 Rumble Ads debug:', {
-          raclid: raclid,
-          ratagExists: typeof (window as any).ratag,
-          conversionValue: conversionValue
-        });
-
-        if (typeof window !== 'undefined' && typeof (window as any).ratag === 'function') {
-          (window as any).ratag('conversion', {
-            to: 3320,
-            cid: raclid || `order-${order.id}`, // Use raclid if available, fallback to order ID
-            value: conversionValue
-          });
-          logger.log('✅ Rumble Ads conversion tracked:', { cid: raclid || `order-${order.id}`, value: conversionValue });
-        } else {
-          logger.warn('⚠️ Rumble Ads ratag function not available');
-        }
-      } catch (rumbleError) {
-        logger.error('Error tracking Rumble Ads conversion:', rumbleError);
-        // Don't fail the order if tracking fails
-      }
+      // NOTE: Meta Pixel and Rumble Ads conversion tracking moved to OrderSuccessPage
+      // to ensure they only fire once after successful order confirmation
 
       // Send Zapier webhook for new orders (exclude test/admin orders)
       try {
