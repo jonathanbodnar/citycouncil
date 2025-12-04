@@ -181,7 +181,8 @@ const Header: React.FC = () => {
           .limit(5);
 
         if (error) throw error;
-        setSearchResults(data || []);
+        // Cast data to match our interface (Supabase returns users as object, not array)
+        setSearchResults((data as unknown as TalentSearchResult[]) || []);
       } catch (error) {
         console.error('Error searching talent:', error);
       } finally {
