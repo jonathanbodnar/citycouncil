@@ -55,6 +55,7 @@ const EmailTestPage = lazy(() => import('./pages/EmailTestPage'));
 const InstagramCallbackPage = lazy(() => import('./pages/InstagramCallbackPage'));
 const WelcomePage = lazy(() => import('./pages/WelcomePage'));
 const ShortLinkRedirectPage = lazy(() => import('./pages/ShortLinkRedirectPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 
 // Redirect component for old /profile/ URLs
 const ProfileRedirect: React.FC = () => {
@@ -107,6 +108,11 @@ function App() {
               <Route path="/order/:talentId" element={
                 <ProtectedRoute>
                   <OrderPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/order-success" element={
+                <ProtectedRoute>
+                  <OrderSuccessPage />
                 </ProtectedRoute>
               } />
               <Route path="/welcome" element={

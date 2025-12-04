@@ -460,29 +460,45 @@ const OrderPage: React.FC = () => {
         const excludedEmails = ['helloshoutout@shoutout.us'];
         const isAdminOrder = user.email && excludedEmails.includes(user.email.toLowerCase());
         
+        logger.log('🔍 Zapier webhook check:', { 
+          userEmail: user.email, 
+          isAdminOrder, 
+          excludedEmails 
+        });
+        
         if (!isAdminOrder) {
           const talentName = talent.temp_full_name || talent.users.full_name;
           const customerName = user.full_name || user.email;
           
+          const webhookPayload = {
+            order_id: order.id,
+            customer_name: customerName,
+            customer_email: user.email,
+            talent_name: talentName,
+            amount: pricing.total,
+            order_date: new Date().toISOString()
+          };
+          
+          logger.log('📤 Sending Zapier webhook:', webhookPayload);
+          
+          // Use mode: 'no-cors' to avoid CORS issues with Zapier
           fetch('https://hooks.zapier.com/hooks/catch/25578725/ukls8cj/', {
             method: 'POST',
+            mode: 'no-cors', // Zapier webhooks don't return CORS headers
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              order_id: order.id,
-              customer_name: customerName,
-              customer_email: user.email,
-              talent_name: talentName,
-              amount: pricing.total,
-              order_date: new Date().toISOString()
-            })
-          }).then(() => {
-            logger.log('✅ Zapier webhook sent');
+            body: JSON.stringify(webhookPayload)
+          }).then((response) => {
+            // Note: with no-cors mode, response will be opaque (status 0)
+            // but the request still goes through
+            logger.log('✅ Zapier webhook sent (no-cors mode, response opaque)');
           }).catch((err) => {
-            logger.error('Error sending Zapier webhook:', err);
+            logger.error('❌ Error sending Zapier webhook:', err);
           });
+        } else {
+          logger.log('⏭️ Skipping Zapier webhook - admin/test order');
         }
       } catch (zapierError) {
-        logger.error('Error with Zapier webhook:', zapierError);
+        logger.error('❌ Exception with Zapier webhook:', zapierError);
         // Don't fail the order if webhook fails
       }
 
@@ -591,7 +607,13 @@ const OrderPage: React.FC = () => {
       // No immediate payout processing needed here
 
       toast.success('Payment successful! Your order has been placed.');
-      navigate('/dashboard');
+      // Navigate to success page with order details for Rumble conversion tracking
+      const successParams = new URLSearchParams({
+        order_id: order.id,
+        amount: pricing.total.toString(),
+        talent: talent.temp_full_name || talent.users.full_name
+      });
+      navigate(`/order-success?${successParams.toString()}`);
 
     } catch (error) {
       logger.error('Error processing order:', error);
