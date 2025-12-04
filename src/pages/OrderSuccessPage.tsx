@@ -3,11 +3,12 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircleIcon, HomeIcon, UserIcon } from '@heroicons/react/24/solid';
 import { Helmet } from 'react-helmet-async';
 
-// Declare ratag as a global function
+// Declare global tracking functions
 declare global {
   interface Window {
     ratag: (event: string, options: { to: number; cid?: string; value?: number }) => void;
     _ratagData: any[];
+    fbq: (action: string, event: string, params?: any) => void;
   }
 }
 
@@ -20,6 +21,7 @@ const OrderSuccessPage: React.FC = () => {
   const orderId = searchParams.get('order_id');
   const amount = searchParams.get('amount');
   const talentName = searchParams.get('talent');
+  const deliveryHours = searchParams.get('delivery_hours');
 
   // Calculate conversion value (25% of order total)
   const orderAmount = amount ? parseFloat(amount) : 0;
@@ -27,6 +29,17 @@ const OrderSuccessPage: React.FC = () => {
 
   // Get Rumble click ID from sessionStorage
   const raclid = typeof window !== 'undefined' ? sessionStorage.getItem('rumble_raclid') : null;
+
+  // Format delivery time for display
+  const getDeliveryTimeText = () => {
+    if (!deliveryHours) return 'soon';
+    const hours = parseInt(deliveryHours);
+    if (hours <= 24) return '24 hours';
+    if (hours <= 48) return '48 hours';
+    if (hours <= 72) return '3 days';
+    if (hours <= 168) return '7 days';
+    return `${Math.ceil(hours / 24)} days`;
+  };
 
   useEffect(() => {
     // Redirect if no order ID (shouldn't land here directly)
@@ -50,6 +63,7 @@ const OrderSuccessPage: React.FC = () => {
         ratagDataExists: typeof window._ratagData
       });
 
+      // === RUMBLE ADS CONVERSION ===
       // Method 1: Direct ratag call (if function exists)
       if (typeof window.ratag === 'function') {
         console.log('📤 Calling ratag("conversion", {to: 3320, cid: "' + cid + '", value: ' + conversionValue + '})');
@@ -68,6 +82,22 @@ const OrderSuccessPage: React.FC = () => {
       }
       else {
         console.warn('⚠️ Rumble ratag not available - neither ratag() nor _ratagData found');
+      }
+
+      // === FACEBOOK PIXEL CONVERSION ===
+      if (typeof window.fbq === 'function') {
+        console.log('📤 Calling fbq("track", "Purchase", {...})');
+        window.fbq('track', 'Purchase', {
+          value: orderAmount,
+          currency: 'USD',
+          content_type: 'product',
+          content_name: `ShoutOut from ${talentName || 'Talent'}`,
+          content_ids: [orderId],
+          num_items: 1
+        });
+        console.log('✅ Facebook Pixel Purchase event tracked');
+      } else {
+        console.warn('⚠️ Facebook Pixel (fbq) not available');
       }
     }
   }, [orderId, orderAmount, conversionValue, raclid, navigate]);
@@ -117,8 +147,8 @@ const OrderSuccessPage: React.FC = () => {
           <div className="rounded-xl p-4 mb-6 text-left border border-blue-500/20" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
             <h3 className="font-semibold text-blue-400 mb-2">What happens next?</h3>
             <ul className="text-sm text-gray-300 space-y-1">
-              <li>• You'll receive an email confirmation</li>
-              <li>• The talent will create your video within 7 days</li>
+              <li>• You'll receive an email and text confirmation</li>
+              <li>• {talentName || 'The talent'} will create your video within {getDeliveryTimeText()}</li>
               <li>• We'll notify you when it's ready!</li>
             </ul>
           </div>

@@ -612,11 +612,12 @@ const OrderPage: React.FC = () => {
       // No immediate payout processing needed here
 
       toast.success('Payment successful! Your order has been placed.');
-      // Navigate to success page with order details for Rumble conversion tracking
+      // Navigate to success page with order details for conversion tracking
       const successParams = new URLSearchParams({
         order_id: order.id,
         amount: pricing.total.toString(),
-        talent: talent.temp_full_name || talent.users.full_name
+        talent: talent.temp_full_name || talent.users.full_name,
+        delivery_hours: talent.fulfillment_time_hours.toString()
       });
       navigate(`/order-success?${successParams.toString()}`);
 
