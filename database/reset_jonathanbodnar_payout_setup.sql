@@ -36,11 +36,12 @@ BEGIN
   END IF;
   
   -- 4. Reset talent_profiles payout SETUP fields only
+  -- Step 0 = intro page, so they see the overview first
   UPDATE talent_profiles
   SET 
     moov_account_id = NULL,
     bank_account_linked = FALSE,
-    payout_onboarding_step = 1,
+    payout_onboarding_step = 0,
     payout_onboarding_completed = FALSE,
     veriff_verified = FALSE,
     veriff_verified_at = NULL
