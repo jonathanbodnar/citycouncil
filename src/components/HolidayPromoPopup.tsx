@@ -20,10 +20,16 @@ const HolidayPromoPopup: React.FC = () => {
       const popupShown = localStorage.getItem(POPUP_STORAGE_KEY);
       const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
 
-      if (popupShown === 'true' && expiryTime) {
+      // If user has already submitted or closed the popup, never show again
+      if (popupShown === 'true') {
+        return;
+      }
+
+      // If countdown has expired, never show again
+      if (expiryTime) {
         const expiry = parseInt(expiryTime, 10);
         if (Date.now() > expiry) {
-          // Countdown expired, never show again
+          localStorage.setItem(POPUP_STORAGE_KEY, 'true');
           return;
         }
       }
