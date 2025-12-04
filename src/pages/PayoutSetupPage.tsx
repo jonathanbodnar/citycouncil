@@ -380,7 +380,7 @@ const PayoutSetupPage: React.FC = () => {
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">W-9 Tax Form</h3>
                   <p className="text-gray-600">
-                    Complete your W-9 form for tax reporting purposes. This is required by the IRS for all payments over $600/year.
+                    Complete your W-9 form for tax reporting purposes. This is required by the IRS for all payments over $600/year. You can use a SSN or an EIN to sign this if you'd rather use a business.
                   </p>
                 </div>
                 <W9FormSignNow
