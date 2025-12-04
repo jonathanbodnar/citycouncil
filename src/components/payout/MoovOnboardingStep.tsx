@@ -93,11 +93,20 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
       )
       if (error) throw error
       
-      const status = data?.capabilities?.[0]?.status === 'enabled' ? 'verified' : 'unverified'
-      setVerificationStatus(status)
+      // Check if account exists and has accountID - that's sufficient for individual accounts
+      // Capabilities may be pending but we can still proceed to bank linking
+      const hasAccount = !!data?.accountID
+      const capabilityStatus = data?.capabilities?.[0]?.status
+      const isVerified = hasAccount && (capabilityStatus === 'enabled' || capabilityStatus === 'pending')
       
-      if (status === 'verified') {
-        toast.success('Account verified!')
+      setVerificationStatus(isVerified ? 'verified' : 'unverified')
+      
+      if (isVerified) {
+        toast.success('Account ready!')
+        onComplete(idToCheck!)
+      } else if (hasAccount) {
+        // Account exists but capabilities not ready - still proceed
+        toast.success('Account created - proceeding to bank setup')
         onComplete(idToCheck!)
       } else {
         toast.loading('Verification in progress...', { duration: 3000 })
