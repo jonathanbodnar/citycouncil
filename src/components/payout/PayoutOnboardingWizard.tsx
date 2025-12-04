@@ -157,6 +157,26 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
       
       // Mark step 4 as completed
       setCompletedSteps(prev => [...prev, 4])
+
+      // Trigger processing of any pending payout batches
+      if (talentId) {
+        try {
+          console.log('Triggering pending batch processing for talent:', talentId)
+          const { data: batchResult, error: batchError } = await supabase.functions.invoke(
+            'moov-process-pending-batches',
+            { body: { talentId } }
+          )
+          
+          if (batchError) {
+            console.error('Error processing pending batches:', batchError)
+          } else if (batchResult?.processedCount > 0) {
+            toast.success(`Processing ${batchResult.processedCount} pending payout(s)!`, { duration: 5000 })
+          }
+        } catch (batchErr) {
+          // Don't block completion if batch processing fails
+          console.error('Batch processing error (non-blocking):', batchErr)
+        }
+      }
       
       // Call onComplete callback
       setTimeout(() => {
