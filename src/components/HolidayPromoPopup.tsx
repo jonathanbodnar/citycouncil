@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 const POPUP_STORAGE_KEY = 'holiday_promo_popup_shown';
 const POPUP_EXPIRY_KEY = 'holiday_promo_popup_expiry';
-const COUNTDOWN_HOURS = 24;
+const COUNTDOWN_HOURS = 48;
 
 const HolidayPromoPopup: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
