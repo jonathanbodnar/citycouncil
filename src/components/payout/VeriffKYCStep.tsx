@@ -22,7 +22,22 @@ const VeriffKYCStep: React.FC<VeriffKYCStepProps> = ({ talentId, onComplete }) =
     
     // Poll for verification status every 5 seconds
     const interval = setInterval(checkVerificationStatus, 5000)
-    return () => clearInterval(interval)
+    
+    // Listen for postMessage from the Veriff popup when it completes
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'veriff-complete') {
+        console.log('Received veriff-complete message from popup')
+        // Immediately check verification status
+        checkVerificationStatus()
+      }
+    }
+    
+    window.addEventListener('message', handleMessage)
+    
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('message', handleMessage)
+    }
   }, [])
 
   const createSession = async () => {

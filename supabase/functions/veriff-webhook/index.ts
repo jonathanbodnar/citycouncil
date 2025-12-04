@@ -13,11 +13,93 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  // Handle GET requests (health checks from Veriff)
+  // Handle GET requests (redirect after Veriff completion or health checks)
   if (req.method === 'GET') {
-    console.log('Health check received')
-    return new Response(JSON.stringify({ status: 'ok' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.log('GET request received - returning auto-close page')
+    
+    // Return an HTML page that closes the popup and notifies the parent window
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verification Complete</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+    }
+    .checkmark {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00c853, #00e676);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      animation: pulse 2s infinite;
+    }
+    .checkmark svg {
+      width: 40px;
+      height: 40px;
+      fill: white;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    p {
+      color: #a0a0a0;
+      font-size: 14px;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="checkmark">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <h1>Verification Submitted!</h1>
+    <p>This window will close automatically...</p>
+  </div>
+  <script>
+    // Notify parent window if it exists
+    if (window.opener) {
+      try {
+        window.opener.postMessage({ type: 'veriff-complete' }, '*');
+      } catch (e) {
+        console.log('Could not notify parent window');
+      }
+    }
+    // Close the window after a short delay
+    setTimeout(function() {
+      window.close();
+    }, 2000);
+  </script>
+</body>
+</html>
+    `
+    
+    return new Response(html, {
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'text/html; charset=utf-8' 
+      },
     })
   }
 

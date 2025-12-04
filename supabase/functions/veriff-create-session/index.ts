@@ -7,56 +7,84 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Simple JWT decode (doesn't verify signature - we trust Supabase's edge runtime)
+function decodeJwt(token: string): any {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = parts[1]
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    return JSON.parse(decoded)
+  } catch {
+    return null
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    )
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser()
-
-    if (userError || !user) {
-      throw new Error('Unauthorized')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    
+    // Get the JWT from Authorization header
+    const authHeader = req.headers.get('Authorization')
+    console.log('Auth header present:', !!authHeader)
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Missing or invalid Authorization header')
     }
+    
+    const token = authHeader.replace('Bearer ', '')
+    
+    // Decode the JWT to get user ID
+    const payload = decodeJwt(token)
+    console.log('JWT payload sub:', payload?.sub)
+    
+    if (!payload?.sub) {
+      throw new Error('Invalid token - no user ID found')
+    }
+    
+    const userId = payload.sub
+    
+    // Use service role client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    // Verify user exists and get their data
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, full_name, email')
+      .eq('id', userId)
+      .single()
+    
+    if (userError || !userData) {
+      console.error('User not found:', userError?.message)
+      throw new Error('User not found')
+    }
+    
+    console.log('User verified:', userId)
 
     const { talentId } = await req.json()
+    console.log('Request talentId:', talentId)
 
     if (!talentId) {
       throw new Error('Missing talentId')
     }
 
     // Verify talent belongs to user
-    const { data: talent, error: talentError } = await supabaseClient
+    const { data: talent, error: talentError } = await supabase
       .from('talent_profiles')
       .select('id, user_id, temp_full_name')
       .eq('id', talentId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single()
 
     if (talentError || !talent) {
-      throw new Error('Talent profile not found or unauthorized')
+      console.error('Talent lookup failed:', talentError?.message)
+      throw new Error('Talent profile not found or does not belong to this user')
     }
-
-    // Get user details
-    const { data: userData } = await supabaseClient
-      .from('users')
-      .select('full_name, email')
-      .eq('id', user.id)
-      .single()
 
     // Get Veriff credentials
     const veriffApiKey = Deno.env.get('VERIFF_API_KEY')
@@ -71,7 +99,7 @@ serve(async (req) => {
     // Prepare Veriff session request
     const veriffPayload = {
       verification: {
-        callback: `${Deno.env.get('SUPABASE_URL')}/functions/v1/veriff-webhook`,
+        callback: `${supabaseUrl}/functions/v1/veriff-webhook`,
         person: {
           firstName: (userData?.full_name || talent.temp_full_name || '').split(' ')[0] || 'User',
           lastName: (userData?.full_name || talent.temp_full_name || '').split(' ').slice(1).join(' ') || '',
@@ -109,13 +137,8 @@ serve(async (req) => {
     const veriffData = await veriffResponse.json()
     console.log('Veriff session created:', veriffData.verification.id)
 
-    // Store session in database using service role
-    const supabaseServiceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    const { error: upsertError } = await supabaseServiceClient
+    // Store session in database
+    const { error: upsertError } = await supabase
       .from('veriff_sessions')
       .upsert({
         talent_id: talentId,
@@ -131,6 +154,8 @@ serve(async (req) => {
       console.error('Error storing Veriff session:', upsertError)
       throw new Error('Failed to store Veriff session')
     }
+
+    console.log('Veriff session stored successfully')
 
     return new Response(
       JSON.stringify({
@@ -163,4 +188,3 @@ serve(async (req) => {
     )
   }
 })
-
