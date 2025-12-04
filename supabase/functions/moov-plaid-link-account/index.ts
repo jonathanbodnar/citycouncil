@@ -1,5 +1,28 @@
 // @ts-ignore - Deno std import
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+// @ts-ignore - Deno npm import
+import { PlaidApi, Configuration, PlaidEnvironments } from 'npm:plaid'
+
+// @ts-ignore
+const PLAID_CLIENT_ID = (globalThis as any).Deno?.env.get('PLAID_CLIENT_ID')
+// @ts-ignore
+const PLAID_SECRET = (globalThis as any).Deno?.env.get('PLAID_SECRET')
+// @ts-ignore
+const MOOV_PUBLIC_KEY = (globalThis as any).Deno?.env.get('MOOV_PUBLIC_KEY')
+// @ts-ignore
+const MOOV_SECRET_KEY = (globalThis as any).Deno?.env.get('MOOV_SECRET_KEY')
+
+const config = new Configuration({
+  basePath: PlaidEnvironments.production,
+  baseOptions: {
+    headers: {
+      'PLAID-CLIENT-ID': PLAID_CLIENT_ID!,
+      'PLAID-SECRET': PLAID_SECRET!,
+    },
+  },
+})
+
+const plaidClient = new PlaidApi(config)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,12 +37,7 @@ serve(async req => {
   }
 
   try {
-    // Get environment variables inside the handler
-    const PLAID_CLIENT_ID = Deno.env.get('PLAID_CLIENT_ID')
-    const PLAID_SECRET = Deno.env.get('PLAID_SECRET')
-    const MOOV_PUBLIC_KEY = Deno.env.get('MOOV_PUBLIC_KEY')
-    const MOOV_SECRET_KEY = Deno.env.get('MOOV_SECRET_KEY')
-
+    console.log('moov-plaid-link-account: Starting...')
     console.log('Plaid Client ID configured:', !!PLAID_CLIENT_ID)
     console.log('Plaid Secret configured:', !!PLAID_SECRET)
     console.log('Moov Public Key configured:', !!MOOV_PUBLIC_KEY)
@@ -33,12 +51,14 @@ serve(async req => {
       throw new Error('Moov credentials not configured')
     }
 
-    const { public_token, account_id, moov_account_id } = await req.json()
+    const body = await req.json()
+    console.log('Request body received:', JSON.stringify({
+      public_token: body.public_token ? 'present' : 'missing',
+      account_id: body.account_id,
+      moov_account_id: body.moov_account_id
+    }))
     
-    console.log('Request received:')
-    console.log('- public_token:', public_token ? 'present' : 'missing')
-    console.log('- account_id:', account_id)
-    console.log('- moov_account_id:', moov_account_id)
+    const { public_token, account_id, moov_account_id } = body
     
     if (!public_token || !account_id || !moov_account_id) {
       throw new Error(
@@ -46,62 +66,28 @@ serve(async req => {
       )
     }
 
-    // Step 1: Exchange Plaid public token for access token
+    // Step 1: Exchange Plaid public token for access token using SDK
     console.log('Step 1: Exchanging Plaid public token...')
-    const exchangeResponse = await fetch('https://production.plaid.com/item/public_token/exchange', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET,
-        public_token: public_token
-      })
+    const exchangeResponse = await plaidClient.itemPublicTokenExchange({
+      public_token
     })
-
-    const exchangeData = await exchangeResponse.json()
-    console.log('Plaid exchange response status:', exchangeResponse.status)
-    
-    if (!exchangeResponse.ok) {
-      console.error('Plaid exchange error:', exchangeData)
-      throw new Error(`Plaid token exchange failed: ${exchangeData.error_message || JSON.stringify(exchangeData)}`)
-    }
-
-    const access_token = exchangeData.access_token
+    const access_token = exchangeResponse.data.access_token
     console.log('Public token exchanged successfully')
 
-    // Step 2: Create processor token for Moov
+    // Step 2: Create processor token for Moov using SDK
     console.log('Step 2: Creating Plaid processor token for Moov...')
-    const processorResponse = await fetch('https://production.plaid.com/processor/token/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET,
-        access_token: access_token,
-        account_id: account_id,
-        processor: 'moov'
-      })
+    const processorResponse = await plaidClient.processorTokenCreate({
+      access_token,
+      account_id,
+      processor: 'moov'
     })
-
-    const processorData = await processorResponse.json()
-    console.log('Plaid processor response status:', processorResponse.status)
-    
-    if (!processorResponse.ok) {
-      console.error('Plaid processor error:', processorData)
-      throw new Error(`Plaid processor token creation failed: ${processorData.error_message || JSON.stringify(processorData)}`)
-    }
-
-    const processor_token = processorData.processor_token
+    const processor_token = processorResponse.data.processor_token
     console.log('Processor token created successfully')
 
-    // Step 3: Link bank account to Moov using the processor token
+    // Step 3: Link bank account to Moov using direct API calls
     console.log('Step 3: Linking bank account to Moov...')
     
-    // First, get Moov access token
+    // Get Moov access token
     const moovAuthResponse = await fetch('https://api.moov.io/oauth2/token', {
       method: 'POST',
       headers: {
@@ -118,7 +104,7 @@ serve(async req => {
     console.log('Moov auth response status:', moovAuthResponse.status)
     
     if (!moovAuthResponse.ok) {
-      console.error('Moov auth error:', moovAuthData)
+      console.error('Moov auth error:', JSON.stringify(moovAuthData))
       throw new Error(`Moov authentication failed: ${JSON.stringify(moovAuthData)}`)
     }
 
@@ -144,7 +130,7 @@ serve(async req => {
     console.log('Moov link response status:', linkResponse.status)
     
     if (!linkResponse.ok) {
-      console.error('Moov link error:', linkData)
+      console.error('Moov link error:', JSON.stringify(linkData))
       throw new Error(`Moov bank account link failed: ${JSON.stringify(linkData)}`)
     }
 
@@ -157,11 +143,11 @@ serve(async req => {
     })
   } catch (error: any) {
     console.error('Error in moov-plaid-link-account:', error.message)
-    console.error('Full error:', error)
+    console.error('Error details:', error.response?.data || error)
     
     return new Response(
       JSON.stringify({
-        error: error.message || 'Unknown error'
+        error: error.response?.data || error.message || 'Unknown error'
       }),
       {
         status: 500,
