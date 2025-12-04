@@ -14,8 +14,8 @@ app.use(helmet({
       scriptSrc: [
         "'self'", 
         // Note: 'unsafe-eval' is required for React/Vite in production
-        // 'unsafe-inline' removed for better security - use nonces for inline scripts
         "'unsafe-eval'",
+        "'unsafe-inline'", // Required for inline scripts (Rumble, Meta Pixel, etc.)
         "data:", // Allow data: URIs for base64 encoded scripts (SearchAtlas Otto)
         "https://connect.facebook.net",
         "https://static.cloudflareinsights.com",
@@ -26,7 +26,9 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://www.google-analytics.com",
         "https://dashboard.searchatlas.com",
-        "https://*.searchatlas.com"
+        "https://*.searchatlas.com",
+        "https://a.ads.rmbl.ws", // Rumble Ads
+        "https://*.rmbl.ws" // Rumble Ads wildcard
       ],
       styleSrc: [
         "'self'", 
@@ -76,7 +78,9 @@ app.use(helmet({
         "https://analytics.google.com",
         "https://www.googletagmanager.com",
         "https://dashboard.searchatlas.com",
-        "https://*.searchatlas.com"
+        "https://*.searchatlas.com",
+        "https://a.ads.rmbl.ws", // Rumble Ads
+        "https://*.rmbl.ws" // Rumble Ads wildcard
       ],
       frameSrc: [
         "'self'",
