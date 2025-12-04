@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
+import { supabase } from '../services/supabase';
 
-// 30 diverse American first names
-const FIRST_NAMES = [
-  'Michael', 'Jessica', 'Christopher', 'Ashley', 'Matthew',
-  'Sarah', 'Joshua', 'Amanda', 'Daniel', 'Jennifer',
-  'David', 'Emily', 'Andrew', 'Melissa', 'James',
-  'Stephanie', 'Ryan', 'Nicole', 'John', 'Elizabeth',
-  'Brandon', 'Lauren', 'Tyler', 'Brittany', 'Kevin',
-  'Samantha', 'Justin', 'Rachel', 'Robert', 'Megan'
-];
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  users: {
+    full_name: string;
+  };
+  talent_profiles?: {
+    temp_full_name: string;
+  };
+}
 
 interface FOMONotificationProps {
   /** Interval in ms between notifications (default: 8000ms = 8 seconds) */
@@ -18,79 +22,160 @@ interface FOMONotificationProps {
 
 const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) => {
   const [visible, setVisible] = useState(false);
-  const [currentName, setCurrentName] = useState('');
-  const [usedNames, setUsedNames] = useState<Set<string>>(new Set());
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [currentReview, setCurrentReview] = useState<Review | null>(null);
+  const [usedReviewIds, setUsedReviewIds] = useState<Set<string>>(new Set());
+
+  // Fetch real reviews on mount
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select(`
+            id,
+            rating,
+            comment,
+            created_at,
+            users!reviews_user_id_fkey (
+              full_name
+            ),
+            talent_profiles!reviews_talent_id_fkey (
+              temp_full_name
+            )
+          `)
+          .gte('rating', 4) // Only show 4-5 star reviews
+          .not('comment', 'is', null) // Only reviews with comments
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+        
+        // Filter reviews with actual comment content
+        const validReviews = (data || []).filter(
+          (r: any) => r.comment && r.comment.trim().length > 10
+        ) as unknown as Review[];
+        
+        setReviews(validReviews);
+      } catch (error) {
+        console.error('Error fetching reviews for FOMO:', error);
+      }
+    };
+
+    fetchReviews();
+  }, []);
 
   useEffect(() => {
-    // Get a random name that hasn't been used yet
-    const getRandomUnusedName = (): string => {
-      const availableNames = FIRST_NAMES.filter(name => !usedNames.has(name));
+    if (reviews.length === 0) return;
+
+    // Get a random review that hasn't been shown yet
+    const getRandomUnusedReview = (): Review | null => {
+      const availableReviews = reviews.filter(r => !usedReviewIds.has(r.id));
       
-      // If all names have been used, reset
-      if (availableNames.length === 0) {
-        setUsedNames(new Set());
-        return FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+      // If all reviews have been shown, reset
+      if (availableReviews.length === 0) {
+        setUsedReviewIds(new Set());
+        return reviews[Math.floor(Math.random() * reviews.length)];
       }
       
-      return availableNames[Math.floor(Math.random() * availableNames.length)];
+      return availableReviews[Math.floor(Math.random() * availableReviews.length)];
     };
 
     // Show first notification after a short delay (3-5 seconds after page load)
     const initialDelay = 3000 + Math.random() * 2000;
     
     const initialTimer = setTimeout(() => {
-      const name = getRandomUnusedName();
-      setCurrentName(name);
-      setUsedNames(prev => new Set(Array.from(prev).concat(name)));
-      setVisible(true);
+      const review = getRandomUnusedReview();
+      if (review) {
+        setCurrentReview(review);
+        setUsedReviewIds(prev => new Set(Array.from(prev).concat(review.id)));
+        setVisible(true);
 
-      // Hide after 4 seconds
-      setTimeout(() => {
-        setVisible(false);
-      }, 4000);
+        // Hide after 5 seconds (slightly longer to read)
+        setTimeout(() => {
+          setVisible(false);
+        }, 5000);
+      }
     }, initialDelay);
 
     // Set up recurring notifications
     const recurringTimer = setInterval(() => {
-      const name = getRandomUnusedName();
-      setCurrentName(name);
-      setUsedNames(prev => new Set(Array.from(prev).concat(name)));
-      setVisible(true);
+      const review = getRandomUnusedReview();
+      if (review) {
+        setCurrentReview(review);
+        setUsedReviewIds(prev => new Set(Array.from(prev).concat(review.id)));
+        setVisible(true);
 
-      // Hide after 4 seconds
-      setTimeout(() => {
-        setVisible(false);
-      }, 4000);
+        // Hide after 5 seconds
+        setTimeout(() => {
+          setVisible(false);
+        }, 5000);
+      }
     }, interval);
 
     return () => {
       clearTimeout(initialTimer);
       clearInterval(recurringTimer);
     };
-  }, [interval, usedNames]);
+  }, [interval, reviews, usedReviewIds]);
+
+  // Truncate comment to first ~80 characters
+  const truncateComment = (comment: string): string => {
+    if (comment.length <= 80) return comment;
+    return comment.substring(0, 80).trim() + '...';
+  };
+
+  // Get first name only for privacy
+  const getFirstName = (fullName: string): string => {
+    return fullName?.split(' ')[0] || 'Customer';
+  };
+
+  if (!currentReview) return null;
 
   return (
     <div
-      className={`fixed right-6 z-[60] transition-all duration-500 ease-in-out transform ${
+      className={`fixed right-4 left-4 sm:left-auto sm:right-6 z-[60] transition-all duration-500 ease-in-out transform ${
         visible 
           ? 'translate-y-0 opacity-100' 
           : 'translate-y-4 opacity-0 pointer-events-none'
       }`}
       style={{
-        // On mobile: always stay 100px from bottom to clear the menu
-        // On desktop: 24px from bottom
-        bottom: window.innerWidth < 768 ? '100px' : '24px'
+        bottom: window.innerWidth < 768 ? '100px' : '24px',
+        maxWidth: '320px'
       }}
     >
-      <div className="glass-strong rounded-xl px-4 py-3 shadow-modern-lg border border-white/30 flex items-center gap-2 backdrop-blur-xl">
-        <CheckBadgeIcon className="h-4 w-4 flex-shrink-0" style={{ color: '#3a86ff' }} />
-        <p className="text-sm font-medium text-white whitespace-nowrap">
-          {currentName} just ordered a ShoutOut.
+      <div className="glass-strong rounded-xl px-4 py-3 shadow-modern-lg border border-white/30 backdrop-blur-xl">
+        {/* Header with stars and name */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex">
+            {[...Array(5)].map((_, i) => (
+              <StarIcon
+                key={i}
+                className={`h-4 w-4 ${
+                  i < currentReview.rating ? 'text-yellow-400' : 'text-gray-500'
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-xs text-gray-400">
+            {getFirstName((currentReview.users as any)?.full_name || 'Customer')}
+          </span>
+        </div>
+        
+        {/* Review comment */}
+        <p className="text-sm text-white/90 leading-snug">
+          "{truncateComment(currentReview.comment)}"
         </p>
+        
+        {/* Talent name if available */}
+        {(currentReview.talent_profiles as any)?.temp_full_name && (
+          <p className="text-xs text-gray-400 mt-2">
+            Review for {(currentReview.talent_profiles as any).temp_full_name}
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
 export default FOMONotification;
-
