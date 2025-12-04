@@ -85,19 +85,30 @@ const OrderSuccessPage: React.FC = () => {
       }
 
       // === FACEBOOK PIXEL CONVERSION ===
-      if (typeof window.fbq === 'function') {
-        console.log('📤 Calling fbq("track", "Purchase", {...})');
-        window.fbq('track', 'Purchase', {
-          value: orderAmount,
-          currency: 'USD',
-          content_type: 'product',
-          content_name: `ShoutOut from ${talentName || 'Talent'}`,
-          content_ids: [orderId],
-          num_items: 1
-        });
-        console.log('✅ Facebook Pixel Purchase event tracked');
-      } else {
-        console.warn('⚠️ Facebook Pixel (fbq) not available');
+      console.log('🔍 Facebook Pixel check:', {
+        fbqExists: typeof (window as any).fbq,
+        fbqType: (window as any).fbq ? 'exists' : 'undefined'
+      });
+      
+      try {
+        const fbq = (window as any).fbq;
+        if (fbq) {
+          const purchaseData = {
+            value: orderAmount,
+            currency: 'USD',
+            content_type: 'product',
+            content_name: `ShoutOut from ${talentName || 'Talent'}`,
+            content_ids: [orderId],
+            num_items: 1
+          };
+          console.log('📤 Calling fbq("track", "Purchase", ...)', purchaseData);
+          fbq('track', 'Purchase', purchaseData);
+          console.log('✅ Facebook Pixel Purchase event tracked successfully');
+        } else {
+          console.warn('⚠️ Facebook Pixel (fbq) not available on window');
+        }
+      } catch (fbError) {
+        console.error('❌ Facebook Pixel error:', fbError);
       }
     }
   }, [orderId, orderAmount, conversionValue, raclid, navigate]);
