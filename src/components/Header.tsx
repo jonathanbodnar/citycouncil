@@ -5,12 +5,26 @@ import {
   UserCircleIcon, 
   Cog6ToothIcon, 
   ArrowRightOnRectangleIcon,
-  BellIcon 
+  BellIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { Notification } from '../types';
 import Logo from './Logo';
+
+interface TalentSearchResult {
+  id: string;
+  username: string;
+  temp_full_name: string;
+  temp_avatar_url: string;
+  pricing: number;
+  users?: {
+    full_name: string;
+    avatar_url: string;
+  };
+}
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -18,8 +32,14 @@ const Header: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [displayName, setDisplayName] = useState<string>('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<TalentSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
   const notificationRef = React.useRef<HTMLDivElement>(null);
+  const searchRef = React.useRef<HTMLDivElement>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   // Fetch display name (prioritize talent_profiles.full_name for talent users)
   useEffect(() => {
@@ -106,6 +126,79 @@ const Header: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showNotifications]);
+
+  // Close search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearch(false);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    };
+
+    if (showSearch) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSearch]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearch]);
+
+  // Search talent as user types
+  useEffect(() => {
+    const searchTalent = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const { data, error } = await supabase
+          .from('talent_profiles')
+          .select(`
+            id,
+            username,
+            temp_full_name,
+            temp_avatar_url,
+            pricing,
+            users!talent_profiles_user_id_fkey (
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('is_active', true)
+          .or(`temp_full_name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%`)
+          .limit(5);
+
+        if (error) throw error;
+        setSearchResults(data || []);
+      } catch (error) {
+        console.error('Error searching talent:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchTalent, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  const handleSearchResultClick = (talent: TalentSearchResult) => {
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    navigate(talent.username ? `/${talent.username}` : `/talent/${talent.id}`);
+  };
 
   // Mark notifications as read when dropdown is opened
   useEffect(() => {
@@ -212,6 +305,101 @@ const Header: React.FC = () => {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Search Button */}
+            <div className="relative z-[2000]" ref={searchRef}>
+              <button
+                onClick={() => setShowSearch(!showSearch)}
+                className="p-2 text-white hover:text-gray-300 transition-colors"
+                title="Search talent"
+              >
+                {showSearch ? (
+                  <XMarkIcon className="h-6 w-6" />
+                ) : (
+                  <MagnifyingGlassIcon className="h-6 w-6" />
+                )}
+              </button>
+
+              {/* Search Dropdown */}
+              {showSearch && (
+                <div
+                  className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl shadow-modern-xl border border-white/30 overflow-hidden z-[2001]"
+                  style={{
+                    background: 'rgba(17, 24, 39, 0.95)',
+                    backdropFilter: 'blur(40px)',
+                    WebkitBackdropFilter: 'blur(40px)'
+                  }}
+                >
+                  <div className="p-4">
+                    <div className="relative">
+                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Search talent..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          color: 'white'
+                        }}
+                      />
+                    </div>
+
+                    {/* Search Results */}
+                    <div className="mt-3 max-h-80 overflow-y-auto">
+                      {isSearching ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin h-6 w-6 border-2 border-white/30 border-t-white rounded-full mx-auto"></div>
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        <div className="space-y-2">
+                          {searchResults.map((talent) => (
+                            <button
+                              key={talent.id}
+                              onClick={() => handleSearchResultClick(talent)}
+                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition-colors text-left"
+                            >
+                              <div className="w-12 h-12 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                {(talent.temp_avatar_url || talent.users?.avatar_url) ? (
+                                  <img
+                                    src={talent.temp_avatar_url || talent.users?.avatar_url}
+                                    alt={talent.temp_full_name || talent.users?.full_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-white/60 text-lg font-bold">
+                                    {(talent.temp_full_name || talent.users?.full_name || '?').charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium truncate">
+                                  {talent.temp_full_name || talent.users?.full_name}
+                                </p>
+                                <p className="text-green-400 text-sm font-semibold">
+                                  ${talent.pricing}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : searchQuery.trim() ? (
+                        <div className="text-center py-6 text-gray-400">
+                          <p>No talent found</p>
+                          <p className="text-sm mt-1">Try a different search term</p>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-gray-400">
+                          <p className="text-sm">Start typing to search talent...</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {user ? (
               <>
                 {/* Bonus/Promotions Button - Talent Only */}
