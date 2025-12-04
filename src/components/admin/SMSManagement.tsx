@@ -10,6 +10,7 @@ interface SMSStats {
   beta_subscribers: number;
   registered_subscribers: number;
   total_subscribers: number;
+  holiday_popup_subscribers: number;
 }
 
 interface SMSCampaign {
@@ -43,7 +44,7 @@ const SMSManagement: React.FC = () => {
   // Form state
   const [campaignName, setCampaignName] = useState('');
   const [message, setMessage] = useState('');
-  const [targetAudience, setTargetAudience] = useState<'beta' | 'registered' | 'all' | 'talent'>('beta');
+  const [targetAudience, setTargetAudience] = useState<'beta' | 'registered' | 'all' | 'talent' | 'holiday_popup'>('beta');
   const [recipientCount, setRecipientCount] = useState(0);
 
   useEffect(() => {
@@ -184,6 +185,7 @@ const SMSManagement: React.FC = () => {
       case 'registered': return 'Registered Users';
       case 'all': return 'All Users';
       case 'talent': return 'Talent';
+      case 'holiday_popup': return 'Holiday Promo';
       default: return audience;
     }
   };
@@ -199,7 +201,7 @@ const SMSManagement: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -208,6 +210,17 @@ const SMSManagement: React.FC = () => {
               <p className="text-xs text-gray-500 mt-1">From landing page</p>
             </div>
             <UserGroupIcon className="h-12 w-12 text-blue-400" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border-2 border-red-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">🎄 Holiday Promo</p>
+              <p className="text-3xl font-bold text-red-600">{stats?.holiday_popup_subscribers || 0}</p>
+              <p className="text-xs text-gray-500 mt-1">From popup</p>
+            </div>
+            <span className="text-4xl">🎅</span>
           </div>
         </div>
 
@@ -261,6 +274,7 @@ const SMSManagement: React.FC = () => {
               onChange={(e) => setTargetAudience(e.target.value as any)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
+              <option value="holiday_popup">🎄 Holiday Promo (from popup) - {stats?.holiday_popup_subscribers || 0}</option>
               <option value="beta">Beta Users (from landing page) - {stats?.beta_subscribers || 0}</option>
               <option value="registered">Registered Users - {stats?.registered_subscribers || 0}</option>
               <option value="all">All Users - {stats?.total_subscribers || 0}</option>

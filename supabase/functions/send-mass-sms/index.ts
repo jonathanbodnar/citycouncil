@@ -13,7 +13,7 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 interface SendMassSMSRequest {
   campaign_name: string;
   message: string;
-  target_audience: 'beta' | 'registered' | 'all' | 'talent';
+  target_audience: 'beta' | 'registered' | 'all' | 'talent' | 'holiday_popup';
 }
 
 const corsHeaders = {
