@@ -374,7 +374,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* FOMO Notification - Shows real reviews */}
-      <FOMONotification interval={15000} />
+      <FOMONotification interval={8000} />
 
     </div>
     </>

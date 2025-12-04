@@ -68,6 +68,8 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
   useEffect(() => {
     if (reviews.length === 0) return;
 
+    let recurringTimer: NodeJS.Timeout | null = null;
+
     // Get a random review that hasn't been shown yet
     const getRandomUnusedReview = (): Review | null => {
       const availableReviews = reviews.filter(r => !usedReviewIds.has(r.id));
@@ -81,25 +83,7 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
       return availableReviews[Math.floor(Math.random() * availableReviews.length)];
     };
 
-    // Show first notification after a short delay (3-5 seconds after page load)
-    const initialDelay = 3000 + Math.random() * 2000;
-    
-    const initialTimer = setTimeout(() => {
-      const review = getRandomUnusedReview();
-      if (review) {
-        setCurrentReview(review);
-        setUsedReviewIds(prev => new Set(Array.from(prev).concat(review.id)));
-        setVisible(true);
-
-        // Hide after 5 seconds (slightly longer to read)
-        setTimeout(() => {
-          setVisible(false);
-        }, 5000);
-      }
-    }, initialDelay);
-
-    // Set up recurring notifications
-    const recurringTimer = setInterval(() => {
+    const showReview = () => {
       const review = getRandomUnusedReview();
       if (review) {
         setCurrentReview(review);
@@ -111,13 +95,25 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
           setVisible(false);
         }, 5000);
       }
-    }, interval);
+    };
+
+    // Show first notification after a short delay (3-5 seconds after page load)
+    const initialDelay = 3000 + Math.random() * 2000;
+    
+    const initialTimer = setTimeout(() => {
+      showReview();
+      
+      // Start recurring timer AFTER the first one shows
+      recurringTimer = setInterval(showReview, interval);
+    }, initialDelay);
 
     return () => {
       clearTimeout(initialTimer);
-      clearInterval(recurringTimer);
+      if (recurringTimer) {
+        clearInterval(recurringTimer);
+      }
     };
-  }, [interval, reviews, usedReviewIds]);
+  }, [interval, reviews]);
 
   // Truncate comment to first ~80 characters
   const truncateComment = (comment: string): string => {
