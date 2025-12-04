@@ -664,68 +664,22 @@ const TalentProfilePage: React.FC = () => {
         );
       })()}
 
-      {/* Recent Orders Section - Only show if there are videos */}
-      {talent.recent_videos.length > 0 && (
-        <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Orders</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            {talent.recent_videos.map((videoUrl, index) => (
-              <div key={index} className="relative rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 w-48 h-64 md:w-56 md:h-72">
-                <VideoPlayer 
-                  videoUrl={videoUrl}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Reviews Section */}
+      {/* Recent Orders Section - Show videos if available, or "Be the first" CTA if no videos */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Reviews ({talent.reviews.length})
-        </h2>
-        
-        {talent.reviews.length > 0 ? (
-          <div className="space-y-6">
-            {talent.reviews.map((review) => (
-              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-600 font-medium">
-                        {review.users.full_name.charAt(0)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <span className="font-medium text-gray-900 mr-2">
-                        {review.users.full_name}
-                      </span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <StarIcon
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="ml-2 text-sm text-gray-600">
-                        {new Date(review.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {review.comment && (
-                      <p className="text-gray-700">{review.comment}</p>
-                    )}
-                  </div>
+        {talent.recent_videos.length > 0 ? (
+          <>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Orders</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {talent.recent_videos.map((videoUrl, index) => (
+                <div key={index} className="relative rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 w-48 h-64 md:w-56 md:h-72">
+                  <VideoPlayer 
+                    videoUrl={videoUrl}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="text-center py-8">
             <div className="text-4xl mb-4">🎬</div>
@@ -764,6 +718,53 @@ const TalentProfilePage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Reviews Section - Only show if there are reviews */}
+      {talent.reviews.length > 0 && (
+        <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Reviews ({talent.reviews.length})
+          </h2>
+          <div className="space-y-6">
+            {talent.reviews.map((review) => (
+              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
+                      <span className="text-primary-600 font-medium">
+                        {review.users.full_name.charAt(0)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center mb-2">
+                      <span className="font-medium text-gray-900 mr-2">
+                        {review.users.full_name}
+                      </span>
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <StarIcon
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="ml-2 text-sm text-gray-600">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    {review.comment && (
+                      <p className="text-gray-700">{review.comment}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Related Talent - Always show */}
       {relatedTalent.length > 0 && (
