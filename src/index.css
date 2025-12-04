@@ -5,6 +5,20 @@
 /* Custom Fonts */
 /* TT Ramillas font is loaded in public/index.html instead of CSS for better build compatibility */
 
+/* Prevent scrolling past content */
+html {
+  overflow-x: hidden;
+  /* Ensure no extra scroll space */
+  height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 /* Mobile viewport fix for collapsing browser UI */
 /* Keep it minimal - only what's needed for safe-area on iOS */
 @supports (-webkit-touch-callout: none) {
