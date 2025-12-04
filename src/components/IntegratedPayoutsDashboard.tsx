@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BanknotesIcon,
   CreditCardIcon,
@@ -13,11 +14,11 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Payout, PayoutBatch, VendorBankInfo } from '../types';
 import toast from 'react-hot-toast';
-import PayoutOnboardingWizard from './payout/PayoutOnboardingWizard';
 import { format, parseISO } from 'date-fns';
 
 const IntegratedPayoutsDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [batches, setBatches] = useState<PayoutBatch[]>([]);
   const [bankInfo, setBankInfo] = useState<VendorBankInfo | null>(null);
@@ -27,7 +28,6 @@ const IntegratedPayoutsDashboard: React.FC = () => {
   const [payoutsEnabled, setPayoutsEnabled] = useState(false);
   const [talentId, setTalentId] = useState<string | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
-  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [payoutOnboardingCompleted, setPayoutOnboardingCompleted] = useState(false);
 
   useEffect(() => {
@@ -315,18 +315,6 @@ const IntegratedPayoutsDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Onboarding Wizard Modal */}
-      {showOnboardingWizard && (
-        <PayoutOnboardingWizard
-          onComplete={() => {
-            setShowOnboardingWizard(false);
-            setPayoutOnboardingCompleted(true);
-            fetchPayoutData();
-          }}
-          onClose={() => setShowOnboardingWizard(false)}
-        />
-      )}
-
       {/* Payouts Notice */}
       {!payoutsEnabled && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
@@ -356,7 +344,7 @@ const IntegratedPayoutsDashboard: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setShowOnboardingWizard(true)}
+            onClick={() => navigate('/payout-setup')}
             disabled={!payoutsEnabled}
             className="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-lg text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl"
             style={{ background: 'linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)' }}
