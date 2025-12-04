@@ -481,16 +481,21 @@ const OrderPage: React.FC = () => {
           
           logger.log('📤 Sending Zapier webhook:', webhookPayload);
           
-          // Use mode: 'no-cors' to avoid CORS issues with Zapier
+          // Zapier webhooks support CORS - don't use no-cors mode as it strips the body!
           fetch('https://hooks.zapier.com/hooks/catch/25578725/ukls8cj/', {
             method: 'POST',
-            mode: 'no-cors', // Zapier webhooks don't return CORS headers
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
             body: JSON.stringify(webhookPayload)
-          }).then((response) => {
-            // Note: with no-cors mode, response will be opaque (status 0)
-            // but the request still goes through
-            logger.log('✅ Zapier webhook sent (no-cors mode, response opaque)');
+          }).then(async (response) => {
+            const responseText = await response.text();
+            logger.log('✅ Zapier webhook response:', { 
+              status: response.status, 
+              ok: response.ok,
+              body: responseText 
+            });
           }).catch((err) => {
             logger.error('❌ Error sending Zapier webhook:', err);
           });
