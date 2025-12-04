@@ -69,7 +69,7 @@ const MobileNavigation: React.FC = () => {
   ] : [
     // Regular User Navigation
     {
-      name: 'Home',
+      name: 'Personalities',
       href: '/',
       icon: HomeIcon,
       iconSolid: HomeIconSolid,
@@ -104,7 +104,7 @@ const MobileNavigation: React.FC = () => {
     badge?: boolean;
   }> = [
     {
-      name: 'Home',
+      name: 'Personalities',
       href: '/',
       icon: HomeIcon,
       iconSolid: HomeIconSolid,
