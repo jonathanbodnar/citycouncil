@@ -755,12 +755,12 @@ const TalentProfilePage: React.FC = () => {
                 ❤️ Anniversary
               </span>
             </div>
-            <button
-              onClick={() => setShowOrderForm(true)}
-              className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
+            <Link
+              to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+              className="inline-block px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
             >
               Order Now - ${talent.pricing}
-            </button>
+            </Link>
           </div>
         )}
       </div>
