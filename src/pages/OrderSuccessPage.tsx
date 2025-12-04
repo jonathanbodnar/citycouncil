@@ -23,12 +23,8 @@ const OrderSuccessPage: React.FC = () => {
   const talentName = searchParams.get('talent');
   const deliveryHours = searchParams.get('delivery_hours');
 
-  // Calculate conversion value (25% of order total)
+  // Calculate order amount for display and FB pixel
   const orderAmount = amount ? parseFloat(amount) : 0;
-  const conversionValue = orderAmount * 0.25;
-
-  // Get Rumble click ID from sessionStorage
-  const raclid = typeof window !== 'undefined' ? sessionStorage.getItem('rumble_raclid') : null;
 
   // Format delivery time for display
   const getDeliveryTimeText = () => {
@@ -48,40 +44,19 @@ const OrderSuccessPage: React.FC = () => {
       return;
     }
 
-    // Fire Rumble conversion on page load (only once)
+    // Fire conversions on page load (only once)
     if (!conversionFiredRef.current && typeof window !== 'undefined') {
       conversionFiredRef.current = true;
       
-      const cid = raclid || `order-${orderId}`;
-      
-      console.log('🔍 Rumble Ads - Order Success Page Load:', {
-        orderId,
-        amount: orderAmount,
-        conversionValue,
-        cid,
-        ratagExists: typeof window.ratag,
-        ratagDataExists: typeof window._ratagData
-      });
-
       // === RUMBLE ADS CONVERSION ===
-      // Method 1: Direct ratag call (if function exists)
-      if (typeof window.ratag === 'function') {
-        console.log('📤 Calling ratag("conversion", {to: 3320, cid: "' + cid + '", value: ' + conversionValue + '})');
-        window.ratag('conversion', {
-          to: 3320,
-          cid: cid,
-          value: conversionValue
-        });
-        console.log('✅ Rumble ratag() called successfully');
-      } 
-      // Method 2: Push to _ratagData array (fallback)
-      else if (window._ratagData) {
-        console.log('📤 Pushing to _ratagData array');
-        window._ratagData.push(['conversion', { to: 3320, cid: cid, value: conversionValue }]);
-        console.log('✅ Rumble _ratagData.push() called successfully');
-      }
-      else {
-        console.warn('⚠️ Rumble ratag not available - neither ratag() nor _ratagData found');
+      // Simple call exactly as per Rumble docs: ratag('conversion', {to: 3320})
+      console.log('🔍 Rumble Ads - Firing conversion');
+      try {
+        // ratag is defined in index.html and pushes to _ratagData
+        (window as any).ratag('conversion', {to: 3320});
+        console.log('✅ Rumble ratag("conversion", {to: 3320}) called');
+      } catch (e) {
+        console.error('❌ Rumble ratag error:', e);
       }
 
       // === FACEBOOK PIXEL CONVERSION ===
@@ -111,7 +86,7 @@ const OrderSuccessPage: React.FC = () => {
         console.error('❌ Facebook Pixel error:', fbError);
       }
     }
-  }, [orderId, orderAmount, conversionValue, raclid, navigate]);
+  }, [orderId, orderAmount, talentName, navigate]);
 
   if (!orderId) {
     return null;
