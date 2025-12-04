@@ -37,24 +37,32 @@ const OrderSuccessPage: React.FC = () => {
     return `${Math.ceil(hours / 24)} days`;
   };
 
+  // Fire conversion immediately when component mounts
   useEffect(() => {
+    console.log('🔍 OrderSuccessPage mounted, orderId:', orderId);
+    
     // Redirect if no order ID (shouldn't land here directly)
     if (!orderId) {
+      console.log('❌ No orderId, redirecting to dashboard');
       navigate('/dashboard');
       return;
     }
 
     // Fire conversions on page load (only once)
-    if (!conversionFiredRef.current && typeof window !== 'undefined') {
+    if (!conversionFiredRef.current) {
       conversionFiredRef.current = true;
       
       // === RUMBLE ADS CONVERSION ===
       // Simple call exactly as per Rumble docs: ratag('conversion', {to: 3320})
       console.log('🔍 Rumble Ads - Firing conversion');
+      console.log('🔍 window.ratag exists:', typeof (window as any).ratag);
+      console.log('🔍 window._ratagData exists:', typeof (window as any)._ratagData);
+      
       try {
         // ratag is defined in index.html and pushes to _ratagData
         (window as any).ratag('conversion', {to: 3320});
         console.log('✅ Rumble ratag("conversion", {to: 3320}) called');
+        console.log('✅ _ratagData now:', (window as any)._ratagData);
       } catch (e) {
         console.error('❌ Rumble ratag error:', e);
       }
