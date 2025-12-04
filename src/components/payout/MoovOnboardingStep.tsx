@@ -24,6 +24,8 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const [isChecking, setIsChecking] = useState(false)
   const [verificationStatus, setVerificationStatus] = useState<string>('unverified')
+  const [accountRejected, setAccountRejected] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null)
   const [hover, setHover] = useState(false)
 
   const [form, setForm] = useState({
@@ -85,6 +87,9 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
     const idToCheck = accountId
     
     setIsChecking(true)
+    setAccountRejected(false)
+    setRejectionReason(null)
+    
     try {
       const { data, error } = await supabase.functions.invoke(
         'moov-get-account',
@@ -93,10 +98,22 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
         }
       )
       
-      // Check if account exists and has accountID - that's sufficient for individual accounts
-      // Capabilities may be pending but we can still proceed to bank linking
+      // Check if account exists and has accountID
       const hasAccount = !error && !!data?.accountID
-      const capabilityStatus = data?.capabilities?.[0]?.status
+      
+      // Check capabilities status - Moov uses: enabled, pending, disabled
+      const capability = data?.capabilities?.[0]
+      const capabilityStatus = capability?.status
+      const disabledReason = capability?.disabledReason
+      
+      // Check if account or capabilities were rejected/disabled
+      if (capabilityStatus === 'disabled') {
+        setAccountRejected(true)
+        setRejectionReason(disabledReason || 'Your account verification was not approved. Please try again with accurate information.')
+        setVerificationStatus('rejected')
+        return
+      }
+      
       const isVerified = hasAccount && (capabilityStatus === 'enabled' || capabilityStatus === 'pending')
       
       setVerificationStatus(isVerified ? 'verified' : 'unverified')
@@ -128,6 +145,24 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
       }
     } finally {
       setIsChecking(false)
+    }
+  }
+  
+  const handleRetryAccount = async () => {
+    // Clear the existing account ID so user can create a new one
+    setAccountId(null)
+    setAccountRejected(false)
+    setRejectionReason(null)
+    setVerificationStatus('unverified')
+    
+    // Clear the moov_account_id from the database
+    try {
+      await supabase
+        .from('talent_profiles')
+        .update({ moov_account_id: null })
+        .eq('user_id', user?.id)
+    } catch (err) {
+      console.error('Error clearing moov_account_id:', err)
     }
   }
 
@@ -276,6 +311,46 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
     WebkitTextFillColor: '#1f2937',
   }
 
+  // Show rejection state with retry option
+  if (accountId && accountRejected) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">
+          Verification Issue
+        </h3>
+        
+        <p className="text-gray-600 mb-4">
+          {rejectionReason || 'There was an issue verifying your account. Please try again with accurate information.'}
+        </p>
+        
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left max-w-md mx-auto">
+          <p className="text-sm text-amber-800">
+            <strong>Common reasons for verification issues:</strong>
+          </p>
+          <ul className="text-sm text-amber-700 mt-2 space-y-1">
+            <li>• Name doesn't match government ID exactly</li>
+            <li>• Incorrect SSN or EIN</li>
+            <li>• Date of birth doesn't match records</li>
+            <li>• Address verification failed</li>
+          </ul>
+        </div>
+        
+        <button
+          onClick={handleRetryAccount}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    )
+  }
+  
   if (accountId) {
     return (
       <div className="text-center py-12">
@@ -301,10 +376,6 @@ const MoovOnboardingStep: React.FC<MoovOnboardingStepProps> = ({
             ? 'Your identity has been verified successfully.'
             : 'Your account is being verified. This usually takes a few moments.'}
         </p>
-        
-        <code className="block bg-gray-100 rounded-lg px-4 py-3 text-sm text-gray-700 mb-6">
-          Account ID: {accountId}
-        </code>
         
         <button
           onClick={handleCheckVerification}
