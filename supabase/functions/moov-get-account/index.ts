@@ -21,10 +21,15 @@ serve(async req => {
   }
 
   try {
-    const { accountId } = await req.json()
+    const body = await req.json()
+    const { accountId } = body
+    console.log('moov-get-account called with:', JSON.stringify(body))
+    
     if (!accountId) {
       throw new Error('Missing accountId in request body')
     }
+
+    console.log('Looking up Moov account:', accountId)
 
     // 2. Call Moov
     const moov = new Moov({
@@ -32,14 +37,18 @@ serve(async req => {
       security: { username: MOOV_PUBLIC_KEY, password: MOOV_SECRET_KEY }
     })
 
+    console.log('Calling moov.accounts.get...')
     const response = await moov.accounts.get({ accountID: accountId })
+    console.log('Moov response:', JSON.stringify(response))
 
     const account = (response as any)?.result
 
     if (!account?.accountID) {
+      console.error('No accountID in response:', JSON.stringify(response))
       throw new Error('Failed to retrieve account from Moov')
     }
 
+    console.log('Returning account:', account.accountID)
     // 3. Return the full account object
     return new Response(JSON.stringify(account), {
       status: 200,
@@ -47,6 +56,7 @@ serve(async req => {
     })
   } catch (error: any) {
     console.error('Moov Get Account Error:', error.message)
+    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)))
     return new Response(
       JSON.stringify({ error: error?.message || String(error) }),
       {
