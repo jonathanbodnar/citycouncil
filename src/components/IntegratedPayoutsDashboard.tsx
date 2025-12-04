@@ -139,8 +139,7 @@ const IntegratedPayoutsDashboard: React.FC = () => {
         if (banksError) throw banksError;
 
         if (banksData && banksData.length > 0) {
-          const latestBank = banksData[banksData.length - 1];
-          const moovBank = banksData[latestBank];
+          const moovBank = banksData[banksData.length - 1];
           const bankInfoForDisplay: VendorBankInfo = {
             id: moovBank.bankAccountID,
             talent_id: talentProfile.id,

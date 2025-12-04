@@ -1,4 +1,6 @@
--- Reset jonathanbodnar payout setup for live Moov testing
+-- Reset jonathanbodnar payout SETUP for live Moov testing
+-- This ONLY clears onboarding data (W-9, Veriff, Moov connection)
+-- It does NOT touch payout batches or payout amounts
 -- Run this in Supabase SQL Editor
 
 BEGIN;
@@ -24,12 +26,16 @@ BEGIN
   DELETE FROM veriff_sessions WHERE talent_id = v_talent_id;
   RAISE NOTICE 'Deleted Veriff sessions';
   
-  -- 3. Delete Moov accounts record
-  DELETE FROM moov_accounts WHERE talent_id = v_talent_id;
-  DELETE FROM moov_accounts WHERE user_id = v_user_id;
-  RAISE NOTICE 'Deleted Moov accounts';
+  -- 3. Delete Moov accounts record (if table exists)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'moov_accounts') THEN
+    DELETE FROM moov_accounts WHERE talent_id = v_talent_id;
+    DELETE FROM moov_accounts WHERE user_id = v_user_id;
+    RAISE NOTICE 'Deleted Moov accounts';
+  ELSE
+    RAISE NOTICE 'moov_accounts table does not exist - skipping';
+  END IF;
   
-  -- 4. Reset talent_profiles payout fields
+  -- 4. Reset talent_profiles payout SETUP fields only
   UPDATE talent_profiles
   SET 
     moov_account_id = NULL,
@@ -39,28 +45,10 @@ BEGIN
     veriff_verified = FALSE,
     veriff_verified_at = NULL
   WHERE id = v_talent_id;
-  RAISE NOTICE 'Reset talent_profiles payout fields';
+  RAISE NOTICE 'Reset talent_profiles payout setup fields';
   
-  -- 5. Reset payout batches to pending (so they can be processed after setup)
-  UPDATE payout_batches
-  SET 
-    status = 'pending',
-    moov_transfer_id = NULL,
-    moov_transfer_status = NULL,
-    processed_at = NULL,
-    updated_at = NOW()
-  WHERE talent_id = v_talent_id;
-  RAISE NOTICE 'Reset payout batches to pending';
-  
-  -- 6. Reset individual payouts to pending
-  UPDATE payouts
-  SET 
-    status = 'pending',
-    processed_at = NULL,
-    updated_at = NOW()
-  WHERE talent_id = v_talent_id
-    AND status != 'paid';
-  RAISE NOTICE 'Reset individual payouts to pending';
+  -- NOTE: We intentionally do NOT touch payout_batches or payouts
+  -- Those represent real earnings and should remain intact
   
 END $$;
 
@@ -78,12 +66,13 @@ SELECT
 FROM talent_profiles tp
 WHERE tp.username = 'jonathanbodnar';
 
--- Check pending batches
+-- Show payout batches (unchanged - just for reference)
 SELECT 
-  'payout_batches' as info,
-  COUNT(*) as pending_count,
-  SUM(net_payout_amount) as total_pending_amount
+  'payout_batches (unchanged)' as info,
+  status,
+  COUNT(*) as count,
+  SUM(net_payout_amount) as total_amount
 FROM payout_batches
 WHERE talent_id = (SELECT id FROM talent_profiles WHERE username = 'jonathanbodnar')
-  AND status = 'pending';
+GROUP BY status;
 
