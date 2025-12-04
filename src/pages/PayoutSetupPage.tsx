@@ -307,19 +307,19 @@ const PayoutSetupPage: React.FC = () => {
           </div>
 
           {/* Main Content */}
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
             {/* Step 0: Introduction */}
             {currentStep === 0 && (
-              <div className="p-8 lg:p-12">
+              <div className="p-8 lg:p-12" style={{ backgroundColor: '#ffffff' }}>
                 <div className="max-w-2xl mx-auto text-center">
                   <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-8">
                     <CreditCardIcon className="w-10 h-10 text-white" />
                   </div>
                   
-                  <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                  <h2 className="text-3xl font-bold mb-4" style={{ color: '#111827' }}>
                     Let's Set Up Your Payouts
                   </h2>
-                  <p className="text-lg text-gray-600 mb-8">
+                  <p className="text-lg mb-8" style={{ color: '#4b5563' }}>
                     To receive payments for your ShoutOut videos, we need to verify your identity and connect your bank account. This process takes about <strong>10-15 minutes</strong> total.
                   </p>
 
@@ -328,15 +328,15 @@ const PayoutSetupPage: React.FC = () => {
                     {STEPS.filter(s => s.id > 0).map((step) => {
                       const Icon = step.icon
                       return (
-                        <div key={step.id} className="flex items-start gap-4 p-4 bg-gray-100 rounded-xl border border-gray-200">
-                          <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
+                        <div key={step.id} className="flex items-start gap-4 p-4 rounded-xl" style={{ backgroundColor: '#f3f4f6', border: '1px solid #e5e7eb' }}>
+                          <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
                             <Icon className="w-5 h-5 text-white" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-gray-900">{step.name}</h4>
-                            <p className="text-sm text-gray-600">{step.description}</p>
+                            <h4 className="font-semibold" style={{ color: '#111827' }}>{step.name}</h4>
+                            <p className="text-sm" style={{ color: '#4b5563' }}>{step.description}</p>
                             {step.timeEstimate && (
-                              <p className="text-xs text-pink-600 font-medium mt-1">~{step.timeEstimate}</p>
+                              <p className="text-xs font-medium mt-1" style={{ color: '#db2777' }}>~{step.timeEstimate}</p>
                             )}
                           </div>
                         </div>
@@ -345,9 +345,9 @@ const PayoutSetupPage: React.FC = () => {
                   </div>
 
                   {/* Important Notes */}
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8 text-left">
-                    <h4 className="font-semibold text-amber-800 mb-3">📋 Before You Start</h4>
-                    <ul className="text-sm text-amber-700 space-y-2">
+                  <div className="rounded-xl p-6 mb-8 text-left" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+                    <h4 className="font-semibold mb-3" style={{ color: '#92400e' }}>📋 Before You Start</h4>
+                    <ul className="text-sm space-y-2" style={{ color: '#b45309' }}>
                       <li>• Have your <strong>government-issued ID</strong> (driver's license or passport) ready</li>
                       <li>• Know your <strong>Social Security Number (SSN)</strong> or <strong>Employer Identification Number (EIN)</strong> for tax purposes</li>
                       <li>• Have your <strong>bank account login</strong> credentials handy</li>
@@ -356,8 +356,8 @@ const PayoutSetupPage: React.FC = () => {
                   </div>
 
                   {/* Continue Later Note */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
-                    <p className="text-sm text-blue-700">
+                  <div className="rounded-xl p-4 mb-8" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                    <p className="text-sm" style={{ color: '#1d4ed8' }}>
                       <strong>Don't have time right now?</strong> No problem! Your progress is saved automatically. You can start now and finish later.
                     </p>
                   </div>
