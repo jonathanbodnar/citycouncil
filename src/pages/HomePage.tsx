@@ -269,27 +269,6 @@ const HomePage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white">
 
       {/* Black Friday Banner */}
-      <style>{`
-        @keyframes slow-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.85; }
-        }
-        .slow-pulse {
-          animation: slow-pulse 3s ease-in-out infinite;
-        }
-      `}</style>
-      <div className="mb-8 rounded-xl p-4 text-center shadow-xl slow-pulse" style={{ background: 'linear-gradient(to right, #a70809, #3c108b)' }}>
-        <h2 className="text-lg sm:text-xl font-bold text-white leading-tight">
-          <span className="inline-block align-middle">🎄</span> Say it with a personalized video ShoutOut from top conservative voices <span className="inline-block align-middle">🎅</span>
-        </h2>
-        <p className="mt-2 text-sm sm:text-base text-white font-medium">
-          Get <span className="text-yellow-300 text-lg font-bold">25% OFF</span> all ShoutOuts with code{' '}
-          <span className="bg-yellow-300 text-purple-900 px-2 py-1 rounded font-mono font-bold text-sm sm:text-base">
-            SANTA25
-          </span>
-        </p>
-      </div>
-
       {/* Featured Talent Carousel */}
       {featuredTalent.length > 0 && (
         <div className="mb-12">
