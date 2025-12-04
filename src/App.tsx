@@ -1,9 +1,25 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+
+// Capture Rumble Ad click ID on app load
+// Rumble appends _raclid to URLs when users click on ads
+const captureRumbleClickId = () => {
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const raclid = urlParams.get('_raclid');
+    if (raclid) {
+      sessionStorage.setItem('rumble_raclid', raclid);
+      console.log('📢 Rumble click ID captured:', raclid);
+    }
+  }
+};
+
+// Run immediately on script load
+captureRumbleClickId();
 
 // Loading fallback component
 const PageLoader = () => (

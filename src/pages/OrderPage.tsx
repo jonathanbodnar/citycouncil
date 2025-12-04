@@ -426,38 +426,29 @@ const OrderPage: React.FC = () => {
 
       // Track Rumble Ads conversion
       try {
-        // Generate unique conversion ID using order ID and timestamp
-        const conversionId = `${order.id}-${Date.now()}`;
+        // Get the _raclid from URL params or sessionStorage (captured on landing)
+        // Rumble appends _raclid to URLs when users click on ads
+        const urlParams = new URLSearchParams(window.location.search);
+        const raclid = urlParams.get('_raclid') || sessionStorage.getItem('rumble_raclid');
+        
         // Value is 25% of order total (admin fee portion)
         const conversionValue = pricing.total * 0.25;
         
         logger.log('🔍 Rumble Ads debug:', {
-          windowExists: typeof window !== 'undefined',
+          raclid: raclid,
           ratagExists: typeof (window as any).ratag,
-          ratagDataExists: typeof (window as any)._ratagData,
-          ratagDataLength: (window as any)._ratagData?.length
+          conversionValue: conversionValue
         });
 
-        if (typeof window !== 'undefined') {
-          // The ratag function pushes to _ratagData queue which Rumble processes
-          if (typeof (window as any).ratag === 'function') {
-            (window as any).ratag('conversion', {
-              to: 3320,
-              cid: conversionId,
-              value: conversionValue
-            });
-            logger.log('✅ Rumble Ads conversion tracked via ratag():', { cid: conversionId, value: conversionValue });
-          } else if ((window as any)._ratagData) {
-            // Fallback: push directly to the data array if ratag function not available
-            (window as any)._ratagData.push(['conversion', {
-              to: 3320,
-              cid: conversionId,
-              value: conversionValue
-            }]);
-            logger.log('✅ Rumble Ads conversion tracked via _ratagData push:', { cid: conversionId, value: conversionValue });
-          } else {
-            logger.warn('⚠️ Rumble Ads tracking not available - ratag and _ratagData not found');
-          }
+        if (typeof window !== 'undefined' && typeof (window as any).ratag === 'function') {
+          (window as any).ratag('conversion', {
+            to: 3320,
+            cid: raclid || `order-${order.id}`, // Use raclid if available, fallback to order ID
+            value: conversionValue
+          });
+          logger.log('✅ Rumble Ads conversion tracked:', { cid: raclid || `order-${order.id}`, value: conversionValue });
+        } else {
+          logger.warn('⚠️ Rumble Ads ratag function not available');
         }
       } catch (rumbleError) {
         logger.error('Error tracking Rumble Ads conversion:', rumbleError);
