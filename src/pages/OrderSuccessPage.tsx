@@ -123,7 +123,7 @@ const OrderSuccessPage: React.FC = () => {
         <title>Order Confirmed! | ShoutOut</title>
       </Helmet>
 
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}>
+      <div className="flex items-center justify-center p-4 py-12" style={{ minHeight: 'calc(100vh - 200px)' }}>
         <div className="max-w-md w-full rounded-2xl shadow-2xl p-8 text-center border border-white/10" style={{ background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))' }}>
           {/* Success Icon */}
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
