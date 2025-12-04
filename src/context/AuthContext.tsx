@@ -78,30 +78,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (authUser) {
           console.log('Creating user profile for:', authUser.email);
           
-          // Use UPSERT to avoid duplicate key errors
-          const { data: createdUser, error: createError } = await supabase
+          // First check if user actually exists (might have been a race condition)
+          const { data: existingUser } = await supabase
             .from('users')
-            .upsert([
-              {
-                id: authUser.id,
-                email: authUser.email || '',
-                full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-                user_type: authUser.user_metadata?.user_type || 'user',
-              },
-            ], {
-              onConflict: 'id',
-              ignoreDuplicates: false
-            })
-            .select()
+            .select('*')
+            .eq('id', authUser.id)
             .single();
 
-          if (createError) {
-            console.error('Error creating user profile:', createError);
-            throw createError;
+          if (existingUser) {
+            // User exists, just use it (don't overwrite user_type!)
+            console.log('User already exists, using existing profile:', existingUser);
+            setUser(existingUser);
+          } else {
+            // User doesn't exist, create new one
+            const { data: createdUser, error: createError } = await supabase
+              .from('users')
+              .insert([
+                {
+                  id: authUser.id,
+                  email: authUser.email || '',
+                  full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                  user_type: authUser.user_metadata?.user_type || 'user',
+                },
+              ])
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('Error creating user profile:', createError);
+              throw createError;
+            }
+            
+            console.log('User profile created successfully:', createdUser);
+            setUser(createdUser);
           }
-          
-          console.log('User profile created successfully:', createdUser);
-          setUser(createdUser);
         } else {
           throw error;
         }
