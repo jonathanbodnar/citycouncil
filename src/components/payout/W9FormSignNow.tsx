@@ -50,11 +50,22 @@ const W9FormSignNow: React.FC<W9FormSignNowProps> = ({ talentId, onComplete }) =
         return
       }
 
-      // Create new document via edge function
+      // Get current session for auth header
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+
+      if (!accessToken) {
+        throw new Error('Not logged in - please refresh the page and try again')
+      }
+
+      // Create new document via edge function with explicit auth
       const { data, error: invokeError } = await supabase.functions.invoke(
         'signnow-create-w9-invite',
         {
-          body: { talentId }
+          body: { talentId },
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
         }
       )
 
