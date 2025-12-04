@@ -47,17 +47,46 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       successHandledRef.current = true;
       console.log('iframe message transaction payload', payload);
       const txId = payload?.transaction?.id || payload?.data?.id || payload?.id || payload?.value?.id;
+      
+      // Check for declined/failed status in the payload
+      const statusCode = payload?.data?.status_code || payload?.status_code || payload?.value?.status_code;
+      const reasonCode = payload?.reason_code_id || payload?.data?.reason_code_id || payload?.value?.reason_code_id;
+      
+      // Fortis status codes: 101 = approved, 102-199 = declined/failed
+      // reason_code_id 1000 = approved, others indicate decline reasons
+      if (statusCode && statusCode !== 101 && statusCode !== 100) {
+        console.error('❌ Payment declined - status_code:', statusCode, 'reason_code:', reasonCode);
+        successHandledRef.current = false; // Allow retry
+        setError('Payment was declined. Please try a different card.');
+        onPaymentError('Payment was declined. Please try a different card.');
+        return;
+      }
+      
       if (txId) {
         verifyFortisTransaction(txId)
           .then((verify) => {
+            // Check if verification shows declined status
+            if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
+              console.error('❌ Payment verification shows declined - status:', verify.statusCode);
+              successHandledRef.current = false; // Allow retry
+              setError('Payment was declined. Please try a different card.');
+              onPaymentError('Payment was declined. Please try a different card.');
+              return;
+            }
+            console.log('✅ Payment verified successfully:', verify.statusCode);
             setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
           })
           .catch((e) => {
             console.error('Payment verification failed:', e);
-            // Payment already succeeded in iframe, so proceed anyway
-            // Verification is for logging/fraud detection only
-            console.log('⚠️ Continuing despite verification failure - payment was captured');
-            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: null, payload }), 0);
+            // If we can't verify, check the original payload status
+            if (statusCode === 101 || statusCode === 100) {
+              console.log('⚠️ Verification failed but original status was approved, proceeding');
+              setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode, payload }), 0);
+            } else {
+              successHandledRef.current = false; // Allow retry
+              setError('Could not verify payment. Please try again.');
+              onPaymentError('Could not verify payment. Please try again.');
+            }
           });
       }
     };
@@ -106,22 +135,49 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         if (successHandledRef.current) return;
         successHandledRef.current = true;
         console.log('payment_success payload', payload);
+        
+        // Check for declined/failed status in the payload first
+        const statusCode = payload?.data?.status_code || payload?.status_code || payload?.transaction?.status_code;
+        const reasonCode = payload?.reason_code_id || payload?.data?.reason_code_id || payload?.transaction?.reason_code_id;
+        
+        // Fortis status codes: 101 = approved, 100 = pending, 102-199 = declined/failed
+        if (statusCode && statusCode !== 101 && statusCode !== 100) {
+          console.error('❌ Payment declined in payload - status_code:', statusCode, 'reason_code:', reasonCode);
+          successHandledRef.current = false; // Allow retry
+          setError('Payment was declined. Please try a different card.');
+          onPaymentError('Payment was declined. Please try a different card.');
+          return;
+        }
+        
         try {
           const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
           if (!txId) throw new Error('Missing transaction id');
+          
           const verify = await verifyFortisTransaction(txId);
+          
+          // Check if verification shows declined status
+          if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
+            console.error('❌ Payment verification shows declined - status:', verify.statusCode);
+            successHandledRef.current = false; // Allow retry
+            setError('Payment was declined. Please try a different card.');
+            onPaymentError('Payment was declined. Please try a different card.');
+            return;
+          }
+          
+          console.log('✅ Payment verified successfully:', verify.statusCode);
           setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
         } catch (e: any) {
           console.error('Payment verification failed:', e);
-          // Payment succeeded in Commerce.js iframe, verification is optional
-          // Continue with order creation even if verification fails
           const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
-          if (txId) {
-            console.log('⚠️ Continuing despite verification failure - payment was captured');
-            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: null, payload }), 0);
+          
+          // Only proceed if original payload showed approved status
+          if (txId && (statusCode === 101 || statusCode === 100)) {
+            console.log('⚠️ Verification failed but original status was approved, proceeding');
+            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode, payload }), 0);
           } else {
-            setError('Payment processing error. Please contact support.');
-            onPaymentError('Payment processing error');
+            successHandledRef.current = false; // Allow retry
+            setError('Could not verify payment. Please try again.');
+            onPaymentError('Could not verify payment. Please try again.');
           }
         }
       };
