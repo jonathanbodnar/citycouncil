@@ -1,12 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircleIcon, HomeIcon, UserIcon } from '@heroicons/react/24/solid';
 import { Helmet } from 'react-helmet-async';
 
+// Declare ratag as a global function
+declare global {
+  interface Window {
+    ratag: (event: string, options: { to: number; cid?: string; value?: number }) => void;
+    _ratagData: any[];
+  }
+}
+
 const OrderSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [conversionFired, setConversionFired] = useState(false);
+  const conversionFiredRef = useRef(false);
 
   // Get order details from URL params
   const orderId = searchParams.get('order_id');
@@ -28,29 +36,41 @@ const OrderSuccessPage: React.FC = () => {
     }
 
     // Fire Rumble conversion on page load (only once)
-    if (!conversionFired && typeof window !== 'undefined') {
+    if (!conversionFiredRef.current && typeof window !== 'undefined') {
+      conversionFiredRef.current = true;
+      
+      const cid = raclid || `order-${orderId}`;
+      
       console.log('🔍 Rumble Ads - Order Success Page Load:', {
         orderId,
         amount: orderAmount,
         conversionValue,
-        raclid,
-        ratagExists: typeof (window as any).ratag
+        cid,
+        ratagExists: typeof window.ratag,
+        ratagDataExists: typeof window._ratagData
       });
 
-      if (typeof (window as any).ratag === 'function') {
-        (window as any).ratag('conversion', {
+      // Method 1: Direct ratag call (if function exists)
+      if (typeof window.ratag === 'function') {
+        console.log('📤 Calling ratag("conversion", {to: 3320, cid: "' + cid + '", value: ' + conversionValue + '})');
+        window.ratag('conversion', {
           to: 3320,
-          cid: raclid || `order-${orderId}`,
-          value: conversionValue,
-          callback: function() {
-            console.log('✅ Rumble Ads conversion callback fired!');
-          }
+          cid: cid,
+          value: conversionValue
         });
-        console.log('✅ Rumble Ads conversion triggered on page load');
+        console.log('✅ Rumble ratag() called successfully');
+      } 
+      // Method 2: Push to _ratagData array (fallback)
+      else if (window._ratagData) {
+        console.log('📤 Pushing to _ratagData array');
+        window._ratagData.push(['conversion', { to: 3320, cid: cid, value: conversionValue }]);
+        console.log('✅ Rumble _ratagData.push() called successfully');
       }
-      setConversionFired(true);
+      else {
+        console.warn('⚠️ Rumble ratag not available - neither ratag() nor _ratagData found');
+      }
     }
-  }, [orderId, orderAmount, conversionValue, raclid, conversionFired, navigate]);
+  }, [orderId, orderAmount, conversionValue, raclid, navigate]);
 
   if (!orderId) {
     return null;
@@ -60,29 +80,6 @@ const OrderSuccessPage: React.FC = () => {
     <>
       <Helmet>
         <title>Order Confirmed! | ShoutOut</title>
-        {/* Rumble Ads conversion script - fires on page load */}
-        <script>
-          {`
-            (function() {
-              var raclid = sessionStorage.getItem('rumble_raclid');
-              var conversionValue = ${conversionValue};
-              var orderId = '${orderId}';
-              
-              console.log('🔍 Rumble inline script:', { raclid: raclid, value: conversionValue, orderId: orderId });
-              
-              if (typeof ratag === 'function') {
-                ratag('conversion', {
-                  to: 3320,
-                  cid: raclid || ('order-' + orderId),
-                  value: conversionValue
-                });
-                console.log('✅ Rumble conversion fired from inline script');
-              } else {
-                console.warn('⚠️ ratag function not available');
-              }
-            })();
-          `}
-        </script>
       </Helmet>
 
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}>
