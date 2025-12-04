@@ -75,7 +75,7 @@ serve(async req => {
     // 3. ⭐ Build the COMPLETE request from the payload
     const createRequest = {
       accountType: 'individual',
-      capabilities: ['transfers', 'send-funds', 'collect-funds', 'wallet'],
+      capabilities: ['transfers', 'send-funds'],
       profile: {
         individual: {
           name: {
