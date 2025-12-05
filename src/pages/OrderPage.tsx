@@ -409,7 +409,7 @@ const OrderPage: React.FC = () => {
       // NOTE: Meta Pixel and Rumble Ads conversion tracking moved to OrderSuccessPage
       // to ensure they only fire once after successful order confirmation
 
-      // Send Zapier webhook for new orders (exclude test/admin orders)
+      // Send Zapier webhook for new orders via Edge Function (exclude test/admin orders)
       try {
         const excludedEmails = ['helloshoutout@shoutout.us'];
         const isAdminOrder = user.email && excludedEmails.includes(user.email.toLowerCase());
@@ -433,25 +433,19 @@ const OrderPage: React.FC = () => {
             order_date: new Date().toISOString()
           };
           
-          logger.log('📤 Sending Zapier webhook:', webhookPayload);
+          logger.log('📤 Sending Zapier webhook via Edge Function:', webhookPayload);
           
-          // Zapier webhooks support CORS - don't use no-cors mode as it strips the body!
-          fetch('https://hooks.zapier.com/hooks/catch/25578725/ukls8cj/', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify(webhookPayload)
-          }).then(async (response) => {
-            const responseText = await response.text();
-            logger.log('✅ Zapier webhook response:', { 
-              status: response.status, 
-              ok: response.ok,
-              body: responseText 
-            });
+          // Use Edge Function to send webhook (avoids CORS issues)
+          supabase.functions.invoke('send-order-webhook', {
+            body: webhookPayload
+          }).then((result) => {
+            if (result.error) {
+              logger.error('❌ Edge Function error:', result.error);
+            } else {
+              logger.log('✅ Zapier webhook sent via Edge Function:', result.data);
+            }
           }).catch((err) => {
-            logger.error('❌ Error sending Zapier webhook:', err);
+            logger.error('❌ Error calling Edge Function:', err);
           });
         } else {
           logger.log('⏭️ Skipping Zapier webhook - admin/test order');
