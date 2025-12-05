@@ -5,28 +5,6 @@ import { PlaidApi, Configuration, PlaidEnvironments } from 'npm:plaid'
 // @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Load secrets (should be set via Supabase Dashboard or CLI)
-// @ts-ignore
-const PLAID_CLIENT_ID = (globalThis as any).Deno?.env.get('PLAID_CLIENT_ID')
-// @ts-ignore
-const PLAID_SECRET = (globalThis as any).Deno?.env.get('PLAID_SECRET')
-// @ts-ignore
-const SUPABASE_URL = (globalThis as any).Deno?.env.get('SUPABASE_URL')
-// @ts-ignore
-const SUPABASE_SERVICE_ROLE_KEY = (globalThis as any).Deno?.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-const config = new Configuration({
-  basePath: PlaidEnvironments.production,
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': PLAID_CLIENT_ID!,
-      'PLAID-SECRET': PLAID_SECRET!,
-    },
-  },
-})
-
-const plaidClient = new PlaidApi(config)
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -38,6 +16,37 @@ serve(async req => {
   }
 
   try {
+    // Load secrets inside request handler (required for Supabase Edge Functions)
+    // @ts-ignore
+    const PLAID_CLIENT_ID = (globalThis as any).Deno?.env.get('PLAID_CLIENT_ID')
+    // @ts-ignore
+    const PLAID_SECRET = (globalThis as any).Deno?.env.get('PLAID_SECRET')
+    // @ts-ignore
+    const SUPABASE_URL = (globalThis as any).Deno?.env.get('SUPABASE_URL')
+    // @ts-ignore
+    const SUPABASE_SERVICE_ROLE_KEY = (globalThis as any).Deno?.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    // Validate credentials
+    if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
+      console.error('Missing Plaid credentials:', { 
+        hasClientId: !!PLAID_CLIENT_ID, 
+        hasSecret: !!PLAID_SECRET 
+      })
+      throw new Error('Plaid credentials not configured')
+    }
+
+    // Initialize Plaid client inside request handler
+    const config = new Configuration({
+      basePath: PlaidEnvironments.production,
+      baseOptions: {
+        headers: {
+          'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
+          'PLAID-SECRET': PLAID_SECRET,
+        },
+      },
+    })
+    const plaidClient = new PlaidApi(config)
+
     const { userId } = await req.json()
     if (!userId) throw new Error('User ID is required')
 
