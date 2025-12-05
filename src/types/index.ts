@@ -47,6 +47,8 @@ export interface TalentProfile {
   onboarding_token?: string; // Token for onboarding signup
   onboarding_completed?: boolean; // Whether onboarding is complete
   onboarding_expires_at?: string; // When onboarding token expires
+  payout_onboarding_completed?: boolean; // Whether payout setup is complete
+  payout_onboarding_step?: string; // Current step in payout onboarding
   temp_full_name?: string; // Temporary storage for name before user creation
   temp_avatar_url?: string; // Temporary storage for avatar before user creation
   instagram_username?: string; // Instagram username for promotion tracking
