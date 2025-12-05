@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const POPUP_SUBMITTED_KEY = 'holiday_promo_submitted'; // Only set when phone submitted
@@ -10,6 +11,7 @@ const COUNTDOWN_HOURS = 48;
 const CLOSE_COOLDOWN_MINUTES = 5; // Show again 5 minutes after closing
 
 const HolidayPromoPopup: React.FC = () => {
+  const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,8 +19,13 @@ const HolidayPromoPopup: React.FC = () => {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [hasShownInitial, setHasShownInitial] = useState(false);
 
-  // Check if popup can be shown (not submitted, not in cooldown)
+  // Check if popup can be shown (not submitted, not in cooldown, not talent/admin)
   const canShowPopup = useCallback(() => {
+    // Never show to talent or admin users
+    if (user?.user_type === 'talent' || user?.user_type === 'admin') {
+      return false;
+    }
+
     // Never show if already submitted
     const submitted = localStorage.getItem(POPUP_SUBMITTED_KEY);
     if (submitted === 'true') {
@@ -45,7 +52,7 @@ const HolidayPromoPopup: React.FC = () => {
     }
 
     return true;
-  }, []);
+  }, [user]);
 
   // Initial popup show (after 2 seconds)
   useEffect(() => {
