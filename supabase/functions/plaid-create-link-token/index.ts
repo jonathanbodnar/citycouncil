@@ -60,13 +60,18 @@ serve(async req => {
     // Format phone number for Plaid (remove all non-digits, ensure 10 digits)
     let phoneNumber = null
     if (userData?.phone) {
-      const cleaned = userData.phone.replace(/\D/g, '')
-      // Remove country code if present
-      const digits = cleaned.startsWith('1') && cleaned.length === 11 ? cleaned.slice(1) : cleaned
+      // Remove +, spaces, dashes, parentheses, etc.
+      const cleaned = userData.phone.replace(/[^\d]/g, '')
+      // Remove country code if present (handles +1, 1, etc.)
+      let digits = cleaned
+      if (digits.startsWith('1') && digits.length === 11) {
+        digits = digits.slice(1)
+      }
       // Only use if exactly 10 digits
       if (digits.length === 10) {
         phoneNumber = digits
       }
+      console.log('Phone processing:', { original: userData.phone, cleaned, digits, final: phoneNumber })
     }
 
     // Parse full name
@@ -121,14 +126,24 @@ serve(async req => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error: any) {
-    console.error(
-      'Plaid Link Token Error:',
-      error.response ? error.response.data : error.message
-    )
+    // Log detailed error information
+    const errorDetails = {
+      message: error?.message,
+      responseData: error?.response?.data,
+      responseStatus: error?.response?.status,
+      stack: error?.stack?.split('\n').slice(0, 5).join('\n')
+    }
+    console.error('Plaid Link Token Error:', JSON.stringify(errorDetails, null, 2))
+
+    // Return user-friendly error
+    const userMessage = error?.response?.data?.error_message 
+      || error?.message 
+      || 'Failed to initialize bank connection. Please try again.'
 
     return new Response(
       JSON.stringify({
-        error: error?.response?.data || error?.message || 'Unknown error',
+        error: userMessage,
+        details: error?.response?.data || null
       }),
       {
         status: 500,
