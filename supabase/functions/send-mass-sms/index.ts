@@ -3,8 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
 const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-// Use separate phone number for user SMS campaigns
-// Falls back to TWILIO_PHONE_NUMBER if USER_SMS_PHONE_NUMBER is not set
+// Use separate phone numbers for different audiences
+// TWILIO_PHONE_NUMBER = Talent dedicated number (for talent SMS)
+// USER_SMS_PHONE_NUMBER = User campaigns number (for users/beta/holiday)
+const TALENT_SMS_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
 const USER_SMS_PHONE_NUMBER = Deno.env.get('USER_SMS_PHONE_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -121,6 +123,10 @@ serve(async (req) => {
     let sent_count = 0;
     let failed_count = 0;
 
+    // Use talent dedicated number for talent, user number for everyone else
+    const fromNumber = target_audience === 'talent' ? TALENT_SMS_PHONE_NUMBER! : USER_SMS_PHONE_NUMBER!;
+    console.log(`Using phone number for ${target_audience}: ${fromNumber}`);
+
     for (const recipient of recipients) {
       try {
         // Send via Twilio
@@ -134,7 +140,7 @@ serve(async (req) => {
             },
             body: new URLSearchParams({
               To: recipient.phone_number,
-              From: USER_SMS_PHONE_NUMBER!,
+              From: fromNumber,
               Body: message
             })
           }
