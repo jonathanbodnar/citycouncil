@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { XMarkIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
 
@@ -251,18 +251,11 @@ const HolidayPromoPopup: React.FC = () => {
 
         {/* Content */}
         <div className="p-8 text-center">
-          {/* Decorative Icons */}
-          <div className="flex justify-center gap-4 mb-4">
-            <span className="text-4xl">🎄</span>
-            <GiftIcon className="h-12 w-12 text-yellow-300" />
-            <span className="text-4xl">🎅</span>
-          </div>
-
           {!hasSubmitted ? (
             <>
               {/* Headline */}
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                Say it with a personalized ShoutOut from top conservative voices 🎁
+                Say it with a personalized ShoutOut from top conservative voices 🎁🎄
               </h2>
               
               <p className="text-white/90 text-lg mb-4">
