@@ -46,6 +46,7 @@ const SMSManagement: React.FC = () => {
   const [message, setMessage] = useState('');
   const [targetAudience, setTargetAudience] = useState<'beta' | 'registered' | 'all' | 'talent' | 'holiday_popup'>('beta');
   const [recipientCount, setRecipientCount] = useState(0);
+  const [excludedUserIds, setExcludedUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchStats();
@@ -55,6 +56,8 @@ const SMSManagement: React.FC = () => {
   useEffect(() => {
     if (targetAudience) {
       fetchRecipients();
+      // Reset exclusions when audience changes
+      setExcludedUserIds(new Set());
     }
   }, [targetAudience]);
 
@@ -103,6 +106,29 @@ const SMSManagement: React.FC = () => {
     }
   };
 
+  const toggleExcludeUser = (userId: string) => {
+    setExcludedUserIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  };
+
+  const excludeAllUsers = () => {
+    setExcludedUserIds(new Set(users.map(u => u.id)));
+  };
+
+  const includeAllUsers = () => {
+    setExcludedUserIds(new Set());
+  };
+
+  // Calculate active recipient count (total - excluded)
+  const activeRecipientCount = users.length - excludedUserIds.size;
+
   const sendCampaign = async () => {
     if (!campaignName.trim() || !message.trim()) {
       toast.error('Please fill in campaign name and message');
@@ -114,13 +140,14 @@ const SMSManagement: React.FC = () => {
       return;
     }
 
-    if (recipientCount === 0) {
-      toast.error('No recipients found for selected audience');
+    if (activeRecipientCount === 0) {
+      toast.error('No recipients selected (all excluded or no users found)');
       return;
     }
 
     const confirm = window.confirm(
-      `Send "${campaignName}" to ${recipientCount} ${targetAudience} users?\n\n` +
+      `Send "${campaignName}" to ${activeRecipientCount} ${targetAudience} users?\n\n` +
+      `${excludedUserIds.size > 0 ? `(${excludedUserIds.size} users excluded)\n\n` : ''}` +
       `Message: ${message}\n\n` +
       `This action cannot be undone.`
     );
@@ -135,7 +162,8 @@ const SMSManagement: React.FC = () => {
         body: {
           campaign_name: campaignName,
           message,
-          target_audience: targetAudience
+          target_audience: targetAudience,
+          excluded_user_ids: Array.from(excludedUserIds)
         }
       });
 
@@ -148,6 +176,7 @@ const SMSManagement: React.FC = () => {
       setMessage('');
       setTargetAudience('beta');
       setRecipientCount(0);
+      setExcludedUserIds(new Set());
       setShowPreview(false);
       
       // Refresh data
@@ -281,7 +310,10 @@ const SMSManagement: React.FC = () => {
               <option value="talent">Talent - Check count</option>
             </select>
             <p className="text-sm text-gray-500 mt-1">
-              📱 This will send to <span className="font-semibold text-blue-600">{recipientCount} users</span>
+              📱 This will send to <span className="font-semibold text-blue-600">{activeRecipientCount} users</span>
+              {excludedUserIds.size > 0 && (
+                <span className="text-orange-600 ml-2">({excludedUserIds.size} excluded)</span>
+              )}
             </p>
           </div>
 
@@ -307,15 +339,15 @@ const SMSManagement: React.FC = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setShowPreview(!showPreview)}
-              disabled={!message || recipientCount === 0}
+              disabled={users.length === 0}
               className="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {showPreview ? 'Hide Preview' : 'Preview Recipients'}
+              {showPreview ? 'Hide Recipients' : `View Recipients (${users.length})`}
             </button>
             
             <button
               onClick={sendCampaign}
-              disabled={sending || !campaignName || !message || recipientCount === 0}
+              disabled={sending || !campaignName || !message || activeRecipientCount === 0}
               className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {sending ? (
@@ -325,7 +357,7 @@ const SMSManagement: React.FC = () => {
                 </>
               ) : (
                 <>
-                  Send SMS Campaign
+                  Send to {activeRecipientCount} Users
                   <PhoneIcon className="h-5 w-5" />
                 </>
               )}
@@ -336,27 +368,78 @@ const SMSManagement: React.FC = () => {
         {/* Recipients Preview */}
         {showPreview && users.length > 0 && (
           <div className="mt-6 border-t pt-6">
-            <h3 className="text-lg font-semibold mb-4">
-              Recipients ({users.length})
-            </h3>
-            <div className="max-h-60 overflow-y-auto space-y-2">
-              {users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{user.full_name || 'Unnamed User'}</p>
-                    <p className="text-sm text-gray-600">{user.phone_number}</p>
-                  </div>
-                  {user.user_tags && user.user_tags.length > 0 && (
-                    <div className="flex gap-1">
-                      {user.user_tags.map((tag) => (
-                        <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                          {tag}
-                        </span>
-                      ))}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">
+                Recipients ({activeRecipientCount} of {users.length} selected)
+              </h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={includeAllUsers}
+                  className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                >
+                  Include All
+                </button>
+                <button
+                  onClick={excludeAllUsers}
+                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                >
+                  Exclude All
+                </button>
+              </div>
+            </div>
+            <div className="max-h-96 overflow-y-auto space-y-2">
+              {users.map((user) => {
+                const isExcluded = excludedUserIds.has(user.id);
+                return (
+                  <div 
+                    key={user.id} 
+                    className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                      isExcluded 
+                        ? 'bg-red-50 border border-red-200 opacity-60' 
+                        : 'bg-gray-50 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={!isExcluded}
+                        onChange={() => toggleExcludeUser(user.id)}
+                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div>
+                        <p className={`font-medium ${isExcluded ? 'line-through text-gray-400' : ''}`}>
+                          {user.full_name || 'Unnamed User'}
+                        </p>
+                        <p className="text-sm text-gray-600">{user.phone_number}</p>
+                        {user.email && (
+                          <p className="text-xs text-gray-400">{user.email}</p>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                    <div className="flex items-center gap-2">
+                      {user.user_tags && user.user_tags.length > 0 && (
+                        <div className="flex gap-1">
+                          {user.user_tags.map((tag) => (
+                            <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => toggleExcludeUser(user.id)}
+                        className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+                          isExcluded
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                        }`}
+                      >
+                        {isExcluded ? 'Include' : 'Exclude'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

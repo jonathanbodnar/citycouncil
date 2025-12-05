@@ -14,6 +14,7 @@ interface SendMassSMSRequest {
   campaign_name: string;
   message: string;
   target_audience: 'beta' | 'registered' | 'all' | 'talent' | 'holiday_popup';
+  excluded_user_ids?: string[];
 }
 
 const corsHeaders = {
@@ -63,7 +64,7 @@ serve(async (req) => {
     }
 
     // Parse request
-    const { campaign_name, message, target_audience }: SendMassSMSRequest = await req.json();
+    const { campaign_name, message, target_audience, excluded_user_ids = [] }: SendMassSMSRequest = await req.json();
 
     // Validate message length
     if (message.length > 160) {
@@ -74,16 +75,29 @@ serve(async (req) => {
     }
 
     // Get recipients
-    const { data: recipients, error: recipientsError } = await supabase.rpc('get_users_by_segment', {
+    const { data: allRecipients, error: recipientsError } = await supabase.rpc('get_users_by_segment', {
       segment: target_audience
     });
 
-    if (recipientsError || !recipients || recipients.length === 0) {
+    if (recipientsError || !allRecipients || allRecipients.length === 0) {
       return new Response(JSON.stringify({ error: 'No recipients found', details: recipientsError }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    // Filter out excluded users
+    const excludedSet = new Set(excluded_user_ids);
+    const recipients = allRecipients.filter((r: any) => !excludedSet.has(r.id));
+
+    if (recipients.length === 0) {
+      return new Response(JSON.stringify({ error: 'All recipients were excluded' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log(`Sending to ${recipients.length} recipients (${excluded_user_ids.length} excluded)`)
 
     // Create campaign record
     const { data: campaign, error: campaignError } = await supabase
