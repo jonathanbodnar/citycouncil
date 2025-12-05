@@ -194,7 +194,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 {/* Desktop Text Content */}
                 <div className="text-white z-10 ml-12 pr-12">
                   <div className="inline-block px-3 py-1 bg-red-600/20 text-red-400 text-xs font-bold rounded-full mb-3 border border-red-500/30">
-                    ⭐ Featured Talent
+                    ⭐ Featured
                   </div>
                   <h2 className="text-2xl font-bold mb-2">
                     {currentTalent.temp_full_name || currentTalent.users.full_name}
