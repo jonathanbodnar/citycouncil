@@ -9,7 +9,8 @@ import {
   ClockIcon,
   VideoCameraIcon,
   HashtagIcon,
-  TagIcon
+  TagIcon,
+  GiftIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { HelpMessage, AdminStats } from '../types';
@@ -79,7 +80,8 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
           { data: orders },
           { data: users },
           { data: talent },
-          { data: payouts }
+          { data: payouts },
+          { count: holidayPromoCount }
         ] = await Promise.all([
           supabase.from('orders').select('*'),
           supabase.from('users').select('*'),
@@ -87,7 +89,8 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
             *,
             users!talent_profiles_user_id_fkey (full_name, avatar_url)
           `),
-          supabase.from('payouts').select('*')
+          supabase.from('payouts').select('*'),
+          supabase.from('beta_signups').select('*', { count: 'exact', head: true }).eq('source', 'holiday_popup')
         ]);
 
         // Calculate comprehensive stats
@@ -172,7 +175,8 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
           promotion_participants: promotionParticipants,
           avg_orders_per_talent: avgOrdersPerTalent,
           avg_orders_per_user: avgOrdersPerUser,
-          avg_delivery_time_hours: avgDeliveryTimeHours
+          avg_delivery_time_hours: avgDeliveryTimeHours,
+          holiday_promo_signups: holidayPromoCount || 0
         });
 
         // Fetch recent orders
@@ -354,6 +358,12 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                 value={`${stats.avg_delivery_time_hours.toFixed(1)}h`}
                 icon={ClockIcon}
                 color="text-teal-600"
+              />
+              <StatsCard
+                title="🎄 Holiday Promo Signups"
+                value={stats.holiday_promo_signups.toLocaleString()}
+                icon={GiftIcon}
+                color="text-red-600"
               />
               {stats.pending_approval_orders > 0 && (
                 <StatsCard
