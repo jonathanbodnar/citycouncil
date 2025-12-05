@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon, GiftIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
 
-const POPUP_STORAGE_KEY = 'holiday_promo_popup_shown';
+const POPUP_SUBMITTED_KEY = 'holiday_promo_submitted'; // Only set when phone submitted
+const POPUP_CLOSED_KEY = 'holiday_promo_closed_at'; // Tracks when they last closed it
 const POPUP_EXPIRY_KEY = 'holiday_promo_popup_expiry';
 const COUNTDOWN_HOURS = 48;
+const CLOSE_COOLDOWN_MINUTES = 5; // Show again 5 minutes after closing
 
 const HolidayPromoPopup: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -13,41 +15,70 @@ const HolidayPromoPopup: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [hasShownInitial, setHasShownInitial] = useState(false);
 
+  // Check if popup can be shown (not submitted, not in cooldown)
+  const canShowPopup = useCallback(() => {
+    // Never show if already submitted
+    const submitted = localStorage.getItem(POPUP_SUBMITTED_KEY);
+    if (submitted === 'true') {
+      return false;
+    }
+
+    // Check if countdown expired
+    const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
+    if (expiryTime) {
+      const expiry = parseInt(expiryTime, 10);
+      if (Date.now() > expiry) {
+        return false;
+      }
+    }
+
+    // Check close cooldown (5 minutes)
+    const closedAt = localStorage.getItem(POPUP_CLOSED_KEY);
+    if (closedAt) {
+      const closedTime = parseInt(closedAt, 10);
+      const cooldownMs = CLOSE_COOLDOWN_MINUTES * 60 * 1000;
+      if (Date.now() - closedTime < cooldownMs) {
+        return false;
+      }
+    }
+
+    return true;
+  }, []);
+
+  // Initial popup show (after 2 seconds)
   useEffect(() => {
-    // Check if popup should be shown
-    const checkPopupVisibility = () => {
-      const popupShown = localStorage.getItem(POPUP_STORAGE_KEY);
-      const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
-
-      // If user has already submitted or closed the popup, never show again
-      if (popupShown === 'true') {
-        return;
-      }
-
-      // If countdown has expired, never show again
-      if (expiryTime) {
-        const expiry = parseInt(expiryTime, 10);
-        if (Date.now() > expiry) {
-          localStorage.setItem(POPUP_STORAGE_KEY, 'true');
-          return;
-        }
-      }
-
-      // Show popup after a short delay
-      setTimeout(() => {
+    const timer = setTimeout(() => {
+      if (canShowPopup()) {
         setIsVisible(true);
+        setHasShownInitial(true);
         
         // Set expiry time if not already set
+        const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
         if (!expiryTime) {
           const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
           localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
         }
-      }, 2000);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [canShowPopup]);
+
+  // Exit intent detection (mouse leaves viewport at top)
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      // Only trigger on exit toward top of page (likely closing tab/navigating away)
+      if (e.clientY <= 0 && !isVisible && hasShownInitial && canShowPopup()) {
+        console.log('🚪 Exit intent detected - showing popup');
+        setIsVisible(true);
+      }
     };
 
-    checkPopupVisibility();
-  }, []);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    return () => document.removeEventListener('mouseleave', handleMouseLeave);
+  }, [isVisible, hasShownInitial, canShowPopup]);
 
   // Countdown timer
   useEffect(() => {
@@ -64,7 +95,8 @@ const HolidayPromoPopup: React.FC = () => {
       if (diff <= 0) {
         setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
         setIsVisible(false);
-        localStorage.setItem(POPUP_STORAGE_KEY, 'true');
+        // Countdown expired - don't show again
+        localStorage.setItem(POPUP_SUBMITTED_KEY, 'true');
         return;
       }
 
@@ -170,8 +202,8 @@ const HolidayPromoPopup: React.FC = () => {
 
       setHasSubmitted(true);
       
-      // Mark popup as shown and close after delay
-      localStorage.setItem(POPUP_STORAGE_KEY, 'true');
+      // Mark as SUBMITTED - never show again
+      localStorage.setItem(POPUP_SUBMITTED_KEY, 'true');
       setTimeout(() => {
         setIsVisible(false);
       }, 3000);
@@ -187,7 +219,9 @@ const HolidayPromoPopup: React.FC = () => {
 
   const handleClose = () => {
     setIsVisible(false);
-    localStorage.setItem(POPUP_STORAGE_KEY, 'true');
+    // Just set a cooldown - will show again on exit intent after 5 minutes
+    localStorage.setItem(POPUP_CLOSED_KEY, Date.now().toString());
+    console.log('🔕 Popup closed - will show again on exit intent after 5 minutes');
   };
 
   if (!isVisible) return null;
