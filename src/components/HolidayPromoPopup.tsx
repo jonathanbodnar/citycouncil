@@ -66,17 +66,19 @@ const HolidayPromoPopup: React.FC = () => {
     return () => clearTimeout(timer);
   }, [canShowPopup]);
 
-  // Exit intent detection (mouse leaves viewport at top) - can trigger before 15s timer
+  // Exit intent detection - tracks mouse position and triggers when leaving top of viewport
   useEffect(() => {
-    const handleMouseOut = (e: MouseEvent) => {
-      // Check if mouse is leaving the viewport (not just moving between elements)
-      const target = e.relatedTarget as Node | null;
-      
-      // If relatedTarget is null or not in document, mouse left the window
-      if (!target || !document.contains(target)) {
-        // Only trigger on exit toward top of page (likely closing tab/navigating away)
-        if (e.clientY <= 50 && !isVisible && canShowPopup()) {
-          console.log('🚪 Exit intent detected - clientY:', e.clientY, '- showing popup');
+    let mouseY = 0;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseY = e.clientY;
+    };
+    
+    const handleMouseLeave = (e: MouseEvent) => {
+      // Trigger if mouse leaves near the top (going to close tab, back button, etc.)
+      if (e.clientY <= 0 || mouseY <= 100) {
+        if (!isVisible && canShowPopup()) {
+          console.log('🚪 Exit intent detected - mouseY:', mouseY, 'clientY:', e.clientY);
           setIsVisible(true);
           setHasShownInitial(true);
           
@@ -90,44 +92,40 @@ const HolidayPromoPopup: React.FC = () => {
       }
     };
 
-    // Use mouseout on document.documentElement for better cross-browser support
-    document.documentElement.addEventListener('mouseout', handleMouseOut);
-    return () => document.documentElement.removeEventListener('mouseout', handleMouseOut);
+    // Track mouse position
+    document.addEventListener('mousemove', handleMouseMove);
+    // Detect when mouse leaves the document
+    document.addEventListener('mouseleave', handleMouseLeave);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
   }, [isVisible, canShowPopup]);
 
-  // Scroll-based exit intent for mobile (user scrolls up quickly at top of page) - can trigger before 15s timer
+  // Back button / history detection for mobile
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let scrollUpCount = 0;
-
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Detect rapid scroll up at top of page (mobile exit intent)
-      if (currentScrollY < lastScrollY && currentScrollY < 100) {
-        scrollUpCount++;
-        if (scrollUpCount >= 3 && !isVisible && canShowPopup()) {
-          console.log('🚪 Mobile exit intent (scroll up) detected - showing popup');
-          setIsVisible(true);
-          setHasShownInitial(true);
-          
-          // Set expiry time if not already set
-          const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
-          if (!expiryTime) {
-            const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
-            localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
-          }
-          scrollUpCount = 0;
+    const handlePopState = () => {
+      if (!isVisible && canShowPopup()) {
+        console.log('🚪 Back button detected - showing popup');
+        setIsVisible(true);
+        setHasShownInitial(true);
+        
+        const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
+        if (!expiryTime) {
+          const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
+          localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
         }
-      } else {
-        scrollUpCount = 0;
       }
-      
-      lastScrollY = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Push a dummy state so we can detect back button
+    window.history.pushState({ popup: true }, '');
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [isVisible, canShowPopup]);
 
   // Countdown timer
