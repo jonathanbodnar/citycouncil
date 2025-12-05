@@ -99,6 +99,7 @@ serve(async req => {
     }
 
     // Build user object for Plaid
+    // NOTE: user.name is NOT allowed for 'auth' product - only for identity_verification, protect, assets
     const plaidUser: any = { 
       client_user_id: userId,
     }
@@ -111,12 +112,7 @@ serve(async req => {
       plaidUser.phone_number = phoneNumber
     }
     
-    if (givenName && familyName) {
-      plaidUser.name = {
-        given_name: givenName,
-        family_name: familyName,
-      }
-    }
+    // DO NOT include user.name - Plaid rejects it for 'auth' product
 
     const tokenRequest = {
       client_id: PLAID_CLIENT_ID,
