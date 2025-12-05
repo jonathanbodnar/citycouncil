@@ -255,6 +255,7 @@ const TalentProfilePage: React.FC = () => {
       if (reviewsError) throw reviewsError;
 
       // Fetch recent videos from completed orders
+      console.log('🎬 Fetching videos for talent_id:', talentData.id);
       const { data: videosData, error: videosError } = await supabase
         .from('orders')
         .select('video_url, created_at')
@@ -264,6 +265,7 @@ const TalentProfilePage: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(6);
 
+      console.log('🎬 Videos query result:', { videosData, videosError });
       if (videosError) throw videosError;
 
       // Fetch pricing urgency data
