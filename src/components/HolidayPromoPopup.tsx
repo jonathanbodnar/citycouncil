@@ -262,7 +262,7 @@ const HolidayPromoPopup: React.FC = () => {
             <>
               {/* Headline */}
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                Holiday Special! 🎁
+                Say it with a personalized ShoutOut from top conservative voices 🎁
               </h2>
               
               <p className="text-white/90 text-lg mb-4">
