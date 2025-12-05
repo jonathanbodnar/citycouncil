@@ -272,7 +272,7 @@ const HomePage: React.FC = () => {
       {/* Hero Banner */}
       <div className="rounded-2xl px-6 py-3 mb-6 text-center border border-white/10 bg-white/5">
         <p className="text-white/80 text-sm sm:text-base font-medium">
-          Get a personalized video ShoutOut from top conservative voices.
+          Get personalized video ShoutOuts from top conservative voices.
         </p>
       </div>
 
