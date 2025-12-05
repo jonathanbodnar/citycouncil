@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import ScrollToTop from './components/ScrollToTop';
+import HolidayPromoPopup from './components/HolidayPromoPopup';
 
 // Capture Rumble Ad click ID on app load
 // Rumble appends _raclid to URLs when users click on ads
@@ -79,6 +80,8 @@ function App() {
               },
             }}
           />
+          {/* Holiday Promo Popup - shows once per user with 24hr countdown */}
+          <HolidayPromoPopup />
           <Suspense fallback={<PageLoader />}>
             <Routes>
             {/* Demo page - standalone without header/footer */}
