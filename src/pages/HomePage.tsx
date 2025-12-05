@@ -269,7 +269,13 @@ const HomePage: React.FC = () => {
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white">
 
-      {/* Black Friday Banner */}
+      {/* Hero Banner */}
+      <div className="glass rounded-2xl px-6 py-4 mb-6 text-center border border-white/10">
+        <p className="text-white text-lg sm:text-xl font-medium">
+          Get a personalized video ShoutOut from top conservative voices.
+        </p>
+      </div>
+
       {/* Featured Talent Carousel */}
       {featuredTalent.length > 0 && (
         <div className="mb-12">
