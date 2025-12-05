@@ -139,8 +139,7 @@ serve(async (req) => {
           pricing: 0,
           is_active: false,  // Not visible on site
           is_coming_soon: false,
-          temp_full_name: user.full_name,
-          delivery_time: 7
+          temp_full_name: user.full_name
         })
         .select('id')
         .single();
