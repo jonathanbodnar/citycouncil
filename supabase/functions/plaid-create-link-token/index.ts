@@ -53,18 +53,34 @@ serve(async req => {
     // Get user data from Supabase
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
     
-    const { data: authUser } = await supabase.auth.admin.getUserById(userId)
-    const { data: userData } = await supabase
+    console.log('Fetching user data for userId:', userId)
+    
+    const { data: authUserData, error: authError } = await supabase.auth.admin.getUserById(userId)
+    if (authError) {
+      console.error('Auth user lookup error:', authError)
+    }
+    const authUser = authUserData?.user
+    console.log('Auth user found:', { email: authUser?.email, id: authUser?.id })
+    
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('phone')
       .eq('id', userId)
       .maybeSingle()
+    if (userError) {
+      console.error('Users table lookup error:', userError)
+    }
+    console.log('User data found:', { phone: userData?.phone })
     
-    const { data: talentProfile } = await supabase
+    const { data: talentProfile, error: talentError } = await supabase
       .from('talent_profiles')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle()
+    if (talentError) {
+      console.error('Talent profile lookup error:', talentError)
+    }
+    console.log('Talent profile found:', { full_name: talentProfile?.full_name })
 
     // Format phone number for Plaid (remove all non-digits, ensure 10 digits)
     let phoneNumber = null
