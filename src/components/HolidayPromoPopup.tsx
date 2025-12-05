@@ -68,16 +68,50 @@ const HolidayPromoPopup: React.FC = () => {
 
   // Exit intent detection (mouse leaves viewport at top)
   useEffect(() => {
-    const handleMouseLeave = (e: MouseEvent) => {
-      // Only trigger on exit toward top of page (likely closing tab/navigating away)
-      if (e.clientY <= 0 && !isVisible && hasShownInitial && canShowPopup()) {
-        console.log('🚪 Exit intent detected - showing popup');
-        setIsVisible(true);
+    const handleMouseOut = (e: MouseEvent) => {
+      // Check if mouse is leaving the viewport (not just moving between elements)
+      const target = e.relatedTarget as Node | null;
+      
+      // If relatedTarget is null or not in document, mouse left the window
+      if (!target || !document.contains(target)) {
+        // Only trigger on exit toward top of page (likely closing tab/navigating away)
+        if (e.clientY <= 50 && !isVisible && hasShownInitial && canShowPopup()) {
+          console.log('🚪 Exit intent detected - clientY:', e.clientY, '- showing popup');
+          setIsVisible(true);
+        }
       }
     };
 
-    document.addEventListener('mouseleave', handleMouseLeave);
-    return () => document.removeEventListener('mouseleave', handleMouseLeave);
+    // Use mouseout on document.documentElement for better cross-browser support
+    document.documentElement.addEventListener('mouseout', handleMouseOut);
+    return () => document.documentElement.removeEventListener('mouseout', handleMouseOut);
+  }, [isVisible, hasShownInitial, canShowPopup]);
+
+  // Scroll-based exit intent for mobile (user scrolls up quickly at top of page)
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let scrollUpCount = 0;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Detect rapid scroll up at top of page (mobile exit intent)
+      if (currentScrollY < lastScrollY && currentScrollY < 100) {
+        scrollUpCount++;
+        if (scrollUpCount >= 3 && !isVisible && hasShownInitial && canShowPopup()) {
+          console.log('🚪 Mobile exit intent (scroll up) detected - showing popup');
+          setIsVisible(true);
+          scrollUpCount = 0;
+        }
+      } else {
+        scrollUpCount = 0;
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [isVisible, hasShownInitial, canShowPopup]);
 
   // Countdown timer
