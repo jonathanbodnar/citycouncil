@@ -61,12 +61,12 @@ const HolidayPromoPopup: React.FC = () => {
           localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
         }
       }
-    }, 11000);
+    }, 15000);
 
     return () => clearTimeout(timer);
   }, [canShowPopup]);
 
-  // Exit intent detection (mouse leaves viewport at top)
+  // Exit intent detection (mouse leaves viewport at top) - can trigger before 15s timer
   useEffect(() => {
     const handleMouseOut = (e: MouseEvent) => {
       // Check if mouse is leaving the viewport (not just moving between elements)
@@ -75,9 +75,17 @@ const HolidayPromoPopup: React.FC = () => {
       // If relatedTarget is null or not in document, mouse left the window
       if (!target || !document.contains(target)) {
         // Only trigger on exit toward top of page (likely closing tab/navigating away)
-        if (e.clientY <= 50 && !isVisible && hasShownInitial && canShowPopup()) {
+        if (e.clientY <= 50 && !isVisible && canShowPopup()) {
           console.log('🚪 Exit intent detected - clientY:', e.clientY, '- showing popup');
           setIsVisible(true);
+          setHasShownInitial(true);
+          
+          // Set expiry time if not already set
+          const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
+          if (!expiryTime) {
+            const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
+            localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
+          }
         }
       }
     };
@@ -85,9 +93,9 @@ const HolidayPromoPopup: React.FC = () => {
     // Use mouseout on document.documentElement for better cross-browser support
     document.documentElement.addEventListener('mouseout', handleMouseOut);
     return () => document.documentElement.removeEventListener('mouseout', handleMouseOut);
-  }, [isVisible, hasShownInitial, canShowPopup]);
+  }, [isVisible, canShowPopup]);
 
-  // Scroll-based exit intent for mobile (user scrolls up quickly at top of page)
+  // Scroll-based exit intent for mobile (user scrolls up quickly at top of page) - can trigger before 15s timer
   useEffect(() => {
     let lastScrollY = window.scrollY;
     let scrollUpCount = 0;
@@ -98,9 +106,17 @@ const HolidayPromoPopup: React.FC = () => {
       // Detect rapid scroll up at top of page (mobile exit intent)
       if (currentScrollY < lastScrollY && currentScrollY < 100) {
         scrollUpCount++;
-        if (scrollUpCount >= 3 && !isVisible && hasShownInitial && canShowPopup()) {
+        if (scrollUpCount >= 3 && !isVisible && canShowPopup()) {
           console.log('🚪 Mobile exit intent (scroll up) detected - showing popup');
           setIsVisible(true);
+          setHasShownInitial(true);
+          
+          // Set expiry time if not already set
+          const expiryTime = localStorage.getItem(POPUP_EXPIRY_KEY);
+          if (!expiryTime) {
+            const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
+            localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
+          }
           scrollUpCount = 0;
         }
       } else {
@@ -112,7 +128,7 @@ const HolidayPromoPopup: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isVisible, hasShownInitial, canShowPopup]);
+  }, [isVisible, canShowPopup]);
 
   // Countdown timer
   useEffect(() => {
