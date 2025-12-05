@@ -85,7 +85,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
     <div 
       className="relative gradient-border rounded-3xl shadow-modern-xl z-0"
     >
-      <div className="relative h-96 md:h-96 rounded-3xl overflow-hidden">
+      <div className="relative h-72 md:h-72 rounded-3xl overflow-hidden">
         {/* Desktop Background - Custom Gradient */}
         <div 
           className="hidden md:block absolute inset-0"
@@ -155,34 +155,29 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         <div className="relative h-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-full">
             {/* Mobile Layout */}
-            <div className="md:hidden flex flex-col justify-center items-center h-full py-6 space-y-4 text-center">
+            <div className="md:hidden flex flex-col justify-center items-center h-full py-4 space-y-2 text-center">
               {/* Mobile Content */}
               <div className="text-white">
-                <div className="inline-block px-4 py-2 bg-red-600/20 text-red-400 text-sm font-bold rounded-full mb-4 border border-red-500/30">
-                  ⭐ Featured Talent
+                <div className="inline-block px-3 py-1 bg-red-600/20 text-red-400 text-xs font-bold rounded-full mb-2 border border-red-500/30">
+                  ⭐ Featured
                 </div>
-                <h2 className="text-2xl font-bold mb-3">
+                <h2 className="text-xl font-bold mb-2">
                   {currentTalent.temp_full_name || currentTalent.users.full_name}
                 </h2>
-                <p className="text-sm opacity-90 mb-4 line-clamp-2 px-4">
+                <p className="text-xs opacity-90 mb-3 line-clamp-2 px-4">
                   {currentTalent.bio}
                 </p>
-                <div className="flex flex-col items-center space-y-1 mb-4">
-                  <div className="text-xl font-bold">
+                <div className="flex items-center justify-center space-x-3 mb-3">
+                  <div className="text-lg font-bold">
                     ${currentTalent.pricing}
                   </div>
                   <div className="text-xs opacity-75">
-                    Delivers in {currentTalent.fulfillment_time_hours}h
+                    {currentTalent.fulfillment_time_hours}h delivery
                   </div>
-                  {(currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0 && currentTalent.charity_name) ? (
-                    <div className="text-xs opacity-75">
-                      {currentTalent.charity_percentage}% to charity ❤️
-                    </div>
-                  ) : null}
                 </div>
                 <Link
                   to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
-                  className="inline-block px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-modern-lg hover:scale-105"
+                  className="inline-block px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-modern-lg hover:scale-105"
                   style={{
                     backgroundColor: '#3a86ff',
                     color: '#ffffff'
@@ -195,34 +190,34 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
 
             {/* Desktop Layout */}
             <div className="hidden md:flex items-center h-full">
-              <div className="grid grid-cols-2 gap-8 items-center w-full">
+              <div className="grid grid-cols-2 gap-6 items-center w-full">
                 {/* Desktop Text Content */}
-                <div className="text-white z-10 ml-16 pr-16">
-                  <div className="inline-block px-4 py-2 bg-red-600/20 text-red-400 text-sm font-bold rounded-full mb-4 border border-red-500/30">
+                <div className="text-white z-10 ml-12 pr-12">
+                  <div className="inline-block px-3 py-1 bg-red-600/20 text-red-400 text-xs font-bold rounded-full mb-3 border border-red-500/30">
                     ⭐ Featured Talent
                   </div>
-                  <h2 className="text-4xl font-bold mb-4">
+                  <h2 className="text-2xl font-bold mb-2">
                     {currentTalent.temp_full_name || currentTalent.users.full_name}
                   </h2>
-                  <p className="text-lg opacity-90 mb-6 line-clamp-3">
+                  <p className="text-sm opacity-90 mb-4 line-clamp-2">
                     {currentTalent.bio}
                   </p>
-                  <div className="flex items-center space-x-6 mb-6">
-                    <div className="text-2xl font-bold">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="text-xl font-bold">
                       ${currentTalent.pricing}
                     </div>
-                    <div className="text-sm opacity-75">
-                      Delivers in {currentTalent.fulfillment_time_hours}h
+                    <div className="text-xs opacity-75">
+                      {currentTalent.fulfillment_time_hours}h delivery
                     </div>
                     {(currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0 && currentTalent.charity_name) ? (
-                      <div className="text-sm opacity-75">
+                      <div className="text-xs opacity-75">
                         {currentTalent.charity_percentage}% to charity ❤️
                       </div>
                     ) : null}
                   </div>
                   <Link
                     to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
-                    className="inline-block px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-modern-lg hover:scale-105"
+                    className="inline-block px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-modern-lg hover:scale-105"
                     style={{
                       backgroundColor: '#3a86ff',
                       color: '#ffffff'
