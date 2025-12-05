@@ -1,5 +1,5 @@
 import React, { Fragment, useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
 import { 
   UserCircleIcon, 
@@ -37,6 +37,8 @@ const Header: React.FC = () => {
   const [searchResults, setSearchResults] = useState<TalentSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === '/' || location.pathname === '/home';
   const notificationRef = React.useRef<HTMLDivElement>(null);
   const searchRef = React.useRef<HTMLDivElement>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -280,12 +282,14 @@ const Header: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/" 
-              className="text-gray-700 hover:text-primary-600 font-medium"
-            >
-              Personalities
-            </Link>
+            {!isHomePage && (
+              <Link 
+                to="/" 
+                className="text-gray-700 hover:text-primary-600 font-medium"
+              >
+                Personalities
+              </Link>
+            )}
             {user && (
               <Link 
                 to="/dashboard" 
