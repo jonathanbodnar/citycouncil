@@ -140,7 +140,8 @@ serve(async (req) => {
           is_active: false,  // Not visible on site
           is_coming_soon: false,
           temp_full_name: user.full_name,
-          category: 'other'  // Required field
+          category: 'other',
+          fulfillment_time_hours: 168  // 7 days default
         })
         .select('id')
         .single();
