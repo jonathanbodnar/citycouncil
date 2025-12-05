@@ -1,5 +1,6 @@
-// Twilio Webhook to Receive SMS Replies from Talent
+// Twilio Webhook to Receive SMS Replies from Talent AND Users
 // This function receives incoming SMS messages and stores them in the database
+// If sender doesn't have a talent profile, one is created so they appear in Comms Center
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -70,11 +71,6 @@ serve(async (req) => {
     console.log('Phone lookup:', { from, cleanPhone });
     
     // Try multiple phone formats to find the user
-    // Format 1: 10 digits (4692079703)
-    // Format 2: 11 digits with 1 (14692079703)
-    // Format 3: With + prefix (+14692079703)
-    // Format 4: With +1 prefix (+14692079703)
-    
     const phoneVariations = [
       cleanPhone,                    // 4692079703
       `1${cleanPhone}`,              // 14692079703
@@ -85,47 +81,80 @@ serve(async (req) => {
     
     console.log('Trying phone variations:', phoneVariations);
     
-    // Find the talent by phone number (try all variations)
+    // Find the user by phone number (try all variations)
     const { data: users, error: userError } = await supabase
       .from('users')
-      .select('id, full_name, phone')
+      .select('id, full_name, phone, user_type')
       .in('phone', phoneVariations);
     
-    const user = users && users.length > 0 ? users[0] : null;
+    let user = users && users.length > 0 ? users[0] : null;
     
     console.log('User lookup result:', { user, error: userError });
 
-    if (userError || !user) {
-      console.error('❌ User not found for phone:', from);
-      return new Response(
-        '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
-        {
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'text/xml' 
-          }
-        }
-      );
+    // If no user found, create a placeholder user for this phone number
+    if (!user) {
+      console.log('📝 Creating placeholder user for phone:', cleanPhone);
+      
+      const { data: newUser, error: createUserError } = await supabase
+        .from('users')
+        .insert({
+          full_name: `SMS User (${cleanPhone})`,
+          phone: cleanPhone,
+          user_type: 'user',
+          email: `sms_${cleanPhone}@placeholder.shoutout.us`
+        })
+        .select()
+        .single();
+      
+      if (createUserError) {
+        console.error('❌ Error creating placeholder user:', createUserError);
+        // Still try to save the message somehow - maybe log it
+        return new Response(
+          '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
+          { headers: { ...corsHeaders, 'Content-Type': 'text/xml' } }
+        );
+      }
+      
+      user = newUser;
+      console.log('✅ Created placeholder user:', user);
     }
 
-    // Find talent profile
-    const { data: talent, error: talentError } = await supabase
+    // Find or create talent profile for this user
+    let { data: talent, error: talentError } = await supabase
       .from('talent_profiles')
       .select('id')
       .eq('user_id', user.id)
       .single();
 
+    // If no talent profile exists, create a placeholder one so they appear in Comms Center
     if (talentError || !talent) {
-      console.error('❌ Talent profile not found for user:', user.id);
-      return new Response(
-        '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
-        {
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'text/xml' 
-          }
-        }
-      );
+      console.log('📝 Creating placeholder talent profile for user:', user.id);
+      
+      const { data: newTalent, error: createTalentError } = await supabase
+        .from('talent_profiles')
+        .insert({
+          user_id: user.id,
+          username: `sms_user_${cleanPhone}`,
+          bio: 'SMS conversation - not a real talent profile',
+          pricing: 0,
+          is_active: false,  // Not visible on site
+          is_coming_soon: false,
+          temp_full_name: user.full_name,
+          delivery_time: 7
+        })
+        .select('id')
+        .single();
+      
+      if (createTalentError) {
+        console.error('❌ Error creating placeholder talent profile:', createTalentError);
+        return new Response(
+          '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
+          { headers: { ...corsHeaders, 'Content-Type': 'text/xml' } }
+        );
+      }
+      
+      talent = newTalent;
+      console.log('✅ Created placeholder talent profile:', talent);
     }
 
     // Save the incoming message to database
@@ -133,10 +162,11 @@ serve(async (req) => {
       .from('sms_messages')
       .insert({
         talent_id: talent.id,
-        from_admin: false, // This is from talent
+        from_admin: false, // This is from the person (talent or user)
         message: body,
         status: 'sent',
-        sent_at: new Date().toISOString()
+        sent_at: new Date().toISOString(),
+        read_by_admin: false
       });
 
     if (insertError) {
@@ -144,7 +174,7 @@ serve(async (req) => {
       throw insertError;
     }
 
-    console.log('✅ Message saved to database');
+    console.log('✅ Message saved to database for talent_id:', talent.id);
 
     // Respond to Twilio with empty TwiML (no auto-reply)
     return new Response(
