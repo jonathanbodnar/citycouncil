@@ -49,11 +49,13 @@ const HomePage: React.FC = () => {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [isTalent, setIsTalent] = useState(false);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
   const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchTalent();
     fetchFeaturedTalent();
+    fetchTotalUsers();
   }, []);
 
   useEffect(() => {
@@ -224,8 +226,29 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const fetchTotalUsers = async () => {
+    try {
+      // Get count of registered users
+      const { count: usersCount, error: usersError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_type', 'user');
 
+      if (usersError) throw usersError;
 
+      // Get count of beta signups (phone numbers not from registered users)
+      const { count: betaCount, error: betaError } = await supabase
+        .from('beta_signups')
+        .select('*', { count: 'exact', head: true });
+
+      if (betaError) throw betaError;
+
+      const total = (usersCount || 0) + (betaCount || 0);
+      setTotalUsers(total);
+    } catch (error) {
+      console.error('Error fetching total users:', error);
+    }
+  };
 
   const filteredTalent = talent.filter(t => {
     const matchesSearch = !searchQuery || 
@@ -270,10 +293,16 @@ const HomePage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white">
 
       {/* Hero Banner */}
-      <div className="rounded-2xl px-6 py-3 mb-6 text-center border border-white/10 bg-white/5">
+      <div className="rounded-2xl px-6 py-3 mb-6 flex items-center justify-center gap-4 border border-white/10 bg-white/5">
         <p className="text-white/80 text-sm sm:text-base font-medium">
           Get personalized video ShoutOuts from top conservative voices.
         </p>
+        {totalUsers > 0 && (
+          <div className="flex items-center gap-1 text-yellow-400">
+            <span className="text-sm">★★★★★</span>
+            <span className="text-white/60 text-sm">({totalUsers.toLocaleString()})</span>
+          </div>
+        )}
       </div>
 
       {/* Featured Talent Carousel */}
