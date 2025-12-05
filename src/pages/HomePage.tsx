@@ -5,7 +5,6 @@ import { TalentProfile, TalentCategory } from '../types';
 import { useAuth } from '../context/AuthContext';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
-import PromoPackageModal from '../components/PromoPackageModal';
 import SEOHelmet from '../components/SEOHelmet';
 import FOMONotification from '../components/FOMONotification';
 
@@ -47,8 +46,6 @@ const HomePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all' | 'coming_soon'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [showPromoModal, setShowPromoModal] = useState(false);
-  const [isTalent, setIsTalent] = useState(false);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -57,10 +54,6 @@ const HomePage: React.FC = () => {
     fetchFeaturedTalent();
     fetchTotalUsers();
   }, []);
-
-  useEffect(() => {
-    checkIfTalentAndShowModal();
-  }, [user]);
 
   const fetchTalent = async () => {
     try {
@@ -141,37 +134,6 @@ const HomePage: React.FC = () => {
       console.error('Error fetching talent:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkIfTalentAndShowModal = async () => {
-    if (!user?.id) return;
-
-    // Check if user has already seen the modal in this session
-    const hasSeenModal = localStorage.getItem(`promo-modal-seen-${user.id}`);
-    if (hasSeenModal) return;
-
-    try {
-      // Check if user is talent
-      const { data, error } = await supabase
-        .from('talent_profiles')
-        .select('is_participating_in_promotion')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        // Not a talent user, don't show modal
-        return;
-      }
-
-      setIsTalent(true);
-
-      // If talent and hasn't claimed promo yet, show modal
-      if (!data.is_participating_in_promotion) {
-        setShowPromoModal(true);
-      }
-    } catch (error) {
-      console.error('Error checking talent status:', error);
     }
   };
 
@@ -415,10 +377,6 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* Promo Package Modal */}
-      {showPromoModal && isTalent && (
-        <PromoPackageModal onClose={() => setShowPromoModal(false)} />
-      )}
 
       {/* FOMO Notification - Shows real reviews */}
       <FOMONotification interval={8000} />
