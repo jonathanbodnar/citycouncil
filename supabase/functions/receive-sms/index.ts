@@ -136,7 +136,7 @@ serve(async (req) => {
           user_id: user.id,
           username: `sms_user_${cleanPhone}`,
           bio: 'SMS conversation - not a real talent profile',
-          pricing: 0,
+          pricing: 1,  // Minimum allowed by check constraint
           is_active: false,  // Not visible on site
           is_coming_soon: false,
           temp_full_name: user.full_name,
