@@ -105,44 +105,63 @@ const HolidayPromoPopup: React.FC = () => {
     
     // Validate phone number (should have 10 digits)
     const digits = phoneNumber.replace(/\D/g, '');
-    if (digits.length !== 10) {
+    
+    // Handle various formats - strip leading 1 if present
+    let cleanDigits = digits;
+    if (digits.length === 11 && digits.startsWith('1')) {
+      cleanDigits = digits.slice(1);
+    }
+    
+    if (cleanDigits.length !== 10) {
+      console.log('❌ Invalid phone number:', phoneNumber, '-> digits:', digits, '-> clean:', cleanDigits);
       toast.error('Please enter a valid 10-digit phone number');
       return;
     }
 
     setIsSubmitting(true);
+    console.log('📱 Holiday popup - submitting phone:', cleanDigits);
 
     try {
       // Format phone number for storage (+1XXXXXXXXXX)
-      const formattedPhone = `+1${digits}`;
+      const formattedPhone = `+1${cleanDigits}`;
+      console.log('📱 Formatted phone for storage:', formattedPhone);
 
       // Save to beta_signups with source "holiday_popup"
-      const { error: insertError } = await supabase
+      const { data, error: insertError } = await supabase
         .from('beta_signups')
         .insert({
           phone_number: formattedPhone,
           source: 'holiday_popup',
           subscribed_at: new Date().toISOString()
-        });
+        })
+        .select();
+
+      console.log('📱 Insert result:', { data, error: insertError });
 
       if (insertError) {
         // Check if it's a duplicate
         if (insertError.code === '23505') {
+          console.log('📱 Duplicate phone number - already signed up');
           toast.success('You\'re already signed up! Use code SANTA25 for 25% off.');
         } else {
+          console.error('❌ Insert error:', insertError);
           throw insertError;
         }
       } else {
+        console.log('✅ Phone number saved successfully:', data);
+        
         // Send SMS via edge function
         try {
-          await supabase.functions.invoke('send-sms', {
+          console.log('📤 Sending welcome SMS...');
+          const smsResult = await supabase.functions.invoke('send-sms', {
             body: {
               to: formattedPhone,
               message: `Welcome to ShoutOut! 🎄 To get 25% off your first order, use code SANTA25. Offer ends in 48 hours! https://shoutout.us`
             }
           });
+          console.log('📤 SMS result:', smsResult);
         } catch (smsError) {
-          console.error('Error sending SMS:', smsError);
+          console.error('❌ Error sending SMS:', smsError);
           // Don't fail the whole submission if SMS fails
         }
 
@@ -157,8 +176,9 @@ const HolidayPromoPopup: React.FC = () => {
         setIsVisible(false);
       }, 3000);
 
-    } catch (error) {
-      console.error('Error submitting phone number:', error);
+    } catch (error: any) {
+      console.error('❌ Error submitting phone number:', error);
+      console.error('❌ Error details:', JSON.stringify(error, null, 2));
       toast.error('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
