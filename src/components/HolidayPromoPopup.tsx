@@ -61,7 +61,7 @@ const HolidayPromoPopup: React.FC = () => {
           localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
         }
       }
-    }, 2000);
+    }, 11000);
 
     return () => clearTimeout(timer);
   }, [canShowPopup]);
