@@ -298,8 +298,18 @@ const HomePage: React.FC = () => {
           Get personalized video ShoutOuts from top conservative voices.
         </p>
         {totalUsers > 0 && (
-          <div className="flex items-center gap-1 text-yellow-400">
-            <span className="text-sm">★★★★★</span>
+          <div className="flex items-center gap-1">
+            <span 
+              className="text-sm font-bold"
+              style={{
+                background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
+              ★★★★★
+            </span>
             <span className="text-white/60 text-sm">({totalUsers.toLocaleString()})</span>
           </div>
         )}

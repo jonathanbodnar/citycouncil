@@ -1,7 +1,5 @@
 // @ts-ignore - Deno std import
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-// @ts-ignore - Deno npm import
-import { PlaidApi, Configuration, PlaidEnvironments } from 'npm:plaid'
 // @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -26,34 +24,29 @@ serve(async req => {
     // @ts-ignore
     const SUPABASE_SERVICE_ROLE_KEY = (globalThis as any).Deno?.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
+    console.log('Environment check:', { 
+      hasPlaidClientId: !!PLAID_CLIENT_ID, 
+      hasPlaidSecret: !!PLAID_SECRET,
+      hasSupabaseUrl: !!SUPABASE_URL,
+      hasServiceKey: !!SUPABASE_SERVICE_ROLE_KEY
+    })
+
     // Validate credentials
     if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
-      console.error('Missing Plaid credentials:', { 
-        hasClientId: !!PLAID_CLIENT_ID, 
-        hasSecret: !!PLAID_SECRET 
-      })
+      console.error('Missing Plaid credentials')
       throw new Error('Plaid credentials not configured')
     }
 
-    // Initialize Plaid client inside request handler
-    const config = new Configuration({
-      basePath: PlaidEnvironments.production,
-      baseOptions: {
-        headers: {
-          'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-          'PLAID-SECRET': PLAID_SECRET,
-        },
-      },
-    })
-    const plaidClient = new PlaidApi(config)
-
-    const { userId } = await req.json()
+    const body = await req.json()
+    const { userId } = body
+    console.log('Received request for userId:', userId)
+    
     if (!userId) throw new Error('User ID is required')
 
     // Get user data from Supabase
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
     
-    console.log('Fetching user data for userId:', userId)
+    console.log('Fetching user data...')
     
     const { data: authUserData, error: authError } = await supabase.auth.admin.getUserById(userId)
     if (authError) {
@@ -74,7 +67,7 @@ serve(async req => {
     
     const { data: talentProfile, error: talentError } = await supabase
       .from('talent_profiles')
-      .select('*')
+      .select('full_name')
       .eq('user_id', userId)
       .maybeSingle()
     if (talentError) {
@@ -85,14 +78,11 @@ serve(async req => {
     // Format phone number for Plaid (remove all non-digits, ensure 10 digits)
     let phoneNumber = null
     if (userData?.phone) {
-      // Remove +, spaces, dashes, parentheses, etc.
       const cleaned = userData.phone.replace(/[^\d]/g, '')
-      // Remove country code if present (handles +1, 1, etc.)
       let digits = cleaned
       if (digits.startsWith('1') && digits.length === 11) {
         digits = digits.slice(1)
       }
-      // Only use if exactly 10 digits
       if (digits.length === 10) {
         phoneNumber = digits
       }
@@ -108,67 +98,80 @@ serve(async req => {
       familyName = nameParts.slice(1).join(' ') || ''
     }
 
-    const tokenRequest: any = {
-      user: { 
-        client_user_id: userId,
-      },
+    // Build user object for Plaid
+    const plaidUser: any = { 
+      client_user_id: userId,
+    }
+    
+    if (authUser?.email) {
+      plaidUser.email_address = authUser.email
+    }
+    
+    if (phoneNumber && phoneNumber.length === 10) {
+      plaidUser.phone_number = phoneNumber
+    }
+    
+    if (givenName && familyName) {
+      plaidUser.name = {
+        given_name: givenName,
+        family_name: familyName,
+      }
+    }
+
+    const tokenRequest = {
+      client_id: PLAID_CLIENT_ID,
+      secret: PLAID_SECRET,
+      user: plaidUser,
       client_name: 'ShoutOut',
       products: ['auth'],
       country_codes: ['US'],
       language: 'en',
     }
 
-    // Only add user data if we have valid information
-    // IMPORTANT: Only send email/phone/name if they are valid, otherwise omit them entirely
-    if (authUser?.email) {
-      tokenRequest.user.email_address = authUser.email
-    }
-    
-    // Only send phone if it's EXACTLY 10 digits (Plaid requirement)
-    if (phoneNumber && phoneNumber.length === 10) {
-      tokenRequest.user.phone_number = phoneNumber
-    }
-    
-    // Only send name if both parts exist
-    if (givenName && familyName) {
-      tokenRequest.user.name = {
-        given_name: givenName,
-        family_name: familyName,
-      }
-    }
+    console.log('Calling Plaid API with request:', JSON.stringify({
+      ...tokenRequest,
+      client_id: '***',
+      secret: '***'
+    }))
 
-    console.log('Creating Plaid link token with user data:', {
-      userId,
-      email: authUser?.email || 'none',
-      phone: phoneNumber || 'none',
-      name: `${givenName} ${familyName}`.trim() || 'none'
+    // Use direct fetch instead of SDK
+    const plaidResponse = await fetch('https://production.plaid.com/link/token/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(tokenRequest),
     })
 
-    const response = await plaidClient.linkTokenCreate(tokenRequest)
+    const responseText = await plaidResponse.text()
+    console.log('Plaid API response status:', plaidResponse.status)
+    console.log('Plaid API response:', responseText.substring(0, 500))
 
-    return new Response(JSON.stringify(response.data), {
+    if (!plaidResponse.ok) {
+      let errorData
+      try {
+        errorData = JSON.parse(responseText)
+      } catch {
+        errorData = { raw: responseText }
+      }
+      console.error('Plaid API error:', errorData)
+      throw new Error(errorData?.error_message || `Plaid API error: ${plaidResponse.status}`)
+    }
+
+    const data = JSON.parse(responseText)
+    console.log('Successfully created link token')
+
+    return new Response(JSON.stringify(data), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error: any) {
-    // Log detailed error information
-    const errorDetails = {
-      message: error?.message,
-      responseData: error?.response?.data,
-      responseStatus: error?.response?.status,
-      stack: error?.stack?.split('\n').slice(0, 5).join('\n')
-    }
-    console.error('Plaid Link Token Error:', JSON.stringify(errorDetails, null, 2))
-
-    // Return user-friendly error
-    const userMessage = error?.response?.data?.error_message 
-      || error?.message 
-      || 'Failed to initialize bank connection. Please try again.'
+    console.error('Error in plaid-create-link-token:', error?.message || error)
+    console.error('Error stack:', error?.stack)
 
     return new Response(
       JSON.stringify({
-        error: userMessage,
-        details: error?.response?.data || null
+        error: error?.message || 'Failed to initialize bank connection. Please try again.',
       }),
       {
         status: 500,
