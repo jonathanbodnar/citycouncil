@@ -80,19 +80,27 @@ const HomePage: React.FC = () => {
         throw error;
       }
 
-      // Separate active and coming soon talent
-      const activeTalent = (data || []).filter(t => t.is_active && !t.is_coming_soon);
-      const comingSoonTalent = (data || []).filter(t => t.is_coming_soon);
-      
-      // Shuffle active talent randomly (Fisher-Yates algorithm)
-      const shuffledActive = [...activeTalent];
-      for (let i = shuffledActive.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledActive[i], shuffledActive[j]] = [shuffledActive[j], shuffledActive[i]];
-      }
-      
-      // Combine: randomized active talent first, then coming soon at the end
-      const sortedData = [...shuffledActive, ...comingSoonTalent];
+      // Sort by display_order (admin-set positioning), then active before coming soon
+      const sortedData = (data || []).sort((a, b) => {
+        // 1. If both have display_order, sort by that (ascending)
+        if (a.display_order !== null && b.display_order !== null) {
+          return a.display_order - b.display_order;
+        }
+        
+        // 2. If only one has display_order, it comes first
+        if (a.display_order !== null) return -1;
+        if (b.display_order !== null) return 1;
+        
+        // 3. For NULL display_order: Active before Coming Soon
+        const aIsActive = a.is_active && !a.is_coming_soon;
+        const bIsActive = b.is_active && !b.is_coming_soon;
+        
+        if (aIsActive && !bIsActive) return -1;
+        if (!aIsActive && bIsActive) return 1;
+        
+        // 4. Within same status, newest first (by created_at)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
 
       console.log('Talent data fetched:', sortedData.length, 'profiles');
 
