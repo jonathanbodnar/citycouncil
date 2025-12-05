@@ -139,7 +139,8 @@ serve(async (req) => {
           pricing: 0,
           is_active: false,  // Not visible on site
           is_coming_soon: false,
-          temp_full_name: user.full_name
+          temp_full_name: user.full_name,
+          category: 'other'  // Required field
         })
         .select('id')
         .single();
