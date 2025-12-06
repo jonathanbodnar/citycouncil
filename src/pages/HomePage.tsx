@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MagnifyingGlassIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
@@ -39,6 +40,7 @@ const TALENT_CATEGORIES = [
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,16 @@ const HomePage: React.FC = () => {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Capture global UTM tracking (e.g., shoutout.us/?utm=rumble)
+  // These track for ANY talent the user orders from
+  useEffect(() => {
+    const utmParam = searchParams.get('utm');
+    // Only store global UTMs (not utm=1 which is talent-specific self-promo)
+    if (utmParam && utmParam !== '1') {
+      localStorage.setItem('promo_source_global', utmParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchTalent();

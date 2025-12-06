@@ -46,41 +46,44 @@ const TalentProfilePage: React.FC = () => {
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
 
-  // Capture UTM tracking and store in localStorage for this talent
-  // Using localStorage so it persists even if user navigates away and comes back later
-  // utm=1 means "self_promo", any other value (e.g., utm=rumble) uses that value as the tag
-  const getPromoSourceFromUtm = (utmValue: string | null): string | null => {
-    if (!utmValue) return null;
-    if (utmValue === '1') return 'self_promo';
-    return utmValue; // e.g., "rumble", "twitter", "facebook", etc.
-  };
-
+  // Capture UTM tracking and store in localStorage
+  // utm=1 means "self_promo" - ONLY tracks for this specific talent
+  // All other UTMs (rumble, twitter, etc.) are GLOBAL - track for any talent ordered
   useEffect(() => {
     const utmParam = searchParams.get('utm');
     const talentIdentifier = username || id;
-    const promoSource = getPromoSourceFromUtm(utmParam);
     
-    if (promoSource && talentIdentifier) {
-      // Store the promo source for this specific talent (by username/id from URL)
-      // Use localStorage for persistence across sessions
-      localStorage.setItem(`promo_source_${talentIdentifier}`, promoSource);
+    if (utmParam === '1' && talentIdentifier) {
+      // Self-promo: store per-talent (only tracks if they order from THIS talent)
+      localStorage.setItem(`promo_source_${talentIdentifier}`, 'self_promo');
+    } else if (utmParam && utmParam !== '1') {
+      // Global UTM: store globally (tracks for ANY talent they order from)
+      localStorage.setItem('promo_source_global', utmParam);
     }
   }, [searchParams, username, id]);
 
-  // Also store promo source by talent's actual ID once loaded (for order page lookup)
+  // Also store self-promo by talent's actual ID once loaded (for order page lookup)
   useEffect(() => {
     const utmParam = searchParams.get('utm');
-    const promoSource = getPromoSourceFromUtm(utmParam);
     
-    if (promoSource && talent?.id) {
-      // Store by talent profile ID (used by order page)
-      localStorage.setItem(`promo_source_${talent.id}`, promoSource);
+    if (utmParam === '1' && talent?.id) {
+      // Self-promo: store by talent profile ID (used by order page)
+      localStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
       // Also store by username if available
       if (talent.username) {
-        localStorage.setItem(`promo_source_${talent.username}`, promoSource);
+        localStorage.setItem(`promo_source_${talent.username}`, 'self_promo');
       }
     }
   }, [searchParams, talent?.id, talent?.username]);
+  
+  // Helper for onClick handlers
+  const storePromoSourceOnClick = () => {
+    const utmParam = searchParams.get('utm');
+    if (utmParam === '1' && talent?.id) {
+      localStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
+    }
+    // Global UTMs are already stored, no need to do anything on click
+  };
 
   useEffect(() => {
     if (id || username) {
@@ -630,15 +633,7 @@ const TalentProfilePage: React.FC = () => {
             {/* CTA Button */}
             <Link
               to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
-              onClick={() => {
-                // Store promo source by talent ID when clicking order button
-                // This ensures it's available on the order page even if the useEffect didn't fire yet
-                const utmParam = searchParams.get('utm');
-                const promoSource = getPromoSourceFromUtm(utmParam);
-                if (promoSource && talent.id) {
-                  localStorage.setItem(`promo_source_${talent.id}`, promoSource);
-                }
-              }}
+              onClick={storePromoSourceOnClick}
               className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl hover:scale-[1.02]"
               style={{ backgroundColor: '#3a86ff' }}
             >
@@ -759,14 +754,7 @@ const TalentProfilePage: React.FC = () => {
             </div>
             <Link
               to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
-              onClick={() => {
-                // Store promo source by talent ID when clicking order button
-                const utmParam = searchParams.get('utm');
-                const promoSource = getPromoSourceFromUtm(utmParam);
-                if (promoSource && talent.id) {
-                  localStorage.setItem(`promo_source_${talent.id}`, promoSource);
-                }
-              }}
+              onClick={storePromoSourceOnClick}
               className="inline-block px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
             >
               Order Now - ${talent.pricing}

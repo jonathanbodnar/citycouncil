@@ -58,26 +58,32 @@ const OrderPage: React.FC = () => {
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   
   // Check for UTM tracking - check URL param first, then localStorage
-  // utm=1 means "self_promo", any other value (e.g., utm=rumble) uses that value as the tag
+  // utm=1 = "self_promo" (talent-specific, only tracks for the talent they landed on)
+  // Other UTMs (rumble, twitter, etc.) = global (tracks for ANY talent)
   const getPromoSource = (loadedTalent?: TalentWithUser | null): string | null => {
     // First check URL param
     const utmParam = searchParams.get('utm');
     if (utmParam) {
       return utmParam === '1' ? 'self_promo' : utmParam;
     }
-    // Then check localStorage (set when they landed on profile page with utm)
-    // Using localStorage so it persists even if user navigates away and comes back
-    // Check by talent ID
+    
+    // Check for talent-specific self_promo (utm=1 on their profile)
+    // This only applies if ordering from the SAME talent they landed on
     if (talentId) {
       const storedByTalentId = localStorage.getItem(`promo_source_${talentId}`);
-      if (storedByTalentId) return storedByTalentId;
+      if (storedByTalentId === 'self_promo') return 'self_promo';
     }
-    // Check by username (if talent data is loaded)
     const talentToCheck = loadedTalent || talent;
     if (talentToCheck?.username) {
       const storedByUsername = localStorage.getItem(`promo_source_${talentToCheck.username}`);
-      if (storedByUsername) return storedByUsername;
+      if (storedByUsername === 'self_promo') return 'self_promo';
     }
+    
+    // Check for global UTM (e.g., shoutout.us/?utm=rumble)
+    // This applies to ANY talent they order from
+    const globalPromo = localStorage.getItem('promo_source_global');
+    if (globalPromo) return globalPromo;
+    
     return null;
   };
   
