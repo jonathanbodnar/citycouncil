@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { 
   StarIcon, 
   HeartIcon, 
@@ -37,6 +37,7 @@ interface TalentWithDetails extends TalentProfile {
 
 const TalentProfilePage: React.FC = () => {
   const { id, username } = useParams<{ id?: string; username?: string }>();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [talent, setTalent] = useState<TalentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,17 @@ const TalentProfilePage: React.FC = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
+
+  // Capture self-promo tracking (utm=1) and store in sessionStorage for this talent
+  useEffect(() => {
+    const utmParam = searchParams.get('utm');
+    const talentIdentifier = username || id;
+    
+    if (utmParam === '1' && talentIdentifier) {
+      // Store the promo source for this specific talent
+      sessionStorage.setItem(`promo_source_${talentIdentifier}`, 'self_promo');
+    }
+  }, [searchParams, username, id]);
 
   useEffect(() => {
     if (id || username) {

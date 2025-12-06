@@ -57,8 +57,26 @@ const OrderPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   
-  // Check for self-promo tracking (utm=1)
-  const promoSource = searchParams.get('utm') === '1' ? 'self_promo' : null;
+  // Check for self-promo tracking (utm=1) - check URL param first, then sessionStorage
+  const getPromoSource = (loadedTalent?: TalentWithUser | null): string | null => {
+    // First check URL param
+    if (searchParams.get('utm') === '1') {
+      return 'self_promo';
+    }
+    // Then check sessionStorage (set when they landed on profile page with utm=1)
+    // Check by talent ID
+    if (talentId) {
+      const storedByTalentId = sessionStorage.getItem(`promo_source_${talentId}`);
+      if (storedByTalentId) return storedByTalentId;
+    }
+    // Check by username (if talent data is loaded)
+    const talentToCheck = loadedTalent || talent;
+    if (talentToCheck?.username) {
+      const storedByUsername = sessionStorage.getItem(`promo_source_${talentToCheck.username}`);
+      if (storedByUsername) return storedByUsername;
+    }
+    return null;
+  };
   
   const {
     register,
@@ -372,7 +390,7 @@ const OrderPage: React.FC = () => {
             approved_at: orderData.isForBusiness ? null : new Date().toISOString(),
             status: 'pending',
             allow_promotional_use: orderData.allowPromotionalUse ?? true,
-            promo_source: promoSource
+            promo_source: getPromoSource(talent)
           },
         ])
         .select()
