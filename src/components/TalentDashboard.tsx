@@ -51,7 +51,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media'>('analytics');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -66,8 +66,8 @@ const TalentDashboard: React.FC = () => {
     if (tabParam && ['orders', 'analytics', 'profile', 'payouts', 'promotion', 'media'].includes(tabParam)) {
       setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media');
     } else {
-      // Default to orders when no tab parameter
-      setActiveTab('orders');
+      // Default to analytics (stats) when no tab parameter
+      setActiveTab('analytics');
     }
   }, [tabParam]); // Watch the actual tab value
 
@@ -524,6 +524,36 @@ const TalentDashboard: React.FC = () => {
             sessionStorage.setItem('phonePromptDismissed', 'true');
           }}
         />
+      )}
+
+      {/* Self-Promo Link Banner */}
+      {talentProfile && (
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-purple-500/20">
+                <span className="text-2xl">🔗</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Your Personal Promo Link</h3>
+                <p className="text-sm text-gray-300">Share this link to track orders from your own promotion</p>
+                <code className="text-xs text-purple-300 bg-purple-900/30 px-2 py-1 rounded mt-1 inline-block">
+                  shoutout.us/{talentProfile.username || talentProfile.id}?utm=1
+                </code>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
+                navigator.clipboard.writeText(promoUrl);
+                toast.success('Promo link copied!');
+              }}
+              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+              📋 Copy Link
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Payout Setup Reminder Banner */}

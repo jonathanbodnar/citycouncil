@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { 
   HeartIcon, 
@@ -51,10 +51,14 @@ const OrderPage: React.FC = () => {
   const { talentId } = useParams<{ talentId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [talent, setTalent] = useState<TalentWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
+  
+  // Check for self-promo tracking (utm=1)
+  const promoSource = searchParams.get('utm') === '1' ? 'self_promo' : null;
   
   const {
     register,
@@ -367,7 +371,8 @@ const OrderPage: React.FC = () => {
             approval_status: orderData.isForBusiness ? 'pending' : 'approved',
             approved_at: orderData.isForBusiness ? null : new Date().toISOString(),
             status: 'pending',
-            allow_promotional_use: orderData.allowPromotionalUse ?? true
+            allow_promotional_use: orderData.allowPromotionalUse ?? true,
+            promo_source: promoSource
           },
         ])
         .select()
