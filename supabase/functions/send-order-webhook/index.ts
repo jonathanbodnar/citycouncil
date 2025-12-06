@@ -29,6 +29,25 @@ serve(async (req) => {
   try {
     const payload: OrderWebhookPayload = await req.json();
     
+    // Exclude test/admin emails from webhook
+    const excludedEmails = [
+      'helloshoutout@shoutout.us',
+      'john@example.com',
+      'admin@shoutout.us'
+    ];
+    
+    if (excludedEmails.includes(payload.customer_email?.toLowerCase())) {
+      console.log('⏭️ Skipping webhook for excluded email:', payload.customer_email);
+      return new Response(JSON.stringify({
+        success: true,
+        skipped: true,
+        reason: 'Excluded email address'
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
     console.log('📤 Sending order webhook to Zapier:', payload);
 
     // Send to Zapier

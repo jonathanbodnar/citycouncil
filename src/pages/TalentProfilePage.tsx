@@ -618,6 +618,14 @@ const TalentProfilePage: React.FC = () => {
             {/* CTA Button */}
             <Link
               to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+              onClick={() => {
+                // Store promo source by talent ID when clicking order button
+                // This ensures it's available on the order page even if the useEffect didn't fire yet
+                const utmParam = searchParams.get('utm');
+                if (utmParam === '1' && talent.id) {
+                  sessionStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
+                }
+              }}
               className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl hover:scale-[1.02]"
               style={{ backgroundColor: '#3a86ff' }}
             >
@@ -738,6 +746,13 @@ const TalentProfilePage: React.FC = () => {
             </div>
             <Link
               to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+              onClick={() => {
+                // Store promo source by talent ID when clicking order button
+                const utmParam = searchParams.get('utm');
+                if (utmParam === '1' && talent.id) {
+                  sessionStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
+                }
+              }}
               className="inline-block px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
             >
               Order Now - ${talent.pricing}

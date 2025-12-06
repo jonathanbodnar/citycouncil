@@ -22,6 +22,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false); // New state for payment processing
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
   const [orderReference, setOrderReference] = useState<string | null>(null);
@@ -50,6 +51,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       const errorMsg = payload?.error || payload?.message || payload?.data?.error || payload?.data?.message;
       if (errorMsg && typeof errorMsg === 'string' && (errorMsg.toLowerCase().includes('decline') || errorMsg.toLowerCase().includes('fail') || errorMsg.toLowerCase().includes('error'))) {
         console.error('❌ Payment error in payload:', errorMsg);
+        setIsProcessing(false);
         setError(errorMsg);
         onPaymentError(errorMsg);
         return;
@@ -67,6 +69,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       // reason_code_id 1000 = approved, others indicate decline reasons
       if (statusCode && statusCode !== 101 && statusCode !== 100) {
         console.error('❌ Payment declined - status_code:', statusCode, 'reason_code:', reasonCode);
+        setIsProcessing(false);
         setError('Payment was declined. Please try a different card.');
         onPaymentError('Payment was declined. Please try a different card.');
         return;
@@ -79,6 +82,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       }
       
       successHandledRef.current = true;
+      setIsProcessing(true); // Show processing spinner
+      setError(null); // Clear any previous errors
       
       // If status is already approved (101 or 100), proceed without verification
       if (statusCode === 101 || statusCode === 100) {
@@ -93,6 +98,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           // Check if verification shows declined status
           if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
             console.error('❌ Payment verification shows declined - status:', verify.statusCode);
+            setIsProcessing(false);
             successHandledRef.current = false; // Allow retry
             setError('Payment was declined. Please try a different card.');
             onPaymentError('Payment was declined. Please try a different card.');
@@ -152,6 +158,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       const handleSuccess = async (payload: any) => {
         if (successHandledRef.current) return;
         successHandledRef.current = true;
+        setIsProcessing(true); // Show processing spinner
+        setError(null); // Clear any previous errors
         console.log('payment_success payload', payload);
         
         // Check for declined/failed status in the payload first
@@ -161,6 +169,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         // Fortis status codes: 101 = approved, 100 = pending, 102-199 = declined/failed
         if (statusCode && statusCode !== 101 && statusCode !== 100) {
           console.error('❌ Payment declined in payload - status_code:', statusCode, 'reason_code:', reasonCode);
+          setIsProcessing(false);
           successHandledRef.current = false; // Allow retry
           setError('Payment was declined. Please try a different card.');
           onPaymentError('Payment was declined. Please try a different card.');
@@ -176,6 +185,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           // Check if verification shows declined status
           if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
             console.error('❌ Payment verification shows declined - status:', verify.statusCode);
+            setIsProcessing(false);
             successHandledRef.current = false; // Allow retry
             setError('Payment was declined. Please try a different card.');
             onPaymentError('Payment was declined. Please try a different card.');
@@ -194,6 +204,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             console.log('⚠️ Verification failed but transaction exists, proceeding with payment');
             setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode || 101, payload }), 0);
           } else {
+            setIsProcessing(false);
             successHandledRef.current = false; // Allow retry
             setError('Could not verify payment. Please try again.');
             onPaymentError('Could not verify payment. Please try again.');
@@ -291,6 +302,20 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Processing Payment Overlay */}
+          {isProcessing && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="bg-slate-900 border border-white/20 rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
+                <div className="relative mx-auto w-16 h-16 mb-4">
+                  <div className="absolute inset-0 rounded-full border-4 border-purple-500/30"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">Processing Payment</h3>
+                <p className="text-slate-400 text-sm">Please wait while we confirm your payment...</p>
+              </div>
             </div>
           )}
 
