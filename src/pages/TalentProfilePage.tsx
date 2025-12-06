@@ -52,10 +52,23 @@ const TalentProfilePage: React.FC = () => {
     const talentIdentifier = username || id;
     
     if (utmParam === '1' && talentIdentifier) {
-      // Store the promo source for this specific talent
+      // Store the promo source for this specific talent (by username/id from URL)
       sessionStorage.setItem(`promo_source_${talentIdentifier}`, 'self_promo');
     }
   }, [searchParams, username, id]);
+
+  // Also store promo source by talent's actual ID once loaded (for order page lookup)
+  useEffect(() => {
+    const utmParam = searchParams.get('utm');
+    if (utmParam === '1' && talent?.id) {
+      // Store by talent profile ID (used by order page)
+      sessionStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
+      // Also store by username if available
+      if (talent.username) {
+        sessionStorage.setItem(`promo_source_${talent.username}`, 'self_promo');
+      }
+    }
+  }, [searchParams, talent?.id, talent?.username]);
 
   useEffect(() => {
     if (id || username) {
