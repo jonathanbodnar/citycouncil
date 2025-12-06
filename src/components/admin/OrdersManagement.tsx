@@ -26,6 +26,7 @@ interface Order {
   denied_by?: string;
   denied_at?: string;
   refund_id?: string;
+  promo_source?: string;
   users: {
     id: string;
     email: string;
@@ -320,7 +321,7 @@ const OrdersManagement: React.FC = () => {
                         ${(order.amount / 100).toFixed(2)}
                       </div>
                     </div>
-                    <div className="col-span-2">
+                    <div>
                       <div className="text-xs text-gray-500 mb-0.5">Date</div>
                       <div className="text-gray-900 text-xs">
                         {new Date(order.created_at).toLocaleDateString('en-US', {
@@ -331,6 +332,20 @@ const OrdersManagement: React.FC = () => {
                           minute: '2-digit'
                         })}
                       </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Source</div>
+                      {order.promo_source ? (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          order.promo_source === 'self_promo' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {order.promo_source === 'self_promo' ? '🎯 Self' : `📣 ${order.promo_source}`}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -452,6 +467,9 @@ const OrdersManagement: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Source
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -460,7 +478,7 @@ const OrdersManagement: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                     No orders found
                   </td>
                 </tr>
@@ -491,6 +509,19 @@ const OrdersManagement: React.FC = () => {
                           ${(order.amount / 100).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {order.promo_source ? (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              order.promo_source === 'self_promo' 
+                                ? 'bg-purple-100 text-purple-800' 
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {order.promo_source === 'self_promo' ? '🎯 Self Promo' : `📣 ${order.promo_source}`}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <button
                             onClick={(e) => {
@@ -507,7 +538,7 @@ const OrdersManagement: React.FC = () => {
                       {/* Expanded Details Row */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                          <td colSpan={8} className="px-6 py-4 bg-gray-50">
                             <div className="space-y-4">
                               {/* Message */}
                               <div>
