@@ -95,9 +95,9 @@ const OrderFulfillmentPage: React.FC = () => {
         return;
       }
 
-      // Redirect to welcome page (which will then redirect to dashboard with order)
+      // Redirect to dashboard with order
       toast.success('Loading your order...');
-      navigate(`/welcome?order=${orderData.id}`);
+      navigate(`/dashboard?tab=orders&order=${orderData.id}`);
       
     } catch (error) {
       console.error('Error verifying token:', error);

@@ -131,7 +131,7 @@ const TalentOnboardingPage: React.FC = () => {
             localStorage.removeItem(savedKey);
 
             toast.success('Welcome back! Your account is already secured with 2FA.');
-            navigate('/welcome');
+            navigate('/dashboard');
           }
         } catch (error) {
           console.error('Error checking MFA status:', error);
@@ -1938,7 +1938,7 @@ const TalentOnboardingPage: React.FC = () => {
                     }
 
                     toast.success('Welcome to ShoutOut! Your account is now fully secured.');
-                    navigate('/welcome');
+                    navigate('/dashboard');
                   } catch (error: any) {
                     console.error('Error completing onboarding:', error);
                     toast.error('Failed to complete onboarding');

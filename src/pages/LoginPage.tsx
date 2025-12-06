@@ -60,12 +60,12 @@ const LoginPage: React.FC = () => {
           console.log('LoginPage: Database user type:', userData?.user_type);
           
           if (!error && userData?.user_type === 'talent') {
-            console.log('LoginPage: ✅ Talent user confirmed, CALLING navigate(/welcome)');
-            navigate('/welcome', { replace: true });
+            console.log('LoginPage: ✅ Talent user confirmed, CALLING navigate(/dashboard)');
+            navigate('/dashboard', { replace: true });
             console.log('LoginPage: ✅ navigate() called');
           } else if (user.user_type === 'talent') {
-            console.log('LoginPage: ✅ Talent user from context, CALLING navigate(/welcome)');
-            navigate('/welcome', { replace: true });
+            console.log('LoginPage: ✅ Talent user from context, CALLING navigate(/dashboard)');
+            navigate('/dashboard', { replace: true });
             console.log('LoginPage: ✅ navigate() called');
           } else {
             console.log('LoginPage: Regular user, redirecting to:', returnTo);
@@ -75,8 +75,8 @@ const LoginPage: React.FC = () => {
           console.error('LoginPage: Error checking user type:', err);
           // Fallback to context user_type
           if (user.user_type === 'talent') {
-            console.log('LoginPage: ✅ Fallback - Talent user, CALLING navigate(/welcome)');
-            navigate('/welcome', { replace: true });
+            console.log('LoginPage: ✅ Fallback - Talent user, CALLING navigate(/dashboard)');
+            navigate('/dashboard', { replace: true });
             console.log('LoginPage: ✅ navigate() called');
           } else {
             navigate(returnTo, { replace: true });
