@@ -212,7 +212,7 @@ const SMSManagement: React.FC = () => {
     switch (audience) {
       case 'beta': return 'Beta Users';
       case 'registered': return 'Registered Users';
-      case 'all': return 'All Users';
+      case 'all': return 'All Phone Numbers';
       case 'talent': return 'Talent';
       case 'holiday_popup': return 'Holiday Promo';
       default: return audience;
@@ -303,11 +303,11 @@ const SMSManagement: React.FC = () => {
               onChange={(e) => setTargetAudience(e.target.value as any)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
+              <option value="all">📱 All Phone Numbers (except talent) - {stats?.total_subscribers || 0}</option>
               <option value="holiday_popup">🎄 Holiday Promo (from popup) - {stats?.holiday_popup_subscribers || 0}</option>
               <option value="beta">Beta Users (from landing page) - {stats?.beta_subscribers || 0}</option>
-              <option value="registered">Registered Users - {stats?.registered_subscribers || 0}</option>
-              <option value="all">All Users - {stats?.total_subscribers || 0}</option>
-              <option value="talent">Talent - Check count</option>
+              <option value="registered">Registered Users (with accounts) - {stats?.registered_subscribers || 0}</option>
+              <option value="talent">🎬 Talent Only</option>
             </select>
             <p className="text-sm text-gray-500 mt-1">
               📱 This will send to <span className="font-semibold text-blue-600">{activeRecipientCount} users</span>

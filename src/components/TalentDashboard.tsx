@@ -527,7 +527,7 @@ const TalentDashboard: React.FC = () => {
       )}
 
       {/* Payout Setup Reminder Banner */}
-      {talentProfile && !talentProfile.onboarding_completed && (
+      {talentProfile && !talentProfile.payout_onboarding_completed && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
