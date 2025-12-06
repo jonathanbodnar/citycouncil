@@ -46,28 +46,38 @@ const TalentProfilePage: React.FC = () => {
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
 
-  // Capture self-promo tracking (utm=1) and store in localStorage for this talent
+  // Capture UTM tracking and store in localStorage for this talent
   // Using localStorage so it persists even if user navigates away and comes back later
+  // utm=1 means "self_promo", any other value (e.g., utm=rumble) uses that value as the tag
+  const getPromoSourceFromUtm = (utmValue: string | null): string | null => {
+    if (!utmValue) return null;
+    if (utmValue === '1') return 'self_promo';
+    return utmValue; // e.g., "rumble", "twitter", "facebook", etc.
+  };
+
   useEffect(() => {
     const utmParam = searchParams.get('utm');
     const talentIdentifier = username || id;
+    const promoSource = getPromoSourceFromUtm(utmParam);
     
-    if (utmParam === '1' && talentIdentifier) {
+    if (promoSource && talentIdentifier) {
       // Store the promo source for this specific talent (by username/id from URL)
       // Use localStorage for persistence across sessions
-      localStorage.setItem(`promo_source_${talentIdentifier}`, 'self_promo');
+      localStorage.setItem(`promo_source_${talentIdentifier}`, promoSource);
     }
   }, [searchParams, username, id]);
 
   // Also store promo source by talent's actual ID once loaded (for order page lookup)
   useEffect(() => {
     const utmParam = searchParams.get('utm');
-    if (utmParam === '1' && talent?.id) {
+    const promoSource = getPromoSourceFromUtm(utmParam);
+    
+    if (promoSource && talent?.id) {
       // Store by talent profile ID (used by order page)
-      localStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
+      localStorage.setItem(`promo_source_${talent.id}`, promoSource);
       // Also store by username if available
       if (talent.username) {
-        localStorage.setItem(`promo_source_${talent.username}`, 'self_promo');
+        localStorage.setItem(`promo_source_${talent.username}`, promoSource);
       }
     }
   }, [searchParams, talent?.id, talent?.username]);
@@ -624,8 +634,9 @@ const TalentProfilePage: React.FC = () => {
                 // Store promo source by talent ID when clicking order button
                 // This ensures it's available on the order page even if the useEffect didn't fire yet
                 const utmParam = searchParams.get('utm');
-                if (utmParam === '1' && talent.id) {
-                  localStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
+                const promoSource = getPromoSourceFromUtm(utmParam);
+                if (promoSource && talent.id) {
+                  localStorage.setItem(`promo_source_${talent.id}`, promoSource);
                 }
               }}
               className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl hover:scale-[1.02]"
@@ -751,8 +762,9 @@ const TalentProfilePage: React.FC = () => {
               onClick={() => {
                 // Store promo source by talent ID when clicking order button
                 const utmParam = searchParams.get('utm');
-                if (utmParam === '1' && talent.id) {
-                  localStorage.setItem(`promo_source_${talent.id}`, 'self_promo');
+                const promoSource = getPromoSourceFromUtm(utmParam);
+                if (promoSource && talent.id) {
+                  localStorage.setItem(`promo_source_${talent.id}`, promoSource);
                 }
               }}
               className="inline-block px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"

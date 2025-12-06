@@ -57,13 +57,15 @@ const OrderPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   
-  // Check for self-promo tracking (utm=1) - check URL param first, then localStorage
+  // Check for UTM tracking - check URL param first, then localStorage
+  // utm=1 means "self_promo", any other value (e.g., utm=rumble) uses that value as the tag
   const getPromoSource = (loadedTalent?: TalentWithUser | null): string | null => {
     // First check URL param
-    if (searchParams.get('utm') === '1') {
-      return 'self_promo';
+    const utmParam = searchParams.get('utm');
+    if (utmParam) {
+      return utmParam === '1' ? 'self_promo' : utmParam;
     }
-    // Then check localStorage (set when they landed on profile page with utm=1)
+    // Then check localStorage (set when they landed on profile page with utm)
     // Using localStorage so it persists even if user navigates away and comes back
     // Check by talent ID
     if (talentId) {
