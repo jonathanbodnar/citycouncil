@@ -27,31 +27,43 @@ serve(async (req) => {
       throw new Error("Twilio credentials not configured");
     }
 
-    const { to, message, talentId } = await req.json();
+    const { to, message, talentId, mediaUrl } = await req.json();
 
-    if (!to || !message) {
-      throw new Error("Missing required fields: to, message");
+    if (!to || (!message && !mediaUrl)) {
+      throw new Error("Missing required fields: to, and either message or mediaUrl");
     }
 
     // Format phone number to E.164 if not already
     const formattedTo = to.startsWith('+') ? to : `+1${to.replace(/\D/g, '')}`;
 
-    console.log('Sending SMS:', {
+    console.log('Sending SMS/MMS:', {
       to: formattedTo,
       from: TWILIO_PHONE_NUMBER,
-      messageLength: message.length,
+      messageLength: message?.length || 0,
+      hasMedia: !!mediaUrl,
+      mediaUrl: mediaUrl || null,
       talentId,
       usingMessagingService: !!TWILIO_MESSAGING_SERVICE_SID
     });
 
-    // Send SMS via Twilio
+    // Send SMS/MMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const authHeader = `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`;
 
     const body = new URLSearchParams({
       To: formattedTo,
-      Body: message,
     });
+    
+    // Add message body (can be empty for MMS with just media)
+    if (message) {
+      body.append('Body', message);
+    }
+    
+    // Add media URL for MMS
+    if (mediaUrl) {
+      body.append('MediaUrl', mediaUrl);
+      console.log('✓ Adding MediaUrl for MMS:', mediaUrl);
+    }
 
     // Use Messaging Service if available (don't include From when using MessagingServiceSid)
     // Otherwise use From number directly
@@ -101,10 +113,11 @@ serve(async (req) => {
           .insert({
             talent_id: talentId,
             from_admin: false, // Mark as system message (not from admin manually)
-            message: message,
+            message: message || (mediaUrl ? '📎 Media message' : ''),
             status: 'sent',
             sent_at: new Date().toISOString(),
             read_by_admin: true, // Auto-mark as read since admin doesn't need to respond
+            media_url: mediaUrl || null,
           });
 
         if (dbError) {
