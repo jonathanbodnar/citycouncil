@@ -319,7 +319,7 @@ const CommsCenterManagement: React.FC = () => {
       const fileName = `sms-media/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       
       const { data, error } = await supabase.storage
-        .from('public-assets')
+        .from('platform-assets')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
@@ -329,7 +329,7 @@ const CommsCenterManagement: React.FC = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('public-assets')
+        .from('platform-assets')
         .getPublicUrl(fileName);
 
       return publicUrl;
