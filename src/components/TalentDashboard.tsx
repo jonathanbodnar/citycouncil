@@ -528,30 +528,25 @@ const TalentDashboard: React.FC = () => {
 
       {/* Self-Promo Link Banner */}
       {talentProfile && (
-        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-purple-500/20">
-                <span className="text-2xl">🔗</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-white">Your Personal Promo Link</h3>
-                <p className="text-sm text-gray-300">Share this link to track orders from your own promotion</p>
-                <code className="text-xs text-purple-300 bg-purple-900/30 px-2 py-1 rounded mt-1 inline-block">
-                  shoutout.us/{talentProfile.username || talentProfile.id}?utm=1
-                </code>
-              </div>
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-red-500/20 border border-green-500/30">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full bg-green-500/20">
+              <span className="text-2xl">🎄</span>
             </div>
-            <button
-              onClick={() => {
-                const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
-                navigator.clipboard.writeText(promoUrl);
-                toast.success('Promo link copied!');
-              }}
-              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-            >
-              📋 Copy Link
-            </button>
+            <div className="flex-1">
+              <h3 className="font-semibold text-white">Christmas Games: 🎄 Use this special link when you promote to earn double off every order you generate.</h3>
+              <button
+                onClick={() => {
+                  const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
+                  navigator.clipboard.writeText(promoUrl);
+                  toast.success('Promo link copied!');
+                }}
+                className="text-sm text-green-300 hover:text-green-200 bg-green-900/30 hover:bg-green-900/50 px-3 py-1.5 rounded mt-2 inline-flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <span>📋</span>
+                <span>shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
