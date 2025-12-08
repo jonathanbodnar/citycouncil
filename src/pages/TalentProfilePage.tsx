@@ -681,7 +681,7 @@ const TalentProfilePage: React.FC = () => {
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center col-span-2"
                 >
-                  ❓ Ask a question
+                  ✨ Other
                 </Link>
               </div>
             </div>
