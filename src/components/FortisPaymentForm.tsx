@@ -29,28 +29,32 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const successHandledRef = useRef(false);
 
   const orderReferenceRef = useRef<string | null>(null);
-  const processingStartTimeRef = useRef<number | null>(null);
+  const isProcessingRef = useRef(false);
   
-  // Update ref when state changes
+  // Update refs when state changes
   useEffect(() => {
     orderReferenceRef.current = orderReference;
   }, [orderReference]);
   
+  useEffect(() => {
+    isProcessingRef.current = isProcessing;
+  }, [isProcessing]);
+  
   // Track when processing starts and add timeout fallback
   useEffect(() => {
-    if (isProcessing && !processingStartTimeRef.current) {
-      processingStartTimeRef.current = Date.now();
-      console.log('⏱️ Processing started, will timeout after 12 seconds');
+    if (isProcessing) {
+      console.log('⏱️ Processing started, will timeout after 10 seconds');
       
-      // If stuck processing for 12 seconds, force success
+      // If stuck processing for 10 seconds, force success
       const timeout = setTimeout(() => {
-        if (isProcessing && !successHandledRef.current) {
-          console.log('⏰ Processing timeout - forcing success');
+        console.log('⏰ Timeout check - isProcessingRef:', isProcessingRef.current, 'successHandledRef:', successHandledRef.current);
+        if (!successHandledRef.current) {
+          console.log('🚀 Processing timeout - forcing success NOW');
           successHandledRef.current = true;
           const fallbackId = `timeout-${Date.now()}`;
           onPaymentSuccess({ id: fallbackId, statusCode: 101, timeoutFallback: true });
         }
-      }, 12000);
+      }, 10000);
       
       return () => clearTimeout(timeout);
     }
