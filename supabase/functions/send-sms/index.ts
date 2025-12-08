@@ -27,7 +27,7 @@ serve(async (req) => {
       throw new Error("Twilio credentials not configured");
     }
 
-    const { to, message, talentId, mediaUrl, skipDbLog } = await req.json();
+    const { to, message, talentId, mediaUrl } = await req.json();
 
     if (!to || (!message && !mediaUrl)) {
       throw new Error("Missing required fields: to, and either message or mediaUrl");
@@ -102,8 +102,7 @@ serve(async (req) => {
     console.log('SMS sent successfully:', twilioData.sid);
 
     // Log SMS to database if talentId is provided (for Comms Center conversation tracking)
-    // Skip if skipDbLog is true (Comms Center handles its own DB logging)
-    if (talentId && !skipDbLog) {
+    if (talentId) {
       try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

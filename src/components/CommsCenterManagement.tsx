@@ -420,32 +420,17 @@ const CommsCenterManagement: React.FC = () => {
       }
 
       // Call Twilio Edge Function to send SMS/MMS
-      // skipDbLog: true because we handle DB logging ourselves below
+      // The Edge Function handles database logging
       const { data, error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: selectedTalent.users.phone,
           message: messageText || (mediaUrl ? '📎 Media message' : ''),
           talentId: selectedTalent.id,
-          mediaUrl: mediaUrl,
-          skipDbLog: true
+          mediaUrl: mediaUrl
         }
       });
 
       if (error) throw error;
-
-      // Save message to database
-      const { error: dbError } = await supabase
-        .from('sms_messages')
-        .insert({
-          talent_id: selectedTalent.id,
-          from_admin: true,
-          message: messageText || (mediaUrl ? '📎 Media message' : ''),
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-          media_url: mediaUrl
-        });
-
-      if (dbError) throw dbError;
 
       toast.success(mediaUrl ? 'MMS sent!' : 'Message sent!');
       setMessageText('');
@@ -474,29 +459,16 @@ const CommsCenterManagement: React.FC = () => {
     try {
       for (const talent of filteredTalents) {
         try {
-          // Call Twilio Edge Function
-          // skipDbLog: true because we handle DB logging ourselves below
+          // Call Twilio Edge Function - it handles database logging
           const { error } = await supabase.functions.invoke('send-sms', {
             body: {
               to: talent.users.phone,
               message: massMessageText,
-              talentId: talent.id,
-              skipDbLog: true
+              talentId: talent.id
             }
           });
 
           if (error) throw error;
-
-          // Save to database
-          await supabase
-            .from('sms_messages')
-            .insert({
-              talent_id: talent.id,
-              from_admin: true,
-              message: massMessageText,
-              status: 'sent',
-              sent_at: new Date().toISOString()
-            });
 
           successCount++;
         } catch (error) {
