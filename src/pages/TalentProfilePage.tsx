@@ -605,7 +605,7 @@ const TalentProfilePage: React.FC = () => {
 
             {/* Order Ideas - Click any to order */}
             <div className="space-y-2">
-              <p className="text-xs text-gray-400 text-center">Click an idea to get started:</p>
+              <p className="text-xs text-gray-400 text-center">Choose a ShoutOut type</p>
               <div className="grid grid-cols-2 gap-1.5">
                 <Link
                   to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
