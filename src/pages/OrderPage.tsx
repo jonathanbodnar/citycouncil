@@ -793,48 +793,6 @@ const OrderPage: React.FC = () => {
             </div>
             )}
 
-            {/* Terms and Submit */}
-            <div className="glass rounded-2xl shadow-modern p-6">
-              <div className="flex items-start mb-4">
-                <input
-                  id="agreedToTerms"
-                  type="checkbox"
-                  defaultChecked={true}
-                  {...register('agreedToTerms', { required: 'You must agree to the terms' })}
-                  className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
-                  style={{ accentColor: '#3b82f6' }}
-                />
-                <label htmlFor="agreedToTerms" className="ml-3 block text-sm text-gray-900">
-                  I agree to the{' '}
-                  <button type="button" className="text-primary-600 hover:text-primary-500 underline">
-                    Terms of Service
-                  </button>{' '}
-                  and{' '}
-                  <button type="button" className="text-primary-600 hover:text-primary-500 underline">
-                    Privacy Policy
-                  </button>
-                </label>
-              </div>
-              {errors.agreedToTerms && (
-                <p className="mb-4 text-sm text-red-600">{errors.agreedToTerms.message}</p>
-              )}
-
-              <div className="flex items-start mb-4">
-                <input
-                  id="allowPromotionalUse"
-                  type="checkbox"
-                  defaultChecked={true}
-                  {...register('allowPromotionalUse')}
-                  className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
-                  style={{ accentColor: '#3b82f6' }}
-                />
-                <label htmlFor="allowPromotionalUse" className="ml-3 block text-sm text-gray-900">
-                  Allow this video to be used by the personality in promotional materials
-                </label>
-              </div>
-
-            </div>
-
             {/* Payment Form - Only show if amount due > 0 */}
             {pricing.amountDue > 0 && (
               <FortisPaymentForm
@@ -848,6 +806,47 @@ const OrderPage: React.FC = () => {
                 loading={submitting}
               />
             )}
+
+            {/* Terms - shown after payment form */}
+            <div className="max-w-3xl mx-auto mt-4 space-y-3">
+              <div className="flex items-start">
+                <input
+                  id="agreedToTerms"
+                  type="checkbox"
+                  defaultChecked={true}
+                  {...register('agreedToTerms', { required: 'You must agree to the terms' })}
+                  className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
+                  style={{ accentColor: '#3b82f6' }}
+                />
+                <label htmlFor="agreedToTerms" className="ml-2 block text-xs text-gray-400">
+                  I agree to the{' '}
+                  <button type="button" className="text-blue-400 hover:text-blue-300 underline">
+                    Terms of Service
+                  </button>{' '}
+                  and{' '}
+                  <button type="button" className="text-blue-400 hover:text-blue-300 underline">
+                    Privacy Policy
+                  </button>
+                </label>
+              </div>
+              {errors.agreedToTerms && (
+                <p className="text-xs text-red-400">{errors.agreedToTerms.message}</p>
+              )}
+
+              <div className="flex items-start">
+                <input
+                  id="allowPromotionalUse"
+                  type="checkbox"
+                  defaultChecked={true}
+                  {...register('allowPromotionalUse')}
+                  className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
+                  style={{ accentColor: '#3b82f6' }}
+                />
+                <label htmlFor="allowPromotionalUse" className="ml-2 block text-xs text-gray-400">
+                  Allow this video to be used by the personality in promotional materials
+                </label>
+              </div>
+            </div>
 
             {/* Free order with credits - show confirmation */}
             {pricing.amountDue === 0 && (
