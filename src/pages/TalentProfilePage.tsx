@@ -448,7 +448,7 @@ const TalentProfilePage: React.FC = () => {
           
           {/* Avatar / Promo Video */}
           <div className="md:w-1/3 relative z-10">
-            <div className="aspect-square md:aspect-auto md:h-full md:min-h-[400px] bg-gray-100 relative group">
+            <div className="aspect-square md:aspect-auto md:h-full md:max-h-[500px] bg-gray-100 relative group overflow-hidden">
               {playingPromoVideo && talent.promo_video_url ? (
                 /* Playing Promo Video */
                 <video
