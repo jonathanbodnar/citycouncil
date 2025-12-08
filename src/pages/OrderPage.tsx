@@ -24,9 +24,12 @@ import toast from 'react-hot-toast';
 import { verifyFortisTransaction } from '../services/fortisCommerceService';
 
 interface OrderFormData {
+  requestDetails: string;
   isForBusiness: boolean;
+  recipientName: string; // Made required
   businessName?: string;
   occasion?: string;
+  specialInstructions?: string;
   // Corporate-specific fields
   eventDescription?: string;
   eventAudience?: string;
@@ -54,38 +57,26 @@ const OrderPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   
-  // Check for UTM tracking - check URL param first, then localStorage
-  // utm=1 = "self_promo" (talent-specific, only tracks for the talent they landed on)
-  // Other UTMs (rumble, twitter, etc.) = global (tracks for ANY talent)
+  // Check for self-promo tracking (utm=1) - check URL param first, then sessionStorage
   const getPromoSource = (loadedTalent?: TalentWithUser | null): string | null => {
     // First check URL param
-    const utmParam = searchParams.get('utm');
-    if (utmParam) {
-      return utmParam === '1' ? 'self_promo' : utmParam;
+    if (searchParams.get('utm') === '1') {
+      return 'self_promo';
     }
-    
-    // Check for talent-specific self_promo (utm=1 on their profile)
-    // This only applies if ordering from the SAME talent they landed on
+    // Then check sessionStorage (set when they landed on profile page with utm=1)
+    // Check by talent ID
     if (talentId) {
-      const storedByTalentId = localStorage.getItem(`promo_source_${talentId}`);
-      if (storedByTalentId === 'self_promo') return 'self_promo';
+      const storedByTalentId = sessionStorage.getItem(`promo_source_${talentId}`);
+      if (storedByTalentId) return storedByTalentId;
     }
+    // Check by username (if talent data is loaded)
     const talentToCheck = loadedTalent || talent;
     if (talentToCheck?.username) {
-      const storedByUsername = localStorage.getItem(`promo_source_${talentToCheck.username}`);
-      if (storedByUsername === 'self_promo') return 'self_promo';
+      const storedByUsername = sessionStorage.getItem(`promo_source_${talentToCheck.username}`);
+      if (storedByUsername) return storedByUsername;
     }
-    
-    // Check for global UTM (e.g., shoutout.us/?utm=rumble)
-    // This applies to ANY talent they order from
-    const globalPromo = localStorage.getItem('promo_source_global');
-    if (globalPromo) return globalPromo;
-    
     return null;
   };
-  
-  // Get occasion from URL params (passed from profile page order ideas)
-  const occasionParam = searchParams.get('occasion');
   
   const {
     register,
@@ -94,8 +85,7 @@ const OrderPage: React.FC = () => {
     formState: { errors },
   } = useForm<OrderFormData>({
     defaultValues: {
-      isForBusiness: false, // Default to personal order
-      occasion: occasionParam || '' // Pre-fill from URL if provided
+      isForBusiness: false // Default to personal order
     }
   });
 
@@ -316,7 +306,7 @@ const OrderPage: React.FC = () => {
     }
   };
 
-  const [showPayment, setShowPayment] = useState(true);
+  const [showPayment, setShowPayment] = useState(false);
   const [orderData, setOrderData] = useState<OrderFormData | null>(null);
 
   const onSubmit = async (data: OrderFormData) => {
@@ -335,7 +325,6 @@ const OrderPage: React.FC = () => {
     try {
       const pricing = calculatePricing();
       logger.log('pricing for order', pricing);
-      
       // Verify Fortis transaction server-side before recording order
       const transactionId = paymentResult?.id || paymentResult?.transaction_id;
       logger.log('transactionId', transactionId);
@@ -379,11 +368,8 @@ const OrderPage: React.FC = () => {
           {
             user_id: user.id,
             talent_id: talent.id,
-            // Details will be filled in after payment on success page
-            request_details: null,
-            recipient_name: null,
-            details_submitted: false,
-            occasion: orderData.occasion || null,
+            request_details: orderData.requestDetails,
+            recipient_name: orderData.recipientName,
             amount: Math.round(pricing.total * 100), // Store in cents
             original_amount: appliedCoupon ? Math.round((pricing.total + pricing.discount) * 100) : null,
             discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
@@ -527,7 +513,7 @@ const OrderPage: React.FC = () => {
                 {
                   userName: user.full_name,
                   amount: pricing.total,
-                  requestDetails: 'Details pending from customer',
+                  requestDetails: orderData.requestDetails,
                   deadline: new Date(fulfillmentDeadline).toLocaleDateString()
                 }
               );
@@ -565,7 +551,7 @@ const OrderPage: React.FC = () => {
                   adminFee: pricing.adminFee,
                   charityAmount: pricing.charityAmount,
                   total: pricing.total,
-                  requestDetails: 'You will add details on the next page',
+                  requestDetails: orderData.requestDetails,
                   estimatedDelivery: new Date(fulfillmentDeadline).toLocaleDateString()
                 }
               );
@@ -669,62 +655,71 @@ const OrderPage: React.FC = () => {
         {/* Order Form */}
         <div className="lg:col-span-2 order-2 lg:order-1">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* What to Expect */}
+            {/* Step 1: Order Type */}
             <div className="glass rounded-2xl shadow-modern p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                What to Expect
+                Order Type
               </h2>
               
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-blue-500">✓</span>
-                  <p className="text-sm text-gray-700">Pay securely</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-blue-500">✓</span>
-                  <p className="text-sm text-gray-700">Add order details after checkout</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-blue-500">✓</span>
-                  <p className="text-sm text-gray-700">Get your video within {talent.fulfillment_time_hours}h</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-blue-500">✓</span>
-                  <p className="text-sm text-gray-700">Download & share</p>
-                </div>
+              <div className="space-y-4">
+                <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="radio"
+                    value="false"
+                    defaultChecked={true}
+                    {...register('isForBusiness', { 
+                      setValueAs: (value) => value === 'true'
+                    })}
+                    className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400"
+                    style={{ accentColor: '#3b82f6' }}
+                  />
+                  <div className="ml-3 flex items-center">
+                    <UserIcon className="h-6 w-6 text-gray-400 mr-3" />
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        Personal ShoutOut
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        For yourself, family, or friends
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                {talent.allow_corporate_pricing && (
+                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      value="true"
+                      {...register('isForBusiness', { 
+                        setValueAs: (value) => value === 'true'
+                      })}
+                      className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400"
+                      style={{ accentColor: '#3b82f6' }}
+                    />
+                    <div className="ml-3 flex items-center">
+                      <BuildingOfficeIcon className="h-6 w-6 text-gray-400 mr-3" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          Business ShoutOut
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          For corporate events, promotions, or team building
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                )}
               </div>
+              {errors.isForBusiness && (
+                <p className="mt-2 text-sm text-red-600">Please select an order type</p>
+              )}
             </div>
 
-            {/* Occasion Selection */}
+            {/* Step 2: Order Details */}
             <div className="glass rounded-2xl shadow-modern p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Occasion
-              </h2>
-              <select
-                id="occasion"
-                {...register('occasion')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="">Select an occasion</option>
-                <option value="gag-gift">🎁 Gag gift for a liberal</option>
-                <option value="pep-talk">💝 Surprise a loved one</option>
-                <option value="holiday">🎄 Merry Christmas</option>
-                <option value="new-year">🎆 New Years ShoutOut</option>
-                <option value="birthday">🎂 Happy Birthday</option>
-                <option value="roast">🔥 Holiday roast</option>
-                <option value="advice">💡 Get advice</option>
-                <option value="other">✨ Other</option>
-              </select>
-            </div>
-
-            {/* Hidden field for isForBusiness - default to personal */}
-            <input type="hidden" {...register('isForBusiness')} value="false" />
-
-            {/* Business Order Details - only show if somehow business is selected */}
-            {isForBusiness && (
-            <div className="glass rounded-2xl shadow-modern p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Business Details
+                Order Details
               </h2>
 
               <div className="space-y-4">
@@ -790,12 +785,156 @@ const OrderPage: React.FC = () => {
                     </div>
                   </>
                 )}
+
+                <div>
+                  <label htmlFor="recipientName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Who is this video for? (Please enter a name) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="recipientName"
+                    {...register('recipientName', { 
+                      required: "Recipient name is required" 
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Enter the recipient's name"
+                  />
+                  {errors.recipientName && (
+                    <p className="mt-1 text-sm text-red-600">{errors.recipientName.message}</p>
+                  )}
+                </div>
+
+                {!isForBusiness && (
+                  <div>
+                    <label htmlFor="occasion" className="block text-sm font-medium text-gray-700 mb-2">
+                      Occasion (Optional)
+                    </label>
+                    <select
+                      id="occasion"
+                      {...register('occasion')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">Select an occasion</option>
+                      <option value="holiday">🎁 Holiday</option>
+                      <option value="birthday">🎂 Birthday</option>
+                      <option value="pep-talk">😊 Pep Talk</option>
+                      <option value="roast">🔥 Roast</option>
+                      <option value="advice">💜 Advice</option>
+                      <option value="question">🤔 Question</option>
+                      <option value="other">💭 Other</option>
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="requestDetails" className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Message Request *
+                  </label>
+                  <textarea
+                    id="requestDetails"
+                    rows={6}
+                    {...register('requestDetails', { 
+                      required: 'Please describe what you want in your ShoutOut',
+                      minLength: { value: 25, message: 'Please provide more details (at least 25 characters)' },
+                      maxLength: { value: 1000, message: 'Please keep your request under 1,000 characters' }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Tell us what you'd like included in your ShoutOut. Be specific about names, details, and the tone you want. The more information you provide, the better your video will be!"
+                  />
+                  {errors.requestDetails && (
+                    <p className="mt-1 text-sm text-red-600">{errors.requestDetails.message}</p>
+                  )}
+                  <p className="mt-1 text-sm text-gray-500">
+                    Characters: {watch('requestDetails')?.length || 0}/1,000
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="specialInstructions" className="block text-sm font-medium text-gray-700 mb-2">
+                    Special Instructions (Optional)
+                  </label>
+                  <textarea
+                    id="specialInstructions"
+                    rows={3}
+                    {...register('specialInstructions')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Any specific requests about delivery, style, or content?"
+                  />
+                </div>
               </div>
             </div>
-            )}
+
+            {/* Terms and Submit */}
+            <div className="glass rounded-2xl shadow-modern p-6">
+              <div className="flex items-start mb-4">
+                <input
+                  id="agreedToTerms"
+                  type="checkbox"
+                  defaultChecked={true}
+                  {...register('agreedToTerms', { required: 'You must agree to the terms' })}
+                  className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
+                  style={{ accentColor: '#3b82f6' }}
+                />
+                <label htmlFor="agreedToTerms" className="ml-3 block text-sm text-gray-900">
+                  I agree to the{' '}
+                  <button type="button" className="text-primary-600 hover:text-primary-500 underline">
+                    Terms of Service
+                  </button>{' '}
+                  and{' '}
+                  <button type="button" className="text-primary-600 hover:text-primary-500 underline">
+                    Privacy Policy
+                  </button>
+                </label>
+              </div>
+              {errors.agreedToTerms && (
+                <p className="mb-4 text-sm text-red-600">{errors.agreedToTerms.message}</p>
+              )}
+
+              <div className="flex items-start mb-4">
+                <input
+                  id="allowPromotionalUse"
+                  type="checkbox"
+                  defaultChecked={true}
+                  {...register('allowPromotionalUse')}
+                  className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
+                  style={{ accentColor: '#3b82f6' }}
+                />
+                <label htmlFor="allowPromotionalUse" className="ml-3 block text-sm text-gray-900">
+                  Allow this video to be used by the personality in promotional materials
+                </label>
+              </div>
+
+              {!showPayment ? (
+                <div className="space-y-3">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-blue-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-modern hover:shadow-modern-lg glow-blue"
+                  >
+                    {submitting 
+                      ? 'Processing...' 
+                      : pricing.amountDue === 0 
+                        ? 'Place Order (Free with Credits!)' 
+                        : `Continue to Payment - $${pricing.amountDue.toFixed(2)}`
+                    }
+                  </button>
+                  
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowPayment(false)}
+                    className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  >
+                    ← Back to order details
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Payment Form - Only show if amount due > 0 */}
-            {pricing.amountDue > 0 && (
+            {showPayment && orderData && pricing.amountDue > 0 && (
               <FortisPaymentForm
                 amount={pricing.amountDue}
                 orderId={`order_${Date.now()}_${talent.id}`}
@@ -808,49 +947,8 @@ const OrderPage: React.FC = () => {
               />
             )}
 
-            {/* Terms - shown after payment form */}
-            <div className="max-w-3xl mx-auto mt-4 space-y-3">
-              <div className="flex items-start">
-                <input
-                  id="agreedToTerms"
-                  type="checkbox"
-                  defaultChecked={true}
-                  {...register('agreedToTerms', { required: 'You must agree to the terms' })}
-                  className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
-                  style={{ accentColor: '#3b82f6' }}
-                />
-                <label htmlFor="agreedToTerms" className="ml-2 block text-xs text-gray-400">
-                  I agree to the{' '}
-                  <button type="button" className="text-blue-400 hover:text-blue-300 underline">
-                    Terms of Service
-                  </button>{' '}
-                  and{' '}
-                  <button type="button" className="text-blue-400 hover:text-blue-300 underline">
-                    Privacy Policy
-                  </button>
-                </label>
-              </div>
-              {errors.agreedToTerms && (
-                <p className="text-xs text-red-400">{errors.agreedToTerms.message}</p>
-              )}
-
-              <div className="flex items-start">
-                <input
-                  id="allowPromotionalUse"
-                  type="checkbox"
-                  defaultChecked={true}
-                  {...register('allowPromotionalUse')}
-                  className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400 rounded mt-0.5"
-                  style={{ accentColor: '#3b82f6' }}
-                />
-                <label htmlFor="allowPromotionalUse" className="ml-2 block text-xs text-gray-400">
-                  Allow this video to be used by the personality in promotional materials
-                </label>
-              </div>
-            </div>
-
             {/* Free order with credits - show confirmation */}
-            {pricing.amountDue === 0 && (
+            {showPayment && orderData && pricing.amountDue === 0 && (
               <div className="rounded-2xl px-6 py-8 bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 max-w-3xl mx-auto text-center">
                 <div className="flex justify-center mb-4">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
