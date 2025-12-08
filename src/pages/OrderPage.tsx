@@ -24,12 +24,9 @@ import toast from 'react-hot-toast';
 import { verifyFortisTransaction } from '../services/fortisCommerceService';
 
 interface OrderFormData {
-  requestDetails: string;
   isForBusiness: boolean;
-  recipientName: string; // Made required
   businessName?: string;
   occasion?: string;
-  specialInstructions?: string;
   // Corporate-specific fields
   eventDescription?: string;
   eventAudience?: string;
@@ -381,8 +378,11 @@ const OrderPage: React.FC = () => {
           {
             user_id: user.id,
             talent_id: talent.id,
-            request_details: orderData.requestDetails,
-            recipient_name: orderData.recipientName,
+            // Details will be filled in after payment on success page
+            request_details: null,
+            recipient_name: null,
+            details_submitted: false,
+            occasion: orderData.occasion || null,
             amount: Math.round(pricing.total * 100), // Store in cents
             original_amount: appliedCoupon ? Math.round((pricing.total + pricing.discount) * 100) : null,
             discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
@@ -526,7 +526,7 @@ const OrderPage: React.FC = () => {
                 {
                   userName: user.full_name,
                   amount: pricing.total,
-                  requestDetails: orderData.requestDetails,
+                  requestDetails: 'Details pending from customer',
                   deadline: new Date(fulfillmentDeadline).toLocaleDateString()
                 }
               );
@@ -564,7 +564,7 @@ const OrderPage: React.FC = () => {
                   adminFee: pricing.adminFee,
                   charityAmount: pricing.charityAmount,
                   total: pricing.total,
-                  requestDetails: orderData.requestDetails,
+                  requestDetails: 'You will add details on the next page',
                   estimatedDelivery: new Date(fulfillmentDeadline).toLocaleDateString()
                 }
               );
@@ -799,24 +799,6 @@ const OrderPage: React.FC = () => {
                   </>
                 )}
 
-                <div>
-                  <label htmlFor="recipientName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Who is this video for? (Please enter a name) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="recipientName"
-                    {...register('recipientName', { 
-                      required: "Recipient name is required" 
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Enter the recipient's name"
-                  />
-                  {errors.recipientName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.recipientName.message}</p>
-                  )}
-                </div>
-
                 {!isForBusiness && (
                   <div>
                     <label htmlFor="occasion" className="block text-sm font-medium text-gray-700 mb-2">
@@ -839,41 +821,6 @@ const OrderPage: React.FC = () => {
                   </div>
                 )}
 
-                <div>
-                  <label htmlFor="requestDetails" className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Message Request *
-                  </label>
-                  <textarea
-                    id="requestDetails"
-                    rows={6}
-                    {...register('requestDetails', { 
-                      required: 'Please describe what you want in your ShoutOut',
-                      minLength: { value: 25, message: 'Please provide more details (at least 25 characters)' },
-                      maxLength: { value: 1000, message: 'Please keep your request under 1,000 characters' }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Tell us what you'd like included in your ShoutOut. Be specific about names, details, and the tone you want. The more information you provide, the better your video will be!"
-                  />
-                  {errors.requestDetails && (
-                    <p className="mt-1 text-sm text-red-600">{errors.requestDetails.message}</p>
-                  )}
-                  <p className="mt-1 text-sm text-gray-500">
-                    Characters: {watch('requestDetails')?.length || 0}/1,000
-                  </p>
-                </div>
-
-                <div>
-                  <label htmlFor="specialInstructions" className="block text-sm font-medium text-gray-700 mb-2">
-                    Special Instructions (Optional)
-                  </label>
-                  <textarea
-                    id="specialInstructions"
-                    rows={3}
-                    {...register('specialInstructions')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Any specific requests about delivery, style, or content?"
-                  />
-                </div>
               </div>
             </div>
 

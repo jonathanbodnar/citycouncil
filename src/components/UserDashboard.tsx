@@ -57,6 +57,14 @@ const UserDashboard: React.FC = () => {
   const [downloadOrderId, setDownloadOrderId] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [updatingPhone, setUpdatingPhone] = useState(false);
+  
+  // Fill in details modal state
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsOrderId, setDetailsOrderId] = useState<string | null>(null);
+  const [detailsRecipientName, setDetailsRecipientName] = useState('');
+  const [detailsRequestDetails, setDetailsRequestDetails] = useState('');
+  const [detailsSpecialInstructions, setDetailsSpecialInstructions] = useState('');
+  const [submittingDetails, setSubmittingDetails] = useState(false);
 
   // Handle tab from URL parameter
   useEffect(() => {
@@ -249,6 +257,51 @@ const UserDashboard: React.FC = () => {
   // Check if user has already reviewed this order
   const hasReviewed = (orderId: string) => {
     return reviews.some(review => review.order_id === orderId);
+  };
+
+  // Open fill in details modal
+  const openDetailsModal = (order: OrderWithTalent) => {
+    setDetailsOrderId(order.id);
+    setDetailsRecipientName(order.recipient_name || '');
+    setDetailsRequestDetails(order.request_details || '');
+    setDetailsSpecialInstructions((order as any).special_instructions || '');
+    setShowDetailsModal(true);
+  };
+
+  // Submit order details
+  const handleSubmitDetails = async () => {
+    if (!detailsRecipientName.trim()) {
+      toast.error('Please enter who this video is for');
+      return;
+    }
+    if (!detailsRequestDetails.trim() || detailsRequestDetails.trim().length < 25) {
+      toast.error('Please provide more details about your request (at least 25 characters)');
+      return;
+    }
+
+    setSubmittingDetails(true);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          recipient_name: detailsRecipientName.trim(),
+          request_details: detailsRequestDetails.trim(),
+          special_instructions: detailsSpecialInstructions.trim() || null,
+          details_submitted: true
+        })
+        .eq('id', detailsOrderId);
+
+      if (error) throw error;
+
+      toast.success('Order details submitted! The talent will start working on your video.');
+      setShowDetailsModal(false);
+      fetchUserData(); // Refresh orders
+    } catch (err) {
+      console.error('Error submitting details:', err);
+      toast.error('Failed to submit details. Please try again.');
+    } finally {
+      setSubmittingDetails(false);
+    }
   };
 
   // Handle download video - prompt for review if not reviewed yet
@@ -534,47 +587,76 @@ const UserDashboard: React.FC = () => {
                   </div>
 
                   <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">Request Details:</h4>
-                      {order.status === 'pending' && editingOrderId !== order.id && (
-                        <button
-                          onClick={() => startEditingRequest(order)}
-                          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                    
-                    {editingOrderId === order.id ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={editedRequestDetails}
-                          onChange={(e) => setEditedRequestDetails(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          rows={4}
-                          placeholder="Describe your request..."
-                        />
-                        <div className="flex gap-2">
+                    {/* Show "Fill in details" button if details not submitted */}
+                    {!order.details_submitted && order.status === 'pending' ? (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-amber-800">⚠️ Details Required</h4>
+                            <p className="text-sm text-amber-600 mt-1">
+                              Tell the talent what you want in your ShoutOut
+                            </p>
+                          </div>
                           <button
-                            onClick={() => saveRequestDetails(order.id)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                            onClick={() => openDetailsModal(order)}
+                            className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
                           >
-                            Save
-                          </button>
-                          <button
-                            onClick={cancelEditingRequest}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
-                          >
-                            Cancel
+                            Fill in Details
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-gray-700 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">
-                        {order.request_details}
-                      </p>
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900">Request Details:</h4>
+                          {order.status === 'pending' && editingOrderId !== order.id && (
+                            <button
+                              onClick={() => startEditingRequest(order)}
+                              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                        
+                        {editingOrderId === order.id ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editedRequestDetails}
+                              onChange={(e) => setEditedRequestDetails(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              rows={4}
+                              placeholder="Describe your request..."
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => saveRequestDetails(order.id)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={cancelEditingRequest}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {order.recipient_name && (
+                              <p className="text-sm text-gray-500 mb-2">
+                                <span className="font-medium">For:</span> {order.recipient_name}
+                              </p>
+                            )}
+                            <p className="text-gray-700 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">
+                              {order.request_details}
+                            </p>
+                          </>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -993,6 +1075,96 @@ const UserDashboard: React.FC = () => {
                   className="flex-1 inline-flex items-center justify-center rounded-xl border-2 border-gray-300 shadow-sm px-6 py-4 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDownloading ? 'Downloading...' : 'Skip'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fill in Details Modal */}
+      {showDetailsModal && detailsOrderId && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
+            {/* Background overlay */}
+            <div 
+              className="fixed inset-0 transition-opacity bg-black bg-opacity-75"
+              onClick={() => !submittingDetails && setShowDetailsModal(false)}
+            />
+
+            {/* Modal panel */}
+            <div className="relative inline-block bg-white rounded-2xl px-6 pt-6 pb-6 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full z-10">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Fill in Order Details
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Tell the talent what you want in your ShoutOut
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Recipient Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Who is this video for? <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={detailsRecipientName}
+                    onChange={(e) => setDetailsRecipientName(e.target.value)}
+                    placeholder="Enter the recipient's name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Request Details */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Message Request <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={detailsRequestDetails}
+                    onChange={(e) => setDetailsRequestDetails(e.target.value)}
+                    rows={4}
+                    placeholder="Tell them what you'd like included in your ShoutOut. Be specific about names, details, and the tone you want!"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    {detailsRequestDetails.length}/1000 characters (min 25)
+                  </p>
+                </div>
+
+                {/* Special Instructions */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Special Instructions (Optional)
+                  </label>
+                  <textarea
+                    value={detailsSpecialInstructions}
+                    onChange={(e) => setDetailsSpecialInstructions(e.target.value)}
+                    rows={2}
+                    placeholder="Any specific requests about delivery, style, or content?"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  disabled={submittingDetails}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitDetails}
+                  disabled={submittingDetails}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {submittingDetails ? 'Submitting...' : 'Submit Details'}
                 </button>
               </div>
             </div>

@@ -98,6 +98,9 @@ export interface Order {
   talent_id: string;
   request_details: string;
   recipient_name?: string; // Who's it for field
+  details_submitted?: boolean; // Whether customer has filled in order details after payment
+  occasion?: string;
+  special_instructions?: string;
   amount: number;
   admin_fee: number;
   charity_amount?: number;
