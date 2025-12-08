@@ -29,20 +29,43 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
   const [orderReference, setOrderReference] = useState<string | null>(null);
   const successHandledRef = useRef(false);
+  const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     initializeFortis();
     // Listen for postMessage from Fortis iframe as a final fallback
     const onMessage = (event: MessageEvent) => {
       try {
+        // Log ALL postMessages for debugging
+        console.log('📨 postMessage received:', {
+          origin: event.origin,
+          data: event.data,
+          type: typeof event.data
+        });
+        
         const origin = String(event.origin || '');
-        if (!origin.includes('fortis.tech')) return;
-        const data: any = event.data;
-        const hasId = !!(data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id);
-        const hasStatus = !!(data?.data?.status_code || data?.status_code || data?.reason_code_id || data?.value?.status_code || data?.value?.reason_code_id);
-        if (hasId || hasStatus) handleMessageSuccess(data);
-      } catch {
-        // ignore malformed messages
+        // Accept messages from fortis.tech or any origin if it contains transaction data
+        const isFortisOrigin = origin.includes('fortis.tech') || origin.includes('fortispay');
+        
+        const data: any = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        
+        // Look for transaction ID in various places
+        const txId = data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id || 
+                     data?.transactionId || data?.transaction_id || data?.txId;
+        const hasId = !!txId;
+        const hasStatus = !!(data?.data?.status_code || data?.status_code || data?.reason_code_id || 
+                            data?.value?.status_code || data?.value?.reason_code_id ||
+                            data?.status || data?.result);
+        
+        console.log('📨 Parsed postMessage:', { isFortisOrigin, hasId, hasStatus, txId });
+        
+        if (hasId || hasStatus) {
+          console.log('✅ Found transaction data in postMessage, calling handleMessageSuccess');
+          handleMessageSuccess(data);
+        }
+      } catch (e) {
+        // Log parse errors for debugging
+        console.log('📨 postMessage parse error (might be non-Fortis message):', e);
       }
     };
     const handleMessageSuccess = (payload: any) => {
@@ -86,6 +109,11 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       successHandledRef.current = true;
       setIsProcessing(true); // Show processing spinner
       setError(null); // Clear any previous errors
+      
+      // Clear any existing timeout
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+      }
       
       // If status is already approved (101 or 100), proceed without verification
       if (statusCode === 101 || statusCode === 100) {
@@ -248,6 +276,16 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       // Events (attach BEFORE create to avoid missing early events)
       console.log('Attaching Commerce JS handlers');
+      
+      // DEBUG: Log ALL events from the event bus
+      const originalEmit = elements.eventBus.emit?.bind(elements.eventBus);
+      if (originalEmit) {
+        elements.eventBus.emit = (event: string, ...args: any[]) => {
+          console.log('🔔 Fortis Event:', event, args);
+          return originalEmit(event, ...args);
+        };
+      }
+      
       elements.eventBus.on('ready', () => {
         console.log('Commerce iframe ready');
         setIsLoading(false);
@@ -257,6 +295,9 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       elements.eventBus.on('success', handleSuccess as any);
       elements.eventBus.on('transaction_success', handleSuccess as any);
       elements.eventBus.on('transaction.completed', handleSuccess as any);
+      elements.eventBus.on('done', handleSuccess as any);
+      elements.eventBus.on('complete', handleSuccess as any);
+      elements.eventBus.on('completed', handleSuccess as any);
       elements.eventBus.on('payment_error', (e: any) => {
         console.error('❌ payment_error event:', e);
         successHandledRef.current = false; // Allow retry
@@ -281,6 +322,67 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         successHandledRef.current = false; // Allow retry
         setError('Payment was declined. Please try a different card.');
         onPaymentError('Payment was declined. Please try a different card.');
+      });
+      
+      // Listen for submit event - this fires when user clicks Pay button
+      elements.eventBus.on('submit', () => {
+        console.log('🔄 Payment form submitted, starting processing...');
+        setIsProcessing(true);
+        
+        // Start polling for success indicators in the iframe
+        let pollCount = 0;
+        const pollInterval = setInterval(() => {
+          pollCount++;
+          try {
+            const iframe = document.querySelector('#payment iframe') as HTMLIFrameElement;
+            const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+            if (iframeDoc) {
+              // Look for success indicators
+              const successText = iframeDoc.body?.innerText?.toLowerCase() || '';
+              const hasSuccess = successText.includes('approved') || 
+                                successText.includes('success') || 
+                                successText.includes('complete') ||
+                                successText.includes('thank you');
+              if (hasSuccess && !successHandledRef.current) {
+                console.log('✅ Detected success state in iframe via polling');
+                clearInterval(pollInterval);
+                // Try to find transaction ID
+                const scripts = iframeDoc.querySelectorAll('script');
+                let txId = null;
+                scripts.forEach(s => {
+                  const match = s.textContent?.match(/transaction[_-]?id["']?\s*[:=]\s*["']?([a-f0-9]+)/i);
+                  if (match) txId = match[1];
+                });
+                handleSuccess({ id: txId, statusCode: 101, polled: true });
+              }
+            }
+          } catch (e) {
+            // Cross-origin - can't access iframe content
+          }
+          
+          // Stop polling after 30 seconds
+          if (pollCount > 60) {
+            clearInterval(pollInterval);
+          }
+        }, 500);
+        
+        // Safety timeout - if no response after 20 seconds, show error
+        processingTimeoutRef.current = setTimeout(() => {
+          clearInterval(pollInterval);
+          console.error('❌ Payment processing timeout - no response from Fortis');
+          setIsProcessing(false);
+          successHandledRef.current = false;
+          setError('Payment is taking longer than expected. Please check your bank statement and try again if not charged.');
+        }, 20000);
+      });
+      
+      // Also listen for validation_error which means form wasn't submitted
+      elements.eventBus.on('validation_error', (e: any) => {
+        console.log('⚠️ Validation error:', e);
+        setIsProcessing(false);
+        if (processingTimeoutRef.current) {
+          clearTimeout(processingTimeoutRef.current);
+        }
       });
 
       // Create iframe in our container (pass selector string to avoid null ref timing)

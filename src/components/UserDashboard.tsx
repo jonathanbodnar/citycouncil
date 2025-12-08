@@ -281,7 +281,14 @@ const UserDashboard: React.FC = () => {
 
     setSubmittingDetails(true);
     try {
-      const { error } = await supabase
+      console.log('📝 Submitting order details from dashboard:', {
+        orderId: detailsOrderId,
+        recipientName: detailsRecipientName.trim(),
+        requestDetailsLength: detailsRequestDetails.trim().length,
+        hasSpecialInstructions: !!detailsSpecialInstructions.trim()
+      });
+      
+      const { data, error } = await supabase
         .from('orders')
         .update({
           recipient_name: detailsRecipientName.trim(),
@@ -289,10 +296,15 @@ const UserDashboard: React.FC = () => {
           special_instructions: detailsSpecialInstructions.trim() || null,
           details_submitted: true
         })
-        .eq('id', detailsOrderId);
+        .eq('id', detailsOrderId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ DB error submitting details:', error);
+        throw error;
+      }
 
+      console.log('✅ Order details saved successfully:', data);
       toast.success('Order details submitted! The talent will start working on your video.');
       setShowDetailsModal(false);
       fetchUserData(); // Refresh orders
