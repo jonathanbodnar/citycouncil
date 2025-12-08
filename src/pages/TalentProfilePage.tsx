@@ -589,7 +589,7 @@ const TalentProfilePage: React.FC = () => {
               <p className="text-sm font-medium text-gray-300 text-center">Choose a ShoutOut type</p>
               <div className="grid grid-cols-2 gap-1.5">
                 <Link
-                  to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
+                  to={user ? `/order/${talent.id}?occasion=gag-gift` : `/signup?returnTo=/order/${talent.id}?occasion=gag-gift`}
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >

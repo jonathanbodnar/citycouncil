@@ -828,7 +828,7 @@ const OrderPage: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="">Select an occasion</option>
-                      <option value="roast">🎁 Gag gift for a liberal</option>
+                      <option value="gag-gift">🎁 Gag gift for a liberal</option>
                       <option value="pep-talk">💝 Surprise a loved one</option>
                       <option value="holiday">🎄 Merry Christmas</option>
                       <option value="birthday">🎂 Happy Birthday</option>
