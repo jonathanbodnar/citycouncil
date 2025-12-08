@@ -640,9 +640,9 @@ const TalentProfilePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Trust Indicators - compact */}
+            {/* Trust Indicators */}
             <div className="mt-2 text-center">
-              <div className="text-[10px] text-gray-500">
+              <div className="text-sm font-medium text-gray-400">
                 🔒 Money-Back Guarantee • 🛡️ Secure • ⚡ Fast
               </div>
             </div>
