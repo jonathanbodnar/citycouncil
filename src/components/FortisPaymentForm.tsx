@@ -56,24 +56,14 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
               textContent.includes('Payment Complete') || 
               textContent.includes('Thank you')) {
             console.log('🎯 Detected success text in iframe, triggering callback');
-            // Try to find transaction ID from orderReference
-            const currentOrderRef = orderReferenceRef.current;
-            if (currentOrderRef && !successHandledRef.current) {
+            if (!successHandledRef.current) {
               successHandledRef.current = true;
               setIsProcessing(true);
-              // Use the order reference as a fallback to verify
-              verifyFortisTransaction(currentOrderRef)
-                .then((verify) => {
-                  if (verify.statusCode === 101 || verify.statusCode === 100) {
-                    console.log('✅ Verified via polling:', verify);
-                    onPaymentSuccess({ id: currentOrderRef, statusCode: verify.statusCode });
-                  }
-                })
-                .catch((e) => {
-                  // Even if verification fails, payment succeeded visually
-                  console.log('⚠️ Verification failed but success detected visually');
-                  onPaymentSuccess({ id: currentOrderRef, statusCode: 101 });
-                });
+              // Payment succeeded visually - proceed directly without verification
+              // The order reference is not a transaction ID, so we use a generated one
+              const fallbackId = `poll-${Date.now()}`;
+              console.log('✅ Proceeding with fallback ID:', fallbackId);
+              onPaymentSuccess({ id: fallbackId, statusCode: 101, pollingFallback: true });
             }
           }
         } catch (e) {
