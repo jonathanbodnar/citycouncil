@@ -674,34 +674,22 @@ const OrderPage: React.FC = () => {
                 What to Expect
               </h2>
               
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">1</div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Complete your payment</p>
-                    <p className="text-xs text-gray-500">Secure checkout with money-back guarantee</p>
-                  </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-blue-500">✓</span>
+                  <p className="text-sm text-gray-700">Pay securely</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">2</div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Add your order details</p>
-                    <p className="text-xs text-gray-500">Tell {talent.temp_full_name || talent.users.full_name} who it's for and what to say</p>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-blue-500">✓</span>
+                  <p className="text-sm text-gray-700">Add order details after checkout</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">3</div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Receive your video within {talent.fulfillment_time_hours}h</p>
-                    <p className="text-xs text-gray-500">We'll notify you when it's ready</p>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-blue-500">✓</span>
+                  <p className="text-sm text-gray-700">Get your video within {talent.fulfillment_time_hours}h</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">4</div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Download & share!</p>
-                    <p className="text-xs text-gray-500">Save your video and share it with everyone</p>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-blue-500">✓</span>
+                  <p className="text-sm text-gray-700">Download & share</p>
                 </div>
               </div>
             </div>
