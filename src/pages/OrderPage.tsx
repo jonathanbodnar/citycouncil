@@ -706,6 +706,27 @@ const OrderPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Occasion Selection */}
+            <div className="glass rounded-2xl shadow-modern p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Occasion
+              </h2>
+              <select
+                id="occasion"
+                {...register('occasion')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">Select an occasion</option>
+                <option value="gag-gift">🎁 Gag gift for a liberal</option>
+                <option value="pep-talk">💝 Surprise a loved one</option>
+                <option value="holiday">🎄 Merry Christmas</option>
+                <option value="birthday">🎂 Happy Birthday</option>
+                <option value="roast">🔥 Holiday roast</option>
+                <option value="advice">💡 Get advice</option>
+                <option value="other">✨ Other</option>
+              </select>
+            </div>
+
             {/* Hidden field for isForBusiness - default to personal */}
             <input type="hidden" {...register('isForBusiness')} value="false" />
 
