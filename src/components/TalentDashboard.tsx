@@ -103,6 +103,65 @@ const TalentDashboard: React.FC = () => {
     }
   }, [user]);
 
+  // Real-time subscription for order updates (e.g., when customer submits details)
+  useEffect(() => {
+    if (!talentProfile?.id) return;
+
+    const channel = supabase
+      .channel(`orders-talent-${talentProfile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `talent_id=eq.${talentProfile.id}`
+        },
+        (payload) => {
+          console.log('📬 Order updated (real-time):', payload);
+          // Update the order in state
+          setOrders(prevOrders => 
+            prevOrders.map(order => 
+              order.id === payload.new.id 
+                ? { ...order, ...payload.new }
+                : order
+            )
+          );
+          
+          // Show toast if details were just submitted
+          if (payload.new.details_submitted && !payload.old?.details_submitted) {
+            toast.success('Customer submitted order details!', {
+              icon: '📝',
+              duration: 5000
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `talent_id=eq.${talentProfile.id}`
+        },
+        (payload) => {
+          console.log('📬 New order (real-time):', payload);
+          // Refresh to get full order data with user info
+          fetchTalentData();
+          toast.success('New order received!', {
+            icon: '🎉',
+            duration: 5000
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [talentProfile?.id]);
+
   const fetchTalentData = async () => {
     try {
       // Fetch talent profile
