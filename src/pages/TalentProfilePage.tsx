@@ -500,7 +500,7 @@ const TalentProfilePage: React.FC = () => {
           </div>
 
           {/* Profile Info */}
-          <div className="md:w-2/3 p-4 md:p-5 relative z-10">
+          <div className="md:w-2/3 p-4 md:p-5 relative z-10 flex flex-col">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
                 {/* Name and Rating inline */}
@@ -584,16 +584,6 @@ const TalentProfilePage: React.FC = () => {
               )}
             </div>
 
-            {/* Pricing Urgency Indicator */}
-            {ordersRemaining <= 10 && (
-              <div className="mb-2 flex items-center justify-center gap-1.5 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/50 rounded-lg px-3 py-2 animate-pulse">
-                <FireIcon className="h-4 w-4 text-orange-400" />
-                <span className="text-xs font-bold text-orange-100">
-                  Only {ordersRemaining} left at this price!
-                </span>
-              </div>
-            )}
-
             {/* Order Ideas - Click any to order */}
             <div className="space-y-2">
               <p className="text-xs text-gray-400 text-center">Choose a ShoutOut type</p>
@@ -656,6 +646,16 @@ const TalentProfilePage: React.FC = () => {
                 🔒 Money-Back Guarantee • 🛡️ Secure • ⚡ Fast
               </div>
             </div>
+
+            {/* Pricing Urgency Indicator - flush at bottom */}
+            {ordersRemaining <= 10 && (
+              <div className="mt-auto pt-3 -mx-4 md:-mx-5 -mb-4 md:-mb-5 flex items-center justify-center gap-1.5 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-t border-orange-400/50 px-3 py-2">
+                <FireIcon className="h-4 w-4 text-orange-400" />
+                <span className="text-xs font-bold text-orange-100">
+                  Only {ordersRemaining} left at this price!
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
