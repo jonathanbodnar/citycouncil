@@ -94,9 +94,16 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         return;
       }
       
+      // Set a timeout - if verification takes too long, proceed anyway
+      const timeoutId = setTimeout(() => {
+        console.warn('⚠️ Verification timeout - proceeding with transaction:', txId);
+        onPaymentSuccess({ id: txId, statusCode: statusCode || 101, payload });
+      }, 10000); // 10 second timeout
+      
       // Otherwise try to verify (but don't block on failure - payment already succeeded in Fortis)
       verifyFortisTransaction(txId)
         .then((verify) => {
+          clearTimeout(timeoutId);
           // Check if verification shows declined status
           if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
             console.error('❌ Payment verification shows declined - status:', verify.statusCode);
@@ -110,6 +117,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
         })
         .catch((e) => {
+          clearTimeout(timeoutId);
           // Verification failed but we have a transaction ID from Fortis
           // The payment likely succeeded - proceed anyway
           console.warn('⚠️ Payment verification failed but transaction exists, proceeding:', e);
@@ -170,11 +178,14 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         successHandledRef.current = true;
         setIsProcessing(true); // Show processing spinner
         setError(null); // Clear any previous errors
-        console.log('payment_success payload', payload);
+        console.log('🎯 payment_success payload received:', payload);
         
         // Check for declined/failed status in the payload first
         const statusCode = payload?.data?.status_code || payload?.status_code || payload?.transaction?.status_code;
         const reasonCode = payload?.reason_code_id || payload?.data?.reason_code_id || payload?.transaction?.reason_code_id;
+        const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
+        
+        console.log('🔍 Extracted from payload:', { txId, statusCode, reasonCode });
         
         // Fortis status codes: 101 = approved, 100 = pending, 102-199 = declined/failed
         if (statusCode && statusCode !== 101 && statusCode !== 100) {
@@ -186,39 +197,52 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           return;
         }
         
-        try {
-          const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
-          if (!txId) throw new Error('Missing transaction id');
+        // If we have a transaction ID and status is approved, proceed immediately
+        // Don't wait for verification - it can hang
+        if (txId && (statusCode === 101 || statusCode === 100)) {
+          console.log('✅ Payment approved in payload, proceeding immediately:', { txId, statusCode });
+          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode, payload }), 0);
+          return;
+        }
+        
+        // If we have txId but no status, try verification with timeout
+        if (txId) {
+          console.log('🔄 Have txId but no status, attempting verification with timeout...');
           
-          const verify = await verifyFortisTransaction(txId);
+          // Set a timeout - proceed after 8 seconds regardless
+          const timeoutId = setTimeout(() => {
+            console.warn('⚠️ Verification timeout - proceeding with transaction:', txId);
+            onPaymentSuccess({ id: txId, statusCode: 101, payload });
+          }, 8000);
           
-          // Check if verification shows declined status
-          if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
-            console.error('❌ Payment verification shows declined - status:', verify.statusCode);
-            setIsProcessing(false);
-            successHandledRef.current = false; // Allow retry
-            setError('Payment was declined. Please try a different card.');
-            onPaymentError('Payment was declined. Please try a different card.');
-            return;
-          }
-          
-          console.log('✅ Payment verified successfully:', verify.statusCode);
-          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
-        } catch (e: any) {
-          console.error('Payment verification failed:', e);
-          const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
-          
-          // Verification failed but we have a transaction ID - payment likely succeeded
-          // Proceed anyway since Fortis already processed the payment
-          if (txId) {
-            console.log('⚠️ Verification failed but transaction exists, proceeding with payment');
+          try {
+            const verify = await verifyFortisTransaction(txId);
+            clearTimeout(timeoutId);
+            
+            // Check if verification shows declined status
+            if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
+              console.error('❌ Payment verification shows declined - status:', verify.statusCode);
+              setIsProcessing(false);
+              successHandledRef.current = false; // Allow retry
+              setError('Payment was declined. Please try a different card.');
+              onPaymentError('Payment was declined. Please try a different card.');
+              return;
+            }
+            
+            console.log('✅ Payment verified successfully:', verify.statusCode);
+            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
+          } catch (e: any) {
+            clearTimeout(timeoutId);
+            console.warn('⚠️ Verification failed but transaction exists, proceeding:', e);
             setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode || 101, payload }), 0);
-          } else {
-            setIsProcessing(false);
-            successHandledRef.current = false; // Allow retry
-            setError('Could not verify payment. Please try again.');
-            onPaymentError('Could not verify payment. Please try again.');
           }
+        } else {
+          // No transaction ID at all
+          console.error('❌ No transaction ID in payload');
+          setIsProcessing(false);
+          successHandledRef.current = false; // Allow retry
+          setError('Could not process payment. Please try again.');
+          onPaymentError('Could not process payment. Please try again.');
         }
       };
 
