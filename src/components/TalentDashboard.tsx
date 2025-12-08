@@ -529,25 +529,20 @@ const TalentDashboard: React.FC = () => {
       {/* Self-Promo Link Banner */}
       {talentProfile && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-red-500/20 border border-green-500/30">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-green-500/20">
-              <span className="text-2xl">🎄</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-white text-lg">Christmas Games 🎄</h3>
-              <p className="text-sm text-gray-300 mt-1">Use this special link when you promote to <span className="underline font-medium text-white">earn double</span> off every order you generate until Christmas.</p>
-              <button
-                onClick={() => {
-                  const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
-                  navigator.clipboard.writeText(promoUrl);
-                  toast.success('Promo link copied!');
-                }}
-                className="text-sm text-green-300 hover:text-green-200 bg-green-900/30 hover:bg-green-900/50 px-3 py-1.5 rounded mt-2 inline-flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <span>📋</span>
-                <span>shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
-              </button>
-            </div>
+          <div>
+            <h3 className="font-semibold text-white text-lg">Christmas Games 🎄</h3>
+            <p className="text-sm text-gray-300 mt-1">Use this special link when you promote to <span className="underline font-medium text-white">earn double</span> off every order you generate until Christmas.</p>
+            <button
+              onClick={() => {
+                const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
+                navigator.clipboard.writeText(promoUrl);
+                toast.success('Promo link copied!');
+              }}
+              className="text-sm text-green-300 hover:text-green-200 bg-green-900/30 hover:bg-green-900/50 px-3 py-1.5 rounded mt-2 inline-flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <span>📋</span>
+              <span>shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
+            </button>
           </div>
         </div>
       )}
