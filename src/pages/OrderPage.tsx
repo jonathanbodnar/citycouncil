@@ -668,71 +668,52 @@ const OrderPage: React.FC = () => {
         {/* Order Form */}
         <div className="lg:col-span-2 order-2 lg:order-1">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Step 1: Order Type */}
+            {/* What to Expect */}
             <div className="glass rounded-2xl shadow-modern p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Order Type
+                What to Expect
               </h2>
               
-              <div className="space-y-4">
-                <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input
-                    type="radio"
-                    value="false"
-                    defaultChecked={true}
-                    {...register('isForBusiness', { 
-                      setValueAs: (value) => value === 'true'
-                    })}
-                    className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400"
-                    style={{ accentColor: '#3b82f6' }}
-                  />
-                  <div className="ml-3 flex items-center">
-                    <UserIcon className="h-6 w-6 text-gray-400 mr-3" />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        Personal ShoutOut
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        For yourself, family, or friends
-                      </div>
-                    </div>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">1</div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Complete your payment</p>
+                    <p className="text-xs text-gray-500">Secure checkout with money-back guarantee</p>
                   </div>
-                </label>
-
-                {talent.allow_corporate_pricing && (
-                  <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input
-                      type="radio"
-                      value="true"
-                      {...register('isForBusiness', { 
-                        setValueAs: (value) => value === 'true'
-                      })}
-                      className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-400"
-                      style={{ accentColor: '#3b82f6' }}
-                    />
-                    <div className="ml-3 flex items-center">
-                      <BuildingOfficeIcon className="h-6 w-6 text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          Business ShoutOut
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          For corporate events, promotions, or team building
-                        </div>
-                      </div>
-                    </div>
-                  </label>
-                )}
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">2</div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Add your order details</p>
+                    <p className="text-xs text-gray-500">Tell {talent.temp_full_name || talent.users.full_name} who it's for and what to say</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">3</div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Receive your video within {talent.fulfillment_time_hours}h</p>
+                    <p className="text-xs text-gray-500">We'll notify you when it's ready</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">4</div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Download & share!</p>
+                    <p className="text-xs text-gray-500">Save your video and share it with everyone</p>
+                  </div>
+                </div>
               </div>
-              {errors.isForBusiness && (
-                <p className="mt-2 text-sm text-red-600">Please select an order type</p>
-              )}
             </div>
 
-            {/* Step 2: Order Details */}
+            {/* Hidden field for isForBusiness - default to personal */}
+            <input type="hidden" {...register('isForBusiness')} value="false" />
+
+            {/* Business Order Details - only show if somehow business is selected */}
+            {isForBusiness && (
             <div className="glass rounded-2xl shadow-modern p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Order Details
+                Business Details
               </h2>
 
               <div className="space-y-4">
@@ -798,31 +779,9 @@ const OrderPage: React.FC = () => {
                     </div>
                   </>
                 )}
-
-                {!isForBusiness && (
-                  <div>
-                    <label htmlFor="occasion" className="block text-sm font-medium text-gray-700 mb-2">
-                      Occasion (Optional)
-                    </label>
-                    <select
-                      id="occasion"
-                      {...register('occasion')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                      <option value="">Select an occasion</option>
-                      <option value="gag-gift">🎁 Gag gift for a liberal</option>
-                      <option value="pep-talk">💝 Surprise a loved one</option>
-                      <option value="holiday">🎄 Merry Christmas</option>
-                      <option value="birthday">🎂 Happy Birthday</option>
-                      <option value="roast">🔥 Holiday roast</option>
-                      <option value="advice">💡 Get advice</option>
-                      <option value="other">✨ Other</option>
-                    </select>
-                  </div>
-                )}
-
               </div>
             </div>
+            )}
 
             {/* Terms and Submit */}
             <div className="glass rounded-2xl shadow-modern p-6">
