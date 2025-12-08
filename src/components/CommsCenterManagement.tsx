@@ -420,12 +420,14 @@ const CommsCenterManagement: React.FC = () => {
       }
 
       // Call Twilio Edge Function to send SMS/MMS
+      // skipDbLog: true because we handle DB logging ourselves below
       const { data, error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: selectedTalent.users.phone,
           message: messageText || (mediaUrl ? '📎 Media message' : ''),
           talentId: selectedTalent.id,
-          mediaUrl: mediaUrl
+          mediaUrl: mediaUrl,
+          skipDbLog: true
         }
       });
 
@@ -473,11 +475,13 @@ const CommsCenterManagement: React.FC = () => {
       for (const talent of filteredTalents) {
         try {
           // Call Twilio Edge Function
+          // skipDbLog: true because we handle DB logging ourselves below
           const { error } = await supabase.functions.invoke('send-sms', {
             body: {
               to: talent.users.phone,
               message: massMessageText,
-              talentId: talent.id
+              talentId: talent.id,
+              skipDbLog: true
             }
           });
 
