@@ -534,7 +534,8 @@ const TalentDashboard: React.FC = () => {
               <span className="text-2xl">🎄</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-white">Christmas Games: 🎄 Use this special link when you promote to earn double off every order you generate.</h3>
+              <h3 className="font-semibold text-white text-lg">Christmas Games 🎄</h3>
+              <p className="text-sm text-gray-300 mt-1">Use this special link when you promote to <span className="underline font-medium text-white">earn double</span> off every order you generate until Christmas.</p>
               <button
                 onClick={() => {
                   const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
