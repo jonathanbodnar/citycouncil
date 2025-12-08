@@ -289,6 +289,14 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       elements.eventBus.on('done', handleSuccess as any);
       elements.eventBus.on('complete', handleSuccess as any);
       elements.eventBus.on('completed', handleSuccess as any);
+      // Fortis specific event names
+      elements.eventBus.on('transactionResponse', handleSuccess as any);
+      elements.eventBus.on('transaction_response', handleSuccess as any);
+      elements.eventBus.on('response', handleSuccess as any);
+      elements.eventBus.on('approved', handleSuccess as any);
+      elements.eventBus.on('payment_complete', handleSuccess as any);
+      elements.eventBus.on('payment.success', handleSuccess as any);
+      elements.eventBus.on('transaction.success', handleSuccess as any);
       elements.eventBus.on('payment_error', (e: any) => {
         console.error('❌ payment_error event:', e);
         successHandledRef.current = false; // Allow retry
@@ -392,6 +400,18 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         hideAgreementCheckbox: false, // Must show - required for payment to process
         hideTotal: false,
         digitalWallets: ['ApplePay', 'GooglePay'],
+        // Add direct callbacks as alternative to eventBus
+        onSuccess: handleSuccess,
+        onError: (e: any) => {
+          console.error('❌ onError callback:', e);
+          setError(e?.message || 'Payment error');
+          onPaymentError(e?.message || 'Payment error');
+        },
+        onDecline: (e: any) => {
+          console.error('❌ onDecline callback:', e);
+          setError('Payment was declined. Please try a different card.');
+          onPaymentError('Payment was declined. Please try a different card.');
+        },
       });
       
       // Try to auto-check the agreement checkbox after iframe loads
