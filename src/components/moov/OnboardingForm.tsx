@@ -213,7 +213,10 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
         style={{
           ...inputStyle,
           letterSpacing: '0.3em',
-          fontFamily: 'monospace'
+          fontFamily: 'monospace',
+          border: '1px solid #d1d5db',
+          borderRadius: '10px',
+          background: '#f9fafb'
         }}
         inputMode='numeric'
         pattern='\d*'
