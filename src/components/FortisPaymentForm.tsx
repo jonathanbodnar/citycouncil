@@ -414,6 +414,36 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         },
       });
       
+      // Start watching for success state immediately - don't wait for submit event
+      // This is our fallback in case eventBus doesn't fire
+      const successWatchInterval = setInterval(() => {
+        if (successHandledRef.current) {
+          clearInterval(successWatchInterval);
+          return;
+        }
+        
+        // Check if the iframe container has any success indicators
+        const container = document.querySelector('#payment');
+        if (container) {
+          const text = container.textContent?.toLowerCase() || '';
+          const hasThankYou = text.includes('thank you') || text.includes('payment complete') || text.includes('approved');
+          if (hasThankYou) {
+            console.log('🎯 SUCCESS DETECTED via container text watch!', text.substring(0, 200));
+            clearInterval(successWatchInterval);
+            if (!successHandledRef.current) {
+              successHandledRef.current = true;
+              setIsProcessing(true);
+              // We don't have transaction ID but payment succeeded - proceed
+              // The order page will handle verification
+              handleSuccess({ id: orderReference || `manual-${Date.now()}`, statusCode: 101, detectedByWatch: true });
+            }
+          }
+        }
+      }, 1000); // Check every second
+      
+      // Clean up interval after 2 minutes
+      setTimeout(() => clearInterval(successWatchInterval), 120000);
+      
       // Try to auto-check the agreement checkbox after iframe loads
       setTimeout(() => {
         try {
