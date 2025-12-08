@@ -20,7 +20,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
   const [orderReference, setOrderReference] = useState<string | null>(null);
@@ -52,7 +51,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     const handleMessageSuccess = (payload: any) => {
       if (successHandledRef.current) return;
       successHandledRef.current = true;
-      setIsProcessing(true);
       
       console.log('✅ Processing payment from postMessage:', payload);
       const txId = payload?.transaction?.id || payload?.data?.id || payload?.id || payload?.value?.id;
@@ -125,7 +123,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       const handleSuccess = async (payload: any) => {
         if (successHandledRef.current) return;
         successHandledRef.current = true;
-        setIsProcessing(true);
         
         console.log('✅ payment_success event:', payload);
         
@@ -149,7 +146,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
         } catch (e: any) {
           console.error('Payment processing error:', e);
-          setIsProcessing(false);
           successHandledRef.current = false;
           setError(e.message || 'Verification failed');
           onPaymentError(e.message || 'Verification failed');
@@ -168,7 +164,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       elements.eventBus.on('payment_error', (e: any) => {
         console.error('❌ payment_error:', e);
         successHandledRef.current = false;
-        setIsProcessing(false);
         setError(e?.message || 'Payment failed');
         onPaymentError(e?.message || 'Payment failed');
       });
@@ -213,20 +208,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-
-          {/* Processing Payment Overlay */}
-          {isProcessing && (
-            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
-              <div className="bg-slate-900 border border-white/20 rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
-                <div className="relative mx-auto w-16 h-16 mb-4">
-                  <div className="absolute inset-0 rounded-full border-4 border-purple-500/30"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Processing Payment</h3>
-                <p className="text-slate-400 text-sm">Please wait while we confirm your payment...</p>
-              </div>
             </div>
           )}
 
