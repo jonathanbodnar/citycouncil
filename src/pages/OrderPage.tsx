@@ -345,27 +345,37 @@ const OrderPage: React.FC = () => {
         console.log('='.repeat(60));
         console.log('🧪 TEST MODE - Order would be created with:');
         console.log('='.repeat(60));
-        console.log({
+        const testOrderData = {
           user_id: user.id,
           user_email: user.email,
           talent_id: talent.id,
           talent_name: talent.temp_full_name || talent.users.full_name,
           occasion: orderData.occasion || null,
           amount_cents: Math.round(pricing.total * 100),
+          amount_dollars: pricing.total,
           admin_fee_cents: Math.round(pricing.adminFee * 100),
           charity_amount_cents: Math.round(pricing.charityAmount * 100),
           is_corporate: orderData.isForBusiness,
           promo_source: getPromoSource(talent),
           coupon_applied: appliedCoupon?.code || null,
           discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
-          payment_result: paymentResult
-        });
+          payment_result: paymentResult,
+          fulfillment_time_hours: talent.fulfillment_time_hours
+        };
+        console.log(testOrderData);
         console.log('='.repeat(60));
-        console.log('✅ TEST MODE: Redirecting to success page with fake order ID');
+        console.log('✅ TEST MODE: Redirecting to success page with test order data');
         
-        // Simulate success - redirect with test order ID
+        // Simulate success - redirect with test order params (same format as real orders)
         toast.success('🧪 TEST MODE: Order simulated successfully!');
-        navigate(`/order-success/test-order-${Date.now()}?test=true`);
+        const testSuccessParams = new URLSearchParams({
+          order_id: `test-order-${Date.now()}`,
+          amount: pricing.total.toString(),
+          talent: talent.temp_full_name || talent.users.full_name,
+          delivery_hours: talent.fulfillment_time_hours.toString(),
+          test: 'true'
+        });
+        navigate(`/order-success?${testSuccessParams.toString()}`);
         return;
       }
       
