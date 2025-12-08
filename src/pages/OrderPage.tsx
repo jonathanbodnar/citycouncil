@@ -708,7 +708,7 @@ const OrderPage: React.FC = () => {
                 <option value="gag-gift">🎁 Gag gift for a liberal</option>
                 <option value="pep-talk">💝 Surprise a loved one</option>
                 <option value="holiday">🎄 Merry Christmas</option>
-                <option value="new-year">🎆 New Year's ShoutOut</option>
+                <option value="new-year">🎆 New Years ShoutOut</option>
                 <option value="birthday">🎂 Happy Birthday</option>
                 <option value="roast">🔥 Holiday roast</option>
                 <option value="advice">💡 Get advice</option>
