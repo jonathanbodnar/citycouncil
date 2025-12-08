@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CreditCardIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../context/AuthContext';
 import { createFortisIntention, verifyFortisTransaction } from '../services/fortisCommerceService';
 
 interface FortisPaymentFormProps {
@@ -22,134 +20,66 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false); // New state for payment processing
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
   const [orderReference, setOrderReference] = useState<string | null>(null);
   const successHandledRef = useRef(false);
-  const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     initializeFortis();
-    // Listen for postMessage from Fortis iframe as a final fallback
+    
+    // Listen for postMessage from Fortis iframe as fallback
     const onMessage = (event: MessageEvent) => {
       try {
-        // Log ALL postMessages for debugging
-        console.log('📨 postMessage received:', {
-          origin: event.origin,
-          data: event.data,
-          type: typeof event.data
-        });
-        
         const origin = String(event.origin || '');
-        // Accept messages from fortis.tech or any origin if it contains transaction data
-        const isFortisOrigin = origin.includes('fortis.tech') || origin.includes('fortispay');
+        if (!origin.includes('fortis.tech') && !origin.includes('fortispay')) return;
         
         const data: any = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        const txId = data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id;
+        const statusCode = data?.data?.status_code || data?.status_code || data?.value?.status_code;
         
-        // Look for transaction ID in various places
-        const txId = data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id || 
-                     data?.transactionId || data?.transaction_id || data?.txId;
-        const hasId = !!txId;
-        const hasStatus = !!(data?.data?.status_code || data?.status_code || data?.reason_code_id || 
-                            data?.value?.status_code || data?.value?.reason_code_id ||
-                            data?.status || data?.result);
+        console.log('📨 Fortis postMessage:', { txId, statusCode, data });
         
-        console.log('📨 Parsed postMessage:', { isFortisOrigin, hasId, hasStatus, txId });
-        
-        if (hasId || hasStatus) {
-          console.log('✅ Found transaction data in postMessage, calling handleMessageSuccess');
+        if (txId) {
           handleMessageSuccess(data);
         }
-      } catch (e) {
-        // Log parse errors for debugging
-        console.log('📨 postMessage parse error (might be non-Fortis message):', e);
+      } catch {
+        // ignore malformed messages
       }
     };
+    
     const handleMessageSuccess = (payload: any) => {
       if (successHandledRef.current) return;
-      console.log('iframe message transaction payload', payload);
-      
-      // Check for error messages in payload
-      const errorMsg = payload?.error || payload?.message || payload?.data?.error || payload?.data?.message;
-      if (errorMsg && typeof errorMsg === 'string' && (errorMsg.toLowerCase().includes('decline') || errorMsg.toLowerCase().includes('fail') || errorMsg.toLowerCase().includes('error'))) {
-        console.error('❌ Payment error in payload:', errorMsg);
-        setIsProcessing(false);
-        setError(errorMsg);
-        onPaymentError(errorMsg);
-        return;
-      }
-      
-      const txId = payload?.transaction?.id || payload?.data?.id || payload?.id || payload?.value?.id;
-      
-      // Check for declined/failed status in the payload
-      const statusCode = payload?.data?.status_code || payload?.status_code || payload?.value?.status_code || payload?.transaction?.status_code;
-      const reasonCode = payload?.reason_code_id || payload?.data?.reason_code_id || payload?.value?.reason_code_id || payload?.transaction?.reason_code_id;
-      
-      console.log('🔍 Transaction status check:', { txId, statusCode, reasonCode });
-      
-      // Fortis status codes: 101 = approved, 102-199 = declined/failed
-      // reason_code_id 1000 = approved, others indicate decline reasons
-      if (statusCode && statusCode !== 101 && statusCode !== 100) {
-        console.error('❌ Payment declined - status_code:', statusCode, 'reason_code:', reasonCode);
-        setIsProcessing(false);
-        setError('Payment was declined. Please try a different card.');
-        onPaymentError('Payment was declined. Please try a different card.');
-        return;
-      }
-      
-      // Only mark as handled if we have a valid transaction
-      if (!txId) {
-        console.warn('⚠️ No transaction ID in payload, ignoring');
-        return;
-      }
-      
       successHandledRef.current = true;
-      setIsProcessing(true); // Show processing spinner
-      setError(null); // Clear any previous errors
+      setIsProcessing(true);
       
-      // Clear any existing timeout
-      if (processingTimeoutRef.current) {
-        clearTimeout(processingTimeoutRef.current);
-      }
+      console.log('✅ Processing payment from postMessage:', payload);
+      const txId = payload?.transaction?.id || payload?.data?.id || payload?.id || payload?.value?.id;
+      const statusCode = payload?.data?.status_code || payload?.status_code || payload?.value?.status_code;
       
-      // If status is already approved (101 or 100), proceed without verification
+      // If already approved, proceed immediately
       if (statusCode === 101 || statusCode === 100) {
-        console.log('✅ Payment approved in payload, proceeding:', statusCode);
-        setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode, payload }), 0);
+        console.log('✅ Payment approved, proceeding');
+        setTimeout(() => onPaymentSuccess({ id: txId, statusCode, payload }), 0);
         return;
       }
       
-      // Set a timeout - if verification takes too long, proceed anyway
-      const timeoutId = setTimeout(() => {
-        console.warn('⚠️ Verification timeout - proceeding with transaction:', txId);
-        onPaymentSuccess({ id: txId, statusCode: statusCode || 101, payload });
-      }, 10000); // 10 second timeout
-      
-      // Otherwise try to verify (but don't block on failure - payment already succeeded in Fortis)
-      verifyFortisTransaction(txId)
-        .then((verify) => {
-          clearTimeout(timeoutId);
-          // Check if verification shows declined status
-          if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
-            console.error('❌ Payment verification shows declined - status:', verify.statusCode);
-            setIsProcessing(false);
-            successHandledRef.current = false; // Allow retry
-            setError('Payment was declined. Please try a different card.');
-            onPaymentError('Payment was declined. Please try a different card.');
-            return;
-          }
-          console.log('✅ Payment verified successfully:', verify.statusCode);
-          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
-        })
-        .catch((e) => {
-          clearTimeout(timeoutId);
-          // Verification failed but we have a transaction ID from Fortis
-          // The payment likely succeeded - proceed anyway
-          console.warn('⚠️ Payment verification failed but transaction exists, proceeding:', e);
-          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode || 101, payload }), 0);
-        });
+      // Otherwise verify
+      if (txId) {
+        verifyFortisTransaction(txId)
+          .then((verify) => {
+            console.log('✅ Verification result:', verify);
+            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
+          })
+          .catch((e) => {
+            // Verification failed but we have transaction - proceed anyway
+            console.warn('⚠️ Verification failed, proceeding anyway:', e);
+            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode || 101, payload }), 0);
+          });
+      }
     };
+    
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, []);
@@ -165,7 +95,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       // Step 2: Ensure Commerce is loaded (added in index.html as async script)
       const waitForCommerce = () => new Promise<void>((resolve, reject) => {
-        // Check immediately first (might already be loaded)
+        // Check immediately first
         if ((window as any).Commerce?.elements) {
           resolve();
           return;
@@ -178,7 +108,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             clearInterval(i);
             resolve();
           }
-          if (attempts > 50) { // Reduced from 100 to 50 (5 seconds max instead of 10)
+          if (attempts > 100) {
             clearInterval(i);
             reject(new Error('Fortis Commerce JS failed to load'));
           }
@@ -195,196 +125,59 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       const handleSuccess = async (payload: any) => {
         if (successHandledRef.current) return;
         successHandledRef.current = true;
-        setIsProcessing(true); // Show processing spinner
-        setError(null); // Clear any previous errors
-        console.log('🎯 payment_success payload received:', payload);
+        setIsProcessing(true);
         
-        // Check for declined/failed status in the payload first
-        const statusCode = payload?.data?.status_code || payload?.status_code || payload?.transaction?.status_code;
-        const reasonCode = payload?.reason_code_id || payload?.data?.reason_code_id || payload?.transaction?.reason_code_id;
-        const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
+        console.log('✅ payment_success event:', payload);
         
-        console.log('🔍 Extracted from payload:', { txId, statusCode, reasonCode });
-        
-        // Fortis status codes: 101 = approved, 100 = pending, 102-199 = declined/failed
-        if (statusCode && statusCode !== 101 && statusCode !== 100) {
-          console.error('❌ Payment declined in payload - status_code:', statusCode, 'reason_code:', reasonCode);
-          setIsProcessing(false);
-          successHandledRef.current = false; // Allow retry
-          setError('Payment was declined. Please try a different card.');
-          onPaymentError('Payment was declined. Please try a different card.');
-          return;
-        }
-        
-        // If we have a transaction ID and status is approved, proceed immediately
-        // Don't wait for verification - it can hang
-        if (txId && (statusCode === 101 || statusCode === 100)) {
-          console.log('✅ Payment approved in payload, proceeding immediately:', { txId, statusCode });
-          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode, payload }), 0);
-          return;
-        }
-        
-        // If we have txId but no status, try verification with timeout
-        if (txId) {
-          console.log('🔄 Have txId but no status, attempting verification with timeout...');
+        try {
+          const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
+          const statusCode = payload?.data?.status_code || payload?.status_code || payload?.transaction?.status_code;
           
-          // Set a timeout - proceed after 8 seconds regardless
-          const timeoutId = setTimeout(() => {
-            console.warn('⚠️ Verification timeout - proceeding with transaction:', txId);
-            onPaymentSuccess({ id: txId, statusCode: 101, payload });
-          }, 8000);
-          
-          try {
-            const verify = await verifyFortisTransaction(txId);
-            clearTimeout(timeoutId);
-            
-            // Check if verification shows declined status
-            if (verify.statusCode && verify.statusCode !== 101 && verify.statusCode !== 100) {
-              console.error('❌ Payment verification shows declined - status:', verify.statusCode);
-              setIsProcessing(false);
-              successHandledRef.current = false; // Allow retry
-              setError('Payment was declined. Please try a different card.');
-              onPaymentError('Payment was declined. Please try a different card.');
-              return;
-            }
-            
-            console.log('✅ Payment verified successfully:', verify.statusCode);
-            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
-          } catch (e: any) {
-            clearTimeout(timeoutId);
-            console.warn('⚠️ Verification failed but transaction exists, proceeding:', e);
-            setTimeout(() => onPaymentSuccess({ id: txId, statusCode: statusCode || 101, payload }), 0);
+          if (!txId) {
+            throw new Error('Missing transaction id');
           }
-        } else {
-          // No transaction ID at all
-          console.error('❌ No transaction ID in payload');
+          
+          // If already approved, proceed immediately
+          if (statusCode === 101 || statusCode === 100) {
+            console.log('✅ Payment approved in event, proceeding');
+            setTimeout(() => onPaymentSuccess({ id: txId, statusCode, payload }), 0);
+            return;
+          }
+          
+          // Otherwise verify
+          const verify = await verifyFortisTransaction(txId);
+          setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
+        } catch (e: any) {
+          console.error('Payment processing error:', e);
           setIsProcessing(false);
-          successHandledRef.current = false; // Allow retry
-          setError('Could not process payment. Please try again.');
-          onPaymentError('Could not process payment. Please try again.');
+          successHandledRef.current = false;
+          setError(e.message || 'Verification failed');
+          onPaymentError(e.message || 'Verification failed');
         }
       };
 
       // Events (attach BEFORE create to avoid missing early events)
       console.log('Attaching Commerce JS handlers');
-      
-      // DEBUG: Log ALL events from the event bus
-      const originalEmit = elements.eventBus.emit?.bind(elements.eventBus);
-      if (originalEmit) {
-        elements.eventBus.emit = (event: string, ...args: any[]) => {
-          console.log('🔔 Fortis Event:', event, args);
-          return originalEmit(event, ...args);
-        };
-      }
-      
       elements.eventBus.on('ready', () => {
         console.log('Commerce iframe ready');
         setIsLoading(false);
       });
       elements.eventBus.on('payment_success', handleSuccess);
-      // Add extra fallbacks in case library emits different event names
       elements.eventBus.on('success', handleSuccess as any);
       elements.eventBus.on('transaction_success', handleSuccess as any);
-      elements.eventBus.on('transaction.completed', handleSuccess as any);
-      elements.eventBus.on('done', handleSuccess as any);
-      elements.eventBus.on('complete', handleSuccess as any);
-      elements.eventBus.on('completed', handleSuccess as any);
-      // Fortis specific event names
-      elements.eventBus.on('transactionResponse', handleSuccess as any);
-      elements.eventBus.on('transaction_response', handleSuccess as any);
-      elements.eventBus.on('response', handleSuccess as any);
-      elements.eventBus.on('approved', handleSuccess as any);
-      elements.eventBus.on('payment_complete', handleSuccess as any);
-      elements.eventBus.on('payment.success', handleSuccess as any);
-      elements.eventBus.on('transaction.success', handleSuccess as any);
       elements.eventBus.on('payment_error', (e: any) => {
-        console.error('❌ payment_error event:', e);
-        successHandledRef.current = false; // Allow retry
-        const errorMsg = e?.message || e?.error || 'Payment failed. Please try again.';
-        setError(errorMsg);
-        onPaymentError(errorMsg);
+        console.error('❌ payment_error:', e);
+        successHandledRef.current = false;
+        setIsProcessing(false);
+        setError(e?.message || 'Payment failed');
+        onPaymentError(e?.message || 'Payment failed');
       });
       elements.eventBus.on('error', (e: any) => {
-        console.error('❌ error event:', e);
-        successHandledRef.current = false; // Allow retry
-        setError(e?.message || 'Payment error. Please try again.');
-      });
-      // Listen for declined/failed transactions
-      elements.eventBus.on('transaction_failed', (e: any) => {
-        console.error('❌ transaction_failed event:', e);
-        successHandledRef.current = false; // Allow retry
-        setError('Transaction failed. Please try a different card.');
-        onPaymentError('Transaction failed. Please try a different card.');
-      });
-      elements.eventBus.on('payment_declined', (e: any) => {
-        console.error('❌ payment_declined event:', e);
-        successHandledRef.current = false; // Allow retry
-        setError('Payment was declined. Please try a different card.');
-        onPaymentError('Payment was declined. Please try a different card.');
-      });
-      
-      // Listen for submit event - this fires when user clicks Pay button
-      elements.eventBus.on('submit', () => {
-        console.log('🔄 Payment form submitted, starting processing...');
-        setIsProcessing(true);
-        
-        // Start polling for success indicators in the iframe
-        let pollCount = 0;
-        const pollInterval = setInterval(() => {
-          pollCount++;
-          try {
-            const iframe = document.querySelector('#payment iframe') as HTMLIFrameElement;
-            const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
-            if (iframeDoc) {
-              // Look for success indicators
-              const successText = iframeDoc.body?.innerText?.toLowerCase() || '';
-              const hasSuccess = successText.includes('approved') || 
-                                successText.includes('success') || 
-                                successText.includes('complete') ||
-                                successText.includes('thank you');
-              if (hasSuccess && !successHandledRef.current) {
-                console.log('✅ Detected success state in iframe via polling');
-                clearInterval(pollInterval);
-                // Try to find transaction ID
-                const scripts = iframeDoc.querySelectorAll('script');
-                let txId = null;
-                scripts.forEach(s => {
-                  const match = s.textContent?.match(/transaction[_-]?id["']?\s*[:=]\s*["']?([a-f0-9]+)/i);
-                  if (match) txId = match[1];
-                });
-                handleSuccess({ id: txId, statusCode: 101, polled: true });
-              }
-            }
-          } catch (e) {
-            // Cross-origin - can't access iframe content
-          }
-          
-          // Stop polling after 30 seconds
-          if (pollCount > 60) {
-            clearInterval(pollInterval);
-          }
-        }, 500);
-        
-        // Safety timeout - if no response after 20 seconds, show error
-        processingTimeoutRef.current = setTimeout(() => {
-          clearInterval(pollInterval);
-          console.error('❌ Payment processing timeout - no response from Fortis');
-          setIsProcessing(false);
-          successHandledRef.current = false;
-          setError('Payment is taking longer than expected. Please check your bank statement and try again if not charged.');
-        }, 20000);
-      });
-      
-      // Also listen for validation_error which means form wasn't submitted
-      elements.eventBus.on('validation_error', (e: any) => {
-        console.log('⚠️ Validation error:', e);
-        setIsProcessing(false);
-        if (processingTimeoutRef.current) {
-          clearTimeout(processingTimeoutRef.current);
-        }
+        console.error('❌ error:', e);
+        setError(e?.message || 'Payment error');
       });
 
-      // Create iframe in our container (pass selector string to avoid null ref timing)
+      // Create iframe in our container
       console.log('Creating Commerce iframe');
       elements.create({
         container: '#payment',
@@ -397,85 +190,20 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         showReceipt: false,
         showSubmitButton: true,
         showValidationAnimation: true,
-        hideAgreementCheckbox: false, // Must show - required for payment to process
+        hideAgreementCheckbox: false,
         hideTotal: false,
         digitalWallets: ['ApplePay', 'GooglePay'],
-        // Add direct callbacks as alternative to eventBus
-        onSuccess: handleSuccess,
-        onError: (e: any) => {
-          console.error('❌ onError callback:', e);
-          setError(e?.message || 'Payment error');
-          onPaymentError(e?.message || 'Payment error');
-        },
-        onDecline: (e: any) => {
-          console.error('❌ onDecline callback:', e);
-          setError('Payment was declined. Please try a different card.');
-          onPaymentError('Payment was declined. Please try a different card.');
-        },
       });
-      
-      // Start watching for success state immediately - don't wait for submit event
-      // This is our fallback in case eventBus doesn't fire
-      const successWatchInterval = setInterval(() => {
-        if (successHandledRef.current) {
-          clearInterval(successWatchInterval);
-          return;
-        }
-        
-        // Check if the iframe container has any success indicators
-        const container = document.querySelector('#payment');
-        if (container) {
-          const text = container.textContent?.toLowerCase() || '';
-          const hasThankYou = text.includes('thank you') || text.includes('payment complete') || text.includes('approved');
-          if (hasThankYou) {
-            console.log('🎯 SUCCESS DETECTED via container text watch!', text.substring(0, 200));
-            clearInterval(successWatchInterval);
-            if (!successHandledRef.current) {
-              successHandledRef.current = true;
-              setIsProcessing(true);
-              // We don't have transaction ID but payment succeeded - proceed
-              // The order page will handle verification
-              handleSuccess({ id: orderReference || `manual-${Date.now()}`, statusCode: 101, detectedByWatch: true });
-            }
-          }
-        }
-      }, 1000); // Check every second
-      
-      // Clean up interval after 2 minutes
-      setTimeout(() => clearInterval(successWatchInterval), 120000);
-      
-      // Try to auto-check the agreement checkbox after iframe loads
-      setTimeout(() => {
-        try {
-          const iframe = document.querySelector('#payment iframe') as HTMLIFrameElement;
-          if (iframe?.contentDocument) {
-            const checkbox = iframe.contentDocument.querySelector('input[type="checkbox"]') as HTMLInputElement;
-            if (checkbox && !checkbox.checked) {
-              checkbox.click();
-              console.log('✅ Auto-checked agreement checkbox');
-            }
-          }
-        } catch (e) {
-          // Cross-origin iframe - can't access, user must check manually
-          console.log('ℹ️ Cannot auto-check agreement (cross-origin iframe)');
-        }
-      }, 2000);
 
       setCommerceInstance(elements);
 
     } catch (err) {
       console.error('Failed to initialize payment:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-      const userFriendlyMsg = errorMsg.includes('Edge Function') 
-        ? 'Payment system is temporarily unavailable. Please try again in a few moments or contact support at hello@shoutout.us'
-        : `Failed to load payment form: ${errorMsg}. Please refresh the page or contact support.`;
-      setError(userFriendlyMsg);
-      onPaymentError(userFriendlyMsg);
+      setError('Failed to load payment form. Please refresh the page.');
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="rounded-2xl px-4 py-5 md:p-6 bg-gradient-to-br from-slate-900/40 to-slate-800/20 border border-white/10 shadow-xl max-w-3xl mx-auto">
@@ -502,7 +230,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             </div>
           )}
 
-          {/* Commerce.js iframe container - handles everything */}
+          {/* Commerce.js iframe container */}
           <div 
             id="payment"
             ref={iframeContainerRef}
@@ -523,8 +251,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           )}
         </div>
       )}
-
-      {/* Wallet buttons are rendered inside the Commerce iframe when available */}
 
       {/* Security Info */}
       <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10">
