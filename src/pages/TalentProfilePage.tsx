@@ -630,15 +630,62 @@ const TalentProfilePage: React.FC = () => {
               </div>
             )}
 
-            {/* CTA Button */}
-            <Link
-              to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
-              onClick={storePromoSourceOnClick}
-              className="w-full text-white py-4 px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 flex items-center justify-center shadow-modern-lg hover:shadow-modern-xl hover:scale-[1.02]"
-              style={{ backgroundColor: '#3a86ff' }}
-            >
-              Order ShoutOut - Starting at ${talent.pricing}
-            </Link>
+            {/* Order Ideas - Click any to order */}
+            <div className="space-y-3">
+              <p className="text-sm text-gray-400 text-center mb-2">Click an idea to get started:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🎁 Gag gift for a liberal
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  💝 Surprise a loved one
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🎄 Merry Christmas
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🎂 Happy Birthday
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🔥 Holiday roast
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  💡 Get advice
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center col-span-2"
+                >
+                  ❓ Ask a question
+                </Link>
+              </div>
+              <p className="text-center text-white/60 text-sm mt-2">Starting at ${talent.pricing}</p>
+            </div>
 
             {/* Trust Indicators */}
             <div className="mt-4 text-center">
