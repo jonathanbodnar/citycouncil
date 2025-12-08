@@ -85,29 +85,30 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           )}
         </h3>
         
-        {/* Categories - Max 1 line */}
+        {/* Category - Single category, prefer non-"other" */}
         <div className="mb-2 sm:mb-3 flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
-          {talent.categories && talent.categories.length > 0 ? (
-            <>
-              {talent.categories.slice(0, 1).map((category) => (
-                <span
-                  key={category}
-                  className="px-2 py-0.5 sm:px-3 sm:py-1 glass-light border border-white/20 text-white text-[10px] sm:text-xs rounded-full font-medium whitespace-nowrap"
-                >
-                  {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </span>
-              ))}
-              {talent.categories.length > 1 && (
-                <span className="w-5 h-5 sm:w-7 sm:h-7 rounded-full glass-light border border-white/20 text-white/60 text-[10px] sm:text-xs font-medium flex items-center justify-center flex-shrink-0">
-                  +{talent.categories.length - 1}
-                </span>
-              )}
-            </>
-          ) : (
-            <span className="px-2 py-0.5 sm:px-3 sm:py-1 glass-light border border-white/20 text-white text-[10px] sm:text-xs rounded-full font-medium whitespace-nowrap">
-              {talent.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </span>
-          )}
+          {(() => {
+            // Get the best category to display (prefer non-"other")
+            let displayCategory = talent.category;
+            if (talent.categories && talent.categories.length > 0) {
+              // Find first non-"other" category, or fall back to first category
+              const nonOther = talent.categories.find(c => c.toLowerCase() !== 'other');
+              displayCategory = nonOther || talent.categories[0];
+            }
+            // If still "other", try the single category field
+            if (displayCategory?.toLowerCase() === 'other' && talent.category && talent.category.toLowerCase() !== 'other') {
+              displayCategory = talent.category;
+            }
+            // Don't show category if it's still "other"
+            if (!displayCategory || displayCategory.toLowerCase() === 'other') {
+              return null;
+            }
+            return (
+              <span className="px-2 py-0.5 sm:px-3 sm:py-1 glass-light border border-white/20 text-white text-[10px] sm:text-xs rounded-full font-medium whitespace-nowrap">
+                {displayCategory.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </span>
+            );
+          })()}
         </div>
         
         {/* Rating - Hidden on mobile, shown on sm+ */}
