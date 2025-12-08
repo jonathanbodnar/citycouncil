@@ -684,7 +684,6 @@ const TalentProfilePage: React.FC = () => {
                   ❓ Ask a question
                 </Link>
               </div>
-              <p className="text-center text-white/60 text-sm mt-2">Starting at ${talent.pricing}</p>
             </div>
 
             {/* Trust Indicators */}
