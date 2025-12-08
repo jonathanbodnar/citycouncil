@@ -500,196 +500,169 @@ const TalentProfilePage: React.FC = () => {
           </div>
 
           {/* Profile Info */}
-          <div className="md:w-2/3 p-6 relative z-10">
-            <div className="flex items-start justify-between mb-4">
+          <div className="md:w-2/3 p-4 md:p-5 relative z-10">
+            <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
-                {/* Position Title */}
-                {talent.position && (
-                  <p className="text-sm font-medium text-gray-600 mb-2 uppercase tracking-wide">
-                    {talent.position}
-                  </p>
-                )}
-                
-                {/* Name and Reviews - Desktop Side by Side */}
-                <div className="md:flex md:items-center md:justify-between mb-2">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2 md:mb-0">
+                {/* Name and Rating inline */}
+                <div className="flex items-center justify-between mb-1">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">
                     {talent.temp_full_name || talent.users.full_name}
                   </h1>
-                  
-                  {/* Rating - Right side on desktop */}
-                  <div className="flex items-center">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <StarIcon
-                          key={i}
-                          className={`h-5 w-5 ${
-                            i < Math.floor(talent.average_rating || 0)
-                              ? 'text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-lg font-semibold text-gray-900">
-                      {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'}
-                    </span>
-                    <span className="ml-2 text-gray-600">
-                      ({talent.reviews.length} reviews)
-                    </span>
-                  </div>
+                  <button 
+                    onClick={() => setShareModalOpen(true)}
+                    className="p-1.5 text-gray-400 hover:text-gray-600"
+                    title="Share talent profile"
+                  >
+                    <ShareIcon className="h-5 w-5" />
+                  </button>
                 </div>
                 
-                <div className="flex items-center flex-wrap gap-3 mb-4">
-                  {/* Categories */}
+                {/* Rating */}
+                <div className="flex items-center mb-2">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <StarIcon
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.floor(talent.average_rating || 0)
+                            ? 'text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="ml-1.5 text-sm font-semibold text-gray-900">
+                    {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'}
+                  </span>
+                  <span className="ml-1 text-xs text-gray-500">
+                    ({talent.reviews.length})
+                  </span>
+                  {/* Verified Badge inline */}
+                  {talent.is_verified && (
+                    <CheckBadgeIcon className="h-4 w-4 text-blue-500 ml-2" title="Verified" />
+                  )}
+                </div>
+                
+                {/* Categories - compact */}
+                <div className="flex items-center flex-wrap gap-1.5 mb-2">
                   {talent.categories && talent.categories.length > 0 ? (
-                    talent.categories.map((category, index) => (
-                      <span key={index} className="glass-light border border-white/20 text-white px-4 py-2 rounded-full text-sm font-bold">
+                    talent.categories.slice(0, 2).map((category, index) => (
+                      <span key={index} className="glass-light border border-white/20 text-white px-2 py-0.5 rounded-full text-xs font-medium">
                         {getCategoryLabel(category)}
                       </span>
                     ))
-                  ) : (
-                    <span className="glass border border-white/20 text-white px-4 py-2 rounded-full text-sm font-bold">
+                  ) : talent.category && talent.category.toLowerCase() !== 'other' && (
+                    <span className="glass border border-white/20 text-white px-2 py-0.5 rounded-full text-xs font-medium">
                       {getCategoryLabel(talent.category)}
                     </span>
                   )}
-                  
-                  {/* Verified Badge */}
-                  {talent.is_verified && (
-                    <div className="flex items-center gap-1">
-                      <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
-                      <span className="text-sm text-gray-600">Verified</span>
-                    </div>
-                  )}
                 </div>
               </div>
-              
-              <button 
-                onClick={() => setShareModalOpen(true)}
-                className="p-2 text-gray-400 hover:text-gray-600"
-                title="Share talent profile"
-              >
-                <ShareIcon className="h-6 w-6" />
-              </button>
             </div>
 
-            {/* Bio */}
-            <p className="text-gray-700 mb-4 leading-relaxed">
+            {/* Bio - condensed */}
+            <p className="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-3">
               {talent.bio}
             </p>
 
-            {/* Stats - Clean Glass Layout */}
-            <div className="glass-strong rounded-2xl px-6 py-4 mb-4 border border-white/30">
+            {/* Stats - Compact Glass Layout */}
+            <div className="glass-strong rounded-xl px-4 py-2.5 mb-3 border border-white/30">
               <div className="flex items-center justify-between text-center">
                 <div className="flex-1">
-                  <div className="text-2xl font-bold" style={{ color: '#ffffff' }}>${talent.pricing}</div>
-                  <div className="text-xs text-gray-600 font-medium">Personal</div>
-                  {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
-                    <div className="text-sm font-semibold text-gray-400">${talent.corporate_pricing} Corp</div>
-                  )}
+                  <div className="text-lg font-bold" style={{ color: '#ffffff' }}>${talent.pricing}</div>
+                  <div className="text-[10px] text-gray-500 font-medium">Personal</div>
                 </div>
                 
                 <div className="flex-1 border-l border-white/30">
-                  <div className="text-xl font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
-                    <ClockIcon className="h-5 w-5 mr-1" />
+                  <div className="text-base font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
+                    <ClockIcon className="h-4 w-4 mr-0.5" />
                     {talent.fulfillment_time_hours}h
                   </div>
-                  <div className="text-xs text-gray-600">Delivery</div>
+                  <div className="text-[10px] text-gray-500">Delivery</div>
                 </div>
                 
                 {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) ? (
                   <div className="flex-1 border-l border-white/30">
-                    <div className="text-xl font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
-                      <HeartIcon className="h-5 w-5 mr-1" />
+                    <div className="text-base font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
+                      <HeartIcon className="h-4 w-4 mr-0.5" />
                       {talent.charity_percentage}%
                     </div>
-                    <div className="text-xs text-gray-600 font-medium">To Charity</div>
+                    <div className="text-[10px] text-gray-500">Charity</div>
                   </div>
                 ) : null}
               </div>
             </div>
 
-            {/* Charity Info */}
-            {(talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0) ? (
-              <div className="mb-4">
-                <div className="flex items-center">
-                  <HeartIcon className="h-5 w-5 text-purple-400 mr-3" />
-                  <span className="font-bold text-purple-300">
-                    {talent.charity_percentage}% of proceeds go to {talent.charity_name}
-                  </span>
-                </div>
-              </div>
-            ) : null}
-
-            {/* Pricing Urgency Indicator - Above Order Button */}
+            {/* Pricing Urgency Indicator */}
             {ordersRemaining <= 10 && (
-              <div className="mb-3 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/50 rounded-xl px-4 py-3 animate-pulse">
-                <FireIcon className="h-5 w-5 text-orange-400" />
-                <span className="text-sm font-bold text-orange-100">
-                  Only {ordersRemaining} more {ordersRemaining === 1 ? 'order' : 'orders'} available at this price!
+              <div className="mb-2 flex items-center justify-center gap-1.5 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/50 rounded-lg px-3 py-2 animate-pulse">
+                <FireIcon className="h-4 w-4 text-orange-400" />
+                <span className="text-xs font-bold text-orange-100">
+                  Only {ordersRemaining} left at this price!
                 </span>
               </div>
             )}
 
             {/* Order Ideas - Click any to order */}
-            <div className="space-y-3">
-              <p className="text-sm text-gray-400 text-center mb-2">Click an idea to get started:</p>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
+              <p className="text-xs text-gray-400 text-center">Click an idea to get started:</p>
+              <div className="grid grid-cols-2 gap-1.5">
                 <Link
                   to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
                   onClick={storePromoSourceOnClick}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🎁 Gag gift for a liberal
+                  🎁 Gag gift
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
                   onClick={storePromoSourceOnClick}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  💝 Surprise a loved one
+                  💝 Surprise
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=holiday` : `/signup?returnTo=/order/${talent.id}?occasion=holiday`}
                   onClick={storePromoSourceOnClick}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🎄 Merry Christmas
+                  🎄 Christmas
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=birthday` : `/signup?returnTo=/order/${talent.id}?occasion=birthday`}
                   onClick={storePromoSourceOnClick}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🎂 Happy Birthday
+                  🎂 Birthday
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
                   onClick={storePromoSourceOnClick}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🔥 Holiday roast
+                  🔥 Roast
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=advice` : `/signup?returnTo=/order/${talent.id}?occasion=advice`}
                   onClick={storePromoSourceOnClick}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  💡 Get advice
+                  💡 Advice
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
                   onClick={storePromoSourceOnClick}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center col-span-2"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center col-span-2"
                 >
                   ✨ Other
                 </Link>
               </div>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="mt-4 text-center">
-              <div className="text-sm text-gray-600">
-                🔒 100% Money-Back Guarantee • 🛡️ Secure Payment • ⚡ Fast Delivery
+            {/* Trust Indicators - compact */}
+            <div className="mt-2 text-center">
+              <div className="text-[10px] text-gray-500">
+                🔒 Money-Back Guarantee • 🛡️ Secure • ⚡ Fast
               </div>
             </div>
           </div>
