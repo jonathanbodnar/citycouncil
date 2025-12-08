@@ -612,42 +612,42 @@ const TalentProfilePage: React.FC = () => {
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🎁 Gag gift
+                  🎁 Gag gift for a liberal
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  💝 Surprise
+                  💝 Surprise a loved one
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=holiday` : `/signup?returnTo=/order/${talent.id}?occasion=holiday`}
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🎄 Christmas
+                  🎄 Merry Christmas
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=birthday` : `/signup?returnTo=/order/${talent.id}?occasion=birthday`}
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🎂 Birthday
+                  🎂 Happy Birthday
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🔥 Roast
+                  🔥 Holiday roast
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=advice` : `/signup?returnTo=/order/${talent.id}?occasion=advice`}
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  💡 Advice
+                  💡 Get advice
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
