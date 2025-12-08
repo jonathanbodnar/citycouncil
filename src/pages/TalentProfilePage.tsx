@@ -635,49 +635,49 @@ const TalentProfilePage: React.FC = () => {
               <p className="text-sm text-gray-400 text-center mb-2">Click an idea to get started:</p>
               <div className="grid grid-cols-2 gap-2">
                 <Link
-                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   🎁 Gag gift for a liberal
                 </Link>
                 <Link
-                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   💝 Surprise a loved one
                 </Link>
                 <Link
-                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  to={user ? `/order/${talent.id}?occasion=holiday` : `/signup?returnTo=/order/${talent.id}?occasion=holiday`}
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   🎄 Merry Christmas
                 </Link>
                 <Link
-                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  to={user ? `/order/${talent.id}?occasion=birthday` : `/signup?returnTo=/order/${talent.id}?occasion=birthday`}
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   🎂 Happy Birthday
                 </Link>
                 <Link
-                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   🔥 Holiday roast
                 </Link>
                 <Link
-                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  to={user ? `/order/${talent.id}?occasion=advice` : `/signup?returnTo=/order/${talent.id}?occasion=advice`}
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   💡 Get advice
                 </Link>
                 <Link
-                  to={user ? `/order/${talent.id}` : `/signup?returnTo=/order/${talent.id}`}
+                  to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
                   onClick={storePromoSourceOnClick}
                   className="px-4 py-3 rounded-xl text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center col-span-2"
                 >

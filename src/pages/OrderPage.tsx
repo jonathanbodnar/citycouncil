@@ -87,6 +87,9 @@ const OrderPage: React.FC = () => {
     return null;
   };
   
+  // Get occasion from URL params (passed from profile page order ideas)
+  const occasionParam = searchParams.get('occasion');
+  
   const {
     register,
     handleSubmit,
@@ -94,7 +97,8 @@ const OrderPage: React.FC = () => {
     formState: { errors },
   } = useForm<OrderFormData>({
     defaultValues: {
-      isForBusiness: false // Default to personal order
+      isForBusiness: false, // Default to personal order
+      occasion: occasionParam || '' // Pre-fill from URL if provided
     }
   });
 
