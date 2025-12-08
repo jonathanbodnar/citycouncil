@@ -12,12 +12,14 @@ interface FortisPaymentFormProps {
   onPaymentSuccess: (paymentResult: any) => void;
   onPaymentError: (error: string) => void;
   loading?: boolean;
+  testMode?: boolean; // Add test mode prop
 }
 
 const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   amount,
   onPaymentSuccess,
   onPaymentError,
+  testMode = false,
 }) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
@@ -121,6 +123,14 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const initializeFortis = async () => {
     try {
       setIsLoading(true);
+      
+      // TEST MODE: Skip Fortis initialization entirely
+      if (testMode) {
+        console.log('🧪 TEST MODE: Skipping Fortis initialization');
+        setIsLoading(false);
+        return;
+      }
+      
       // Step 1: Create transaction intention via Supabase Edge Function
       const cents = Math.round(amount * 100);
       const intention = await createFortisIntention(cents);
@@ -283,10 +293,49 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   };
 
 
+  // Handle test mode payment simulation
+  const handleTestPayment = () => {
+    console.log('🧪 TEST MODE: Simulating successful payment');
+    onPaymentSuccess({
+      id: `test-tx-${Date.now()}`,
+      statusCode: 101,
+      payload: { test_mode: true, simulated: true }
+    });
+  };
+
   return (
     <div className="rounded-2xl px-4 py-5 md:p-6 bg-gradient-to-br from-slate-900/40 to-slate-800/20 border border-white/10 shadow-xl max-w-3xl mx-auto">
-      {/* Fortis Commerce.js Payment Form */}
-      {paymentMethod === 'card' && (
+      {/* TEST MODE UI */}
+      {testMode && (
+        <div className="space-y-4">
+          <div className="p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">🧪</span>
+              <h3 className="text-lg font-bold text-yellow-400">TEST MODE</h3>
+            </div>
+            <p className="text-yellow-200 text-sm mb-4">
+              Payment processing is disabled. Click the button below to simulate a successful payment without any real charges or database writes.
+            </p>
+            <div className="bg-slate-900/50 rounded-lg p-3 mb-4">
+              <p className="text-slate-300 text-sm">
+                <strong>Amount:</strong> ${amount.toFixed(2)} (will NOT be charged)
+              </p>
+            </div>
+            <button
+              onClick={handleTestPayment}
+              className="w-full py-3 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              🧪 Simulate Successful Payment
+            </button>
+          </div>
+          <p className="text-xs text-slate-500 text-center">
+            Remove <code className="bg-slate-800 px-1 rounded">?test=true</code> from URL to use real payment processing
+          </p>
+        </div>
+      )}
+
+      {/* Fortis Commerce.js Payment Form - only show if NOT in test mode */}
+      {!testMode && paymentMethod === 'card' && (
         <div className="space-y-4">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">

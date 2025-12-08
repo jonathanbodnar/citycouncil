@@ -32,6 +32,9 @@ const OrderSuccessPage: React.FC = () => {
   const talentName = searchParams.get('talent');
   const deliveryHours = searchParams.get('delivery_hours');
   const occasion = searchParams.get('occasion');
+  
+  // Test mode - check if this is a test order
+  const isTestMode = searchParams.get('test') === 'true' || (orderId && orderId.startsWith('test-order-'));
 
   // Calculate order amount for display and FB pixel
   const orderAmount = amount ? parseFloat(amount) : 0;
@@ -49,6 +52,19 @@ const OrderSuccessPage: React.FC = () => {
 
   // Submit order details
   const handleSubmitDetails = async () => {
+    // Test mode - simulate submission
+    if (isTestMode) {
+      console.log('🧪 TEST MODE: Simulating details submission');
+      console.log({
+        recipientName: recipientName.trim(),
+        requestDetails: requestDetails.trim(),
+        specialInstructions: specialInstructions.trim() || null
+      });
+      setDetailsSubmitted(true);
+      toast.success('🧪 TEST: Details would be submitted (no DB write)');
+      return;
+    }
+    
     if (!recipientName.trim()) {
       toast.error('Please enter who this video is for');
       return;
@@ -90,12 +106,18 @@ const OrderSuccessPage: React.FC = () => {
 
   // Fire conversion immediately when component mounts
   useEffect(() => {
-    console.log('🔍 OrderSuccessPage mounted, orderId:', orderId);
+    console.log('🔍 OrderSuccessPage mounted, orderId:', orderId, 'isTestMode:', isTestMode);
     
-    // Redirect if no order ID (shouldn't land here directly)
-    if (!orderId) {
+    // Redirect if no order ID (shouldn't land here directly) - but allow test orders
+    if (!orderId && !isTestMode) {
       console.log('❌ No orderId, redirecting to dashboard');
       navigate('/dashboard');
+      return;
+    }
+
+    // Skip conversions in test mode
+    if (isTestMode) {
+      console.log('🧪 TEST MODE: Skipping conversion tracking');
       return;
     }
 
@@ -145,28 +167,41 @@ const OrderSuccessPage: React.FC = () => {
         console.error('❌ Facebook Pixel error:', fbError);
       }
     }
-  }, [orderId, orderAmount, talentName, navigate]);
+  }, [orderId, orderAmount, talentName, navigate, isTestMode]);
 
-  if (!orderId) {
+  if (!orderId && !isTestMode) {
     return null;
   }
 
   return (
     <>
       <Helmet>
-        <title>Order Confirmed! | ShoutOut</title>
+        <title>{isTestMode ? '🧪 TEST - ' : ''}Order Confirmed! | ShoutOut</title>
       </Helmet>
 
       <div className="flex items-center justify-center p-4 py-8" style={{ minHeight: 'calc(100vh - 200px)' }}>
         <div className="max-w-lg w-full rounded-2xl shadow-2xl p-6 md:p-8 border border-white/10" style={{ background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))' }}>
+          {/* Test Mode Banner */}
+          {isTestMode && (
+            <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-xl">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🧪</span>
+                <div>
+                  <p className="text-yellow-400 font-bold text-sm">TEST MODE</p>
+                  <p className="text-yellow-200 text-xs">No order was created. No payment was processed.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Success Icon */}
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: isTestMode ? 'linear-gradient(135deg, #eab308, #ca8a04)' : 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
             <CheckCircleIcon className="h-10 w-10 text-white" />
           </div>
 
           {/* Title */}
           <h1 className="text-xl md:text-2xl font-bold text-white mb-2 text-center">
-            {detailsSubmitted ? 'All Set! 🎉' : 'Payment Successful! 🎉'}
+            {isTestMode ? '🧪 Test Order Complete!' : (detailsSubmitted ? 'All Set! 🎉' : 'Payment Successful! 🎉')}
           </h1>
 
           {/* Order Info */}
