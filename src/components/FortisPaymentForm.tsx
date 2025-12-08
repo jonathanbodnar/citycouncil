@@ -296,10 +296,27 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         showReceipt: false,
         showSubmitButton: true,
         showValidationAnimation: true,
-        hideAgreementCheckbox: true,
+        hideAgreementCheckbox: false, // Must show - required for payment to process
         hideTotal: false,
         digitalWallets: ['ApplePay', 'GooglePay'],
       });
+      
+      // Try to auto-check the agreement checkbox after iframe loads
+      setTimeout(() => {
+        try {
+          const iframe = document.querySelector('#payment iframe') as HTMLIFrameElement;
+          if (iframe?.contentDocument) {
+            const checkbox = iframe.contentDocument.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            if (checkbox && !checkbox.checked) {
+              checkbox.click();
+              console.log('✅ Auto-checked agreement checkbox');
+            }
+          }
+        } catch (e) {
+          // Cross-origin iframe - can't access, user must check manually
+          console.log('ℹ️ Cannot auto-check agreement (cross-origin iframe)');
+        }
+      }, 2000);
 
       setCommerceInstance(elements);
 
