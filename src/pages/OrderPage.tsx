@@ -54,9 +54,6 @@ const OrderPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   
-  // Test mode - add ?test=true to URL to test flow without DB writes or real payments
-  const isTestMode = searchParams.get('test') === 'true';
-  
   // Check for UTM tracking - check URL param first, then localStorage
   // utm=1 = "self_promo" (talent-specific, only tracks for the talent they landed on)
   // Other UTMs (rumble, twitter, etc.) = global (tracks for ANY talent)
@@ -338,46 +335,6 @@ const OrderPage: React.FC = () => {
     try {
       const pricing = calculatePricing();
       logger.log('pricing for order', pricing);
-      
-      // TEST MODE: Skip all DB writes and real processing
-      if (isTestMode) {
-        logger.log('🧪 TEST MODE: Simulating order flow without DB writes');
-        console.log('='.repeat(60));
-        console.log('🧪 TEST MODE - Order would be created with:');
-        console.log('='.repeat(60));
-        const testOrderData = {
-          user_id: user.id,
-          user_email: user.email,
-          talent_id: talent.id,
-          talent_name: talent.temp_full_name || talent.users.full_name,
-          occasion: orderData.occasion || null,
-          amount_cents: Math.round(pricing.total * 100),
-          amount_dollars: pricing.total,
-          admin_fee_cents: Math.round(pricing.adminFee * 100),
-          charity_amount_cents: Math.round(pricing.charityAmount * 100),
-          is_corporate: orderData.isForBusiness,
-          promo_source: getPromoSource(talent),
-          coupon_applied: appliedCoupon?.code || null,
-          discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
-          payment_result: paymentResult,
-          fulfillment_time_hours: talent.fulfillment_time_hours
-        };
-        console.log(testOrderData);
-        console.log('='.repeat(60));
-        console.log('✅ TEST MODE: Redirecting to success page with test order data');
-        
-        // Simulate success - redirect with test order params (same format as real orders)
-        toast.success('🧪 TEST MODE: Order simulated successfully!');
-        const testSuccessParams = new URLSearchParams({
-          order_id: `test-order-${Date.now()}`,
-          amount: pricing.total.toString(),
-          talent: talent.temp_full_name || talent.users.full_name,
-          delivery_hours: talent.fulfillment_time_hours.toString(),
-          test: 'true'
-        });
-        navigate(`/order-success?${testSuccessParams.toString()}`);
-        return;
-      }
       
       // Verify Fortis transaction server-side before recording order
       const transactionId = paymentResult?.id || paymentResult?.transaction_id;
@@ -699,21 +656,6 @@ const OrderPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Test Mode Banner */}
-      {isTestMode && (
-        <div className="mb-6 p-4 bg-yellow-500/20 border-2 border-yellow-500 rounded-xl">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🧪</span>
-            <div>
-              <h3 className="text-lg font-bold text-yellow-400">TEST MODE ACTIVE</h3>
-              <p className="text-yellow-200 text-sm">
-                No real payments will be processed. No database writes will occur. Check browser console for order data.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Order a ShoutOut
@@ -863,7 +805,6 @@ const OrderPage: React.FC = () => {
                 onPaymentSuccess={handlePaymentSuccess}
                 onPaymentError={handlePaymentError}
                 loading={submitting}
-                testMode={isTestMode}
               />
             )}
 
