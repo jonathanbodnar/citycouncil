@@ -649,9 +649,9 @@ const TalentProfilePage: React.FC = () => {
 
             {/* Pricing Urgency Indicator - flush at bottom */}
             {ordersRemaining <= 10 && (
-              <div className="mt-auto pt-3 -mx-4 md:-mx-5 -mb-4 md:-mb-5 flex items-center justify-center gap-1.5 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-t border-orange-400/50 px-3 py-2">
-                <FireIcon className="h-4 w-4 text-orange-400" />
-                <span className="text-xs font-bold text-orange-100">
+              <div className="mt-auto pt-3 -mx-4 md:-mx-5 -mb-4 md:-mb-5 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-t border-orange-400/50 px-4 py-3">
+                <FireIcon className="h-5 w-5 text-orange-400" />
+                <span className="text-sm font-bold text-orange-100">
                   Only {ordersRemaining} left at this price!
                 </span>
               </div>
