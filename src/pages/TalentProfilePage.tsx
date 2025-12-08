@@ -561,36 +561,27 @@ const TalentProfilePage: React.FC = () => {
             </div>
 
             {/* Bio - condensed */}
-            <p className="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-3">
+            <p className="text-sm text-gray-600 mb-2 leading-relaxed line-clamp-3">
               {talent.bio}
             </p>
 
-            {/* Stats - Compact Glass Layout */}
-            <div className="glass-strong rounded-xl px-4 py-2.5 mb-3 border border-white/30">
-              <div className="flex items-center justify-between text-center">
-                <div className="flex-1">
-                  <div className="text-lg font-bold" style={{ color: '#ffffff' }}>${talent.pricing}</div>
-                  <div className="text-[10px] text-gray-500 font-medium">Personal</div>
-                </div>
-                
-                <div className="flex-1 border-l border-white/30">
-                  <div className="text-base font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
-                    <ClockIcon className="h-4 w-4 mr-0.5" />
-                    {talent.fulfillment_time_hours}h
-                  </div>
-                  <div className="text-[10px] text-gray-500">Delivery</div>
-                </div>
-                
-                {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) ? (
-                  <div className="flex-1 border-l border-white/30">
-                    <div className="text-base font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
-                      <HeartIcon className="h-4 w-4 mr-0.5" />
-                      {talent.charity_percentage}%
-                    </div>
-                    <div className="text-[10px] text-gray-500">Charity</div>
-                  </div>
-                ) : null}
-              </div>
+            {/* Stats - Simple inline text */}
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mb-3">
+              <span className="font-semibold text-white">${talent.pricing}</span>
+              <span className="text-gray-400">•</span>
+              <span className="flex items-center">
+                <ClockIcon className="h-3.5 w-3.5 mr-0.5" />
+                {talent.fulfillment_time_hours}h delivery
+              </span>
+              {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <span className="flex items-center text-purple-400">
+                    <HeartIcon className="h-3.5 w-3.5 mr-0.5" />
+                    {talent.charity_percentage}% to {talent.charity_name}
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Pricing Urgency Indicator */}
