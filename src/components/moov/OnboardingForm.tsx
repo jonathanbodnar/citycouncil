@@ -51,7 +51,7 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
 }) => {
   const taxIdType = form.taxIdType || 'ssn'
   return (
-    <form style={glassCard} onSubmit={onSubmit}>
+    <form style={glassCard} onSubmit={onSubmit} className="light-theme">
       <button
         type='button'
         onClick={onClose}

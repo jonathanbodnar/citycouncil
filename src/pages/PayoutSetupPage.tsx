@@ -307,7 +307,7 @@ const PayoutSetupPage: React.FC = () => {
           </div>
 
           {/* Main Content */}
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
+          <div className="light-theme bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
             {/* Step 0: Introduction */}
             {currentStep === 0 && (
               <div className="p-8 lg:p-12" style={{ backgroundColor: '#ffffff' }}>

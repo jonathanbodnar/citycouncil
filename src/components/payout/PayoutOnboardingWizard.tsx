@@ -198,7 +198,7 @@ const PayoutOnboardingWizard: React.FC<PayoutOnboardingWizardProps> = ({ onCompl
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 overflow-y-auto">
       <div className="min-h-screen px-4 py-8 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
+        <div className="light-theme bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
           {/* Header */}
           <div className="px-8 py-6 rounded-t-2xl" style={{ background: 'linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)' }}>
             <div className="flex justify-between items-start">

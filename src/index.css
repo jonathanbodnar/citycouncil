@@ -286,11 +286,16 @@ body {
 }
 
 /* Dark Theme Text Overrides */
-.text-gray-900,
-.text-gray-800,
-.text-gray-700,
-h1, h2, h3, h4, h5, h6 {
+/* Only apply to elements NOT inside light-theme containers */
+:not(.light-theme) > .text-gray-900,
+:not(.light-theme) > .text-gray-800,
+:not(.light-theme) > .text-gray-700 {
   color: #ffffff !important;
+}
+
+/* Headers - only override if not inside light-theme container */
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff;
 }
 
 .text-gray-600 {
@@ -305,6 +310,77 @@ h1, h2, h3, h4, h5, h6 {
 .text-xl.font-semibold:not([style*="color"]),
 .text-2xl.font-bold:not([style*="color"]) {
   color: #ffffff !important;
+}
+
+/* Light theme container - resets dark theme overrides for white background areas */
+.light-theme,
+.light-theme * {
+  /* Allow inline styles to take precedence */
+}
+
+.light-theme h1,
+.light-theme h2,
+.light-theme h3,
+.light-theme h4,
+.light-theme h5,
+.light-theme h6 {
+  color: #111827 !important;
+}
+
+.light-theme .text-gray-900 {
+  color: #111827 !important;
+}
+
+.light-theme .text-gray-800 {
+  color: #1f2937 !important;
+}
+
+.light-theme .text-gray-700 {
+  color: #374151 !important;
+}
+
+.light-theme .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.light-theme .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.light-theme p {
+  color: #4b5563;
+}
+
+/* Light theme form inputs - restore light appearance */
+.light-theme input[type="text"],
+.light-theme input[type="email"],
+.light-theme input[type="password"],
+.light-theme input[type="number"],
+.light-theme input[type="tel"],
+.light-theme textarea,
+.light-theme select {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
+}
+
+.light-theme input::placeholder,
+.light-theme textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Light theme backgrounds */
+.light-theme .bg-white,
+.light-theme[class*="bg-white"] {
+  background: #ffffff !important;
+}
+
+.light-theme .bg-gray-50 {
+  background: #f9fafb !important;
+}
+
+.light-theme .bg-gray-100 {
+  background: #f3f4f6 !important;
 }
 
 /* Dark Theme Form Inputs */
