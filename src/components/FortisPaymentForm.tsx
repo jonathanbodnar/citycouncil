@@ -28,6 +28,13 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const [orderReference, setOrderReference] = useState<string | null>(null);
   const successHandledRef = useRef(false);
 
+  const orderReferenceRef = useRef<string | null>(null);
+  
+  // Update ref when state changes
+  useEffect(() => {
+    orderReferenceRef.current = orderReference;
+  }, [orderReference]);
+
   useEffect(() => {
     initializeFortis();
     
@@ -50,21 +57,22 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
               textContent.includes('Thank you')) {
             console.log('🎯 Detected success text in iframe, triggering callback');
             // Try to find transaction ID from orderReference
-            if (orderReference && !successHandledRef.current) {
+            const currentOrderRef = orderReferenceRef.current;
+            if (currentOrderRef && !successHandledRef.current) {
               successHandledRef.current = true;
               setIsProcessing(true);
               // Use the order reference as a fallback to verify
-              verifyFortisTransaction(orderReference)
+              verifyFortisTransaction(currentOrderRef)
                 .then((verify) => {
                   if (verify.statusCode === 101 || verify.statusCode === 100) {
                     console.log('✅ Verified via polling:', verify);
-                    onPaymentSuccess({ id: orderReference, statusCode: verify.statusCode });
+                    onPaymentSuccess({ id: currentOrderRef, statusCode: verify.statusCode });
                   }
                 })
                 .catch((e) => {
                   // Even if verification fails, payment succeeded visually
                   console.log('⚠️ Verification failed but success detected visually');
-                  onPaymentSuccess({ id: orderReference, statusCode: 101 });
+                  onPaymentSuccess({ id: currentOrderRef, statusCode: 101 });
                 });
             }
           }
@@ -73,8 +81,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         }
       }, 1000);
     };
-    // Start polling after 3 seconds to give normal callbacks time to fire
-    setTimeout(startPolling, 3000);
+    // Start polling after 5 seconds to give normal callbacks time to fire
+    setTimeout(startPolling, 5000);
     
     // Listen for postMessage from Fortis iframe as a final fallback
     const onMessage = (event: MessageEvent) => {
@@ -169,7 +177,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       window.removeEventListener('message', onMessage);
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [orderReference]);
+  }, []); // Only run once on mount
 
   const initializeFortis = async () => {
     try {
