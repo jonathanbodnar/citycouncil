@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   ClockIcon, 
   CheckCircleIcon, 
@@ -46,6 +46,7 @@ interface ReviewWithUser extends Review {
 
 const TalentDashboard: React.FC = () => {
   const { user, updateProfile } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<OrderWithUser[]>([]);
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
@@ -557,11 +558,10 @@ const TalentDashboard: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-white">Complete Your Payout Setup</h3>
-                <p className="text-sm text-gray-300">Set up your bank account to receive payments for your ShoutOuts!</p>
               </div>
             </div>
             <button
-              onClick={() => setActiveTab('payouts')}
+              onClick={() => navigate('/payout-setup')}
               className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors"
             >
               Set Up Payouts
