@@ -566,18 +566,18 @@ const TalentProfilePage: React.FC = () => {
             </p>
 
             {/* Stats - Simple inline text */}
-            <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mb-3">
-              <span className="font-semibold text-white">${talent.pricing}</span>
-              <span className="text-gray-400">•</span>
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-gray-400 mb-3">
+              <span className="font-bold text-white">${talent.pricing}</span>
+              <span className="text-gray-500">•</span>
               <span className="flex items-center">
-                <ClockIcon className="h-3.5 w-3.5 mr-0.5" />
+                <ClockIcon className="h-4 w-4 mr-0.5" />
                 {talent.fulfillment_time_hours}h delivery
               </span>
               {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) && (
                 <>
-                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-500">•</span>
                   <span className="flex items-center text-purple-400">
-                    <HeartIcon className="h-3.5 w-3.5 mr-0.5" />
+                    <HeartIcon className="h-4 w-4 mr-0.5" />
                     {talent.charity_percentage}% to {talent.charity_name}
                   </span>
                 </>
@@ -586,7 +586,7 @@ const TalentProfilePage: React.FC = () => {
 
             {/* Order Ideas - Click any to order */}
             <div className="space-y-2">
-              <p className="text-xs text-gray-400 text-center">Choose a ShoutOut type</p>
+              <p className="text-sm font-medium text-gray-300 text-center">Choose a ShoutOut type</p>
               <div className="grid grid-cols-2 gap-1.5">
                 <Link
                   to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
