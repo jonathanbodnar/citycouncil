@@ -60,14 +60,7 @@ const OrderSuccessPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      console.log('📝 Submitting order details:', {
-        orderId,
-        recipientName: recipientName.trim(),
-        requestDetailsLength: requestDetails.trim().length,
-        hasSpecialInstructions: !!specialInstructions.trim()
-      });
-      
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('orders')
         .update({
           recipient_name: recipientName.trim(),
@@ -75,15 +68,10 @@ const OrderSuccessPage: React.FC = () => {
           special_instructions: specialInstructions.trim() || null,
           details_submitted: true
         })
-        .eq('id', orderId)
-        .select();
+        .eq('id', orderId);
 
-      if (error) {
-        console.error('❌ DB error submitting details:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('✅ Order details saved successfully:', data);
       setDetailsSubmitted(true);
       toast.success('Order details submitted! The talent will start working on your video.');
     } catch (err) {
