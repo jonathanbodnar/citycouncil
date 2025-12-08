@@ -44,7 +44,7 @@ const MobileNavigation: React.FC = () => {
     // Talent Navigation (no Home, has Stats)
     {
       name: 'Orders',
-      href: '/dashboard',
+      href: '/dashboard?tab=orders',
       icon: RectangleStackIcon,
       iconSolid: RectangleStackIconSolid,
     },
@@ -136,8 +136,7 @@ const MobileNavigation: React.FC = () => {
         {navigation.map((item) => {
           // Better active detection for routes with query params
           const isActive = location.pathname === item.href || 
-                          (item.href.includes('?') && location.pathname + location.search === item.href) ||
-                          (item.href === '/dashboard' && location.pathname === '/dashboard' && !location.search);
+                          (item.href.includes('?') && location.pathname + location.search === item.href);
           const Icon = isActive ? item.iconSolid : item.icon;
           
           return (
