@@ -150,7 +150,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     window.addEventListener('message', onMessage);
     return () => {
       window.removeEventListener('message', onMessage);
-      if (pollInterval) clearInterval(pollInterval);
     };
   }, []); // Only run once on mount
 
