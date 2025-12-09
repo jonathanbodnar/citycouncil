@@ -159,15 +159,17 @@ const HelpDesk: React.FC = () => {
         {messages.length > 0 ? (
           messages.map((message) => (
             <div key={message.id} className="space-y-3">
-              {/* User Message */}
-              <div className="flex justify-end">
-                <div className="max-w-xs lg:max-w-md bg-primary-600 text-white rounded-lg px-4 py-2">
-                  <p className="text-sm">{message.message}</p>
-                  <p className="text-xs opacity-75 mt-1">
-                    {new Date(message.created_at).toLocaleTimeString()}
-                  </p>
+              {/* User Message - Hide if it's an admin-initiated placeholder */}
+              {message.message !== '[Admin initiated conversation]' && (
+                <div className="flex justify-end">
+                  <div className="max-w-xs lg:max-w-md bg-primary-600 text-white rounded-lg px-4 py-2">
+                    <p className="text-sm">{message.message}</p>
+                    <p className="text-xs opacity-75 mt-1">
+                      {new Date(message.created_at).toLocaleTimeString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Support Team Response */}
               {message.response && (
