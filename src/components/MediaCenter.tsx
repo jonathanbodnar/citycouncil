@@ -92,9 +92,13 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('video/')) {
-      toast.error('Please select a video file');
+    // Validate file type - check MIME type OR extension
+    const validExtensions = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.m4v'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    const isVideo = file.type.startsWith('video/') || validExtensions.includes(fileExtension);
+    
+    if (!isVideo) {
+      toast.error('Please select a video file (MP4, MOV, WEBM, etc.)');
       return;
     }
 
@@ -105,25 +109,46 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       return;
     }
 
+    if (!user?.id) {
+      toast.error('You must be logged in to update your promo video');
+      return;
+    }
+
     setUploadingNewVideo(true);
+    logger.log('Starting promo video update:', { 
+      fileName: file.name, 
+      fileSize: file.size, 
+      fileType: file.type,
+      userId: user.id,
+      talentId 
+    });
+
     try {
       // Upload video to Wasabi
+      logger.log('Uploading to Wasabi...');
       const uploadResult = await uploadVideoToWasabi(file, talentId);
+      logger.log('Wasabi upload result:', uploadResult);
 
       if (!uploadResult.success) {
         throw new Error(uploadResult.error || 'Failed to upload video');
       }
 
       // Update talent profile with new video URL
-      // Use user_id for RLS policy compliance
-      const { error } = await supabase
+      logger.log('Updating talent profile with new video URL:', uploadResult.videoUrl);
+      const { data, error } = await supabase
         .from('talent_profiles')
         .update({
           promo_video_url: uploadResult.videoUrl,
         })
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id)
+        .select();
 
-      if (error) throw error;
+      logger.log('Supabase update result:', { data, error });
+
+      if (error) {
+        logger.error('Supabase update error:', error);
+        throw error;
+      }
 
       setCurrentPromoVideoUrl(uploadResult.videoUrl);
       toast.success('Promo video updated successfully!');
@@ -132,9 +157,9 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       if (videoInputRef.current) {
         videoInputRef.current.value = '';
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error updating promo video:', error);
-      toast.error('Failed to update promo video');
+      toast.error(error?.message || 'Failed to update promo video');
     } finally {
       setUploadingNewVideo(false);
     }
