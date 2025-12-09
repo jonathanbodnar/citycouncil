@@ -447,8 +447,8 @@ const TalentProfilePage: React.FC = () => {
           ></div>
           
           {/* Avatar / Promo Video */}
-          <div className="md:w-1/3 relative z-10">
-            <div className="aspect-square md:aspect-auto md:h-full md:min-h-[400px] bg-gray-100 relative group">
+          <div className="md:w-1/3 relative z-10 md:self-stretch">
+            <div className="aspect-square md:aspect-auto md:h-full bg-gray-100 relative group">
               {playingPromoVideo && talent.promo_video_url ? (
                 /* Playing Promo Video */
                 <video
@@ -500,7 +500,7 @@ const TalentProfilePage: React.FC = () => {
           </div>
 
           {/* Profile Info */}
-          <div className="md:w-2/3 p-4 md:p-5 relative z-10 flex flex-col">
+          <div className="md:w-2/3 p-4 md:p-5 relative z-10 flex flex-col justify-between">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
                 {/* Name and Rating inline */}
