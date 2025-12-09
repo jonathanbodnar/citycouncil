@@ -154,9 +154,12 @@ const AdminHelpDesk: React.FC = () => {
         
         acc[userId].messages.push(message);
         
-        // Set latest message info
+        // Set latest message info - prefer actual messages over admin-initiated placeholders
         if (!acc[userId].latest_message_time || message.created_at > acc[userId].latest_message_time) {
-          acc[userId].latest_message = message.message;
+          // If it's an admin-initiated conversation, show the response instead of the placeholder
+          acc[userId].latest_message = message.message === '[Admin initiated conversation]' && message.response 
+            ? message.response 
+            : message.message;
           acc[userId].latest_message_time = message.created_at;
         }
         
@@ -469,31 +472,33 @@ const AdminHelpDesk: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 bg-gray-50">
               {selectedConversation.messages.map((message) => (
                 <div key={message.id} className="space-y-3">
-                  {/* User Message */}
-                  <div className="flex justify-start">
-                    <div className="bg-white rounded-2xl px-4 py-3 max-w-[85%] md:max-w-[70%] shadow-sm border border-gray-200">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {selectedConversation.user_name}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          selectedConversation.user_type === 'talent' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
-                        }`}>
-                          {selectedConversation.user_type}
-                        </span>
+                  {/* User Message - Hide if it's an admin-initiated conversation placeholder */}
+                  {message.message !== '[Admin initiated conversation]' && (
+                    <div className="flex justify-start">
+                      <div className="bg-white rounded-2xl px-4 py-3 max-w-[85%] md:max-w-[70%] shadow-sm border border-gray-200">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {selectedConversation.user_name}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            selectedConversation.user_type === 'talent' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
+                          }`}>
+                            {selectedConversation.user_type}
+                          </span>
+                        </div>
+                        <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed">{message.message}</p>
+                        <p className="text-xs text-gray-500 mt-3">
+                          {new Date(message.created_at).toLocaleString([], { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric',
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
                       </div>
-                      <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed">{message.message}</p>
-                      <p className="text-xs text-gray-500 mt-3">
-                        {new Date(message.created_at).toLocaleString([], { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          year: 'numeric',
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </p>
                     </div>
-                  </div>
+                  )}
 
                   {/* Admin Response */}
                   {message.response && (
