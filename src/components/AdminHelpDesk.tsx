@@ -44,40 +44,40 @@ const AdminHelpDesk: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lastUpdateRef = useRef<number>(0);
+  const shouldScrollRef = useRef<boolean>(false);
+  const selectedConversationRef = useRef<ConversationGroup | null>(null);
+
+  // Keep ref in sync with state for use in subscription callback
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
 
   useEffect(() => {
     fetchConversations();
     
-    // Set up real-time subscription
-    // Only subscribe to INSERT events (new messages) to reduce DB load
-    // Filter to unresolved conversations to reduce noise
+    // Set up real-time subscription for new messages only
     const subscription = supabase
       .channel('admin_help_messages')
       .on('postgres_changes', 
         { 
-          event: 'INSERT',  // Changed from '*' to only new messages
+          event: 'INSERT',
           schema: 'public', 
           table: 'help_messages'
         }, 
         (payload) => {
-          // Throttle updates to prevent excessive refreshes (max once per second)
-          const now = Date.now();
-          if (now - lastUpdateRef.current < 1000) {
-            return;
-          }
-          lastUpdateRef.current = now;
+          const newMsg = payload.new as any;
           
-          // Use requestAnimationFrame for smooth updates
-          requestAnimationFrame(() => {
-            // Only refresh selected conversation if it's the updated one
-            if (selectedConversation && payload.new && (payload.new as any)?.user_id === selectedConversation.user_id) {
+          // Only refresh if it's a new message from a user (not admin-initiated)
+          if (newMsg && newMsg.message !== '[Admin initiated conversation]') {
+            // Update conversations list silently (no scroll)
+            fetchConversations();
+            
+            // If this message is for the currently selected conversation, refresh it
+            if (selectedConversationRef.current && newMsg.user_id === selectedConversationRef.current.user_id) {
+              shouldScrollRef.current = true;
               refreshSelectedConversation();
             }
-            
-            // Refresh conversations list
-            fetchConversations();
-          });
+          }
         }
       )
       .subscribe();
@@ -87,13 +87,13 @@ const AdminHelpDesk: React.FC = () => {
     };
   }, []);
 
+  // Only scroll when explicitly requested (new message or conversation selected)
   useEffect(() => {
-    scrollToBottom();
+    if (shouldScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      shouldScrollRef.current = false;
+    }
   }, [selectedConversation?.messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const markConversationAsRead = async (userId: string) => {
     try {
@@ -110,6 +110,7 @@ const AdminHelpDesk: React.FC = () => {
   };
 
   const handleSelectConversation = async (conversation: ConversationGroup) => {
+    shouldScrollRef.current = true; // Scroll to bottom when selecting conversation
     setSelectedConversation(conversation);
     // Mark all messages in this conversation as read
     await markConversationAsRead(conversation.user_id);
@@ -171,6 +172,11 @@ const AdminHelpDesk: React.FC = () => {
         
         return acc;
       }, {});
+
+      // Sort messages within each conversation by created_at ascending (oldest first)
+      Object.values(grouped).forEach((conv: ConversationGroup) => {
+        conv.messages.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      });
 
       const conversationList = (Object.values(grouped) as ConversationGroup[]).sort((a, b) => 
         new Date(b.latest_message_time).getTime() - new Date(a.latest_message_time).getTime()
@@ -281,6 +287,7 @@ const AdminHelpDesk: React.FC = () => {
       
       // Don't refresh everything, just the selected conversation
       // Small delay to ensure database update is complete
+      shouldScrollRef.current = true;
       setTimeout(() => {
         refreshSelectedConversation();
       }, 100);
