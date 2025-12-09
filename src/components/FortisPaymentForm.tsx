@@ -22,6 +22,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const successHandledRef = useRef(false);
+  const paymentDeclinedRef = useRef(false); // Track if payment was declined
   const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
   
   // Stable callback refs to avoid stale closures
@@ -44,13 +45,18 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     timeoutIdRef.current = setTimeout(() => {
       console.log('⏰ Timeout reached - checking state');
       console.log('   successHandledRef:', successHandledRef.current);
+      console.log('   paymentDeclinedRef:', paymentDeclinedRef.current);
       
-      if (!successHandledRef.current) {
+      // Only force success if payment wasn't declined and hasn't been handled
+      if (!successHandledRef.current && !paymentDeclinedRef.current) {
         console.log('🚀 FORCING SUCCESS - timeout fallback');
         successHandledRef.current = true;
         setIsProcessing(false);
         const fallbackId = `timeout-${Date.now()}`;
         onPaymentSuccessRef.current({ id: fallbackId, statusCode: 101, timeoutFallback: true });
+      } else if (paymentDeclinedRef.current) {
+        console.log('❌ Payment was declined - not forcing success');
+        setIsProcessing(false);
       }
     }, 8000);
   }, []);
@@ -68,6 +74,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   useEffect(() => {
     if (isProcessing && !successHandledRef.current) {
       console.log('🔄 isProcessing is true - ensuring timeout is running');
+      // Reset declined flag when starting a new attempt
+      paymentDeclinedRef.current = false;
       forceSuccessAfterTimeout();
     }
   }, [isProcessing, forceSuccessAfterTimeout]);
@@ -97,6 +105,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
   const handlePaymentError = useCallback((errorMsg: string, source: string) => {
     console.error(`❌ Payment error from ${source}:`, errorMsg);
+    paymentDeclinedRef.current = true; // Mark as declined so timeout doesn't force success
     successHandledRef.current = false;
     
     if (timeoutIdRef.current) {
