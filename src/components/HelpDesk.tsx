@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
@@ -15,10 +15,66 @@ const HelpDesk: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     if (user) {
       fetchMessages();
+
+      // Set up real-time subscription for this user's messages
+      const subscription = supabase
+        .channel(`help_messages_${user.id}`)
+        .on('postgres_changes', 
+          { 
+            event: '*', // Listen for INSERT and UPDATE (for responses)
+            schema: 'public', 
+            table: 'help_messages',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            console.log('Help message update received:', payload);
+            
+            if (payload.eventType === 'INSERT') {
+              // New message added (could be admin-initiated)
+              const newMsg = payload.new as HelpMessage;
+              setMessages(prev => {
+                // Check if message already exists to avoid duplicates
+                if (prev.some(m => m.id === newMsg.id)) {
+                  return prev;
+                }
+                return [...prev, newMsg];
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              // Message updated (admin responded)
+              const updatedMsg = payload.new as HelpMessage;
+              setMessages(prev => 
+                prev.map(m => m.id === updatedMsg.id ? updatedMsg : m)
+              );
+              
+              // Show toast notification for new response
+              if (updatedMsg.response) {
+                toast.success('Support team replied!', {
+                  icon: '💬',
+                  duration: 4000
+                });
+              }
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
     }
   }, [user]);
 
@@ -134,6 +190,7 @@ const HelpDesk: React.FC = () => {
             <p className="text-gray-600">Ask us anything about ShoutOut!</p>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}
