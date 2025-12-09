@@ -317,7 +317,13 @@ const OrderPage: React.FC = () => {
   };
 
   const [showPayment, setShowPayment] = useState(true);
-  const [orderData, setOrderData] = useState<OrderFormData | null>(null);
+  // Initialize orderData with defaults since payment form shows immediately
+  const [orderData, setOrderData] = useState<OrderFormData>({
+    isForBusiness: false,
+    occasion: occasionParam || '',
+    agreedToTerms: true,
+    allowPromotionalUse: true
+  });
 
   const onSubmit = async (data: OrderFormData) => {
     if (!talent || !user) return;
@@ -329,7 +335,7 @@ const OrderPage: React.FC = () => {
 
   const handlePaymentSuccess = async (paymentResult: any) => {
     logger.log('handlePaymentSuccess called with', paymentResult);
-    if (!talent || !user || !orderData) return;
+    if (!talent || !user) return;
 
     setSubmitting(true);
     try {
