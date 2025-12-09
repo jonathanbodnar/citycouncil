@@ -44,6 +44,7 @@ const AdminHelpDesk: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef<boolean>(false);
   const selectedConversationRef = useRef<ConversationGroup | null>(null);
 
@@ -89,8 +90,9 @@ const AdminHelpDesk: React.FC = () => {
 
   // Only scroll when explicitly requested (new message or conversation selected)
   useEffect(() => {
-    if (shouldScrollRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (shouldScrollRef.current && messagesContainerRef.current) {
+      // Scroll within the messages container, not the whole page
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
       shouldScrollRef.current = false;
     }
   }, [selectedConversation?.messages]);
@@ -350,7 +352,7 @@ const AdminHelpDesk: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] md:h-[700px] flex flex-col md:flex-row">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[80vh] min-h-[500px] max-h-[900px] flex flex-col md:flex-row">
       {/* Conversations List - Left Side */}
       <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col h-1/3 md:h-full">
         {/* Header */}
@@ -507,7 +509,7 @@ const AdminHelpDesk: React.FC = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 bg-gray-50">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 bg-gray-50">
               {selectedConversation.messages.map((message) => (
                 <div key={message.id} className="space-y-3">
                   {/* User Message - Hide if it's an admin-initiated conversation placeholder */}
