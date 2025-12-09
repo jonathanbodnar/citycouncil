@@ -12,126 +12,47 @@ interface DownloadOptions {
 
 /**
  * Downloads a video file with mobile Safari support
- * Uses Web Share API on iOS, falls back to blob download on other platforms
+ * For iOS: Opens video directly in new tab (fetching large files on mobile is unreliable)
+ * For Desktop/Android: Uses blob download
  */
 export const downloadVideo = async ({ url, filename, onSuccess, onError }: DownloadOptions): Promise<boolean> => {
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  console.log('📥 Download attempt:', { url, filename, isIOS, isSafari, isMobile });
+  console.log('📥 Download attempt:', { url, filename, isIOS, isMobile });
 
+  // iOS/iPad: Don't try to fetch - just open the video directly
+  // Fetching large videos on mobile Safari is unreliable and slow
+  if (isIOS) {
+    console.log('📱 iOS detected - opening video directly');
+    openVideoInNewTab(url);
+    toast.success('Video opened! Long-press to save to Photos.', { duration: 6000 });
+    onSuccess?.();
+    return true;
+  }
+
+  // Android/Desktop: Try blob download with timeout
   try {
-    // Fetch the video first
-    const response = await fetch(url, { mode: 'cors' });
+    toast.loading('Preparing download...', { id: 'download-progress' });
+    
+    // Add a 30 second timeout for the fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    const response = await fetch(url, { 
+      mode: 'cors',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
       throw new Error(`Failed to fetch: ${response.status}`);
     }
     
     const blob = await response.blob();
-    const file = new File([blob], filename, { type: blob.type || 'video/mp4' });
-
-    // iOS: Try Web Share API first (this allows saving to camera roll)
-    if (isIOS && navigator.share && navigator.canShare) {
-      try {
-        const shareData = { files: [file] };
-        
-        if (navigator.canShare(shareData)) {
-          await navigator.share(shareData);
-          toast.success('Video saved!');
-          onSuccess?.();
-          return true;
-        }
-      } catch (shareError: any) {
-        // User cancelled or share failed - try alternative
-        console.log('Share API failed:', shareError.message);
-        
-        if (shareError.name === 'AbortError') {
-          // User cancelled - don't show error
-          return false;
-        }
-      }
-    }
-
-    // iOS Safari fallback: Open in new tab with instructions
-    if (isIOS) {
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Create a temporary page that shows the video with save instructions
-      const newWindow = window.open('', '_blank');
-      if (newWindow) {
-        newWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Save Video</title>
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                background: #1a1a2e;
-                color: white;
-                padding: 20px;
-                text-align: center;
-                margin: 0;
-              }
-              video {
-                max-width: 100%;
-                border-radius: 12px;
-                margin: 20px 0;
-              }
-              .instructions {
-                background: rgba(255,255,255,0.1);
-                padding: 20px;
-                border-radius: 12px;
-                margin-top: 20px;
-              }
-              h2 { color: #a855f7; margin-bottom: 10px; }
-              p { color: #9ca3af; line-height: 1.6; }
-              .step { 
-                display: flex; 
-                align-items: center; 
-                gap: 10px; 
-                margin: 10px 0;
-                text-align: left;
-              }
-              .step-num {
-                background: #a855f7;
-                width: 28px;
-                height: 28px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-                flex-shrink: 0;
-              }
-            </style>
-          </head>
-          <body>
-            <h2>📱 Save Your Video</h2>
-            <video src="${blobUrl}" controls playsinline autoplay muted></video>
-            <div class="instructions">
-              <div class="step">
-                <span class="step-num">1</span>
-                <span>Long-press on the video above</span>
-              </div>
-              <div class="step">
-                <span class="step-num">2</span>
-                <span>Tap "Save to Photos" or "Download"</span>
-              </div>
-            </div>
-          </body>
-          </html>
-        `);
-        newWindow.document.close();
-        toast.success('Video opened! Long-press to save.', { duration: 5000 });
-        onSuccess?.();
-        return true;
-      }
-    }
-
-    // Android/Desktop: Standard blob download
+    console.log('📦 Blob created:', { size: blob.size, type: blob.type });
+    
+    // Standard blob download
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -146,26 +67,38 @@ export const downloadVideo = async ({ url, filename, onSuccess, onError }: Downl
       URL.revokeObjectURL(blobUrl);
     }, 100);
 
-    toast.success('Video downloaded!');
+    toast.success('Video downloaded!', { id: 'download-progress' });
     onSuccess?.();
     return true;
 
   } catch (error: any) {
     console.error('Download error:', error);
+    toast.dismiss('download-progress');
     
-    // Final fallback: Just open the URL directly
-    try {
-      window.open(url, '_blank');
-      toast.success('Video opened in new tab. Long-press or right-click to save.', { duration: 5000 });
-      onSuccess?.();
-      return true;
-    } catch (openError) {
-      toast.error('Unable to download. Please try again.');
-      onError?.(error);
-      return false;
+    // If fetch failed or timed out, fall back to opening in new tab
+    if (error.name === 'AbortError') {
+      toast.error('Download timed out. Opening video instead...', { duration: 3000 });
     }
+    
+    openVideoInNewTab(url);
+    toast.success('Video opened! Right-click or long-press to save.', { duration: 5000 });
+    onSuccess?.();
+    return true;
   }
 };
+
+/**
+ * Opens video in a new tab with save instructions
+ */
+function openVideoInNewTab(url: string) {
+  // Just open the direct URL - Safari can handle video files natively
+  const newWindow = window.open(url, '_blank');
+  
+  // If popup was blocked, try direct navigation
+  if (!newWindow) {
+    window.location.href = url;
+  }
+}
 
 /**
  * Downloads a video with watermark (for admin/talent promo downloads)
