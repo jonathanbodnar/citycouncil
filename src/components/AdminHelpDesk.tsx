@@ -174,7 +174,7 @@ const AdminHelpDesk: React.FC = () => {
       }, {});
 
       // Sort messages within each conversation by created_at ascending (oldest first)
-      Object.values(grouped).forEach((conv: ConversationGroup) => {
+      (Object.values(grouped) as ConversationGroup[]).forEach((conv) => {
         conv.messages.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
       });
 
