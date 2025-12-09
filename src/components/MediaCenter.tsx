@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   PhotoIcon, 
   VideoCameraIcon, 
   ClipboardDocumentIcon,
   CheckIcon,
   ArrowDownTrayIcon,
-  ShareIcon
+  ShareIcon,
+  ArrowPathIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { generatePromoGraphic, downloadPromoGraphic } from '../services/promoGraphicGenerator';
+import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
 import { logger } from '../utils/logger';
 
@@ -40,6 +43,9 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [shareableVideos, setShareableVideos] = useState<ShareableVideo[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
+  const [currentPromoVideoUrl, setCurrentPromoVideoUrl] = useState(promoVideoUrl);
+  const [uploadingNewVideo, setUploadingNewVideo] = useState(false);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Social media platform icons (SVG paths)
   const socialIcons = {
@@ -75,6 +81,61 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   useEffect(() => {
     fetchShareableVideos();
   }, [talentId]);
+
+  useEffect(() => {
+    setCurrentPromoVideoUrl(promoVideoUrl);
+  }, [promoVideoUrl]);
+
+  const handleUpdatePromoVideo = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast.error('Please select a video file');
+      return;
+    }
+
+    // Validate file size (max 100MB)
+    const maxSize = 100 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('Video must be less than 100MB');
+      return;
+    }
+
+    setUploadingNewVideo(true);
+    try {
+      // Upload video to Wasabi
+      const uploadResult = await uploadVideoToWasabi(file, talentId);
+
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload video');
+      }
+
+      // Update talent profile with new video URL
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({
+          promo_video_url: uploadResult.videoUrl,
+        })
+        .eq('id', talentId);
+
+      if (error) throw error;
+
+      setCurrentPromoVideoUrl(uploadResult.videoUrl);
+      toast.success('Promo video updated successfully!');
+      
+      // Clear the file input
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
+    } catch (error) {
+      logger.error('Error updating promo video:', error);
+      toast.error('Failed to update promo video');
+    } finally {
+      setUploadingNewVideo(false);
+    }
+  };
 
   const fetchShareableVideos = async () => {
     try {
@@ -191,7 +252,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   };
 
   const handleDownloadPromoVideo = async () => {
-    if (!promoVideoUrl) {
+    if (!currentPromoVideoUrl) {
       toast.error('No promo video available');
       return;
     }
@@ -203,10 +264,10 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
 
     setDownloadingVideo(true);
     try {
-      logger.log('Downloading promo video (already watermarked):', promoVideoUrl);
+      logger.log('Downloading promo video (already watermarked):', currentPromoVideoUrl);
 
       // Video is already watermarked during upload - just fetch it directly
-      const response = await fetch(promoVideoUrl);
+      const response = await fetch(currentPromoVideoUrl);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch video: ${response.status}`);
@@ -366,13 +427,9 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
           </button>
 
           {/* Promo Video */}
-          {promoVideoUrl && (
-            <button
-              onClick={handleDownloadPromoVideo}
-              disabled={downloadingVideo}
-              className="glass-hover p-4 rounded-lg text-left transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="flex items-center gap-3 mb-2">
+          {currentPromoVideoUrl ? (
+            <div className="glass-hover p-4 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
                   <VideoCameraIcon className="h-6 w-6 text-white" />
                 </div>
@@ -381,13 +438,104 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
                   <p className="text-sm text-gray-400">With watermark</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-300">
-                  {downloadingVideo ? 'Processing...' : 'Download MP4'}
-                </span>
-                <ArrowDownTrayIcon className="h-5 w-5 text-gray-400" />
+              
+              {/* Video Preview */}
+              <div className="mb-3">
+                <video 
+                  src={currentPromoVideoUrl} 
+                  className="w-full h-32 object-cover rounded-lg bg-black"
+                  muted
+                  preload="metadata"
+                />
               </div>
-            </button>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDownloadPromoVideo}
+                  disabled={downloadingVideo || uploadingNewVideo}
+                  className="flex-1 glass-hover p-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {downloadingVideo ? (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 text-gray-300 animate-spin" />
+                      <span className="text-sm text-gray-300">Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDownTrayIcon className="h-4 w-4 text-gray-300" />
+                      <span className="text-sm text-gray-300">Download</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={uploadingNewVideo || downloadingVideo}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 p-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingNewVideo ? (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 text-white animate-spin" />
+                      <span className="text-sm text-white">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <PencilIcon className="h-4 w-4 text-white" />
+                      <span className="text-sm text-white">Update</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              {/* Hidden file input */}
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*,.mp4,.mov,.webm"
+                onChange={handleUpdatePromoVideo}
+                className="hidden"
+              />
+            </div>
+          ) : (
+            <div className="glass-hover p-4 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                  <VideoCameraIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Promo Video</h4>
+                  <p className="text-sm text-gray-400">No video uploaded yet</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => videoInputRef.current?.click()}
+                disabled={uploadingNewVideo}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 p-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {uploadingNewVideo ? (
+                  <>
+                    <ArrowPathIcon className="h-5 w-5 text-white animate-spin" />
+                    <span className="text-white font-medium">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <VideoCameraIcon className="h-5 w-5 text-white" />
+                    <span className="text-white font-medium">Upload Promo Video</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Hidden file input */}
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*,.mp4,.mov,.webm"
+                onChange={handleUpdatePromoVideo}
+                className="hidden"
+              />
+            </div>
           )}
         </div>
       </div>
@@ -488,4 +636,5 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
 };
 
 export default MediaCenter;
+
 
