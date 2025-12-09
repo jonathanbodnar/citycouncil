@@ -245,6 +245,37 @@ const AdminHelpDesk: React.FC = () => {
         if (insertError) throw insertError;
       }
 
+      // Send SMS notification to user if they have a phone number
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('phone, phone_number')
+          .eq('id', selectedConversation.user_id)
+          .single();
+
+        const userPhone = userData?.phone || userData?.phone_number;
+        if (userPhone) {
+          const smsMessage = `ShoutOut Support: ${newMessage.trim().substring(0, 140)}${newMessage.trim().length > 140 ? '...' : ''}\n\nReply in app: https://shoutout.us/dashboard`;
+          
+          const { error: smsError } = await supabase.functions.invoke('send-sms', {
+            body: {
+              to: userPhone,
+              message: smsMessage
+            }
+          });
+
+          if (smsError) {
+            console.error('Failed to send SMS notification:', smsError);
+            // Don't fail the response if SMS fails
+          } else {
+            console.log('SMS notification sent to user:', userPhone);
+          }
+        }
+      } catch (smsErr) {
+        console.error('Error sending SMS notification:', smsErr);
+        // Don't fail the response if SMS fails
+      }
+
       setNewMessage('');
       toast.success('Response sent!');
       
