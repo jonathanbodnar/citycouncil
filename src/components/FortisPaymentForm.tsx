@@ -64,6 +64,14 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     };
   }, []);
 
+  // CRITICAL: Start timeout whenever isProcessing becomes true
+  useEffect(() => {
+    if (isProcessing && !successHandledRef.current) {
+      console.log('🔄 isProcessing is true - ensuring timeout is running');
+      forceSuccessAfterTimeout();
+    }
+  }, [isProcessing, forceSuccessAfterTimeout]);
+
   const handlePaymentComplete = useCallback((payload: any, source: string) => {
     if (successHandledRef.current) {
       console.log(`⚠️ Success already handled, ignoring ${source}`);
