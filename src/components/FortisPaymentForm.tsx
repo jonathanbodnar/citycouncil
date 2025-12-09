@@ -119,13 +119,22 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, []);
+  }, [amount]); // Re-initialize when amount changes (e.g., coupon applied)
 
   const initializeFortis = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      successHandledRef.current = false; // Reset success handler for new amount
+      
+      // Clear any existing payment form
+      if (iframeContainerRef.current) {
+        iframeContainerRef.current.innerHTML = '';
+      }
+      
       // Step 1: Create transaction intention via Supabase Edge Function
       const cents = Math.round(amount * 100);
+      console.log('🔄 Initializing Fortis with amount:', amount, 'cents:', cents);
       const intention = await createFortisIntention(cents);
       setOrderReference(intention.orderReference);
 
