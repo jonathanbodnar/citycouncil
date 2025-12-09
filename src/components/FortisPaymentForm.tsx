@@ -34,6 +34,9 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     const onMessage = (event: MessageEvent) => {
       try {
         const origin = String(event.origin || '');
+        // Log ALL messages for debugging
+        console.log('📨 postMessage received:', { origin, data: event.data });
+        
         if (!origin.includes('fortis.tech')) return;
         const data: any = event.data;
         const hasId = !!(data?.transaction?.id || data?.data?.id || data?.id || data?.value?.id);
@@ -218,6 +221,13 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         console.log('Commerce iframe ready');
         setIsLoading(false);
       });
+      // Log ALL events from Commerce.js
+      const logEvent = (name: string) => (data: any) => {
+        console.log(`🎯 Commerce.js event [${name}]:`, data);
+      };
+      elements.eventBus.on('submit', logEvent('submit'));
+      elements.eventBus.on('done', logEvent('done'));
+      elements.eventBus.on('complete', logEvent('complete'));
       elements.eventBus.on('payment_success', handleSuccess);
       // Add extra fallbacks in case library emits different event names
       elements.eventBus.on('success', handleSuccess as any);
