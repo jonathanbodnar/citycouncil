@@ -294,43 +294,15 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     try {
       logger.log('Downloading promo video (already watermarked):', currentPromoVideoUrl);
 
-      // Video is already watermarked during upload - just fetch it directly
-      const response = await fetch(currentPromoVideoUrl);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch video: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      logger.log('Video blob size:', blob.size);
-
+      const { downloadVideo } = await import('../utils/mobileDownload');
       const filename = `${talentUsername}-promo-video.mp4`;
 
-      // Try to use native share API on mobile (saves to camera roll)
-      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        try {
-          const file = new File([blob], filename, { type: 'video/mp4' });
-          await navigator.share({
-            files: [file],
-            title: 'ShoutOut Promo Video',
-            text: 'My ShoutOut promo video'
-          });
-          toast.success('Video saved!');
-          return;
-        } catch (shareError) {
-          logger.log('Share failed, falling back to download:', shareError);
-        }
-      }
-
-      // Fallback: Traditional download
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      await downloadVideo({
+        url: currentPromoVideoUrl,
+        filename,
+        onSuccess: () => logger.log('Promo video download successful'),
+        onError: (error) => logger.error('Promo video download error:', error)
+      });
 
       toast.success('Promo video downloaded!');
     } catch (error) {
@@ -344,6 +316,8 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
 
   const handleDownloadShareableVideo = async (videoUrl: string, orderId: string) => {
     try {
+      toast.loading('Adding watermark...', { id: 'watermark-shareable' });
+      
       // Call watermark-video Edge Function
       const { data, error } = await supabase.functions.invoke('watermark-video', {
         body: { videoUrl }
@@ -355,40 +329,21 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         throw new Error('No watermarked URL returned');
       }
 
-      // Fetch the video
-      const response = await fetch(data.watermarkedUrl);
-      const blob = await response.blob();
+      toast.success('Watermark applied!', { id: 'watermark-shareable' });
+
+      // Use mobile-friendly download utility
+      const { downloadVideo } = await import('../utils/mobileDownload');
       const filename = `shoutout-${orderId.slice(0, 8)}.mp4`;
 
-      // Try to use native share API on mobile (saves to camera roll)
-      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        try {
-          const file = new File([blob], filename, { type: 'video/mp4' });
-          await navigator.share({
-            files: [file],
-            title: 'ShoutOut Video',
-            text: 'My ShoutOut video'
-          });
-          toast.success('Video saved!');
-          return;
-        } catch (shareError) {
-          logger.log('Share failed, falling back to download:', shareError);
-        }
-      }
-
-      // Fallback: Traditional download
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success('Video downloaded!');
+      await downloadVideo({
+        url: data.watermarkedUrl,
+        filename,
+        onSuccess: () => logger.log('Shareable video download successful'),
+        onError: (err) => logger.error('Shareable video download error:', err)
+      });
     } catch (error) {
       logger.error('Error downloading video:', error);
+      toast.dismiss('watermark-shareable');
       toast.error('Failed to download video');
     }
   };

@@ -322,76 +322,22 @@ const UserDashboard: React.FC = () => {
   const [downloadStarted, setDownloadStarted] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Actually download the video - works reliably on all browsers
+  // Actually download the video - works reliably on all browsers including iOS Safari
   const performDownload = async (order: OrderWithTalent) => {
     if (downloadStarted) return; // Prevent duplicate downloads
     setDownloadStarted(true);
     setIsDownloading(true);
     
     try {
+      const { downloadVideo } = await import('../utils/mobileDownload');
       const filename = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-      // Mobile: Try native share API first, fall back to opening in new tab
-      if (isMobile && navigator.share && navigator.canShare) {
-        try {
-          const response = await fetch(order.video_url!, { mode: 'cors' });
-          if (!response.ok) throw new Error('Fetch failed');
-          
-          const blob = await response.blob();
-          const file = new File([blob], filename, { type: 'video/mp4' });
-          
-          // Check if we can share files
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: 'My ShoutOut Video',
-              text: `Just got my personalized ShoutOut from ${order.talent_profiles.users.full_name}!`
-            });
-            toast.success('Video saved!');
-            return;
-          }
-        } catch (shareError: any) {
-          console.log('Share failed, trying fallback:', shareError);
-          // Fall through to fallback methods
-        }
-      }
-
-      // iOS Fallback: Open video in new tab (user can long-press to save)
-      if (isIOS) {
-        window.open(order.video_url!, '_blank');
-        toast.success('Video opened! Long-press to save to your camera roll.', { duration: 5000 });
-        return;
-      }
-
-      // Android/Desktop: Try fetch + download
-      try {
-        const response = await fetch(order.video_url!, { mode: 'cors' });
-        if (!response.ok) throw new Error('Failed to fetch video');
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Cleanup
-        setTimeout(() => {
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-        }, 100);
-        
-        toast.success('Video downloaded!');
-      } catch (fetchError) {
-        // Final fallback: Open in new tab
-        console.log('Fetch failed, opening in new tab:', fetchError);
-        window.open(order.video_url!, '_blank');
-        toast.success('Video opened in new tab. Right-click to save.', { duration: 5000 });
-      }
+      
+      await downloadVideo({
+        url: order.video_url!,
+        filename,
+        onSuccess: () => console.log('Download successful'),
+        onError: (error) => console.error('Download failed:', error)
+      });
     } catch (error) {
       console.error('Download error:', error);
       // Ultimate fallback - just open the video

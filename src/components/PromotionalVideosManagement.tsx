@@ -154,30 +154,25 @@ const PromotionalVideosManagement: React.FC = () => {
         toast.success('Watermark applied!', { id: 'watermark' });
       }
 
-      // Download the watermarked video
+      // Download the watermarked video using mobile-friendly utility
       toast.loading('Downloading video...', { id: 'download' });
-      console.log('⬇️ Fetching watermarked video:', data.watermarkedUrl);
+      console.log('⬇️ Downloading watermarked video:', data.watermarkedUrl);
       
-      const response = await fetch(data.watermarkedUrl);
+      const { downloadVideo } = await import('../utils/mobileDownload');
+      const filename = `shoutout-${talentName.replace(/\s+/g, '-')}-${orderId.slice(0, 8)}.mp4`;
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch video: ${response.status} ${response.statusText}`);
-      }
-      
-      const blob = await response.blob();
-      console.log('✅ Video blob created:', { size: blob.size, type: blob.type });
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `shoutout-${talentName.replace(/\s+/g, '-')}-${orderId.slice(0, 8)}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      console.log('✅ Video download initiated');
-      toast.success('Video downloaded!', { id: 'download' });
+      await downloadVideo({
+        url: data.watermarkedUrl,
+        filename,
+        onSuccess: () => {
+          console.log('✅ Video download successful');
+          toast.dismiss('download');
+        },
+        onError: (err) => {
+          console.error('Download error:', err);
+          toast.dismiss('download');
+        }
+      });
     } catch (error: any) {
       console.error('❌ Error in download flow:', {
         error,
@@ -190,27 +185,17 @@ const PromotionalVideosManagement: React.FC = () => {
       toast.dismiss('download');
       toast.error('Failed to download with watermark. Trying direct download...', { duration: 3000 });
       
-      // Fallback: direct download without watermark
+      // Fallback: direct download without watermark using mobile-friendly utility
       try {
         console.log('🔄 Attempting direct download fallback...');
-        const response = await fetch(videoUrl);
+        const { downloadVideo } = await import('../utils/mobileDownload');
+        const filename = `shoutout-${talentName.replace(/\s+/g, '-')}-${orderId.slice(0, 8)}-no-watermark.mp4`;
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch video: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `shoutout-${talentName.replace(/\s+/g, '-')}-${orderId.slice(0, 8)}-no-watermark.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        console.log('✅ Direct download successful');
-        toast.success('Video downloaded (without watermark)', { duration: 3000 });
+        await downloadVideo({
+          url: videoUrl,
+          filename,
+          onSuccess: () => console.log('✅ Direct download successful')
+        });
       } catch (fallbackError: any) {
         console.error('❌ Fallback download also failed:', fallbackError);
         toast.error('Failed to download video. Please try again later.');
