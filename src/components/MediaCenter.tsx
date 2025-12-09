@@ -12,6 +12,7 @@ import {
 import { supabase } from '../services/supabase';
 import { generatePromoGraphic, downloadPromoGraphic } from '../services/promoGraphicGenerator';
 import { uploadVideoToWasabi } from '../services/videoUpload';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { logger } from '../utils/logger';
 
@@ -38,6 +39,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   avatarUrl,
   promoVideoUrl
 }) => {
+  const { user } = useAuth();
   const [generatingGraphic, setGeneratingGraphic] = useState(false);
   const [downloadingVideo, setDownloadingVideo] = useState(false);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
@@ -113,12 +115,13 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       }
 
       // Update talent profile with new video URL
+      // Use user_id for RLS policy compliance
       const { error } = await supabase
         .from('talent_profiles')
         .update({
           promo_video_url: uploadResult.videoUrl,
         })
-        .eq('id', talentId);
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
