@@ -224,37 +224,43 @@ const OnboardingForm: React.FC<OnboardingFormProps> = ({
         autoComplete='off'
         required
       />
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <input
-          name='month'
-          placeholder='MM'
-          value={form.month}
-          onChange={(e) => {
-            if (/^\d{0,2}$/.test(e.target.value)) onChange(e)
-          }}
-          style={{ ...inputStyle, marginBottom: 0 }}
-          required
-        />
-        <input
-          name='day'
-          placeholder='DD'
-          value={form.day}
-          onChange={(e) => {
-            if (/^\d{0,2}$/.test(e.target.value)) onChange(e)
-          }}
-          style={{ ...inputStyle, marginBottom: 0 }}
-          required
-        />
-        <input
-          name='year'
-          placeholder='YYYY'
-          value={form.year}
-          onChange={(e) => {
-            if (/^\d{0,4}$/.test(e.target.value)) onChange(e)
-          }}
-          style={{ ...inputStyle, marginBottom: 0 }}
-          required
-        />
+      {/* Birthday */}
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>
+          Date of Birth
+        </label>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input
+            name='month'
+            placeholder='MM'
+            value={form.month}
+            onChange={(e) => {
+              if (/^\d{0,2}$/.test(e.target.value)) onChange(e)
+            }}
+            style={{ ...inputStyle, marginBottom: 0 }}
+            required
+          />
+          <input
+            name='day'
+            placeholder='DD'
+            value={form.day}
+            onChange={(e) => {
+              if (/^\d{0,2}$/.test(e.target.value)) onChange(e)
+            }}
+            style={{ ...inputStyle, marginBottom: 0 }}
+            required
+          />
+          <input
+            name='year'
+            placeholder='YYYY'
+            value={form.year}
+            onChange={(e) => {
+              if (/^\d{0,4}$/.test(e.target.value)) onChange(e)
+            }}
+            style={{ ...inputStyle, marginBottom: 0 }}
+            required
+          />
+        </div>
       </div>
 
       {/* SSL Encryption Notice */}
