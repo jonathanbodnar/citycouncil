@@ -1093,12 +1093,12 @@ const UserDashboard: React.FC = () => {
             />
 
             {/* Modal panel */}
-            <div className="relative inline-block bg-white rounded-2xl px-6 pt-6 pb-6 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full z-10">
+            <div className="relative inline-block bg-white-solid rounded-2xl px-6 pt-6 pb-6 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full z-10 border border-white/20">
               <div className="mb-4">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-white mb-2">
                   Fill in Order Details
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-400">
                   Tell the talent what you want in your ShoutOut
                 </p>
               </div>
@@ -1106,38 +1106,38 @@ const UserDashboard: React.FC = () => {
               <div className="space-y-4">
                 {/* Recipient Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Who is this video for? <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Who is this video for? <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={detailsRecipientName}
                     onChange={(e) => setDetailsRecipientName(e.target.value)}
                     placeholder="Enter the recipient's name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-slate-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 {/* Request Details */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Message Request <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Your Message Request <span className="text-red-400">*</span>
                   </label>
                   <textarea
                     value={detailsRequestDetails}
                     onChange={(e) => setDetailsRequestDetails(e.target.value)}
                     rows={4}
                     placeholder="Tell them what you'd like included in your ShoutOut. Be specific about names, details, and the tone you want!"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full px-3 py-2 bg-slate-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {detailsRequestDetails.length}/1000 characters (min 25)
                   </p>
                 </div>
 
                 {/* Special Instructions */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Special Instructions (Optional)
                   </label>
                   <textarea
@@ -1145,7 +1145,7 @@ const UserDashboard: React.FC = () => {
                     onChange={(e) => setDetailsSpecialInstructions(e.target.value)}
                     rows={2}
                     placeholder="Any specific requests about delivery, style, or content?"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full px-3 py-2 bg-slate-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
                 </div>
               </div>
@@ -1155,7 +1155,7 @@ const UserDashboard: React.FC = () => {
                 <button
                   onClick={() => setShowDetailsModal(false)}
                   disabled={submittingDetails}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 bg-slate-700 border border-white/20 rounded-lg text-white hover:bg-slate-600 transition-colors"
                 >
                   Cancel
                 </button>
