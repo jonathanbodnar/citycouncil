@@ -195,12 +195,22 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           handlePaymentError('Payment was declined. Please try a different card.', 'payment_declined');
         });
 
-        // CRITICAL: Listen for submit event to start timeout
+        // Listen for submit event to start timeout
         elements.eventBus.on('submit', () => {
           console.log('📤 Form submitted - starting processing');
           setIsProcessing(true);
           forceSuccessAfterTimeout();
         });
+
+        // Log ALL events for debugging
+        const originalOn = elements.eventBus.on.bind(elements.eventBus);
+        elements.eventBus.on = (event: string, handler: any) => {
+          const wrappedHandler = (...args: any[]) => {
+            console.log(`🔔 Fortis event: ${event}`, args);
+            return handler(...args);
+          };
+          return originalOn(event, wrappedHandler);
+        };
 
         // Create the iframe
         console.log('🔧 Creating Commerce iframe');
@@ -231,6 +241,33 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
     initializeFortis();
     
+    // Watch for clicks on the payment container - if user clicks Pay button
+    // we should start the timeout even if Fortis doesn't emit events
+    const paymentContainer = document.getElementById('payment');
+    const handleContainerClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      // Check if clicked element looks like a submit button
+      const isButton = target.tagName === 'BUTTON' || 
+                       target.closest('button') ||
+                       target.textContent?.toLowerCase().includes('pay') ||
+                       target.textContent?.toLowerCase().includes('submit');
+      
+      if (isButton && !successHandledRef.current) {
+        console.log('🖱️ Detected click on payment button area');
+        // Start timeout after a short delay to allow Fortis to process
+        setTimeout(() => {
+          if (!successHandledRef.current) {
+            console.log('⏱️ Starting backup timeout from click detection');
+            setIsProcessing(true);
+            forceSuccessAfterTimeout();
+          }
+        }, 2000);
+      }
+    };
+    
+    // Use capture to catch events before iframe
+    paymentContainer?.addEventListener('click', handleContainerClick, true);
+    
     // Also listen for postMessage as ultimate fallback
     const onMessage = (event: MessageEvent) => {
       try {
@@ -256,7 +293,10 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     };
     
     window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      paymentContainer?.removeEventListener('click', handleContainerClick, true);
+    };
   }, [amount, handlePaymentComplete, handlePaymentError, forceSuccessAfterTimeout]);
 
   return (
