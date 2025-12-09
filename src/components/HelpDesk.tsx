@@ -142,16 +142,13 @@ const HelpDesk: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-96 flex flex-col">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[70vh] min-h-[400px] max-h-[700px] flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
           <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-600" />
           <h2 className="text-lg font-semibold text-gray-900">Help & Support</h2>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
-          Get instant help or chat with our support team
-        </p>
       </div>
 
       {/* Messages */}
