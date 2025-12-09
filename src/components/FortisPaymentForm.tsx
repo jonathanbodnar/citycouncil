@@ -229,6 +229,41 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           return originalOn(event, wrappedHandler);
         };
 
+        // AGGRESSIVE FALLBACK: Watch for visual success indicators
+        // Since Fortis events aren't firing, watch the DOM for changes
+        const observer = new MutationObserver((mutations) => {
+          if (successHandledRef.current || paymentDeclinedRef.current) return;
+          
+          const container = document.getElementById('payment');
+          if (!container) return;
+          
+          // Check all text in the container
+          const allText = container.innerText || container.textContent || '';
+          
+          if (allText.includes('Transaction Successful') || 
+              allText.includes('Thank you for your payment') ||
+              allText.includes('Payment Complete')) {
+            console.log('👁️ MutationObserver detected success text!');
+            successHandledRef.current = true;
+            setIsProcessing(false);
+            const fallbackId = `observer-${Date.now()}`;
+            onPaymentSuccessRef.current({ id: fallbackId, statusCode: 101, observerFallback: true });
+          }
+        });
+        
+        // Start observing after iframe is created
+        setTimeout(() => {
+          const container = document.getElementById('payment');
+          if (container) {
+            observer.observe(container, { 
+              childList: true, 
+              subtree: true, 
+              characterData: true 
+            });
+            console.log('👁️ MutationObserver started watching for success');
+          }
+        }, 1000);
+
         // Create the iframe
         console.log('🔧 Creating Commerce iframe');
         elements.create({
