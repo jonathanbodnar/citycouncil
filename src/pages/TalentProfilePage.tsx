@@ -45,6 +45,38 @@ const TalentProfilePage: React.FC = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
+  const [hasCoupon, setHasCoupon] = useState(false);
+
+  // Check for coupon from URL or localStorage
+  useEffect(() => {
+    const checkCoupon = () => {
+      const coupon = localStorage.getItem('auto_apply_coupon');
+      setHasCoupon(coupon === 'SANTA25');
+    };
+    
+    // Check URL param first
+    const couponParam = searchParams.get('coupon');
+    if (couponParam) {
+      localStorage.setItem('auto_apply_coupon', couponParam.toUpperCase());
+      window.dispatchEvent(new Event('couponApplied'));
+    }
+    
+    // Check on mount
+    checkCoupon();
+    
+    // Listen for storage changes and custom events
+    window.addEventListener('storage', checkCoupon);
+    window.addEventListener('couponApplied', checkCoupon);
+    
+    return () => {
+      window.removeEventListener('storage', checkCoupon);
+      window.removeEventListener('couponApplied', checkCoupon);
+    };
+  }, [searchParams]);
+
+  // Calculate discounted price (25% off)
+  const originalPrice = talent?.pricing || 0;
+  const discountedPrice = Math.round(originalPrice * 0.75);
 
   // Capture UTM tracking and store in localStorage
   // utm=1 means "self_promo" - ONLY tracks for this specific talent
@@ -567,7 +599,20 @@ const TalentProfilePage: React.FC = () => {
 
             {/* Stats - Simple inline text */}
             <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-gray-400 mb-3">
-              <span className="font-bold text-white">${talent.pricing}</span>
+              {hasCoupon ? (
+                <span className="flex items-center gap-2">
+                  <span className="text-gray-400 line-through">${originalPrice}</span>
+                  <span 
+                    className="font-bold bg-clip-text text-transparent"
+                    style={{ backgroundImage: 'linear-gradient(to right, #8B5CF6, #3B82F6)' }}
+                  >
+                    ${discountedPrice}
+                  </span>
+                  <span className="text-xs text-green-400 font-medium">25% OFF</span>
+                </span>
+              ) : (
+                <span className="font-bold text-white">${talent.pricing}</span>
+              )}
               <span className="text-gray-500">•</span>
               <span className="flex items-center">
                 <ClockIcon className="h-4 w-4 mr-0.5" />
@@ -767,7 +812,14 @@ const TalentProfilePage: React.FC = () => {
               onClick={storePromoSourceOnClick}
               className="inline-block px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
             >
-              Order Now - ${talent.pricing}
+              {hasCoupon ? (
+                <span className="flex items-center gap-2">
+                  Order Now - <span className="line-through opacity-70">${originalPrice}</span>
+                  <span className="font-bold">${discountedPrice}</span>
+                </span>
+              ) : (
+                <>Order Now - ${talent.pricing}</>
+              )}
             </Link>
           </div>
         )}
@@ -849,8 +901,20 @@ const TalentProfilePage: React.FC = () => {
                 <h3 className="font-medium text-white mb-1 truncate">
                   {related.temp_full_name || related.users.full_name}
                 </h3>
-                <div className="text-lg font-bold text-green-400">
-                  ${related.pricing}
+                <div className="text-lg font-bold">
+                  {hasCoupon ? (
+                    <span className="flex items-center gap-2">
+                      <span className="text-gray-400 text-sm line-through">${related.pricing}</span>
+                      <span 
+                        className="bg-clip-text text-transparent"
+                        style={{ backgroundImage: 'linear-gradient(to right, #8B5CF6, #3B82F6)' }}
+                      >
+                        ${Math.round((related.pricing || 0) * 0.75)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-green-400">${related.pricing}</span>
+                  )}
                 </div>
               </Link>
             ))}

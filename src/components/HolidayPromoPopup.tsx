@@ -243,7 +243,8 @@ const HolidayPromoPopup: React.FC = () => {
           const smsResult = await supabase.functions.invoke('send-sms', {
             body: {
               to: formattedPhone,
-              message: `You're in! 🎉 You'll get a text if you win the free ShoutOut. Ready to order now? Here's a 25% off coupon (expires in 24hrs): SANTA25 https://shoutout.us?coupon=SANTA25`
+              message: `You're in! 🎉 You'll get a text if you win the free ShoutOut. Ready to order now? Here's a 25% off coupon (expires in 24hrs): SANTA25 https://shoutout.us?coupon=SANTA25`,
+              useUserNumber: true // Send from user-facing number, not talent number
             }
           });
           console.log('📤 SMS result:', smsResult);

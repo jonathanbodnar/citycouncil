@@ -4,7 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 // Twilio credentials and Messaging Service SID for link shortening
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER"); // Talent number
+const USER_SMS_PHONE_NUMBER = Deno.env.get("USER_SMS_PHONE_NUMBER") || Deno.env.get("TWILIO_PHONE_NUMBER"); // User-facing number
 const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
 
 const corsHeaders = {
@@ -27,7 +28,7 @@ serve(async (req) => {
       throw new Error("Twilio credentials not configured");
     }
 
-    const { to, message, talentId, mediaUrl } = await req.json();
+    const { to, message, talentId, mediaUrl, useUserNumber } = await req.json();
 
     if (!to || (!message && !mediaUrl)) {
       throw new Error("Missing required fields: to, and either message or mediaUrl");
@@ -35,10 +36,15 @@ serve(async (req) => {
 
     // Format phone number to E.164 if not already
     const formattedTo = to.startsWith('+') ? to : `+1${to.replace(/\D/g, '')}`;
+    
+    // Use user number for non-talent messages (e.g., giveaway, help desk)
+    // Use talent number for talent-specific messages (when talentId is provided)
+    const fromNumber = (useUserNumber || !talentId) ? USER_SMS_PHONE_NUMBER : TWILIO_PHONE_NUMBER;
 
     console.log('Sending SMS/MMS:', {
       to: formattedTo,
-      from: TWILIO_PHONE_NUMBER,
+      from: fromNumber,
+      usingUserNumber: useUserNumber || !talentId,
       messageLength: message?.length || 0,
       hasMedia: !!mediaUrl,
       mediaUrl: mediaUrl || null,
@@ -76,8 +82,8 @@ serve(async (req) => {
       console.log('✓ Using MessagingServiceSid:', TWILIO_MESSAGING_SERVICE_SID.substring(0, 8) + '...');
       console.log('✓ ShortenUrls parameter set to: true');
     } else {
-      body.append('From', TWILIO_PHONE_NUMBER);
-      console.log('✗ Using direct From number (no link shortening available)');
+      body.append('From', fromNumber!);
+      console.log('✗ Using direct From number (no link shortening available):', fromNumber);
     }
     
     // Log the full request body for debugging
