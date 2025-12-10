@@ -51,6 +51,16 @@ const HomePage: React.FC = () => {
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Capture coupon from URL (e.g., shoutout.us/?coupon=SANTA25)
+  useEffect(() => {
+    const couponParam = searchParams.get('coupon');
+    if (couponParam) {
+      localStorage.setItem('auto_apply_coupon', couponParam.toUpperCase());
+      // Dispatch event to update TalentCards immediately
+      window.dispatchEvent(new Event('couponApplied'));
+    }
+  }, [searchParams]);
+
   // Capture global UTM tracking (e.g., shoutout.us/?utm=rumble)
   // These track for ANY talent the user orders from
   useEffect(() => {

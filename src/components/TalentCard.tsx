@@ -21,8 +21,24 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   const [hasCoupon, setHasCoupon] = useState(false);
   
   useEffect(() => {
-    const coupon = localStorage.getItem('auto_apply_coupon');
-    setHasCoupon(coupon === 'SANTA25');
+    const checkCoupon = () => {
+      const coupon = localStorage.getItem('auto_apply_coupon');
+      setHasCoupon(coupon === 'SANTA25');
+    };
+    
+    // Check on mount
+    checkCoupon();
+    
+    // Listen for storage changes (from popup)
+    window.addEventListener('storage', checkCoupon);
+    
+    // Also listen for custom event (for same-tab updates)
+    window.addEventListener('couponApplied', checkCoupon);
+    
+    return () => {
+      window.removeEventListener('storage', checkCoupon);
+      window.removeEventListener('couponApplied', checkCoupon);
+    };
   }, []);
   
   // Calculate discounted price (25% off)
@@ -164,7 +180,10 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
                 <span className="text-sm sm:text-base text-gray-400 line-through">
                   ${originalPrice}
                 </span>
-                <span className="text-lg sm:text-xl font-semibold text-green-400">
+                <span 
+                  className="text-lg sm:text-xl font-bold bg-clip-text text-transparent"
+                  style={{ backgroundImage: 'linear-gradient(to right, #8B5CF6, #3B82F6)' }}
+                >
                   ${discountedPrice}
                 </span>
               </div>

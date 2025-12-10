@@ -243,7 +243,7 @@ const HolidayPromoPopup: React.FC = () => {
           const smsResult = await supabase.functions.invoke('send-sms', {
             body: {
               to: formattedPhone,
-              message: `You're in! 🎉 You'll get a text if you win the free ShoutOut. Ready to order now? Here's a 25% off coupon: SANTA25 https://shoutout.us`
+              message: `You're in! 🎉 You'll get a text if you win the free ShoutOut. Ready to order now? Here's a 25% off coupon (expires in 24hrs): SANTA25 https://shoutout.us?coupon=SANTA25`
             }
           });
           console.log('📤 SMS result:', smsResult);
@@ -256,6 +256,9 @@ const HolidayPromoPopup: React.FC = () => {
         
         // Store coupon code in localStorage for auto-apply at checkout
         localStorage.setItem('auto_apply_coupon', 'SANTA25');
+        
+        // Dispatch custom event to update TalentCards immediately
+        window.dispatchEvent(new Event('couponApplied'));
         
         // Fire Facebook Pixel Lead event
         console.log('📊 Attempting to fire Lead events...', { 
@@ -428,6 +431,7 @@ const HolidayPromoPopup: React.FC = () => {
               <div className="mt-4 bg-white/20 backdrop-blur rounded-xl p-4">
                 <p className="text-white/70 text-sm mb-1">Can't wait? Get 25% off now:</p>
                 <p className="text-yellow-300 text-2xl font-mono font-bold">SANTA25</p>
+                <p className="text-white/60 text-xs mt-2">Code expires in 24 hours</p>
               </div>
             </div>
           )}
