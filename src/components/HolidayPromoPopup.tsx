@@ -253,6 +253,15 @@ const HolidayPromoPopup: React.FC = () => {
         }
 
         toast.success('Check your phone for your discount code! 🎁');
+        
+        // Fire Facebook Pixel Lead event
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+          (window as any).fbq('track', 'Lead', {
+            content_name: 'Holiday Promo Popup',
+            content_category: 'Phone Signup'
+          });
+          console.log('📊 Facebook Pixel Lead event fired');
+        }
       }
 
       setHasSubmitted(true);
