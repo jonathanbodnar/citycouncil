@@ -517,10 +517,10 @@ const TalentProfilePage: React.FC = () => {
                   {talent.promo_video_url && (
                     <button
                       onClick={() => setPlayingPromoVideo(true)}
-                      className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-all duration-300"
+                      className="absolute inset-0 flex items-center justify-center bg-black/5 hover:bg-black/20 transition-all duration-300"
                     >
-                      <div className="glass-strong p-6 rounded-full border-2 border-white/60 glow-blue hover:scale-110 transition-transform duration-300">
-                        <PlayIcon className="h-16 w-16 text-white drop-shadow-lg" />
+                      <div className="bg-black/30 backdrop-blur-sm p-4 rounded-full border border-white/40 hover:bg-black/50 hover:scale-110 transition-all duration-300">
+                        <PlayIcon className="h-12 w-12 text-white/80" />
                       </div>
                     </button>
                   )}
