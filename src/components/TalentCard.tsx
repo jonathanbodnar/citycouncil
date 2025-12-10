@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { StarIcon, HeartIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
@@ -16,6 +16,18 @@ interface TalentCardProps {
 const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   const isComingSoon = talent.is_coming_soon === true;
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
+  
+  // Check if user has a coupon from the giveaway popup
+  const [hasCoupon, setHasCoupon] = useState(false);
+  
+  useEffect(() => {
+    const coupon = localStorage.getItem('auto_apply_coupon');
+    setHasCoupon(coupon === 'SANTA25');
+  }, []);
+  
+  // Calculate discounted price (25% off)
+  const originalPrice = talent.pricing || 0;
+  const discountedPrice = Math.round(originalPrice * 0.75);
   
   const demandColors = {
     high: 'bg-red-500/20 text-red-400',
@@ -147,9 +159,20 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         {/* Price and Charity - Push to bottom */}
         <div className="flex items-center justify-between mt-auto">
           <div>
-            <div className="text-lg sm:text-xl font-semibold text-white">
-              ${talent.pricing}
-            </div>
+            {hasCoupon ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm sm:text-base text-gray-400 line-through">
+                  ${originalPrice}
+                </span>
+                <span className="text-lg sm:text-xl font-semibold text-green-400">
+                  ${discountedPrice}
+                </span>
+              </div>
+            ) : (
+              <div className="text-lg sm:text-xl font-semibold text-white">
+                ${talent.pricing}
+              </div>
+            )}
             {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
               <div className="hidden sm:block text-xs text-gray-400 font-medium">
                 Corporate: ${talent.corporate_pricing}

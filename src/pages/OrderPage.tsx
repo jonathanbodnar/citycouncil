@@ -130,6 +130,21 @@ const OrderPage: React.FC = () => {
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-apply coupon from localStorage (set by giveaway popup)
+  useEffect(() => {
+    const autoApplyCoupon = localStorage.getItem('auto_apply_coupon');
+    if (autoApplyCoupon && user && talent && !appliedCoupon && !couponCode) {
+      setCouponCode(autoApplyCoupon);
+      // Trigger validation after setting the code
+      setTimeout(() => {
+        const validateBtn = document.querySelector('[data-coupon-apply]') as HTMLButtonElement;
+        if (validateBtn) {
+          validateBtn.click();
+        }
+      }, 500);
+    }
+  }, [user, talent, appliedCoupon, couponCode]);
+
   const fetchUserCredits = async () => {
     if (!user) return;
     
@@ -956,6 +971,7 @@ const OrderPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={validateCoupon}
+                    data-coupon-apply="true"
                     disabled={couponLoading || !couponCode.trim()}
                     className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >

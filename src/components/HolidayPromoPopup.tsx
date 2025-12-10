@@ -254,6 +254,9 @@ const HolidayPromoPopup: React.FC = () => {
 
         toast.success('You\'re entered! Good luck! 🍀');
         
+        // Store coupon code in localStorage for auto-apply at checkout
+        localStorage.setItem('auto_apply_coupon', 'SANTA25');
+        
         // Fire Facebook Pixel Lead event
         console.log('📊 Attempting to fire Lead events...', { 
           hasFbq: typeof (window as any).fbq === 'function',
