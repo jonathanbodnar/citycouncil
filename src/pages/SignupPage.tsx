@@ -15,7 +15,6 @@ const SignupPage: React.FC = () => {
     email: '',
     phoneNumber: '',
     password: '',
-    confirmPassword: '',
     userType: 'user' as 'user' | 'talent', // Always 'user' - talent accounts created by admin only
     agreeToTerms: true,
   });
@@ -36,11 +35,6 @@ const SignupPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
 
     if (!formData.phoneNumber || formData.phoneNumber.trim() === '') {
       toast.error('Phone number is required');
@@ -155,22 +149,6 @@ const SignupPage: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
           </div>
 
           <div className="flex items-center">
