@@ -54,13 +54,24 @@ const SignupPage: React.FC = () => {
       await signUp(formData.email, formData.password, formData.fullName, formData.userType, formData.phoneNumber);
       toast.success('Account created successfully! Redirecting...');
       
-      // Fire tracking events directly here as backup (also fired in AuthContext)
+      // Fire tracking events directly on successful signup (like popup does for Lead)
       console.log('📊 SignupPage: Firing tracking events after successful signup...', {
         hasFbq: typeof (window as any).fbq === 'function',
         hasRatag: typeof (window as any).ratag === 'function'
       });
       
-      // Rumble Ads User conversion - fire directly like popup does for Lead
+      // Facebook Pixel CompleteRegistration event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'CompleteRegistration', {
+          content_name: 'User Registration',
+          status: 'complete'
+        });
+        console.log('📊 SignupPage: Facebook Pixel CompleteRegistration fired');
+      } else {
+        console.warn('⚠️ SignupPage: Facebook Pixel (fbq) not found');
+      }
+      
+      // Rumble Ads User conversion
       if (typeof window !== 'undefined' && (window as any).ratag) {
         (window as any).ratag('conversion', { to: 3337 });
         console.log('📊 SignupPage: Rumble Ads User conversion fired (3337)');
