@@ -53,8 +53,22 @@ const SignupPage: React.FC = () => {
     try {
       await signUp(formData.email, formData.password, formData.fullName, formData.userType, formData.phoneNumber);
       toast.success('Account created successfully! Redirecting...');
+      
+      // Fire tracking events directly here as backup (also fired in AuthContext)
+      console.log('📊 SignupPage: Firing tracking events after successful signup...', {
+        hasFbq: typeof (window as any).fbq === 'function',
+        hasRatag: typeof (window as any).ratag === 'function'
+      });
+      
+      // Rumble Ads User conversion - fire directly like popup does for Lead
+      if (typeof window !== 'undefined' && (window as any).ratag) {
+        (window as any).ratag('conversion', { to: 3337 });
+        console.log('📊 SignupPage: Rumble Ads User conversion fired (3337)');
+      } else {
+        console.warn('⚠️ SignupPage: Rumble Ads (ratag) not found');
+      }
+      
       // Navigate to returnTo URL after successful signup
-      // Note: Tracking events (Meta Pixel, Rumble) are fired in AuthContext.signUp()
       setTimeout(() => {
         navigate(returnTo);
       }, 1000);

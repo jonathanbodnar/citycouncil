@@ -201,6 +201,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             
           // Fire tracking events for new user registration
+          console.log('📊 Attempting to fire registration tracking events...', {
+            hasFbq: typeof (window as any).fbq === 'function',
+            hasRatag: typeof (window as any).ratag === 'function'
+          });
+          
           // Facebook Pixel CompleteRegistration event
           if (typeof window !== 'undefined' && (window as any).fbq) {
             (window as any).fbq('track', 'CompleteRegistration', {
@@ -208,12 +213,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               status: 'complete'
             });
             console.log('📊 Facebook Pixel CompleteRegistration event fired');
+          } else {
+            console.warn('⚠️ Facebook Pixel (fbq) not found');
           }
           
-          // Rumble Ads User conversion
+          // Rumble Ads User conversion - mimic popup pattern
           if (typeof window !== 'undefined' && (window as any).ratag) {
             (window as any).ratag('conversion', { to: 3337 });
             console.log('📊 Rumble Ads User conversion fired (3337)');
+          } else {
+            console.warn('⚠️ Rumble Ads (ratag) not found');
           }
         } else if (userType === 'talent') {
           // We'll handle talent profile creation in the onboarding flow
