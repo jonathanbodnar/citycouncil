@@ -51,18 +51,22 @@ const TalentProfilePage: React.FC = () => {
   useEffect(() => {
     const checkCoupon = () => {
       const coupon = localStorage.getItem('auto_apply_coupon');
+      console.log('🎟️ Checking coupon:', coupon);
       setHasCoupon(coupon === 'SANTA25');
     };
     
-    // Check URL param first
+    // Check URL param first and store it
     const couponParam = searchParams.get('coupon');
     if (couponParam) {
+      console.log('🎟️ Found coupon in URL:', couponParam);
       localStorage.setItem('auto_apply_coupon', couponParam.toUpperCase());
+      // Set state immediately since we just stored it
+      setHasCoupon(couponParam.toUpperCase() === 'SANTA25');
       window.dispatchEvent(new Event('couponApplied'));
+    } else {
+      // No URL param, check localStorage
+      checkCoupon();
     }
-    
-    // Check on mount
-    checkCoupon();
     
     // Listen for storage changes and custom events
     window.addEventListener('storage', checkCoupon);
