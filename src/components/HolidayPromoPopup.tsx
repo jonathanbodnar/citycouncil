@@ -229,7 +229,7 @@ const HolidayPromoPopup: React.FC = () => {
         // Check if it's a duplicate
         if (insertError.code === '23505') {
           console.log('📱 Duplicate phone number - already signed up');
-          toast.success('You\'re already signed up! Use code SANTA25 for 25% off.');
+          toast.success('You\'re already entered! Good luck! 🍀');
         } else {
           console.error('❌ Insert error:', insertError);
           throw insertError;
@@ -243,7 +243,7 @@ const HolidayPromoPopup: React.FC = () => {
           const smsResult = await supabase.functions.invoke('send-sms', {
             body: {
               to: formattedPhone,
-              message: `Welcome to ShoutOut! 🎄 To get 25% off your first order, use code SANTA25. Offer ends in 48 hours! https://shoutout.us`
+              message: `You're in! 🎉 You'll get a text if you win the free ShoutOut. Ready to order now? Here's a 25% off coupon: SANTA25 https://shoutout.us`
             }
           });
           console.log('📤 SMS result:', smsResult);
@@ -252,7 +252,7 @@ const HolidayPromoPopup: React.FC = () => {
           // Don't fail the whole submission if SMS fails
         }
 
-        toast.success('Check your phone for your discount code! 🎁');
+        toast.success('You\'re entered! Good luck! 🍀');
         
         // Fire Facebook Pixel Lead event
         console.log('📊 Attempting to fire Lead events...', { 
@@ -334,16 +334,20 @@ const HolidayPromoPopup: React.FC = () => {
             <>
               {/* Headline */}
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                Say it with a personalized ShoutOut from top conservative voices 🎁🎄
+                🎁 Daily Giveaway 🎁
               </h2>
               
-              <p className="text-white/90 text-lg mb-4">
-                Get <span className="text-yellow-300 font-bold text-xl">25% OFF</span> all ShoutOuts
+              <p className="text-white/90 text-lg mb-2">
+                Win a <span className="text-yellow-300 font-bold text-xl">FREE</span> personalized ShoutOut!
+              </p>
+              
+              <p className="text-white/70 text-base mb-4">
+                $100 value • New winner every day
               </p>
 
               {/* Countdown Timer */}
               <div className="mb-6">
-                <p className="text-white/70 text-sm mb-2">Offer expires in:</p>
+                <p className="text-white/70 text-sm mb-2">Next drawing in:</p>
                 <div className="flex justify-center gap-3">
                   <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-2">
                     <span className="text-2xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
@@ -364,7 +368,7 @@ const HolidayPromoPopup: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-white/80 text-sm mb-2">
-                    Enter your phone number to get your code:
+                    Enter your phone number to enter:
                   </label>
                   <input
                     type="tel"
@@ -379,6 +383,9 @@ const HolidayPromoPopup: React.FC = () => {
                     maxLength={14}
                     required
                   />
+                  <p className="text-white/60 text-xs mt-2">
+                    If you win, you'll get a text here.
+                  </p>
                 </div>
 
                 <button
@@ -393,16 +400,16 @@ const HolidayPromoPopup: React.FC = () => {
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">
                       <div className="animate-spin h-5 w-5 border-2 border-gray-800 border-t-transparent rounded-full"></div>
-                      Sending...
+                      Entering...
                     </span>
                   ) : (
-                    'Get My 25% OFF Code 🎁'
+                    'Enter to Win 🎉'
                   )}
                 </button>
               </form>
 
-              <p className="text-white/60 text-xs mt-4">
-                By entering your phone number, you agree to receive promotional messages.
+              <p className="text-white/50 text-xs mt-4">
+                *Giveaway is a $100 credit. No purchase necessary.
               </p>
             </>
           ) : (
@@ -410,13 +417,13 @@ const HolidayPromoPopup: React.FC = () => {
             <div className="py-8">
               <div className="text-6xl mb-4">🎉</div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                You're All Set!
+                You're Entered!
               </h2>
-              <p className="text-white/90">
-                Check your phone for your discount code!
+              <p className="text-white/90 mb-4">
+                Good luck! We'll text you if you win.
               </p>
-              <div className="mt-6 bg-white/20 backdrop-blur rounded-xl p-4">
-                <p className="text-white/70 text-sm">Your code:</p>
+              <div className="mt-4 bg-white/20 backdrop-blur rounded-xl p-4">
+                <p className="text-white/70 text-sm mb-1">Can't wait? Get 25% off now:</p>
                 <p className="text-yellow-300 text-2xl font-mono font-bold">SANTA25</p>
               </div>
             </div>
