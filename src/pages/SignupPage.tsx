@@ -60,6 +60,7 @@ const SignupPage: React.FC = () => {
       await signUp(formData.email, formData.password, formData.fullName, formData.userType, formData.phoneNumber);
       toast.success('Account created successfully! Redirecting...');
       // Navigate to returnTo URL after successful signup
+      // Note: Tracking events (Meta Pixel, Rumble) are fired in AuthContext.signUp()
       setTimeout(() => {
         navigate(returnTo);
       }, 1000);

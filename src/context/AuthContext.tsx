@@ -199,6 +199,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               onConflict: 'user_id',
               ignoreDuplicates: true
             });
+            
+          // Fire tracking events for new user registration
+          // Facebook Pixel CompleteRegistration event
+          if (typeof window !== 'undefined' && (window as any).fbq) {
+            (window as any).fbq('track', 'CompleteRegistration', {
+              content_name: 'User Registration',
+              status: 'complete'
+            });
+            console.log('📊 Facebook Pixel CompleteRegistration event fired');
+          }
+          
+          // Rumble Ads User conversion
+          if (typeof window !== 'undefined' && (window as any).ratag) {
+            (window as any).ratag('conversion', { to: 3337 });
+            console.log('📊 Rumble Ads User conversion fired (3337)');
+          }
         } else if (userType === 'talent') {
           // We'll handle talent profile creation in the onboarding flow
         }

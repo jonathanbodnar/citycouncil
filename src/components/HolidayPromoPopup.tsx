@@ -262,6 +262,12 @@ const HolidayPromoPopup: React.FC = () => {
           });
           console.log('📊 Facebook Pixel Lead event fired');
         }
+        
+        // Fire Rumble Ads Lead conversion
+        if (typeof window !== 'undefined' && (window as any).ratag) {
+          (window as any).ratag('conversion', { to: 3336 });
+          console.log('📊 Rumble Ads Lead conversion fired (3336)');
+        }
       }
 
       setHasSubmitted(true);
