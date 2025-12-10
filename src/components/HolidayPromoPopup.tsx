@@ -255,18 +255,27 @@ const HolidayPromoPopup: React.FC = () => {
         toast.success('Check your phone for your discount code! 🎁');
         
         // Fire Facebook Pixel Lead event
+        console.log('📊 Attempting to fire Lead events...', { 
+          hasFbq: typeof (window as any).fbq === 'function',
+          hasRatag: typeof (window as any).ratag === 'function'
+        });
+        
         if (typeof window !== 'undefined' && (window as any).fbq) {
           (window as any).fbq('track', 'Lead', {
             content_name: 'Holiday Promo Popup',
             content_category: 'Phone Signup'
           });
           console.log('📊 Facebook Pixel Lead event fired');
+        } else {
+          console.warn('⚠️ Facebook Pixel (fbq) not found');
         }
         
         // Fire Rumble Ads Lead conversion
         if (typeof window !== 'undefined' && (window as any).ratag) {
           (window as any).ratag('conversion', { to: 3336 });
           console.log('📊 Rumble Ads Lead conversion fired (3336)');
+        } else {
+          console.warn('⚠️ Rumble Ads (ratag) not found');
         }
       }
 
