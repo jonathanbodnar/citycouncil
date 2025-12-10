@@ -617,7 +617,37 @@ const OrderPage: React.FC = () => {
       // No immediate payout processing needed here
 
       toast.success('Payment successful! Your order has been placed.');
-      // Navigate to success page with order details for conversion tracking
+      
+      // Fire tracking events on successful order (click-based, like popup Lead)
+      console.log('📊 OrderPage: Firing conversion tracking events...', {
+        hasFbq: typeof (window as any).fbq === 'function',
+        hasRatag: typeof (window as any).ratag === 'function'
+      });
+      
+      // Rumble Ads Order conversion
+      if (typeof window !== 'undefined' && (window as any).ratag) {
+        (window as any).ratag('conversion', { to: 3320 });
+        console.log('📊 OrderPage: Rumble Ads Order conversion fired (3320)');
+      } else {
+        console.warn('⚠️ OrderPage: Rumble Ads (ratag) not found');
+      }
+      
+      // Facebook Pixel Purchase event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Purchase', {
+          value: pricing.total,
+          currency: 'USD',
+          content_type: 'product',
+          content_name: `ShoutOut from ${talent.temp_full_name || talent.users.full_name}`,
+          content_ids: [order.id],
+          num_items: 1
+        });
+        console.log('📊 OrderPage: Facebook Pixel Purchase event fired');
+      } else {
+        console.warn('⚠️ OrderPage: Facebook Pixel (fbq) not found');
+      }
+      
+      // Navigate to success page with order details
       const successParams = new URLSearchParams({
         order_id: order.id,
         amount: pricing.total.toString(),

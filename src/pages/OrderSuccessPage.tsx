@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircleIcon, HomeIcon, UserIcon } from '@heroicons/react/24/solid';
 import { Helmet } from 'react-helmet-async';
@@ -17,7 +17,6 @@ declare global {
 const OrderSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const conversionFiredRef = useRef(false);
 
   // Form state for order details
   const [recipientName, setRecipientName] = useState('');
@@ -88,64 +87,19 @@ const OrderSuccessPage: React.FC = () => {
     navigate('/dashboard?tab=orders');
   };
 
-  // Fire conversion immediately when component mounts
+  // Redirect if no order ID (shouldn't land here directly)
   useEffect(() => {
     console.log('🔍 OrderSuccessPage mounted, orderId:', orderId);
     
-    // Redirect if no order ID (shouldn't land here directly)
     if (!orderId) {
       console.log('❌ No orderId, redirecting to dashboard');
       navigate('/dashboard');
       return;
     }
-
-    // Fire conversions on page load (only once)
-    if (!conversionFiredRef.current) {
-      conversionFiredRef.current = true;
-      
-      // === RUMBLE ADS CONVERSION ===
-      // Simple call exactly as per Rumble docs: ratag('conversion', {to: 3320})
-      console.log('🔍 Rumble Ads - Firing conversion');
-      console.log('🔍 window.ratag exists:', typeof (window as any).ratag);
-      console.log('🔍 window._ratagData exists:', typeof (window as any)._ratagData);
-      
-      try {
-        // ratag is defined in index.html and pushes to _ratagData
-        (window as any).ratag('conversion', {to: 3320});
-        console.log('✅ Rumble ratag("conversion", {to: 3320}) called');
-        console.log('✅ _ratagData now:', (window as any)._ratagData);
-      } catch (e) {
-        console.error('❌ Rumble ratag error:', e);
-      }
-
-      // === FACEBOOK PIXEL CONVERSION ===
-      console.log('🔍 Facebook Pixel check:', {
-        fbqExists: typeof (window as any).fbq,
-        fbqType: (window as any).fbq ? 'exists' : 'undefined'
-      });
-      
-      try {
-        const fbq = (window as any).fbq;
-        if (fbq) {
-          const purchaseData = {
-            value: orderAmount,
-            currency: 'USD',
-            content_type: 'product',
-            content_name: `ShoutOut from ${talentName || 'Talent'}`,
-            content_ids: [orderId],
-            num_items: 1
-          };
-          console.log('📤 Calling fbq("track", "Purchase", ...)', purchaseData);
-          fbq('track', 'Purchase', purchaseData);
-          console.log('✅ Facebook Pixel Purchase event tracked successfully');
-        } else {
-          console.warn('⚠️ Facebook Pixel (fbq) not available on window');
-        }
-      } catch (fbError) {
-        console.error('❌ Facebook Pixel error:', fbError);
-      }
-    }
-  }, [orderId, orderAmount, talentName, navigate]);
+    
+    // Note: Conversion tracking (Rumble, Facebook) is now fired in OrderPage
+    // on successful payment (click-based) to ensure reliable tracking
+  }, [orderId, navigate]);
 
   if (!orderId) {
     return null;
