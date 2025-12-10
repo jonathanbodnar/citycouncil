@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 const POPUP_SUBMITTED_KEY = 'holiday_promo_submitted'; // Only set when phone submitted
 const POPUP_CLOSED_KEY = 'holiday_promo_closed_at'; // Tracks when they last closed it
 const POPUP_EXPIRY_KEY = 'holiday_promo_popup_expiry';
-const COUNTDOWN_HOURS = 48;
+const COUNTDOWN_HOURS = 3;
 const CLOSE_COOLDOWN_MINUTES = 5; // Show again 5 minutes after closing
 
 const HolidayPromoPopup: React.FC = () => {
@@ -338,7 +338,7 @@ const HolidayPromoPopup: React.FC = () => {
               </h2>
               
               <p className="text-white/90 text-lg mb-2">
-                Win a <span className="text-yellow-300 font-bold text-xl">FREE</span> personalized ShoutOut!
+                Win a <span className="text-yellow-300 font-bold text-xl">FREE</span> personalized video ShoutOut!
               </p>
               
               <p className="text-white/70 text-base mb-4">
