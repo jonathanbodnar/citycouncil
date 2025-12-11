@@ -62,7 +62,7 @@ interface SourceBreakdown {
 }
 
 type ChartMode = 'count' | 'cost' | 'drill';
-type DateRange = '7d' | '14d' | '30d' | '90d' | 'custom';
+type DateRange = 'today' | '7d' | '14d' | '30d' | '90d' | 'custom';
 
 const GOAL_COLORS = {
   followers: '#8B5CF6', // Purple
@@ -117,6 +117,10 @@ const AdvancedAnalytics: React.FC = () => {
     let start = new Date();
     
     switch (dateRange) {
+      case 'today':
+        // Start and end are both today
+        start = new Date(end);
+        break;
       case '7d':
         start.setDate(end.getDate() - 7);
         break;
@@ -636,7 +640,7 @@ const AdvancedAnalytics: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <CalendarIcon className="h-5 w-5 text-gray-400" />
             <div className="flex bg-gray-800 rounded-lg p-1">
-              {(['7d', '14d', '30d', '90d'] as DateRange[]).map((range) => (
+              {(['today', '7d', '14d', '30d', '90d'] as DateRange[]).map((range) => (
                 <button
                   key={range}
                   onClick={() => setDateRange(range)}
@@ -646,7 +650,7 @@ const AdvancedAnalytics: React.FC = () => {
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  {range}
+                  {range === 'today' ? 'Today' : range}
                 </button>
               ))}
             </div>
