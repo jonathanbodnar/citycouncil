@@ -49,7 +49,7 @@ interface CampaignMapping {
 }
 
 interface AdCredentials {
-  platform: 'facebook' | 'rumble';
+  platform: 'facebook' | 'rumble' | 'instagram';
   is_connected: boolean;
   last_sync_at: string | null;
   account_id?: string;
@@ -97,7 +97,7 @@ const AdvancedAnalytics: React.FC = () => {
   const [credentials, setCredentials] = useState<AdCredentials[]>([]);
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
   const [credentialForm, setCredentialForm] = useState({
-    platform: 'facebook' as 'facebook' | 'rumble',
+    platform: 'facebook' as 'facebook' | 'rumble' | 'instagram',
     access_token: '',
     account_id: ''
   });
@@ -988,8 +988,13 @@ const AdvancedAnalytics: React.FC = () => {
             {/* Connection Status */}
             <div className="mb-6 space-y-3">
               <h4 className="text-sm font-medium text-gray-400 mb-2">Connection Status</h4>
-              {['facebook', 'rumble'].map((platform) => {
+              {['facebook', 'instagram', 'rumble'].map((platform) => {
                 const cred = credentials.find(c => c.platform === platform);
+                const platformLabels: Record<string, string> = {
+                  facebook: 'Facebook Ads',
+                  instagram: 'Instagram (Followers)',
+                  rumble: 'Rumble Ads'
+                };
                 return (
                   <div key={platform} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
                     <div className="flex items-center gap-2">
@@ -998,7 +1003,7 @@ const AdvancedAnalytics: React.FC = () => {
                       ) : (
                         <XMarkIcon className="h-5 w-5 text-red-500" />
                       )}
-                      <span className="text-white capitalize">{platform}</span>
+                      <span className="text-white">{platformLabels[platform]}</span>
                     </div>
                     <span className="text-gray-400 text-sm">
                       {cred?.is_connected 
@@ -1021,38 +1026,49 @@ const AdvancedAnalytics: React.FC = () => {
                   value={credentialForm.platform}
                   onChange={(e) => setCredentialForm(prev => ({ 
                     ...prev, 
-                    platform: e.target.value as 'facebook' | 'rumble' 
+                    platform: e.target.value as 'facebook' | 'rumble' | 'instagram'
                   }))}
                   className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
                 >
-                  <option value="facebook">Facebook / Meta</option>
-                  <option value="rumble">Rumble</option>
+                  <option value="facebook">Facebook / Meta (Ads)</option>
+                  <option value="instagram">Instagram (Followers)</option>
+                  <option value="rumble">Rumble (Ads)</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">
-                  {credentialForm.platform === 'facebook' ? 'Access Token' : 'API Key'}
+                  {credentialForm.platform === 'rumble' ? 'API Key' : 'Access Token'}
                 </label>
                 <input
                   type="password"
                   value={credentialForm.access_token}
                   onChange={(e) => setCredentialForm(prev => ({ ...prev, access_token: e.target.value }))}
                   className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
-                  placeholder={credentialForm.platform === 'facebook' ? 'Enter Facebook access token' : 'Enter Rumble API key'}
+                  placeholder={
+                    credentialForm.platform === 'facebook' ? 'Enter Facebook access token' : 
+                    credentialForm.platform === 'instagram' ? 'Enter Meta access token (same as Facebook)' :
+                    'Enter Rumble API key'
+                  }
                 />
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">
-                  {credentialForm.platform === 'facebook' ? 'Ad Account ID' : 'Account ID'}
+                  {credentialForm.platform === 'facebook' ? 'Ad Account ID' : 
+                   credentialForm.platform === 'instagram' ? 'Instagram Business Account ID (optional)' :
+                   'Account ID'}
                 </label>
                 <input
                   type="text"
                   value={credentialForm.account_id}
                   onChange={(e) => setCredentialForm(prev => ({ ...prev, account_id: e.target.value }))}
                   className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
-                  placeholder={credentialForm.platform === 'facebook' ? 'act_123456789' : 'Your Rumble account ID'}
+                  placeholder={
+                    credentialForm.platform === 'facebook' ? 'act_123456789' : 
+                    credentialForm.platform === 'instagram' ? 'Leave blank to auto-detect' :
+                    'Your Rumble account ID'
+                  }
                 />
               </div>
 
@@ -1061,6 +1077,15 @@ const AdvancedAnalytics: React.FC = () => {
                   <p className="text-blue-400 text-sm">
                     <strong>Note:</strong> You need a Facebook Marketing API access token with <code>ads_read</code> permission.
                     Get one from the <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="underline">Graph API Explorer</a>.
+                  </p>
+                </div>
+              )}
+
+              {credentialForm.platform === 'instagram' && (
+                <div className="p-3 bg-pink-500/10 border border-pink-500/30 rounded-lg">
+                  <p className="text-pink-400 text-sm">
+                    <strong>Note:</strong> Use the same Meta access token as Facebook. Required permissions: <code>instagram_basic</code>, <code>instagram_manage_insights</code>, <code>pages_read_engagement</code>.
+                    Your Instagram must be a Business/Creator account connected to a Facebook Page.
                   </p>
                 </div>
               )}

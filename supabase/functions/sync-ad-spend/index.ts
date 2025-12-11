@@ -1,4 +1,5 @@
 // Edge Function to sync ad spend data from Facebook and Rumble APIs
+// Also syncs Instagram follower counts via Meta Graph API
 // Handles timezone conversions (Rumble UTC, Facebook account timezone)
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -40,7 +41,8 @@ serve(async (req) => {
 
     const results = {
       facebook: { success: false, records: 0, error: null as string | null },
-      rumble: { success: false, records: 0, error: null as string | null }
+      rumble: { success: false, records: 0, error: null as string | null },
+      instagram: { success: false, followers: 0, error: null as string | null }
     };
 
     // Get date range (last 30 days)
@@ -49,6 +51,7 @@ serve(async (req) => {
     startDate.setDate(startDate.getDate() - 30);
 
     for (const cred of credentials || []) {
+      // Facebook Ad Spend Sync
       if (cred.platform === 'facebook' && cred.access_token && cred.account_id) {
         try {
           const fbRecords = await syncFacebookAds(
@@ -59,7 +62,6 @@ serve(async (req) => {
           );
           
           if (fbRecords.length > 0) {
-            // Upsert records
             const { error: upsertError } = await supabase
               .from('ad_spend_daily')
               .upsert(fbRecords, { 
@@ -85,6 +87,51 @@ serve(async (req) => {
         }
       }
 
+      // Instagram Follower Sync (uses same Meta access token)
+      if (cred.platform === 'instagram' && cred.access_token) {
+        try {
+          const followerCount = await syncInstagramFollowers(
+            cred.access_token,
+            cred.account_id, // Instagram Business Account ID or Page ID
+            cred.additional_config
+          );
+          
+          if (followerCount > 0) {
+            // Get today's date in CST (12am CST = new day)
+            const now = new Date();
+            // Convert to CST
+            const cstOffset = -6; // CST is UTC-6
+            const cstDate = new Date(now.getTime() + (cstOffset * 60 * 60 * 1000));
+            const todayStr = cstDate.toISOString().split('T')[0];
+            
+            // Upsert today's follower count
+            const { error: upsertError } = await supabase
+              .from('follower_counts')
+              .upsert({
+                date: todayStr,
+                platform: 'instagram',
+                count: followerCount
+              }, { onConflict: 'date' });
+            
+            if (upsertError) throw upsertError;
+            
+            results.instagram.success = true;
+            results.instagram.followers = followerCount;
+          }
+
+          // Update last sync time
+          await supabase
+            .from('ad_platform_credentials')
+            .update({ last_sync_at: new Date().toISOString() })
+            .eq('platform', 'instagram');
+
+        } catch (igError: any) {
+          console.error('Instagram sync error:', igError);
+          results.instagram.error = igError.message;
+        }
+      }
+
+      // Rumble Ad Spend Sync
       if (cred.platform === 'rumble' && cred.access_token) {
         try {
           const rumbleRecords = await syncRumbleAds(
@@ -140,6 +187,86 @@ serve(async (req) => {
     });
   }
 });
+
+// Sync Instagram follower count using Meta Graph API
+async function syncInstagramFollowers(
+  accessToken: string,
+  accountId: string | undefined,
+  additionalConfig: any
+): Promise<number> {
+  // The account ID can be either:
+  // 1. Instagram Business Account ID directly
+  // 2. Facebook Page ID (we'll need to get the connected IG account)
+  
+  let instagramAccountId = accountId;
+  
+  // If we have a Page ID in config, get the connected Instagram account
+  if (additionalConfig?.page_id) {
+    const pageUrl = `https://graph.facebook.com/v18.0/${additionalConfig.page_id}?` + 
+      new URLSearchParams({
+        access_token: accessToken,
+        fields: 'instagram_business_account'
+      });
+    
+    const pageResponse = await fetch(pageUrl);
+    if (pageResponse.ok) {
+      const pageData = await pageResponse.json();
+      if (pageData.instagram_business_account?.id) {
+        instagramAccountId = pageData.instagram_business_account.id;
+      }
+    }
+  }
+  
+  if (!instagramAccountId) {
+    // Try to find Instagram account from user's pages
+    const pagesUrl = `https://graph.facebook.com/v18.0/me/accounts?` + 
+      new URLSearchParams({
+        access_token: accessToken,
+        fields: 'id,name,instagram_business_account{id,username,followers_count}'
+      });
+    
+    const pagesResponse = await fetch(pagesUrl);
+    if (pagesResponse.ok) {
+      const pagesData = await pagesResponse.json();
+      // Find first page with Instagram account
+      for (const page of pagesData.data || []) {
+        if (page.instagram_business_account?.id) {
+          instagramAccountId = page.instagram_business_account.id;
+          // If we got followers_count directly, return it
+          if (page.instagram_business_account.followers_count !== undefined) {
+            console.log(`Found Instagram account: ${page.instagram_business_account.username} with ${page.instagram_business_account.followers_count} followers`);
+            return page.instagram_business_account.followers_count;
+          }
+          break;
+        }
+      }
+    }
+  }
+  
+  if (!instagramAccountId) {
+    throw new Error('No Instagram Business Account found. Make sure your Instagram is connected to a Facebook Page.');
+  }
+  
+  // Fetch follower count from Instagram Business Account
+  const igUrl = `https://graph.facebook.com/v18.0/${instagramAccountId}?` + 
+    new URLSearchParams({
+      access_token: accessToken,
+      fields: 'id,username,followers_count,media_count'
+    });
+  
+  const igResponse = await fetch(igUrl);
+  
+  if (!igResponse.ok) {
+    const errorData = await igResponse.json();
+    throw new Error(errorData.error?.message || 'Instagram API error');
+  }
+  
+  const igData = await igResponse.json();
+  
+  console.log(`Instagram account: ${igData.username}, Followers: ${igData.followers_count}`);
+  
+  return igData.followers_count || 0;
+}
 
 // Sync Facebook Ads data using Marketing API
 async function syncFacebookAds(
@@ -273,4 +400,3 @@ async function syncRumbleAds(
 
   return records;
 }
-
