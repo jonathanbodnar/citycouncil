@@ -25,8 +25,8 @@ const getPopupDelay = (): number => {
     return 3000; // 3 seconds for SMS campaigns
   }
   
-  console.log('🎁 Default source - 6 second delay');
-  return 6000; // 6 seconds for all other sources
+  console.log('🎁 Default source - 9 second delay');
+  return 9000; // 9 seconds for all other sources
 };
 
 // Safe localStorage helpers for Safari private browsing (defined outside component)
