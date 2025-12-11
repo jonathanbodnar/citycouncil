@@ -246,9 +246,17 @@ const AdvancedAnalytics: React.FC = () => {
       // Process data into daily buckets
       const dailyMap = new Map<string, DailyData>();
       
-      // Initialize all dates in range
+      // Initialize all dates in range (inclusive of both start and end)
       const current = new Date(start);
-      while (current <= end) {
+      const endDate = new Date(end);
+      
+      console.log('📅 Initializing date range:', {
+        start: formatLocalDate(current),
+        end: formatLocalDate(endDate),
+        currentTime: new Date().toLocaleString()
+      });
+      
+      while (current <= endDate) {
         const dateStr = formatLocalDate(current);
         dailyMap.set(dateStr, {
           date: dateStr,
@@ -262,6 +270,8 @@ const AdvancedAnalytics: React.FC = () => {
         });
         current.setDate(current.getDate() + 1);
       }
+      
+      console.log('📅 Dates initialized:', Array.from(dailyMap.keys()));
 
       // Log any errors from queries
       if (ordersResult.error) console.error('Orders query error:', ordersResult.error);
