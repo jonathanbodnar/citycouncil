@@ -79,6 +79,26 @@ const SignupPage: React.FC = () => {
         console.warn('⚠️ SignupPage: Rumble Ads (ratag) not found');
       }
       
+      // Send user registration to Zapier webhook (users only, not talent)
+      if (formData.userType === 'user') {
+        try {
+          console.log('📤 SignupPage: Sending user registration to Zapier...');
+          await fetch('https://hooks.zapier.com/hooks/catch/25578725/ufgyrec/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: formData.fullName,
+              email: formData.email,
+              registered_at: new Date().toISOString()
+            })
+          });
+          console.log('✅ SignupPage: User registration sent to Zapier');
+        } catch (zapierError) {
+          console.error('⚠️ SignupPage: Failed to send to Zapier:', zapierError);
+          // Don't block registration if Zapier fails
+        }
+      }
+      
       // Navigate to returnTo URL after successful signup
       setTimeout(() => {
         navigate(returnTo);
