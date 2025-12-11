@@ -19,20 +19,10 @@ const getPopupDelay = (): number => {
   
   // Customize delay based on source
   switch (source.toLowerCase()) {
-    case 'rumble':
-      return 5000; // 5 seconds for Rumble ads
-    case 'facebook':
-    case 'fb':
-      return 8000; // 8 seconds for Facebook
-    case 'twitter':
-    case 'x':
-      return 8000; // 8 seconds for Twitter/X
-    case 'email':
-      return 3000; // 3 seconds for email campaigns
     case 'sms':
       return 3000; // 3 seconds for SMS campaigns
     default:
-      return 15000; // 15 seconds for organic/unknown
+      return 8000; // 8 seconds for all other sources
   }
 };
 
