@@ -1138,6 +1138,12 @@ interface CampaignMappingModalProps {
   onClose: () => void;
 }
 
+interface AvailableCampaign {
+  campaign_id: string;
+  campaign_name: string;
+  platform: string;
+}
+
 const CampaignMappingModal: React.FC<CampaignMappingModalProps> = ({ mapping, onSave, onClose }) => {
   const [form, setForm] = useState({
     campaign_id: mapping?.campaign_id || '',
@@ -1145,6 +1151,43 @@ const CampaignMappingModal: React.FC<CampaignMappingModalProps> = ({ mapping, on
     platform: mapping?.platform || 'facebook' as 'facebook' | 'rumble',
     goals: mapping?.goals || [] as string[]
   });
+  const [availableCampaigns, setAvailableCampaigns] = useState<AvailableCampaign[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+
+  // Fetch available campaigns from ad_spend_daily
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        // Get unique campaigns from ad_spend_daily
+        const { data, error } = await supabase
+          .from('ad_spend_daily')
+          .select('campaign_id, campaign_name, platform')
+          .order('campaign_name');
+        
+        if (error) throw error;
+        
+        // Deduplicate by campaign_id
+        const uniqueCampaigns = new Map<string, AvailableCampaign>();
+        (data || []).forEach(row => {
+          if (!uniqueCampaigns.has(row.campaign_id)) {
+            uniqueCampaigns.set(row.campaign_id, {
+              campaign_id: row.campaign_id,
+              campaign_name: row.campaign_name,
+              platform: row.platform
+            });
+          }
+        });
+        
+        setAvailableCampaigns(Array.from(uniqueCampaigns.values()));
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+    
+    fetchCampaigns();
+  }, []);
 
   const toggleGoal = (goal: string) => {
     setForm(prev => ({
@@ -1154,6 +1197,21 @@ const CampaignMappingModal: React.FC<CampaignMappingModalProps> = ({ mapping, on
         : [...prev.goals, goal]
     }));
   };
+
+  const handleCampaignSelect = (campaignId: string) => {
+    const campaign = availableCampaigns.find(c => c.campaign_id === campaignId);
+    if (campaign) {
+      setForm(prev => ({
+        ...prev,
+        campaign_id: campaign.campaign_id,
+        campaign_name: campaign.campaign_name,
+        platform: campaign.platform as 'facebook' | 'rumble'
+      }));
+    }
+  };
+
+  // Filter campaigns by selected platform
+  const filteredCampaigns = availableCampaigns.filter(c => c.platform === form.platform);
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -1169,33 +1227,15 @@ const CampaignMappingModal: React.FC<CampaignMappingModalProps> = ({ mapping, on
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Campaign ID</label>
-            <input
-              type="text"
-              value={form.campaign_id}
-              onChange={(e) => setForm(prev => ({ ...prev, campaign_id: e.target.value }))}
-              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
-              placeholder="e.g., 123456789"
-              disabled={!!mapping}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Campaign Name</label>
-            <input
-              type="text"
-              value={form.campaign_name}
-              onChange={(e) => setForm(prev => ({ ...prev, campaign_name: e.target.value }))}
-              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
-              placeholder="e.g., Holiday Promo 2024"
-            />
-          </div>
-
-          <div>
             <label className="block text-sm text-gray-400 mb-1">Platform</label>
             <select
               value={form.platform}
-              onChange={(e) => setForm(prev => ({ ...prev, platform: e.target.value as 'facebook' | 'rumble' }))}
+              onChange={(e) => setForm(prev => ({ 
+                ...prev, 
+                platform: e.target.value as 'facebook' | 'rumble',
+                campaign_id: '',
+                campaign_name: ''
+              }))}
               className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
               disabled={!!mapping}
             >
@@ -1203,6 +1243,57 @@ const CampaignMappingModal: React.FC<CampaignMappingModalProps> = ({ mapping, on
               <option value="rumble">Rumble</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Campaign</label>
+            {loadingCampaigns ? (
+              <div className="w-full bg-gray-800 text-gray-400 rounded-lg px-4 py-2">
+                Loading campaigns...
+              </div>
+            ) : filteredCampaigns.length > 0 ? (
+              <select
+                value={form.campaign_id}
+                onChange={(e) => handleCampaignSelect(e.target.value)}
+                className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+                disabled={!!mapping}
+              >
+                <option value="">Select a campaign...</option>
+                {filteredCampaigns.map(campaign => (
+                  <option key={campaign.campaign_id} value={campaign.campaign_id}>
+                    {campaign.campaign_name || campaign.campaign_id}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="space-y-2">
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-2 text-yellow-400 text-sm">
+                  No campaigns found. Sync your ad data first or enter manually below.
+                </div>
+                <input
+                  type="text"
+                  value={form.campaign_id}
+                  onChange={(e) => setForm(prev => ({ ...prev, campaign_id: e.target.value }))}
+                  className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+                  placeholder="Enter campaign ID manually"
+                  disabled={!!mapping}
+                />
+              </div>
+            )}
+          </div>
+
+          {form.campaign_id && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Campaign Name</label>
+              <input
+                type="text"
+                value={form.campaign_name}
+                onChange={(e) => setForm(prev => ({ ...prev, campaign_name: e.target.value }))}
+                className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+                placeholder="e.g., Holiday Promo 2024"
+              />
+              <p className="text-gray-500 text-xs mt-1">ID: {form.campaign_id}</p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm text-gray-400 mb-2">Associated Goals</label>
