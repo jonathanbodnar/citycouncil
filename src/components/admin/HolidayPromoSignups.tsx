@@ -36,7 +36,7 @@ const HolidayPromoSignups: React.FC = () => {
       setSignups(data || []);
       
       // Extract unique UTM sources
-      const uniqueUtms = [...new Set(data?.map(s => s.utm_source).filter(Boolean) || [])];
+      const uniqueUtms = Array.from(new Set(data?.map(s => s.utm_source).filter(Boolean) || []));
       setUtmSources(uniqueUtms as string[]);
     } catch (error) {
       console.error('Error fetching signups:', error);
