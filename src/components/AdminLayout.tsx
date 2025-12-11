@@ -17,7 +17,8 @@ import {
   DevicePhoneMobileIcon,
   BellIcon,
   TagIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  GiftIcon
 } from '@heroicons/react/24/outline';
 import Logo from './Logo';
 
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { key: 'w9s', label: 'W-9 Forms', icon: DocumentTextIcon },
   { key: 'coupons', label: 'Coupons', icon: TagIcon },
   { key: 'credits', label: 'Credits', icon: CurrencyDollarIcon },
+  { key: 'holiday-promo', label: 'Holiday Promo', icon: GiftIcon },
   { key: 'comms', label: 'Comms Center', icon: DevicePhoneMobileIcon },
   { key: 'notifications', label: 'Notifications', icon: BellIcon },
   { key: 'promo-videos', label: 'Promo Videos', icon: VideoCameraIcon },

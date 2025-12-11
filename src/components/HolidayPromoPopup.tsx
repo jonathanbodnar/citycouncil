@@ -264,12 +264,18 @@ const HolidayPromoPopup: React.FC = () => {
       const formattedPhone = `+1${cleanDigits}`;
       console.log('📱 Formatted phone for storage:', formattedPhone);
 
+      // Get UTM source for tracking
+      const urlParams = new URLSearchParams(window.location.search);
+      const utmSource = urlParams.get('utm') || urlParams.get('utm_source') || safeGetItem('promo_source_global') || null;
+      console.log('📱 UTM source:', utmSource);
+
       // Save to beta_signups with source "holiday_popup"
       const { data, error: insertError } = await supabase
         .from('beta_signups')
         .insert({
           phone_number: formattedPhone,
           source: 'holiday_popup',
+          utm_source: utmSource,
           subscribed_at: new Date().toISOString()
         })
         .select();
