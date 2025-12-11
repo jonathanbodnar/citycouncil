@@ -111,15 +111,29 @@ const AdvancedAnalytics: React.FC = () => {
   const [currentFollowers, setCurrentFollowers] = useState<number>(0);
   const [showFollowerInput, setShowFollowerInput] = useState(false);
 
+  // Helper to format date as YYYY-MM-DD in local timezone (defined early for use in getDateRange)
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Calculate date range
   const getDateRange = useCallback(() => {
-    const end = new Date();
-    let start = new Date();
+    // Get current date/time in local timezone
+    const now = new Date();
+    console.log('🕐 Current local time:', now.toLocaleString(), 'Date:', now.getDate(), 'formatLocalDate:', formatLocalDate(now));
+    
+    const end = new Date(now);
+    let start = new Date(now);
     
     switch (dateRange) {
       case 'today':
-        // Start and end are both today
-        start = new Date(end);
+        // Start and end are both today - ensure we're using local date
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        end.setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+        console.log('📅 Today mode - start:', formatLocalDate(start), 'end:', formatLocalDate(end));
         break;
       case '7d':
         start.setDate(end.getDate() - 7);
@@ -146,14 +160,6 @@ const AdvancedAnalytics: React.FC = () => {
     
     return { start, end };
   }, [dateRange, customStartDate, customEndDate]);
-
-  // Helper to format date as YYYY-MM-DD in local timezone
-  const formatLocalDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
   // Helper to get ISO timestamp for start of day in local timezone
   const getLocalDayStart = (date: Date) => {
