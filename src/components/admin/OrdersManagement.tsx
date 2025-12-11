@@ -21,6 +21,10 @@ interface Order {
   status: string;
   payment_transaction_id: string;
   request_details: string;
+  recipient_name?: string;
+  occasion?: string;
+  special_instructions?: string;
+  details_submitted?: boolean;
   fulfillment_token?: string;
   denial_reason?: string;
   denied_by?: string;
@@ -353,6 +357,33 @@ const OrdersManagement: React.FC = () => {
                 {/* Expanded Details */}
                 {isExpanded && (
                   <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
+                    {/* Order Details Status */}
+                    {!order.details_submitted && (
+                      <div className="pt-3">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          <p className="text-xs text-yellow-700 font-medium">⏳ Pending details from customer</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recipient & Occasion */}
+                    {(order.recipient_name || order.occasion) && (
+                      <div className="pt-3 grid grid-cols-2 gap-3">
+                        {order.recipient_name && (
+                          <div>
+                            <div className="text-xs font-semibold text-gray-700 mb-1">Recipient:</div>
+                            <p className="text-xs text-gray-600">{order.recipient_name}</p>
+                          </div>
+                        )}
+                        {order.occasion && (
+                          <div>
+                            <div className="text-xs font-semibold text-gray-700 mb-1">Occasion:</div>
+                            <p className="text-xs text-gray-600 capitalize">{order.occasion.replace(/-/g, ' ')}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Message */}
                     {order.request_details && (
                       <div className="pt-3">
@@ -360,6 +391,18 @@ const OrdersManagement: React.FC = () => {
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-700 whitespace-pre-wrap">
                             {order.request_details}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Special Instructions */}
+                    {order.special_instructions && (
+                      <div className="pt-2">
+                        <div className="text-xs font-semibold text-gray-700 mb-2">Special Instructions:</div>
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <p className="text-xs text-blue-700 whitespace-pre-wrap">
+                            {order.special_instructions}
                           </p>
                         </div>
                       </div>
@@ -540,13 +583,50 @@ const OrdersManagement: React.FC = () => {
                         <tr>
                           <td colSpan={8} className="px-6 py-4 bg-gray-50">
                             <div className="space-y-4">
-                              {/* Message */}
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Request Message:</h4>
-                                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{order.request_details}</p>
+                              {/* Order Details Status */}
+                              {!order.details_submitted && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                  <p className="text-sm text-yellow-700 font-medium">⏳ Pending details from customer</p>
                                 </div>
-                              </div>
+                              )}
+
+                              {/* Recipient & Occasion */}
+                              {(order.recipient_name || order.occasion) && (
+                                <div className="grid grid-cols-2 gap-4">
+                                  {order.recipient_name && (
+                                    <div>
+                                      <h4 className="text-sm font-semibold text-gray-700 mb-1">Recipient:</h4>
+                                      <p className="text-sm text-gray-600">{order.recipient_name}</p>
+                                    </div>
+                                  )}
+                                  {order.occasion && (
+                                    <div>
+                                      <h4 className="text-sm font-semibold text-gray-700 mb-1">Occasion:</h4>
+                                      <p className="text-sm text-gray-600 capitalize">{order.occasion.replace(/-/g, ' ')}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Message */}
+                              {order.request_details && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Request Message:</h4>
+                                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{order.request_details}</p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Special Instructions */}
+                              {order.special_instructions && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Special Instructions:</h4>
+                                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                    <p className="text-sm text-blue-700 whitespace-pre-wrap">{order.special_instructions}</p>
+                                  </div>
+                                </div>
+                              )}
 
                               {/* Actions Section */}
                               <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
