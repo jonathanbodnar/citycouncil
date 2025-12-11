@@ -147,13 +147,24 @@ const AdvancedAnalytics: React.FC = () => {
     return { start, end };
   }, [dateRange, customStartDate, customEndDate]);
 
+  // Helper to format date as YYYY-MM-DD in local timezone
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Fetch all data
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const { start, end } = getDateRange();
-      const startStr = start.toISOString().split('T')[0];
-      const endStr = end.toISOString().split('T')[0];
+      // Use local date formatting to avoid UTC conversion issues
+      const startStr = formatLocalDate(start);
+      const endStr = formatLocalDate(end);
+      
+      console.log('📊 Fetching analytics data:', { startStr, endStr, dateRange });
 
       // Fetch all required data in parallel
       const [
@@ -220,7 +231,7 @@ const AdvancedAnalytics: React.FC = () => {
       // Initialize all dates in range
       const current = new Date(start);
       while (current <= end) {
-        const dateStr = current.toISOString().split('T')[0];
+        const dateStr = formatLocalDate(current);
         dailyMap.set(dateStr, {
           date: dateStr,
           followers: 0,
@@ -249,23 +260,23 @@ const AdvancedAnalytics: React.FC = () => {
         followers: followerCountsResult.data?.length || 0
       });
 
-      // Count orders per day
+      // Count orders per day (use local date)
       ordersResult.data?.forEach(order => {
-        const date = new Date(order.created_at).toISOString().split('T')[0];
+        const date = formatLocalDate(new Date(order.created_at));
         const day = dailyMap.get(date);
         if (day) day.orders++;
       });
 
-      // Count users per day
+      // Count users per day (use local date)
       usersResult.data?.forEach(user => {
-        const date = new Date(user.created_at).toISOString().split('T')[0];
+        const date = formatLocalDate(new Date(user.created_at));
         const day = dailyMap.get(date);
         if (day) day.users++;
       });
 
-      // Count SMS signups per day
+      // Count SMS signups per day (use local date)
       smsResult.data?.forEach(signup => {
-        const date = new Date(signup.subscribed_at).toISOString().split('T')[0];
+        const date = formatLocalDate(new Date(signup.subscribed_at));
         const day = dailyMap.get(date);
         if (day) day.sms++;
       });
@@ -430,7 +441,7 @@ const AdvancedAnalytics: React.FC = () => {
   // Save follower count
   const saveFollowerCount = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = formatLocalDate(new Date());
       
       const { error } = await supabase
         .from('follower_counts')
