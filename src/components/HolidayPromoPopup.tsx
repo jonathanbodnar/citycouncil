@@ -15,15 +15,18 @@ const getPopupDelay = (): number => {
   const urlParams = new URLSearchParams(window.location.search);
   const utmSource = urlParams.get('utm') || urlParams.get('utm_source') || '';
   const storedSource = localStorage.getItem('promo_source_global') || '';
-  const source = utmSource || storedSource;
+  const source = (utmSource || storedSource).trim().toLowerCase();
   
-  // Customize delay based on source
-  switch (source.toLowerCase()) {
-    case 'sms':
-      return 3000; // 3 seconds for SMS campaigns
-    default:
-      return 6000; // 6 seconds for all other sources
+  console.log('🎁 Popup source detection:', { utmSource, storedSource, finalSource: source });
+  
+  // Only match exact "sms" source
+  if (source === 'sms') {
+    console.log('🎁 SMS source detected - 3 second delay');
+    return 3000; // 3 seconds for SMS campaigns
   }
+  
+  console.log('🎁 Default source - 6 second delay');
+  return 6000; // 6 seconds for all other sources
 };
 
 const HolidayPromoPopup: React.FC = () => {
