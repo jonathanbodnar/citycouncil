@@ -155,6 +155,20 @@ const AdvancedAnalytics: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // Helper to get ISO timestamp for start of day in local timezone
+  const getLocalDayStart = (date: Date) => {
+    const localDate = new Date(date);
+    localDate.setHours(0, 0, 0, 0);
+    return localDate.toISOString();
+  };
+
+  // Helper to get ISO timestamp for end of day in local timezone
+  const getLocalDayEnd = (date: Date) => {
+    const localDate = new Date(date);
+    localDate.setHours(23, 59, 59, 999);
+    return localDate.toISOString();
+  };
+
   // Fetch all data
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -164,7 +178,11 @@ const AdvancedAnalytics: React.FC = () => {
       const startStr = formatLocalDate(start);
       const endStr = formatLocalDate(end);
       
-      console.log('📊 Fetching analytics data:', { startStr, endStr, dateRange });
+      // Get proper UTC timestamps for local day boundaries
+      const startTimestamp = getLocalDayStart(start);
+      const endTimestamp = getLocalDayEnd(end);
+      
+      console.log('📊 Fetching analytics data:', { startStr, endStr, startTimestamp, endTimestamp, dateRange });
 
       // Fetch all required data in parallel
       const [
@@ -176,28 +194,28 @@ const AdvancedAnalytics: React.FC = () => {
         mappingsResult,
         credentialsResult
       ] = await Promise.all([
-        // Orders by date
+        // Orders by date (use local timezone boundaries)
         supabase
           .from('orders')
           .select('created_at, promo_source')
-          .gte('created_at', `${startStr}T00:00:00Z`)
-          .lte('created_at', `${endStr}T23:59:59Z`),
+          .gte('created_at', startTimestamp)
+          .lte('created_at', endTimestamp),
         
-        // Users by date
+        // Users by date (use local timezone boundaries)
         supabase
           .from('users')
           .select('created_at, promo_source')
           .eq('user_type', 'user')
-          .gte('created_at', `${startStr}T00:00:00Z`)
-          .lte('created_at', `${endStr}T23:59:59Z`),
+          .gte('created_at', startTimestamp)
+          .lte('created_at', endTimestamp),
         
-        // SMS signups (holiday popup)
+        // SMS signups (holiday popup) (use local timezone boundaries)
         supabase
           .from('beta_signups')
           .select('subscribed_at, utm_source')
           .eq('source', 'holiday_popup')
-          .gte('subscribed_at', `${startStr}T00:00:00Z`)
-          .lte('subscribed_at', `${endStr}T23:59:59Z`),
+          .gte('subscribed_at', startTimestamp)
+          .lte('subscribed_at', endTimestamp),
         
         // Ad spend
         supabase
