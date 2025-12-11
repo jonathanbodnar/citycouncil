@@ -8,7 +8,7 @@ interface AuthContextType {
   supabaseUser: SupabaseUser | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, userType: 'user' | 'talent', phoneNumber?: string) => Promise<any>;
+  signUp: (email: string, password: string, fullName: string, userType: 'user' | 'talent', phoneNumber?: string, promoSource?: string | null) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -129,9 +129,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, userType: 'user' | 'talent', phoneNumber?: string) => {
+  const signUp = async (email: string, password: string, fullName: string, userType: 'user' | 'talent', phoneNumber?: string, promoSource?: string | null) => {
     try {
-      console.log('🔍 signUp called with:', { email, fullName, userType, phoneNumber });
+      console.log('🔍 signUp called with:', { email, fullName, userType, phoneNumber, promoSource });
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -177,6 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               full_name: fullName,
               user_type: userType,
               phone: phoneNumber || null, // Save phone number to database
+              promo_source: promoSource || null, // Track UTM source for analytics
             },
           ], {
             onConflict: 'id',

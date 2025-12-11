@@ -230,6 +230,21 @@ const AdvancedAnalytics: React.FC = () => {
         current.setDate(current.getDate() + 1);
       }
 
+      // Log any errors from queries
+      if (ordersResult.error) console.error('Orders query error:', ordersResult.error);
+      if (usersResult.error) console.error('Users query error:', usersResult.error);
+      if (smsResult.error) console.error('SMS query error:', smsResult.error);
+      if (adSpendResult.error) console.error('Ad spend query error:', adSpendResult.error);
+      if (followerCountsResult.error) console.error('Follower counts query error:', followerCountsResult.error);
+      
+      console.log('📊 Analytics data fetched:', {
+        orders: ordersResult.data?.length || 0,
+        users: usersResult.data?.length || 0,
+        sms: smsResult.data?.length || 0,
+        adSpend: adSpendResult.data?.length || 0,
+        followers: followerCountsResult.data?.length || 0
+      });
+
       // Count orders per day
       ordersResult.data?.forEach(order => {
         const date = new Date(order.created_at).toISOString().split('T')[0];

@@ -11,6 +11,22 @@ const SignupPage: React.FC = () => {
   const navigate = useNavigate();
   const returnTo = searchParams.get('returnTo') || '/';
   
+  // Capture UTM source from URL or localStorage
+  const getPromoSource = (): string | null => {
+    // Check URL params first
+    const urlUtm = searchParams.get('utm') || searchParams.get('utm_source');
+    if (urlUtm) return urlUtm;
+    
+    // Check localStorage for stored promo source
+    try {
+      return localStorage.getItem('promo_source') || null;
+    } catch {
+      return null;
+    }
+  };
+  
+  const promoSource = getPromoSource();
+  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -52,7 +68,7 @@ const SignupPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await signUp(formData.email, formData.password, formData.fullName, formData.userType, formData.phoneNumber);
+      await signUp(formData.email, formData.password, formData.fullName, formData.userType, formData.phoneNumber, promoSource);
       toast.success('Account created successfully! Redirecting...');
       
       // Fire tracking events directly on successful signup (like popup does for Lead)
