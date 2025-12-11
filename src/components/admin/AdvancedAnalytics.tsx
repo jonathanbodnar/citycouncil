@@ -973,8 +973,8 @@ const AdvancedAnalytics: React.FC = () => {
 
       {/* API Credentials Modal */}
       {showCredentialsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-700" style={{ backgroundColor: '#111827' }}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-white">API Settings</h3>
               <button
@@ -1116,8 +1116,8 @@ const CampaignMappingModal: React.FC<CampaignMappingModalProps> = ({ mapping, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="rounded-xl p-6 max-w-md w-full border border-gray-700" style={{ backgroundColor: '#111827' }}>
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-white">
             {mapping ? 'Edit' : 'Add'} Campaign Mapping
