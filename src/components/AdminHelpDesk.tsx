@@ -510,7 +510,9 @@ const AdminHelpDesk: React.FC = () => {
 
             {/* Messages */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 bg-gray-50">
-              {selectedConversation.messages.map((message) => (
+              {[...selectedConversation.messages]
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((message) => (
                 <div key={message.id} className="space-y-3">
                   {/* User Message - Hide if it's an admin-initiated conversation placeholder */}
                   {message.message !== '[Admin initiated conversation]' && (
