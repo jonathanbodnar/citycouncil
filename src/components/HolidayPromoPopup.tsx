@@ -10,6 +10,32 @@ const POPUP_EXPIRY_KEY = 'holiday_promo_popup_expiry';
 const COUNTDOWN_HOURS = 3;
 const CLOSE_COOLDOWN_MINUTES = 5; // Show again 5 minutes after closing
 
+// Popup delay based on traffic source (in milliseconds)
+const getPopupDelay = (): number => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const utmSource = urlParams.get('utm') || urlParams.get('utm_source') || '';
+  const storedSource = localStorage.getItem('promo_source_global') || '';
+  const source = utmSource || storedSource;
+  
+  // Customize delay based on source
+  switch (source.toLowerCase()) {
+    case 'rumble':
+      return 5000; // 5 seconds for Rumble ads
+    case 'facebook':
+    case 'fb':
+      return 8000; // 8 seconds for Facebook
+    case 'twitter':
+    case 'x':
+      return 8000; // 8 seconds for Twitter/X
+    case 'email':
+      return 3000; // 3 seconds for email campaigns
+    case 'sms':
+      return 3000; // 3 seconds for SMS campaigns
+    default:
+      return 15000; // 15 seconds for organic/unknown
+  }
+};
+
 const HolidayPromoPopup: React.FC = () => {
   const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
@@ -54,8 +80,11 @@ const HolidayPromoPopup: React.FC = () => {
     return true;
   }, [user]);
 
-  // Initial popup show (after 2 seconds)
+  // Initial popup show - delay based on traffic source
   useEffect(() => {
+    const delay = getPopupDelay();
+    console.log('🎁 Popup delay set to:', delay, 'ms');
+    
     const timer = setTimeout(() => {
       if (canShowPopup()) {
         setIsVisible(true);
@@ -68,7 +97,7 @@ const HolidayPromoPopup: React.FC = () => {
           localStorage.setItem(POPUP_EXPIRY_KEY, expiry.toString());
         }
       }
-    }, 15000);
+    }, delay);
 
     return () => clearTimeout(timer);
   }, [canShowPopup]);
