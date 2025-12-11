@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
 import Logo from '../components/Logo';
 import PhoneInput from '../components/PhoneInput';
 import toast from 'react-hot-toast';
@@ -79,24 +80,27 @@ const SignupPage: React.FC = () => {
         console.warn('⚠️ SignupPage: Rumble Ads (ratag) not found');
       }
       
-      // Send user registration to Zapier webhook (users only, not talent)
+      // Send user registration to Zapier webhook via Edge Function (users only, not talent)
       if (formData.userType === 'user') {
-        try {
-          console.log('📤 SignupPage: Sending user registration to Zapier...');
-          await fetch('https://hooks.zapier.com/hooks/catch/25578725/ufgyrec/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: formData.fullName,
-              email: formData.email,
-              registered_at: new Date().toISOString()
-            })
-          });
-          console.log('✅ SignupPage: User registration sent to Zapier');
-        } catch (zapierError) {
-          console.error('⚠️ SignupPage: Failed to send to Zapier:', zapierError);
-          // Don't block registration if Zapier fails
-        }
+        const webhookPayload = {
+          name: formData.fullName,
+          email: formData.email,
+          registered_at: new Date().toISOString()
+        };
+        
+        console.log('📤 SignupPage: Sending user registration to Zapier via Edge Function...', webhookPayload);
+        
+        supabase.functions.invoke('send-user-webhook', {
+          body: webhookPayload
+        }).then((result) => {
+          if (result.error) {
+            console.error('❌ SignupPage: Edge Function error:', result.error);
+          } else {
+            console.log('✅ SignupPage: User registration sent to Zapier via Edge Function:', result.data);
+          }
+        }).catch((err) => {
+          console.error('❌ SignupPage: Error calling Edge Function:', err);
+        });
       }
       
       // Navigate to returnTo URL after successful signup
