@@ -22,7 +22,7 @@ const getPopupDelay = (): number => {
     case 'sms':
       return 3000; // 3 seconds for SMS campaigns
     default:
-      return 8000; // 8 seconds for all other sources
+      return 6000; // 6 seconds for all other sources
   }
 };
 
