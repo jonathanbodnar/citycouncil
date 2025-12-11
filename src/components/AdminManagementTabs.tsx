@@ -29,6 +29,7 @@ import AdminPayoutsManagement from './AdminPayoutsManagement';
 import W9Management from './admin/W9Management';
 import CreditsManagement from './admin/CreditsManagement';
 import HolidayPromoSignups from './admin/HolidayPromoSignups';
+import AdvancedAnalytics from './admin/AdvancedAnalytics';
 import toast from 'react-hot-toast';
 
 interface StatsCardProps {
@@ -62,7 +63,7 @@ interface AdminManagementTabsProps {
 }
 
 const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
-  const activeTab = activeTabProp as 'analytics' | 'orders' | 'users' | 'talent' | 'payouts' | 'w9s' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons' | 'credits' | 'holiday-promo';
+  const activeTab = activeTabProp as 'analytics' | 'advanced-analytics' | 'orders' | 'users' | 'talent' | 'payouts' | 'w9s' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons' | 'credits' | 'holiday-promo';
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -530,6 +531,11 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
       {/* Holiday Promo Tab */}
       {activeTab === 'holiday-promo' && (
         <HolidayPromoSignups />
+      )}
+
+      {/* Advanced Analytics Tab */}
+      {activeTab === 'advanced-analytics' && (
+        <AdvancedAnalytics />
       )}
 
       {/* Payouts Tab */}

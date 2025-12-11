@@ -1,0 +1,1217 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  ChartBarIcon,
+  CalendarIcon,
+  CurrencyDollarIcon,
+  UserGroupIcon,
+  ChatBubbleLeftIcon,
+  UserPlusIcon,
+  ShoppingCartIcon,
+  Cog6ToothIcon,
+  ArrowPathIcon,
+  LinkIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  XMarkIcon,
+  PlusIcon
+} from '@heroicons/react/24/outline';
+import { supabase } from '../../services/supabase';
+import toast from 'react-hot-toast';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+
+// Types
+interface DailyData {
+  date: string;
+  followers: number;
+  sms: number;
+  users: number;
+  orders: number;
+  totalSpend: number;
+  fbSpend: number;
+  rumbleSpend: number;
+}
+
+interface CampaignMapping {
+  id: string;
+  campaign_id: string;
+  campaign_name: string;
+  platform: 'facebook' | 'rumble';
+  goals: string[];
+}
+
+interface AdCredentials {
+  platform: 'facebook' | 'rumble';
+  is_connected: boolean;
+  last_sync_at: string | null;
+  account_id?: string;
+}
+
+interface SourceBreakdown {
+  source: string;
+  count: number;
+  percentage: number;
+}
+
+type ChartMode = 'count' | 'cost' | 'drill';
+type DateRange = '7d' | '14d' | '30d' | '90d' | 'custom';
+
+const GOAL_COLORS = {
+  followers: '#8B5CF6', // Purple
+  sms: '#10B981',      // Green
+  users: '#3B82F6',    // Blue
+  orders: '#F59E0B'    // Amber
+};
+
+const GOAL_LABELS = {
+  followers: 'Followers',
+  sms: 'SMS Signups',
+  users: 'Users',
+  orders: 'Orders'
+};
+
+const AdvancedAnalytics: React.FC = () => {
+  // State
+  const [chartMode, setChartMode] = useState<ChartMode>('count');
+  const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [chartData, setChartData] = useState<DailyData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  
+  // Campaign mappings
+  const [campaignMappings, setCampaignMappings] = useState<CampaignMapping[]>([]);
+  const [showMappingModal, setShowMappingModal] = useState(false);
+  const [editingMapping, setEditingMapping] = useState<CampaignMapping | null>(null);
+  
+  // Ad platform credentials
+  const [credentials, setCredentials] = useState<AdCredentials[]>([]);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credentialForm, setCredentialForm] = useState({
+    platform: 'facebook' as 'facebook' | 'rumble',
+    access_token: '',
+    account_id: ''
+  });
+  
+  // Source breakdowns
+  const [smsSourceBreakdown, setSmsSourceBreakdown] = useState<SourceBreakdown[]>([]);
+  const [userSourceBreakdown, setUserSourceBreakdown] = useState<SourceBreakdown[]>([]);
+  const [orderSourceBreakdown, setOrderSourceBreakdown] = useState<SourceBreakdown[]>([]);
+  
+  // Current follower count input
+  const [currentFollowers, setCurrentFollowers] = useState<number>(0);
+  const [showFollowerInput, setShowFollowerInput] = useState(false);
+
+  // Calculate date range
+  const getDateRange = useCallback(() => {
+    const end = new Date();
+    let start = new Date();
+    
+    switch (dateRange) {
+      case '7d':
+        start.setDate(end.getDate() - 7);
+        break;
+      case '14d':
+        start.setDate(end.getDate() - 14);
+        break;
+      case '30d':
+        start.setDate(end.getDate() - 30);
+        break;
+      case '90d':
+        start.setDate(end.getDate() - 90);
+        break;
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          return {
+            start: new Date(customStartDate),
+            end: new Date(customEndDate)
+          };
+        }
+        start.setDate(end.getDate() - 30);
+        break;
+    }
+    
+    return { start, end };
+  }, [dateRange, customStartDate, customEndDate]);
+
+  // Fetch all data
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { start, end } = getDateRange();
+      const startStr = start.toISOString().split('T')[0];
+      const endStr = end.toISOString().split('T')[0];
+
+      // Fetch all required data in parallel
+      const [
+        ordersResult,
+        usersResult,
+        smsResult,
+        adSpendResult,
+        followerCountsResult,
+        mappingsResult,
+        credentialsResult
+      ] = await Promise.all([
+        // Orders by date
+        supabase
+          .from('orders')
+          .select('created_at, promo_source')
+          .gte('created_at', `${startStr}T00:00:00Z`)
+          .lte('created_at', `${endStr}T23:59:59Z`),
+        
+        // Users by date
+        supabase
+          .from('users')
+          .select('created_at, promo_source')
+          .eq('user_type', 'user')
+          .gte('created_at', `${startStr}T00:00:00Z`)
+          .lte('created_at', `${endStr}T23:59:59Z`),
+        
+        // SMS signups (holiday popup)
+        supabase
+          .from('beta_signups')
+          .select('subscribed_at, utm_source')
+          .eq('source', 'holiday_popup')
+          .gte('subscribed_at', `${startStr}T00:00:00Z`)
+          .lte('subscribed_at', `${endStr}T23:59:59Z`),
+        
+        // Ad spend
+        supabase
+          .from('ad_spend_daily')
+          .select('*')
+          .gte('date', startStr)
+          .lte('date', endStr),
+        
+        // Follower counts
+        supabase
+          .from('follower_counts')
+          .select('*')
+          .gte('date', startStr)
+          .lte('date', endStr)
+          .order('date', { ascending: true }),
+        
+        // Campaign mappings
+        supabase
+          .from('campaign_goal_mappings')
+          .select('*'),
+        
+        // Credentials
+        supabase
+          .from('ad_platform_credentials')
+          .select('platform, is_connected, last_sync_at, account_id')
+      ]);
+
+      // Process data into daily buckets
+      const dailyMap = new Map<string, DailyData>();
+      
+      // Initialize all dates in range
+      const current = new Date(start);
+      while (current <= end) {
+        const dateStr = current.toISOString().split('T')[0];
+        dailyMap.set(dateStr, {
+          date: dateStr,
+          followers: 0,
+          sms: 0,
+          users: 0,
+          orders: 0,
+          totalSpend: 0,
+          fbSpend: 0,
+          rumbleSpend: 0
+        });
+        current.setDate(current.getDate() + 1);
+      }
+
+      // Count orders per day
+      ordersResult.data?.forEach(order => {
+        const date = new Date(order.created_at).toISOString().split('T')[0];
+        const day = dailyMap.get(date);
+        if (day) day.orders++;
+      });
+
+      // Count users per day
+      usersResult.data?.forEach(user => {
+        const date = new Date(user.created_at).toISOString().split('T')[0];
+        const day = dailyMap.get(date);
+        if (day) day.users++;
+      });
+
+      // Count SMS signups per day
+      smsResult.data?.forEach(signup => {
+        const date = new Date(signup.subscribed_at).toISOString().split('T')[0];
+        const day = dailyMap.get(date);
+        if (day) day.sms++;
+      });
+
+      // Add ad spend per day
+      adSpendResult.data?.forEach(spend => {
+        const day = dailyMap.get(spend.date);
+        if (day) {
+          day.totalSpend += Number(spend.spend) || 0;
+          if (spend.platform === 'facebook') {
+            day.fbSpend += Number(spend.spend) || 0;
+          } else if (spend.platform === 'rumble') {
+            day.rumbleSpend += Number(spend.spend) || 0;
+          }
+        }
+      });
+
+      // Calculate follower changes (today's count - yesterday's count)
+      const followerData = followerCountsResult.data || [];
+      followerData.forEach((fc, index) => {
+        const day = dailyMap.get(fc.date);
+        if (day && index > 0) {
+          const prevCount = followerData[index - 1].count;
+          day.followers = fc.count - prevCount;
+        } else if (day && index === 0) {
+          day.followers = 0; // First day has no previous reference
+        }
+      });
+
+      // Convert to array and sort by date
+      const chartDataArray = Array.from(dailyMap.values()).sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
+      setChartData(chartDataArray);
+      setCampaignMappings(mappingsResult.data || []);
+      setCredentials(credentialsResult.data || []);
+
+      // Calculate source breakdowns
+      calculateSourceBreakdowns(
+        smsResult.data || [],
+        usersResult.data || [],
+        ordersResult.data || []
+      );
+
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      toast.error('Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
+  }, [getDateRange]);
+
+  // Calculate source breakdowns
+  const calculateSourceBreakdowns = (
+    smsData: any[],
+    userData: any[],
+    orderData: any[]
+  ) => {
+    // SMS sources
+    const smsSources = new Map<string, number>();
+    smsData.forEach(s => {
+      const source = s.utm_source || 'Direct';
+      smsSources.set(source, (smsSources.get(source) || 0) + 1);
+    });
+    const smsTotal = smsData.length;
+    setSmsSourceBreakdown(
+      Array.from(smsSources.entries())
+        .map(([source, count]) => ({
+          source,
+          count,
+          percentage: smsTotal > 0 ? (count / smsTotal) * 100 : 0
+        }))
+        .sort((a, b) => b.count - a.count)
+    );
+
+    // User sources
+    const userSources = new Map<string, number>();
+    userData.forEach(u => {
+      const source = u.promo_source || 'Direct';
+      userSources.set(source, (userSources.get(source) || 0) + 1);
+    });
+    const userTotal = userData.length;
+    setUserSourceBreakdown(
+      Array.from(userSources.entries())
+        .map(([source, count]) => ({
+          source,
+          count,
+          percentage: userTotal > 0 ? (count / userTotal) * 100 : 0
+        }))
+        .sort((a, b) => b.count - a.count)
+    );
+
+    // Order sources
+    const orderSources = new Map<string, number>();
+    orderData.forEach(o => {
+      const source = o.promo_source || 'Direct';
+      orderSources.set(source, (orderSources.get(source) || 0) + 1);
+    });
+    const orderTotal = orderData.length;
+    setOrderSourceBreakdown(
+      Array.from(orderSources.entries())
+        .map(([source, count]) => ({
+          source,
+          count,
+          percentage: orderTotal > 0 ? (count / orderTotal) * 100 : 0
+        }))
+        .sort((a, b) => b.count - a.count)
+    );
+  };
+
+  // Transform data based on chart mode
+  const getTransformedData = useCallback(() => {
+    if (chartMode === 'count') {
+      return chartData;
+    }
+    
+    if (chartMode === 'cost') {
+      // Cost per goal = total spend / goal count
+      return chartData.map(day => ({
+        ...day,
+        date: day.date,
+        followers: day.followers > 0 ? day.totalSpend / day.followers : 0,
+        sms: day.sms > 0 ? day.totalSpend / day.sms : 0,
+        users: day.users > 0 ? day.totalSpend / day.users : 0,
+        orders: day.orders > 0 ? day.totalSpend / day.orders : 0
+      }));
+    }
+    
+    if (chartMode === 'drill') {
+      // Calculate spend per goal based on campaign mappings
+      return chartData.map(day => {
+        const goalSpend: Record<string, number> = {
+          followers: 0,
+          sms: 0,
+          users: 0,
+          orders: 0
+        };
+        
+        // This would need actual campaign-level spend data
+        // For now, distribute based on mapped campaigns
+        // TODO: Implement proper drill-down with campaign-level data
+        
+        return {
+          ...day,
+          date: day.date,
+          followers: day.followers > 0 && goalSpend.followers > 0 
+            ? goalSpend.followers / day.followers : 0,
+          sms: day.sms > 0 && goalSpend.sms > 0 
+            ? goalSpend.sms / day.sms : 0,
+          users: day.users > 0 && goalSpend.users > 0 
+            ? goalSpend.users / day.users : 0,
+          orders: day.orders > 0 && goalSpend.orders > 0 
+            ? goalSpend.orders / day.orders : 0
+        };
+      });
+    }
+    
+    return chartData;
+  }, [chartData, chartMode, campaignMappings]);
+
+  // Save follower count
+  const saveFollowerCount = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { error } = await supabase
+        .from('follower_counts')
+        .upsert({
+          date: today,
+          platform: 'total',
+          count: currentFollowers
+        }, { onConflict: 'date' });
+      
+      if (error) throw error;
+      
+      toast.success('Follower count saved');
+      setShowFollowerInput(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error saving follower count:', error);
+      toast.error('Failed to save follower count');
+    }
+  };
+
+  // Save ad platform credentials
+  const saveCredentials = async () => {
+    try {
+      const { error } = await supabase
+        .from('ad_platform_credentials')
+        .upsert({
+          platform: credentialForm.platform,
+          access_token: credentialForm.access_token,
+          account_id: credentialForm.account_id,
+          is_connected: true,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'platform' });
+      
+      if (error) throw error;
+      
+      toast.success(`${credentialForm.platform} credentials saved`);
+      setShowCredentialsModal(false);
+      setCredentialForm({ platform: 'facebook', access_token: '', account_id: '' });
+      fetchData();
+    } catch (error) {
+      console.error('Error saving credentials:', error);
+      toast.error('Failed to save credentials');
+    }
+  };
+
+  // Save campaign mapping
+  const saveCampaignMapping = async (mapping: Partial<CampaignMapping>) => {
+    try {
+      if (editingMapping?.id) {
+        const { error } = await supabase
+          .from('campaign_goal_mappings')
+          .update({
+            campaign_name: mapping.campaign_name,
+            goals: mapping.goals,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingMapping.id);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('campaign_goal_mappings')
+          .insert({
+            campaign_id: mapping.campaign_id,
+            campaign_name: mapping.campaign_name,
+            platform: mapping.platform,
+            goals: mapping.goals
+          });
+        
+        if (error) throw error;
+      }
+      
+      toast.success('Campaign mapping saved');
+      setShowMappingModal(false);
+      setEditingMapping(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error saving mapping:', error);
+      toast.error('Failed to save campaign mapping');
+    }
+  };
+
+  // Sync ad spend data
+  const syncAdSpend = async () => {
+    setSyncing(true);
+    try {
+      // Call edge function to sync ad spend
+      const { data, error } = await supabase.functions.invoke('sync-ad-spend');
+      
+      if (error) throw error;
+      
+      toast.success('Ad spend data synced');
+      fetchData();
+    } catch (error) {
+      console.error('Error syncing ad spend:', error);
+      toast.error('Failed to sync ad spend. Make sure API credentials are configured.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return `$${value.toFixed(2)}`;
+  };
+
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Get Y-axis label based on mode
+  const getYAxisLabel = () => {
+    if (chartMode === 'count') return 'Count';
+    return 'Cost ($)';
+  };
+
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload) return null;
+    
+    return (
+      <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl">
+        <p className="text-white font-medium mb-2">{formatDate(label)}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {GOAL_LABELS[entry.dataKey as keyof typeof GOAL_LABELS]}: {
+              chartMode === 'count' 
+                ? entry.value 
+                : formatCurrency(entry.value)
+            }
+          </p>
+        ))}
+        {chartMode !== 'count' && payload[0]?.payload?.totalSpend > 0 && (
+          <p className="text-gray-400 text-xs mt-2 border-t border-gray-700 pt-2">
+            Total Spend: {formatCurrency(payload[0].payload.totalSpend)}
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Advanced Analytics</h2>
+          <p className="text-gray-400">Track goals, costs, and campaign performance</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCredentialsModal(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            <Cog6ToothIcon className="h-4 w-4" />
+            API Settings
+          </button>
+          <button
+            onClick={syncAdSpend}
+            disabled={syncing}
+            className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          >
+            <ArrowPathIcon className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            Sync Data
+          </button>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="glass rounded-xl p-4">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          {/* Chart Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 text-sm">Mode:</span>
+            <div className="flex bg-gray-800 rounded-lg p-1">
+              {(['count', 'cost', 'drill'] as ChartMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setChartMode(mode)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    chartMode === mode
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date Range */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <CalendarIcon className="h-5 w-5 text-gray-400" />
+            <div className="flex bg-gray-800 rounded-lg p-1">
+              {(['7d', '14d', '30d', '90d'] as DateRange[]).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setDateRange(range)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    dateRange === range
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setDateRange('custom')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                dateRange === 'custom'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-400 hover:text-white bg-gray-800'
+              }`}
+            >
+              Custom
+            </button>
+            {dateRange === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="bg-gray-800 text-white rounded-lg px-3 py-1.5 text-sm"
+                />
+                <span className="text-gray-400">to</span>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="bg-gray-800 text-white rounded-lg px-3 py-1.5 text-sm"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Follower Count Input */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex items-center gap-4">
+            <span className="text-gray-400 text-sm">Today's Follower Count:</span>
+            {showFollowerInput ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={currentFollowers}
+                  onChange={(e) => setCurrentFollowers(parseInt(e.target.value) || 0)}
+                  className="bg-gray-800 text-white rounded-lg px-3 py-1.5 text-sm w-32"
+                  placeholder="Enter count"
+                />
+                <button
+                  onClick={saveFollowerCount}
+                  className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setShowFollowerInput(false)}
+                  className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowFollowerInput(true)}
+                className="px-3 py-1.5 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600"
+              >
+                Update Count
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="glass rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">
+            {chartMode === 'count' ? 'Goal Counts Over Time' : 
+             chartMode === 'cost' ? 'Cost Per Goal Over Time' :
+             'Campaign Drill-Down Analysis'}
+          </h3>
+          <div className="flex items-center gap-4">
+            {Object.entries(GOAL_COLORS).map(([goal, color]) => (
+              <div key={goal} className="flex items-center gap-1">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: color }}
+                />
+                <span className="text-gray-400 text-sm">
+                  {GOAL_LABELS[goal as keyof typeof GOAL_LABELS]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={getTransformedData()}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis 
+                dataKey="date" 
+                tickFormatter={formatDate}
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              />
+              <YAxis 
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                tickFormatter={chartMode === 'count' ? undefined : formatCurrency}
+                label={{ 
+                  value: getYAxisLabel(), 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  fill: '#9CA3AF'
+                }}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="followers" 
+                name="Followers"
+                stroke={GOAL_COLORS.followers} 
+                strokeWidth={2}
+                dot={{ fill: GOAL_COLORS.followers, strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="sms" 
+                name="SMS Signups"
+                stroke={GOAL_COLORS.sms} 
+                strokeWidth={2}
+                dot={{ fill: GOAL_COLORS.sms, strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="users" 
+                name="Users"
+                stroke={GOAL_COLORS.users} 
+                strokeWidth={2}
+                dot={{ fill: GOAL_COLORS.users, strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="orders" 
+                name="Orders"
+                stroke={GOAL_COLORS.orders} 
+                strokeWidth={2}
+                dot={{ fill: GOAL_COLORS.orders, strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Campaign Mappings (Drill Mode) */}
+      {chartMode === 'drill' && (
+        <div className="glass rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Campaign → Goal Mappings</h3>
+            <button
+              onClick={() => {
+                setEditingMapping(null);
+                setShowMappingModal(true);
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Add Mapping
+            </button>
+          </div>
+          
+          {campaignMappings.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">
+              No campaign mappings configured. Add mappings to see drill-down analysis.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Campaign</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Platform</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Goals</th>
+                    <th className="text-right py-3 px-4 text-gray-400 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {campaignMappings.map((mapping) => (
+                    <tr key={mapping.id} className="border-b border-gray-700/50 hover:bg-gray-800/30">
+                      <td className="py-3 px-4 text-white">{mapping.campaign_name || mapping.campaign_id}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          mapping.platform === 'facebook' 
+                            ? 'bg-blue-500/20 text-blue-400' 
+                            : 'bg-green-500/20 text-green-400'
+                        }`}>
+                          {mapping.platform}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1">
+                          {mapping.goals.map((goal) => (
+                            <span 
+                              key={goal}
+                              className="px-2 py-0.5 rounded text-xs font-medium"
+                              style={{ 
+                                backgroundColor: `${GOAL_COLORS[goal as keyof typeof GOAL_COLORS]}20`,
+                                color: GOAL_COLORS[goal as keyof typeof GOAL_COLORS]
+                              }}
+                            >
+                              {GOAL_LABELS[goal as keyof typeof GOAL_LABELS]}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => {
+                            setEditingMapping(mapping);
+                            setShowMappingModal(true);
+                          }}
+                          className="text-purple-400 hover:text-purple-300 text-sm"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          
+          {/* Overlap Warning */}
+          {campaignMappings.some(m => m.goals.length > 1) && (
+            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-2">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-yellow-400 font-medium text-sm">Overlap Detected</p>
+                <p className="text-yellow-400/70 text-xs">
+                  Some campaigns are mapped to multiple goals. Their spend will be distributed across those goals.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Source Breakdowns */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* SMS Sources */}
+        <div className="glass rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ChatBubbleLeftIcon className="h-5 w-5 text-green-500" />
+            <h3 className="text-lg font-semibold text-white">SMS Sources</h3>
+          </div>
+          {smsSourceBreakdown.length === 0 ? (
+            <p className="text-gray-400 text-sm">No SMS signups in this period</p>
+          ) : (
+            <div className="space-y-3">
+              {smsSourceBreakdown.map((source) => (
+                <div key={source.source}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-300">{source.source}</span>
+                    <span className="text-white font-medium">{source.count} ({source.percentage.toFixed(1)}%)</span>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-green-500 rounded-full"
+                      style={{ width: `${source.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* User Sources */}
+        <div className="glass rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <UserPlusIcon className="h-5 w-5 text-blue-500" />
+            <h3 className="text-lg font-semibold text-white">User Sources</h3>
+          </div>
+          {userSourceBreakdown.length === 0 ? (
+            <p className="text-gray-400 text-sm">No users in this period</p>
+          ) : (
+            <div className="space-y-3">
+              {userSourceBreakdown.map((source) => (
+                <div key={source.source}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-300">{source.source}</span>
+                    <span className="text-white font-medium">{source.count} ({source.percentage.toFixed(1)}%)</span>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{ width: `${source.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Order Sources */}
+        <div className="glass rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ShoppingCartIcon className="h-5 w-5 text-amber-500" />
+            <h3 className="text-lg font-semibold text-white">Order Sources</h3>
+          </div>
+          {orderSourceBreakdown.length === 0 ? (
+            <p className="text-gray-400 text-sm">No orders in this period</p>
+          ) : (
+            <div className="space-y-3">
+              {orderSourceBreakdown.map((source) => (
+                <div key={source.source}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-300">{source.source}</span>
+                    <span className="text-white font-medium">{source.count} ({source.percentage.toFixed(1)}%)</span>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-amber-500 rounded-full"
+                      style={{ width: `${source.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* API Credentials Modal */}
+      {showCredentialsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">API Settings</h3>
+              <button
+                onClick={() => setShowCredentialsModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Connection Status */}
+            <div className="mb-6 space-y-3">
+              <h4 className="text-sm font-medium text-gray-400 mb-2">Connection Status</h4>
+              {['facebook', 'rumble'].map((platform) => {
+                const cred = credentials.find(c => c.platform === platform);
+                return (
+                  <div key={platform} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      {cred?.is_connected ? (
+                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <XMarkIcon className="h-5 w-5 text-red-500" />
+                      )}
+                      <span className="text-white capitalize">{platform}</span>
+                    </div>
+                    <span className="text-gray-400 text-sm">
+                      {cred?.is_connected 
+                        ? `Last sync: ${cred.last_sync_at ? new Date(cred.last_sync_at).toLocaleString() : 'Never'}`
+                        : 'Not connected'
+                      }
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add/Update Credentials */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-gray-400">Add/Update Credentials</h4>
+              
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Platform</label>
+                <select
+                  value={credentialForm.platform}
+                  onChange={(e) => setCredentialForm(prev => ({ 
+                    ...prev, 
+                    platform: e.target.value as 'facebook' | 'rumble' 
+                  }))}
+                  className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+                >
+                  <option value="facebook">Facebook / Meta</option>
+                  <option value="rumble">Rumble</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  {credentialForm.platform === 'facebook' ? 'Access Token' : 'API Key'}
+                </label>
+                <input
+                  type="password"
+                  value={credentialForm.access_token}
+                  onChange={(e) => setCredentialForm(prev => ({ ...prev, access_token: e.target.value }))}
+                  className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+                  placeholder={credentialForm.platform === 'facebook' ? 'Enter Facebook access token' : 'Enter Rumble API key'}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  {credentialForm.platform === 'facebook' ? 'Ad Account ID' : 'Account ID'}
+                </label>
+                <input
+                  type="text"
+                  value={credentialForm.account_id}
+                  onChange={(e) => setCredentialForm(prev => ({ ...prev, account_id: e.target.value }))}
+                  className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+                  placeholder={credentialForm.platform === 'facebook' ? 'act_123456789' : 'Your Rumble account ID'}
+                />
+              </div>
+
+              {credentialForm.platform === 'facebook' && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <p className="text-blue-400 text-sm">
+                    <strong>Note:</strong> You need a Facebook Marketing API access token with <code>ads_read</code> permission.
+                    Get one from the <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="underline">Graph API Explorer</a>.
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={saveCredentials}
+                className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Save Credentials
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Campaign Mapping Modal */}
+      {showMappingModal && (
+        <CampaignMappingModal
+          mapping={editingMapping}
+          onSave={saveCampaignMapping}
+          onClose={() => {
+            setShowMappingModal(false);
+            setEditingMapping(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Campaign Mapping Modal Component
+interface CampaignMappingModalProps {
+  mapping: CampaignMapping | null;
+  onSave: (mapping: Partial<CampaignMapping>) => void;
+  onClose: () => void;
+}
+
+const CampaignMappingModal: React.FC<CampaignMappingModalProps> = ({ mapping, onSave, onClose }) => {
+  const [form, setForm] = useState({
+    campaign_id: mapping?.campaign_id || '',
+    campaign_name: mapping?.campaign_name || '',
+    platform: mapping?.platform || 'facebook' as 'facebook' | 'rumble',
+    goals: mapping?.goals || [] as string[]
+  });
+
+  const toggleGoal = (goal: string) => {
+    setForm(prev => ({
+      ...prev,
+      goals: prev.goals.includes(goal)
+        ? prev.goals.filter(g => g !== goal)
+        : [...prev.goals, goal]
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-white">
+            {mapping ? 'Edit' : 'Add'} Campaign Mapping
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Campaign ID</label>
+            <input
+              type="text"
+              value={form.campaign_id}
+              onChange={(e) => setForm(prev => ({ ...prev, campaign_id: e.target.value }))}
+              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+              placeholder="e.g., 123456789"
+              disabled={!!mapping}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Campaign Name</label>
+            <input
+              type="text"
+              value={form.campaign_name}
+              onChange={(e) => setForm(prev => ({ ...prev, campaign_name: e.target.value }))}
+              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+              placeholder="e.g., Holiday Promo 2024"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Platform</label>
+            <select
+              value={form.platform}
+              onChange={(e) => setForm(prev => ({ ...prev, platform: e.target.value as 'facebook' | 'rumble' }))}
+              className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+              disabled={!!mapping}
+            >
+              <option value="facebook">Facebook / Meta</option>
+              <option value="rumble">Rumble</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Associated Goals</label>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(GOAL_LABELS).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => toggleGoal(key)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                    form.goals.includes(key)
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: GOAL_COLORS[key as keyof typeof GOAL_COLORS] }}
+                  />
+                  {label}
+                </button>
+              ))}
+            </div>
+            {form.goals.length > 1 && (
+              <p className="text-yellow-400 text-xs mt-2">
+                ⚠️ Multiple goals selected - spend will be distributed across these goals
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onSave(form)}
+              disabled={!form.campaign_id || form.goals.length === 0}
+              className="flex-1 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdvancedAnalytics;
+
