@@ -269,6 +269,8 @@ async function syncInstagramFollowers(
 }
 
 // Sync Facebook Ads data using Marketing API
+// IMPORTANT: Facebook returns data in the ad account's timezone (CST for US accounts)
+// This means Facebook's "Dec 11" is already Dec 11 CST - no conversion needed!
 async function syncFacebookAds(
   accessToken: string,
   accountId: string,
@@ -304,8 +306,8 @@ async function syncFacebookAds(
   const data = await response.json();
 
   for (const insight of data.data || []) {
-    // Facebook returns date_start in account timezone
-    // We'll store it as-is since the account is likely in CST
+    // Facebook returns date_start in account timezone (CST for US accounts)
+    // No conversion needed - dates are already in CST!
     records.push({
       date: insight.date_start,
       platform: 'facebook',
@@ -316,6 +318,8 @@ async function syncFacebookAds(
       clicks: parseInt(insight.clicks) || 0
     });
   }
+  
+  console.log(`Synced ${records.length} Facebook ad records (already in account timezone/CST)`);
 
   // Handle pagination if needed
   let nextUrl = data.paging?.next;
@@ -341,8 +345,30 @@ async function syncFacebookAds(
   return records;
 }
 
+// Helper to convert UTC date string to CST date string
+// Rumble reports in UTC, we want to store as CST
+// UTC midnight = CST 6pm previous day, so we need to ADD 6 hours to get CST date
+// Example: Rumble says "2025-12-11" (UTC) = their day started at UTC midnight
+//          In CST, UTC midnight is 6pm Dec 10. So Rumble's Dec 11 data
+//          actually spans Dec 10 6pm CST to Dec 11 6pm CST.
+//          We'll store it as the CST date where most of the day falls (Dec 11).
+function convertUtcDateToCst(utcDateStr: string): string {
+  // Rumble's date represents a UTC day. We want to map it to CST.
+  // Since Rumble's "Dec 11 UTC" is mostly "Dec 11 CST" (from 6am CST onwards),
+  // we keep the same date. The key insight is that Rumble's daily aggregation
+  // in UTC will mostly align with CST dates.
+  // 
+  // If you want exact CST day boundaries, you'd need hourly data from Rumble.
+  // For daily aggregates, we'll keep the date as-is since:
+  // - Rumble Dec 11 UTC = Dec 10 6pm CST to Dec 11 6pm CST
+  // - Most of that time (18 hours) is Dec 11 CST
+  return utcDateStr;
+}
+
 // Sync Rumble Ads data
 // Note: Rumble's API details may vary - this is a placeholder implementation
+// IMPORTANT: Rumble uses UTC timezone for their daily data
+// Facebook uses account timezone (CST for US accounts)
 async function syncRumbleAds(
   apiKey: string,
   accountId: string | undefined,
@@ -352,7 +378,7 @@ async function syncRumbleAds(
   const records: AdSpendRecord[] = [];
   
   // Rumble API endpoint (placeholder - actual endpoint may differ)
-  // Rumble uses UTC timezone
+  // Request in UTC since that's what Rumble uses
   const url = `https://ads.rumble.com/api/v1/campaigns/stats?` + new URLSearchParams({
     api_key: apiKey,
     start_date: startDate.toISOString().split('T')[0],
@@ -377,11 +403,10 @@ async function syncRumbleAds(
     const data = await response.json();
 
     for (const stat of data.stats || data.data || []) {
-      // Convert UTC date to CST for consistency
-      const utcDate = new Date(stat.date + 'T00:00:00Z');
-      // Subtract 6 hours for CST (or 5 for CDT)
-      utcDate.setHours(utcDate.getHours() - 6);
-      const cstDate = utcDate.toISOString().split('T')[0];
+      // Rumble reports dates in UTC
+      // For daily aggregates, we keep the same date since most of the UTC day
+      // overlaps with the same CST date (18 out of 24 hours)
+      const cstDate = convertUtcDateToCst(stat.date);
 
       records.push({
         date: cstDate,
@@ -393,6 +418,8 @@ async function syncRumbleAds(
         clicks: parseInt(stat.clicks) || 0
       });
     }
+    
+    console.log(`Synced ${records.length} Rumble ad records (UTC dates mapped to CST)`);
   } catch (error) {
     console.error('Rumble API error:', error);
     // Return empty array if API fails
