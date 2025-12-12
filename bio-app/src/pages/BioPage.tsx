@@ -305,9 +305,9 @@ const BioPage: React.FC = () => {
           })));
         }
 
-        // Fetch Rumble data if they have a rumble handle
+        // Fetch Rumble data - first try cache, then fall back to live scraping
         if (profile.rumble_handle) {
-          fetchRumbleData(profile.rumble_handle);
+          fetchRumbleData(profile.id, profile.rumble_handle);
         }
 
       } catch (error) {
@@ -321,10 +321,32 @@ const BioPage: React.FC = () => {
     fetchBioData();
   }, [username]);
 
-  // Fetch Rumble channel data
-  const fetchRumbleData = async (rumbleHandle: string) => {
+  // Fetch Rumble channel data - first from cache, then fallback to live scraping
+  const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
     setRumbleLoading(true);
     try {
+      // First, try to get cached data from rumble_cache table
+      const { data: cachedData, error: cacheError } = await supabase
+        .from('rumble_cache')
+        .select('*')
+        .eq('talent_id', talentId)
+        .single();
+      
+      if (!cacheError && cachedData) {
+        // Use cached data - it's updated every 15 minutes by cron job
+        setRumbleData({
+          title: cachedData.latest_video_title || 'Watch on Rumble',
+          thumbnail: cachedData.latest_video_thumbnail || '',
+          url: cachedData.latest_video_url || cachedData.channel_url || `https://rumble.com/user/${rumbleHandle.replace(/^@/, '')}`,
+          views: cachedData.latest_video_views || 0,
+          isLive: cachedData.is_live || false,
+          liveViewers: cachedData.live_viewers || 0,
+        });
+        setRumbleLoading(false);
+        return;
+      }
+      
+      // Fallback: scrape live if no cache exists
       const cleanHandle = rumbleHandle.replace(/^@/, '');
       
       // Try both /user/ and /c/ URL formats
