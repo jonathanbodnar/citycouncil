@@ -369,7 +369,12 @@ const TalentManagement: React.FC = () => {
         charity_name: editingTalent.charity_name,
         admin_fee_percentage: editingTalent.admin_fee_percentage,
         temp_avatar_url: editingTalent.temp_avatar_url,
-        temp_full_name: editingTalent.temp_full_name
+        temp_full_name: editingTalent.temp_full_name,
+        // Social links
+        twitter_handle: editingTalent.twitter_handle || null,
+        instagram_handle: editingTalent.instagram_handle || null,
+        facebook_handle: editingTalent.facebook_handle || null,
+        tiktok_handle: editingTalent.tiktok_handle || null
       };
 
       // Add position field if it exists (after migration)
@@ -1935,6 +1940,76 @@ const TalentManagement: React.FC = () => {
                   onChange={(e) => setEditingTalent({...editingTalent, admin_fee_percentage: parseFloat(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+            </div>
+            
+            {/* Social Links */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-900 mb-3">Social Links</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Twitter/X Handle
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">@</span>
+                    <input
+                      type="text"
+                      value={editingTalent.twitter_handle || ''}
+                      onChange={(e) => setEditingTalent({...editingTalent, twitter_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Instagram Handle
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">@</span>
+                    <input
+                      type="text"
+                      value={editingTalent.instagram_handle || ''}
+                      onChange={(e) => setEditingTalent({...editingTalent, instagram_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Facebook Handle
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">@</span>
+                    <input
+                      type="text"
+                      value={editingTalent.facebook_handle || ''}
+                      onChange={(e) => setEditingTalent({...editingTalent, facebook_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    TikTok Handle
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">@</span>
+                    <input
+                      type="text"
+                      value={editingTalent.tiktok_handle || ''}
+                      onChange={(e) => setEditingTalent({...editingTalent, tiktok_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             

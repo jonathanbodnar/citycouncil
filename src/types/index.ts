@@ -64,6 +64,11 @@ export interface TalentProfile {
   is_coming_soon?: boolean; // Marks talent as "Coming Soon" - not visible on /home yet
   display_order?: number | null; // Controls order on /home (lower = higher on page, NULL = sort by created_at DESC)
   featured_image_position?: string; // CSS background-position for featured carousel (e.g., 'center 30%', 'center top')
+  // Social media handles
+  twitter_handle?: string;
+  instagram_handle?: string;
+  facebook_handle?: string;
+  tiktok_handle?: string;
 }
 
 export type TalentCategory = 
