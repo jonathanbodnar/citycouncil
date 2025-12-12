@@ -20,6 +20,8 @@ interface TalentProfile {
   temp_avatar_url?: string;
   bio?: string;
   social_accounts?: SocialAccount[];
+  promo_video_url?: string;
+  rumble_handle?: string;
 }
 
 interface SocialAccount {
@@ -77,6 +79,10 @@ const SOCIAL_PLATFORMS: Record<string, { icon: React.ReactNode; baseUrl: string;
   discord: { 
     icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>,
     baseUrl: 'https://discord.gg/', name: 'Discord' 
+  },
+  rumble: { 
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/></svg>,
+    baseUrl: 'https://rumble.com/c/', name: 'Rumble' 
   },
 };
 
@@ -141,6 +147,15 @@ interface NewsletterConfig {
   is_active: boolean;
 }
 
+interface RumbleVideoData {
+  title: string;
+  thumbnail: string;
+  url: string;
+  views: number;
+  isLive: boolean;
+  liveViewers?: number;
+}
+
 const BioPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
@@ -149,6 +164,8 @@ const BioPage: React.FC = () => {
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [randomReview, setRandomReview] = useState<Review | null>(null);
   const [newsletterConfig, setNewsletterConfig] = useState<NewsletterConfig | null>(null);
+  const [rumbleData, setRumbleData] = useState<RumbleVideoData | null>(null);
+  const [rumbleLoading, setRumbleLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -253,6 +270,11 @@ const BioPage: React.FC = () => {
           })));
         }
 
+        // Fetch Rumble data if they have a rumble handle
+        if (profile.rumble_handle) {
+          fetchRumbleData(profile.rumble_handle);
+        }
+
       } catch (error) {
         console.error('Error fetching bio data:', error);
         setNotFound(true);
@@ -263,6 +285,105 @@ const BioPage: React.FC = () => {
 
     fetchBioData();
   }, [username]);
+
+  // Fetch Rumble channel data
+  const fetchRumbleData = async (rumbleHandle: string) => {
+    setRumbleLoading(true);
+    try {
+      const cleanHandle = rumbleHandle.replace(/^@/, '');
+      const channelUrl = `https://rumble.com/c/${cleanHandle}`;
+      
+      // Use CORS proxy to fetch Rumble page
+      const corsProxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(channelUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`,
+      ];
+      
+      let html = '';
+      for (const proxyUrl of corsProxies) {
+        try {
+          const response = await fetch(proxyUrl);
+          if (response.ok) {
+            html = await response.text();
+            break;
+          }
+        } catch (e) {
+          console.log('Rumble proxy failed, trying next...', e);
+        }
+      }
+      
+      if (!html) {
+        console.log('Could not fetch Rumble data');
+        return;
+      }
+      
+      // Parse the HTML to extract video data
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Check for live stream first
+      const liveIndicator = doc.querySelector('.video-item--live, [class*="live"], .livestream-item');
+      const isLive = !!liveIndicator;
+      
+      // Get the first/latest video
+      const videoItem = doc.querySelector('.video-listing-entry, .video-item, article.video-item, [class*="videostream"]');
+      
+      if (videoItem) {
+        // Extract thumbnail
+        const thumbnailEl = videoItem.querySelector('img[src*="thumb"], img.thumbnail, img[class*="thumb"]');
+        const thumbnail = thumbnailEl?.getAttribute('src') || thumbnailEl?.getAttribute('data-src') || '';
+        
+        // Extract title
+        const titleEl = videoItem.querySelector('h3, .video-item--title, [class*="title"]');
+        const title = titleEl?.textContent?.trim() || 'Latest Video';
+        
+        // Extract URL
+        const linkEl = videoItem.querySelector('a[href*="/v"]') || videoItem.closest('a');
+        let videoUrl = linkEl?.getAttribute('href') || channelUrl;
+        if (videoUrl && !videoUrl.startsWith('http')) {
+          videoUrl = `https://rumble.com${videoUrl}`;
+        }
+        
+        // Extract views
+        const viewsEl = videoItem.querySelector('[class*="views"], .video-item--meta, .video-item--views');
+        const viewsText = viewsEl?.textContent || '0';
+        const viewsMatch = viewsText.match(/[\d,.]+[KkMm]?/);
+        let views = 0;
+        if (viewsMatch) {
+          const viewStr = viewsMatch[0].replace(/,/g, '');
+          if (viewStr.toLowerCase().includes('k')) {
+            views = parseFloat(viewStr) * 1000;
+          } else if (viewStr.toLowerCase().includes('m')) {
+            views = parseFloat(viewStr) * 1000000;
+          } else {
+            views = parseInt(viewStr) || 0;
+          }
+        }
+        
+        // Extract live viewers if live
+        let liveViewers = 0;
+        if (isLive) {
+          const liveViewersEl = doc.querySelector('[class*="watching"], [class*="viewers"], .livestream-viewers');
+          const liveViewersText = liveViewersEl?.textContent || '0';
+          const liveMatch = liveViewersText.match(/[\d,]+/);
+          liveViewers = liveMatch ? parseInt(liveMatch[0].replace(/,/g, '')) : 0;
+        }
+        
+        setRumbleData({
+          title,
+          thumbnail: thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail,
+          url: videoUrl,
+          views,
+          isLive,
+          liveViewers,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching Rumble data:', error);
+    } finally {
+      setRumbleLoading(false);
+    }
+  };
 
   // Track link clicks
   const handleLinkClick = async (link: BioLink) => {
@@ -470,25 +591,25 @@ const BioPage: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => handleLinkClick(link)}
-                className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] ${isFeatured ? 'relative overflow-hidden' : ''}`}
+                className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] overflow-hidden`}
                 style={{
                   ...getButtonStyle(),
                   ...featuredStyle,
+                  padding: 0, // Remove padding for flush image
                 }}
               >
-                {isFeatured && (
-                  <div className="absolute top-2 right-2">
-                    <StarSolidIcon className="h-4 w-4 text-yellow-400" />
-                  </div>
-                )}
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center">
                   {link.thumbnail_url ? (
-                    <img src={link.thumbnail_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                    <img src={link.thumbnail_url} alt="" className="w-14 h-14 object-cover flex-shrink-0" />
                   ) : link.icon_url ? (
-                    <img src={link.icon_url} alt="" className="w-6 h-6" />
+                    <div className="w-14 h-14 flex items-center justify-center flex-shrink-0">
+                      <img src={link.icon_url} alt="" className="w-6 h-6" />
+                    </div>
                   ) : null}
-                  <span className="text-white font-medium">{link.title}</span>
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60" />
+                  <div className={`flex-1 flex items-center justify-between px-4 py-4 ${!link.thumbnail_url && !link.icon_url ? 'pl-4' : ''}`}>
+                    <span className="text-white font-medium text-left">{link.title}</span>
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60 flex-shrink-0 ml-2" />
+                  </div>
                 </div>
               </a>
             );
@@ -624,59 +745,140 @@ const BioPage: React.FC = () => {
             </a>
           ))}
 
+          {/* Rumble Card - Shows latest video or live status */}
+          {talentProfile?.rumble_handle && bioSettings && (
+            <a
+              href={rumbleData?.url || `https://rumble.com/c/${talentProfile.rumble_handle.replace(/^@/, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-6"
+            >
+              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl overflow-hidden border border-green-500/30 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-stretch">
+                  {/* Thumbnail */}
+                  <div className="w-28 h-20 flex-shrink-0 relative bg-black/20">
+                    {rumbleLoading ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-400"></div>
+                      </div>
+                    ) : rumbleData?.thumbnail ? (
+                      <img 
+                        src={rumbleData.thumbnail} 
+                        alt="" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-600 to-emerald-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white/80">
+                          <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
+                        </svg>
+                      </div>
+                    )}
+                    {/* Live indicator */}
+                    {rumbleData?.isLive && (
+                      <div className="absolute top-1 left-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                        LIVE
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 p-3 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-1">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-green-400">
+                        <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
+                      </svg>
+                      <span className="text-green-400 text-xs font-medium">Rumble</span>
+                      {rumbleData?.isLive && rumbleData.liveViewers && rumbleData.liveViewers > 0 && (
+                        <span className="text-red-400 text-xs font-medium">
+                          • {rumbleData.liveViewers.toLocaleString()} watching
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-white font-medium text-sm line-clamp-1">
+                      {rumbleData?.title || 'Watch on Rumble'}
+                    </h3>
+                    {!rumbleData?.isLive && rumbleData?.views && rumbleData.views > 0 && (
+                      <p className="text-gray-400 text-xs mt-0.5">
+                        {rumbleData.views.toLocaleString()} views
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </a>
+          )}
+
           {/* ShoutOut Card - Always at the bottom (cannot be removed) */}
           {bioSettings && (
             <a
               href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block mt-6"
+              className="block mt-4"
             >
-              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl p-5 border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-start gap-4">
-                  {/* Profile Image */}
-                  <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-500/50">
-                    {profileImage ? (
+              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-stretch">
+                  {/* Promo Video Thumbnail */}
+                  <div className="w-20 flex-shrink-0 relative bg-black/20">
+                    {talentProfile?.promo_video_url ? (
+                      <video 
+                        src={talentProfile.promo_video_url}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : profileImage ? (
                       <img 
                         src={profileImage} 
                         alt="" 
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                        <GiftIcon className="h-6 w-6 text-white" />
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-500">
+                        <GiftIcon className="h-8 w-8 text-white" />
+                      </div>
+                    )}
+                    {talentProfile?.promo_video_url && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
                       </div>
                     )}
                   </div>
                   
-                  <div className="flex-1">
+                  <div className="flex-1 p-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <GiftIcon className="h-5 w-5 text-blue-400" />
-                      <span className="text-blue-400 text-sm font-medium">ShoutOut</span>
+                      <GiftIcon className="h-4 w-4 text-blue-400" />
+                      <span className="text-blue-400 text-xs font-medium">ShoutOut</span>
                     </div>
-                    <h3 className="text-white font-semibold mb-1">
+                    <h3 className="text-white font-semibold text-sm mb-1">
                       Get a personalized video from {displayName}
                     </h3>
                     
                     {/* Random Review - Show first line only */}
                     {randomReview && (
-                      <div className="mt-3 pt-3 border-t border-white/10">
-                        <div className="flex items-center gap-1 mb-1">
+                      <div className="mt-2 pt-2 border-t border-white/10">
+                        <div className="flex items-center gap-1 mb-0.5">
                           {[...Array(5)].map((_, i) => (
                             i < randomReview.rating ? (
-                              <StarSolidIcon key={i} className="h-4 w-4 text-yellow-400" />
+                              <StarSolidIcon key={i} className="h-3 w-3 text-yellow-400" />
                             ) : (
-                              <StarIcon key={i} className="h-4 w-4 text-gray-600" />
+                              <StarIcon key={i} className="h-3 w-3 text-gray-600" />
                             )
                           ))}
                         </div>
                         {randomReview.comment && (
-                          <p className="text-gray-300 text-sm line-clamp-1">
+                          <p className="text-gray-300 text-xs line-clamp-1">
                             "{randomReview.comment.split('\n')[0]}"
                           </p>
                         )}
                         {randomReview.users?.full_name && (
-                          <p className="text-gray-500 text-xs mt-1">
+                          <p className="text-gray-500 text-[10px] mt-0.5">
                             — {randomReview.users.full_name}
                           </p>
                         )}
