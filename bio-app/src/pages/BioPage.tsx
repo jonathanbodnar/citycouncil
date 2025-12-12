@@ -409,8 +409,8 @@ const BioPage: React.FC = () => {
       // Look for patterns like "LIVE" badge near viewer count
       const liveMatch = html.match(/([\d,]+)\s*(?:watching|viewers)/i);
       const hasLiveIndicator = html.includes('class="is-live"') || html.includes('class="status--live"') || 
-                               (html.includes('>LIVE<') && liveMatch);
-      const isLive = hasLiveIndicator && !!liveMatch;
+                               (html.includes('>LIVE<') && !!liveMatch);
+      const isLive: boolean = !!(hasLiveIndicator && liveMatch);
       const liveViewers = liveMatch ? parseInt(liveMatch[1].replace(/,/g, '')) : 0;
       
       // Try to find thumbnail using regex on raw HTML

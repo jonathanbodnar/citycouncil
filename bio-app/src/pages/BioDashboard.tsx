@@ -1722,23 +1722,11 @@ const AddLinkModal: React.FC<{
           {/* Grid Link Fields with Carousel */}
           {linkType === 'grid' && (
             <>
-              {/* Grid Layout Selection */}
+              {/* Grid Layout Selection - Only 2 or 3 columns */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
-                <div className="grid grid-cols-3 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setGridColumns(1)}
-                    className={`p-3 rounded-xl transition-all ${
-                      gridColumns === 1 ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
-                    }`}
-                  >
-                    <div className="flex justify-center mb-2">
-                      <div className="w-full h-8 bg-current opacity-40 rounded" />
-                    </div>
-                    <div className="text-xs text-center text-gray-300">Full width</div>
-                  </button>
-                  
+                <div className="grid grid-cols-2 gap-3">
+                  {/* 2 Columns (1x2) */}
                   <button
                     type="button"
                     onClick={() => setGridColumns(2)}
@@ -1747,25 +1735,27 @@ const AddLinkModal: React.FC<{
                     }`}
                   >
                     <div className="grid grid-cols-2 gap-1 mb-2">
-                      <div className="h-8 bg-current opacity-40 rounded" />
-                      <div className="h-8 bg-current opacity-40 rounded" />
+                      <div className="aspect-square bg-current opacity-40 rounded" />
+                      <div className="aspect-square bg-current opacity-40 rounded" />
                     </div>
-                    <div className="text-xs text-center text-gray-300">2 columns</div>
+                    <div className="text-xs text-center text-gray-300">1×2</div>
                   </button>
                   
+                  {/* 4 Columns (2x2) */}
                   <button
                     type="button"
-                    onClick={() => setGridColumns(3)}
+                    onClick={() => setGridColumns(4)}
                     className={`p-3 rounded-xl transition-all ${
-                      gridColumns === 3 ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                      gridColumns === 4 ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
                     }`}
                   >
-                    <div className="grid grid-cols-3 gap-1 mb-2">
-                      <div className="h-8 bg-current opacity-40 rounded" />
-                      <div className="h-8 bg-current opacity-40 rounded" />
-                      <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="grid grid-cols-2 gap-1 mb-2">
+                      <div className="aspect-square bg-current opacity-40 rounded" />
+                      <div className="aspect-square bg-current opacity-40 rounded" />
+                      <div className="aspect-square bg-current opacity-40 rounded" />
+                      <div className="aspect-square bg-current opacity-40 rounded" />
                     </div>
-                    <div className="text-xs text-center text-gray-300">3 columns</div>
+                    <div className="text-xs text-center text-gray-300">2×2</div>
                   </button>
                 </div>
               </div>
@@ -1891,7 +1881,7 @@ const AddLinkModal: React.FC<{
               {/* Preview of all cards */}
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-2">Preview</label>
-                <div className={`grid gap-2 ${gridColumns === 1 ? 'grid-cols-1' : gridColumns === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                <div className="grid grid-cols-2 gap-2">
                   {gridLinks.slice(0, gridColumns).map((gl, i) => (
                     <button
                       key={i}
@@ -2071,24 +2061,8 @@ const EditLinkModal: React.FC<{
           {link.link_type === 'grid' && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
-              <div className="grid grid-cols-3 gap-3">
-                {/* Full Width */}
-                <button
-                  type="button"
-                  onClick={() => setGridColumns(1)}
-                  className={`p-3 rounded-xl transition-all ${
-                    gridColumns === 1
-                      ? 'bg-blue-500/20 border-2 border-blue-500'
-                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
-                  }`}
-                >
-                  <div className="flex justify-center mb-2">
-                    <div className="w-full h-8 bg-current opacity-40 rounded" />
-                  </div>
-                  <div className="text-xs text-center text-gray-300">Full width</div>
-                </button>
-                
-                {/* 2 Columns */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* 2 Columns (1x2) */}
                 <button
                   type="button"
                   onClick={() => setGridColumns(2)}
@@ -2099,28 +2073,29 @@ const EditLinkModal: React.FC<{
                   }`}
                 >
                   <div className="grid grid-cols-2 gap-1 mb-2">
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                    <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="aspect-square bg-current opacity-40 rounded" />
+                    <div className="aspect-square bg-current opacity-40 rounded" />
                   </div>
-                  <div className="text-xs text-center text-gray-300">2 columns</div>
+                  <div className="text-xs text-center text-gray-300">1×2</div>
                 </button>
                 
-                {/* 3 Columns */}
+                {/* 4 Columns (2x2) */}
                 <button
                   type="button"
-                  onClick={() => setGridColumns(3)}
+                  onClick={() => setGridColumns(4)}
                   className={`p-3 rounded-xl transition-all ${
-                    gridColumns === 3
+                    gridColumns === 4
                       ? 'bg-blue-500/20 border-2 border-blue-500'
                       : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
                   }`}
                 >
-                  <div className="grid grid-cols-3 gap-1 mb-2">
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                    <div className="h-8 bg-current opacity-40 rounded" />
+                  <div className="grid grid-cols-2 gap-1 mb-2">
+                    <div className="aspect-square bg-current opacity-40 rounded" />
+                    <div className="aspect-square bg-current opacity-40 rounded" />
+                    <div className="aspect-square bg-current opacity-40 rounded" />
+                    <div className="aspect-square bg-current opacity-40 rounded" />
                   </div>
-                  <div className="text-xs text-center text-gray-300">3 columns</div>
+                  <div className="text-xs text-center text-gray-300">2×2</div>
                 </button>
               </div>
             </div>
