@@ -323,9 +323,8 @@ const BioPage: React.FC = () => {
 
   // Fetch Rumble channel data - first from cache, then fallback to live scraping
   const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
-    setRumbleLoading(true);
     try {
-      // First, try to get cached data from rumble_cache table
+      // First, try to get cached data from rumble_cache table (no loading state for cache)
       const { data: cachedData, error: cacheError } = await supabase
         .from('rumble_cache')
         .select('*')
@@ -334,6 +333,7 @@ const BioPage: React.FC = () => {
       
       if (!cacheError && cachedData) {
         // Use cached data - it's updated every 15 minutes by cron job
+        // No loading spinner needed - cache is instant
         setRumbleData({
           title: cachedData.latest_video_title || 'Watch on Rumble',
           thumbnail: cachedData.latest_video_thumbnail || '',
@@ -342,11 +342,11 @@ const BioPage: React.FC = () => {
           isLive: cachedData.is_live || false,
           liveViewers: cachedData.live_viewers || 0,
         });
-        setRumbleLoading(false);
         return;
       }
       
-      // Fallback: scrape live if no cache exists
+      // Fallback: scrape live if no cache exists - show loading only for live scraping
+      setRumbleLoading(true);
       const cleanHandle = rumbleHandle.replace(/^@/, '');
       
       // Try both /user/ and /c/ URL formats
