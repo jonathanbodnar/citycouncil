@@ -507,12 +507,14 @@ const BioPage: React.FC = () => {
           })()}
 
           {/* Newsletter Signup - Show if there's a newsletter link (with or without config) */}
+          {/* Always use rounded style for newsletter container since pill doesn't work well here */}
           {hasNewsletterLink && (
             <div 
-              className={`${getRadiusClass()}`}
+              className="rounded-xl"
               style={{
                 ...getButtonStyle(),
-                padding: bioSettings?.button_style === 'pill' ? '28px 40px' : '20px 24px',
+                borderRadius: '0.75rem', // Override pill style
+                padding: '20px 24px',
               }}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -529,12 +531,12 @@ const BioPage: React.FC = () => {
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder="Enter your email"
                     required
-                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
+                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
                   />
                   <button
                     type="submit"
                     disabled={subscribing || !newsletterConfig || !privacyAccepted}
-                    className="px-6 py-3 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                    className="px-6 py-3 rounded-xl font-medium text-white transition-colors disabled:opacity-50"
                     style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
                   >
                     {subscribing ? '...' : 'Join'}
