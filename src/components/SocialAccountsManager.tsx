@@ -31,7 +31,7 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
     { value: 'facebook', label: 'Facebook', placeholder: 'username' },
     { value: 'instagram', label: 'Instagram', placeholder: '@username' },
     { value: 'tiktok', label: 'TikTok', placeholder: '@username' },
-    { value: 'rumble', label: 'Rumble', placeholder: 'username' },
+    { value: 'rumble', label: 'Rumble', placeholder: 'ChannelName (from rumble.com/c/...)' },
     { value: 'linkedin', label: 'LinkedIn', placeholder: 'username' },
   ];
 

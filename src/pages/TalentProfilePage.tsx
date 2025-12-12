@@ -620,11 +620,11 @@ const TalentProfilePage: React.FC = () => {
                           )}
                           {rumbleHandle && (
                             <a 
-                              href={`https://rumble.com/c/${rumbleHandle}`}
+                              href={`https://rumble.com/c/${rumbleHandle.replace('@', '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1.5 text-gray-400 hover:text-gray-600"
-                              title={`@${rumbleHandle}`}
+                              title={`Rumble: ${rumbleHandle.replace('@', '')}`}
                             >
                               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M14.4 2.4H9.6c-4 0-7.2 3.2-7.2 7.2v4.8c0 4 3.2 7.2 7.2 7.2h4.8c4 0 7.2-3.2 7.2-7.2V9.6c0-4-3.2-7.2-7.2-7.2zm2.4 12c0 1.32-1.08 2.4-2.4 2.4h-4.8c-1.32 0-2.4-1.08-2.4-2.4V9.6c0-1.32 1.08-2.4 2.4-2.4h4.8c1.32 0 2.4 1.08 2.4 2.4v4.8zm-2.4-3.6l-4.8 2.88V8.52l4.8 2.28z"/>
