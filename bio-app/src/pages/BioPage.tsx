@@ -670,8 +670,8 @@ const BioPage: React.FC = () => {
             >
               <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl overflow-hidden border border-green-500/30 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex items-stretch">
-                  {/* Thumbnail */}
-                  <div className="w-28 h-20 flex-shrink-0 relative bg-black/20">
+                  {/* Thumbnail - 50% taller */}
+                  <div className="w-36 h-[120px] flex-shrink-0 relative bg-black/20">
                     {rumbleLoading ? (
                       <div className="w-full h-full flex items-center justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-400"></div>
