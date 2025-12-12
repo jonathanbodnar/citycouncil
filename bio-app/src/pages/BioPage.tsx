@@ -331,7 +331,7 @@ const BioPage: React.FC = () => {
         .eq('talent_id', talentId)
         .single();
       
-      if (!cacheError && cachedData) {
+      if (!cacheError && cachedData && cachedData.latest_video_thumbnail) {
         // Use cached data - it's updated every 15 minutes by cron job
         // No loading spinner needed - cache is instant
         setRumbleData({
@@ -361,31 +361,47 @@ const BioPage: React.FC = () => {
       // Try each URL format with CORS proxies
       for (const channelUrl of urlFormats) {
         const corsProxies = [
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(channelUrl)}`,
           `https://api.allorigins.win/raw?url=${encodeURIComponent(channelUrl)}`,
           `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`,
         ];
         
         for (const proxyUrl of corsProxies) {
           try {
-            const response = await fetch(proxyUrl);
+            const response = await fetch(proxyUrl, {
+              headers: {
+                'Accept': 'text/html,application/xhtml+xml',
+              }
+            });
             if (response.ok) {
               const text = await response.text();
               // Check if we got actual video content (not an error page)
-              if (text.includes('thumbnail__image') || text.includes('video-item')) {
+              // Rumble uses various class patterns for thumbnails
+              if (text.includes('thumbnail') || text.includes('video-item') || text.includes('videostream') || text.includes('rmbl')) {
                 html = text;
                 successUrl = channelUrl;
+                console.log('Rumble HTML fetched successfully from:', proxyUrl);
                 break;
               }
             }
           } catch (e) {
-            console.log('Rumble proxy failed, trying next...', e);
+            console.log('Rumble proxy failed, trying next...', proxyUrl);
           }
         }
         if (html) break;
       }
       
       if (!html) {
-        console.log('Could not fetch Rumble data');
+        console.log('Could not fetch Rumble data - all proxies failed');
+        // Set default data with channel URL
+        setRumbleData({
+          title: 'Watch on Rumble',
+          thumbnail: '',
+          url: `https://rumble.com/user/${cleanHandle}`,
+          views: 0,
+          isLive: false,
+          liveViewers: 0,
+        });
         return;
       }
       
@@ -394,98 +410,66 @@ const BioPage: React.FC = () => {
       const doc = parser.parseFromString(html, 'text/html');
       
       // Check for live stream - look for is-live class or status--live
-      const liveIndicator = doc.querySelector('.is-live, [class*="status--live"], .livestream-item');
-      const isLive = !!liveIndicator;
+      const isLive = html.includes('is-live') || html.includes('status--live') || html.includes('livestream-item');
       
-      // Get the first/latest video - try multiple selectors
-      // Rumble uses .videostream.thumbnail__grid--item for video cards
-      const videoItem = doc.querySelector(
-        '.videostream.thumbnail__grid--item, ' +
-        '.video-listing-entry, ' +
-        '.video-item, ' +
-        'article.video-item, ' +
-        '[class*="videostream"][role="listitem"]'
-      );
-      
-      if (videoItem) {
-        // Extract thumbnail - look for thumbnail__image class
-        const thumbnailEl = videoItem.querySelector(
-          'img.thumbnail__image, ' +
-          'img[src*="rmbl"], ' +
-          'img[src*="thumb"], ' +
-          'img.thumbnail'
-        );
-        const thumbnail = thumbnailEl?.getAttribute('src') || thumbnailEl?.getAttribute('data-src') || '';
-        
-        // Extract title - look for thumbnail__title class or title attribute
-        const titleEl = videoItem.querySelector(
-          'h3.thumbnail__title, ' +
-          '.thumbnail__title, ' +
-          'h3[title], ' +
-          '.video-item--title'
-        );
-        const title = titleEl?.getAttribute('title') || titleEl?.textContent?.trim() || 'Latest Video';
-        
-        // Extract URL - look for links to /v* (video pages)
-        const linkEl = videoItem.querySelector(
-          'a.videostream__link[href*="/v"], ' +
-          'a.title__link[href*="/v"], ' +
-          'a[href*="/v"]'
-        );
-        let videoUrl = linkEl?.getAttribute('href') || successUrl;
-        if (videoUrl && !videoUrl.startsWith('http')) {
-          videoUrl = `https://rumble.com${videoUrl}`;
-        }
-        // Clean up query params from video URL
-        if (videoUrl.includes('?')) {
-          videoUrl = videoUrl.split('?')[0];
-        }
-        
-        // Extract views - look for data-views attribute or views text
-        const viewsEl = videoItem.querySelector(
-          '[data-views], ' +
-          '.videostream__views, ' +
-          '[class*="views"]'
-        );
-        let views = 0;
-        const dataViews = viewsEl?.getAttribute('data-views');
-        if (dataViews) {
-          views = parseInt(dataViews) || 0;
-        } else {
-          const viewsText = viewsEl?.textContent || '0';
-          const viewsMatch = viewsText.match(/[\d,.]+[KkMm]?/);
-          if (viewsMatch) {
-            const viewStr = viewsMatch[0].replace(/,/g, '');
-            if (viewStr.toLowerCase().includes('k')) {
-              views = parseFloat(viewStr) * 1000;
-            } else if (viewStr.toLowerCase().includes('m')) {
-              views = parseFloat(viewStr) * 1000000;
-            } else {
-              views = parseInt(viewStr) || 0;
-            }
-          }
-        }
-        
-        // Extract live viewers if live
-        let liveViewers = 0;
-        if (isLive) {
-          const liveViewersEl = doc.querySelector('[class*="watching"], [class*="viewers"], .livestream-viewers');
-          const liveViewersText = liveViewersEl?.textContent || '0';
-          const liveMatch = liveViewersText.match(/[\d,]+/);
-          liveViewers = liveMatch ? parseInt(liveMatch[0].replace(/,/g, '')) : 0;
-        }
-        
-        setRumbleData({
-          title,
-          thumbnail: thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail,
-          url: videoUrl,
-          views,
-          isLive,
-          liveViewers,
-        });
-      } else {
-        console.log('No video item found in Rumble page');
+      // Try to find thumbnail using regex on raw HTML (more reliable than DOM parsing)
+      // Rumble thumbnails are usually from sp.rmbl.ws or i.rmbl.ws
+      let thumbnail = '';
+      const thumbMatch = html.match(/src="(https:\/\/[^"]*(?:sp\.rmbl\.ws|i\.rmbl\.ws|rmbl)[^"]*(?:\.jpg|\.webp|\.png)[^"]*)"/i);
+      if (thumbMatch) {
+        thumbnail = thumbMatch[1];
       }
+      
+      // Try to find video title from HTML
+      let title = 'Latest Video';
+      // Look for title in thumbnail__title or video title patterns
+      const titleMatch = html.match(/class="thumbnail__title[^"]*"[^>]*title="([^"]+)"/i) ||
+                         html.match(/class="thumbnail__title[^"]*"[^>]*>([^<]+)</i) ||
+                         html.match(/title="([^"]{10,100})"[^>]*class="[^"]*thumbnail/i);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+      }
+      
+      // Try to find video URL
+      let videoUrl = successUrl;
+      const videoUrlMatch = html.match(/href="(\/v[a-z0-9]+-[^"]+\.html)/i);
+      if (videoUrlMatch) {
+        videoUrl = `https://rumble.com${videoUrlMatch[1].split('?')[0]}`;
+      }
+      
+      // Try to find views
+      let views = 0;
+      const viewsMatch = html.match(/data-views="(\d+)"/i) ||
+                         html.match(/([\d,]+)\s*views/i) ||
+                         html.match(/([\d.]+[KkMm])\s*views/i);
+      if (viewsMatch) {
+        const viewStr = viewsMatch[1].replace(/,/g, '');
+        if (viewStr.toLowerCase().includes('k')) {
+          views = Math.round(parseFloat(viewStr) * 1000);
+        } else if (viewStr.toLowerCase().includes('m')) {
+          views = Math.round(parseFloat(viewStr) * 1000000);
+        } else {
+          views = parseInt(viewStr) || 0;
+        }
+      }
+      
+      // Extract live viewers if live
+      let liveViewers = 0;
+      if (isLive) {
+        const liveMatch = html.match(/([\d,]+)\s*(?:watching|viewers)/i);
+        liveViewers = liveMatch ? parseInt(liveMatch[1].replace(/,/g, '')) : 0;
+      }
+      
+      console.log('Rumble data extracted:', { title, thumbnail, videoUrl, views, isLive, liveViewers });
+      
+      setRumbleData({
+        title,
+        thumbnail: thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail,
+        url: videoUrl,
+        views,
+        isLive,
+        liveViewers,
+      });
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
     } finally {

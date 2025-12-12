@@ -18,7 +18,9 @@ import {
   PaintBrushIcon,
   CloudArrowUpIcon,
   ArrowsUpDownIcon,
-  SwatchIcon
+  SwatchIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { uploadImageToWasabi } from '../services/wasabiUpload';
@@ -89,6 +91,7 @@ interface BioLink {
   subtitle?: string;
   button_text?: string;
   is_featured?: boolean;
+  link_format?: 'thin' | 'tall' | 'square'; // Link display format
 }
 
 interface NewsletterConfig {
@@ -1408,21 +1411,50 @@ const BioDashboard: React.FC = () => {
   );
 };
 
+// Grid link data for carousel
+interface GridLinkData {
+  title: string;
+  url: string;
+  thumbnailUrl: string;
+}
+
 // Add Link Modal
 const AddLinkModal: React.FC<{
   onClose: () => void;
   onAdd: (link: Omit<BioLink, 'id' | 'display_order'>) => void;
+  onAddMultiple?: (links: Omit<BioLink, 'id' | 'display_order'>[]) => void;
   talentId: string;
-}> = ({ onClose, onAdd, talentId }) => {
+}> = ({ onClose, onAdd, onAddMultiple, talentId }) => {
   const [linkType, setLinkType] = useState<'basic' | 'grid' | 'newsletter' | 'sponsor'>('basic');
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
-  const [gridColumns, setGridColumns] = useState(1);
+  const [gridColumns, setGridColumns] = useState(2);
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [linkFormat, setLinkFormat] = useState<'thin' | 'tall' | 'square'>('thin');
+  
+  // Grid carousel state
+  const [currentGridSlot, setCurrentGridSlot] = useState(0);
+  const [gridLinks, setGridLinks] = useState<GridLinkData[]>([
+    { title: '', url: '', thumbnailUrl: '' },
+    { title: '', url: '', thumbnailUrl: '' },
+  ]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Update grid links array when columns change
+  useEffect(() => {
+    if (linkType === 'grid') {
+      const newGridLinks = Array(gridColumns).fill(null).map((_, i) => 
+        gridLinks[i] || { title: '', url: '', thumbnailUrl: '' }
+      );
+      setGridLinks(newGridLinks);
+      if (currentGridSlot >= gridColumns) {
+        setCurrentGridSlot(gridColumns - 1);
+      }
+    }
+  }, [gridColumns, linkType]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, slotIndex?: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -1430,7 +1462,13 @@ const AddLinkModal: React.FC<{
     try {
       const result = await uploadImageToWasabi(file, `bio-images/${talentId}`);
       if (result.success && result.imageUrl) {
-        setThumbnailUrl(result.imageUrl);
+        if (linkType === 'grid' && slotIndex !== undefined) {
+          const newGridLinks = [...gridLinks];
+          newGridLinks[slotIndex] = { ...newGridLinks[slotIndex], thumbnailUrl: result.imageUrl };
+          setGridLinks(newGridLinks);
+        } else {
+          setThumbnailUrl(result.imageUrl);
+        }
         toast.success('Image uploaded!');
       } else {
         toast.error(result.error || 'Upload failed');
@@ -1444,16 +1482,47 @@ const AddLinkModal: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAdd({
-      talent_id: talentId,
-      link_type: linkType,
-      title,
-      url,
-      thumbnail_url: thumbnailUrl || undefined,
-      grid_columns: gridColumns,
-      is_active: true,
-      is_featured: linkType === 'basic' ? isFeatured : false,
-    });
+    
+    if (linkType === 'grid' && onAddMultiple) {
+      // Add all grid links at once
+      const validLinks = gridLinks
+        .filter(gl => gl.title || gl.url || gl.thumbnailUrl)
+        .map(gl => ({
+          talent_id: talentId,
+          link_type: 'grid' as const,
+          title: gl.title,
+          url: gl.url,
+          thumbnail_url: gl.thumbnailUrl || undefined,
+          grid_columns: gridColumns,
+          is_active: true,
+          is_featured: false,
+          link_format: undefined,
+        }));
+      
+      if (validLinks.length > 0) {
+        onAddMultiple(validLinks);
+      } else {
+        toast.error('Please fill in at least one grid card');
+      }
+    } else {
+      onAdd({
+        talent_id: talentId,
+        link_type: linkType,
+        title,
+        url,
+        thumbnail_url: thumbnailUrl || undefined,
+        grid_columns: gridColumns,
+        is_active: true,
+        is_featured: linkType === 'basic' ? isFeatured : false,
+        link_format: linkType === 'basic' ? linkFormat : undefined,
+      });
+    }
+  };
+
+  const updateGridLink = (index: number, field: keyof GridLinkData, value: string) => {
+    const newGridLinks = [...gridLinks];
+    newGridLinks[index] = { ...newGridLinks[index], [field]: value };
+    setGridLinks(newGridLinks);
   };
 
   const linkTypes = [
@@ -1502,158 +1571,355 @@ const AddLinkModal: React.FC<{
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={linkType === 'newsletter' ? 'Join my newsletter' : 'My Website'}
-              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+          {/* Basic Link Fields */}
+          {linkType !== 'grid' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={linkType === 'newsletter' ? 'Join my newsletter' : 'My Website'}
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
 
-          {linkType !== 'newsletter' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example.com"
-                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-          )}
-
-          {/* Image Upload for basic and grid links */}
-          {(linkType === 'basic' || linkType === 'grid') && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                {linkType === 'basic' ? 'Icon/Image (optional)' : 'Image (optional)'}
-              </label>
-              
-              {thumbnailUrl ? (
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={thumbnailUrl} 
-                    alt="Preview" 
-                    className={`${linkType === 'basic' ? 'w-16 h-16' : 'w-24 h-24'} rounded-lg object-cover`}
+              {linkType !== 'newsletter' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                    required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setThumbnailUrl('')}
-                    className="text-sm text-red-400 hover:text-red-300"
-                  >
-                    Remove
-                  </button>
                 </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    {uploading ? (
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    ) : (
-                      <>
-                        <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-400">Click to upload image</p>
-                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                      </>
-                    )}
+              )}
+
+              {/* Image Upload for basic links */}
+              {linkType === 'basic' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Icon/Image (optional)</label>
+                  
+                  {thumbnailUrl ? (
+                    <div className="flex items-center gap-4">
+                      <img src={thumbnailUrl} alt="Preview" className="w-16 h-16 rounded-lg object-cover" />
+                      <button type="button" onClick={() => setThumbnailUrl('')} className="text-sm text-red-400 hover:text-red-300">
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
+                      <div className="flex flex-col items-center justify-center">
+                        {uploading ? (
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                        ) : (
+                          <>
+                            <CloudArrowUpIcon className="h-8 w-8 text-gray-400 mb-1" />
+                            <p className="text-xs text-gray-400">Upload image</p>
+                          </>
+                        )}
+                      </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e)} disabled={uploading} />
+                    </label>
+                  )}
+                </div>
+              )}
+
+              {/* Link Format for basic links */}
+              {linkType === 'basic' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Link Format</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {/* Thin */}
+                    <button
+                      type="button"
+                      onClick={() => setLinkFormat('thin')}
+                      className={`p-3 rounded-xl transition-all ${
+                        linkFormat === 'thin'
+                          ? 'bg-blue-500/20 border-2 border-blue-500'
+                          : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-full h-6 bg-current opacity-40 rounded flex items-center px-2">
+                          <div className="w-3 h-3 bg-white/60 rounded mr-2" />
+                          <div className="flex-1 h-2 bg-white/40 rounded" />
+                        </div>
+                        <span className="text-xs text-gray-300">Thin</span>
+                      </div>
+                    </button>
+                    
+                    {/* Tall */}
+                    <button
+                      type="button"
+                      onClick={() => setLinkFormat('tall')}
+                      className={`p-3 rounded-xl transition-all ${
+                        linkFormat === 'tall'
+                          ? 'bg-blue-500/20 border-2 border-blue-500'
+                          : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-full h-12 bg-current opacity-40 rounded flex items-center px-2">
+                          <div className="w-8 h-8 bg-white/60 rounded mr-2" />
+                          <div className="flex-1">
+                            <div className="h-2 bg-white/40 rounded mb-1" />
+                            <div className="h-1.5 bg-white/20 rounded w-2/3" />
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-300">Tall</span>
+                      </div>
+                    </button>
+                    
+                    {/* Square (no title) */}
+                    <button
+                      type="button"
+                      onClick={() => setLinkFormat('square')}
+                      className={`p-3 rounded-xl transition-all ${
+                        linkFormat === 'square'
+                          ? 'bg-blue-500/20 border-2 border-blue-500'
+                          : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 bg-current opacity-40 rounded flex items-center justify-center">
+                          <div className="w-6 h-6 bg-white/60 rounded" />
+                        </div>
+                        <span className="text-xs text-gray-300">Square</span>
+                      </div>
+                    </button>
                   </div>
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
+                  <p className="text-xs text-gray-500 mt-2">
+                    {linkFormat === 'square' ? 'Image only, no title displayed' : 'Choose how your link appears'}
+                  </p>
+                </div>
+              )}
+
+              {/* Featured option for basic links */}
+              {linkType === 'basic' && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    className="w-5 h-5 rounded bg-white/10 border-white/20 text-yellow-500 focus:ring-yellow-500"
                   />
+                  <div className="flex items-center gap-2">
+                    <span className="text-white">Featured link</span>
+                    <span className="text-yellow-400">⭐</span>
+                  </div>
+                  <span className="text-xs text-gray-400">(gradient highlight)</span>
                 </label>
               )}
-              <p className="text-xs text-gray-500 mt-2">
-                {linkType === 'basic' 
-                  ? 'Add a small icon or image to display next to your link'
-                  : 'Add an image to display on the card'
-                }
-              </p>
-            </div>
+            </>
           )}
 
+          {/* Grid Link Fields with Carousel */}
           {linkType === 'grid' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
-              <div className="grid grid-cols-3 gap-3">
-                {/* Full Width */}
-                <button
-                  type="button"
-                  onClick={() => setGridColumns(1)}
-                  className={`p-3 rounded-xl transition-all ${
-                    gridColumns === 1
-                      ? 'bg-blue-500/20 border-2 border-blue-500'
-                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
-                  }`}
-                >
-                  <div className="flex justify-center mb-2">
-                    <div className="w-full h-8 bg-current opacity-40 rounded" />
-                  </div>
-                  <div className="text-xs text-center text-gray-300">Full width</div>
-                </button>
-                
-                {/* 2 Columns */}
-                <button
-                  type="button"
-                  onClick={() => setGridColumns(2)}
-                  className={`p-3 rounded-xl transition-all ${
-                    gridColumns === 2
-                      ? 'bg-blue-500/20 border-2 border-blue-500'
-                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
-                  }`}
-                >
-                  <div className="grid grid-cols-2 gap-1 mb-2">
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                  </div>
-                  <div className="text-xs text-center text-gray-300">2 columns</div>
-                </button>
-                
-                {/* 3 Columns */}
-                <button
-                  type="button"
-                  onClick={() => setGridColumns(3)}
-                  className={`p-3 rounded-xl transition-all ${
-                    gridColumns === 3
-                      ? 'bg-blue-500/20 border-2 border-blue-500'
-                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
-                  }`}
-                >
-                  <div className="grid grid-cols-3 gap-1 mb-2">
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                    <div className="h-8 bg-current opacity-40 rounded" />
-                  </div>
-                  <div className="text-xs text-center text-gray-300">3 columns</div>
-                </button>
+            <>
+              {/* Grid Layout Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setGridColumns(1)}
+                    className={`p-3 rounded-xl transition-all ${
+                      gridColumns === 1 ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className="flex justify-center mb-2">
+                      <div className="w-full h-8 bg-current opacity-40 rounded" />
+                    </div>
+                    <div className="text-xs text-center text-gray-300">Full width</div>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setGridColumns(2)}
+                    className={`p-3 rounded-xl transition-all ${
+                      gridColumns === 2 ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className="grid grid-cols-2 gap-1 mb-2">
+                      <div className="h-8 bg-current opacity-40 rounded" />
+                      <div className="h-8 bg-current opacity-40 rounded" />
+                    </div>
+                    <div className="text-xs text-center text-gray-300">2 columns</div>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setGridColumns(3)}
+                    className={`p-3 rounded-xl transition-all ${
+                      gridColumns === 3 ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className="grid grid-cols-3 gap-1 mb-2">
+                      <div className="h-8 bg-current opacity-40 rounded" />
+                      <div className="h-8 bg-current opacity-40 rounded" />
+                      <div className="h-8 bg-current opacity-40 rounded" />
+                    </div>
+                    <div className="text-xs text-center text-gray-300">3 columns</div>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* Featured option for basic links */}
-          {linkType === 'basic' && (
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-5 h-5 rounded bg-white/10 border-white/20 text-yellow-500 focus:ring-yellow-500"
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-white">Featured link</span>
-                <span className="text-yellow-400">⭐</span>
+              {/* Carousel Navigation */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-300">
+                  Card {currentGridSlot + 1} of {gridColumns}
+                </span>
+                <div className="flex items-center gap-2">
+                  {Array(gridColumns).fill(null).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setCurrentGridSlot(i)}
+                      className={`w-2.5 h-2.5 rounded-full transition-all ${
+                        currentGridSlot === i ? 'bg-blue-500 w-6' : 'bg-white/30 hover:bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
-              <span className="text-xs text-gray-400">(gradient highlight)</span>
-            </label>
+
+              {/* Carousel Card Editor */}
+              <div className="relative">
+                <div className="flex items-center">
+                  {/* Left Arrow */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentGridSlot(Math.max(0, currentGridSlot - 1))}
+                    disabled={currentGridSlot === 0}
+                    className={`p-2 rounded-lg mr-2 transition-colors ${
+                      currentGridSlot === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <ChevronLeftIcon className="h-6 w-6" />
+                  </button>
+
+                  {/* Card Content */}
+                  <div className="flex-1 bg-white/5 border border-white/20 rounded-xl p-4 space-y-4">
+                    <div className="text-center text-sm font-medium text-blue-400 mb-3">
+                      Grid Card {currentGridSlot + 1}
+                    </div>
+
+                    {/* Image Upload */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-2">Image</label>
+                      {gridLinks[currentGridSlot]?.thumbnailUrl ? (
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={gridLinks[currentGridSlot].thumbnailUrl} 
+                            alt="Preview" 
+                            className="w-20 h-20 rounded-lg object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateGridLink(currentGridSlot, 'thumbnailUrl', '')}
+                            className="text-xs text-red-400 hover:text-red-300"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
+                          {uploading ? (
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                          ) : (
+                            <>
+                              <CloudArrowUpIcon className="h-8 w-8 text-gray-400 mb-1" />
+                              <p className="text-xs text-gray-400">Upload image</p>
+                            </>
+                          )}
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e, currentGridSlot)}
+                            disabled={uploading}
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={gridLinks[currentGridSlot]?.title || ''}
+                        onChange={(e) => updateGridLink(currentGridSlot, 'title', e.target.value)}
+                        placeholder="Card title"
+                        className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    {/* URL */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">URL</label>
+                      <input
+                        type="url"
+                        value={gridLinks[currentGridSlot]?.url || ''}
+                        onChange={(e) => updateGridLink(currentGridSlot, 'url', e.target.value)}
+                        placeholder="https://example.com"
+                        className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Arrow */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentGridSlot(Math.min(gridColumns - 1, currentGridSlot + 1))}
+                    disabled={currentGridSlot === gridColumns - 1}
+                    className={`p-2 rounded-lg ml-2 transition-colors ${
+                      currentGridSlot === gridColumns - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <ChevronRightIcon className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Preview of all cards */}
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-2">Preview</label>
+                <div className={`grid gap-2 ${gridColumns === 1 ? 'grid-cols-1' : gridColumns === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                  {gridLinks.slice(0, gridColumns).map((gl, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setCurrentGridSlot(i)}
+                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                        currentGridSlot === i ? 'border-blue-500' : 'border-white/10'
+                      }`}
+                    >
+                      {gl.thumbnailUrl ? (
+                        <div className="relative w-full h-full">
+                          <img src={gl.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                          {gl.title && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5">
+                              <p className="text-[8px] text-white truncate">{gl.title}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                          <span className="text-xs text-gray-500">{i + 1}</span>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           <div className="flex gap-3 pt-4">
@@ -1668,7 +1934,7 @@ const AddLinkModal: React.FC<{
               type="submit"
               className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors"
             >
-              Add Link
+              {linkType === 'grid' ? `Add ${gridColumns} Card${gridColumns > 1 ? 's' : ''}` : 'Add Link'}
             </button>
           </div>
         </form>
