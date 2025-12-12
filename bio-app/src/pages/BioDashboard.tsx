@@ -1433,6 +1433,7 @@ const AddLinkModal: React.FC<{
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [linkFormat, setLinkFormat] = useState<'thin' | 'tall' | 'square'>('thin');
+  const [gridFormat, setGridFormat] = useState<'thin' | 'tall' | 'square'>('square'); // Default to square for grids
   
   // Grid carousel state
   const [currentGridSlot, setCurrentGridSlot] = useState(0);
@@ -1496,7 +1497,7 @@ const AddLinkModal: React.FC<{
           grid_columns: gridColumns,
           is_active: true,
           is_featured: false,
-          link_format: undefined,
+          link_format: gridFormat, // Apply the chosen format to grid cards
         }));
       
       if (validLinks.length > 0) {
@@ -1758,6 +1759,74 @@ const AddLinkModal: React.FC<{
                     <div className="text-xs text-center text-gray-300">2×2</div>
                   </button>
                 </div>
+              </div>
+
+              {/* Card Format Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Card Format</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Thin */}
+                  <button
+                    type="button"
+                    onClick={() => setGridFormat('thin')}
+                    className={`p-3 rounded-xl transition-all ${
+                      gridFormat === 'thin'
+                        ? 'bg-purple-500/20 border-2 border-purple-500'
+                        : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-full h-6 bg-current opacity-40 rounded flex items-center px-2">
+                        <div className="w-3 h-3 bg-white/60 rounded mr-2" />
+                        <div className="flex-1 h-2 bg-white/40 rounded" />
+                      </div>
+                      <span className="text-xs text-gray-300">Thin</span>
+                    </div>
+                  </button>
+                  
+                  {/* Tall */}
+                  <button
+                    type="button"
+                    onClick={() => setGridFormat('tall')}
+                    className={`p-3 rounded-xl transition-all ${
+                      gridFormat === 'tall'
+                        ? 'bg-purple-500/20 border-2 border-purple-500'
+                        : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-full h-12 bg-current opacity-40 rounded overflow-hidden">
+                        <div className="w-full h-6 bg-white/60" />
+                        <div className="px-2 py-1">
+                          <div className="h-1.5 bg-white/40 rounded w-2/3" />
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-300">Tall</span>
+                    </div>
+                  </button>
+                  
+                  {/* Square (no title) */}
+                  <button
+                    type="button"
+                    onClick={() => setGridFormat('square')}
+                    className={`p-3 rounded-xl transition-all ${
+                      gridFormat === 'square'
+                        ? 'bg-purple-500/20 border-2 border-purple-500'
+                        : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 bg-current opacity-40 rounded flex items-center justify-center">
+                        <div className="w-6 h-6 bg-white/60 rounded" />
+                      </div>
+                      <span className="text-xs text-gray-300">Square</span>
+                    </div>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {gridFormat === 'square' ? 'Image only, no title displayed' : 
+                   gridFormat === 'tall' ? 'Image with title below' : 'Compact card with title'}
+                </p>
               </div>
 
               {/* Carousel Navigation */}

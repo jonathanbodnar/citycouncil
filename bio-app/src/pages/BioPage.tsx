@@ -871,20 +871,80 @@ const BioPage: React.FC = () => {
             );
           })}
 
-          {/* Grid Links - Support 1x2, 2x2, 2x3 layouts */}
+          {/* Grid Links - Support different formats and layouts */}
           {links.filter(l => l.link_type === 'grid').length > 0 && (() => {
             const gridLinks = links.filter(l => l.link_type === 'grid');
-            // Determine grid columns based on the grid_columns value (1=full, 2=half, 3=third)
-            const maxCols = Math.max(...gridLinks.map(l => l.grid_columns || 2));
-            const gridClass = maxCols === 3 ? 'grid-cols-3' : 'grid-cols-2';
+            // Determine grid columns based on the grid_columns value (2=2 columns, 4=2x2)
+            const gridCols = gridLinks[0]?.grid_columns || 2;
+            const gridClass = gridCols >= 3 ? 'grid-cols-3' : 'grid-cols-2';
             
             return (
               <div className={`grid ${gridClass} gap-3`}>
                 {gridLinks.map((link) => {
-                  // Calculate span: 1 col = full width, 2 = half, 3 = third
-                  const colSpan = link.grid_columns === 1 ? (maxCols === 3 ? 'col-span-3' : 'col-span-2') : 
-                                  link.grid_columns === 3 ? 'col-span-1' : 'col-span-1';
+                  const linkFormat = link.link_format || 'square';
                   
+                  // Square format - image only, no title
+                  if (linkFormat === 'square') {
+                    return (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => handleLinkClick(link)}
+                        className={`aspect-square ${getRadiusClass()} overflow-hidden relative group`}
+                        style={getButtonStyle()}
+                      >
+                        {link.thumbnail_url ? (
+                          <img 
+                            src={link.thumbnail_url} 
+                            alt={link.title || ''} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-white/10">
+                            <Squares2X2Icon className="h-8 w-8 text-white/40" />
+                          </div>
+                        )}
+                      </a>
+                    );
+                  }
+                  
+                  // Tall format - image with title below
+                  if (linkFormat === 'tall') {
+                    return (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => handleLinkClick(link)}
+                        className={`${getRadiusClass()} overflow-hidden group`}
+                        style={getButtonStyle()}
+                      >
+                        <div className="aspect-square w-full">
+                          {link.thumbnail_url ? (
+                            <img 
+                              src={link.thumbnail_url} 
+                              alt={link.title || ''} 
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-white/10">
+                              <Squares2X2Icon className="h-8 w-8 text-white/40" />
+                            </div>
+                          )}
+                        </div>
+                        {link.title && (
+                          <div className="p-2">
+                            <span className="text-white font-medium text-sm line-clamp-2">{link.title}</span>
+                          </div>
+                        )}
+                      </a>
+                    );
+                  }
+                  
+                  // Thin format - compact with image and title
                   return (
                     <a
                       key={link.id}
@@ -892,7 +952,7 @@ const BioPage: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => handleLinkClick(link)}
-                      className={`${colSpan} aspect-square ${getRadiusClass()} overflow-hidden relative group`}
+                      className={`${getRadiusClass()} overflow-hidden relative group`}
                       style={getButtonStyle()}
                     >
                       {link.thumbnail_url ? (
@@ -900,14 +960,14 @@ const BioPage: React.FC = () => {
                           <img 
                             src={link.thumbnail_url} 
                             alt={link.title || ''} 
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
                             <span className="text-white font-medium text-sm">{link.title}</span>
                           </div>
                         </>
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                        <div className="w-full aspect-square flex flex-col items-center justify-center p-4">
                           <Squares2X2Icon className="h-8 w-8 text-white/60 mb-2" />
                           <span className="text-white font-medium text-sm text-center">{link.title}</span>
                         </div>
