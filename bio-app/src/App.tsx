@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import BioPage from './pages/BioPage';
 import BioDashboard from './pages/BioDashboard';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
         <Route path="/dashboard" element={<BioDashboard />} />
         {/* Root shows a landing/redirect */}
         <Route path="/" element={<BioLanding />} />
+        {/* Privacy policy for each talent */}
+        <Route path="/:username/privacy" element={<PrivacyPolicy />} />
         {/* Bio pages at /:username */}
         <Route path="/:username" element={<BioPage />} />
       </Routes>

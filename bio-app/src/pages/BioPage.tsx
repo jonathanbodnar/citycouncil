@@ -93,6 +93,7 @@ const BioPage: React.FC = () => {
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(true); // Pre-checked
 
   useEffect(() => {
     const fetchBioData = async () => {
@@ -452,10 +453,10 @@ const BioPage: React.FC = () => {
           {/* Newsletter Signup - Show if there's a newsletter link (with or without config) */}
           {hasNewsletterLink && (
             <div 
-              className={`${getRadiusClass()} ${bioSettings?.button_style === 'pill' ? 'px-6 py-5' : ''}`}
+              className={`${getRadiusClass()}`}
               style={{
                 ...getButtonStyle(),
-                padding: bioSettings?.button_style === 'pill' ? '20px 24px' : '16px',
+                padding: bioSettings?.button_style === 'pill' ? '24px 32px' : '16px',
               }}
             >
               <div className="flex items-center gap-3 mb-3">
@@ -464,23 +465,45 @@ const BioPage: React.FC = () => {
                   {links.find(l => l.link_type === 'newsletter')?.title || 'Join my newsletter'}
                 </h3>
               </div>
-              <form onSubmit={handleNewsletterSignup} className="flex gap-2">
-                <input
-                  type="email"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
-                />
-                <button
-                  type="submit"
-                  disabled={subscribing || !newsletterConfig}
-                  className="px-4 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
-                >
-                  {subscribing ? '...' : 'Join'}
-                </button>
+              <form onSubmit={handleNewsletterSignup} className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subscribing || !newsletterConfig || !privacyAccepted}
+                    className="px-4 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                    style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
+                  >
+                    {subscribing ? '...' : 'Join'}
+                  </button>
+                </div>
+                {/* Privacy Policy Checkbox */}
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={privacyAccepted}
+                    onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                    className="mt-1 w-4 h-4 rounded bg-white/10 border-white/30 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                  />
+                  <span className="text-xs text-gray-400 leading-relaxed">
+                    I agree to receive {displayName}'s newsletter and accept their{' '}
+                    <a 
+                      href={`/${username}/privacy`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      Privacy Policy
+                    </a>
+                  </span>
+                </label>
               </form>
             </div>
           )}
