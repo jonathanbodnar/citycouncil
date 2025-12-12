@@ -372,7 +372,7 @@ const BioPage: React.FC = () => {
           try {
             console.log('Trying Rumble proxy:', proxyUrl);
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
             
             const response = await fetch(proxyUrl, {
               headers: {
@@ -419,6 +419,7 @@ const BioPage: React.FC = () => {
           isLive: false,
           liveViewers: 0,
         });
+        setRumbleLoading(false);
         return;
       }
       
