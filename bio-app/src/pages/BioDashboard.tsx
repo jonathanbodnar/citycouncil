@@ -32,6 +32,13 @@ interface TalentProfile {
   full_name?: string;
   temp_avatar_url?: string;
   bio?: string;
+  social_accounts?: SocialAccount[];
+}
+
+interface SocialAccount {
+  id: string;
+  platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'linkedin' | 'youtube' | 'threads' | 'snapchat' | 'pinterest';
+  handle: string;
 }
 
 interface User {
@@ -129,12 +136,81 @@ const NEWSLETTER_PROVIDERS = [
   { id: 'zapier', name: 'Zapier Webhook', icon: '🔗' },
 ];
 
+// Social platforms with their URL patterns and icons
+const SOCIAL_PLATFORMS = [
+  { id: 'instagram', name: 'Instagram', urlPattern: 'instagram.com', icon: '📸', baseUrl: 'https://instagram.com/' },
+  { id: 'twitter', name: 'X (Twitter)', urlPattern: 'twitter.com|x.com', icon: '𝕏', baseUrl: 'https://x.com/' },
+  { id: 'tiktok', name: 'TikTok', urlPattern: 'tiktok.com', icon: '🎵', baseUrl: 'https://tiktok.com/@' },
+  { id: 'youtube', name: 'YouTube', urlPattern: 'youtube.com|youtu.be', icon: '▶️', baseUrl: 'https://youtube.com/' },
+  { id: 'facebook', name: 'Facebook', urlPattern: 'facebook.com|fb.com', icon: '📘', baseUrl: 'https://facebook.com/' },
+  { id: 'linkedin', name: 'LinkedIn', urlPattern: 'linkedin.com', icon: '💼', baseUrl: 'https://linkedin.com/in/' },
+  { id: 'threads', name: 'Threads', urlPattern: 'threads.net', icon: '🧵', baseUrl: 'https://threads.net/@' },
+  { id: 'snapchat', name: 'Snapchat', urlPattern: 'snapchat.com', icon: '👻', baseUrl: 'https://snapchat.com/add/' },
+  { id: 'pinterest', name: 'Pinterest', urlPattern: 'pinterest.com', icon: '📌', baseUrl: 'https://pinterest.com/' },
+  { id: 'spotify', name: 'Spotify', urlPattern: 'spotify.com|open.spotify', icon: '🎧', baseUrl: 'https://open.spotify.com/' },
+  { id: 'twitch', name: 'Twitch', urlPattern: 'twitch.tv', icon: '🎮', baseUrl: 'https://twitch.tv/' },
+  { id: 'discord', name: 'Discord', urlPattern: 'discord.gg|discord.com', icon: '💬', baseUrl: 'https://discord.gg/' },
+];
+
+// URLs to skip during import (not actual links)
+const SKIP_URL_PATTERNS = [
+  '/privacy',
+  '/terms',
+  '/legal',
+  '/cookie',
+  '/about',
+  '/contact',
+  '/help',
+  '/support',
+  '/faq',
+  'facebook.com/sharer',
+  'twitter.com/intent',
+  'twitter.com/share',
+  'linkedin.com/sharing',
+  'linkedin.com/shareArticle',
+  'pinterest.com/pin/create',
+  'reddit.com/submit',
+  'tumblr.com/share',
+  'telegram.me/share',
+  't.me/share',
+  'wa.me',
+  'whatsapp.com/send',
+  'line.me/R/share',
+  'social-plugins.line.me',
+  'story.kakao.com/share',
+  'vk.com/share',
+  'getpocket.com/save',
+  'buffer.com/add',
+  'mailto:',
+  'tel:',
+  'sms:',
+];
+
+// Helper to detect if URL is a social platform
+const detectSocialPlatform = (url: string): string | null => {
+  const lowerUrl = url.toLowerCase();
+  for (const platform of SOCIAL_PLATFORMS) {
+    const patterns = platform.urlPattern.split('|');
+    if (patterns.some(p => lowerUrl.includes(p))) {
+      return platform.id;
+    }
+  }
+  return null;
+};
+
+// Helper to check if URL should be skipped
+const shouldSkipUrl = (url: string): boolean => {
+  const lowerUrl = url.toLowerCase();
+  return SKIP_URL_PATTERNS.some(pattern => lowerUrl.includes(pattern));
+};
+
 const BioDashboard: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [, setUser] = useState<User | null>(null);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [bioSettings, setBioSettings] = useState<BioSettings | null>(null);
   const [links, setLinks] = useState<BioLink[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialAccount[]>([]);
   const [newsletterConfigs, setNewsletterConfigs] = useState<NewsletterConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,8 +218,9 @@ const BioDashboard: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAddSocialModal, setShowAddSocialModal] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'links' | 'style' | 'settings'>('links');
+  const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
 
   // Auto-refresh preview
@@ -194,6 +271,11 @@ const BioDashboard: React.FC = () => {
         }
 
         setTalentProfile(profile);
+        
+        // Load social accounts from talent profile
+        if (profile.social_accounts && Array.isArray(profile.social_accounts)) {
+          setSocialLinks(profile.social_accounts);
+        }
 
         // Get or create bio settings
         let { data: settings, error: settingsError } = await supabase
@@ -485,17 +567,13 @@ const BioDashboard: React.FC = () => {
             const anchor = el as HTMLAnchorElement;
             const href = anchor.getAttribute('href');
             
-            // Skip social share links, anchors, and javascript links
+            // Skip unwanted URLs (share buttons, privacy, etc.)
             const jsPrefix = 'javascript'; // eslint workaround
             if (!href || 
                 href.startsWith('#') || 
                 href.startsWith(jsPrefix + ':') ||
-                href.includes('facebook.com/sharer') ||
-                href.includes('twitter.com/intent') ||
-                href.includes('linkedin.com/sharing') ||
-                href.includes('pinterest.com/pin') ||
-                href.includes('wa.me') ||
-                href === url) {
+                href === url ||
+                shouldSkipUrl(href)) {
               return;
             }
             
@@ -577,14 +655,46 @@ const BioDashboard: React.FC = () => {
         }
       });
       
-      if (extractedLinks.length === 0) {
+      // Separate social links from regular links
+      const regularLinks: typeof extractedLinks = [];
+      const detectedSocialLinks: Array<{ platform: string; url: string; handle: string }> = [];
+      
+      for (const link of extractedLinks) {
+        const socialPlatform = detectSocialPlatform(link.url);
+        if (socialPlatform) {
+          // Extract handle from URL
+          let handle = link.url;
+          try {
+            const urlObj = new URL(link.url);
+            handle = urlObj.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || link.title;
+            // Remove @ if present
+            handle = handle.replace(/^@/, '');
+          } catch {
+            handle = link.title;
+          }
+          
+          // Check if we already have this social platform
+          const existingSocial = detectedSocialLinks.find(s => s.platform === socialPlatform);
+          if (!existingSocial) {
+            detectedSocialLinks.push({
+              platform: socialPlatform,
+              url: link.url,
+              handle,
+            });
+          }
+        } else {
+          regularLinks.push(link);
+        }
+      }
+      
+      if (regularLinks.length === 0 && detectedSocialLinks.length === 0) {
         throw new Error('No links found on this page. Try a different URL or add links manually.');
       }
       
-      // Limit to 20 links max
-      const linksToImport = extractedLinks.slice(0, 20);
+      // Limit to 20 regular links max
+      const linksToImport = regularLinks.slice(0, 20);
       
-      // Save links to database
+      // Save regular links to database
       const newLinks: BioLink[] = [];
       for (let i = 0; i < linksToImport.length; i++) {
         const link = linksToImport[i];
@@ -609,13 +719,40 @@ const BioDashboard: React.FC = () => {
         }
       }
       
-      if (newLinks.length > 0) {
+      // Add detected social links to state (merge with existing)
+      if (detectedSocialLinks.length > 0) {
+        const newSocialLinks: SocialAccount[] = [];
+        for (const social of detectedSocialLinks) {
+          // Check if platform already exists
+          const exists = socialLinks.some(s => s.platform === social.platform);
+          if (!exists) {
+            newSocialLinks.push({
+              id: `imported-${Date.now()}-${social.platform}`,
+              platform: social.platform as SocialAccount['platform'],
+              handle: social.handle,
+            });
+          }
+        }
+        if (newSocialLinks.length > 0) {
+          const updatedSocials = [...socialLinks, ...newSocialLinks];
+          setSocialLinks(updatedSocials);
+          // Save to talent profile
+          await supabase
+            .from('talent_profiles')
+            .update({ social_accounts: updatedSocials })
+            .eq('id', talentProfile.id);
+        }
+      }
+      
+      const totalImported = newLinks.length + detectedSocialLinks.filter(s => !socialLinks.some(existing => existing.platform === s.platform)).length;
+      
+      if (totalImported > 0) {
         setLinks([...links, ...newLinks]);
-        toast.success(`Imported ${newLinks.length} links!`, { id: 'import' });
+        toast.success(`Imported ${newLinks.length} links${detectedSocialLinks.length > 0 ? ` and ${detectedSocialLinks.length} social profiles` : ''}!`, { id: 'import' });
         // Auto-refresh preview
         setTimeout(refreshPreview, 500);
       } else {
-        throw new Error('Failed to save imported links.');
+        throw new Error('No new links to import (may already exist).');
       }
       
     } catch (error: any) {
@@ -724,6 +861,7 @@ const BioDashboard: React.FC = () => {
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {[
             { key: 'links', label: 'Links', icon: LinkIcon },
+            { key: 'social', label: 'Social', icon: SparklesIcon },
             { key: 'style', label: 'Style', icon: PaintBrushIcon },
             { key: 'settings', label: 'Settings', icon: Cog6ToothIcon },
           ].map((tab) => (
@@ -866,6 +1004,81 @@ const BioDashboard: React.FC = () => {
                   </div>
                 </div>
               </>
+            )}
+
+            {activeTab === 'social' && (
+              <div className="space-y-6">
+                {/* Add Social Button */}
+                <button
+                  onClick={() => setShowAddSocialModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  Add Social Link
+                </button>
+
+                {/* Social Links List */}
+                <div className="space-y-3">
+                  {socialLinks.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+                      <SparklesIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-400 mb-2">No social links yet</h3>
+                      <p className="text-gray-500 mb-4">Add your social media profiles to display at the bottom of your bio page</p>
+                    </div>
+                  ) : (
+                    socialLinks.map((social) => {
+                      const platform = SOCIAL_PLATFORMS.find(p => p.id === social.platform);
+                      return (
+                        <div
+                          key={social.id}
+                          className="bg-white/5 border border-white/10 rounded-xl p-4 transition-all hover:border-white/20"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/10 text-2xl">
+                              {platform?.icon || '🔗'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-white">
+                                {platform?.name || social.platform}
+                              </h3>
+                              <p className="text-sm text-gray-400">@{social.handle}</p>
+                            </div>
+                            <button
+                              onClick={async () => {
+                                const updated = socialLinks.filter(s => s.id !== social.id);
+                                setSocialLinks(updated);
+                                await supabase
+                                  .from('talent_profiles')
+                                  .update({ social_accounts: updated })
+                                  .eq('id', talentProfile?.id);
+                                toast.success('Social link removed');
+                                setTimeout(refreshPreview, 500);
+                              }}
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Info about social icons */}
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-4">
+                  <div className="flex items-start gap-3">
+                    <SparklesIcon className="h-6 w-6 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-medium text-white mb-1">Social Icons</h3>
+                      <p className="text-sm text-gray-300">
+                        Social links appear as icons at the bottom of your bio page, just above the footer.
+                        They're automatically imported when you use the Import Links feature.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {activeTab === 'style' && (
@@ -1170,6 +1383,29 @@ const BioDashboard: React.FC = () => {
         <ImportModal
           onClose={() => setShowImportModal(false)}
           onImport={importFromUrl}
+        />
+      )}
+
+      {showAddSocialModal && (
+        <AddSocialModal
+          onClose={() => setShowAddSocialModal(false)}
+          onAdd={async (social) => {
+            const newSocial: SocialAccount = {
+              id: `social-${Date.now()}`,
+              platform: social.platform as SocialAccount['platform'],
+              handle: social.handle,
+            };
+            const updated = [...socialLinks, newSocial];
+            setSocialLinks(updated);
+            await supabase
+              .from('talent_profiles')
+              .update({ social_accounts: updated })
+              .eq('id', talentProfile?.id);
+            toast.success('Social link added!');
+            setTimeout(refreshPreview, 500);
+            setShowAddSocialModal(false);
+          }}
+          existingPlatforms={socialLinks.map(s => s.platform)}
         />
       )}
     </div>
@@ -1843,6 +2079,121 @@ const ImportModal: React.FC<{
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Add Social Modal
+const AddSocialModal: React.FC<{
+  onClose: () => void;
+  onAdd: (social: { platform: string; handle: string }) => void;
+  existingPlatforms: string[];
+}> = ({ onClose, onAdd, existingPlatforms }) => {
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [handle, setHandle] = useState('');
+
+  const availablePlatforms = SOCIAL_PLATFORMS.filter(p => !existingPlatforms.includes(p.id));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedPlatform && handle) {
+      onAdd({ platform: selectedPlatform, handle: handle.replace(/^@/, '') });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">Add Social Link</h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+        {!selectedPlatform ? (
+          <div className="space-y-3">
+            <p className="text-gray-400 text-sm mb-4">
+              Select a platform to add:
+            </p>
+            {availablePlatforms.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                You've added all available social platforms!
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {availablePlatforms.map((platform) => (
+                  <button
+                    key={platform.id}
+                    onClick={() => setSelectedPlatform(platform.id)}
+                    className="p-4 rounded-xl border-2 border-white/20 hover:border-white/40 text-left transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{platform.icon}</span>
+                      <span className="font-medium text-white">{platform.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <button
+              type="button"
+              onClick={() => setSelectedPlatform(null)}
+              className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            >
+              ← Back to platforms
+            </button>
+
+            <div className="p-4 bg-white/5 rounded-xl flex items-center gap-3">
+              <span className="text-3xl">
+                {SOCIAL_PLATFORMS.find(p => p.id === selectedPlatform)?.icon}
+              </span>
+              <div>
+                <h3 className="font-medium text-white">
+                  {SOCIAL_PLATFORMS.find(p => p.id === selectedPlatform)?.name}
+                </h3>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Username / Handle</label>
+              <div className="flex items-center">
+                <span className="text-gray-500 mr-2">@</span>
+                <input
+                  type="text"
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
+                  placeholder="username"
+                  className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+              >
+                Add Social
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

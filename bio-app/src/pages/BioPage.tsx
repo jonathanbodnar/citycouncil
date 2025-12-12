@@ -19,7 +19,30 @@ interface TalentProfile {
   full_name?: string;
   temp_avatar_url?: string;
   bio?: string;
+  social_accounts?: SocialAccount[];
 }
+
+interface SocialAccount {
+  id: string;
+  platform: string;
+  handle: string;
+}
+
+// Social platform configurations
+const SOCIAL_PLATFORMS: Record<string, { icon: string; baseUrl: string; name: string }> = {
+  instagram: { icon: '📸', baseUrl: 'https://instagram.com/', name: 'Instagram' },
+  twitter: { icon: '𝕏', baseUrl: 'https://x.com/', name: 'X' },
+  tiktok: { icon: '🎵', baseUrl: 'https://tiktok.com/@', name: 'TikTok' },
+  youtube: { icon: '▶️', baseUrl: 'https://youtube.com/@', name: 'YouTube' },
+  facebook: { icon: '📘', baseUrl: 'https://facebook.com/', name: 'Facebook' },
+  linkedin: { icon: '💼', baseUrl: 'https://linkedin.com/in/', name: 'LinkedIn' },
+  threads: { icon: '🧵', baseUrl: 'https://threads.net/@', name: 'Threads' },
+  snapchat: { icon: '👻', baseUrl: 'https://snapchat.com/add/', name: 'Snapchat' },
+  pinterest: { icon: '📌', baseUrl: 'https://pinterest.com/', name: 'Pinterest' },
+  spotify: { icon: '🎧', baseUrl: 'https://open.spotify.com/user/', name: 'Spotify' },
+  twitch: { icon: '🎮', baseUrl: 'https://twitch.tv/', name: 'Twitch' },
+  discord: { icon: '💬', baseUrl: 'https://discord.gg/', name: 'Discord' },
+};
 
 interface BioSettings {
   id?: string;
@@ -594,6 +617,33 @@ const BioPage: React.FC = () => {
             </a>
           )}
         </div>
+
+        {/* Social Icons */}
+        {talentProfile?.social_accounts && talentProfile.social_accounts.length > 0 && (
+          <div className="mt-8 flex justify-center gap-4 flex-wrap">
+            {talentProfile.social_accounts.map((social) => {
+              const platform = SOCIAL_PLATFORMS[social.platform];
+              if (!platform) return null;
+              
+              return (
+                <a
+                  key={social.id}
+                  href={`${platform.baseUrl}${social.handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110"
+                  style={{
+                    backgroundColor: `${bioSettings?.button_color || '#3b82f6'}30`,
+                    border: `1px solid ${bioSettings?.button_color || '#3b82f6'}50`,
+                  }}
+                  title={platform.name}
+                >
+                  {platform.icon}
+                </a>
+              );
+            })}
+          </div>
+        )}
 
         {/* Footer - White text with opacity for visibility on any background */}
         <div className="mt-8 text-center">
