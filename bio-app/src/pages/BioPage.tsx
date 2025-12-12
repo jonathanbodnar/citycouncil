@@ -363,20 +363,28 @@ const BioPage: React.FC = () => {
       // Try each URL format with CORS proxies
       for (const channelUrl of urlFormats) {
         const corsProxies = [
-          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(channelUrl)}`,
           `https://api.allorigins.win/raw?url=${encodeURIComponent(channelUrl)}`,
           `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`,
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(channelUrl)}`,
         ];
         
         for (const proxyUrl of corsProxies) {
           try {
+            console.log('Trying Rumble proxy:', proxyUrl);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+            
             const response = await fetch(proxyUrl, {
               headers: {
                 'Accept': 'text/html,application/xhtml+xml',
-              }
+              },
+              signal: controller.signal,
             });
+            clearTimeout(timeoutId);
+            
             if (response.ok) {
               const text = await response.text();
+              console.log('Rumble response length:', text.length);
               // Check if we got actual video content (not an error page)
               // Rumble uses various class patterns for thumbnails and CDN domains
               if (text.includes('thumbnail__image') || text.includes('thumbnail__title') || 
@@ -386,10 +394,15 @@ const BioPage: React.FC = () => {
                 successUrl = channelUrl;
                 console.log('Rumble HTML fetched successfully from:', proxyUrl);
                 break;
+              } else {
+                console.log('Rumble response did not contain expected content');
               }
+            } else {
+              console.log('Rumble proxy returned status:', response.status);
             }
-          } catch (e) {
-            console.log('Rumble proxy failed, trying next...', proxyUrl);
+          } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+            console.log('Rumble proxy failed:', proxyUrl, errorMessage);
           }
         }
         if (html) break;
@@ -516,6 +529,15 @@ const BioPage: React.FC = () => {
       });
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
+      // Set fallback data so the card still shows
+      setRumbleData({
+        title: 'Watch on Rumble',
+        thumbnail: '',
+        url: `https://rumble.com/user/${rumbleHandle.replace(/^@/, '')}`,
+        views: 0,
+        isLive: false,
+        liveViewers: 0,
+      });
     } finally {
       setRumbleLoading(false);
     }
