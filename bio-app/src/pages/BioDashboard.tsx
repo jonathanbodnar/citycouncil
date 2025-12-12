@@ -1510,6 +1510,20 @@ const AddLinkModal: React.FC<{
     }
   };
 
+  // Helper to auto-add https://
+  const ensureHttps = (inputUrl: string) => {
+    if (!inputUrl) return inputUrl;
+    if (inputUrl.startsWith('http://') || inputUrl.startsWith('https://')) return inputUrl;
+    return 'https://' + inputUrl;
+  };
+
+  // Auto-add https:// when URL loses focus
+  const handleUrlBlur = () => {
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      setUrl('https://' + url);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -1521,7 +1535,7 @@ const AddLinkModal: React.FC<{
           talent_id: talentId,
           link_type: 'grid' as const,
           title: gl.title,
-          url: gl.url,
+          url: ensureHttps(gl.url),
           thumbnail_url: gl.thumbnailUrl || undefined,
           grid_columns: gridColumns,
           is_active: true,
@@ -1539,7 +1553,7 @@ const AddLinkModal: React.FC<{
         talent_id: talentId,
         link_type: linkType,
         title,
-        url,
+        url: ensureHttps(url),
         thumbnail_url: thumbnailUrl || undefined,
         grid_columns: gridColumns,
         is_active: true,
@@ -1620,13 +1634,15 @@ const AddLinkModal: React.FC<{
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
                   <input
-                    type="url"
+                    type="text"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://example.com"
+                    onBlur={handleUrlBlur}
+                    placeholder="example.com"
                     className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
                 </div>
               )}
 
@@ -2040,10 +2056,18 @@ const EditLinkModal: React.FC<{
   const [title, setTitle] = useState(link.title || '');
   const [url, setUrl] = useState(link.url || '');
   const [thumbnailUrl, setThumbnailUrl] = useState(link.thumbnail_url || '');
-  const [gridColumns, setGridColumns] = useState(link.grid_columns || 1);
+  const [gridColumns, setGridColumns] = useState(link.grid_columns || 2);
   const [isActive, setIsActive] = useState(link.is_active);
   const [isFeatured, setIsFeatured] = useState(link.is_featured || false);
+  const [linkFormat, setLinkFormat] = useState<'thin' | 'tall' | 'square'>(link.link_format as 'thin' | 'tall' | 'square' || 'thin');
   const [uploading, setUploading] = useState(false);
+
+  // Auto-add https:// when URL loses focus
+  const handleUrlBlur = () => {
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      setUrl('https://' + url);
+    }
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2067,14 +2091,20 @@ const EditLinkModal: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Auto-add https:// before saving
+    let finalUrl = url;
+    if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = 'https://' + finalUrl;
+    }
     onSave({
       ...link,
       title,
-      url,
+      url: finalUrl,
       thumbnail_url: thumbnailUrl || undefined,
       grid_columns: gridColumns,
       is_active: isActive,
       is_featured: isFeatured,
+      link_format: linkFormat,
     });
   };
 
@@ -2106,12 +2136,14 @@ const EditLinkModal: React.FC<{
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
             <input
-              type="url"
+              type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
+              onBlur={handleUrlBlur}
+              placeholder="example.com"
               className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
+            <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
           </div>
 
           <div>
@@ -2196,6 +2228,146 @@ const EditLinkModal: React.FC<{
                   <div className="text-xs text-center text-gray-300">2×2</div>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Link Format for basic links */}
+          {link.link_type === 'basic' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Link Format</label>
+              <div className="grid grid-cols-3 gap-3">
+                {/* Thin */}
+                <button
+                  type="button"
+                  onClick={() => setLinkFormat('thin')}
+                  className={`p-3 rounded-xl transition-all ${
+                    linkFormat === 'thin'
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-full h-6 bg-current opacity-40 rounded flex items-center px-2">
+                      <div className="w-3 h-3 bg-white/60 rounded mr-2" />
+                      <div className="flex-1 h-2 bg-white/40 rounded" />
+                    </div>
+                    <span className="text-xs text-gray-300">Thin</span>
+                  </div>
+                </button>
+                
+                {/* Tall */}
+                <button
+                  type="button"
+                  onClick={() => setLinkFormat('tall')}
+                  className={`p-3 rounded-xl transition-all ${
+                    linkFormat === 'tall'
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-full h-12 bg-current opacity-40 rounded flex items-center px-2">
+                      <div className="w-8 h-8 bg-white/60 rounded mr-2" />
+                      <div className="flex-1">
+                        <div className="h-2 bg-white/40 rounded mb-1" />
+                        <div className="h-1.5 bg-white/20 rounded w-2/3" />
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-300">Tall</span>
+                  </div>
+                </button>
+                
+                {/* Square (no title) */}
+                <button
+                  type="button"
+                  onClick={() => setLinkFormat('square')}
+                  className={`p-3 rounded-xl transition-all ${
+                    linkFormat === 'square'
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 bg-current opacity-40 rounded flex items-center justify-center">
+                      <div className="w-6 h-6 bg-white/60 rounded" />
+                    </div>
+                    <span className="text-xs text-gray-300">Square</span>
+                  </div>
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {linkFormat === 'square' ? 'Image only, no title displayed' : 'Choose how your link appears'}
+              </p>
+            </div>
+          )}
+
+          {/* Card Format for grid links */}
+          {link.link_type === 'grid' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Card Format</label>
+              <div className="grid grid-cols-3 gap-3">
+                {/* Thin */}
+                <button
+                  type="button"
+                  onClick={() => setLinkFormat('thin')}
+                  className={`p-3 rounded-xl transition-all ${
+                    linkFormat === 'thin'
+                      ? 'bg-purple-500/20 border-2 border-purple-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-full h-6 bg-current opacity-40 rounded flex items-center px-2">
+                      <div className="w-3 h-3 bg-white/60 rounded mr-2" />
+                      <div className="flex-1 h-2 bg-white/40 rounded" />
+                    </div>
+                    <span className="text-xs text-gray-300">Thin</span>
+                  </div>
+                </button>
+                
+                {/* Tall */}
+                <button
+                  type="button"
+                  onClick={() => setLinkFormat('tall')}
+                  className={`p-3 rounded-xl transition-all ${
+                    linkFormat === 'tall'
+                      ? 'bg-purple-500/20 border-2 border-purple-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-full h-12 bg-current opacity-40 rounded overflow-hidden">
+                      <div className="w-full h-6 bg-white/60" />
+                      <div className="px-2 py-1">
+                        <div className="h-1.5 bg-white/40 rounded w-2/3" />
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-300">Tall</span>
+                  </div>
+                </button>
+                
+                {/* Square (no title) */}
+                <button
+                  type="button"
+                  onClick={() => setLinkFormat('square')}
+                  className={`p-3 rounded-xl transition-all ${
+                    linkFormat === 'square'
+                      ? 'bg-purple-500/20 border-2 border-purple-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 bg-current opacity-40 rounded flex items-center justify-center">
+                      <div className="w-6 h-6 bg-white/60 rounded" />
+                    </div>
+                    <span className="text-xs text-gray-300">Square</span>
+                  </div>
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {linkFormat === 'square' ? 'Image only, flush edges' : 
+                 linkFormat === 'tall' ? 'Image with title below' : 'Compact card with title'}
+              </p>
             </div>
           )}
 
