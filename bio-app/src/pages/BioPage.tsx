@@ -886,14 +886,18 @@ const BioPage: React.FC = () => {
             // Determine grid columns based on the grid_columns value (2=2 columns, 4=2x2)
             const gridCols = gridLinks[0]?.grid_columns || 2;
             const gridClass = gridCols >= 3 ? 'grid-cols-3' : 'grid-cols-2';
+            const linkFormat = gridLinks[0]?.link_format || 'square';
+            
+            // Square format uses no gap for flush edges
+            const gapClass = linkFormat === 'square' ? 'gap-0' : 'gap-3';
             
             return (
-              <div className={`grid ${gridClass} gap-3`}>
+              <div className={`grid ${gridClass} ${gapClass} overflow-hidden rounded-xl`}>
                 {gridLinks.map((link) => {
-                  const linkFormat = link.link_format || 'square';
+                  const format = link.link_format || 'square';
                   
-                  // Square format - image only, no title
-                  if (linkFormat === 'square') {
+                  // Square format - image only, no title, flush edges
+                  if (format === 'square') {
                     return (
                       <a
                         key={link.id}
@@ -901,8 +905,7 @@ const BioPage: React.FC = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => handleLinkClick(link)}
-                        className={`aspect-square ${getRadiusClass()} overflow-hidden relative group`}
-                        style={getButtonStyle()}
+                        className="aspect-square overflow-hidden relative group"
                       >
                         {link.thumbnail_url ? (
                           <img 
