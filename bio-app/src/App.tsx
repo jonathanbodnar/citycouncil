@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import BioPage from './pages/BioPage';
+import BioDashboard from './pages/BioDashboard';
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
         }}
       />
       <Routes>
+        {/* Dashboard for editing bio - requires auth token */}
+        <Route path="/dashboard" element={<BioDashboard />} />
         {/* Root shows a landing/redirect */}
         <Route path="/" element={<BioLanding />} />
         {/* Bio pages at /:username */}
