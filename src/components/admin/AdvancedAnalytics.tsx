@@ -111,7 +111,7 @@ const AdvancedAnalytics: React.FC = () => {
   const [currentFollowers, setCurrentFollowers] = useState<number>(0);
   const [showFollowerInput, setShowFollowerInput] = useState(false);
 
-  // Helper to format date as YYYY-MM-DD in local timezone (defined early for use in getDateRange)
+  // Helper to format date as YYYY-MM-DD
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -119,33 +119,44 @@ const AdvancedAnalytics: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // Calculate date range
-  const getDateRange = useCallback(() => {
-    // Get current date/time in local timezone
+  // Convert UTC timestamp to CST date string (YYYY-MM-DD)
+  const formatTimestampToCST = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const cstString = date.toLocaleString('en-US', { timeZone: 'America/Chicago' });
+    const cstDate = new Date(cstString);
+    return formatLocalDate(cstDate);
+  };
+
+  // Get current date in CST
+  const getCSTNow = () => {
     const now = new Date();
-    console.log('🕐 Current local time:', now.toLocaleString(), 'Date:', now.getDate(), 'formatLocalDate:', formatLocalDate(now));
+    const cstString = now.toLocaleString('en-US', { timeZone: 'America/Chicago' });
+    return new Date(cstString);
+  };
+
+  // Calculate date range (all dates in CST)
+  const getDateRange = useCallback(() => {
+    const now = getCSTNow();
+    console.log('🕐 Current CST time:', now.toLocaleString());
     
-    const end = new Date(now);
-    let start = new Date(now);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     switch (dateRange) {
       case 'today':
-        // Start and end are both today - ensure we're using local date
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        end.setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
-        console.log('📅 Today mode - start:', formatLocalDate(start), 'end:', formatLocalDate(end));
+        console.log('📅 Today mode (CST) - start:', formatLocalDate(start), 'end:', formatLocalDate(end));
         break;
       case '7d':
-        start.setDate(end.getDate() - 7);
+        start.setDate(start.getDate() - 7);
         break;
       case '14d':
-        start.setDate(end.getDate() - 14);
+        start.setDate(start.getDate() - 14);
         break;
       case '30d':
-        start.setDate(end.getDate() - 30);
+        start.setDate(start.getDate() - 30);
         break;
       case '90d':
-        start.setDate(end.getDate() - 90);
+        start.setDate(start.getDate() - 90);
         break;
       case 'custom':
         if (customStartDate && customEndDate) {
@@ -154,25 +165,28 @@ const AdvancedAnalytics: React.FC = () => {
             end: new Date(customEndDate)
           };
         }
-        start.setDate(end.getDate() - 30);
+        start.setDate(start.getDate() - 30);
         break;
     }
     
     return { start, end };
   }, [dateRange, customStartDate, customEndDate]);
 
-  // Helper to get ISO timestamp for start of day in local timezone
-  const getLocalDayStart = (date: Date) => {
-    const localDate = new Date(date);
-    localDate.setHours(0, 0, 0, 0);
-    return localDate.toISOString();
+  // Helper to get ISO timestamp for start of day in CST from date string (YYYY-MM-DD)
+  // Midnight CST = 6:00 AM UTC
+  const getCSTDayStartFromString = (dateStr: string) => {
+    return `${dateStr}T06:00:00.000Z`;
   };
 
-  // Helper to get ISO timestamp for end of day in local timezone
-  const getLocalDayEnd = (date: Date) => {
-    const localDate = new Date(date);
-    localDate.setHours(23, 59, 59, 999);
-    return localDate.toISOString();
+  // Helper to get ISO timestamp for end of day in CST from date string (YYYY-MM-DD)
+  // 11:59:59 PM CST = 5:59:59 AM UTC next day
+  const getCSTDayEndFromString = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const nextDay = new Date(year, month - 1, day + 1);
+    const nextYear = nextDay.getFullYear();
+    const nextMonth = String(nextDay.getMonth() + 1).padStart(2, '0');
+    const nextDayNum = String(nextDay.getDate()).padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDayNum}T05:59:59.999Z`;
   };
 
   // Fetch all data
@@ -184,9 +198,9 @@ const AdvancedAnalytics: React.FC = () => {
       const startStr = formatLocalDate(start);
       const endStr = formatLocalDate(end);
       
-      // Get proper UTC timestamps for local day boundaries
-      const startTimestamp = getLocalDayStart(start);
-      const endTimestamp = getLocalDayEnd(end);
+      // Get proper UTC timestamps for CST day boundaries
+      const startTimestamp = getCSTDayStartFromString(startStr);
+      const endTimestamp = getCSTDayEndFromString(endStr);
       
       console.log('📊 Fetching analytics data:', { startStr, endStr, startTimestamp, endTimestamp, dateRange });
 
@@ -207,13 +221,12 @@ const AdvancedAnalytics: React.FC = () => {
           .gte('created_at', startTimestamp)
           .lte('created_at', endTimestamp),
         
-        // Users by date (use local timezone boundaries)
+        // Users by date - use RPC function to bypass RLS
         supabase
-          .from('users')
-          .select('created_at, promo_source')
-          .eq('user_type', 'user')
-          .gte('created_at', startTimestamp)
-          .lte('created_at', endTimestamp),
+          .rpc('get_users_for_analytics', {
+            start_ts: startTimestamp,
+            end_ts: endTimestamp
+          }),
         
         // SMS signups (holiday popup) (use local timezone boundaries)
         supabase
@@ -293,26 +306,50 @@ const AdvancedAnalytics: React.FC = () => {
         adSpend: adSpendResult.data?.length || 0,
         followers: followerCountsResult.data?.length || 0
       });
+      
+      // Debug: log raw data and any errors
+      console.log('📊 Raw data:', {
+        orders: ordersResult.data,
+        ordersError: ordersResult.error,
+        users: usersResult.data,
+        usersError: usersResult.error,
+        sms: smsResult.data,
+        smsError: smsResult.error
+      });
+      
+      console.log('📊 Date map keys:', Array.from(dailyMap.keys()));
 
-      // Count orders per day (use local date)
+      // Count orders per day (convert UTC to CST)
       ordersResult.data?.forEach(order => {
-        const date = formatLocalDate(new Date(order.created_at));
+        const date = formatTimestampToCST(order.created_at);
         const day = dailyMap.get(date);
-        if (day) day.orders++;
+        if (day) {
+          day.orders++;
+        } else {
+          console.log('📊 Order date not in range:', date, 'from', order.created_at);
+        }
       });
 
-      // Count users per day (use local date)
-      usersResult.data?.forEach(user => {
-        const date = formatLocalDate(new Date(user.created_at));
+      // Count users per day (convert UTC to CST)
+      usersResult.data?.forEach((user: { created_at: string; promo_source?: string; did_holiday_popup?: boolean }) => {
+        const date = formatTimestampToCST(user.created_at);
         const day = dailyMap.get(date);
-        if (day) day.users++;
+        if (day) {
+          day.users++;
+        } else {
+          console.log('📊 User date not in range:', date, 'from', user.created_at);
+        }
       });
 
-      // Count SMS signups per day (use local date)
+      // Count SMS signups per day (convert UTC to CST)
       smsResult.data?.forEach(signup => {
-        const date = formatLocalDate(new Date(signup.subscribed_at));
+        const date = formatTimestampToCST(signup.subscribed_at);
         const day = dailyMap.get(date);
-        if (day) day.sms++;
+        if (day) {
+          day.sms++;
+        } else {
+          console.log('📊 SMS date not in range:', date, 'from', signup.subscribed_at);
+        }
       });
 
       // Add ad spend per day
@@ -328,17 +365,37 @@ const AdvancedAnalytics: React.FC = () => {
         }
       });
 
-      // Calculate follower changes (today's count - yesterday's count)
+      // Calculate follower changes
+      // The count recorded at midnight on date X represents followers at END of day X-1
+      // So: growth on Dec 11 = count recorded Dec 12 midnight - count recorded Dec 11 midnight
       const followerData = followerCountsResult.data || [];
-      followerData.forEach((fc, index) => {
-        const day = dailyMap.get(fc.date);
-        if (day && index > 0) {
-          const prevCount = followerData[index - 1].count;
-          day.followers = fc.count - prevCount;
-        } else if (day && index === 0) {
-          day.followers = 0; // First day has no previous reference
+      const followerByDate = new Map<string, number>();
+      followerData.forEach(fc => {
+        followerByDate.set(fc.date, fc.count);
+      });
+      
+      // For each day, growth = next day's midnight count - this day's midnight count
+      const sortedDates = Array.from(dailyMap.keys()).sort();
+      sortedDates.forEach(dateStr => {
+        const day = dailyMap.get(dateStr);
+        if (!day) return;
+        
+        const todayMidnightCount = followerByDate.get(dateStr);
+        
+        // Get next day's date
+        const currentDate = new Date(dateStr + 'T12:00:00');
+        currentDate.setDate(currentDate.getDate() + 1);
+        const nextDateStr = formatLocalDate(currentDate);
+        const nextMidnightCount = followerByDate.get(nextDateStr);
+        
+        if (todayMidnightCount !== undefined && nextMidnightCount !== undefined) {
+          day.followers = nextMidnightCount - todayMidnightCount;
+        } else {
+          day.followers = 0;
         }
       });
+      
+      console.log('📊 Follower data:', Object.fromEntries(followerByDate));
 
       // Convert to array and sort by date
       const chartDataArray = Array.from(dailyMap.values()).sort(
