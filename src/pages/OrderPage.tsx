@@ -424,7 +424,8 @@ const OrderPage: React.FC = () => {
             approved_at: orderData.isForBusiness ? null : new Date().toISOString(),
             status: 'pending',
             allow_promotional_use: orderData.allowPromotionalUse ?? true,
-            promo_source: getPromoSource(talent)
+            promo_source: getPromoSource(talent),
+            did_holiday_popup: localStorage.getItem('holiday_popup_submitted') === 'true'
           },
         ])
         .select()

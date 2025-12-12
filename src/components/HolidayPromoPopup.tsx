@@ -19,14 +19,14 @@ const getPopupDelay = (): number => {
   
   console.log('🎁 Popup source detection:', { utmSource, storedSource, finalSource: source });
   
-  // Only match exact "sms" source
-  if (source === 'sms') {
-    console.log('🎁 SMS source detected - 3 second delay');
-    return 3000; // 3 seconds for SMS campaigns
+  // Fast popup for SMS and giveaway sources
+  if (source === 'sms' || source === 'giveaway') {
+    console.log(`🎁 ${source} source detected - 3 second delay`);
+    return 3000; // 3 seconds for SMS and giveaway campaigns
   }
   
-  console.log('🎁 Default source - 9 second delay');
-  return 9000; // 9 seconds for all other sources
+  console.log('🎁 Default source - 15 second delay');
+  return 15000; // 15 seconds for all other sources
 };
 
 // Safe localStorage helpers for Safari private browsing (defined outside component)
@@ -265,8 +265,20 @@ const HolidayPromoPopup: React.FC = () => {
       console.log('📱 Formatted phone for storage:', formattedPhone);
 
       // Get UTM source for tracking
+      // Supports both simple utm= and Facebook's detailed utm_source=
       const urlParams = new URLSearchParams(window.location.search);
-      const utmSource = urlParams.get('utm') || urlParams.get('utm_source') || safeGetItem('promo_source_global') || null;
+      let utmSource = urlParams.get('utm') || safeGetItem('promo_source_global') || null;
+      
+      // Check for Facebook-style utm_source if no simple utm
+      if (!utmSource) {
+        const fbUtmSource = urlParams.get('utm_source');
+        if (fbUtmSource) {
+          // Normalize Facebook sources to 'fb'
+          const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+          const normalizedSource = fbUtmSource.toLowerCase();
+          utmSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : fbUtmSource;
+        }
+      }
       console.log('📱 UTM source:', utmSource);
 
       // Save to beta_signups with source "holiday_popup"
@@ -314,6 +326,9 @@ const HolidayPromoPopup: React.FC = () => {
         
         // Store coupon code in localStorage for auto-apply at checkout
         safeSetItem('auto_apply_coupon', 'SANTA25');
+        
+        // Track that user submitted the holiday popup (for user/order tracking)
+        safeSetItem('holiday_popup_submitted', 'true');
         
         // Dispatch custom event to update TalentCards immediately
         window.dispatchEvent(new Event('couponApplied'));

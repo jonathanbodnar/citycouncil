@@ -14,6 +14,8 @@ interface User {
   last_login?: string;
   sms_subscribed?: boolean;
   user_tags?: string[];
+  promo_source?: string;
+  did_holiday_popup?: boolean;
 }
 
 const UsersManagement: React.FC = () => {
@@ -201,6 +203,9 @@ const UsersManagement: React.FC = () => {
                   <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
                   </th>
+                  <th className="hidden md:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Source
+                  </th>
                   <th className="hidden lg:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tags
                   </th>
@@ -215,7 +220,7 @@ const UsersManagement: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center text-gray-500 text-sm">
+                    <td colSpan={7} className="px-3 sm:px-6 py-8 sm:py-12 text-center text-gray-500 text-sm">
                       No users found
                     </td>
                   </tr>
@@ -272,6 +277,25 @@ const UsersManagement: React.FC = () => {
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getUserTypeColor(user.user_type)}`}>
                           {user.user_type || 'user'}
                         </span>
+                      </td>
+
+                      {/* Source Column - Shows UTM source and holiday popup */}
+                      <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {user.promo_source && (
+                            <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
+                              📣 {user.promo_source}
+                            </span>
+                          )}
+                          {user.did_holiday_popup && (
+                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
+                              📱 Popup
+                            </span>
+                          )}
+                          {!user.promo_source && !user.did_holiday_popup && (
+                            <span className="text-xs text-gray-400">Direct</span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Tags Column - Hidden on smaller screens */}

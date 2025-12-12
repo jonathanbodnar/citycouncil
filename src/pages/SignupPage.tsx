@@ -12,14 +12,24 @@ const SignupPage: React.FC = () => {
   const returnTo = searchParams.get('returnTo') || '/';
   
   // Capture UTM source from URL or localStorage
+  // Supports both simple utm= and Facebook's detailed utm_source=
   const getPromoSource = (): string | null => {
-    // Check URL params first
-    const urlUtm = searchParams.get('utm') || searchParams.get('utm_source');
-    if (urlUtm) return urlUtm;
+    // Check simple utm param first
+    const simpleUtm = searchParams.get('utm');
+    if (simpleUtm) return simpleUtm;
+    
+    // Check for Facebook-style utm_source
+    const utmSource = searchParams.get('utm_source');
+    if (utmSource) {
+      // Normalize Facebook sources to 'fb'
+      const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+      const normalizedSource = utmSource.toLowerCase();
+      return fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : utmSource;
+    }
     
     // Check localStorage for stored promo source
     try {
-      return localStorage.getItem('promo_source') || null;
+      return localStorage.getItem('promo_source_global') || localStorage.getItem('promo_source') || null;
     } catch {
       return null;
     }

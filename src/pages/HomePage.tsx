@@ -61,13 +61,45 @@ const HomePage: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Capture global UTM tracking (e.g., shoutout.us/?utm=rumble)
+  // Capture global UTM tracking (e.g., shoutout.us/?utm=rumble or Facebook's detailed params)
   // These track for ANY talent the user orders from
+  // Facebook format: ?utm_source={{site_source_name}}&utm_medium={{placement}}&utm_campaign={{campaign.name}}&utm_content={{ad.name}}
   useEffect(() => {
+    // Check for simple utm param first
     const utmParam = searchParams.get('utm');
-    // Only store global UTMs (not utm=1 which is talent-specific self-promo)
+    // Check for Facebook-style utm_source param
+    const utmSource = searchParams.get('utm_source');
+    
+    // Determine the source to store
+    let sourceToStore: string | null = null;
+    
     if (utmParam && utmParam !== '1') {
-      localStorage.setItem('promo_source_global', utmParam);
+      // Simple utm param (not self-promo)
+      sourceToStore = utmParam;
+    } else if (utmSource) {
+      // Facebook-style UTM - normalize Facebook sources to 'fb'
+      // Facebook sources include: fb, facebook, ig, instagram, meta, audience_network, messenger, etc.
+      const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+      const normalizedSource = utmSource.toLowerCase();
+      
+      if (fbSources.some(s => normalizedSource.includes(s))) {
+        sourceToStore = 'fb';
+      } else {
+        sourceToStore = utmSource;
+      }
+      
+      // Also store the full UTM details for reference
+      const utmDetails = {
+        source: utmSource,
+        medium: searchParams.get('utm_medium'),
+        campaign: searchParams.get('utm_campaign'),
+        content: searchParams.get('utm_content')
+      };
+      localStorage.setItem('utm_details', JSON.stringify(utmDetails));
+    }
+    
+    if (sourceToStore) {
+      localStorage.setItem('promo_source_global', sourceToStore);
     }
   }, [searchParams]);
 

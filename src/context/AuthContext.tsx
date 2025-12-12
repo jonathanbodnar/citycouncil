@@ -168,6 +168,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         console.log('📱 Saving user with phone:', phoneNumber ? '(has phone)' : '(no phone)');
         
+        // Check if user did the holiday popup (stored in localStorage)
+        let didHolidayPopup = false;
+        try {
+          didHolidayPopup = localStorage.getItem('holiday_popup_submitted') === 'true';
+        } catch {
+          // localStorage not available
+        }
+        
         const { error: profileError } = await supabase
           .from('users')
           .upsert([
@@ -178,6 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               user_type: userType,
               phone: phoneNumber || null, // Save phone number to database
               promo_source: promoSource || null, // Track UTM source for analytics
+              did_holiday_popup: didHolidayPopup, // Track if they submitted the holiday popup
             },
           ], {
             onConflict: 'id',
