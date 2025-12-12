@@ -1444,13 +1444,13 @@ const AddLinkModal: React.FC<{
   // Update grid links array when columns change
   useEffect(() => {
     if (linkType === 'grid') {
-      const newGridLinks = Array(gridColumns).fill(null).map((_, i) => 
-        gridLinks[i] || { title: '', url: '', thumbnailUrl: '' }
-      );
-      setGridLinks(newGridLinks);
-      if (currentGridSlot >= gridColumns) {
-        setCurrentGridSlot(gridColumns - 1);
-      }
+      setGridLinks(prevLinks => {
+        const newGridLinks = Array(gridColumns).fill(null).map((_, i) => 
+          prevLinks[i] || { title: '', url: '', thumbnailUrl: '' }
+        );
+        return newGridLinks;
+      });
+      setCurrentGridSlot(prev => prev >= gridColumns ? gridColumns - 1 : prev);
     }
   }, [gridColumns, linkType]);
 

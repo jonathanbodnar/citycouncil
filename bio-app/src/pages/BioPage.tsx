@@ -405,10 +405,6 @@ const BioPage: React.FC = () => {
         return;
       }
       
-      // Parse the HTML to extract video data
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
       // Check for live stream - look for is-live class or status--live
       const isLive = html.includes('is-live') || html.includes('status--live') || html.includes('livestream-item');
       
