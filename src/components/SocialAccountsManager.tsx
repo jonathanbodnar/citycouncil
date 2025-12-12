@@ -61,17 +61,30 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
     }
 
     try {
+      const handle = newAccount.handle.trim();
+      
+      // Insert into social_accounts table
       const { error } = await supabase
         .from('social_accounts')
         .insert([
           {
             talent_id: talentId,
             platform: newAccount.platform,
-            handle: newAccount.handle.trim(),
+            handle: handle,
           },
         ]);
 
       if (error) throw error;
+
+      // Also sync to talent_profiles _handle columns
+      const handleColumn = `${newAccount.platform}_handle`;
+      const cleanHandle = handle.replace('@', '');
+      if (['twitter', 'instagram', 'facebook', 'tiktok'].includes(newAccount.platform)) {
+        await supabase
+          .from('talent_profiles')
+          .update({ [handleColumn]: cleanHandle })
+          .eq('id', talentId);
+      }
 
       toast.success('Social account added successfully!');
       setNewAccount({ platform: '', handle: '' });
@@ -87,12 +100,24 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
 
   const removeSocialAccount = async (accountId: string) => {
     try {
+      // First get the account to know which platform to clear
+      const accountToRemove = socialAccounts.find(a => a.id === accountId);
+      
       const { error } = await supabase
         .from('social_accounts')
         .delete()
         .eq('id', accountId);
 
       if (error) throw error;
+
+      // Also clear the talent_profiles _handle column
+      if (accountToRemove && ['twitter', 'instagram', 'facebook', 'tiktok'].includes(accountToRemove.platform)) {
+        const handleColumn = `${accountToRemove.platform}_handle`;
+        await supabase
+          .from('talent_profiles')
+          .update({ [handleColumn]: null })
+          .eq('id', talentId);
+      }
 
       toast.success('Social account removed');
       fetchSocialAccounts();
