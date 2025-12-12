@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   PlusIcon, 
@@ -11,10 +11,16 @@ import {
   EyeIcon,
   CheckIcon,
   XMarkIcon,
-  GlobeAltIcon,
   ClipboardIcon,
   ArrowTopRightOnSquareIcon,
-  SparklesIcon
+  SparklesIcon,
+  PhotoIcon,
+  Cog6ToothIcon,
+  PaintBrushIcon,
+  ArrowPathIcon,
+  CloudArrowUpIcon,
+  ArrowsUpDownIcon,
+  SwatchIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
@@ -25,6 +31,8 @@ interface TalentProfile {
   user_id: string;
   username?: string;
   full_name?: string;
+  profile_image?: string;
+  bio?: string;
 }
 
 interface User {
@@ -45,6 +53,17 @@ interface BioSettings {
   font_family: string;
   show_shoutout_card: boolean;
   is_published: boolean;
+  background_type: string;
+  gradient_start: string;
+  gradient_end: string;
+  gradient_direction: string;
+  button_style: string;
+  button_color: string;
+  text_color: string;
+  card_style: string;
+  card_opacity: number;
+  profile_image_url?: string;
+  display_name?: string;
 }
 
 interface BioLink {
@@ -58,14 +77,58 @@ interface BioLink {
   grid_size?: 'small' | 'medium' | 'large';
   display_order: number;
   is_active: boolean;
+  grid_columns?: number;
+  background_image_url?: string;
+  thumbnail_url?: string;
+  subtitle?: string;
+  button_text?: string;
+  is_featured?: boolean;
 }
 
-interface BioLinkIcon {
-  id: string;
-  name: string;
-  icon_url: string;
-  category: string;
+interface NewsletterConfig {
+  id?: string;
+  talent_id: string;
+  provider: string;
+  api_key?: string;
+  list_id?: string;
+  webhook_url?: string;
+  form_id?: string;
+  is_active: boolean;
 }
+
+// Gradient presets
+const GRADIENT_PRESETS = [
+  { name: 'Midnight', start: '#0a0a0a', end: '#1a1a2e', direction: 'to-b' },
+  { name: 'Ocean', start: '#0c4a6e', end: '#164e63', direction: 'to-br' },
+  { name: 'Sunset', start: '#7c2d12', end: '#1c1917', direction: 'to-b' },
+  { name: 'Forest', start: '#14532d', end: '#0a0a0a', direction: 'to-b' },
+  { name: 'Purple Haze', start: '#581c87', end: '#0a0a0a', direction: 'to-b' },
+  { name: 'Rose', start: '#881337', end: '#1c1917', direction: 'to-b' },
+  { name: 'Slate', start: '#334155', end: '#0f172a', direction: 'to-b' },
+  { name: 'Warm', start: '#78350f', end: '#1c1917', direction: 'to-br' },
+];
+
+const BUTTON_COLORS = [
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Purple', value: '#8b5cf6' },
+  { name: 'Pink', value: '#ec4899' },
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Yellow', value: '#eab308' },
+  { name: 'Green', value: '#22c55e' },
+  { name: 'Teal', value: '#14b8a6' },
+  { name: 'White', value: '#ffffff' },
+];
+
+const NEWSLETTER_PROVIDERS = [
+  { id: 'mailchimp', name: 'Mailchimp', icon: '📧' },
+  { id: 'getresponse', name: 'GetResponse', icon: '📬' },
+  { id: 'flodesk', name: 'Flodesk', icon: '💐' },
+  { id: 'emailoctopus', name: 'EmailOctopus', icon: '🐙' },
+  { id: 'cleverreach', name: 'CleverReach', icon: '🎯' },
+  { id: 'activecampaign', name: 'ActiveCampaign', icon: '⚡' },
+  { id: 'zapier', name: 'Zapier Webhook', icon: '🔗' },
+];
 
 const BioDashboard: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -73,12 +136,16 @@ const BioDashboard: React.FC = () => {
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [bioSettings, setBioSettings] = useState<BioSettings | null>(null);
   const [links, setLinks] = useState<BioLink[]>([]);
-  const [icons, setIcons] = useState<BioLinkIcon[]>([]);
+  const [newsletterConfigs, setNewsletterConfigs] = useState<NewsletterConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingLink, setEditingLink] = useState<BioLink | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showStyleModal, setShowStyleModal] = useState(false);
+  const [showNewsletterModal, setShowNewsletterModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'links' | 'style' | 'settings'>('links');
 
   // Authenticate user from token
   useEffect(() => {
@@ -92,9 +159,7 @@ const BioDashboard: React.FC = () => {
       }
 
       try {
-        // Token is the user ID - fetch user data
         console.log('Bio Dashboard: Authenticating with token:', token);
-        console.log('Bio Dashboard: Supabase URL:', process.env.REACT_APP_SUPABASE_URL);
         
         const { data: userData, error: userError } = await supabase
           .from('users')
@@ -102,29 +167,24 @@ const BioDashboard: React.FC = () => {
           .eq('id', token)
           .single();
 
-        console.log('Bio Dashboard: User query result:', { userData, userError });
-
         if (userError || !userData) {
           console.error('Bio Dashboard: User lookup failed:', userError);
-          setAuthError(`Invalid authentication token. Error: ${userError?.message || 'User not found'}. Please try again from your ShoutOut dashboard.`);
+          setAuthError(`Invalid authentication token. Please try again from your ShoutOut dashboard.`);
           setLoading(false);
           return;
         }
 
         setUser(userData);
 
-        // Get talent profile
         const { data: profile, error: profileError } = await supabase
           .from('talent_profiles')
           .select('*')
           .eq('user_id', userData.id)
           .single();
 
-        console.log('Bio Dashboard: Talent profile query result:', { profile, profileError });
-
         if (profileError || !profile) {
           console.error('Bio Dashboard: Talent profile lookup failed:', profileError);
-          setAuthError(`No talent profile found. Error: ${profileError?.message || 'Profile not found'}. You must be a talent to use ShoutOut Bio.`);
+          setAuthError(`No talent profile found. You must be a talent to use ShoutOut Bio.`);
           setLoading(false);
           return;
         }
@@ -139,8 +199,7 @@ const BioDashboard: React.FC = () => {
           .single();
 
         if (settingsError && settingsError.code === 'PGRST116') {
-          // Create default settings
-          const defaultSettings: BioSettings = {
+          const defaultSettings: Partial<BioSettings> = {
             talent_id: profile.id,
             theme: 'glass',
             background_color: '#0a0a0a',
@@ -148,6 +207,17 @@ const BioDashboard: React.FC = () => {
             font_family: 'Inter',
             show_shoutout_card: true,
             is_published: false,
+            background_type: 'gradient',
+            gradient_start: '#0a0a0a',
+            gradient_end: '#1a1a2e',
+            gradient_direction: 'to-b',
+            button_style: 'rounded',
+            button_color: '#3b82f6',
+            text_color: '#ffffff',
+            card_style: 'glass',
+            card_opacity: 0.10,
+            display_name: profile.full_name,
+            profile_image_url: profile.profile_image,
           };
 
           const { data: newSettings, error: createError } = await supabase
@@ -174,13 +244,13 @@ const BioDashboard: React.FC = () => {
 
         setLinks(linksData || []);
 
-        // Get icons
-        const { data: iconsData } = await supabase
-          .from('bio_link_icons')
+        // Get newsletter configs
+        const { data: newsletterData } = await supabase
+          .from('bio_newsletter_configs')
           .select('*')
-          .eq('is_active', true);
+          .eq('talent_id', profile.id);
 
-        setIcons(iconsData || []);
+        setNewsletterConfigs(newsletterData || []);
 
       } catch (error) {
         console.error('Authentication error:', error);
@@ -194,7 +264,7 @@ const BioDashboard: React.FC = () => {
   }, [searchParams]);
 
   // Save settings
-  const saveSettings = async (updates: Partial<BioSettings>) => {
+  const saveSettings = useCallback(async (updates: Partial<BioSettings>) => {
     if (!bioSettings?.id) return;
 
     setSaving(true);
@@ -213,7 +283,7 @@ const BioDashboard: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [bioSettings]);
 
   // Add new link
   const addLink = async (link: Omit<BioLink, 'id' | 'display_order'>) => {
@@ -256,6 +326,12 @@ const BioDashboard: React.FC = () => {
           image_url: link.image_url,
           grid_size: link.grid_size,
           is_active: link.is_active,
+          grid_columns: link.grid_columns,
+          background_image_url: link.background_image_url,
+          thumbnail_url: link.thumbnail_url,
+          subtitle: link.subtitle,
+          button_text: link.button_text,
+          is_featured: link.is_featured,
           updated_at: new Date().toISOString(),
         })
         .eq('id', link.id);
@@ -287,6 +363,32 @@ const BioDashboard: React.FC = () => {
     }
   };
 
+  // Reorder links
+  const moveLink = async (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= links.length) return;
+
+    const newLinks = [...links];
+    const [movedLink] = newLinks.splice(index, 1);
+    newLinks.splice(newIndex, 0, movedLink);
+
+    // Update display_order
+    const updatedLinks = newLinks.map((link, i) => ({ ...link, display_order: i }));
+    setLinks(updatedLinks);
+
+    // Save to database
+    try {
+      for (const link of updatedLinks) {
+        await supabase
+          .from('bio_links')
+          .update({ display_order: link.display_order })
+          .eq('id', link.id);
+      }
+    } catch (error) {
+      console.error('Error reordering links:', error);
+    }
+  };
+
   // Copy bio URL
   const copyBioUrl = () => {
     const url = `https://bio.shoutout.us/${talentProfile?.username || talentProfile?.id}`;
@@ -297,6 +399,62 @@ const BioDashboard: React.FC = () => {
   // Publish/unpublish
   const togglePublish = async () => {
     await saveSettings({ is_published: !bioSettings?.is_published });
+  };
+
+  // Import from URL
+  const importFromUrl = async (url: string) => {
+    if (!talentProfile?.id) return;
+    
+    toast.loading('Importing links...', { id: 'import' });
+    
+    try {
+      // Create import record
+      const { data: importRecord, error: importError } = await supabase
+        .from('bio_import_history')
+        .insert([{
+          talent_id: talentProfile.id,
+          source_url: url,
+          status: 'processing'
+        }])
+        .select()
+        .single();
+
+      if (importError) throw importError;
+
+      // Call edge function to scrape the URL
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/scrape-bio-links`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          url,
+          talent_id: talentProfile.id,
+          import_id: importRecord.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to import links');
+      }
+
+      const result = await response.json();
+      
+      // Refresh links
+      const { data: linksData } = await supabase
+        .from('bio_links')
+        .select('*')
+        .eq('talent_id', talentProfile.id)
+        .order('display_order');
+
+      setLinks(linksData || []);
+      toast.success(`Imported ${result.count || 0} links!`, { id: 'import' });
+      setShowImportModal(false);
+    } catch (error) {
+      console.error('Error importing links:', error);
+      toast.error('Failed to import links. Try adding them manually.', { id: 'import' });
+    }
   };
 
   if (loading) {
@@ -329,60 +487,62 @@ const BioDashboard: React.FC = () => {
   const bioUrl = `bio.shoutout.us/${talentProfile?.username || talentProfile?.id}`;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-8 px-4">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20 bg-blue-500" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full blur-[100px] opacity-10 bg-purple-500" />
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(${bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg'}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
+          }}
+        />
       </div>
 
-      <div className="max-w-4xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="mb-8">
+      {/* Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                <SparklesIcon className="h-8 w-8 text-blue-400" />
-                ShoutOut Bio
-              </h1>
-              <p className="text-gray-400 mt-1">
-                Welcome, {user?.full_name}! Create your personalized link-in-bio page.
-              </p>
-            </div>
             <div className="flex items-center gap-3">
+              <SparklesIcon className="h-8 w-8 text-blue-400" />
+              <div>
+                <h1 className="text-xl font-bold text-white">ShoutOut Bio</h1>
+                <p className="text-sm text-gray-400">@{talentProfile?.username || 'username'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={copyBioUrl}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-xl text-white hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white text-sm hover:bg-white/10 transition-colors"
               >
-                <ClipboardIcon className="h-5 w-5" />
+                <ClipboardIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">{bioUrl}</span>
               </button>
               <a
                 href={`https://${bioUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-xl text-white hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white text-sm hover:bg-white/10 transition-colors"
               >
-                <ArrowTopRightOnSquareIcon className="h-5 w-5" />
-                Preview
+                <EyeIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Preview</span>
               </a>
               <button
                 onClick={togglePublish}
                 disabled={saving}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                   bioSettings?.is_published
-                    ? 'bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30'
+                    ? 'bg-green-500/20 border border-green-500/50 text-green-400'
                     : 'bg-blue-500 text-white hover:bg-blue-600'
                 }`}
               >
                 {bioSettings?.is_published ? (
                   <>
-                    <CheckIcon className="h-5 w-5" />
-                    Published
+                    <CheckIcon className="h-4 w-4" />
+                    Live
                   </>
                 ) : (
                   <>
-                    <EyeIcon className="h-5 w-5" />
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                     Publish
                   </>
                 )}
@@ -390,163 +550,454 @@ const BioDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </header>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Settings Panel */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Profile Settings */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <GlobeAltIcon className="h-5 w-5 text-blue-400" />
-                Profile Settings
-              </h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Instagram Username
-                  </label>
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-2">@</span>
-                    <input
-                      type="text"
-                      value={bioSettings?.instagram_username || ''}
-                      onChange={(e) => setBioSettings({ ...bioSettings!, instagram_username: e.target.value })}
-                      onBlur={() => saveSettings({ instagram_username: bioSettings?.instagram_username })}
-                      placeholder="username"
-                      className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-                </div>
+      <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          {[
+            { key: 'links', label: 'Links', icon: LinkIcon },
+            { key: 'style', label: 'Style', icon: PaintBrushIcon },
+            { key: 'settings', label: 'Settings', icon: Cog6ToothIcon },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as typeof activeTab)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
+                activeTab === tab.key
+                  ? 'bg-white/20 text-white'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    One-liner / Tagline
-                  </label>
-                  <input
-                    type="text"
-                    value={bioSettings?.one_liner || ''}
-                    onChange={(e) => setBioSettings({ ...bioSettings!, one_liner: e.target.value })}
-                    onBlur={() => saveSettings({ one_liner: bioSettings?.one_liner })}
-                    placeholder="Your catchy tagline..."
-                    maxLength={100}
-                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">{bioSettings?.one_liner?.length || 0}/100</p>
-                </div>
-              </div>
-            </div>
-
-            {/* ShoutOut Card Settings */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <GiftIcon className="h-5 w-5 text-pink-400" />
-                ShoutOut Card
-              </h2>
-              <p className="text-sm text-gray-400 mb-4">
-                This card links to your ShoutOut profile and shows a random review.
-              </p>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={bioSettings?.show_shoutout_card ?? true}
-                  onChange={(e) => saveSettings({ show_shoutout_card: e.target.checked })}
-                  className="w-5 h-5 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500"
-                />
-                <span className="text-white">Show ShoutOut card on bio page</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Links Panel */}
-          <div className="lg:col-span-2">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <LinkIcon className="h-5 w-5 text-blue-400" />
-                  Your Links
-                </h2>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
-                >
-                  <PlusIcon className="h-5 w-5" />
-                  Add Link
-                </button>
-              </div>
-
-              {links.length === 0 ? (
-                <div className="text-center py-12">
-                  <LinkIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-400 mb-2">No links yet</h3>
-                  <p className="text-gray-500 mb-4">Add your first link to get started</p>
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Left Column - Editor */}
+          <div className="space-y-6">
+            {activeTab === 'links' && (
+              <>
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setShowAddModal(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
                   >
                     <PlusIcon className="h-5 w-5" />
                     Add Link
                   </button>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
+                  >
+                    <CloudArrowUpIcon className="h-5 w-5" />
+                    Import Links
+                  </button>
                 </div>
-              ) : (
+
+                {/* Links List */}
                 <div className="space-y-3">
-                  {links.map((link, index) => (
-                    <div
-                      key={link.id}
-                      className={`bg-white/5 border rounded-xl p-4 transition-all border-white/10 hover:border-white/20 ${!link.is_active ? 'opacity-50' : ''}`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex-shrink-0">
-                          {link.link_type === 'basic' && (
-                            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                              <LinkIcon className="h-5 w-5 text-blue-400" />
-                            </div>
-                          )}
-                          {link.link_type === 'grid' && (
-                            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                              <Squares2X2Icon className="h-5 w-5 text-purple-400" />
-                            </div>
-                          )}
-                          {link.link_type === 'newsletter' && (
-                            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                              <EnvelopeIcon className="h-5 w-5 text-green-400" />
-                            </div>
-                          )}
-                          {link.link_type === 'sponsor' && (
-                            <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                              <GiftIcon className="h-5 w-5 text-yellow-400" />
-                            </div>
-                          )}
-                        </div>
+                  {links.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+                      <LinkIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-400 mb-2">No links yet</h3>
+                      <p className="text-gray-500 mb-4">Add your first link or import from another platform</p>
+                    </div>
+                  ) : (
+                    links.map((link, index) => (
+                      <div
+                        key={link.id}
+                        className={`bg-white/5 border rounded-xl p-4 transition-all border-white/10 hover:border-white/20 ${!link.is_active ? 'opacity-50' : ''}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Reorder buttons */}
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => moveLink(index, 'up')}
+                              disabled={index === 0}
+                              className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ArrowsUpDownIcon className="h-4 w-4 rotate-180" />
+                            </button>
+                            <button
+                              onClick={() => moveLink(index, 'down')}
+                              disabled={index === links.length - 1}
+                              className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ArrowsUpDownIcon className="h-4 w-4" />
+                            </button>
+                          </div>
 
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-white truncate">
-                            {link.title || `${link.link_type.charAt(0).toUpperCase() + link.link_type.slice(1)} Link`}
-                          </h3>
-                          {link.url && (
-                            <p className="text-sm text-gray-400 truncate">{link.url}</p>
+                          {/* Thumbnail */}
+                          {link.thumbnail_url ? (
+                            <img src={link.thumbnail_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          ) : (
+                            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                              link.link_type === 'basic' ? 'bg-blue-500/20' :
+                              link.link_type === 'grid' ? 'bg-purple-500/20' :
+                              link.link_type === 'newsletter' ? 'bg-green-500/20' :
+                              'bg-yellow-500/20'
+                            }`}>
+                              {link.link_type === 'basic' && <LinkIcon className="h-5 w-5 text-blue-400" />}
+                              {link.link_type === 'grid' && <Squares2X2Icon className="h-5 w-5 text-purple-400" />}
+                              {link.link_type === 'newsletter' && <EnvelopeIcon className="h-5 w-5 text-green-400" />}
+                              {link.link_type === 'sponsor' && <GiftIcon className="h-5 w-5 text-yellow-400" />}
+                            </div>
                           )}
-                        </div>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setEditingLink(link)}
-                            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => deleteLink(link.id!)}
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-white truncate">
+                              {link.title || `${link.link_type.charAt(0).toUpperCase() + link.link_type.slice(1)} Link`}
+                            </h3>
+                            {link.url && (
+                              <p className="text-sm text-gray-400 truncate">{link.url}</p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setEditingLink(link)}
+                              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => deleteLink(link.id!)}
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
-              )}
+
+                {/* ShoutOut Card Info */}
+                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-2xl p-4">
+                  <div className="flex items-start gap-3">
+                    <GiftIcon className="h-6 w-6 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-medium text-white mb-1">ShoutOut Card</h3>
+                      <p className="text-sm text-gray-300 mb-2">
+                        A special card linking to your ShoutOut profile with a random review. This card cannot be removed.
+                      </p>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={bioSettings?.show_shoutout_card ?? true}
+                          onChange={(e) => saveSettings({ show_shoutout_card: e.target.checked })}
+                          className="w-4 h-4 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-white">Show ShoutOut card</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'style' && (
+              <div className="space-y-6">
+                {/* Background Gradient */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <SwatchIcon className="h-5 w-5 text-purple-400" />
+                    Background
+                  </h3>
+                  <div className="grid grid-cols-4 gap-3">
+                    {GRADIENT_PRESETS.map((preset) => (
+                      <button
+                        key={preset.name}
+                        onClick={() => saveSettings({
+                          gradient_start: preset.start,
+                          gradient_end: preset.end,
+                          gradient_direction: preset.direction,
+                        })}
+                        className={`aspect-square rounded-xl border-2 transition-all ${
+                          bioSettings?.gradient_start === preset.start && bioSettings?.gradient_end === preset.end
+                            ? 'border-white scale-105'
+                            : 'border-transparent hover:border-white/50'
+                        }`}
+                        style={{
+                          background: `linear-gradient(${preset.direction === 'to-b' ? '180deg' : '135deg'}, ${preset.start}, ${preset.end})`
+                        }}
+                        title={preset.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Button Color */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <PaintBrushIcon className="h-5 w-5 text-blue-400" />
+                    Button Color
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {BUTTON_COLORS.map((color) => (
+                      <button
+                        key={color.name}
+                        onClick={() => saveSettings({ button_color: color.value })}
+                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                          bioSettings?.button_color === color.value
+                            ? 'border-white scale-110'
+                            : 'border-transparent hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color.value }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Button Style */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Button Style</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: 'rounded', label: 'Rounded', className: 'rounded-xl' },
+                      { id: 'pill', label: 'Pill', className: 'rounded-full' },
+                      { id: 'square', label: 'Square', className: 'rounded-md' },
+                    ].map((style) => (
+                      <button
+                        key={style.id}
+                        onClick={() => saveSettings({ button_style: style.id })}
+                        className={`p-4 border-2 transition-all ${style.className} ${
+                          bioSettings?.button_style === style.id
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-white/20 hover:border-white/40'
+                        }`}
+                      >
+                        <div 
+                          className={`h-8 ${style.className}`}
+                          style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
+                        />
+                        <p className="text-xs text-gray-400 mt-2">{style.label}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card Style */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Card Style</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'glass', label: 'Glass', desc: 'Transparent with blur' },
+                      { id: 'solid', label: 'Solid', desc: 'Opaque background' },
+                      { id: 'outline', label: 'Outline', desc: 'Border only' },
+                      { id: 'shadow', label: 'Shadow', desc: 'With drop shadow' },
+                    ].map((style) => (
+                      <button
+                        key={style.id}
+                        onClick={() => saveSettings({ card_style: style.id })}
+                        className={`p-4 border-2 rounded-xl text-left transition-all ${
+                          bioSettings?.card_style === style.id
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-white/20 hover:border-white/40'
+                        }`}
+                      >
+                        <p className="font-medium text-white">{style.label}</p>
+                        <p className="text-xs text-gray-400">{style.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="space-y-6">
+                {/* Profile Settings */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Profile</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+                      <input
+                        type="text"
+                        value={bioSettings?.display_name || ''}
+                        onChange={(e) => setBioSettings({ ...bioSettings!, display_name: e.target.value })}
+                        onBlur={() => saveSettings({ display_name: bioSettings?.display_name })}
+                        placeholder="Your name"
+                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Instagram Username</label>
+                      <div className="flex items-center">
+                        <span className="text-gray-500 mr-2">@</span>
+                        <input
+                          type="text"
+                          value={bioSettings?.instagram_username || ''}
+                          onChange={(e) => setBioSettings({ ...bioSettings!, instagram_username: e.target.value })}
+                          onBlur={() => saveSettings({ instagram_username: bioSettings?.instagram_username })}
+                          placeholder="username"
+                          className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">One-liner / Tagline</label>
+                      <input
+                        type="text"
+                        value={bioSettings?.one_liner || ''}
+                        onChange={(e) => setBioSettings({ ...bioSettings!, one_liner: e.target.value })}
+                        onBlur={() => saveSettings({ one_liner: bioSettings?.one_liner })}
+                        placeholder="Your catchy tagline..."
+                        maxLength={100}
+                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{bioSettings?.one_liner?.length || 0}/100</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Newsletter Integration */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                      <EnvelopeIcon className="h-5 w-5 text-green-400" />
+                      Newsletter Integration
+                    </h3>
+                    <button
+                      onClick={() => setShowNewsletterModal(true)}
+                      className="text-sm text-blue-400 hover:text-blue-300"
+                    >
+                      Configure
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-400 mb-4">
+                    Connect your email service to collect subscribers directly from your bio page.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {NEWSLETTER_PROVIDERS.map((provider) => {
+                      const config = newsletterConfigs.find(c => c.provider === provider.id);
+                      return (
+                        <div
+                          key={provider.id}
+                          className={`px-3 py-1.5 rounded-lg text-sm ${
+                            config?.is_active
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                              : 'bg-white/5 text-gray-500 border border-white/10'
+                          }`}
+                        >
+                          {provider.icon} {provider.name}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Live Preview */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-400">Live Preview</h3>
+                <a
+                  href={`https://${bioUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                >
+                  Open <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                </a>
+              </div>
+              
+              {/* Phone Frame */}
+              <div className="relative mx-auto" style={{ maxWidth: '320px' }}>
+                <div 
+                  className="rounded-[2.5rem] overflow-hidden border-4 border-gray-800 shadow-2xl"
+                  style={{
+                    background: `linear-gradient(${bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg'}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
+                  }}
+                >
+                  {/* Notch */}
+                  <div className="bg-black h-6 flex items-center justify-center">
+                    <div className="w-20 h-4 bg-gray-800 rounded-full" />
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="p-4 min-h-[500px]">
+                    {/* Profile */}
+                    <div className="text-center mb-6">
+                      <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden border-2 border-white/20">
+                        {talentProfile?.profile_image ? (
+                          <img 
+                            src={talentProfile.profile_image} 
+                            alt="" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl text-white font-bold">
+                            {(bioSettings?.display_name || talentProfile?.full_name || 'U')[0]}
+                          </div>
+                        )}
+                      </div>
+                      <h2 className="text-lg font-bold text-white">
+                        {bioSettings?.display_name || talentProfile?.full_name || 'Your Name'}
+                      </h2>
+                      {bioSettings?.instagram_username && (
+                        <p className="text-sm text-gray-400">@{bioSettings.instagram_username}</p>
+                      )}
+                      {bioSettings?.one_liner && (
+                        <p className="text-sm text-gray-300 mt-2">{bioSettings.one_liner}</p>
+                      )}
+                    </div>
+
+                    {/* Preview Links */}
+                    <div className="space-y-3">
+                      {links.filter(l => l.is_active).slice(0, 4).map((link) => (
+                        <div
+                          key={link.id}
+                          className={`p-3 backdrop-blur-sm border border-white/10 text-center transition-all ${
+                            bioSettings?.button_style === 'pill' ? 'rounded-full' :
+                            bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'
+                          }`}
+                          style={{
+                            backgroundColor: `${bioSettings?.button_color || '#3b82f6'}20`,
+                            borderColor: `${bioSettings?.button_color || '#3b82f6'}40`,
+                          }}
+                        >
+                          <span className="text-white text-sm font-medium">{link.title || 'Link'}</span>
+                        </div>
+                      ))}
+                      
+                      {links.length > 4 && (
+                        <p className="text-center text-gray-500 text-xs">+{links.length - 4} more links</p>
+                      )}
+
+                      {/* ShoutOut Card Preview */}
+                      {bioSettings?.show_shoutout_card && (
+                        <div className="mt-4 p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/30">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                              <GiftIcon className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white text-sm font-medium">Get a ShoutOut!</p>
+                              <p className="text-gray-400 text-xs">Personalized video message</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-6 text-center">
+                      <p className="text-xs text-gray-500">Powered by ShoutOut</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -562,23 +1013,38 @@ const BioDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Link Modal */}
+      {/* Modals */}
       {showAddModal && (
         <AddLinkModal
           onClose={() => setShowAddModal(false)}
           onAdd={addLink}
           talentId={talentProfile?.id || ''}
-          icons={icons}
+          buttonColor={bioSettings?.button_color || '#3b82f6'}
         />
       )}
 
-      {/* Edit Link Modal */}
       {editingLink && (
         <EditLinkModal
           link={editingLink}
           onClose={() => setEditingLink(null)}
           onSave={updateLink}
-          icons={icons}
+          buttonColor={bioSettings?.button_color || '#3b82f6'}
+        />
+      )}
+
+      {showNewsletterModal && (
+        <NewsletterModal
+          configs={newsletterConfigs}
+          talentId={talentProfile?.id || ''}
+          onClose={() => setShowNewsletterModal(false)}
+          onSave={setNewsletterConfigs}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={importFromUrl}
         />
       )}
     </div>
@@ -590,11 +1056,13 @@ const AddLinkModal: React.FC<{
   onClose: () => void;
   onAdd: (link: Omit<BioLink, 'id' | 'display_order'>) => void;
   talentId: string;
-  icons: BioLinkIcon[];
-}> = ({ onClose, onAdd, talentId, icons }) => {
+  buttonColor: string;
+}> = ({ onClose, onAdd, talentId, buttonColor }) => {
   const [linkType, setLinkType] = useState<'basic' | 'grid' | 'newsletter' | 'sponsor'>('basic');
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [gridColumns, setGridColumns] = useState(1);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -603,12 +1071,15 @@ const AddLinkModal: React.FC<{
       link_type: linkType,
       title,
       url,
+      thumbnail_url: thumbnailUrl || undefined,
+      grid_columns: gridColumns,
       is_active: true,
     });
   };
 
   const linkTypes = [
-    { type: 'basic' as const, label: 'Basic Link', icon: LinkIcon, color: 'blue', desc: 'Simple link with icon and title' },
+    { type: 'basic' as const, label: 'Basic Link', icon: LinkIcon, color: 'blue', desc: 'Simple link with title' },
+    { type: 'grid' as const, label: 'Grid Card', icon: Squares2X2Icon, color: 'purple', desc: 'Image card with link' },
     { type: 'newsletter' as const, label: 'Newsletter', icon: EnvelopeIcon, color: 'green', desc: 'Email signup form' },
     { type: 'sponsor' as const, label: 'Become a Sponsor', icon: GiftIcon, color: 'yellow', desc: 'Sponsorship CTA' },
   ];
@@ -630,25 +1101,23 @@ const AddLinkModal: React.FC<{
           {/* Link Type Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-3">Link Type</label>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
               {linkTypes.map((lt) => (
                 <button
                   key={lt.type}
                   type="button"
                   onClick={() => setLinkType(lt.type)}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                  className={`p-3 rounded-xl border-2 text-left transition-all ${
                     linkType === lt.type
                       ? 'border-blue-500 bg-blue-500/20'
                       : 'border-white/20 hover:border-white/40'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <lt.icon className="h-6 w-6 text-blue-400" />
-                    <div>
-                      <h3 className="font-medium text-white">{lt.label}</h3>
-                      <p className="text-xs text-gray-400">{lt.desc}</p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <lt.icon className="h-5 w-5 text-blue-400" />
+                    <span className="text-sm font-medium text-white">{lt.label}</span>
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">{lt.desc}</p>
                 </button>
               ))}
             </div>
@@ -666,17 +1135,57 @@ const AddLinkModal: React.FC<{
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
-              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              required={linkType !== 'newsletter'}
-            />
-          </div>
+          {linkType !== 'newsletter' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                required
+              />
+            </div>
+          )}
+
+          {linkType === 'grid' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Image URL (optional)</label>
+                <input
+                  type="url"
+                  value={thumbnailUrl}
+                  onChange={(e) => setThumbnailUrl(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Grid Size</label>
+                <div className="flex gap-2">
+                  {[
+                    { cols: 1, label: 'Full Width' },
+                    { cols: 2, label: 'Half (2 cols)' },
+                    { cols: 3, label: 'Third (3 cols)' },
+                  ].map((size) => (
+                    <button
+                      key={size.cols}
+                      type="button"
+                      onClick={() => setGridColumns(size.cols)}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm transition-all ${
+                        gridColumns === size.cols
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                      }`}
+                    >
+                      {size.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="flex gap-3 pt-4">
             <button
@@ -688,7 +1197,8 @@ const AddLinkModal: React.FC<{
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+              className="flex-1 px-4 py-3 text-white rounded-xl font-medium transition-colors"
+              style={{ backgroundColor: buttonColor }}
             >
               Add Link
             </button>
@@ -704,10 +1214,12 @@ const EditLinkModal: React.FC<{
   link: BioLink;
   onClose: () => void;
   onSave: (link: BioLink) => void;
-  icons: BioLinkIcon[];
-}> = ({ link, onClose, onSave, icons }) => {
+  buttonColor: string;
+}> = ({ link, onClose, onSave, buttonColor }) => {
   const [title, setTitle] = useState(link.title || '');
   const [url, setUrl] = useState(link.url || '');
+  const [thumbnailUrl, setThumbnailUrl] = useState(link.thumbnail_url || '');
+  const [gridColumns, setGridColumns] = useState(link.grid_columns || 1);
   const [isActive, setIsActive] = useState(link.is_active);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -716,13 +1228,15 @@ const EditLinkModal: React.FC<{
       ...link,
       title,
       url,
+      thumbnail_url: thumbnailUrl || undefined,
+      grid_columns: gridColumns,
       is_active: isActive,
     });
   };
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-lg">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-white">Edit Link</h2>
           <button
@@ -756,6 +1270,48 @@ const EditLinkModal: React.FC<{
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Image URL (optional)</label>
+            <input
+              type="url"
+              value={thumbnailUrl}
+              onChange={(e) => setThumbnailUrl(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+            {thumbnailUrl && (
+              <div className="mt-2">
+                <img src={thumbnailUrl} alt="Preview" className="w-20 h-20 rounded-lg object-cover" />
+              </div>
+            )}
+          </div>
+
+          {link.link_type === 'grid' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Grid Size</label>
+              <div className="flex gap-2">
+                {[
+                  { cols: 1, label: 'Full Width' },
+                  { cols: 2, label: 'Half (2 cols)' },
+                  { cols: 3, label: 'Third (3 cols)' },
+                ].map((size) => (
+                  <button
+                    key={size.cols}
+                    type="button"
+                    onClick={() => setGridColumns(size.cols)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm transition-all ${
+                      gridColumns === size.cols
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }`}
+                  >
+                    {size.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -776,7 +1332,8 @@ const EditLinkModal: React.FC<{
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+              className="flex-1 px-4 py-3 text-white rounded-xl font-medium transition-colors"
+              style={{ backgroundColor: buttonColor }}
             >
               Save Changes
             </button>
@@ -787,5 +1344,272 @@ const EditLinkModal: React.FC<{
   );
 };
 
-export default BioDashboard;
+// Newsletter Modal
+const NewsletterModal: React.FC<{
+  configs: NewsletterConfig[];
+  talentId: string;
+  onClose: () => void;
+  onSave: (configs: NewsletterConfig[]) => void;
+}> = ({ configs, talentId, onClose, onSave }) => {
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState('');
+  const [listId, setListId] = useState('');
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [saving, setSaving] = useState(false);
 
+  const handleSave = async () => {
+    if (!selectedProvider) return;
+    
+    setSaving(true);
+    try {
+      const existingConfig = configs.find(c => c.provider === selectedProvider);
+      
+      const configData = {
+        talent_id: talentId,
+        provider: selectedProvider,
+        api_key: apiKey || null,
+        list_id: listId || null,
+        webhook_url: webhookUrl || null,
+        is_active: true,
+      };
+
+      if (existingConfig?.id) {
+        const { error } = await supabase
+          .from('bio_newsletter_configs')
+          .update(configData)
+          .eq('id', existingConfig.id);
+        
+        if (error) throw error;
+        onSave(configs.map(c => c.id === existingConfig.id ? { ...c, ...configData } : c));
+      } else {
+        const { data, error } = await supabase
+          .from('bio_newsletter_configs')
+          .insert([configData])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        onSave([...configs, data]);
+      }
+
+      toast.success('Newsletter integration saved!');
+      setSelectedProvider(null);
+      setApiKey('');
+      setListId('');
+      setWebhookUrl('');
+    } catch (error) {
+      console.error('Error saving newsletter config:', error);
+      toast.error('Failed to save integration');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">Newsletter Integration</h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+        {!selectedProvider ? (
+          <div className="space-y-3">
+            <p className="text-gray-400 text-sm mb-4">
+              Select a provider to connect your email list:
+            </p>
+            {NEWSLETTER_PROVIDERS.map((provider) => {
+              const config = configs.find(c => c.provider === provider.id);
+              return (
+                <button
+                  key={provider.id}
+                  onClick={() => {
+                    setSelectedProvider(provider.id);
+                    if (config) {
+                      setApiKey(config.api_key || '');
+                      setListId(config.list_id || '');
+                      setWebhookUrl(config.webhook_url || '');
+                    }
+                  }}
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${
+                    config?.is_active
+                      ? 'border-green-500/50 bg-green-500/10'
+                      : 'border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{provider.icon}</span>
+                    <div>
+                      <h3 className="font-medium text-white">{provider.name}</h3>
+                      {config?.is_active && (
+                        <p className="text-xs text-green-400">Connected</p>
+                      )}
+                    </div>
+                  </div>
+                  <PencilIcon className="h-5 w-5 text-gray-400" />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <button
+              onClick={() => setSelectedProvider(null)}
+              className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            >
+              ← Back to providers
+            </button>
+
+            <div className="p-4 bg-white/5 rounded-xl">
+              <h3 className="font-medium text-white mb-1">
+                {NEWSLETTER_PROVIDERS.find(p => p.id === selectedProvider)?.name}
+              </h3>
+              <p className="text-sm text-gray-400">
+                Enter your API credentials to connect.
+              </p>
+            </div>
+
+            {selectedProvider === 'zapier' ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Webhook URL</label>
+                <input
+                  type="url"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://hooks.zapier.com/..."
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Create a Zap with "Webhooks by Zapier" as the trigger
+                </p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="Enter your API key"
+                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">List/Audience ID</label>
+                  <input
+                    type="text"
+                    value={listId}
+                    onChange={(e) => setListId(e.target.value)}
+                    placeholder="Enter your list ID"
+                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setSelectedProvider(null)}
+                className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Import Modal
+const ImportModal: React.FC<{
+  onClose: () => void;
+  onImport: (url: string) => void;
+}> = ({ onClose, onImport }) => {
+  const [url, setUrl] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onImport(url);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">Import Links</h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Link-in-Bio URL
+            </label>
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://linktr.ee/username"
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Supports Linktree, Beacons, Stan Store, and other link-in-bio pages
+            </p>
+          </div>
+
+          <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+            <div className="flex items-start gap-3">
+              <CloudArrowUpIcon className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-white font-medium">How it works</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  We'll scan your existing link-in-bio page and import all your links and images automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+            >
+              Import
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default BioDashboard;

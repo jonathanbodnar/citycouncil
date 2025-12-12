@@ -1,30 +1,95 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
-  SparklesIcon,
+  GiftIcon,
+  StarIcon,
   ArrowTopRightOnSquareIcon,
   EnvelopeIcon,
-  GiftIcon
+  LinkIcon,
+  Squares2X2Icon
 } from '@heroicons/react/24/outline';
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
-import { TalentProfile, Review, BioSettings, BioLink } from '../types';
 import toast from 'react-hot-toast';
 
-interface TalentUser {
-  full_name: string;
-  avatar_url?: string;
+interface TalentProfile {
+  id: string;
+  user_id: string;
+  username?: string;
+  full_name?: string;
+  profile_image?: string;
+  bio?: string;
+}
+
+interface BioSettings {
+  id?: string;
+  talent_id: string;
+  instagram_username?: string;
+  one_liner?: string;
+  theme: string;
+  background_color: string;
+  accent_color: string;
+  font_family: string;
+  show_shoutout_card: boolean;
+  is_published: boolean;
+  background_type: string;
+  gradient_start: string;
+  gradient_end: string;
+  gradient_direction: string;
+  button_style: string;
+  button_color: string;
+  text_color: string;
+  card_style: string;
+  card_opacity: number;
+  profile_image_url?: string;
+  display_name?: string;
+}
+
+interface BioLink {
+  id: string;
+  talent_id: string;
+  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor';
+  title?: string;
+  url?: string;
+  icon_url?: string;
+  image_url?: string;
+  grid_size?: 'small' | 'medium' | 'large';
+  display_order: number;
+  is_active: boolean;
+  grid_columns?: number;
+  background_image_url?: string;
+  thumbnail_url?: string;
+  subtitle?: string;
+  button_text?: string;
+  is_featured?: boolean;
+  click_count?: number;
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  review_text?: string;
+  reviewer_name?: string;
+  created_at: string;
+}
+
+interface NewsletterConfig {
+  id: string;
+  provider: string;
+  webhook_url?: string;
+  is_active: boolean;
 }
 
 const BioPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
-  const [talentUser, setTalentUser] = useState<TalentUser | null>(null);
   const [bioSettings, setBioSettings] = useState<BioSettings | null>(null);
   const [links, setLinks] = useState<BioLink[]>([]);
   const [randomReview, setRandomReview] = useState<Review | null>(null);
+  const [newsletterConfig, setNewsletterConfig] = useState<NewsletterConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [email, setEmail] = useState('');
+  const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
@@ -36,14 +101,14 @@ const BioPage: React.FC = () => {
       }
 
       try {
-        // Find talent by username or ID
+        // Try to find by username first, then by ID
         let { data: profile, error: profileError } = await supabase
           .from('talent_profiles')
           .select('*')
           .eq('username', username)
           .single();
 
-        if (profileError) {
+        if (profileError || !profile) {
           // Try by ID
           const { data: profileById, error: idError } = await supabase
             .from('talent_profiles')
@@ -51,7 +116,7 @@ const BioPage: React.FC = () => {
             .eq('id', username)
             .single();
 
-          if (idError) {
+          if (idError || !profileById) {
             setNotFound(true);
             setLoading(false);
             return;
@@ -61,19 +126,6 @@ const BioPage: React.FC = () => {
 
         setTalentProfile(profile);
 
-        // Get user info
-        if (profile.user_id) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('full_name, avatar_url')
-            .eq('id', profile.user_id)
-            .single();
-
-          if (userData) {
-            setTalentUser(userData);
-          }
-        }
-
         // Get bio settings
         const { data: settings, error: settingsError } = await supabase
           .from('bio_settings')
@@ -81,7 +133,7 @@ const BioPage: React.FC = () => {
           .eq('talent_id', profile.id)
           .single();
 
-        if (settingsError || !settings?.is_published) {
+        if (settingsError || !settings || !settings.is_published) {
           setNotFound(true);
           setLoading(false);
           return;
@@ -92,22 +144,36 @@ const BioPage: React.FC = () => {
         // Get links
         const { data: linksData } = await supabase
           .from('bio_links')
-          .select('*, bio_grid_cards(*)')
+          .select('*')
           .eq('talent_id', profile.id)
           .eq('is_active', true)
           .order('display_order');
 
         setLinks(linksData || []);
 
-        // Get random review for ShoutOut card
+        // Get a random review
         const { data: reviews } = await supabase
           .from('reviews')
           .select('*')
           .eq('talent_id', profile.id)
-          .gte('rating', 4);
+          .gte('rating', 4)
+          .limit(10);
 
         if (reviews && reviews.length > 0) {
-          setRandomReview(reviews[Math.floor(Math.random() * reviews.length)]);
+          const randomIndex = Math.floor(Math.random() * reviews.length);
+          setRandomReview(reviews[randomIndex]);
+        }
+
+        // Get newsletter config
+        const { data: newsletterData } = await supabase
+          .from('bio_newsletter_configs')
+          .select('*')
+          .eq('talent_id', profile.id)
+          .eq('is_active', true)
+          .limit(1);
+
+        if (newsletterData && newsletterData.length > 0) {
+          setNewsletterConfig(newsletterData[0]);
         }
 
       } catch (error) {
@@ -121,27 +187,72 @@ const BioPage: React.FC = () => {
     fetchBioData();
   }, [username]);
 
-  const handleNewsletterSubscribe = async (e: React.FormEvent) => {
+  // Track link clicks
+  const handleLinkClick = async (link: BioLink) => {
+    if (link.id) {
+      await supabase
+        .from('bio_links')
+        .update({ click_count: (link.click_count || 0) + 1 })
+        .eq('id', link.id);
+    }
+  };
+
+  // Handle newsletter signup
+  const handleNewsletterSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!newsletterEmail || !newsletterConfig) return;
 
     setSubscribing(true);
     try {
-      // This would integrate with the newsletter provider
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Successfully subscribed!');
-      setEmail('');
+      if (newsletterConfig.webhook_url) {
+        // Send to Zapier webhook
+        await fetch(newsletterConfig.webhook_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: newsletterEmail,
+            talent_id: talentProfile?.id,
+            talent_name: bioSettings?.display_name || talentProfile?.full_name,
+            source: 'shoutout_bio',
+          }),
+        });
+      }
+      toast.success('Thanks for subscribing!');
+      setNewsletterEmail('');
     } catch (error) {
-      toast.error('Failed to subscribe');
+      console.error('Newsletter signup error:', error);
+      toast.error('Failed to subscribe. Please try again.');
     } finally {
       setSubscribing(false);
     }
   };
 
+  // Get button style classes
+  const getButtonClasses = () => {
+    const baseClasses = 'w-full p-4 backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]';
+    const styleClasses = 
+      bioSettings?.button_style === 'pill' ? 'rounded-full' :
+      bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl';
+    
+    return `${baseClasses} ${styleClasses}`;
+  };
+
+  // Get card style
+  const getCardStyle = () => {
+    const buttonColor = bioSettings?.button_color || '#3b82f6';
+    return {
+      backgroundColor: `${buttonColor}15`,
+      borderColor: `${buttonColor}40`,
+    };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -149,64 +260,56 @@ const BioPage: React.FC = () => {
   if (notFound) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4">
-        <SparklesIcon className="h-16 w-16 text-gray-600 mb-4" />
+        <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mb-4">
+          <LinkIcon className="h-8 w-8 text-gray-600" />
+        </div>
         <h1 className="text-2xl font-bold text-white mb-2">Bio Not Found</h1>
-        <p className="text-gray-400 mb-6">This bio page doesn't exist or isn't published yet.</p>
+        <p className="text-gray-400 mb-6 text-center">This bio page doesn't exist or isn't published yet.</p>
         <a
           href="https://shoutout.us"
           className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
         >
-          Go to ShoutOut
+          Create Your Own Bio
         </a>
       </div>
     );
   }
 
-  const displayName = talentUser?.full_name || talentProfile?.full_name || 'Creator';
-  const avatarUrl = talentUser?.avatar_url || talentProfile?.temp_avatar_url;
+  const gradientDirection = bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg';
 
   return (
     <div 
-      className="min-h-screen py-8 px-4"
-      style={{ 
-        backgroundColor: bioSettings?.background_color || '#0a0a0a',
-        fontFamily: bioSettings?.font_family || 'Inter',
+      className="min-h-screen"
+      style={{
+        background: `linear-gradient(${gradientDirection}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
       }}
     >
-      {/* Background Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20"
-          style={{ backgroundColor: bioSettings?.accent_color || '#3b82f6' }}
-        />
-        <div 
-          className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full blur-[100px] opacity-10"
-          style={{ backgroundColor: bioSettings?.accent_color || '#3b82f6' }}
-        />
-      </div>
-
-      <div className="max-w-md mx-auto relative z-10">
+      <div className="max-w-lg mx-auto px-4 py-8 min-h-screen flex flex-col">
         {/* Profile Header */}
         <div className="text-center mb-8">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="w-24 h-24 rounded-full object-cover mx-auto mb-4 border-2 border-white/20 shadow-lg"
-            />
-          ) : (
-            <div 
-              className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-white/20"
-              style={{ backgroundColor: bioSettings?.accent_color || '#3b82f6' }}
-            >
-              <SparklesIcon className="h-12 w-12 text-white" />
-            </div>
-          )}
+          {/* Profile Image */}
+          <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-2 border-white/20 shadow-xl">
+            {talentProfile?.profile_image ? (
+              <img 
+                src={talentProfile.profile_image} 
+                alt={bioSettings?.display_name || talentProfile?.full_name || 'Profile'} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-3xl text-white font-bold">
+                {(bioSettings?.display_name || talentProfile?.full_name || 'U')[0]}
+              </div>
+            )}
+          </div>
 
-          <h1 className="text-2xl font-bold text-white mb-1">{displayName}</h1>
-          
+          {/* Name */}
+          <h1 className="text-2xl font-bold text-white mb-1">
+            {bioSettings?.display_name || talentProfile?.full_name || 'Creator'}
+          </h1>
+
+          {/* Instagram Username */}
           {bioSettings?.instagram_username && (
-            <a
+            <a 
               href={`https://instagram.com/${bioSettings.instagram_username}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -216,47 +319,199 @@ const BioPage: React.FC = () => {
             </a>
           )}
 
+          {/* One-liner */}
           {bioSettings?.one_liner && (
-            <p className="text-gray-300 mt-3 max-w-xs mx-auto">{bioSettings.one_liner}</p>
+            <p className="text-gray-300 mt-3 max-w-sm mx-auto">
+              {bioSettings.one_liner}
+            </p>
           )}
         </div>
 
         {/* Links */}
-        <div className="space-y-4">
-          {links.map((link) => (
-            <BioLinkItem
+        <div className="flex-1 space-y-4">
+          {/* Regular Links */}
+          {links.filter(l => l.link_type === 'basic').map((link) => (
+            <a
               key={link.id}
-              link={link}
-              accentColor={bioSettings?.accent_color || '#3b82f6'}
-              email={email}
-              setEmail={setEmail}
-              onSubscribe={handleNewsletterSubscribe}
-              subscribing={subscribing}
-            />
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => handleLinkClick(link)}
+              className={getButtonClasses()}
+              style={getCardStyle()}
+            >
+              <div className="flex items-center justify-center gap-3">
+                {link.thumbnail_url ? (
+                  <img src={link.thumbnail_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                ) : link.icon_url ? (
+                  <img src={link.icon_url} alt="" className="w-6 h-6" />
+                ) : null}
+                <span className="text-white font-medium">{link.title}</span>
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-400" />
+              </div>
+            </a>
           ))}
 
-          {/* ShoutOut Card */}
+          {/* Grid Links */}
+          {links.filter(l => l.link_type === 'grid').length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              {links.filter(l => l.link_type === 'grid').map((link) => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => handleLinkClick(link)}
+                  className={`${link.grid_columns === 1 ? 'col-span-2' : ''} aspect-square rounded-xl overflow-hidden relative group`}
+                  style={getCardStyle()}
+                >
+                  {link.thumbnail_url ? (
+                    <>
+                      <img 
+                        src={link.thumbnail_url} 
+                        alt={link.title || ''} 
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
+                        <span className="text-white font-medium text-sm">{link.title}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                      <Squares2X2Icon className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-white font-medium text-sm text-center">{link.title}</span>
+                    </div>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {/* Newsletter Signup */}
+          {links.filter(l => l.link_type === 'newsletter').length > 0 && newsletterConfig && (
+            <div 
+              className={`${bioSettings?.button_style === 'pill' ? 'rounded-3xl' : bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'} p-5 backdrop-blur-sm border`}
+              style={getCardStyle()}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <EnvelopeIcon className="h-6 w-6 text-green-400" />
+                <h3 className="text-white font-medium">
+                  {links.find(l => l.link_type === 'newsletter')?.title || 'Join my newsletter'}
+                </h3>
+              </div>
+              <form onSubmit={handleNewsletterSignup} className="flex gap-2">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
+                />
+                <button
+                  type="submit"
+                  disabled={subscribing}
+                  className="px-4 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
+                >
+                  {subscribing ? '...' : 'Join'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Sponsor Links */}
+          {links.filter(l => l.link_type === 'sponsor').map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => handleLinkClick(link)}
+              className={`${getButtonClasses()} bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30`}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <GiftIcon className="h-6 w-6 text-yellow-400" />
+                <span className="text-white font-medium">{link.title || 'Become a Sponsor'}</span>
+              </div>
+            </a>
+          ))}
+
+          {/* ShoutOut Card - Always at the bottom */}
           {bioSettings?.show_shoutout_card && (
-            <ShoutOutCard
-              talentProfile={talentProfile}
-              displayName={displayName}
-              avatarUrl={avatarUrl}
-              review={randomReview}
-              accentColor={bioSettings?.accent_color || '#3b82f6'}
-            />
+            <a
+              href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-6"
+            >
+              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl p-5 border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-start gap-4">
+                  {/* Profile Image */}
+                  <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-500/50">
+                    {talentProfile?.profile_image ? (
+                      <img 
+                        src={talentProfile.profile_image} 
+                        alt="" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                        <GiftIcon className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <GiftIcon className="h-5 w-5 text-blue-400" />
+                      <span className="text-blue-400 text-sm font-medium">ShoutOut</span>
+                    </div>
+                    <h3 className="text-white font-semibold mb-1">
+                      Get a personalized video from {bioSettings?.display_name || talentProfile?.full_name}
+                    </h3>
+                    
+                    {/* Random Review */}
+                    {randomReview && (
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <div className="flex items-center gap-1 mb-1">
+                          {[...Array(5)].map((_, i) => (
+                            i < randomReview.rating ? (
+                              <StarSolidIcon key={i} className="h-4 w-4 text-yellow-400" />
+                            ) : (
+                              <StarIcon key={i} className="h-4 w-4 text-gray-600" />
+                            )
+                          ))}
+                        </div>
+                        {randomReview.review_text && (
+                          <p className="text-gray-300 text-sm line-clamp-2">
+                            "{randomReview.review_text}"
+                          </p>
+                        )}
+                        {randomReview.reviewer_name && (
+                          <p className="text-gray-500 text-xs mt-1">
+                            — {randomReview.reviewer_name}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </a>
           )}
         </div>
 
         {/* Footer */}
-        <div className="mt-12 text-center">
-          <a
+        <div className="mt-8 text-center">
+          <a 
             href="https://shoutout.us"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-400 text-sm transition-colors"
           >
-            <SparklesIcon className="h-4 w-4" />
-            Powered by ShoutOut
+            <span>Powered by</span>
+            <span className="font-semibold">ShoutOut</span>
           </a>
         </div>
       </div>
@@ -264,198 +519,4 @@ const BioPage: React.FC = () => {
   );
 };
 
-// Bio Link Item Component
-const BioLinkItem: React.FC<{
-  link: BioLink;
-  accentColor: string;
-  email: string;
-  setEmail: (email: string) => void;
-  onSubscribe: (e: React.FormEvent) => void;
-  subscribing: boolean;
-}> = ({ link, accentColor, email, setEmail, onSubscribe, subscribing }) => {
-  if (link.link_type === 'basic') {
-    return (
-      <a
-        href={link.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block w-full p-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all group"
-      >
-        <div className="flex items-center gap-4">
-          {link.icon_url ? (
-            <img src={link.icon_url} alt="" className="w-6 h-6 invert opacity-70 group-hover:opacity-100 transition-opacity" />
-          ) : (
-            <ArrowTopRightOnSquareIcon className="w-6 h-6 text-gray-400 group-hover:text-white transition-colors" />
-          )}
-          <span className="flex-1 text-white font-medium">{link.title}</span>
-          <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
-        </div>
-      </a>
-    );
-  }
-
-  if (link.link_type === 'grid' && link.bio_grid_cards && link.bio_grid_cards.length > 0) {
-    const gridCols = link.grid_size === 'small' ? 'grid-cols-4' : link.grid_size === 'large' ? 'grid-cols-2' : 'grid-cols-3';
-    
-    return (
-      <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10">
-        {link.title && (
-          <h3 className="text-white font-medium mb-4">{link.title}</h3>
-        )}
-        <div className={`grid ${gridCols} gap-2`}>
-          {link.bio_grid_cards.map((card) => (
-            <a
-              key={card.id}
-              href={card.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="aspect-square rounded-xl overflow-hidden hover:opacity-80 transition-opacity"
-            >
-              <img
-                src={card.image_url}
-                alt={card.title || ''}
-                className="w-full h-full object-cover"
-              />
-            </a>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (link.link_type === 'newsletter') {
-    return (
-      <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10">
-        <div className="flex items-center gap-3 mb-4">
-          <div 
-            className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${accentColor}30` }}
-          >
-            <EnvelopeIcon className="w-5 h-5" style={{ color: accentColor }} />
-          </div>
-          <div>
-            <h3 className="text-white font-medium">{link.title || 'Join the Newsletter'}</h3>
-            <p className="text-sm text-gray-400">Get updates straight to your inbox</p>
-          </div>
-        </div>
-        <form onSubmit={onSubscribe} className="flex gap-2">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            required
-          />
-          <button
-            type="submit"
-            disabled={subscribing}
-            className="px-6 py-3 rounded-xl font-medium text-white transition-colors disabled:opacity-50"
-            style={{ backgroundColor: accentColor }}
-          >
-            {subscribing ? '...' : 'Join'}
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  if (link.link_type === 'sponsor') {
-    return (
-      <a
-        href={link.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block w-full p-4 rounded-2xl border-2 border-dashed border-yellow-500/50 hover:border-yellow-500 hover:bg-yellow-500/10 transition-all group"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-            <GiftIcon className="w-5 h-5 text-yellow-400" />
-          </div>
-          <div className="flex-1">
-            <span className="text-white font-medium">{link.title || 'Become a Sponsor'}</span>
-            <p className="text-sm text-yellow-400/70">Support this creator</p>
-          </div>
-          <ArrowTopRightOnSquareIcon className="w-5 h-5 text-yellow-500/50 group-hover:text-yellow-500 transition-colors" />
-        </div>
-      </a>
-    );
-  }
-
-  return null;
-};
-
-// ShoutOut Card Component
-const ShoutOutCard: React.FC<{
-  talentProfile: TalentProfile | null;
-  displayName: string;
-  avatarUrl?: string;
-  review: Review | null;
-  accentColor: string;
-}> = ({ talentProfile, displayName, avatarUrl, review, accentColor }) => {
-  // Link to the main ShoutOut site for ordering
-  const profileUrl = `https://shoutout.us/${talentProfile?.username || talentProfile?.id}`;
-
-  return (
-    <div 
-      className="p-4 rounded-2xl backdrop-blur-xl border border-white/10 overflow-hidden relative"
-      style={{ 
-        background: `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}10 50%, transparent 100%)`,
-        borderColor: `${accentColor}30`,
-      }}
-    >
-      {/* Decorative gradient */}
-      <div 
-        className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-30"
-        style={{ backgroundColor: accentColor }}
-      />
-      
-      <div className="relative">
-        <div className="flex items-center gap-4 mb-4">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt=""
-              className="w-14 h-14 rounded-full object-cover border-2 border-white/20"
-            />
-          ) : (
-            <div 
-              className="w-14 h-14 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: accentColor }}
-            >
-              <SparklesIcon className="h-7 w-7 text-white" />
-            </div>
-          )}
-          <div>
-            <p className="text-sm text-gray-400">Get a personalized ShoutOut from</p>
-            <h3 className="text-lg font-bold text-white">{displayName}</h3>
-          </div>
-        </div>
-
-        {review && (
-          <div className="bg-white/5 rounded-xl p-3 mb-4">
-            <div className="flex items-center gap-1 mb-1">
-              {[...Array(5)].map((_, i) => (
-                <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-600'}>★</span>
-              ))}
-            </div>
-            <p className="text-sm text-gray-300 line-clamp-2">"{review.comment}"</p>
-          </div>
-        )}
-
-        <a
-          href={profileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full py-3 text-center font-semibold text-white rounded-xl transition-all hover:opacity-90"
-          style={{ backgroundColor: accentColor }}
-        >
-          Get Your ShoutOut →
-        </a>
-      </div>
-    </div>
-  );
-};
-
 export default BioPage;
-
