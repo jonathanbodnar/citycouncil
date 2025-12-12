@@ -997,18 +997,9 @@ const BioDashboard: React.FC = () => {
                     <GiftIcon className="h-6 w-6 text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <h3 className="font-medium text-white mb-1">ShoutOut Card</h3>
-                      <p className="text-sm text-gray-300 mb-2">
-                        A special card linking to your ShoutOut profile with a random review. This card cannot be removed.
+                      <p className="text-sm text-gray-300">
+                        A special card linking to your ShoutOut profile with a random review is always shown at the bottom of your bio page.
                       </p>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={bioSettings?.show_shoutout_card ?? true}
-                          onChange={(e) => saveSettings({ show_shoutout_card: e.target.checked })}
-                          className="w-4 h-4 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-white">Show ShoutOut card</span>
-                      </label>
                     </div>
                   </div>
                 </div>

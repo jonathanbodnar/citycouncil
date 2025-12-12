@@ -586,8 +586,8 @@ const BioPage: React.FC = () => {
             </a>
           ))}
 
-          {/* ShoutOut Card - Always at the bottom */}
-          {bioSettings?.show_shoutout_card && (
+          {/* ShoutOut Card - Always at the bottom (cannot be removed) */}
+          {bioSettings && (
             <a
               href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}`}
               target="_blank"
