@@ -12,7 +12,8 @@ import {
   ChartBarIcon,
   PlayIcon,
   CloudArrowUpIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
@@ -44,6 +45,9 @@ interface ReviewWithUser extends Review {
   };
 }
 
+// Feature flag: Only show Bio tab for specific users
+const BIO_FEATURE_ALLOWED_EMAILS = ['jb@apollo.inc'];
+
 const TalentDashboard: React.FC = () => {
   const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -52,7 +56,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media'>('analytics');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media' | 'bio'>('analytics');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -61,16 +65,22 @@ const TalentDashboard: React.FC = () => {
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
 
+  // Check if user has access to Bio feature
+  const hasBioAccess = user?.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase());
+
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
   useEffect(() => {
-    if (tabParam && ['orders', 'analytics', 'profile', 'payouts', 'promotion', 'media'].includes(tabParam)) {
-      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media');
+    const validTabs = ['orders', 'analytics', 'profile', 'payouts', 'promotion', 'media'];
+    if (hasBioAccess) validTabs.push('bio');
+    
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media' | 'bio');
     } else {
       // Default to analytics (stats) when no tab parameter
       setActiveTab('analytics');
     }
-  }, [tabParam]); // Watch the actual tab value
+  }, [tabParam, hasBioAccess]); // Watch the actual tab value
 
   // Handle order parameter from fulfillment link
   useEffect(() => {
@@ -640,6 +650,8 @@ const TalentDashboard: React.FC = () => {
               { key: 'payouts', label: 'Payouts', count: null, icon: BanknotesIcon },
               { key: 'promotion', label: 'Promotion 🎁', count: null },
               { key: 'profile', label: 'Profile Settings', count: null },
+              // Bio tab - only show for allowed users
+              ...(hasBioAccess ? [{ key: 'bio', label: 'ShoutOut Bio ✨', count: null, icon: LinkIcon }] : []),
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -1669,6 +1681,31 @@ const TalentDashboard: React.FC = () => {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bio Tab - Only for allowed users */}
+      {activeTab === 'bio' && hasBioAccess && (
+        <div className="space-y-6">
+          <div className="glass border border-white/20 rounded-2xl p-8 text-center">
+            <LinkIcon className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">ShoutOut Bio</h2>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              Create your personalized link-in-bio page at bio.shoutout.us/{talentProfile?.username || 'yourname'}
+            </p>
+            <a
+              href={`https://bio.shoutout.us/dashboard?token=${encodeURIComponent(user?.id || '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              <LinkIcon className="h-5 w-5" />
+              Open Bio Dashboard
+            </a>
+            <p className="text-sm text-gray-500 mt-4">
+              Opens in a new tab at bio.shoutout.us
+            </p>
           </div>
         </div>
       )}
