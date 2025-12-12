@@ -107,9 +107,6 @@ const AdvancedAnalytics: React.FC = () => {
   const [userSourceBreakdown, setUserSourceBreakdown] = useState<SourceBreakdown[]>([]);
   const [orderSourceBreakdown, setOrderSourceBreakdown] = useState<SourceBreakdown[]>([]);
   
-  // Current follower count input
-  const [currentFollowers, setCurrentFollowers] = useState<number>(0);
-  const [showFollowerInput, setShowFollowerInput] = useState(false);
 
   // Helper to format date as YYYY-MM-DD
   const formatLocalDate = (date: Date) => {
@@ -551,31 +548,6 @@ const AdvancedAnalytics: React.FC = () => {
     
     return chartData;
   }, [chartData, chartMode, campaignMappings]);
-
-  // Save follower count
-  const saveFollowerCount = async () => {
-    try {
-      const today = formatLocalDate(new Date());
-      
-      const { error } = await supabase
-        .from('follower_counts')
-        .upsert({
-          date: today,
-          platform: 'total',
-          count: currentFollowers
-        }, { onConflict: 'date' });
-      
-      if (error) throw error;
-      
-      toast.success('Follower count saved');
-      setShowFollowerInput(false);
-      fetchData();
-    } catch (error) {
-      console.error('Error saving follower count:', error);
-      toast.error('Failed to save follower count');
-    }
-  };
-
   // Save ad platform credentials
   const saveCredentials = async () => {
     try {
@@ -809,42 +781,6 @@ const AdvancedAnalytics: React.FC = () => {
           </div>
         </div>
 
-        {/* Follower Count Input */}
-        <div className="mt-4 pt-4 border-t border-gray-700">
-          <div className="flex items-center gap-4">
-            <span className="text-gray-400 text-sm">Today's Follower Count:</span>
-            {showFollowerInput ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={currentFollowers}
-                  onChange={(e) => setCurrentFollowers(parseInt(e.target.value) || 0)}
-                  className="bg-gray-800 text-white rounded-lg px-3 py-1.5 text-sm w-32"
-                  placeholder="Enter count"
-                />
-                <button
-                  onClick={saveFollowerCount}
-                  className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setShowFollowerInput(false)}
-                  className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowFollowerInput(true)}
-                className="px-3 py-1.5 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600"
-              >
-                Update Count
-              </button>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Chart */}

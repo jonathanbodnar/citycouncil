@@ -63,7 +63,7 @@ interface AdminManagementTabsProps {
 }
 
 const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
-  const activeTab = activeTabProp as 'analytics' | 'advanced-analytics' | 'orders' | 'users' | 'talent' | 'payouts' | 'w9s' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons' | 'credits' | 'holiday-promo';
+  const activeTab = activeTabProp as 'analytics' | 'advanced-analytics' | 'orders' | 'users' | 'talent' | 'payouts' | 'w9s' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons' | 'credits' | 'giveaway';
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -362,7 +362,7 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                 color="text-teal-600"
               />
               <StatsCard
-                title="🎄 Holiday Promo Signups"
+                title="🎁 Giveaway Signups"
                 value={stats.holiday_promo_signups.toLocaleString()}
                 icon={GiftIcon}
                 color="text-red-600"
@@ -528,8 +528,8 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         <CreditsManagement />
       )}
 
-      {/* Holiday Promo Tab */}
-      {activeTab === 'holiday-promo' && (
+      {/* Giveaway Tab */}
+      {activeTab === 'giveaway' && (
         <HolidayPromoSignups />
       )}
 
