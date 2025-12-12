@@ -128,6 +128,7 @@ interface BioLink {
   button_text?: string;
   is_featured?: boolean;
   click_count?: number;
+  link_format?: 'thin' | 'tall' | 'square';
 }
 
 interface Review {
@@ -761,6 +762,72 @@ const BioPage: React.FC = () => {
               boxShadow: `0 0 20px ${bioSettings?.button_color || '#3b82f6'}30`,
             } : {};
             
+            const linkFormat = link.link_format || 'thin';
+            
+            // Square format - image only, no title
+            if (linkFormat === 'square') {
+              return (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => handleLinkClick(link)}
+                  className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] overflow-hidden block`}
+                  style={{
+                    ...getButtonStyle(),
+                    ...featuredStyle,
+                    padding: 0,
+                  }}
+                >
+                  <div className="aspect-square w-full relative">
+                    {link.thumbnail_url ? (
+                      <img src={link.thumbnail_url} alt={link.title || ''} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-white/10">
+                        <ArrowTopRightOnSquareIcon className="h-8 w-8 text-white/40" />
+                      </div>
+                    )}
+                  </div>
+                </a>
+              );
+            }
+            
+            // Tall format - larger image with title below
+            if (linkFormat === 'tall') {
+              return (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => handleLinkClick(link)}
+                  className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] overflow-hidden block`}
+                  style={{
+                    ...getButtonStyle(),
+                    ...featuredStyle,
+                    padding: 0,
+                  }}
+                >
+                  {link.thumbnail_url && (
+                    <div className="h-32 w-full">
+                      <img src={link.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex-1">
+                      <span className="text-white font-medium text-left block">{link.title}</span>
+                      {link.subtitle && (
+                        <span className="text-white/60 text-sm text-left block mt-0.5">{link.subtitle}</span>
+                      )}
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60 flex-shrink-0 ml-2" />
+                  </div>
+                </a>
+              );
+            }
+            
+            // Default thin format
             return (
               <a
                 key={link.id}
