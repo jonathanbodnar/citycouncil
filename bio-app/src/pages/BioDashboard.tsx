@@ -428,6 +428,34 @@ const BioDashboard: React.FC = () => {
     }
   };
 
+  // Add multiple links (for grid cards)
+  const addMultipleLinks = async (newLinks: Omit<BioLink, 'id' | 'display_order'>[]) => {
+    if (!talentProfile?.id) return;
+
+    try {
+      const linksToInsert = newLinks.map((link, index) => ({
+        ...link,
+        talent_id: talentProfile.id,
+        display_order: links.length + index,
+      }));
+
+      const { data, error } = await supabase
+        .from('bio_links')
+        .insert(linksToInsert)
+        .select();
+
+      if (error) throw error;
+      setLinks([...links, ...(data || [])]);
+      setShowAddModal(false);
+      toast.success(`${data?.length || 0} grid cards added!`);
+      // Auto-refresh preview
+      setTimeout(refreshPreview, 500);
+    } catch (error) {
+      console.error('Error adding links:', error);
+      toast.error('Failed to add grid cards');
+    }
+  };
+
   // Update link
   const updateLink = async (link: BioLink) => {
     if (!link.id) return;
@@ -1357,6 +1385,7 @@ const BioDashboard: React.FC = () => {
         <AddLinkModal
           onClose={() => setShowAddModal(false)}
           onAdd={addLink}
+          onAddMultiple={addMultipleLinks}
           talentId={talentProfile?.id || ''}
         />
       )}
