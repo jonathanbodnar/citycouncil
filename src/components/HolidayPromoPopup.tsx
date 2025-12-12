@@ -267,19 +267,28 @@ const HolidayPromoPopup: React.FC = () => {
       // Get UTM source for tracking
       // Supports both simple utm= and Facebook's detailed utm_source=
       const urlParams = new URLSearchParams(window.location.search);
-      let utmSource = urlParams.get('utm') || safeGetItem('promo_source_global') || null;
+      const urlUtm = urlParams.get('utm');
+      const storedUtm = safeGetItem('promo_source_global');
+      const fbUtmSource = urlParams.get('utm_source');
+      
+      console.log('📱 UTM Debug:', {
+        currentUrl: window.location.href,
+        urlUtm,
+        storedUtm,
+        fbUtmSource,
+        allUrlParams: Object.fromEntries(urlParams.entries())
+      });
+      
+      let utmSource = urlUtm || storedUtm || null;
       
       // Check for Facebook-style utm_source if no simple utm
-      if (!utmSource) {
-        const fbUtmSource = urlParams.get('utm_source');
-        if (fbUtmSource) {
-          // Normalize Facebook sources to 'fb'
-          const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
-          const normalizedSource = fbUtmSource.toLowerCase();
-          utmSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : fbUtmSource;
-        }
+      if (!utmSource && fbUtmSource) {
+        // Normalize Facebook sources to 'fb'
+        const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+        const normalizedSource = fbUtmSource.toLowerCase();
+        utmSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : fbUtmSource;
       }
-      console.log('📱 UTM source:', utmSource);
+      console.log('📱 Final UTM source:', utmSource);
 
       // Save to beta_signups with source "holiday_popup"
       const { data, error: insertError } = await supabase

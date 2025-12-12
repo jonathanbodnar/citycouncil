@@ -85,8 +85,10 @@ const TalentProfilePage: React.FC = () => {
   // Capture UTM tracking and store in localStorage
   // utm=1 means "self_promo" - ONLY tracks for this specific talent
   // All other UTMs (rumble, twitter, etc.) are GLOBAL - track for any talent ordered
+  // Also supports Facebook's utm_source format
   useEffect(() => {
     const utmParam = searchParams.get('utm');
+    const utmSource = searchParams.get('utm_source');
     const talentIdentifier = username || id;
     
     if (utmParam === '1' && talentIdentifier) {
@@ -95,6 +97,21 @@ const TalentProfilePage: React.FC = () => {
     } else if (utmParam && utmParam !== '1') {
       // Global UTM: store globally (tracks for ANY talent they order from)
       localStorage.setItem('promo_source_global', utmParam);
+    } else if (utmSource) {
+      // Facebook-style UTM - normalize Facebook sources to 'fb'
+      const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+      const normalizedSource = utmSource.toLowerCase();
+      const sourceToStore = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : utmSource;
+      localStorage.setItem('promo_source_global', sourceToStore);
+      
+      // Also store the full UTM details for reference
+      const utmDetails = {
+        source: utmSource,
+        medium: searchParams.get('utm_medium'),
+        campaign: searchParams.get('utm_campaign'),
+        content: searchParams.get('utm_content')
+      };
+      localStorage.setItem('utm_details', JSON.stringify(utmDetails));
     }
   }, [searchParams, username, id]);
 
