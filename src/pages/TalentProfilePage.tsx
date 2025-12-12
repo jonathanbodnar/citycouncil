@@ -547,18 +547,19 @@ const TalentProfilePage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     {/* Social Links - check both social_accounts and direct handle columns */}
                     {(() => {
-                      // Get Twitter handle from either source
-                      const twitterHandle = talent.twitter_handle || 
-                        talent.social_accounts?.find(a => a.platform === 'twitter')?.handle?.replace('@', '');
-                      // Get Instagram handle from either source
-                      const instagramHandle = talent.instagram_handle || 
-                        talent.social_accounts?.find(a => a.platform === 'instagram')?.handle?.replace('@', '');
-                      // Get Facebook handle from either source
-                      const facebookHandle = talent.facebook_handle || 
-                        talent.social_accounts?.find(a => a.platform === 'facebook')?.handle?.replace('@', '');
-                      // Get TikTok handle from either source
-                      const tiktokHandle = talent.tiktok_handle || 
-                        talent.social_accounts?.find(a => a.platform === 'tiktok')?.handle?.replace('@', '');
+                      // Get handles - prioritize social_accounts (talent-entered) over _handle columns
+                      const twitterHandle = 
+                        talent.social_accounts?.find(a => a.platform === 'twitter')?.handle?.replace('@', '') ||
+                        talent.twitter_handle;
+                      const instagramHandle = 
+                        talent.social_accounts?.find(a => a.platform === 'instagram')?.handle?.replace('@', '') ||
+                        talent.instagram_handle;
+                      const facebookHandle = 
+                        talent.social_accounts?.find(a => a.platform === 'facebook')?.handle?.replace('@', '') ||
+                        talent.facebook_handle;
+                      const tiktokHandle = 
+                        talent.social_accounts?.find(a => a.platform === 'tiktok')?.handle?.replace('@', '') ||
+                        talent.tiktok_handle;
                       
                       return (
                         <>
