@@ -265,18 +265,23 @@ const AdvancedAnalytics: React.FC = () => {
       // Process data into daily buckets
       const dailyMap = new Map<string, DailyData>();
       
-      // Initialize all dates in range (inclusive of both start and end)
-      const current = new Date(start);
-      const endDate = new Date(end);
+      // Initialize all dates in range using the CST date strings
+      // Parse startStr and endStr to iterate through dates
+      const [startYear, startMonth, startDay] = startStr.split('-').map(Number);
+      const [endYear, endMonth, endDay] = endStr.split('-').map(Number);
       
-      console.log('📅 Initializing date range:', {
-        start: formatLocalDate(current),
-        end: formatLocalDate(endDate),
-        currentTime: new Date().toLocaleString()
-      });
+      // Create dates at noon to avoid timezone issues during iteration
+      const currentDate = new Date(startYear, startMonth - 1, startDay, 12, 0, 0);
+      const endDate = new Date(endYear, endMonth - 1, endDay, 12, 0, 0);
       
-      while (current <= endDate) {
-        const dateStr = formatLocalDate(current);
+      console.log('📅 Initializing date range:', { startStr, endStr });
+      
+      while (currentDate <= endDate) {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
         dailyMap.set(dateStr, {
           date: dateStr,
           followers: 0,
@@ -287,7 +292,7 @@ const AdvancedAnalytics: React.FC = () => {
           fbSpend: 0,
           rumbleSpend: 0
         });
-        current.setDate(current.getDate() + 1);
+        currentDate.setDate(currentDate.getDate() + 1);
       }
       
       console.log('📅 Dates initialized:', Array.from(dailyMap.keys()));
