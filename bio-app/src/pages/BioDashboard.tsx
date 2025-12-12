@@ -925,167 +925,62 @@ const BioDashboard: React.FC = () => {
 
           {/* Right Column - Live Preview */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h3 className="text-sm font-medium text-gray-400">Live Preview</h3>
-                <a
-                  href={`https://${bioUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                >
-                  Open <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                </a>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      // Force iframe refresh
+                      const iframe = document.getElementById('bio-preview-iframe') as HTMLIFrameElement;
+                      if (iframe) {
+                        iframe.src = iframe.src;
+                      }
+                    }}
+                    className="text-sm text-gray-400 hover:text-white flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+                  >
+                    Refresh
+                  </button>
+                  <a
+                    href={`https://${bioUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                  >
+                    Open <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
               
-              {/* Phone Frame */}
-              <div className="relative mx-auto" style={{ maxWidth: '320px' }}>
-                <div 
-                  className="rounded-[2.5rem] overflow-hidden border-4 border-gray-800 shadow-2xl"
-                  style={{
-                    background: `linear-gradient(${bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg'}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
-                  }}
-                >
-                  {/* Notch */}
-                  <div className="bg-black h-6 flex items-center justify-center">
-                    <div className="w-20 h-4 bg-gray-800 rounded-full" />
+              {/* Iframe Embed */}
+              <div className="relative w-full" style={{ height: '700px' }}>
+                {bioSettings?.is_published ? (
+                  <iframe
+                    id="bio-preview-iframe"
+                    src={`https://${bioUrl}`}
+                    className="w-full h-full border-0"
+                    title="Bio Preview"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center"
+                    style={{
+                      background: `linear-gradient(${bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg'}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
+                    }}
+                  >
+                    <EyeIcon className="h-12 w-12 text-gray-500 mb-4" />
+                    <h3 className="text-lg font-semibold text-white mb-2">Preview Not Available</h3>
+                    <p className="text-gray-400 text-sm mb-4">
+                      Publish your bio page to see the live preview here.
+                    </p>
+                    <button
+                      onClick={togglePublish}
+                      disabled={saving}
+                      className="px-6 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+                    >
+                      Publish Now
+                    </button>
                   </div>
-                  
-                  {/* Content */}
-                  <div className="p-4 min-h-[500px]">
-                    {/* Profile */}
-                    <div className="text-center mb-6">
-                      <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden border-2 border-white/20">
-                        {talentProfile?.profile_image ? (
-                          <img 
-                            src={talentProfile.profile_image} 
-                            alt="" 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl text-white font-bold">
-                            {(bioSettings?.display_name || talentProfile?.full_name || 'U')[0]}
-                          </div>
-                        )}
-                      </div>
-                      <h2 className="text-lg font-bold text-white">
-                        {bioSettings?.display_name || talentProfile?.full_name || 'Your Name'}
-                      </h2>
-                      {bioSettings?.instagram_username && (
-                        <p className="text-sm text-gray-400">@{bioSettings.instagram_username}</p>
-                      )}
-                      {bioSettings?.one_liner && (
-                        <p className="text-sm text-gray-300 mt-2">{bioSettings.one_liner}</p>
-                      )}
-                    </div>
-
-                    {/* Preview Links */}
-                    <div className="space-y-3">
-                      {links.filter(l => l.is_active && l.link_type !== 'newsletter').slice(0, 3).map((link) => {
-                        const cardStyle = bioSettings?.card_style || 'glass';
-                        const buttonColor = bioSettings?.button_color || '#3b82f6';
-                        
-                        // Get style based on card_style
-                        let cardClasses = `p-3 text-center transition-all ${
-                          bioSettings?.button_style === 'pill' ? 'rounded-full' :
-                          bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'
-                        }`;
-                        
-                        let cardStyles: React.CSSProperties = {};
-                        
-                        if (cardStyle === 'glass') {
-                          cardClasses += ' backdrop-blur-sm border';
-                          cardStyles = {
-                            backgroundColor: `${buttonColor}20`,
-                            borderColor: `${buttonColor}50`,
-                          };
-                        } else if (cardStyle === 'solid') {
-                          cardClasses += ' border';
-                          cardStyles = {
-                            backgroundColor: `${buttonColor}40`,
-                            borderColor: `${buttonColor}30`,
-                          };
-                        } else if (cardStyle === 'outline') {
-                          cardClasses += ' border-2 bg-transparent';
-                          cardStyles = {
-                            borderColor: buttonColor,
-                          };
-                        } else if (cardStyle === 'shadow') {
-                          cardStyles = {
-                            backgroundColor: `${buttonColor}25`,
-                            boxShadow: `0 4px 15px ${buttonColor}30`,
-                          };
-                        }
-                        
-                        return (
-                          <div
-                            key={link.id}
-                            className={cardClasses}
-                            style={cardStyles}
-                          >
-                            <span className="text-white text-sm font-medium">{link.title || 'Link'}</span>
-                          </div>
-                        );
-                      })}
-                      
-                      {/* Newsletter Preview */}
-                      {links.some(l => l.link_type === 'newsletter' && l.is_active) && (
-                        <div 
-                          className={`p-3 ${
-                            bioSettings?.button_style === 'pill' ? 'rounded-2xl' :
-                            bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'
-                          } bg-white/10 border border-white/20`}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <EnvelopeIcon className="h-4 w-4 text-green-400" />
-                            <span className="text-white text-xs font-medium">
-                              {links.find(l => l.link_type === 'newsletter')?.title || 'Join my newsletter'}
-                            </span>
-                          </div>
-                          <div className="flex gap-1">
-                            <div className="flex-1 h-7 bg-white/10 rounded-md" />
-                            <div 
-                              className="px-3 h-7 rounded-md text-xs flex items-center text-white"
-                              style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
-                            >
-                              Join
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {links.filter(l => l.link_type !== 'newsletter').length > 3 && (
-                        <p className="text-center text-gray-500 text-xs">+{links.filter(l => l.link_type !== 'newsletter').length - 3} more links</p>
-                      )}
-
-                      {/* ShoutOut Card Preview */}
-                      {bioSettings?.show_shoutout_card && (
-                        <div className="mt-4 p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/30">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-500/50">
-                              {talentProfile?.profile_image ? (
-                                <img src={talentProfile.profile_image} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                                  <GiftIcon className="h-5 w-5 text-white" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-white text-xs font-medium">Get a ShoutOut!</p>
-                              <p className="text-gray-400 text-[10px]">Personalized video message</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Footer - White with opacity */}
-                    <div className="mt-6 text-center">
-                      <p className="text-xs text-white/40">Powered by ShoutOut</p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
