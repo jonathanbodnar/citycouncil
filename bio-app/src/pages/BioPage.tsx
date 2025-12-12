@@ -418,28 +418,37 @@ const BioPage: React.FC = () => {
       
       // Try to find thumbnail using regex on raw HTML
       // Rumble thumbnails come from various CDN subdomains including 1a-1791.com
+      // IMPORTANT: Video thumbnails have "-small-" in the filename, profile images don't
       let thumbnail = '';
-      // Look for thumbnail images - they usually have specific patterns
-      const thumbPatterns = [
-        // Rumble's CDN patterns - 1a-1791.com is the primary one
-        /src="(https:\/\/1a-1791\.com\/video\/[^"]+\.(jpg|jpeg|webp|png)[^"]*)"/i,
-        /src="(https:\/\/sp\.rmbl\.ws\/[^"]+)"/i,
-        /src="(https:\/\/i\.rmbl\.ws\/[^"]+)"/i,
-        // Look for thumbnail__image class which contains the actual thumbnails
-        /class="thumbnail__image[^"]*"[^>]*src="([^"]+)"/i,
-        /src="([^"]+)"[^>]*class="thumbnail__image/i,
-        // Data-src patterns
-        /data-src="(https:\/\/[^"]*\.(jpg|jpeg|webp|png)[^"]*)"/i,
-        // OG image meta tag
-        /og:image"[^>]*content="([^"]+)"/i,
-        /content="([^"]+)"[^>]*property="og:image/i,
-      ];
       
-      for (const pattern of thumbPatterns) {
-        const match = html.match(pattern);
-        if (match && match[1] && !match[1].includes('data:image')) {
-          thumbnail = match[1];
-          break;
+      // First, try to find video thumbnails specifically (they have "-small-" in the URL)
+      const videoThumbMatch = html.match(/src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png)[^"]*)"/i);
+      if (videoThumbMatch && videoThumbMatch[1]) {
+        thumbnail = videoThumbMatch[1];
+      }
+      
+      // If no video thumbnail found, try other patterns
+      if (!thumbnail) {
+        const thumbPatterns = [
+          // Look for thumbnail__image class which contains the actual thumbnails
+          /class="thumbnail__image[^"]*"[^>]*src="([^"]+)"/i,
+          /src="([^"]+)"[^>]*class="thumbnail__image/i,
+          // Rumble's other CDN patterns
+          /src="(https:\/\/sp\.rmbl\.ws\/[^"]+)"/i,
+          /src="(https:\/\/i\.rmbl\.ws\/[^"]+)"/i,
+          // Data-src patterns
+          /data-src="(https:\/\/[^"]*\.(jpg|jpeg|webp|png)[^"]*)"/i,
+          // OG image meta tag (usually the video thumbnail)
+          /og:image"[^>]*content="([^"]+)"/i,
+          /content="([^"]+)"[^>]*property="og:image/i,
+        ];
+        
+        for (const pattern of thumbPatterns) {
+          const match = html.match(pattern);
+          if (match && match[1] && !match[1].includes('data:image')) {
+            thumbnail = match[1];
+            break;
+          }
         }
       }
       
