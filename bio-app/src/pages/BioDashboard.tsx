@@ -1117,42 +1117,65 @@ const AddLinkModal: React.FC<{
             </div>
           )}
 
-          {linkType === 'grid' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Image URL (optional)</label>
-                <input
-                  type="url"
-                  value={thumbnailUrl}
-                  onChange={(e) => setThumbnailUrl(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Grid Size</label>
-                <div className="flex gap-2">
-                  {[
-                    { cols: 1, label: 'Full Width' },
-                    { cols: 2, label: 'Half (2 cols)' },
-                    { cols: 3, label: 'Third (3 cols)' },
-                  ].map((size) => (
-                    <button
-                      key={size.cols}
-                      type="button"
-                      onClick={() => setGridColumns(size.cols)}
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm transition-all ${
-                        gridColumns === size.cols
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                      }`}
-                    >
-                      {size.label}
-                    </button>
-                  ))}
+          {/* Image URL for basic and grid links */}
+          {(linkType === 'basic' || linkType === 'grid') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                {linkType === 'basic' ? 'Icon/Image URL (optional)' : 'Image URL (optional)'}
+              </label>
+              <input
+                type="url"
+                value={thumbnailUrl}
+                onChange={(e) => setThumbnailUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              />
+              {thumbnailUrl && (
+                <div className="mt-2">
+                  <img 
+                    src={thumbnailUrl} 
+                    alt="Preview" 
+                    className={`${linkType === 'basic' ? 'w-10 h-10' : 'w-20 h-20'} rounded-lg object-cover`}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
                 </div>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {linkType === 'basic' 
+                  ? 'Add a small icon or image to display next to your link'
+                  : 'Add an image to display on the card'
+                }
+              </p>
+            </div>
+          )}
+
+          {linkType === 'grid' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { cols: 1, label: '1×2', desc: 'Full width' },
+                  { cols: 2, label: '2×2', desc: '2 columns' },
+                  { cols: 3, label: '2×3', desc: '3 columns' },
+                ].map((size) => (
+                  <button
+                    key={size.cols}
+                    type="button"
+                    onClick={() => setGridColumns(size.cols)}
+                    className={`py-3 px-3 rounded-lg text-sm transition-all ${
+                      gridColumns === size.cols
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }`}
+                  >
+                    <div className="font-semibold">{size.label}</div>
+                    <div className="text-xs opacity-70">{size.desc}</div>
+                  </button>
+                ))}
               </div>
-            </>
+            </div>
           )}
 
           <div className="flex gap-3 pt-4">
@@ -1256,24 +1279,25 @@ const EditLinkModal: React.FC<{
 
           {link.link_type === 'grid' && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Grid Size</label>
-              <div className="flex gap-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { cols: 1, label: 'Full Width' },
-                  { cols: 2, label: 'Half (2 cols)' },
-                  { cols: 3, label: 'Third (3 cols)' },
+                  { cols: 1, label: '1×2', desc: 'Full width' },
+                  { cols: 2, label: '2×2', desc: '2 columns' },
+                  { cols: 3, label: '2×3', desc: '3 columns' },
                 ].map((size) => (
                   <button
                     key={size.cols}
                     type="button"
                     onClick={() => setGridColumns(size.cols)}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm transition-all ${
+                    className={`py-3 px-3 rounded-lg text-sm transition-all ${
                       gridColumns === size.cols
                         ? 'bg-blue-500 text-white'
                         : 'bg-white/10 text-gray-300 hover:bg-white/20'
                     }`}
                   >
-                    {size.label}
+                    <div className="font-semibold">{size.label}</div>
+                    <div className="text-xs opacity-70">{size.desc}</div>
                   </button>
                 ))}
               </div>

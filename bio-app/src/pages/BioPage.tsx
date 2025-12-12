@@ -68,9 +68,11 @@ interface BioLink {
 interface Review {
   id: string;
   rating: number;
-  review_text?: string;
-  reviewer_name?: string;
+  comment?: string;
   created_at: string;
+  users?: {
+    full_name?: string;
+  };
 }
 
 interface NewsletterConfig {
@@ -151,10 +153,10 @@ const BioPage: React.FC = () => {
 
         setLinks(linksData || []);
 
-        // Get a random review
+        // Get a random review with user info
         const { data: reviews } = await supabase
           .from('reviews')
-          .select('*')
+          .select('*, users:user_id(full_name)')
           .eq('talent_id', profile.id)
           .gte('rating', 4)
           .limit(10);
@@ -399,40 +401,53 @@ const BioPage: React.FC = () => {
             </a>
           ))}
 
-          {/* Grid Links */}
-          {links.filter(l => l.link_type === 'grid').length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {links.filter(l => l.link_type === 'grid').map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => handleLinkClick(link)}
-                  className={`${link.grid_columns === 1 ? 'col-span-2' : ''} aspect-square ${getRadiusClass()} overflow-hidden relative group`}
-                  style={getButtonStyle()}
-                >
-                  {link.thumbnail_url ? (
-                    <>
-                      <img 
-                        src={link.thumbnail_url} 
-                        alt={link.title || ''} 
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
-                        <span className="text-white font-medium text-sm">{link.title}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-4">
-                      <Squares2X2Icon className="h-8 w-8 text-white/60 mb-2" />
-                      <span className="text-white font-medium text-sm text-center">{link.title}</span>
-                    </div>
-                  )}
-                </a>
-              ))}
-            </div>
-          )}
+          {/* Grid Links - Support 1x2, 2x2, 2x3 layouts */}
+          {links.filter(l => l.link_type === 'grid').length > 0 && (() => {
+            const gridLinks = links.filter(l => l.link_type === 'grid');
+            // Determine grid columns based on the grid_columns value (1=full, 2=half, 3=third)
+            const maxCols = Math.max(...gridLinks.map(l => l.grid_columns || 2));
+            const gridClass = maxCols === 3 ? 'grid-cols-3' : 'grid-cols-2';
+            
+            return (
+              <div className={`grid ${gridClass} gap-3`}>
+                {gridLinks.map((link) => {
+                  // Calculate span: 1 col = full width, 2 = half, 3 = third
+                  const colSpan = link.grid_columns === 1 ? (maxCols === 3 ? 'col-span-3' : 'col-span-2') : 
+                                  link.grid_columns === 3 ? 'col-span-1' : 'col-span-1';
+                  
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleLinkClick(link)}
+                      className={`${colSpan} aspect-square ${getRadiusClass()} overflow-hidden relative group`}
+                      style={getButtonStyle()}
+                    >
+                      {link.thumbnail_url ? (
+                        <>
+                          <img 
+                            src={link.thumbnail_url} 
+                            alt={link.title || ''} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
+                            <span className="text-white font-medium text-sm">{link.title}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                          <Squares2X2Icon className="h-8 w-8 text-white/60 mb-2" />
+                          <span className="text-white font-medium text-sm text-center">{link.title}</span>
+                        </div>
+                      )}
+                    </a>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Newsletter Signup - Show if there's a newsletter link (with or without config) */}
           {hasNewsletterLink && (
@@ -526,7 +541,7 @@ const BioPage: React.FC = () => {
                       Get a personalized video from {displayName}
                     </h3>
                     
-                    {/* Random Review */}
+                    {/* Random Review - Show first line only */}
                     {randomReview && (
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <div className="flex items-center gap-1 mb-1">
@@ -538,14 +553,14 @@ const BioPage: React.FC = () => {
                             )
                           ))}
                         </div>
-                        {randomReview.review_text && (
-                          <p className="text-gray-300 text-sm line-clamp-2">
-                            "{randomReview.review_text}"
+                        {randomReview.comment && (
+                          <p className="text-gray-300 text-sm line-clamp-1">
+                            "{randomReview.comment.split('\n')[0]}"
                           </p>
                         )}
-                        {randomReview.reviewer_name && (
+                        {randomReview.users?.full_name && (
                           <p className="text-gray-500 text-xs mt-1">
-                            — {randomReview.reviewer_name}
+                            — {randomReview.users.full_name}
                           </p>
                         )}
                       </div>
