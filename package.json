@@ -1,12 +1,13 @@
 {
   "name": "shout-out",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Conservative talent video platform - get personalized shoutouts from your favorite personalities",
   "author": "ShoutOut Team",
   "homepage": "https://shoutout.app",
   "dependencies": {
     "@headlessui/react": "^2.2.9",
+    "@hello-pangea/dnd": "^18.0.1",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
     "@moovio/sdk": "^0.20.0",
