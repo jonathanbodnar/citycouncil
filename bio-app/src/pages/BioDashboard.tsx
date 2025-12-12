@@ -143,6 +143,12 @@ const BioDashboard: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'links' | 'style' | 'settings'>('links');
+  const [previewKey, setPreviewKey] = useState(0);
+
+  // Auto-refresh preview
+  const refreshPreview = useCallback(() => {
+    setPreviewKey(prev => prev + 1);
+  }, []);
 
   // Authenticate user from token
   useEffect(() => {
@@ -274,13 +280,15 @@ const BioDashboard: React.FC = () => {
       if (error) throw error;
       setBioSettings({ ...bioSettings, ...updates });
       toast.success('Settings saved!');
+      // Auto-refresh preview after saving
+      setTimeout(refreshPreview, 500);
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
-  }, [bioSettings]);
+  }, [bioSettings, refreshPreview]);
 
   // Add new link
   const addLink = async (link: Omit<BioLink, 'id' | 'display_order'>) => {
@@ -303,6 +311,8 @@ const BioDashboard: React.FC = () => {
       setLinks([...links, data]);
       setShowAddModal(false);
       toast.success('Link added!');
+      // Auto-refresh preview
+      setTimeout(refreshPreview, 500);
     } catch (error) {
       console.error('Error adding link:', error);
       toast.error('Failed to add link');
@@ -337,6 +347,8 @@ const BioDashboard: React.FC = () => {
       setLinks(links.map(l => l.id === link.id ? link : l));
       setEditingLink(null);
       toast.success('Link updated!');
+      // Auto-refresh preview
+      setTimeout(refreshPreview, 500);
     } catch (error) {
       console.error('Error updating link:', error);
       toast.error('Failed to update link');
@@ -354,6 +366,8 @@ const BioDashboard: React.FC = () => {
       if (error) throw error;
       setLinks(links.filter(l => l.id !== linkId));
       toast.success('Link deleted!');
+      // Auto-refresh preview
+      setTimeout(refreshPreview, 500);
     } catch (error) {
       console.error('Error deleting link:', error);
       toast.error('Failed to delete link');
@@ -398,71 +412,214 @@ const BioDashboard: React.FC = () => {
     await saveSettings({ is_published: !bioSettings?.is_published });
   };
 
-  // Import from URL - Edge function needs to be deployed for this to work
+  // Import from URL - Uses a CORS proxy to fetch and parse link-in-bio pages
   const importFromUrl = async (url: string) => {
     if (!talentProfile?.id) return;
     
-    // For now, show a message that import is coming soon since edge function isn't deployed
-    toast.error(
-      'Import feature coming soon! For now, please add your links manually.',
-      { id: 'import', duration: 5000 }
-    );
+    toast.loading('Importing links...', { id: 'import' });
     setShowImportModal(false);
     
-    // TODO: Uncomment this when edge function is deployed
-    /*
-    toast.loading('Importing links...', { id: 'import' });
-    
     try {
-      const { data: importRecord, error: importError } = await supabase
-        .from('bio_import_history')
-        .insert([{
-          talent_id: talentProfile.id,
-          source_url: url,
-          status: 'processing'
-        }])
-        .select()
-        .single();
-
-      if (importError) {
-        throw new Error('Could not create import record');
-      }
-
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-      const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+      // Use a CORS proxy to fetch the page
+      const corsProxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      ];
       
-      const response = await fetch(`${supabaseUrl}/functions/v1/scrape-bio-links`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({
-          url,
-          talent_id: talentProfile.id,
-          import_id: importRecord.id
-        })
+      let html = '';
+      let fetchSuccess = false;
+      
+      for (const proxyUrl of corsProxies) {
+        try {
+          const response = await fetch(proxyUrl);
+          if (response.ok) {
+            html = await response.text();
+            fetchSuccess = true;
+            break;
+          }
+        } catch (e) {
+          console.log('Proxy failed, trying next...', e);
+        }
+      }
+      
+      if (!fetchSuccess || !html) {
+        throw new Error('Could not fetch the page. Please check the URL and try again.');
+      }
+      
+      // Parse the HTML to extract links
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      const extractedLinks: Array<{
+        title: string;
+        url: string;
+        thumbnail_url?: string;
+      }> = [];
+      
+      // Common selectors for link-in-bio platforms
+      const linkSelectors = [
+        // Linktree
+        'a[data-testid="LinkButton"]',
+        'a[data-testid="StyledContainer"]',
+        // Beacons
+        'a.link-block',
+        'a[class*="LinkButton"]',
+        // Stan Store
+        'a[class*="product-card"]',
+        'a[class*="link-card"]',
+        // Generic patterns
+        'a[href^="http"]:not([href*="facebook.com/sharer"]):not([href*="twitter.com/intent"]):not([href*="linkedin.com/sharing"])',
+        // Main content links
+        '.links a',
+        '.link-list a',
+        '[class*="link"] a',
+        '[class*="Link"] a',
+      ];
+      
+      // Try each selector
+      for (const selector of linkSelectors) {
+        try {
+          const elements = doc.querySelectorAll(selector);
+          elements.forEach((el) => {
+            const anchor = el as HTMLAnchorElement;
+            const href = anchor.getAttribute('href');
+            
+            // Skip social share links, anchors, and javascript links
+            if (!href || 
+                href.startsWith('#') || 
+                href.startsWith('javascript:') ||
+                href.includes('facebook.com/sharer') ||
+                href.includes('twitter.com/intent') ||
+                href.includes('linkedin.com/sharing') ||
+                href.includes('pinterest.com/pin') ||
+                href.includes('wa.me') ||
+                href === url) {
+              return;
+            }
+            
+            // Get the title from various sources
+            let title = '';
+            const titleEl = anchor.querySelector('h3, h4, p, span, [class*="title"], [class*="Title"]');
+            if (titleEl) {
+              title = titleEl.textContent?.trim() || '';
+            }
+            if (!title) {
+              title = anchor.textContent?.trim() || '';
+            }
+            if (!title) {
+              title = anchor.getAttribute('aria-label') || '';
+            }
+            
+            // Clean up title - remove extra whitespace
+            title = title.replace(/\s+/g, ' ').trim();
+            
+            // Skip if no meaningful title or too long (probably scraped wrong content)
+            if (!title || title.length > 100 || title.length < 2) {
+              return;
+            }
+            
+            // Get thumbnail if available
+            let thumbnail_url = '';
+            const img = anchor.querySelector('img');
+            if (img) {
+              thumbnail_url = img.getAttribute('src') || img.getAttribute('data-src') || '';
+              // Make relative URLs absolute
+              if (thumbnail_url && !thumbnail_url.startsWith('http')) {
+                try {
+                  const baseUrl = new URL(url);
+                  thumbnail_url = new URL(thumbnail_url, baseUrl.origin).href;
+                } catch {
+                  thumbnail_url = '';
+                }
+              }
+            }
+            
+            // Check for duplicates
+            const isDuplicate = extractedLinks.some(
+              (l) => l.url === href || l.title === title
+            );
+            
+            if (!isDuplicate && href) {
+              extractedLinks.push({
+                title,
+                url: href,
+                thumbnail_url: thumbnail_url || undefined,
+              });
+            }
+          });
+        } catch (e) {
+          console.log('Selector failed:', selector, e);
+        }
+      }
+      
+      // Also try to find links in JSON-LD or meta tags
+      const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      scripts.forEach((script) => {
+        try {
+          const data = JSON.parse(script.textContent || '');
+          if (data.mainEntity?.itemListElement) {
+            data.mainEntity.itemListElement.forEach((item: any) => {
+              if (item.url && item.name) {
+                const isDuplicate = extractedLinks.some((l) => l.url === item.url);
+                if (!isDuplicate) {
+                  extractedLinks.push({
+                    title: item.name,
+                    url: item.url,
+                  });
+                }
+              }
+            });
+          }
+        } catch {
+          // Ignore JSON parse errors
+        }
       });
-
-      if (!response.ok) {
-        throw new Error(`Import failed (${response.status})`);
-      }
-
-      const result = await response.json();
       
-      const { data: linksData } = await supabase
-        .from('bio_links')
-        .select('*')
-        .eq('talent_id', talentProfile.id)
-        .order('display_order');
-
-      setLinks(linksData || []);
-      toast.success(`Imported ${result.count || 0} links!`, { id: 'import' });
-      setShowImportModal(false);
+      if (extractedLinks.length === 0) {
+        throw new Error('No links found on this page. Try a different URL or add links manually.');
+      }
+      
+      // Limit to 20 links max
+      const linksToImport = extractedLinks.slice(0, 20);
+      
+      // Save links to database
+      const newLinks: BioLink[] = [];
+      for (let i = 0; i < linksToImport.length; i++) {
+        const link = linksToImport[i];
+        const newLink = {
+          talent_id: talentProfile.id,
+          link_type: 'basic' as const,
+          title: link.title,
+          url: link.url,
+          thumbnail_url: link.thumbnail_url,
+          display_order: links.length + i,
+          is_active: true,
+        };
+        
+        const { data, error } = await supabase
+          .from('bio_links')
+          .insert([newLink])
+          .select()
+          .single();
+        
+        if (!error && data) {
+          newLinks.push(data);
+        }
+      }
+      
+      if (newLinks.length > 0) {
+        setLinks([...links, ...newLinks]);
+        toast.success(`Imported ${newLinks.length} links!`, { id: 'import' });
+        // Auto-refresh preview
+        setTimeout(refreshPreview, 500);
+      } else {
+        throw new Error('Failed to save imported links.');
+      }
+      
     } catch (error: any) {
-      toast.error(error.message || 'Failed to import links.', { id: 'import' });
+      console.error('Import error:', error);
+      toast.error(error.message || 'Failed to import links. Please try again.', { id: 'import' });
     }
-    */
   };
 
   if (loading) {
@@ -941,7 +1098,8 @@ const BioDashboard: React.FC = () => {
                 {bioSettings?.is_published ? (
                   <iframe
                     id="bio-preview-iframe"
-                    src={`https://${bioUrl}`}
+                    key={previewKey}
+                    src={`https://${bioUrl}?t=${previewKey}`}
                     className="w-full h-full border-0"
                     title="Bio Preview"
                   />
