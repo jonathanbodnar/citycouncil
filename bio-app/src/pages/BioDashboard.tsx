@@ -14,10 +14,8 @@ import {
   ClipboardIcon,
   ArrowTopRightOnSquareIcon,
   SparklesIcon,
-  PhotoIcon,
   Cog6ToothIcon,
   PaintBrushIcon,
-  ArrowPathIcon,
   CloudArrowUpIcon,
   ArrowsUpDownIcon,
   SwatchIcon
@@ -132,7 +130,7 @@ const NEWSLETTER_PROVIDERS = [
 
 const BioDashboard: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [bioSettings, setBioSettings] = useState<BioSettings | null>(null);
   const [links, setLinks] = useState<BioLink[]>([]);
@@ -141,7 +139,6 @@ const BioDashboard: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [editingLink, setEditingLink] = useState<BioLink | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showStyleModal, setShowStyleModal] = useState(false);
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
