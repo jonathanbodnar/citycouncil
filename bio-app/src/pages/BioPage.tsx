@@ -720,7 +720,7 @@ const BioPage: React.FC = () => {
                     )}
                   </div>
                   
-                  <div className="flex-1 p-3 flex flex-col justify-center">
+                  <div className="flex-1 p-3 flex flex-col justify-start">
                     <div className="flex items-center gap-2 mb-1">
                       <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-green-400">
                         <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
@@ -732,7 +732,7 @@ const BioPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-white font-medium text-sm line-clamp-1">
+                    <h3 className="text-white font-medium text-sm line-clamp-2">
                       {rumbleData?.title || 'Watch on Rumble'}
                     </h3>
                     {!rumbleData?.isLive && rumbleData?.views && rumbleData.views > 0 && (
