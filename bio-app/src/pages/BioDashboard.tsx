@@ -315,7 +315,7 @@ const BioDashboard: React.FC = () => {
             accent_color: '#3b82f6',
             font_family: 'Inter',
             show_shoutout_card: true,
-            is_published: false,
+            is_published: true, // Auto-publish by default - all talents have a bio page
             background_type: 'gradient',
             gradient_start: '#0a0a0a',
             gradient_end: '#1a1a2e',

@@ -206,14 +206,49 @@ const BioPage: React.FC = () => {
 
         setTalentProfile(profile);
 
-        // Get bio settings
-        const { data: settings, error: settingsError } = await supabase
+        // Get bio settings - auto-create if they don't exist
+        let { data: settings, error: settingsError } = await supabase
           .from('bio_settings')
           .select('*')
           .eq('talent_id', profile.id)
           .single();
 
-        if (settingsError || !settings || !settings.is_published) {
+        // If no settings exist, create default ones (auto-published)
+        if (settingsError && settingsError.code === 'PGRST116') {
+          const defaultSettings = {
+            talent_id: profile.id,
+            theme: 'glass',
+            background_color: '#0a0a0a',
+            accent_color: '#3b82f6',
+            font_family: 'Inter',
+            show_shoutout_card: true,
+            is_published: true, // Auto-publish by default
+            background_type: 'gradient',
+            gradient_start: '#0a0a0a',
+            gradient_end: '#1a1a2e',
+            gradient_direction: 'to-b',
+            button_style: 'rounded',
+            button_color: '#3b82f6',
+            text_color: '#ffffff',
+            card_style: 'glass',
+            card_opacity: 0.10,
+            display_name: profile.full_name,
+            profile_image_url: profile.temp_avatar_url,
+          };
+
+          const { data: newSettings, error: createError } = await supabase
+            .from('bio_settings')
+            .insert([defaultSettings])
+            .select()
+            .single();
+
+          if (!createError && newSettings) {
+            settings = newSettings;
+          }
+        }
+
+        // If still no settings or not published, show not found
+        if (!settings || !settings.is_published) {
           setNotFound(true);
           setLoading(false);
           return;
