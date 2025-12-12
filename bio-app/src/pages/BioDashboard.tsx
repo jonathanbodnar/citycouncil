@@ -1279,30 +1279,14 @@ const BioDashboard: React.FC = () => {
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h3 className="text-sm font-medium text-gray-400">Live Preview</h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      // Force iframe refresh by setting src to a new value
-                      const iframe = document.getElementById('bio-preview-iframe') as HTMLIFrameElement;
-                      if (iframe) {
-                        const currentSrc = iframe.src;
-                        iframe.src = '';
-                        setTimeout(() => { iframe.src = currentSrc; }, 50);
-                      }
-                    }}
-                    className="text-sm text-gray-400 hover:text-white flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
-                  >
-                    Refresh
-                  </button>
-                  <a
-                    href={`https://${bioUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                  >
-                    Open <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                  </a>
-                </div>
+                <a
+                  href={`https://${bioUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                >
+                  Open <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                </a>
               </div>
               
               {/* Iframe Embed */}
@@ -1357,7 +1341,6 @@ const BioDashboard: React.FC = () => {
           onClose={() => setShowAddModal(false)}
           onAdd={addLink}
           talentId={talentProfile?.id || ''}
-          buttonColor={bioSettings?.button_color || '#3b82f6'}
         />
       )}
 
@@ -1366,7 +1349,6 @@ const BioDashboard: React.FC = () => {
           link={editingLink}
           onClose={() => setEditingLink(null)}
           onSave={updateLink}
-          buttonColor={bioSettings?.button_color || '#3b82f6'}
         />
       )}
 
@@ -1417,8 +1399,7 @@ const AddLinkModal: React.FC<{
   onClose: () => void;
   onAdd: (link: Omit<BioLink, 'id' | 'display_order'>) => void;
   talentId: string;
-  buttonColor: string;
-}> = ({ onClose, onAdd, talentId, buttonColor }) => {
+}> = ({ onClose, onAdd, talentId }) => {
   const [linkType, setLinkType] = useState<'basic' | 'grid' | 'newsletter' | 'sponsor'>('basic');
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -1615,14 +1596,13 @@ const AddLinkModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
+              className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 text-white rounded-xl font-medium transition-colors"
-              style={{ backgroundColor: buttonColor }}
+              className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors"
             >
               Add Link
             </button>
@@ -1638,8 +1618,7 @@ const EditLinkModal: React.FC<{
   link: BioLink;
   onClose: () => void;
   onSave: (link: BioLink) => void;
-  buttonColor: string;
-}> = ({ link, onClose, onSave, buttonColor }) => {
+}> = ({ link, onClose, onSave }) => {
   const [title, setTitle] = useState(link.title || '');
   const [url, setUrl] = useState(link.url || '');
   const [thumbnailUrl, setThumbnailUrl] = useState(link.thumbnail_url || '');
@@ -1798,14 +1777,13 @@ const EditLinkModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
+              className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 text-white rounded-xl font-medium transition-colors"
-              style={{ backgroundColor: buttonColor }}
+              className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors"
             >
               Save Changes
             </button>
