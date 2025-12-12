@@ -136,20 +136,32 @@ const NEWSLETTER_PROVIDERS = [
   { id: 'zapier', name: 'Zapier Webhook', icon: '🔗' },
 ];
 
-// Social platforms with their URL patterns and icons
+// Social platforms with their URL patterns and SVG icons
 const SOCIAL_PLATFORMS = [
-  { id: 'instagram', name: 'Instagram', urlPattern: 'instagram.com', icon: '📸', baseUrl: 'https://instagram.com/' },
-  { id: 'twitter', name: 'X (Twitter)', urlPattern: 'twitter.com|x.com', icon: '𝕏', baseUrl: 'https://x.com/' },
-  { id: 'tiktok', name: 'TikTok', urlPattern: 'tiktok.com', icon: '🎵', baseUrl: 'https://tiktok.com/@' },
-  { id: 'youtube', name: 'YouTube', urlPattern: 'youtube.com|youtu.be', icon: '▶️', baseUrl: 'https://youtube.com/' },
-  { id: 'facebook', name: 'Facebook', urlPattern: 'facebook.com|fb.com', icon: '📘', baseUrl: 'https://facebook.com/' },
-  { id: 'linkedin', name: 'LinkedIn', urlPattern: 'linkedin.com', icon: '💼', baseUrl: 'https://linkedin.com/in/' },
-  { id: 'threads', name: 'Threads', urlPattern: 'threads.net', icon: '🧵', baseUrl: 'https://threads.net/@' },
-  { id: 'snapchat', name: 'Snapchat', urlPattern: 'snapchat.com', icon: '👻', baseUrl: 'https://snapchat.com/add/' },
-  { id: 'pinterest', name: 'Pinterest', urlPattern: 'pinterest.com', icon: '📌', baseUrl: 'https://pinterest.com/' },
-  { id: 'spotify', name: 'Spotify', urlPattern: 'spotify.com|open.spotify', icon: '🎧', baseUrl: 'https://open.spotify.com/' },
-  { id: 'twitch', name: 'Twitch', urlPattern: 'twitch.tv', icon: '🎮', baseUrl: 'https://twitch.tv/' },
-  { id: 'discord', name: 'Discord', urlPattern: 'discord.gg|discord.com', icon: '💬', baseUrl: 'https://discord.gg/' },
+  { id: 'instagram', name: 'Instagram', urlPattern: 'instagram.com', baseUrl: 'https://instagram.com/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg> },
+  { id: 'twitter', name: 'X (Twitter)', urlPattern: 'twitter.com|x.com', baseUrl: 'https://x.com/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> },
+  { id: 'tiktok', name: 'TikTok', urlPattern: 'tiktok.com', baseUrl: 'https://tiktok.com/@',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg> },
+  { id: 'youtube', name: 'YouTube', urlPattern: 'youtube.com|youtu.be', baseUrl: 'https://youtube.com/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> },
+  { id: 'facebook', name: 'Facebook', urlPattern: 'facebook.com|fb.com', baseUrl: 'https://facebook.com/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> },
+  { id: 'linkedin', name: 'LinkedIn', urlPattern: 'linkedin.com', baseUrl: 'https://linkedin.com/in/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg> },
+  { id: 'threads', name: 'Threads', urlPattern: 'threads.net', baseUrl: 'https://threads.net/@',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.182.408-2.256 1.33-3.022.88-.73 2.108-1.146 3.456-1.17 1.005-.018 1.96.14 2.836.469-.034-.773-.17-1.418-.413-1.911-.351-.714-.964-1.08-1.874-1.12-1.084.007-1.9.6-2.378 1.235l-1.7-1.154c.78-1.104 2.144-1.8 3.943-1.963l.136-.008c1.678-.067 3.056.36 4.1 1.27.962.838 1.574 2.086 1.82 3.713.266-.057.54-.103.82-.138l.468-.06c1.953-.19 3.936.376 5.14 1.556 1.522 1.49 1.973 3.746 1.239 6.2-.49 1.638-1.51 3.07-2.95 4.14-1.617 1.2-3.654 1.832-6.058 1.88h-.007zm-2.21-8.106c-.78.045-1.394.283-1.776.69-.345.368-.516.838-.483 1.325.033.515.266.96.657 1.254.453.34 1.09.5 1.798.454 1.053-.057 1.864-.508 2.412-1.342.396-.604.637-1.4.716-2.364-.93-.252-1.956-.345-3.324-.017z"/></svg> },
+  { id: 'snapchat', name: 'Snapchat', urlPattern: 'snapchat.com', baseUrl: 'https://snapchat.com/add/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.074-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.494-.166-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.15-.055-.225-.015-.243.165-.465.42-.509 3.264-.54 4.73-3.879 4.791-4.02l.016-.029c.18-.345.224-.645.119-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-1.107-.435-1.257-.93-1.197-1.273.09-.479.674-.793 1.168-.793.146 0 .27.029.383.074.42.194.789.3 1.104.3.234 0 .384-.06.465-.105l-.046-.569c-.098-1.626-.225-3.651.307-4.837C7.392 1.077 10.739.807 11.727.807l.419-.015h.06z"/></svg> },
+  { id: 'pinterest', name: 'Pinterest', urlPattern: 'pinterest.com', baseUrl: 'https://pinterest.com/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/></svg> },
+  { id: 'spotify', name: 'Spotify', urlPattern: 'spotify.com|open.spotify', baseUrl: 'https://open.spotify.com/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg> },
+  { id: 'twitch', name: 'Twitch', urlPattern: 'twitch.tv', baseUrl: 'https://twitch.tv/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg> },
+  { id: 'discord', name: 'Discord', urlPattern: 'discord.gg|discord.com', baseUrl: 'https://discord.gg/',
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg> },
 ];
 
 // URLs to skip during import (not actual links)
@@ -1034,8 +1046,8 @@ const BioDashboard: React.FC = () => {
                           className="bg-white/5 border border-white/10 rounded-xl p-4 transition-all hover:border-white/20"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/10 text-2xl">
-                              {platform?.icon || '🔗'}
+                            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/10 text-blue-400">
+                              {platform?.icon || <LinkIcon className="w-6 h-6" />}
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-medium text-white">
@@ -1570,26 +1582,57 @@ const AddLinkModal: React.FC<{
           {linkType === 'grid' && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { cols: 1, label: '1×2', desc: 'Full width' },
-                  { cols: 2, label: '2×2', desc: '2 columns' },
-                  { cols: 3, label: '2×3', desc: '3 columns' },
-                ].map((size) => (
-                  <button
-                    key={size.cols}
-                    type="button"
-                    onClick={() => setGridColumns(size.cols)}
-                    className={`py-3 px-3 rounded-lg text-sm transition-all ${
-                      gridColumns === size.cols
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                    }`}
-                  >
-                    <div className="font-semibold">{size.label}</div>
-                    <div className="text-xs opacity-70">{size.desc}</div>
-                  </button>
-                ))}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Full Width */}
+                <button
+                  type="button"
+                  onClick={() => setGridColumns(1)}
+                  className={`p-3 rounded-xl transition-all ${
+                    gridColumns === 1
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex justify-center mb-2">
+                    <div className="w-full h-8 bg-current opacity-40 rounded" />
+                  </div>
+                  <div className="text-xs text-center text-gray-300">Full width</div>
+                </button>
+                
+                {/* 2 Columns */}
+                <button
+                  type="button"
+                  onClick={() => setGridColumns(2)}
+                  className={`p-3 rounded-xl transition-all ${
+                    gridColumns === 2
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="grid grid-cols-2 gap-1 mb-2">
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                  </div>
+                  <div className="text-xs text-center text-gray-300">2 columns</div>
+                </button>
+                
+                {/* 3 Columns */}
+                <button
+                  type="button"
+                  onClick={() => setGridColumns(3)}
+                  className={`p-3 rounded-xl transition-all ${
+                    gridColumns === 3
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="grid grid-cols-3 gap-1 mb-2">
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                  </div>
+                  <div className="text-xs text-center text-gray-300">3 columns</div>
+                </button>
               </div>
             </div>
           )}
@@ -1760,26 +1803,57 @@ const EditLinkModal: React.FC<{
           {link.link_type === 'grid' && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Grid Layout</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { cols: 1, label: '1×2', desc: 'Full width' },
-                  { cols: 2, label: '2×2', desc: '2 columns' },
-                  { cols: 3, label: '2×3', desc: '3 columns' },
-                ].map((size) => (
-                  <button
-                    key={size.cols}
-                    type="button"
-                    onClick={() => setGridColumns(size.cols)}
-                    className={`py-3 px-3 rounded-lg text-sm transition-all ${
-                      gridColumns === size.cols
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                    }`}
-                  >
-                    <div className="font-semibold">{size.label}</div>
-                    <div className="text-xs opacity-70">{size.desc}</div>
-                  </button>
-                ))}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Full Width */}
+                <button
+                  type="button"
+                  onClick={() => setGridColumns(1)}
+                  className={`p-3 rounded-xl transition-all ${
+                    gridColumns === 1
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex justify-center mb-2">
+                    <div className="w-full h-8 bg-current opacity-40 rounded" />
+                  </div>
+                  <div className="text-xs text-center text-gray-300">Full width</div>
+                </button>
+                
+                {/* 2 Columns */}
+                <button
+                  type="button"
+                  onClick={() => setGridColumns(2)}
+                  className={`p-3 rounded-xl transition-all ${
+                    gridColumns === 2
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="grid grid-cols-2 gap-1 mb-2">
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                  </div>
+                  <div className="text-xs text-center text-gray-300">2 columns</div>
+                </button>
+                
+                {/* 3 Columns */}
+                <button
+                  type="button"
+                  onClick={() => setGridColumns(3)}
+                  className={`p-3 rounded-xl transition-all ${
+                    gridColumns === 3
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-white/5 border-2 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="grid grid-cols-3 gap-1 mb-2">
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                    <div className="h-8 bg-current opacity-40 rounded" />
+                  </div>
+                  <div className="text-xs text-center text-gray-300">3 columns</div>
+                </button>
               </div>
             </div>
           )}
@@ -2150,7 +2224,9 @@ const AddSocialModal: React.FC<{
                     className="p-4 rounded-xl border-2 border-white/20 hover:border-white/40 text-left transition-all"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{platform.icon}</span>
+                      <div className="w-8 h-8 flex items-center justify-center text-blue-400">
+                        {platform.icon}
+                      </div>
                       <span className="font-medium text-white">{platform.name}</span>
                     </div>
                   </button>
@@ -2169,9 +2245,9 @@ const AddSocialModal: React.FC<{
             </button>
 
             <div className="p-4 bg-white/5 rounded-xl flex items-center gap-3">
-              <span className="text-3xl">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-blue-400">
                 {SOCIAL_PLATFORMS.find(p => p.id === selectedPlatform)?.icon}
-              </span>
+              </div>
               <div>
                 <h3 className="font-medium text-white">
                   {SOCIAL_PLATFORMS.find(p => p.id === selectedPlatform)?.name}
