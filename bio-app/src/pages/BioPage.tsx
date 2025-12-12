@@ -377,8 +377,10 @@ const BioPage: React.FC = () => {
             if (response.ok) {
               const text = await response.text();
               // Check if we got actual video content (not an error page)
-              // Rumble uses various class patterns for thumbnails
-              if (text.includes('thumbnail') || text.includes('video-item') || text.includes('videostream') || text.includes('rmbl')) {
+              // Rumble uses various class patterns for thumbnails and CDN domains
+              if (text.includes('thumbnail__image') || text.includes('thumbnail__title') || 
+                  text.includes('1a-1791.com') || text.includes('videostream') || 
+                  text.includes('rmbl.ws')) {
                 html = text;
                 successUrl = channelUrl;
                 console.log('Rumble HTML fetched successfully from:', proxyUrl);
@@ -415,20 +417,27 @@ const BioPage: React.FC = () => {
       const liveViewers = liveMatch ? parseInt(liveMatch[1].replace(/,/g, '')) : 0;
       
       // Try to find thumbnail using regex on raw HTML
-      // Rumble thumbnails come from various CDN subdomains
+      // Rumble thumbnails come from various CDN subdomains including 1a-1791.com
       let thumbnail = '';
       // Look for thumbnail images - they usually have specific patterns
       const thumbPatterns = [
+        // Rumble's CDN patterns - 1a-1791.com is the primary one
+        /src="(https:\/\/1a-1791\.com\/video\/[^"]+\.(jpg|jpeg|webp|png)[^"]*)"/i,
         /src="(https:\/\/sp\.rmbl\.ws\/[^"]+)"/i,
         /src="(https:\/\/i\.rmbl\.ws\/[^"]+)"/i,
-        /data-src="(https:\/\/[^"]*rmbl[^"]*\.(jpg|webp|png)[^"]*)"/i,
-        /src="(https:\/\/[^"]*thumb[^"]*\.(jpg|webp|png))"/i,
+        // Look for thumbnail__image class which contains the actual thumbnails
+        /class="thumbnail__image[^"]*"[^>]*src="([^"]+)"/i,
+        /src="([^"]+)"[^>]*class="thumbnail__image/i,
+        // Data-src patterns
+        /data-src="(https:\/\/[^"]*\.(jpg|jpeg|webp|png)[^"]*)"/i,
+        // OG image meta tag
         /og:image"[^>]*content="([^"]+)"/i,
+        /content="([^"]+)"[^>]*property="og:image/i,
       ];
       
       for (const pattern of thumbPatterns) {
         const match = html.match(pattern);
-        if (match && match[1]) {
+        if (match && match[1] && !match[1].includes('data:image')) {
           thumbnail = match[1];
           break;
         }
@@ -437,16 +446,19 @@ const BioPage: React.FC = () => {
       // Try to find video title from HTML - look for title attribute on links or h3 tags
       let title = 'Latest Video';
       const titlePatterns = [
-        /title="([^"]{15,150})"[^>]*class="[^"]*video/i,
-        /class="[^"]*title[^"]*"[^>]*>([^<]{10,150})</i,
-        /<h3[^>]*class="[^"]*thumbnail__title[^"]*"[^>]*>([^<]+)</i,
+        // Look for thumbnail__title class first - this is the main title element
+        /class="thumbnail__title[^"]*"[^>]*>([^<]+)</i,
         /class="thumbnail__title[^"]*"[^>]*title="([^"]+)"/i,
-        /<a[^>]*title="([^"]{15,150})"[^>]*href="\/v/i,
+        // Title attribute on video links
+        /<a[^>]*href="\/v[^"]*"[^>]*title="([^"]{10,150})"/i,
+        /title="([^"]{10,150})"[^>]*href="\/v/i,
+        // Generic title patterns
+        /class="[^"]*title[^"]*"[^>]*>([^<]{10,150})</i,
       ];
       
       for (const pattern of titlePatterns) {
         const match = html.match(pattern);
-        if (match && match[1]) {
+        if (match && match[1] && match[1].trim().length > 5) {
           title = match[1].trim();
           break;
         }
