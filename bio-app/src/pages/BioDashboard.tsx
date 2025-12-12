@@ -89,10 +89,10 @@ interface NewsletterConfig {
   id?: string;
   talent_id: string;
   provider: string;
-  api_key?: string;
-  list_id?: string;
-  webhook_url?: string;
-  form_id?: string;
+  api_key?: string | null;
+  list_id?: string | null;
+  webhook_url?: string | null;
+  form_id?: string | null;
   is_active: boolean;
 }
 
