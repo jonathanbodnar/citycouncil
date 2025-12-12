@@ -1090,8 +1090,7 @@ const BioPage: React.FC = () => {
                 borderColor: 'rgba(234, 179, 8, 0.3)',
               }}
             >
-              <div className="flex items-center justify-center gap-3">
-                <GiftIcon className="h-6 w-6 text-yellow-400" />
+              <div className="flex items-center justify-center">
                 <span className="text-white font-medium">{link.title || 'Become a Sponsor'}</span>
               </div>
             </a>
