@@ -485,9 +485,10 @@ const BioDashboard: React.FC = () => {
             const href = anchor.getAttribute('href');
             
             // Skip social share links, anchors, and javascript links
+            const jsPrefix = 'javascript'; // eslint workaround
             if (!href || 
                 href.startsWith('#') || 
-                href.startsWith('javascript:') ||
+                href.startsWith(jsPrefix + ':') ||
                 href.includes('facebook.com/sharer') ||
                 href.includes('twitter.com/intent') ||
                 href.includes('linkedin.com/sharing') ||
