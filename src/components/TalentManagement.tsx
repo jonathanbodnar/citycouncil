@@ -175,6 +175,10 @@ const TalentManagement: React.FC = () => {
             email,
             phone,
             last_login
+          ),
+          social_accounts (
+            platform,
+            handle
           )
         `)
         .order('created_at', { ascending: false });
@@ -478,6 +482,40 @@ const TalentManagement: React.FC = () => {
       }
 
       console.log('SUCCESS: Talent profile update completed');
+
+      // Sync social handles to social_accounts table for backwards compatibility
+      const socialHandles = [
+        { platform: 'twitter', handle: editingTalent.twitter_handle },
+        { platform: 'instagram', handle: editingTalent.instagram_handle },
+        { platform: 'facebook', handle: editingTalent.facebook_handle },
+        { platform: 'tiktok', handle: editingTalent.tiktok_handle }
+      ].filter(s => s.handle); // Only include non-empty handles
+
+      // Delete existing social accounts for this talent
+      await supabase
+        .from('social_accounts')
+        .delete()
+        .eq('talent_id', editingTalent.id);
+
+      // Insert new social accounts if any
+      if (socialHandles.length > 0) {
+        const socialAccountsData = socialHandles.map(s => ({
+          talent_id: editingTalent.id,
+          platform: s.platform,
+          handle: s.handle!.startsWith('@') ? s.handle : `@${s.handle}`
+        }));
+
+        const { error: socialError } = await supabase
+          .from('social_accounts')
+          .insert(socialAccountsData);
+
+        if (socialError) {
+          console.error('Error syncing social accounts:', socialError);
+          // Don't throw - main update succeeded
+        } else {
+          console.log('Social accounts synced successfully');
+        }
+      }
 
       // Now verify the data was actually saved
       const { data: verificationData, error: verifyError } = await supabase
@@ -1544,9 +1582,21 @@ const TalentManagement: React.FC = () => {
                           }
                         }
                         
+                        // Populate handle fields from social_accounts if not already set
+                        const socialAccounts = (talent as any).social_accounts || [];
+                        const getHandleFromSocial = (platform: string) => {
+                          const account = socialAccounts.find((a: any) => a.platform === platform);
+                          return account?.handle?.replace('@', '') || null;
+                        };
+                        
                         setEditingTalent({
                           ...talent,
-                          temp_phone: cleanedPhone // Store just 10 digits
+                          temp_phone: cleanedPhone, // Store just 10 digits
+                          // Pre-populate from social_accounts if direct columns are empty
+                          twitter_handle: talent.twitter_handle || getHandleFromSocial('twitter'),
+                          instagram_handle: talent.instagram_handle || getHandleFromSocial('instagram'),
+                          facebook_handle: talent.facebook_handle || getHandleFromSocial('facebook'),
+                          tiktok_handle: talent.tiktok_handle || getHandleFromSocial('tiktok')
                         });
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
                       }}
