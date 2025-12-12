@@ -121,10 +121,28 @@ const AdvancedAnalytics: React.FC = () => {
 
   // Convert UTC timestamp to CST date string (YYYY-MM-DD)
   const formatTimestampToCST = (timestamp: string) => {
-    const date = new Date(timestamp);
+    // Handle Postgres timestamp format (e.g., "2025-12-11T06:40:08.747944+00")
+    // by normalizing to proper ISO format
+    let normalizedTimestamp = timestamp;
+    if (timestamp.match(/\+00$/)) {
+      normalizedTimestamp = timestamp.replace(/\+00$/, 'Z');
+    } else if (timestamp.match(/\+\d{2}$/) && !timestamp.includes(':')) {
+      // Handle +HH format without colon
+      normalizedTimestamp = timestamp.replace(/\+(\d{2})$/, '+$1:00');
+    }
+    
+    const date = new Date(normalizedTimestamp);
+    if (isNaN(date.getTime())) {
+      console.error('Invalid timestamp:', timestamp, 'normalized:', normalizedTimestamp);
+      return '1970-01-01'; // Fallback
+    }
+    
     const cstString = date.toLocaleString('en-US', { timeZone: 'America/Chicago' });
     const cstDate = new Date(cstString);
-    return formatLocalDate(cstDate);
+    const year = cstDate.getFullYear();
+    const month = String(cstDate.getMonth() + 1).padStart(2, '0');
+    const day = String(cstDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // Get current date in CST
