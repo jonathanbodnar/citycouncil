@@ -29,7 +29,7 @@ interface TalentProfile {
   user_id: string;
   username?: string;
   full_name?: string;
-  profile_image?: string;
+  temp_avatar_url?: string;
   bio?: string;
 }
 
@@ -214,7 +214,7 @@ const BioDashboard: React.FC = () => {
             card_style: 'glass',
             card_opacity: 0.10,
             display_name: profile.full_name,
-            profile_image_url: profile.profile_image,
+            profile_image_url: profile.temp_avatar_url,
           };
 
           const { data: newSettings, error: createError } = await supabase
@@ -398,14 +398,22 @@ const BioDashboard: React.FC = () => {
     await saveSettings({ is_published: !bioSettings?.is_published });
   };
 
-  // Import from URL - Note: Edge function needs to be deployed for this to work
+  // Import from URL - Edge function needs to be deployed for this to work
   const importFromUrl = async (url: string) => {
     if (!talentProfile?.id) return;
     
+    // For now, show a message that import is coming soon since edge function isn't deployed
+    toast.error(
+      'Import feature coming soon! For now, please add your links manually.',
+      { id: 'import', duration: 5000 }
+    );
+    setShowImportModal(false);
+    
+    // TODO: Uncomment this when edge function is deployed
+    /*
     toast.loading('Importing links...', { id: 'import' });
     
     try {
-      // Create import record
       const { data: importRecord, error: importError } = await supabase
         .from('bio_import_history')
         .insert([{
@@ -417,19 +425,12 @@ const BioDashboard: React.FC = () => {
         .single();
 
       if (importError) {
-        console.error('Import record error:', importError);
         throw new Error('Could not create import record');
       }
 
-      // Check if edge function URL is configured
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
       const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
       
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase configuration missing');
-      }
-
-      // Call edge function to scrape the URL
       const response = await fetch(`${supabaseUrl}/functions/v1/scrape-bio-links`, {
         method: 'POST',
         headers: {
@@ -444,25 +445,11 @@ const BioDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Edge function error:', response.status, errorText);
-        
-        // Update import record with failure
-        await supabase
-          .from('bio_import_history')
-          .update({ status: 'failed', error_message: `HTTP ${response.status}` })
-          .eq('id', importRecord.id);
-          
-        throw new Error(`Import service unavailable (${response.status}). The scraper edge function may not be deployed yet.`);
+        throw new Error(`Import failed (${response.status})`);
       }
 
       const result = await response.json();
       
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      
-      // Refresh links
       const { data: linksData } = await supabase
         .from('bio_links')
         .select('*')
@@ -470,17 +457,12 @@ const BioDashboard: React.FC = () => {
         .order('display_order');
 
       setLinks(linksData || []);
-      
-      if (result.count > 0) {
-        toast.success(`Imported ${result.count} links!`, { id: 'import' });
-      } else {
-        toast.success('Import complete, but no links were found on that page.', { id: 'import' });
-      }
+      toast.success(`Imported ${result.count || 0} links!`, { id: 'import' });
       setShowImportModal(false);
     } catch (error: any) {
-      console.error('Error importing links:', error);
-      toast.error(error.message || 'Failed to import links. Try adding them manually.', { id: 'import' });
+      toast.error(error.message || 'Failed to import links.', { id: 'import' });
     }
+    */
   };
 
   if (loading) {

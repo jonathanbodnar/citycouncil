@@ -17,7 +17,7 @@ interface TalentProfile {
   user_id: string;
   username?: string;
   full_name?: string;
-  profile_image?: string;
+  temp_avatar_url?: string;
   bio?: string;
 }
 
@@ -227,62 +227,65 @@ const BioPage: React.FC = () => {
     }
   };
 
-  // Get button classes based on card_style
-  const getButtonClasses = () => {
-    const cardStyle = bioSettings?.card_style || 'glass';
+  // Get button radius class
+  const getRadiusClass = () => {
     const buttonStyle = bioSettings?.button_style || 'rounded';
-    
-    // Border radius based on button_style
-    const radiusClass = 
-      buttonStyle === 'pill' ? 'rounded-full' :
-      buttonStyle === 'square' ? 'rounded-md' : 'rounded-xl';
-    
-    // Base classes
-    let classes = `w-full p-4 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${radiusClass}`;
-    
-    // Card style specific classes
-    if (cardStyle === 'glass') {
-      classes += ' backdrop-blur-sm bg-white/10 border border-white/20';
-    } else if (cardStyle === 'solid') {
-      classes += ' bg-white/20 border border-white/10';
-    } else if (cardStyle === 'outline') {
-      classes += ' bg-transparent border-2 border-white/40';
-    } else if (cardStyle === 'shadow') {
-      classes += ' bg-white/10 shadow-lg shadow-black/20';
-    }
-    
-    return classes;
+    if (buttonStyle === 'pill') return 'rounded-full';
+    if (buttonStyle === 'square') return 'rounded-md';
+    return 'rounded-xl';
   };
 
-  // Get button style object for colored buttons
-  const getButtonStyle = () => {
+  // Get button style object - ALL styling done via inline styles for consistency
+  const getButtonStyle = (): React.CSSProperties => {
     const buttonColor = bioSettings?.button_color || '#3b82f6';
     const cardStyle = bioSettings?.card_style || 'glass';
     
+    const baseStyle: React.CSSProperties = {
+      width: '100%',
+      padding: '16px',
+      transition: 'all 0.3s',
+      display: 'block',
+    };
+    
     if (cardStyle === 'glass') {
       return {
+        ...baseStyle,
         backgroundColor: `${buttonColor}20`,
+        borderWidth: '1px',
+        borderStyle: 'solid',
         borderColor: `${buttonColor}50`,
+        backdropFilter: 'blur(8px)',
       };
     } else if (cardStyle === 'solid') {
       return {
+        ...baseStyle,
         backgroundColor: `${buttonColor}40`,
+        borderWidth: '1px',
+        borderStyle: 'solid',
         borderColor: `${buttonColor}30`,
       };
     } else if (cardStyle === 'outline') {
       return {
+        ...baseStyle,
         backgroundColor: 'transparent',
+        borderWidth: '2px',
+        borderStyle: 'solid',
         borderColor: buttonColor,
       };
     } else if (cardStyle === 'shadow') {
       return {
+        ...baseStyle,
         backgroundColor: `${buttonColor}25`,
-        boxShadow: `0 4px 20px ${buttonColor}30`,
+        boxShadow: `0 4px 20px ${buttonColor}40`,
+        border: 'none',
       };
     }
     
     return {
+      ...baseStyle,
       backgroundColor: `${buttonColor}20`,
+      borderWidth: '1px',
+      borderStyle: 'solid',
       borderColor: `${buttonColor}50`,
     };
   };
@@ -318,7 +321,7 @@ const BioPage: React.FC = () => {
 
   const gradientDirection = bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg';
   const displayName = talentProfile?.full_name || bioSettings?.display_name || 'Creator';
-  const profileImage = talentProfile?.profile_image || bioSettings?.profile_image_url;
+  const profileImage = talentProfile?.temp_avatar_url || bioSettings?.profile_image_url;
   const hasNewsletterLink = links.some(l => l.link_type === 'newsletter');
 
   return (
@@ -381,7 +384,7 @@ const BioPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => handleLinkClick(link)}
-              className={getButtonClasses()}
+              className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98]`}
               style={getButtonStyle()}
             >
               <div className="flex items-center justify-center gap-3">
@@ -406,7 +409,7 @@ const BioPage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => handleLinkClick(link)}
-                  className={`${link.grid_columns === 1 ? 'col-span-2' : ''} aspect-square rounded-xl overflow-hidden relative group`}
+                  className={`${link.grid_columns === 1 ? 'col-span-2' : ''} aspect-square ${getRadiusClass()} overflow-hidden relative group`}
                   style={getButtonStyle()}
                 >
                   {link.thumbnail_url ? (
@@ -434,8 +437,11 @@ const BioPage: React.FC = () => {
           {/* Newsletter Signup - Show if there's a newsletter link (with or without config) */}
           {hasNewsletterLink && (
             <div 
-              className={getButtonClasses()}
-              style={getButtonStyle()}
+              className={`${getRadiusClass()} ${bioSettings?.button_style === 'pill' ? 'px-6 py-5' : ''}`}
+              style={{
+                ...getButtonStyle(),
+                padding: bioSettings?.button_style === 'pill' ? '20px 24px' : '16px',
+              }}
             >
               <div className="flex items-center gap-3 mb-3">
                 <EnvelopeIcon className="h-6 w-6 text-green-400" />
@@ -472,7 +478,12 @@ const BioPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => handleLinkClick(link)}
-              className={`${getButtonClasses()} !bg-gradient-to-r !from-yellow-500/20 !to-orange-500/20 !border-yellow-500/30`}
+              className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98]`}
+              style={{
+                ...getButtonStyle(),
+                background: 'linear-gradient(to right, rgba(234, 179, 8, 0.2), rgba(249, 115, 22, 0.2))',
+                borderColor: 'rgba(234, 179, 8, 0.3)',
+              }}
             >
               <div className="flex items-center justify-center gap-3">
                 <GiftIcon className="h-6 w-6 text-yellow-400" />
