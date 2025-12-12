@@ -272,9 +272,18 @@ const BioDashboard: React.FC = () => {
 
         setTalentProfile(profile);
         
-        // Load social accounts from talent profile
-        if (profile.social_accounts && Array.isArray(profile.social_accounts)) {
-          setSocialLinks(profile.social_accounts);
+        // Load social accounts from the social_accounts table (not JSONB field)
+        const { data: socialData } = await supabase
+          .from('social_accounts')
+          .select('id, platform, handle')
+          .eq('talent_id', profile.id);
+        
+        if (socialData && socialData.length > 0) {
+          setSocialLinks(socialData.map(s => ({
+            id: s.id,
+            platform: s.platform,
+            handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
+          })));
         }
 
         // Get or create bio settings
@@ -1405,6 +1414,7 @@ const AddLinkModal: React.FC<{
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [gridColumns, setGridColumns] = useState(1);
+  const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1437,6 +1447,7 @@ const AddLinkModal: React.FC<{
       thumbnail_url: thumbnailUrl || undefined,
       grid_columns: gridColumns,
       is_active: true,
+      is_featured: linkType === 'basic' ? isFeatured : false,
     });
   };
 
@@ -1592,6 +1603,23 @@ const AddLinkModal: React.FC<{
             </div>
           )}
 
+          {/* Featured option for basic links */}
+          {linkType === 'basic' && (
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+                className="w-5 h-5 rounded bg-white/10 border-white/20 text-yellow-500 focus:ring-yellow-500"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-white">Featured link</span>
+                <span className="text-yellow-400">⭐</span>
+              </div>
+              <span className="text-xs text-gray-400">(gradient highlight)</span>
+            </label>
+          )}
+
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -1624,6 +1652,7 @@ const EditLinkModal: React.FC<{
   const [thumbnailUrl, setThumbnailUrl] = useState(link.thumbnail_url || '');
   const [gridColumns, setGridColumns] = useState(link.grid_columns || 1);
   const [isActive, setIsActive] = useState(link.is_active);
+  const [isFeatured, setIsFeatured] = useState(link.is_featured || false);
   const [uploading, setUploading] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1655,6 +1684,7 @@ const EditLinkModal: React.FC<{
       thumbnail_url: thumbnailUrl || undefined,
       grid_columns: gridColumns,
       is_active: isActive,
+      is_featured: isFeatured,
     });
   };
 
@@ -1763,15 +1793,33 @@ const EditLinkModal: React.FC<{
             </div>
           )}
 
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              className="w-5 h-5 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500"
-            />
-            <span className="text-white">Link is active</span>
-          </label>
+          <div className="space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+                className="w-5 h-5 rounded bg-white/10 border-white/20 text-blue-500 focus:ring-blue-500"
+              />
+              <span className="text-white">Link is active</span>
+            </label>
+
+            {link.link_type === 'basic' && (
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isFeatured}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                  className="w-5 h-5 rounded bg-white/10 border-white/20 text-yellow-500 focus:ring-yellow-500"
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-white">Featured link</span>
+                  <span className="text-yellow-400">⭐</span>
+                </div>
+                <span className="text-xs text-gray-400">(gradient highlight)</span>
+              </label>
+            )}
+          </div>
 
           <div className="flex gap-3 pt-4">
             <button

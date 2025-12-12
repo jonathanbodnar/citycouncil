@@ -110,6 +110,7 @@ const BioPage: React.FC = () => {
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [bioSettings, setBioSettings] = useState<BioSettings | null>(null);
   const [links, setLinks] = useState<BioLink[]>([]);
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [randomReview, setRandomReview] = useState<Review | null>(null);
   const [newsletterConfig, setNewsletterConfig] = useState<NewsletterConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -200,6 +201,20 @@ const BioPage: React.FC = () => {
 
         if (newsletterData && newsletterData.length > 0) {
           setNewsletterConfig(newsletterData[0]);
+        }
+
+        // Get social accounts from the social_accounts table
+        const { data: socialData } = await supabase
+          .from('social_accounts')
+          .select('id, platform, handle')
+          .eq('talent_id', profile.id);
+        
+        if (socialData && socialData.length > 0) {
+          setSocialAccounts(socialData.map(s => ({
+            id: s.id,
+            platform: s.platform,
+            handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
+          })));
         }
 
       } catch (error) {
@@ -403,27 +418,45 @@ const BioPage: React.FC = () => {
         {/* Links */}
         <div className="flex-1 space-y-4">
           {/* Regular Links */}
-          {links.filter(l => l.link_type === 'basic').map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => handleLinkClick(link)}
-              className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98]`}
-              style={getButtonStyle()}
-            >
-              <div className="flex items-center justify-center gap-3">
-                {link.thumbnail_url ? (
-                  <img src={link.thumbnail_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                ) : link.icon_url ? (
-                  <img src={link.icon_url} alt="" className="w-6 h-6" />
-                ) : null}
-                <span className="text-white font-medium">{link.title}</span>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60" />
-              </div>
-            </a>
-          ))}
+          {links.filter(l => l.link_type === 'basic').map((link) => {
+            // Featured links get a gradient background matching their color scheme
+            const isFeatured = link.is_featured;
+            const featuredStyle = isFeatured ? {
+              background: `linear-gradient(135deg, ${bioSettings?.button_color || '#3b82f6'}40, ${bioSettings?.gradient_end || '#1a1a2e'}60)`,
+              border: `2px solid ${bioSettings?.button_color || '#3b82f6'}`,
+              boxShadow: `0 0 20px ${bioSettings?.button_color || '#3b82f6'}30`,
+            } : {};
+            
+            return (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => handleLinkClick(link)}
+                className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] ${isFeatured ? 'relative overflow-hidden' : ''}`}
+                style={{
+                  ...getButtonStyle(),
+                  ...featuredStyle,
+                }}
+              >
+                {isFeatured && (
+                  <div className="absolute top-2 right-2">
+                    <StarSolidIcon className="h-4 w-4 text-yellow-400" />
+                  </div>
+                )}
+                <div className="flex items-center justify-center gap-3">
+                  {link.thumbnail_url ? (
+                    <img src={link.thumbnail_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                  ) : link.icon_url ? (
+                    <img src={link.icon_url} alt="" className="w-6 h-6" />
+                  ) : null}
+                  <span className="text-white font-medium">{link.title}</span>
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60" />
+                </div>
+              </a>
+            );
+          })}
 
           {/* Grid Links - Support 1x2, 2x2, 2x3 layouts */}
           {links.filter(l => l.link_type === 'grid').length > 0 && (() => {
@@ -479,29 +512,29 @@ const BioPage: React.FC = () => {
               className={`${getRadiusClass()}`}
               style={{
                 ...getButtonStyle(),
-                padding: bioSettings?.button_style === 'pill' ? '24px 32px' : '16px',
+                padding: bioSettings?.button_style === 'pill' ? '28px 40px' : '20px 24px',
               }}
             >
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-4">
                 <EnvelopeIcon className="h-6 w-6 text-green-400" />
                 <h3 className="text-white font-medium">
                   {links.find(l => l.link_type === 'newsletter')?.title || 'Join my newsletter'}
                 </h3>
               </div>
-              <form onSubmit={handleNewsletterSignup} className="space-y-3">
-                <div className="flex gap-2">
+              <form onSubmit={handleNewsletterSignup} className="space-y-4">
+                <div className="flex gap-3">
                   <input
                     type="email"
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder="Enter your email"
                     required
-                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
+                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
                   />
                   <button
                     type="submit"
                     disabled={subscribing || !newsletterConfig || !privacyAccepted}
-                    className="px-4 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                    className="px-6 py-3 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
                     style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
                   >
                     {subscribing ? '...' : 'Join'}
@@ -619,9 +652,9 @@ const BioPage: React.FC = () => {
         </div>
 
         {/* Social Icons */}
-        {talentProfile?.social_accounts && talentProfile.social_accounts.length > 0 && (
+        {socialAccounts.length > 0 && (
           <div className="mt-8 flex justify-center gap-4 flex-wrap">
-            {talentProfile.social_accounts.map((social) => {
+            {socialAccounts.map((social) => {
               const platform = SOCIAL_PLATFORMS[social.platform];
               if (!platform) return null;
               
