@@ -398,7 +398,7 @@ const BioDashboard: React.FC = () => {
     await saveSettings({ is_published: !bioSettings?.is_published });
   };
 
-  // Import from URL
+  // Import from URL - Note: Edge function needs to be deployed for this to work
   const importFromUrl = async (url: string) => {
     if (!talentProfile?.id) return;
     
@@ -416,14 +416,25 @@ const BioDashboard: React.FC = () => {
         .select()
         .single();
 
-      if (importError) throw importError;
+      if (importError) {
+        console.error('Import record error:', importError);
+        throw new Error('Could not create import record');
+      }
+
+      // Check if edge function URL is configured
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration missing');
+      }
 
       // Call edge function to scrape the URL
-      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/scrape-bio-links`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/scrape-bio-links`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${supabaseKey}`,
         },
         body: JSON.stringify({
           url,
@@ -433,10 +444,23 @@ const BioDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to import links');
+        const errorText = await response.text();
+        console.error('Edge function error:', response.status, errorText);
+        
+        // Update import record with failure
+        await supabase
+          .from('bio_import_history')
+          .update({ status: 'failed', error_message: `HTTP ${response.status}` })
+          .eq('id', importRecord.id);
+          
+        throw new Error(`Import service unavailable (${response.status}). The scraper edge function may not be deployed yet.`);
       }
 
       const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
       
       // Refresh links
       const { data: linksData } = await supabase
@@ -446,11 +470,16 @@ const BioDashboard: React.FC = () => {
         .order('display_order');
 
       setLinks(linksData || []);
-      toast.success(`Imported ${result.count || 0} links!`, { id: 'import' });
+      
+      if (result.count > 0) {
+        toast.success(`Imported ${result.count} links!`, { id: 'import' });
+      } else {
+        toast.success('Import complete, but no links were found on that page.', { id: 'import' });
+      }
       setShowImportModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error importing links:', error);
-      toast.error('Failed to import links. Try adding them manually.', { id: 'import' });
+      toast.error(error.message || 'Failed to import links. Try adding them manually.', { id: 'import' });
     }
   };
 
@@ -952,45 +981,108 @@ const BioDashboard: React.FC = () => {
 
                     {/* Preview Links */}
                     <div className="space-y-3">
-                      {links.filter(l => l.is_active).slice(0, 4).map((link) => (
-                        <div
-                          key={link.id}
-                          className={`p-3 backdrop-blur-sm border border-white/10 text-center transition-all ${
-                            bioSettings?.button_style === 'pill' ? 'rounded-full' :
-                            bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'
-                          }`}
-                          style={{
-                            backgroundColor: `${bioSettings?.button_color || '#3b82f6'}20`,
-                            borderColor: `${bioSettings?.button_color || '#3b82f6'}40`,
-                          }}
-                        >
-                          <span className="text-white text-sm font-medium">{link.title || 'Link'}</span>
-                        </div>
-                      ))}
+                      {links.filter(l => l.is_active && l.link_type !== 'newsletter').slice(0, 3).map((link) => {
+                        const cardStyle = bioSettings?.card_style || 'glass';
+                        const buttonColor = bioSettings?.button_color || '#3b82f6';
+                        
+                        // Get style based on card_style
+                        let cardClasses = `p-3 text-center transition-all ${
+                          bioSettings?.button_style === 'pill' ? 'rounded-full' :
+                          bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'
+                        }`;
+                        
+                        let cardStyles: React.CSSProperties = {};
+                        
+                        if (cardStyle === 'glass') {
+                          cardClasses += ' backdrop-blur-sm border';
+                          cardStyles = {
+                            backgroundColor: `${buttonColor}20`,
+                            borderColor: `${buttonColor}50`,
+                          };
+                        } else if (cardStyle === 'solid') {
+                          cardClasses += ' border';
+                          cardStyles = {
+                            backgroundColor: `${buttonColor}40`,
+                            borderColor: `${buttonColor}30`,
+                          };
+                        } else if (cardStyle === 'outline') {
+                          cardClasses += ' border-2 bg-transparent';
+                          cardStyles = {
+                            borderColor: buttonColor,
+                          };
+                        } else if (cardStyle === 'shadow') {
+                          cardStyles = {
+                            backgroundColor: `${buttonColor}25`,
+                            boxShadow: `0 4px 15px ${buttonColor}30`,
+                          };
+                        }
+                        
+                        return (
+                          <div
+                            key={link.id}
+                            className={cardClasses}
+                            style={cardStyles}
+                          >
+                            <span className="text-white text-sm font-medium">{link.title || 'Link'}</span>
+                          </div>
+                        );
+                      })}
                       
-                      {links.length > 4 && (
-                        <p className="text-center text-gray-500 text-xs">+{links.length - 4} more links</p>
+                      {/* Newsletter Preview */}
+                      {links.some(l => l.link_type === 'newsletter' && l.is_active) && (
+                        <div 
+                          className={`p-3 ${
+                            bioSettings?.button_style === 'pill' ? 'rounded-2xl' :
+                            bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'
+                          } bg-white/10 border border-white/20`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <EnvelopeIcon className="h-4 w-4 text-green-400" />
+                            <span className="text-white text-xs font-medium">
+                              {links.find(l => l.link_type === 'newsletter')?.title || 'Join my newsletter'}
+                            </span>
+                          </div>
+                          <div className="flex gap-1">
+                            <div className="flex-1 h-7 bg-white/10 rounded-md" />
+                            <div 
+                              className="px-3 h-7 rounded-md text-xs flex items-center text-white"
+                              style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
+                            >
+                              Join
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {links.filter(l => l.link_type !== 'newsletter').length > 3 && (
+                        <p className="text-center text-gray-500 text-xs">+{links.filter(l => l.link_type !== 'newsletter').length - 3} more links</p>
                       )}
 
                       {/* ShoutOut Card Preview */}
                       {bioSettings?.show_shoutout_card && (
-                        <div className="mt-4 p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/30">
+                        <div className="mt-4 p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/30">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                              <GiftIcon className="h-5 w-5 text-white" />
+                            <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-500/50">
+                              {talentProfile?.profile_image ? (
+                                <img src={talentProfile.profile_image} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                  <GiftIcon className="h-5 w-5 text-white" />
+                                </div>
+                              )}
                             </div>
                             <div className="flex-1">
-                              <p className="text-white text-sm font-medium">Get a ShoutOut!</p>
-                              <p className="text-gray-400 text-xs">Personalized video message</p>
+                              <p className="text-white text-xs font-medium">Get a ShoutOut!</p>
+                              <p className="text-gray-400 text-[10px]">Personalized video message</p>
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Footer */}
+                    {/* Footer - White with opacity */}
                     <div className="mt-6 text-center">
-                      <p className="text-xs text-gray-500">Powered by ShoutOut</p>
+                      <p className="text-xs text-white/40">Powered by ShoutOut</p>
                     </div>
                   </div>
                 </div>
@@ -1126,7 +1218,7 @@ const AddLinkModal: React.FC<{
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="My Website"
+              placeholder={linkType === 'newsletter' ? 'Join my newsletter' : 'My Website'}
               className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               required
             />

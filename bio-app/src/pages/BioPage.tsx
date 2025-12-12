@@ -227,22 +227,63 @@ const BioPage: React.FC = () => {
     }
   };
 
-  // Get button style classes
+  // Get button classes based on card_style
   const getButtonClasses = () => {
-    const baseClasses = 'w-full p-4 backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]';
-    const styleClasses = 
-      bioSettings?.button_style === 'pill' ? 'rounded-full' :
-      bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl';
+    const cardStyle = bioSettings?.card_style || 'glass';
+    const buttonStyle = bioSettings?.button_style || 'rounded';
     
-    return `${baseClasses} ${styleClasses}`;
+    // Border radius based on button_style
+    const radiusClass = 
+      buttonStyle === 'pill' ? 'rounded-full' :
+      buttonStyle === 'square' ? 'rounded-md' : 'rounded-xl';
+    
+    // Base classes
+    let classes = `w-full p-4 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${radiusClass}`;
+    
+    // Card style specific classes
+    if (cardStyle === 'glass') {
+      classes += ' backdrop-blur-sm bg-white/10 border border-white/20';
+    } else if (cardStyle === 'solid') {
+      classes += ' bg-white/20 border border-white/10';
+    } else if (cardStyle === 'outline') {
+      classes += ' bg-transparent border-2 border-white/40';
+    } else if (cardStyle === 'shadow') {
+      classes += ' bg-white/10 shadow-lg shadow-black/20';
+    }
+    
+    return classes;
   };
 
-  // Get card style
-  const getCardStyle = () => {
+  // Get button style object for colored buttons
+  const getButtonStyle = () => {
     const buttonColor = bioSettings?.button_color || '#3b82f6';
+    const cardStyle = bioSettings?.card_style || 'glass';
+    
+    if (cardStyle === 'glass') {
+      return {
+        backgroundColor: `${buttonColor}20`,
+        borderColor: `${buttonColor}50`,
+      };
+    } else if (cardStyle === 'solid') {
+      return {
+        backgroundColor: `${buttonColor}40`,
+        borderColor: `${buttonColor}30`,
+      };
+    } else if (cardStyle === 'outline') {
+      return {
+        backgroundColor: 'transparent',
+        borderColor: buttonColor,
+      };
+    } else if (cardStyle === 'shadow') {
+      return {
+        backgroundColor: `${buttonColor}25`,
+        boxShadow: `0 4px 20px ${buttonColor}30`,
+      };
+    }
+    
     return {
-      backgroundColor: `${buttonColor}15`,
-      borderColor: `${buttonColor}40`,
+      backgroundColor: `${buttonColor}20`,
+      borderColor: `${buttonColor}50`,
     };
   };
 
@@ -276,6 +317,9 @@ const BioPage: React.FC = () => {
   }
 
   const gradientDirection = bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg';
+  const displayName = talentProfile?.full_name || bioSettings?.display_name || 'Creator';
+  const profileImage = talentProfile?.profile_image || bioSettings?.profile_image_url;
+  const hasNewsletterLink = links.some(l => l.link_type === 'newsletter');
 
   return (
     <div 
@@ -289,22 +333,22 @@ const BioPage: React.FC = () => {
         <div className="text-center mb-8">
           {/* Profile Image */}
           <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-2 border-white/20 shadow-xl">
-            {talentProfile?.profile_image ? (
+            {profileImage ? (
               <img 
-                src={talentProfile.profile_image} 
-                alt={bioSettings?.display_name || talentProfile?.full_name || 'Profile'} 
+                src={profileImage} 
+                alt={displayName} 
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-3xl text-white font-bold">
-                {(bioSettings?.display_name || talentProfile?.full_name || 'U')[0]}
+                {displayName[0]}
               </div>
             )}
           </div>
 
-          {/* Name */}
+          {/* Name - Always use full_name from talent profile */}
           <h1 className="text-2xl font-bold text-white mb-1">
-            {bioSettings?.display_name || talentProfile?.full_name || 'Creator'}
+            {displayName}
           </h1>
 
           {/* Instagram Username */}
@@ -338,7 +382,7 @@ const BioPage: React.FC = () => {
               rel="noopener noreferrer"
               onClick={() => handleLinkClick(link)}
               className={getButtonClasses()}
-              style={getCardStyle()}
+              style={getButtonStyle()}
             >
               <div className="flex items-center justify-center gap-3">
                 {link.thumbnail_url ? (
@@ -347,7 +391,7 @@ const BioPage: React.FC = () => {
                   <img src={link.icon_url} alt="" className="w-6 h-6" />
                 ) : null}
                 <span className="text-white font-medium">{link.title}</span>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-400" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60" />
               </div>
             </a>
           ))}
@@ -363,7 +407,7 @@ const BioPage: React.FC = () => {
                   rel="noopener noreferrer"
                   onClick={() => handleLinkClick(link)}
                   className={`${link.grid_columns === 1 ? 'col-span-2' : ''} aspect-square rounded-xl overflow-hidden relative group`}
-                  style={getCardStyle()}
+                  style={getButtonStyle()}
                 >
                   {link.thumbnail_url ? (
                     <>
@@ -378,7 +422,7 @@ const BioPage: React.FC = () => {
                     </>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center p-4">
-                      <Squares2X2Icon className="h-8 w-8 text-gray-400 mb-2" />
+                      <Squares2X2Icon className="h-8 w-8 text-white/60 mb-2" />
                       <span className="text-white font-medium text-sm text-center">{link.title}</span>
                     </div>
                   )}
@@ -387,11 +431,11 @@ const BioPage: React.FC = () => {
             </div>
           )}
 
-          {/* Newsletter Signup */}
-          {links.filter(l => l.link_type === 'newsletter').length > 0 && newsletterConfig && (
+          {/* Newsletter Signup - Show if there's a newsletter link (with or without config) */}
+          {hasNewsletterLink && (
             <div 
-              className={`${bioSettings?.button_style === 'pill' ? 'rounded-3xl' : bioSettings?.button_style === 'square' ? 'rounded-md' : 'rounded-xl'} p-5 backdrop-blur-sm border`}
-              style={getCardStyle()}
+              className={getButtonClasses()}
+              style={getButtonStyle()}
             >
               <div className="flex items-center gap-3 mb-3">
                 <EnvelopeIcon className="h-6 w-6 text-green-400" />
@@ -410,7 +454,7 @@ const BioPage: React.FC = () => {
                 />
                 <button
                   type="submit"
-                  disabled={subscribing}
+                  disabled={subscribing || !newsletterConfig}
                   className="px-4 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
                   style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
                 >
@@ -428,7 +472,7 @@ const BioPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => handleLinkClick(link)}
-              className={`${getButtonClasses()} bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30`}
+              className={`${getButtonClasses()} !bg-gradient-to-r !from-yellow-500/20 !to-orange-500/20 !border-yellow-500/30`}
             >
               <div className="flex items-center justify-center gap-3">
                 <GiftIcon className="h-6 w-6 text-yellow-400" />
@@ -449,9 +493,9 @@ const BioPage: React.FC = () => {
                 <div className="flex items-start gap-4">
                   {/* Profile Image */}
                   <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-500/50">
-                    {talentProfile?.profile_image ? (
+                    {profileImage ? (
                       <img 
-                        src={talentProfile.profile_image} 
+                        src={profileImage} 
                         alt="" 
                         className="w-full h-full object-cover"
                       />
@@ -468,7 +512,7 @@ const BioPage: React.FC = () => {
                       <span className="text-blue-400 text-sm font-medium">ShoutOut</span>
                     </div>
                     <h3 className="text-white font-semibold mb-1">
-                      Get a personalized video from {bioSettings?.display_name || talentProfile?.full_name}
+                      Get a personalized video from {displayName}
                     </h3>
                     
                     {/* Random Review */}
@@ -502,13 +546,13 @@ const BioPage: React.FC = () => {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer - White text with opacity for visibility on any background */}
         <div className="mt-8 text-center">
           <a 
             href="https://shoutout.us"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-400 text-sm transition-colors"
+            className="inline-flex items-center gap-2 text-white/40 hover:text-white/60 text-sm transition-colors"
           >
             <span>Powered by</span>
             <span className="font-semibold">ShoutOut</span>
