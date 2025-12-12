@@ -405,25 +405,50 @@ const BioPage: React.FC = () => {
         return;
       }
       
-      // Check for live stream - look for is-live class or status--live
-      const isLive = html.includes('is-live') || html.includes('status--live') || html.includes('livestream-item');
+      // Check for live stream - be strict: only if there's an actual "LIVE" indicator with viewers
+      // Look for patterns like "LIVE" badge near viewer count
+      const liveMatch = html.match(/([\d,]+)\s*(?:watching|viewers)/i);
+      const hasLiveIndicator = html.includes('class="is-live"') || html.includes('class="status--live"') || 
+                               (html.includes('>LIVE<') && liveMatch);
+      const isLive = hasLiveIndicator && !!liveMatch;
+      const liveViewers = liveMatch ? parseInt(liveMatch[1].replace(/,/g, '')) : 0;
       
-      // Try to find thumbnail using regex on raw HTML (more reliable than DOM parsing)
-      // Rumble thumbnails are usually from sp.rmbl.ws or i.rmbl.ws
+      // Try to find thumbnail using regex on raw HTML
+      // Rumble thumbnails come from various CDN subdomains
       let thumbnail = '';
-      const thumbMatch = html.match(/src="(https:\/\/[^"]*(?:sp\.rmbl\.ws|i\.rmbl\.ws|rmbl)[^"]*(?:\.jpg|\.webp|\.png)[^"]*)"/i);
-      if (thumbMatch) {
-        thumbnail = thumbMatch[1];
+      // Look for thumbnail images - they usually have specific patterns
+      const thumbPatterns = [
+        /src="(https:\/\/sp\.rmbl\.ws\/[^"]+)"/i,
+        /src="(https:\/\/i\.rmbl\.ws\/[^"]+)"/i,
+        /data-src="(https:\/\/[^"]*rmbl[^"]*\.(jpg|webp|png)[^"]*)"/i,
+        /src="(https:\/\/[^"]*thumb[^"]*\.(jpg|webp|png))"/i,
+        /og:image"[^>]*content="([^"]+)"/i,
+      ];
+      
+      for (const pattern of thumbPatterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          thumbnail = match[1];
+          break;
+        }
       }
       
-      // Try to find video title from HTML
+      // Try to find video title from HTML - look for title attribute on links or h3 tags
       let title = 'Latest Video';
-      // Look for title in thumbnail__title or video title patterns
-      const titleMatch = html.match(/class="thumbnail__title[^"]*"[^>]*title="([^"]+)"/i) ||
-                         html.match(/class="thumbnail__title[^"]*"[^>]*>([^<]+)</i) ||
-                         html.match(/title="([^"]{10,100})"[^>]*class="[^"]*thumbnail/i);
-      if (titleMatch) {
-        title = titleMatch[1].trim();
+      const titlePatterns = [
+        /title="([^"]{15,150})"[^>]*class="[^"]*video/i,
+        /class="[^"]*title[^"]*"[^>]*>([^<]{10,150})</i,
+        /<h3[^>]*class="[^"]*thumbnail__title[^"]*"[^>]*>([^<]+)</i,
+        /class="thumbnail__title[^"]*"[^>]*title="([^"]+)"/i,
+        /<a[^>]*title="([^"]{15,150})"[^>]*href="\/v/i,
+      ];
+      
+      for (const pattern of titlePatterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          title = match[1].trim();
+          break;
+        }
       }
       
       // Try to find video URL
@@ -435,25 +460,25 @@ const BioPage: React.FC = () => {
       
       // Try to find views
       let views = 0;
-      const viewsMatch = html.match(/data-views="(\d+)"/i) ||
-                         html.match(/([\d,]+)\s*views/i) ||
-                         html.match(/([\d.]+[KkMm])\s*views/i);
-      if (viewsMatch) {
-        const viewStr = viewsMatch[1].replace(/,/g, '');
-        if (viewStr.toLowerCase().includes('k')) {
-          views = Math.round(parseFloat(viewStr) * 1000);
-        } else if (viewStr.toLowerCase().includes('m')) {
-          views = Math.round(parseFloat(viewStr) * 1000000);
-        } else {
-          views = parseInt(viewStr) || 0;
-        }
-      }
+      const viewsPatterns = [
+        /data-views="(\d+)"/i,
+        /([\d,]+)\s*views/i,
+        /([\d.]+[KkMm])\s*views/i,
+      ];
       
-      // Extract live viewers if live
-      let liveViewers = 0;
-      if (isLive) {
-        const liveMatch = html.match(/([\d,]+)\s*(?:watching|viewers)/i);
-        liveViewers = liveMatch ? parseInt(liveMatch[1].replace(/,/g, '')) : 0;
+      for (const pattern of viewsPatterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          const viewStr = match[1].replace(/,/g, '');
+          if (viewStr.toLowerCase().includes('k')) {
+            views = Math.round(parseFloat(viewStr) * 1000);
+          } else if (viewStr.toLowerCase().includes('m')) {
+            views = Math.round(parseFloat(viewStr) * 1000000);
+          } else {
+            views = parseInt(viewStr) || 0;
+          }
+          break;
+        }
       }
       
       console.log('Rumble data extracted:', { title, thumbnail, videoUrl, views, isLive, liveViewers });
@@ -691,9 +716,9 @@ const BioPage: React.FC = () => {
                         </svg>
                       </div>
                     )}
-                    {/* Live indicator */}
+                    {/* Live indicator - top right */}
                     {rumbleData?.isLive && (
-                      <div className="absolute top-1 left-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
                         LIVE
                       </div>
