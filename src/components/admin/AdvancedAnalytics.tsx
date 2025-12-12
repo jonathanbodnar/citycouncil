@@ -221,35 +221,17 @@ const AdvancedAnalytics: React.FC = () => {
 
       // Fetch all required data in parallel
       const [
-        ordersResult,
-        usersResult,
-        smsResult,
+        analyticsDataResult,
         adSpendResult,
         followerCountsResult,
         mappingsResult,
         credentialsResult
       ] = await Promise.all([
-        // Orders by date (use local timezone boundaries)
-        supabase
-          .from('orders')
-          .select('created_at, promo_source')
-          .gte('created_at', startTimestamp)
-          .lte('created_at', endTimestamp),
-        
-        // Users by date - use RPC function to bypass RLS
-        supabase
-          .rpc('get_users_for_analytics', {
-            start_ts: startTimestamp,
-            end_ts: endTimestamp
-          }),
-        
-        // SMS signups (holiday popup) (use local timezone boundaries)
-        supabase
-          .from('beta_signups')
-          .select('subscribed_at, utm_source')
-          .eq('source', 'holiday_popup')
-          .gte('subscribed_at', startTimestamp)
-          .lte('subscribed_at', endTimestamp),
+        // Use database function for CST timezone conversion
+        supabase.rpc('get_analytics_data_cst', {
+          start_date: startStr,
+          end_date: endStr
+        }),
         
         // Ad spend
         supabase
@@ -276,6 +258,19 @@ const AdvancedAnalytics: React.FC = () => {
           .from('ad_platform_credentials')
           .select('platform, is_connected, last_sync_at, account_id')
       ]);
+      
+      // Parse analytics data from the combined result
+      const analyticsData = analyticsDataResult.data || [];
+      const ordersData = analyticsData.filter((r: any) => r.record_type === 'order');
+      const usersData = analyticsData.filter((r: any) => r.record_type === 'user');
+      const smsData = analyticsData.filter((r: any) => r.record_type === 'sms');
+      
+      console.log('📊 Analytics data from DB:', { 
+        total: analyticsData.length,
+        orders: ordersData.length, 
+        users: usersData.length, 
+        sms: smsData.length 
+      });
 
       // Process data into daily buckets
       const dailyMap = new Map<string, DailyData>();
@@ -313,62 +308,37 @@ const AdvancedAnalytics: React.FC = () => {
       console.log('📅 Dates initialized:', Array.from(dailyMap.keys()));
 
       // Log any errors from queries
-      if (ordersResult.error) console.error('Orders query error:', ordersResult.error);
-      if (usersResult.error) console.error('Users query error:', usersResult.error);
-      if (smsResult.error) console.error('SMS query error:', smsResult.error);
+      if (analyticsDataResult.error) console.error('Analytics data query error:', analyticsDataResult.error);
       if (adSpendResult.error) console.error('Ad spend query error:', adSpendResult.error);
       if (followerCountsResult.error) console.error('Follower counts query error:', followerCountsResult.error);
-      
-      console.log('📊 Analytics data fetched:', {
-        orders: ordersResult.data?.length || 0,
-        users: usersResult.data?.length || 0,
-        sms: smsResult.data?.length || 0,
-        adSpend: adSpendResult.data?.length || 0,
-        followers: followerCountsResult.data?.length || 0
-      });
-      
-      // Debug: log raw data and any errors
-      console.log('📊 Raw data:', {
-        orders: ordersResult.data,
-        ordersError: ordersResult.error,
-        users: usersResult.data,
-        usersError: usersResult.error,
-        sms: smsResult.data,
-        smsError: smsResult.error
-      });
-      
-      console.log('📊 Date map keys:', Array.from(dailyMap.keys()));
 
-      // Count orders per day (convert UTC to CST)
-      ordersResult.data?.forEach(order => {
-        const date = formatTimestampToCST(order.created_at);
-        const day = dailyMap.get(date);
+      // Count orders per day (dates already in CST from database)
+      ordersData.forEach((order: { cst_date: string; promo_source?: string; did_holiday_popup?: boolean }) => {
+        const day = dailyMap.get(order.cst_date);
         if (day) {
           day.orders++;
         } else {
-          console.log('📊 Order date not in range:', date, 'from', order.created_at);
+          console.log('📊 Order date not in range:', order.cst_date);
         }
       });
 
-      // Count users per day (convert UTC to CST)
-      usersResult.data?.forEach((user: { created_at: string; promo_source?: string; did_holiday_popup?: boolean }) => {
-        const date = formatTimestampToCST(user.created_at);
-        const day = dailyMap.get(date);
+      // Count users per day (dates already in CST from database)
+      usersData.forEach((user: { cst_date: string; promo_source?: string; did_holiday_popup?: boolean }) => {
+        const day = dailyMap.get(user.cst_date);
         if (day) {
           day.users++;
         } else {
-          console.log('📊 User date not in range:', date, 'from', user.created_at);
+          console.log('📊 User date not in range:', user.cst_date);
         }
       });
 
-      // Count SMS signups per day (convert UTC to CST)
-      smsResult.data?.forEach(signup => {
-        const date = formatTimestampToCST(signup.subscribed_at);
-        const day = dailyMap.get(date);
+      // Count SMS signups per day (dates already in CST from database)
+      smsData.forEach((signup: { cst_date: string; promo_source?: string }) => {
+        const day = dailyMap.get(signup.cst_date);
         if (day) {
           day.sms++;
         } else {
-          console.log('📊 SMS date not in range:', date, 'from', signup.subscribed_at);
+          console.log('📊 SMS date not in range:', signup.cst_date);
         }
       });
 
@@ -426,11 +396,11 @@ const AdvancedAnalytics: React.FC = () => {
       setCampaignMappings(mappingsResult.data || []);
       setCredentials(credentialsResult.data || []);
 
-      // Calculate source breakdowns
+      // Calculate source breakdowns (use the filtered data)
       calculateSourceBreakdowns(
-        smsResult.data || [],
-        usersResult.data || [],
-        ordersResult.data || []
+        smsData,
+        usersData,
+        ordersData
       );
 
     } catch (error) {
@@ -447,10 +417,10 @@ const AdvancedAnalytics: React.FC = () => {
     userData: any[],
     orderData: any[]
   ) => {
-    // SMS sources
+    // SMS sources (promo_source from the unified query, which is utm_source for SMS)
     const smsSources = new Map<string, number>();
     smsData.forEach(s => {
-      const source = s.utm_source || 'Direct';
+      const source = s.promo_source || 'Direct';
       smsSources.set(source, (smsSources.get(source) || 0) + 1);
     });
     const smsTotal = smsData.length;
