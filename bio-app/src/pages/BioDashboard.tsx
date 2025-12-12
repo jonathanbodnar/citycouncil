@@ -953,12 +953,11 @@ const BioDashboard: React.FC = () => {
                 {/* Card Style */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                   <h3 className="text-lg font-semibold text-white mb-4">Card Style</h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {[
                       { id: 'glass', label: 'Glass', desc: 'Transparent with blur' },
                       { id: 'solid', label: 'Solid', desc: 'Opaque background' },
                       { id: 'outline', label: 'Outline', desc: 'Border only' },
-                      { id: 'shadow', label: 'Shadow', desc: 'With drop shadow' },
                     ].map((style) => (
                       <button
                         key={style.id}

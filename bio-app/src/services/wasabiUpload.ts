@@ -1,23 +1,12 @@
-// Wasabi S3 Upload Service for Bio App
-import AWS from 'aws-sdk';
+// Image Upload Service for Bio App
+// Uses Supabase Storage which handles CORS properly
+import { supabase } from './supabase';
 
 interface UploadResponse {
   success: boolean;
   imageUrl?: string;
   error?: string;
 }
-
-// Initialize Wasabi S3 client
-const getWasabiClient = () => {
-  return new AWS.S3({
-    endpoint: 's3.us-central-1.wasabisys.com',
-    accessKeyId: process.env.REACT_APP_WASABI_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY!,
-    region: 'us-central-1',
-    s3ForcePathStyle: true,
-    signatureVersion: 'v4'
-  });
-};
 
 export const uploadImageToWasabi = async (
   file: File, 
@@ -33,27 +22,34 @@ export const uploadImageToWasabi = async (
       return { success: false, error: 'Image must be less than 5MB' };
     }
 
-    const wasabi = getWasabiClient();
-
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
     
-    const uploadParams = {
-      Bucket: 'shoutout-assets',
-      Key: fileName,
-      Body: file,
-      ContentType: file.type,
-      ACL: 'public-read' as const,
-    };
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('bio-assets')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      });
 
-    await wasabi.upload(uploadParams).promise();
-    
-    // Use direct Wasabi URL
-    const imageUrl = `https://s3.us-central-1.wasabisys.com/shoutout-assets/${fileName}`;
-    
+    if (error) {
+      console.error('Supabase upload error:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Upload failed' 
+      };
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('bio-assets')
+      .getPublicUrl(data.path);
+
     return {
       success: true,
-      imageUrl
+      imageUrl: urlData.publicUrl
     };
 
   } catch (error: any) {
