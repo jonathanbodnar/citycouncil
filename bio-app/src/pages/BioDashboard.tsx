@@ -984,14 +984,12 @@ const BioDashboard: React.FC = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
-                      <input
-                        type="text"
-                        value={bioSettings?.display_name || ''}
-                        onChange={(e) => setBioSettings({ ...bioSettings!, display_name: e.target.value })}
-                        onBlur={() => saveSettings({ display_name: bioSettings?.display_name })}
-                        placeholder="Your name"
-                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                      />
+                      <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white">
+                        {talentProfile?.full_name || 'Your name'}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        This is pulled from your ShoutOut profile. Update it there to change it here.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Instagram Username</label>
