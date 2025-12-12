@@ -96,6 +96,7 @@ interface BioSettings {
   accent_color: string;
   font_family: string;
   show_shoutout_card: boolean;
+  show_rumble_card: boolean;
   is_published: boolean;
   background_type: string;
   gradient_start: string;
@@ -710,7 +711,7 @@ const BioPage: React.FC = () => {
         {/* Links */}
         <div className="flex-1 space-y-4">
           {/* Rumble Card - Shows latest video or live status - AT THE TOP */}
-          {talentProfile?.rumble_handle && bioSettings && (
+          {talentProfile?.rumble_handle && bioSettings && bioSettings.show_rumble_card !== false && (
             <a
               href={rumbleData?.url || `https://rumble.com/user/${talentProfile.rumble_handle.replace(/^@/, '')}`}
               target="_blank"

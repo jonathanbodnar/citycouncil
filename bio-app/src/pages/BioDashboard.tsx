@@ -60,6 +60,7 @@ interface BioSettings {
   accent_color: string;
   font_family: string;
   show_shoutout_card: boolean;
+  show_rumble_card: boolean;
   is_published: boolean;
   background_type: string;
   gradient_start: string;
@@ -1035,6 +1036,50 @@ const BioDashboard: React.FC = () => {
                     ))
                   )}
                 </div>
+
+                {/* Rumble Card Toggle */}
+                {talentProfile?.rumble_handle && (
+                  <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-2xl p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-green-400 flex-shrink-0 mt-0.5">
+                          <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
+                        </svg>
+                        <div>
+                          <h3 className="font-medium text-white mb-1">Rumble Card</h3>
+                          <p className="text-sm text-gray-300">
+                            Shows your latest Rumble video or live stream at the top of your bio page.
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Channel: @{talentProfile.rumble_handle}
+                          </p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={bioSettings?.show_rumble_card !== false}
+                          onChange={(e) => {
+                            if (bioSettings) {
+                              const updated = { ...bioSettings, show_rumble_card: e.target.checked };
+                              setBioSettings(updated);
+                              supabase
+                                .from('bio_settings')
+                                .update({ show_rumble_card: e.target.checked })
+                                .eq('id', bioSettings.id)
+                                .then(() => {
+                                  toast.success(e.target.checked ? 'Rumble card enabled' : 'Rumble card disabled');
+                                  setTimeout(refreshPreview, 500);
+                                });
+                            }
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 {/* ShoutOut Card Info */}
                 <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-2xl p-4">
