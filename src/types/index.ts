@@ -69,6 +69,7 @@ export interface TalentProfile {
   instagram_handle?: string;
   facebook_handle?: string;
   tiktok_handle?: string;
+  rumble_handle?: string;
 }
 
 export type TalentCategory = 
@@ -93,7 +94,7 @@ export type TalentCategory =
 
 export interface SocialAccount {
   id: string;
-  platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'linkedin';
+  platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'rumble' | 'linkedin';
   handle: string;
 }
 

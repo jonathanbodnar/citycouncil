@@ -64,7 +64,8 @@ const TalentManagement: React.FC = () => {
     twitter_handle: '',
     instagram_handle: '',
     facebook_handle: '',
-    tiktok_handle: ''
+    tiktok_handle: '',
+    rumble_handle: ''
   });
   
   // Charity donation toggle for admin creation
@@ -311,6 +312,7 @@ const TalentManagement: React.FC = () => {
         admin_fee_percentage: defaultAdminFee, // Use platform settings default
         twitter_handle: '',
         instagram_handle: '',
+        rumble_handle: '',
         facebook_handle: '',
         tiktok_handle: ''
       });
@@ -378,7 +380,8 @@ const TalentManagement: React.FC = () => {
         twitter_handle: editingTalent.twitter_handle || null,
         instagram_handle: editingTalent.instagram_handle || null,
         facebook_handle: editingTalent.facebook_handle || null,
-        tiktok_handle: editingTalent.tiktok_handle || null
+        tiktok_handle: editingTalent.tiktok_handle || null,
+        rumble_handle: editingTalent.rumble_handle || null
       };
 
       // Add position field if it exists (after migration)
@@ -488,7 +491,8 @@ const TalentManagement: React.FC = () => {
         { platform: 'twitter', handle: editingTalent.twitter_handle },
         { platform: 'instagram', handle: editingTalent.instagram_handle },
         { platform: 'facebook', handle: editingTalent.facebook_handle },
-        { platform: 'tiktok', handle: editingTalent.tiktok_handle }
+        { platform: 'tiktok', handle: editingTalent.tiktok_handle },
+        { platform: 'rumble', handle: editingTalent.rumble_handle }
       ].filter(s => s.handle); // Only include non-empty handles
 
       // Delete existing social accounts for this talent
@@ -1241,6 +1245,19 @@ const TalentManagement: React.FC = () => {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Rumble</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
+                    <input
+                      type="text"
+                      value={newTalent.rumble_handle}
+                      onChange={(e) => setNewTalent({...newTalent, rumble_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -1596,7 +1613,8 @@ const TalentManagement: React.FC = () => {
                           twitter_handle: talent.twitter_handle || getHandleFromSocial('twitter'),
                           instagram_handle: talent.instagram_handle || getHandleFromSocial('instagram'),
                           facebook_handle: talent.facebook_handle || getHandleFromSocial('facebook'),
-                          tiktok_handle: talent.tiktok_handle || getHandleFromSocial('tiktok')
+                          tiktok_handle: talent.tiktok_handle || getHandleFromSocial('tiktok'),
+                          rumble_handle: talent.rumble_handle || getHandleFromSocial('rumble')
                         });
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
                       }}
@@ -2055,6 +2073,22 @@ const TalentManagement: React.FC = () => {
                       type="text"
                       value={editingTalent.tiktok_handle || ''}
                       onChange={(e) => setEditingTalent({...editingTalent, tiktok_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rumble Handle
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">@</span>
+                    <input
+                      type="text"
+                      value={editingTalent.rumble_handle || ''}
+                      onChange={(e) => setEditingTalent({...editingTalent, rumble_handle: e.target.value.replace('@', '')})}
                       className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="username"
                     />
