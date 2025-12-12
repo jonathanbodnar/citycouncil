@@ -21,6 +21,7 @@ import {
   SwatchIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
+import { uploadImageToWasabi } from '../services/wasabiUpload';
 import toast from 'react-hot-toast';
 
 // Types
@@ -1188,6 +1189,27 @@ const AddLinkModal: React.FC<{
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [gridColumns, setGridColumns] = useState(1);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const result = await uploadImageToWasabi(file, `bio-images/${talentId}`);
+      if (result.success && result.imageUrl) {
+        setThumbnailUrl(result.imageUrl);
+        toast.success('Image uploaded!');
+      } else {
+        toast.error(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1274,32 +1296,51 @@ const AddLinkModal: React.FC<{
             </div>
           )}
 
-          {/* Image URL for basic and grid links */}
+          {/* Image Upload for basic and grid links */}
           {(linkType === 'basic' || linkType === 'grid') && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                {linkType === 'basic' ? 'Icon/Image URL (optional)' : 'Image URL (optional)'}
+                {linkType === 'basic' ? 'Icon/Image (optional)' : 'Image (optional)'}
               </label>
-              <input
-                type="url"
-                value={thumbnailUrl}
-                onChange={(e) => setThumbnailUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              />
-              {thumbnailUrl && (
-                <div className="mt-2">
+              
+              {thumbnailUrl ? (
+                <div className="flex items-center gap-4">
                   <img 
                     src={thumbnailUrl} 
                     alt="Preview" 
-                    className={`${linkType === 'basic' ? 'w-10 h-10' : 'w-20 h-20'} rounded-lg object-cover`}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
+                    className={`${linkType === 'basic' ? 'w-16 h-16' : 'w-24 h-24'} rounded-lg object-cover`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setThumbnailUrl('')}
+                    className="text-sm text-red-400 hover:text-red-300"
+                  >
+                    Remove
+                  </button>
                 </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    {uploading ? (
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    ) : (
+                      <>
+                        <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-400">Click to upload image</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                      </>
+                    )}
+                  </div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                  />
+                </label>
               )}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-2">
                 {linkType === 'basic' 
                   ? 'Add a small icon or image to display next to your link'
                   : 'Add an image to display on the card'
@@ -1369,6 +1410,27 @@ const EditLinkModal: React.FC<{
   const [thumbnailUrl, setThumbnailUrl] = useState(link.thumbnail_url || '');
   const [gridColumns, setGridColumns] = useState(link.grid_columns || 1);
   const [isActive, setIsActive] = useState(link.is_active);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const result = await uploadImageToWasabi(file, `bio-images/${link.talent_id}`);
+      if (result.success && result.imageUrl) {
+        setThumbnailUrl(result.imageUrl);
+        toast.success('Image uploaded!');
+      } else {
+        toast.error(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1419,18 +1481,44 @@ const EditLinkModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Image URL (optional)</label>
-            <input
-              type="url"
-              value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-            {thumbnailUrl && (
-              <div className="mt-2">
-                <img src={thumbnailUrl} alt="Preview" className="w-20 h-20 rounded-lg object-cover" />
+            <label className="block text-sm font-medium text-gray-300 mb-2">Image (optional)</label>
+            
+            {thumbnailUrl ? (
+              <div className="flex items-center gap-4">
+                <img 
+                  src={thumbnailUrl} 
+                  alt="Preview" 
+                  className="w-20 h-20 rounded-lg object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setThumbnailUrl('')}
+                  className="text-sm text-red-400 hover:text-red-300"
+                >
+                  Remove
+                </button>
               </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  {uploading ? (
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  ) : (
+                    <>
+                      <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-400">Click to upload image</p>
+                      <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                    </>
+                  )}
+                </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                />
+              </label>
             )}
           </div>
 
