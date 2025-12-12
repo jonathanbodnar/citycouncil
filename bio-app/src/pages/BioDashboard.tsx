@@ -35,6 +35,7 @@ interface TalentProfile {
   temp_avatar_url?: string;
   bio?: string;
   social_accounts?: SocialAccount[];
+  rumble_handle?: string;
 }
 
 interface SocialAccount {
