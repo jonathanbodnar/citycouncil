@@ -93,14 +93,20 @@ const BioDashboard: React.FC = () => {
 
       try {
         // Token is the user ID - fetch user data
+        console.log('Bio Dashboard: Authenticating with token:', token);
+        console.log('Bio Dashboard: Supabase URL:', process.env.REACT_APP_SUPABASE_URL);
+        
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('id', token)
           .single();
 
+        console.log('Bio Dashboard: User query result:', { userData, userError });
+
         if (userError || !userData) {
-          setAuthError('Invalid authentication token. Please try again from your ShoutOut dashboard.');
+          console.error('Bio Dashboard: User lookup failed:', userError);
+          setAuthError(`Invalid authentication token. Error: ${userError?.message || 'User not found'}. Please try again from your ShoutOut dashboard.`);
           setLoading(false);
           return;
         }
@@ -114,8 +120,11 @@ const BioDashboard: React.FC = () => {
           .eq('user_id', userData.id)
           .single();
 
+        console.log('Bio Dashboard: Talent profile query result:', { profile, profileError });
+
         if (profileError || !profile) {
-          setAuthError('No talent profile found. You must be a talent to use ShoutOut Bio.');
+          console.error('Bio Dashboard: Talent profile lookup failed:', profileError);
+          setAuthError(`No talent profile found. Error: ${profileError?.message || 'Profile not found'}. You must be a talent to use ShoutOut Bio.`);
           setLoading(false);
           return;
         }
