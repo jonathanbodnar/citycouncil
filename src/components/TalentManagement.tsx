@@ -65,7 +65,8 @@ const TalentManagement: React.FC = () => {
     instagram_handle: '',
     facebook_handle: '',
     tiktok_handle: '',
-    rumble_handle: ''
+    rumble_handle: '',
+    rumble_type: 'c' as 'c' | 'user' // 'c' for channel, 'user' for user
   });
   
   // Charity donation toggle for admin creation
@@ -313,6 +314,7 @@ const TalentManagement: React.FC = () => {
         twitter_handle: '',
         instagram_handle: '',
         rumble_handle: '',
+        rumble_type: 'c' as 'c' | 'user',
         facebook_handle: '',
         tiktok_handle: ''
       });
@@ -381,7 +383,8 @@ const TalentManagement: React.FC = () => {
         instagram_handle: editingTalent.instagram_handle || null,
         facebook_handle: editingTalent.facebook_handle || null,
         tiktok_handle: editingTalent.tiktok_handle || null,
-        rumble_handle: editingTalent.rumble_handle || null
+        rumble_handle: editingTalent.rumble_handle || null,
+        rumble_type: editingTalent.rumble_type || 'c'
       };
 
       // Add position field if it exists (after migration)
@@ -1246,15 +1249,22 @@ const TalentManagement: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Rumble Channel</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-xs">rumble.com/c/</span>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Rumble</label>
+                  <div className="flex gap-2">
+                    <select
+                      value={newTalent.rumble_type}
+                      onChange={(e) => setNewTalent({...newTalent, rumble_type: e.target.value as 'c' | 'user'})}
+                      className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                    >
+                      <option value="c">Channel (/c/)</option>
+                      <option value="user">User (/user/)</option>
+                    </select>
                     <input
                       type="text"
                       value={newTalent.rumble_handle}
                       onChange={(e) => setNewTalent({...newTalent, rumble_handle: e.target.value})}
-                      className="w-full pl-24 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="ChannelName"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Name"
                     />
                   </div>
                 </div>
@@ -2081,16 +2091,23 @@ const TalentManagement: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rumble Channel
+                    Rumble
                   </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-xs">rumble.com/c/</span>
+                  <div className="flex gap-2">
+                    <select
+                      value={editingTalent.rumble_type || 'c'}
+                      onChange={(e) => setEditingTalent({...editingTalent, rumble_type: e.target.value as 'c' | 'user'})}
+                      className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    >
+                      <option value="c">Channel (/c/)</option>
+                      <option value="user">User (/user/)</option>
+                    </select>
                     <input
                       type="text"
                       value={editingTalent.rumble_handle || ''}
                       onChange={(e) => setEditingTalent({...editingTalent, rumble_handle: e.target.value})}
-                      className="w-full pl-24 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="ChannelName"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Name"
                     />
                   </div>
                 </div>

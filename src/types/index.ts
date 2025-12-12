@@ -70,6 +70,7 @@ export interface TalentProfile {
   facebook_handle?: string;
   tiktok_handle?: string;
   rumble_handle?: string;
+  rumble_type?: 'c' | 'user'; // 'c' for channel, 'user' for user profile
 }
 
 export type TalentCategory = 

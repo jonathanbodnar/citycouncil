@@ -563,6 +563,7 @@ const TalentProfilePage: React.FC = () => {
                       const rumbleHandle = 
                         talent.social_accounts?.find(a => a.platform === 'rumble')?.handle?.replace('@', '') ||
                         talent.rumble_handle;
+                      const rumbleType = (talent as any).rumble_type || 'c'; // 'c' for channel, 'user' for user
                       
                       return (
                         <>
@@ -620,7 +621,7 @@ const TalentProfilePage: React.FC = () => {
                           )}
                           {rumbleHandle && (
                             <a 
-                              href={`https://rumble.com/c/${rumbleHandle.replace('@', '')}`}
+                              href={`https://rumble.com/${rumbleType}/${rumbleHandle.replace('@', '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1.5 text-gray-400 hover:text-gray-600"
