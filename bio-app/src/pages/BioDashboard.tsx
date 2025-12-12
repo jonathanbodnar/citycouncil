@@ -913,10 +913,12 @@ const BioDashboard: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      // Force iframe refresh
+                      // Force iframe refresh by setting src to a new value
                       const iframe = document.getElementById('bio-preview-iframe') as HTMLIFrameElement;
                       if (iframe) {
-                        iframe.src = iframe.src;
+                        const currentSrc = iframe.src;
+                        iframe.src = '';
+                        setTimeout(() => { iframe.src = currentSrc; }, 50);
                       }
                     }}
                     className="text-sm text-gray-400 hover:text-white flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
