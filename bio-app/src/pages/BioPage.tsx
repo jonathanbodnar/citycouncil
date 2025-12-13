@@ -478,21 +478,31 @@ const BioPage: React.FC = () => {
         }
       }
       
-      // Find video title - look for title attribute on video links in the video section
-      // Pattern: <a href="/vXXX-title.html" title="Video Title">
-      // Use exec loop instead of matchAll for ES5 compatibility
-      const titleRegex = /<a[^>]*href="(\/v[a-z0-9]+-[^"]+\.html)"[^>]*title="([^"]{10,200})"/gi;
-      let titleMatch = titleRegex.exec(videoSection);
-      if (titleMatch) {
-        title = titleMatch[2].trim();
-        videoUrl = `https://rumble.com${titleMatch[1].split('?')[0]}`;
+      // Find video title - look for thumbnail__title class with title attribute
+      // Pattern: <h3 class="thumbnail__title..." title="Video Title">
+      const titleClassRegex = /class="thumbnail__title[^"]*"[^>]*title="([^"]{10,200})"/gi;
+      let titleMatch = titleClassRegex.exec(videoSection);
+      if (titleMatch && titleMatch[1]) {
+        title = titleMatch[1].trim();
       } else {
         // Try whole page
-        titleRegex.lastIndex = 0; // Reset regex state
-        titleMatch = titleRegex.exec(htmlWithoutStyles);
-        if (titleMatch) {
-          title = titleMatch[2].trim();
-          videoUrl = `https://rumble.com${titleMatch[1].split('?')[0]}`;
+        titleClassRegex.lastIndex = 0;
+        titleMatch = titleClassRegex.exec(htmlWithoutStyles);
+        if (titleMatch && titleMatch[1]) {
+          title = titleMatch[1].trim();
+        }
+      }
+      
+      // Find video URL from href
+      const videoUrlRegex = /href="(\/v[a-z0-9]+-[^"]+\.html)/gi;
+      let videoUrlMatch = videoUrlRegex.exec(videoSection);
+      if (videoUrlMatch && videoUrlMatch[1]) {
+        videoUrl = `https://rumble.com${videoUrlMatch[1].split('?')[0]}`;
+      } else {
+        videoUrlRegex.lastIndex = 0;
+        videoUrlMatch = videoUrlRegex.exec(htmlWithoutStyles);
+        if (videoUrlMatch && videoUrlMatch[1]) {
+          videoUrl = `https://rumble.com${videoUrlMatch[1].split('?')[0]}`;
         }
       }
       
