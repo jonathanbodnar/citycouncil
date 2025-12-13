@@ -431,7 +431,9 @@ const BioPage: React.FC = () => {
       // Check for live stream - look for actual live stream elements in the video grid
       // The live badge appears as class="videostream__status--live" with text "LIVE"
       // or there's a live viewer count like "1,234 watching"
-      const liveStatusMatch = htmlWithoutStyles.match(/class="[^"]*videostream__status--live[^"]*"[^>]*>([^<]*LIVE[^<]*)</i);
+      // Also check for thumbnail__thumb--live class which indicates a live stream thumbnail
+      const liveStatusMatch = htmlWithoutStyles.match(/class="[^"]*videostream__status--live[^"]*"/i) ||
+                              htmlWithoutStyles.match(/class="[^"]*thumbnail__thumb--live[^"]*"/i);
       const liveViewerMatch = htmlWithoutStyles.match(/class="[^"]*watching-now[^"]*"[^>]*>([\d,]+)/i) ||
                               htmlWithoutStyles.match(/([\d,]+)\s*watching\s*now/i) ||
                               htmlWithoutStyles.match(/>([\d,]+)\s*(?:watching|viewers)</i);
