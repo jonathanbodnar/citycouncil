@@ -451,18 +451,19 @@ const BioPage: React.FC = () => {
       const videoSection = gridMatch ? gridMatch[1] : htmlWithoutStyles;
       
       // Find all video thumbnails with -small- in URL (these are video thumbs, not profile pics)
-      // Use matchAll to get all matches, then take the first one from the video section
+      // Use exec loop instead of matchAll for ES5 compatibility
       const thumbRegex = /src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png))"/gi;
-      const thumbMatches = [...videoSection.matchAll(thumbRegex)];
-      if (thumbMatches.length > 0 && thumbMatches[0][1]) {
-        thumbnail = thumbMatches[0][1];
+      let thumbMatch = thumbRegex.exec(videoSection);
+      if (thumbMatch && thumbMatch[1]) {
+        thumbnail = thumbMatch[1];
       }
       
       // If no thumbnail in video section, try the whole page but be more careful
       if (!thumbnail) {
-        const allThumbMatches = [...htmlWithoutStyles.matchAll(thumbRegex)];
-        if (allThumbMatches.length > 0 && allThumbMatches[0][1]) {
-          thumbnail = allThumbMatches[0][1];
+        thumbRegex.lastIndex = 0; // Reset regex state
+        thumbMatch = thumbRegex.exec(htmlWithoutStyles);
+        if (thumbMatch && thumbMatch[1]) {
+          thumbnail = thumbMatch[1];
         }
       }
       
