@@ -480,17 +480,19 @@ const BioPage: React.FC = () => {
       
       // Find video title - look for title attribute on video links in the video section
       // Pattern: <a href="/vXXX-title.html" title="Video Title">
+      // Use exec loop instead of matchAll for ES5 compatibility
       const titleRegex = /<a[^>]*href="(\/v[a-z0-9]+-[^"]+\.html)"[^>]*title="([^"]{10,200})"/gi;
-      const titleMatches = [...videoSection.matchAll(titleRegex)];
-      if (titleMatches.length > 0) {
-        title = titleMatches[0][2].trim();
-        videoUrl = `https://rumble.com${titleMatches[0][1].split('?')[0]}`;
+      let titleMatch = titleRegex.exec(videoSection);
+      if (titleMatch) {
+        title = titleMatch[2].trim();
+        videoUrl = `https://rumble.com${titleMatch[1].split('?')[0]}`;
       } else {
         // Try whole page
-        const allTitleMatches = [...htmlWithoutStyles.matchAll(titleRegex)];
-        if (allTitleMatches.length > 0) {
-          title = allTitleMatches[0][2].trim();
-          videoUrl = `https://rumble.com${allTitleMatches[0][1].split('?')[0]}`;
+        titleRegex.lastIndex = 0; // Reset regex state
+        titleMatch = titleRegex.exec(htmlWithoutStyles);
+        if (titleMatch) {
+          title = titleMatch[2].trim();
+          videoUrl = `https://rumble.com${titleMatch[1].split('?')[0]}`;
         }
       }
       
