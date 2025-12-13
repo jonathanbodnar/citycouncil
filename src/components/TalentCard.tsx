@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { StarIcon, HeartIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
@@ -16,34 +16,6 @@ interface TalentCardProps {
 const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   const isComingSoon = talent.is_coming_soon === true;
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
-  
-  // Check if user has a coupon from the giveaway popup
-  const [hasCoupon, setHasCoupon] = useState(false);
-  
-  useEffect(() => {
-    const checkCoupon = () => {
-      const coupon = localStorage.getItem('auto_apply_coupon');
-      setHasCoupon(coupon === 'SANTA25');
-    };
-    
-    // Check on mount
-    checkCoupon();
-    
-    // Listen for storage changes (from popup)
-    window.addEventListener('storage', checkCoupon);
-    
-    // Also listen for custom event (for same-tab updates)
-    window.addEventListener('couponApplied', checkCoupon);
-    
-    return () => {
-      window.removeEventListener('storage', checkCoupon);
-      window.removeEventListener('couponApplied', checkCoupon);
-    };
-  }, []);
-  
-  // Calculate discounted price (25% off)
-  const originalPrice = talent.pricing || 0;
-  const discountedPrice = Math.round(originalPrice * 0.75);
   
   const demandColors = {
     high: 'bg-red-500/20 text-red-400',
@@ -172,32 +144,14 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           {talent.bio}
         </p>
 
-        {/* Price and Charity - Push to bottom */}
+        {/* CTA Text - Push to bottom */}
         <div className="flex items-center justify-between mt-auto">
-          <div>
-            {hasCoupon ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm sm:text-base text-gray-400 line-through">
-                  ${originalPrice}
-                </span>
-                <span 
-                  className="text-lg sm:text-xl font-bold bg-clip-text text-transparent"
-                  style={{ backgroundImage: 'linear-gradient(to right, #8B5CF6, #3B82F6)' }}
-                >
-                  ${discountedPrice}
-                </span>
-              </div>
-            ) : (
-              <div className="text-lg sm:text-xl font-semibold text-white">
-                ${talent.pricing}
-              </div>
-            )}
-            {talent.allow_corporate_pricing && talent.corporate_pricing && talent.corporate_pricing !== talent.pricing && (
-              <div className="hidden sm:block text-xs text-gray-400 font-medium">
-                Corporate: ${talent.corporate_pricing}
-              </div>
-            )}
-          </div>
+          <span 
+            className="text-[10px] sm:text-xs font-semibold tracking-wide"
+            style={{ color: 'rgba(139, 92, 246, 0.6)' }}
+          >
+            ORDER A VIDEO SHOUTOUT
+          </span>
           {(talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name) ? (
             <div className="flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-red-400 font-medium">
               <HeartIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
