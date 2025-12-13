@@ -423,99 +423,73 @@ const BioPage: React.FC = () => {
         return;
       }
       
+      // Strip out CSS/style sections to avoid picking up wrong thumbnails from sidebar styles
+      const htmlWithoutStyles = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+      
       // Check for live stream - be strict: only if there's an actual "LIVE" indicator with viewers
-      // Look for patterns like "LIVE" badge near viewer count
-      const liveMatch = html.match(/([\d,]+)\s*(?:watching|viewers)/i);
-      const hasLiveIndicator = html.includes('class="is-live"') || html.includes('class="status--live"') || 
-                               (html.includes('>LIVE<') && !!liveMatch);
+      const liveMatch = htmlWithoutStyles.match(/([\d,]+)\s*(?:watching|viewers)/i);
+      const hasLiveIndicator = htmlWithoutStyles.includes('class="is-live"') || htmlWithoutStyles.includes('class="status--live"') || 
+                               (htmlWithoutStyles.includes('>LIVE<') && !!liveMatch);
       const isLive: boolean = !!(hasLiveIndicator && liveMatch);
       const liveViewers = liveMatch ? parseInt(liveMatch[1].replace(/,/g, '')) : 0;
       
-      // Try to find thumbnail using regex on raw HTML
-      // Rumble thumbnails come from various CDN subdomains including 1a-1791.com
-      // IMPORTANT: Video thumbnails have "-small-" in the filename, profile images don't
+      // Try to find thumbnail - look specifically in the video grid section
+      // The video grid contains the channel's own videos, not featured/related content
       let thumbnail = '';
-      
-      // First, try to find video thumbnails specifically (they have "-small-" in the URL)
-      const videoThumbMatch = html.match(/src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png)[^"]*)"/i);
-      if (videoThumbMatch && videoThumbMatch[1]) {
-        thumbnail = videoThumbMatch[1];
-      }
-      
-      // If no video thumbnail found, try other patterns
-      if (!thumbnail) {
-        const thumbPatterns = [
-          // Look for thumbnail__image class which contains the actual thumbnails
-          /class="thumbnail__image[^"]*"[^>]*src="([^"]+)"/i,
-          /src="([^"]+)"[^>]*class="thumbnail__image/i,
-          // Rumble's other CDN patterns
-          /src="(https:\/\/sp\.rmbl\.ws\/[^"]+)"/i,
-          /src="(https:\/\/i\.rmbl\.ws\/[^"]+)"/i,
-          // Data-src patterns
-          /data-src="(https:\/\/[^"]*\.(jpg|jpeg|webp|png)[^"]*)"/i,
-          // OG image meta tag (usually the video thumbnail)
-          /og:image"[^>]*content="([^"]+)"/i,
-          /content="([^"]+)"[^>]*property="og:image/i,
-        ];
-        
-        for (const pattern of thumbPatterns) {
-          const match = html.match(pattern);
-          if (match && match[1] && !match[1].includes('data:image')) {
-            thumbnail = match[1];
-            break;
-          }
-        }
-      }
-      
-      // Try to find video title from HTML - look for title attribute on links or h3 tags
       let title = 'Latest Video';
-      const titlePatterns = [
-        // Look for thumbnail__title class first - this is the main title element
-        /class="thumbnail__title[^"]*"[^>]*>([^<]+)</i,
-        /class="thumbnail__title[^"]*"[^>]*title="([^"]+)"/i,
-        // Title attribute on video links
-        /<a[^>]*href="\/v[^"]*"[^>]*title="([^"]{10,150})"/i,
-        /title="([^"]{10,150})"[^>]*href="\/v/i,
-        // Generic title patterns
-        /class="[^"]*title[^"]*"[^>]*>([^<]{10,150})</i,
-      ];
-      
-      for (const pattern of titlePatterns) {
-        const match = html.match(pattern);
-        if (match && match[1] && match[1].trim().length > 5) {
-          title = match[1].trim();
-          break;
-        }
-      }
-      
-      // Try to find video URL
       let videoUrl = successUrl;
-      const videoUrlMatch = html.match(/href="(\/v[a-z0-9]+-[^"]+\.html)/i);
-      if (videoUrlMatch) {
-        videoUrl = `https://rumble.com${videoUrlMatch[1].split('?')[0]}`;
+      let views = 0;
+      
+      // Try to extract the main video grid section (contains channel's videos)
+      const gridMatch = htmlWithoutStyles.match(/class="thumbnail__grid"[\s\S]*?(<article[\s\S]*?<\/article>)/i);
+      const videoSection = gridMatch ? gridMatch[1] : htmlWithoutStyles;
+      
+      // Find all video thumbnails with -small- in URL (these are video thumbs, not profile pics)
+      // Use matchAll to get all matches, then take the first one from the video section
+      const thumbRegex = /src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png))"/gi;
+      const thumbMatches = [...videoSection.matchAll(thumbRegex)];
+      if (thumbMatches.length > 0 && thumbMatches[0][1]) {
+        thumbnail = thumbMatches[0][1];
       }
       
-      // Try to find views
-      let views = 0;
-      const viewsPatterns = [
-        /data-views="(\d+)"/i,
-        /([\d,]+)\s*views/i,
-        /([\d.]+[KkMm])\s*views/i,
-      ];
-      
-      for (const pattern of viewsPatterns) {
-        const match = html.match(pattern);
-        if (match && match[1]) {
-          const viewStr = match[1].replace(/,/g, '');
-          if (viewStr.toLowerCase().includes('k')) {
-            views = Math.round(parseFloat(viewStr) * 1000);
-          } else if (viewStr.toLowerCase().includes('m')) {
-            views = Math.round(parseFloat(viewStr) * 1000000);
-          } else {
-            views = parseInt(viewStr) || 0;
-          }
-          break;
+      // If no thumbnail in video section, try the whole page but be more careful
+      if (!thumbnail) {
+        const allThumbMatches = [...htmlWithoutStyles.matchAll(thumbRegex)];
+        if (allThumbMatches.length > 0 && allThumbMatches[0][1]) {
+          thumbnail = allThumbMatches[0][1];
         }
+      }
+      
+      // If still no thumbnail, try OG meta tag (should be channel-specific)
+      if (!thumbnail) {
+        const ogMatch = html.match(/property="og:image"[^>]*content="([^"]+)"/i) ||
+                        html.match(/content="([^"]+)"[^>]*property="og:image"/i);
+        if (ogMatch && ogMatch[1]) {
+          thumbnail = ogMatch[1];
+        }
+      }
+      
+      // Find video title - look for title attribute on video links in the video section
+      // Pattern: <a href="/vXXX-title.html" title="Video Title">
+      const titleRegex = /<a[^>]*href="(\/v[a-z0-9]+-[^"]+\.html)"[^>]*title="([^"]{10,200})"/gi;
+      const titleMatches = [...videoSection.matchAll(titleRegex)];
+      if (titleMatches.length > 0) {
+        title = titleMatches[0][2].trim();
+        videoUrl = `https://rumble.com${titleMatches[0][1].split('?')[0]}`;
+      } else {
+        // Try whole page
+        const allTitleMatches = [...htmlWithoutStyles.matchAll(titleRegex)];
+        if (allTitleMatches.length > 0) {
+          title = allTitleMatches[0][2].trim();
+          videoUrl = `https://rumble.com${allTitleMatches[0][1].split('?')[0]}`;
+        }
+      }
+      
+      // Try to find views from data-views attribute
+      const viewsMatch = videoSection.match(/data-views="(\d+)"/i) || 
+                         htmlWithoutStyles.match(/data-views="(\d+)"/i);
+      if (viewsMatch && viewsMatch[1]) {
+        views = parseInt(viewsMatch[1]) || 0;
       }
       
       console.log('Rumble data extracted:', { title, thumbnail, videoUrl, views, isLive, liveViewers });
