@@ -45,8 +45,9 @@ interface ReviewWithUser extends Review {
   };
 }
 
-// Feature flag: Only show Bio tab for specific users
+// Feature flag: Only show Bio tab for specific users on dev environment
 const BIO_FEATURE_ALLOWED_EMAILS = ['jb@apollo.inc'];
+const IS_DEV_ENVIRONMENT = window.location.hostname === 'dev.shoutout.us' || window.location.hostname === 'localhost';
 
 const TalentDashboard: React.FC = () => {
   const { user, updateProfile } = useAuth();
@@ -65,8 +66,8 @@ const TalentDashboard: React.FC = () => {
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
 
-  // Check if user has access to Bio feature
-  const hasBioAccess = user?.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase());
+  // Check if user has access to Bio feature (only on dev environment)
+  const hasBioAccess = IS_DEV_ENVIRONMENT && user?.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase());
 
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
