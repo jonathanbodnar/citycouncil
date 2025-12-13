@@ -423,15 +423,21 @@ const BioPage: React.FC = () => {
         return;
       }
       
-      // Strip out CSS/style sections to avoid picking up wrong thumbnails from sidebar styles
-      const htmlWithoutStyles = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+      // Strip out CSS/style sections AND script sections to avoid false positives
+      const htmlWithoutStyles = html
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
       
-      // Check for live stream - be strict: only if there's an actual "LIVE" indicator with viewers
-      const liveMatch = htmlWithoutStyles.match(/([\d,]+)\s*(?:watching|viewers)/i);
-      const hasLiveIndicator = htmlWithoutStyles.includes('class="is-live"') || htmlWithoutStyles.includes('class="status--live"') || 
-                               (htmlWithoutStyles.includes('>LIVE<') && !!liveMatch);
-      const isLive: boolean = !!(hasLiveIndicator && liveMatch);
-      const liveViewers = liveMatch ? parseInt(liveMatch[1].replace(/,/g, '')) : 0;
+      // Check for live stream - look for actual live stream elements in the video grid
+      // The live badge appears as class="videostream__status--live" with text "LIVE"
+      // or there's a live viewer count like "1,234 watching"
+      const liveStatusMatch = htmlWithoutStyles.match(/class="[^"]*videostream__status--live[^"]*"[^>]*>([^<]*LIVE[^<]*)</i);
+      const liveViewerMatch = htmlWithoutStyles.match(/class="[^"]*watching-now[^"]*"[^>]*>([\d,]+)/i) ||
+                              htmlWithoutStyles.match(/([\d,]+)\s*watching\s*now/i) ||
+                              htmlWithoutStyles.match(/>([\d,]+)\s*(?:watching|viewers)</i);
+      
+      const isLive: boolean = !!(liveStatusMatch || (liveViewerMatch && parseInt(liveViewerMatch[1].replace(/,/g, '')) > 0));
+      const liveViewers = liveViewerMatch ? parseInt(liveViewerMatch[1].replace(/,/g, '')) : 0;
       
       // Try to find thumbnail - look specifically in the video grid section
       // The video grid contains the channel's own videos, not featured/related content
