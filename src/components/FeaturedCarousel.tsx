@@ -167,14 +167,6 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 <p className="text-xs opacity-90 mb-3 line-clamp-2 px-4">
                   {currentTalent.bio}
                 </p>
-                <div className="flex items-center justify-center space-x-3 mb-3">
-                  <div className="text-lg font-bold">
-                    ${currentTalent.pricing}
-                  </div>
-                  <div className="text-xs opacity-75">
-                    {currentTalent.fulfillment_time_hours}h delivery
-                  </div>
-                </div>
                 <Link
                   to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
                   className="inline-block px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-modern-lg hover:scale-105"
@@ -202,19 +194,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                   <p className="text-sm opacity-90 mb-4 line-clamp-2">
                     {currentTalent.bio}
                   </p>
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="text-xl font-bold">
-                      ${currentTalent.pricing}
+                  {(currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0 && currentTalent.charity_name) ? (
+                    <div className="text-xs opacity-75 mb-4">
+                      {currentTalent.charity_percentage}% to charity ❤️
                     </div>
-                    <div className="text-xs opacity-75">
-                      {currentTalent.fulfillment_time_hours}h delivery
-                    </div>
-                    {(currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0 && currentTalent.charity_name) ? (
-                      <div className="text-xs opacity-75">
-                        {currentTalent.charity_percentage}% to charity ❤️
-                      </div>
-                    ) : null}
-                  </div>
+                  ) : null}
                   <Link
                     to={currentTalent.username ? `/${currentTalent.username}` : `/talent/${currentTalent.id}`}
                     className="inline-block px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-modern-lg hover:scale-105"
