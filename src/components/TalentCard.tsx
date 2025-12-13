@@ -148,7 +148,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         <div className="flex items-center justify-between mt-auto">
           <span 
             className="text-[10px] sm:text-xs"
-            style={{ color: 'rgba(167, 139, 250, 0.6)' }}
+            style={{ color: 'rgba(147, 197, 253, 0.6)' }}
           >
             {talent.fulfillment_time_hours}h delivery
           </span>

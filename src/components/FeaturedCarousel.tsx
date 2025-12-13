@@ -167,7 +167,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                 <p className="text-xs opacity-90 mb-3 line-clamp-2 px-4">
                   {currentTalent.bio}
                 </p>
-                <div className="text-xs mb-3" style={{ color: 'rgba(167, 139, 250, 0.6)' }}>
+                <div className="text-xs mb-3" style={{ color: 'rgba(147, 197, 253, 0.6)' }}>
                   {currentTalent.fulfillment_time_hours}h delivery
                 </div>
                 <Link
@@ -198,11 +198,11 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
                     {currentTalent.bio}
                   </p>
                   <div className="flex items-center space-x-4 mb-4">
-                    <div className="text-xs" style={{ color: 'rgba(167, 139, 250, 0.6)' }}>
+                    <div className="text-xs" style={{ color: 'rgba(147, 197, 253, 0.6)' }}>
                       {currentTalent.fulfillment_time_hours}h delivery
                     </div>
                     {(currentTalent.charity_percentage && Number(currentTalent.charity_percentage) > 0 && currentTalent.charity_name) ? (
-                      <div className="text-xs" style={{ color: 'rgba(167, 139, 250, 0.6)' }}>
+                      <div className="text-xs" style={{ color: 'rgba(147, 197, 253, 0.6)' }}>
                         {currentTalent.charity_percentage}% to charity ❤️
                       </div>
                     ) : null}
