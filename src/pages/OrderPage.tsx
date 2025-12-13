@@ -903,14 +903,14 @@ const OrderPage: React.FC = () => {
 
             {/* Free order with credits - show confirmation */}
             {pricing.amountDue === 0 && (
-              <div className="rounded-2xl px-6 py-8 bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 max-w-3xl mx-auto text-center">
+              <div className="light-theme rounded-2xl px-6 py-8 bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 max-w-3xl mx-auto text-center">
                 <div className="flex justify-center mb-4">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                     <CurrencyDollarIcon className="h-10 w-10 text-green-600" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Order Covered by Credits!</h3>
-                <p className="text-gray-600 mb-6">
+                <h3 className="text-2xl font-bold mb-2" style={{ color: '#111827' }}>Order Covered by Credits!</h3>
+                <p className="mb-6" style={{ color: '#4b5563' }}>
                   Your account credits will cover the full cost of this order.
                   No payment needed!
                 </p>
