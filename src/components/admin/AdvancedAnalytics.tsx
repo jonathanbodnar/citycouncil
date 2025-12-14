@@ -369,7 +369,7 @@ const AdvancedAnalytics: React.FC = () => {
 
       // Calculate follower changes
       // The count recorded on date X represents the follower count at the END of that day
-      // So: growth on Dec 11 = count on Dec 11 - count on Dec 10
+      // Growth for date X = count on date X - count on date (X-1)
       const followerData = followerCountsResult.data || [];
       console.log('📊 Raw follower data from DB:', followerData);
       
@@ -378,34 +378,33 @@ const AdvancedAnalytics: React.FC = () => {
         followerByDate.set(fc.date, fc.count);
       });
       
-      // For each day, growth = this day's count - previous day's count
-      const sortedDates = Array.from(dailyMap.keys()).sort();
-      sortedDates.forEach(dateStr => {
-        const day = dailyMap.get(dateStr);
-        if (!day) return;
-        
-        const todayCount = followerByDate.get(dateStr);
-        
-        // Get previous day's date
-        const currentDate = new Date(dateStr + 'T12:00:00');
-        currentDate.setDate(currentDate.getDate() - 1);
-        const prevDateStr = formatLocalDate(currentDate);
-        const prevCount = followerByDate.get(prevDateStr);
-        
-        if (todayCount !== undefined && prevCount !== undefined) {
-          day.followers = todayCount - prevCount;
-          console.log(`📊 Followers ${dateStr}: ${todayCount} - ${prevCount} (prev: ${prevDateStr}) = ${day.followers}`);
-        } else if (todayCount !== undefined) {
-          // If no previous day data, just show 0 growth (we can't calculate)
-          day.followers = 0;
-          console.log(`📊 Followers ${dateStr}: ${todayCount} (no prev data for ${prevDateStr})`);
-        } else {
-          day.followers = 0;
-          console.log(`📊 Followers ${dateStr}: no data`);
-        }
-      });
-      
       console.log('📊 Follower counts by date:', Object.fromEntries(followerByDate));
+      
+      // Sort the dates we have follower data for
+      const followerDates = Array.from(followerByDate.keys()).sort();
+      console.log('📊 Follower dates available:', followerDates);
+      
+      // Calculate growth between consecutive days we have data for
+      for (let i = 1; i < followerDates.length; i++) {
+        const currentDateStr = followerDates[i];
+        const prevDateStr = followerDates[i - 1];
+        
+        const currentCount = followerByDate.get(currentDateStr)!;
+        const prevCount = followerByDate.get(prevDateStr)!;
+        const growth = currentCount - prevCount;
+        
+        // Attribute growth to the current date (the day the growth happened)
+        const day = dailyMap.get(currentDateStr);
+        if (day) {
+          day.followers = growth;
+          console.log(`📊 Followers ${currentDateStr}: ${currentCount} - ${prevCount} = ${growth}`);
+        } else {
+          console.log(`📊 Followers ${currentDateStr}: date not in chart range`);
+        }
+      }
+      
+      // Log final state
+      console.log('📊 Final dailyMap followers:', Array.from(dailyMap.entries()).map(([k, v]) => `${k}: ${v.followers}`));
 
       // Convert to array and sort by date
       const chartDataArray = Array.from(dailyMap.values()).sort(
