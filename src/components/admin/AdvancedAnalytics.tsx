@@ -240,11 +240,16 @@ const AdvancedAnalytics: React.FC = () => {
           .gte('date', startStr)
           .lte('date', endStr),
         
-        // Follower counts
+        // Follower counts - fetch one extra day before startStr for growth calculation
         supabase
           .from('follower_counts')
           .select('*')
-          .gte('date', startStr)
+          .gte('date', (() => {
+            // Subtract one day from startStr for growth calculation
+            const [y, m, d] = startStr.split('-').map(Number);
+            const prevDay = new Date(y, m - 1, d - 1);
+            return `${prevDay.getFullYear()}-${String(prevDay.getMonth() + 1).padStart(2, '0')}-${String(prevDay.getDate()).padStart(2, '0')}`;
+          })())
           .lte('date', endStr)
           .order('date', { ascending: true }),
         
@@ -356,36 +361,44 @@ const AdvancedAnalytics: React.FC = () => {
       });
 
       // Calculate follower changes
-      // The count recorded at midnight on date X represents followers at END of day X-1
-      // So: growth on Dec 11 = count recorded Dec 12 midnight - count recorded Dec 11 midnight
+      // The count recorded on date X represents the follower count at the END of that day
+      // So: growth on Dec 11 = count on Dec 11 - count on Dec 10
       const followerData = followerCountsResult.data || [];
+      console.log('📊 Raw follower data from DB:', followerData);
+      
       const followerByDate = new Map<string, number>();
       followerData.forEach(fc => {
         followerByDate.set(fc.date, fc.count);
       });
       
-      // For each day, growth = next day's midnight count - this day's midnight count
+      // For each day, growth = this day's count - previous day's count
       const sortedDates = Array.from(dailyMap.keys()).sort();
       sortedDates.forEach(dateStr => {
         const day = dailyMap.get(dateStr);
         if (!day) return;
         
-        const todayMidnightCount = followerByDate.get(dateStr);
+        const todayCount = followerByDate.get(dateStr);
         
-        // Get next day's date
+        // Get previous day's date
         const currentDate = new Date(dateStr + 'T12:00:00');
-        currentDate.setDate(currentDate.getDate() + 1);
-        const nextDateStr = formatLocalDate(currentDate);
-        const nextMidnightCount = followerByDate.get(nextDateStr);
+        currentDate.setDate(currentDate.getDate() - 1);
+        const prevDateStr = formatLocalDate(currentDate);
+        const prevCount = followerByDate.get(prevDateStr);
         
-        if (todayMidnightCount !== undefined && nextMidnightCount !== undefined) {
-          day.followers = nextMidnightCount - todayMidnightCount;
+        if (todayCount !== undefined && prevCount !== undefined) {
+          day.followers = todayCount - prevCount;
+          console.log(`📊 Followers ${dateStr}: ${todayCount} - ${prevCount} (prev: ${prevDateStr}) = ${day.followers}`);
+        } else if (todayCount !== undefined) {
+          // If no previous day data, just show 0 growth (we can't calculate)
+          day.followers = 0;
+          console.log(`📊 Followers ${dateStr}: ${todayCount} (no prev data for ${prevDateStr})`);
         } else {
           day.followers = 0;
+          console.log(`📊 Followers ${dateStr}: no data`);
         }
       });
       
-      console.log('📊 Follower data:', Object.fromEntries(followerByDate));
+      console.log('📊 Follower counts by date:', Object.fromEntries(followerByDate));
 
       // Convert to array and sort by date
       const chartDataArray = Array.from(dailyMap.values()).sort(
