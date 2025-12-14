@@ -376,6 +376,7 @@ const AdvancedAnalytics: React.FC = () => {
       // Calculate follower changes
       // The count recorded on date X represents the follower count at the END of that day
       // Growth for date X = count on date X - count on date (X-1)
+      // If there are gaps, distribute growth evenly across missing days
       const followerData = followerCountsResult.data || [];
       console.log('📊 Raw follower data from DB:', followerData);
       
@@ -390,22 +391,36 @@ const AdvancedAnalytics: React.FC = () => {
       const followerDates = Array.from(followerByDate.keys()).sort();
       console.log('📊 Follower dates available:', followerDates);
       
-      // Calculate growth between consecutive days we have data for
+      // Calculate growth between consecutive data points and distribute across gaps
       for (let i = 1; i < followerDates.length; i++) {
         const currentDateStr = followerDates[i];
         const prevDateStr = followerDates[i - 1];
         
         const currentCount = followerByDate.get(currentDateStr)!;
         const prevCount = followerByDate.get(prevDateStr)!;
-        const growth = currentCount - prevCount;
+        const totalGrowth = currentCount - prevCount;
         
-        // Attribute growth to the current date (the day the growth happened)
-        const day = dailyMap.get(currentDateStr);
-        if (day) {
-          day.followers = growth;
-          console.log(`📊 Followers ${currentDateStr}: ${currentCount} - ${prevCount} = ${growth}`);
-        } else {
-          console.log(`📊 Followers ${currentDateStr}: date not in chart range`);
+        // Calculate how many days between the two data points
+        const prevDate = new Date(prevDateStr + 'T12:00:00');
+        const currentDate = new Date(currentDateStr + 'T12:00:00');
+        const daysBetween = Math.round((currentDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Distribute growth evenly across all days in the gap
+        const growthPerDay = Math.round(totalGrowth / daysBetween);
+        
+        console.log(`📊 Followers ${prevDateStr} to ${currentDateStr}: ${totalGrowth} over ${daysBetween} days = ${growthPerDay}/day`);
+        
+        // Apply growth to each day in the range (excluding the start date, including end date)
+        for (let d = 1; d <= daysBetween; d++) {
+          const targetDate = new Date(prevDate);
+          targetDate.setDate(targetDate.getDate() + d);
+          const targetDateStr = formatLocalDate(targetDate);
+          
+          const day = dailyMap.get(targetDateStr);
+          if (day) {
+            day.followers = growthPerDay;
+            console.log(`📊 Followers ${targetDateStr}: ${growthPerDay}`);
+          }
         }
       }
       
