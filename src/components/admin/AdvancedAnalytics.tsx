@@ -850,15 +850,33 @@ const AdvancedAnalytics: React.FC = () => {
                 stroke="#9CA3AF"
                 tick={{ fill: '#9CA3AF', fontSize: 12 }}
               />
+              {/* Primary Y-axis for SMS, Users, Orders */}
               <YAxis 
+                yAxisId="left"
                 stroke="#9CA3AF"
                 tick={{ fill: '#9CA3AF', fontSize: 12 }}
                 tickFormatter={chartMode === 'count' ? undefined : formatCurrency}
                 label={{ 
-                  value: getYAxisLabel(), 
+                  value: chartMode === 'count' ? 'SMS / Users / Orders' : 'Cost ($)', 
                   angle: -90, 
                   position: 'insideLeft',
-                  fill: '#9CA3AF'
+                  fill: '#9CA3AF',
+                  style: { fontSize: 11 }
+                }}
+              />
+              {/* Secondary Y-axis for Followers (scaled: 100 followers = 1 on left axis) */}
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                stroke={GOAL_COLORS.followers}
+                tick={{ fill: GOAL_COLORS.followers, fontSize: 12 }}
+                tickFormatter={(value) => chartMode === 'count' ? `${value}` : formatCurrency(value)}
+                label={{ 
+                  value: 'Followers', 
+                  angle: 90, 
+                  position: 'insideRight',
+                  fill: GOAL_COLORS.followers,
+                  style: { fontSize: 11 }
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
@@ -867,6 +885,7 @@ const AdvancedAnalytics: React.FC = () => {
                 type="monotone" 
                 dataKey="followers" 
                 name="Followers"
+                yAxisId="right"
                 stroke={GOAL_COLORS.followers} 
                 strokeWidth={2}
                 dot={{ fill: GOAL_COLORS.followers, strokeWidth: 2, r: 4 }}
@@ -876,6 +895,7 @@ const AdvancedAnalytics: React.FC = () => {
                 type="monotone" 
                 dataKey="sms" 
                 name="SMS Signups"
+                yAxisId="left"
                 stroke={GOAL_COLORS.sms} 
                 strokeWidth={2}
                 dot={{ fill: GOAL_COLORS.sms, strokeWidth: 2, r: 4 }}
@@ -885,6 +905,7 @@ const AdvancedAnalytics: React.FC = () => {
                 type="monotone" 
                 dataKey="users" 
                 name="Users"
+                yAxisId="left"
                 stroke={GOAL_COLORS.users} 
                 strokeWidth={2}
                 dot={{ fill: GOAL_COLORS.users, strokeWidth: 2, r: 4 }}
@@ -894,6 +915,7 @@ const AdvancedAnalytics: React.FC = () => {
                 type="monotone" 
                 dataKey="orders" 
                 name="Orders"
+                yAxisId="left"
                 stroke={GOAL_COLORS.orders} 
                 strokeWidth={2}
                 dot={{ fill: GOAL_COLORS.orders, strokeWidth: 2, r: 4 }}
