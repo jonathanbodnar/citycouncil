@@ -276,6 +276,13 @@ const AdvancedAnalytics: React.FC = () => {
         users: usersData.length, 
         sms: smsData.length 
       });
+      
+      // Log follower counts query result
+      console.log('📊 Follower counts query result:', {
+        data: followerCountsResult.data,
+        error: followerCountsResult.error,
+        count: followerCountsResult.data?.length
+      });
 
       // Process data into daily buckets
       const dailyMap = new Map<string, DailyData>();
