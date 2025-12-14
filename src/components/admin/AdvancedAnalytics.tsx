@@ -107,6 +107,9 @@ const AdvancedAnalytics: React.FC = () => {
   const [userSourceBreakdown, setUserSourceBreakdown] = useState<SourceBreakdown[]>([]);
   const [orderSourceBreakdown, setOrderSourceBreakdown] = useState<SourceBreakdown[]>([]);
   
+  // Raw ad spend data for drill mode
+  const [rawAdSpendData, setRawAdSpendData] = useState<any[]>([]);
+  
 
   // Helper to format date as YYYY-MM-DD
   const formatLocalDate = (date: Date) => {
@@ -354,6 +357,9 @@ const AdvancedAnalytics: React.FC = () => {
         }
       });
 
+      // Store raw ad spend data for drill mode
+      setRawAdSpendData(adSpendResult.data || []);
+      
       // Add ad spend per day
       adSpendResult.data?.forEach(spend => {
         const day = dailyMap.get(spend.date);
@@ -507,7 +513,16 @@ const AdvancedAnalytics: React.FC = () => {
     }
     
     if (chartMode === 'drill') {
-      // Calculate spend per goal based on campaign mappings
+      // Build a map of campaign_id -> goals from mappings
+      const campaignGoalMap = new Map<string, string[]>();
+      campaignMappings.forEach(mapping => {
+        campaignGoalMap.set(mapping.campaign_id, mapping.goals);
+      });
+      
+      console.log('📊 Drill mode - campaign mappings:', campaignMappings);
+      console.log('📊 Drill mode - raw ad spend:', rawAdSpendData);
+      
+      // Calculate spend per goal per day based on campaign mappings
       return chartData.map(day => {
         const goalSpend: Record<string, number> = {
           followers: 0,
@@ -516,10 +531,25 @@ const AdvancedAnalytics: React.FC = () => {
           orders: 0
         };
         
-        // This would need actual campaign-level spend data
-        // For now, distribute based on mapped campaigns
-        // TODO: Implement proper drill-down with campaign-level data
+        // Find all ad spend records for this day
+        const daySpendRecords = rawAdSpendData.filter(s => s.date === day.date);
         
+        daySpendRecords.forEach(spend => {
+          const goals = campaignGoalMap.get(spend.campaign_id);
+          if (goals && goals.length > 0) {
+            // Distribute spend across mapped goals
+            const spendPerGoal = (Number(spend.spend) || 0) / goals.length;
+            goals.forEach(goal => {
+              if (goalSpend[goal] !== undefined) {
+                goalSpend[goal] += spendPerGoal;
+              }
+            });
+          }
+        });
+        
+        console.log(`📊 Drill ${day.date}: goalSpend=`, goalSpend);
+        
+        // Return cost per acquisition for each goal
         return {
           ...day,
           date: day.date,
