@@ -7,6 +7,9 @@ cmds = ["npm ci"]
 [phases.build]
 cmds = ["npm run build"]
 
+# Pass environment variables to build phase
+[variables]
+REACT_APP_YOUTUBE_API_KEY = "${REACT_APP_YOUTUBE_API_KEY}"
+
 [start]
 cmd = "npm start"
-
