@@ -36,6 +36,7 @@ interface TalentProfile {
   bio?: string;
   social_accounts?: SocialAccount[];
   rumble_handle?: string;
+  youtube_handle?: string;
 }
 
 interface SocialAccount {
@@ -62,6 +63,7 @@ interface BioSettings {
   font_family: string;
   show_shoutout_card: boolean;
   show_rumble_card: boolean;
+  show_youtube_card?: boolean;
   is_published: boolean;
   background_type: string;
   gradient_start: string;
@@ -1077,6 +1079,50 @@ const BioDashboard: React.FC = () => {
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* YouTube Card Toggle */}
+                {talentProfile?.youtube_handle && (
+                  <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 rounded-2xl p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        <div>
+                          <h3 className="font-medium text-white mb-1">YouTube Card</h3>
+                          <p className="text-sm text-gray-300">
+                            Shows your latest YouTube video or live stream at the top of your bio page.
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Channel: @{talentProfile.youtube_handle}
+                          </p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={bioSettings?.show_youtube_card !== false}
+                          onChange={(e) => {
+                            if (bioSettings) {
+                              const updated = { ...bioSettings, show_youtube_card: e.target.checked };
+                              setBioSettings(updated);
+                              supabase
+                                .from('bio_settings')
+                                .update({ show_youtube_card: e.target.checked })
+                                .eq('id', bioSettings.id)
+                                .then(() => {
+                                  toast.success(e.target.checked ? 'YouTube card enabled' : 'YouTube card disabled');
+                                  setTimeout(refreshPreview, 500);
+                                });
+                            }
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
                       </label>
                     </div>
                   </div>
