@@ -109,6 +109,8 @@ export interface Order {
   occasion?: string;
   special_instructions?: string;
   amount: number;
+  original_amount?: number; // Original price before coupon discount (used for WINNER100)
+  coupon_code?: string; // Coupon code used for this order
   admin_fee: number;
   charity_amount?: number;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded' | 'denied';

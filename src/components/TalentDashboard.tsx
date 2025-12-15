@@ -49,6 +49,16 @@ interface ReviewWithUser extends Review {
 const BIO_FEATURE_ALLOWED_EMAILS = ['jb@apollo.inc'];
 const IS_DEV_ENVIRONMENT = window.location.hostname === 'dev.shoutout.us' || window.location.hostname === 'localhost';
 
+// Helper to get the display amount for an order
+// For WINNER100 giveaway orders, use original_amount (full price) so talent sees what they'll actually earn
+const getOrderDisplayAmount = (order: Order): number => {
+  // If it's a WINNER100 order and has original_amount, use that
+  if (order.coupon_code?.toUpperCase() === 'WINNER100' && order.original_amount) {
+    return Number(order.original_amount);
+  }
+  return Number(order.amount);
+};
+
 const TalentDashboard: React.FC = () => {
   const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -720,7 +730,10 @@ const TalentDashboard: React.FC = () => {
                             )}
                           </h4>
                           <p className="text-sm text-gray-300">
-                            ${(Number(order.amount) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                            ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                            {order.coupon_code?.toUpperCase() === 'WINNER100' && (
+                              <span className="ml-2 text-xs text-green-400">🎁 Giveaway</span>
+                            )}
                           </p>
                           {order.is_corporate_order && order.approval_status === 'pending' ? (
                             <p className="text-sm text-orange-400 font-medium">
@@ -870,7 +883,10 @@ const TalentDashboard: React.FC = () => {
                             )}
                           </h4>
                           <p className="text-sm text-gray-300">
-                            ${(Number(order.amount) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                            ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                            {order.coupon_code?.toUpperCase() === 'WINNER100' && (
+                              <span className="ml-2 text-xs text-green-400">🎁 Giveaway</span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -962,10 +978,15 @@ const TalentDashboard: React.FC = () => {
                             </h4>
                             <div className="space-y-1">
                               <p className="text-sm text-gray-300">
-                                ${(Number(order.amount) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                                ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                                {order.coupon_code?.toUpperCase() === 'WINNER100' && (
+                                  <span className="ml-2 text-xs text-green-400">🎁 Giveaway</span>
+                                )}
                               </p>
                               {(() => {
-                                const basePrice = Number(order.amount) / 100 / 1.029;
+                                // Use display amount (original_amount for WINNER100 orders)
+                                const displayAmount = getOrderDisplayAmount(order);
+                                const basePrice = displayAmount / 100 / 1.029;
                                 const isPromo = talentProfile?.first_orders_promo_active && (talentProfile?.fulfilled_orders || 0) < 10;
                                 const adminFeePercentage = isPromo ? 0 : (order.admin_fee || talentProfile?.admin_fee_percentage || 25);
                                 const netPayout = basePrice - (basePrice * (adminFeePercentage / 100));
@@ -1088,7 +1109,7 @@ const TalentDashboard: React.FC = () => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Earnings</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${(completedOrders.reduce((sum, order) => sum + (Number(order.amount) - Number(order.admin_fee)), 0) / 100).toFixed(0)}
+                    ${(completedOrders.reduce((sum, order) => sum + (getOrderDisplayAmount(order) - Number(order.admin_fee)), 0) / 100).toFixed(0)}
                   </p>
                 </div>
               </div>
@@ -1116,7 +1137,7 @@ const TalentDashboard: React.FC = () => {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 mb-2">
-                  ${((completedOrders.reduce((sum, order) => sum + (Number(order.amount) - Number(order.admin_fee)), 0) / 100) / completedOrders.length || 0).toFixed(0)}
+                  ${((completedOrders.reduce((sum, order) => sum + (getOrderDisplayAmount(order) - Number(order.admin_fee)), 0) / 100) / completedOrders.length || 0).toFixed(0)}
                 </div>
                 <div className="text-sm text-gray-600">Avg. Earnings/Order</div>
               </div>
