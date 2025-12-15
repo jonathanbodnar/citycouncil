@@ -323,7 +323,7 @@ const BioPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
-  // Fetch Rumble channel data from cache only - cron job updates every 15 min
+  // Fetch Rumble channel data - show cache immediately, scrape in background if stale
   const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
     const cleanHandle = rumbleHandle.replace(/^@/, '');
     const defaultChannelUrl = `https://rumble.com/user/${cleanHandle}`;
@@ -337,7 +337,7 @@ const BioPage: React.FC = () => {
         .single();
       
       if (!cacheError && cachedData) {
-        // Use cached data - show whatever we have
+        // Show cached data immediately
         setRumbleData({
           title: cachedData.latest_video_title || 'Watch on Rumble',
           thumbnail: cachedData.latest_video_thumbnail || '',
@@ -346,10 +346,19 @@ const BioPage: React.FC = () => {
           isLive: cachedData.is_live || false,
           liveViewers: cachedData.live_viewers || 0,
         });
+        
+        // Check if cache is stale (>15 min old) or empty - scrape in background
+        const lastChecked = new Date(cachedData.last_checked_at).getTime();
+        const fifteenMinAgo = Date.now() - 15 * 60 * 1000;
+        const needsRefresh = !cachedData.latest_video_thumbnail || lastChecked < fifteenMinAgo;
+        
+        if (needsRefresh) {
+          scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
+        }
         return;
       }
       
-      // No cache - show fallback (cron job will populate it)
+      // No cache - show fallback and scrape in background
       setRumbleData({
         title: 'Watch on Rumble',
         thumbnail: '',
@@ -358,6 +367,7 @@ const BioPage: React.FC = () => {
         isLive: false,
         liveViewers: 0,
       });
+      scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
       
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
@@ -369,6 +379,125 @@ const BioPage: React.FC = () => {
         isLive: false,
         liveViewers: 0,
       });
+    }
+  };
+  
+  // Background scrape - doesn't block UI, updates cache for future visits
+  const scrapeRumbleInBackground = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string) => {
+    try {
+      const urlFormats = [
+        `https://rumble.com/user/${cleanHandle}`,
+        `https://rumble.com/c/${cleanHandle}`,
+      ];
+      
+      let html = '';
+      let successUrl = '';
+      
+      for (const channelUrl of urlFormats) {
+        const corsProxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(channelUrl)}`,
+          `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`,
+        ];
+        
+        for (const proxyUrl of corsProxies) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            
+            const response = await fetch(proxyUrl, {
+              headers: { 'Accept': 'text/html' },
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+              const text = await response.text();
+              if (text.includes('thumbnail__image') || text.includes('thumbnail__title')) {
+                html = text;
+                successUrl = channelUrl;
+                break;
+              }
+            }
+          } catch {
+            // Continue to next proxy
+          }
+        }
+        if (html) break;
+      }
+      
+      if (!html) return; // No data, keep current display
+      
+      // Parse the HTML
+      const htmlClean = html
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+      
+      // Check for live stream
+      const isLive = !!(
+        htmlClean.match(/class="[^"]*videostream__status--live[^"]*"/i) ||
+        htmlClean.match(/class="[^"]*thumbnail__thumb--live[^"]*"/i)
+      );
+      
+      // Find thumbnail
+      let thumbnail = '';
+      const thumbMatch = htmlClean.match(/src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png))"/i);
+      if (thumbMatch) {
+        thumbnail = thumbMatch[1];
+      }
+      
+      // Find title
+      let title = 'Latest Video';
+      const titleMatch = htmlClean.match(/class="thumbnail__title[^"]*"[^>]*title="([^"]{10,200})"/i);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+      }
+      
+      // Find video URL
+      let videoUrl = successUrl;
+      const urlMatch = htmlClean.match(/href="(\/v[a-z0-9]+-[^"]+\.html)/i);
+      if (urlMatch) {
+        videoUrl = `https://rumble.com${urlMatch[1].split('?')[0]}`;
+      }
+      
+      // Find views
+      let views = 0;
+      const viewsMatch = htmlClean.match(/data-views="(\d+)"/i);
+      if (viewsMatch) {
+        views = parseInt(viewsMatch[1]) || 0;
+      }
+      
+      const finalThumbnail = thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail;
+      
+      // Only update if we got useful data
+      if (finalThumbnail || title !== 'Latest Video') {
+        // Update the UI
+        setRumbleData({
+          title,
+          thumbnail: finalThumbnail,
+          url: videoUrl,
+          views,
+          isLive,
+          liveViewers: 0,
+        });
+        
+        // Save to cache
+        await supabase
+          .from('rumble_cache')
+          .upsert({
+            talent_id: talentId,
+            rumble_handle: rumbleHandle,
+            is_live: isLive,
+            live_viewers: 0,
+            latest_video_title: title,
+            latest_video_thumbnail: finalThumbnail,
+            latest_video_url: videoUrl,
+            latest_video_views: views,
+            channel_url: successUrl,
+            last_checked_at: new Date().toISOString(),
+          }, { onConflict: 'talent_id' });
+      }
+    } catch (error) {
+      console.error('Background Rumble scrape failed:', error);
     }
   };
 
