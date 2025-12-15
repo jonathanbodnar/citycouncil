@@ -361,15 +361,28 @@ const AdvancedAnalytics: React.FC = () => {
       setRawAdSpendData(adSpendResult.data || []);
       
       // Add ad spend per day
+      console.log('💰 Processing ad spend data:', adSpendResult.data?.length, 'records');
       adSpendResult.data?.forEach(spend => {
         const day = dailyMap.get(spend.date);
         if (day) {
-          day.totalSpend += Number(spend.spend) || 0;
+          const spendAmount = Number(spend.spend) || 0;
+          day.totalSpend += spendAmount;
           if (spend.platform === 'facebook') {
-            day.fbSpend += Number(spend.spend) || 0;
+            day.fbSpend += spendAmount;
           } else if (spend.platform === 'rumble') {
-            day.rumbleSpend += Number(spend.spend) || 0;
+            day.rumbleSpend += spendAmount;
           }
+          console.log(`💰 ${spend.date} ${spend.platform}: +$${spendAmount.toFixed(2)} (total now: $${day.totalSpend.toFixed(2)})`);
+        } else {
+          console.log(`💰 Ad spend date not in range: ${spend.date}`);
+        }
+      });
+      
+      // Log final totals per day
+      console.log('💰 Final daily totals:');
+      dailyMap.forEach((day, date) => {
+        if (day.totalSpend > 0) {
+          console.log(`💰 ${date}: Total=$${day.totalSpend.toFixed(2)}, FB=$${day.fbSpend.toFixed(2)}, Rumble=$${day.rumbleSpend.toFixed(2)}`);
         }
       });
 
@@ -605,7 +618,7 @@ const AdvancedAnalytics: React.FC = () => {
     }
     
     return chartData;
-  }, [chartData, chartMode, campaignMappings]);
+  }, [chartData, chartMode, campaignMappings, rawAdSpendData]);
   // Save ad platform credentials
   const saveCredentials = async () => {
     try {
