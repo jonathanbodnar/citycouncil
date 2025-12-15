@@ -1473,3 +1473,4 @@ const BioPage: React.FC = () => {
 };
 
 export default BioPage;
+// Trigger rebuild for env vars
