@@ -188,10 +188,9 @@ const UsersManagement: React.FC = () => {
       </div>
 
       {/* Users Table */}
-      <div className="glass rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <div className="inline-block min-w-full align-middle">
-            <table className="min-w-full divide-y divide-gray-200">
+      <div className="glass rounded-2xl">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '900px' }}>
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -333,8 +332,7 @@ const UsersManagement: React.FC = () => {
                   ))
                 )}
               </tbody>
-            </table>
-          </div>
+          </table>
         </div>
       </div>
     </div>
