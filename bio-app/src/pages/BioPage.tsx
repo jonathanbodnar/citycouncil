@@ -353,19 +353,8 @@ const BioPage: React.FC = () => {
         const needsRefresh = !cachedData.latest_video_thumbnail || lastChecked < fifteenMinAgo;
         
         if (needsRefresh) {
-          // Try to claim the refresh lock by updating last_checked_at
-          // Only proceeds if we're the first to update (prevents multiple simultaneous scrapes)
-          const { data: updateResult } = await supabase
-            .from('rumble_cache')
-            .update({ last_checked_at: new Date().toISOString() })
-            .eq('talent_id', talentId)
-            .lt('last_checked_at', new Date(fifteenMinAgo).toISOString())
-            .select('talent_id');
-          
-          // Only scrape if we successfully claimed the lock (updated a row)
-          if (updateResult && updateResult.length > 0) {
-            scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
-          }
+          // Scrape in background - timestamp only updates on SUCCESS
+          scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl, lastChecked);
         }
         return;
       }
@@ -380,23 +369,8 @@ const BioPage: React.FC = () => {
         liveViewers: 0,
       });
       
-      // Try to insert a placeholder to claim the scrape (prevents race condition)
-      const { error: insertError } = await supabase
-        .from('rumble_cache')
-        .insert({
-          talent_id: talentId,
-          rumble_handle: rumbleHandle,
-          latest_video_title: 'Watch on Rumble',
-          latest_video_thumbnail: '',
-          latest_video_url: defaultChannelUrl,
-          channel_url: defaultChannelUrl,
-          last_checked_at: new Date().toISOString(),
-        });
-      
-      // Only scrape if we successfully inserted (we're the first visitor)
-      if (!insertError) {
-        scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
-      }
+      // Scrape in background - will create cache entry on success
+      scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl, 0);
       
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
@@ -411,8 +385,8 @@ const BioPage: React.FC = () => {
     }
   };
   
-  // Background scrape - doesn't block UI, updates cache for future visits
-  const scrapeRumbleInBackground = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string) => {
+  // Background scrape - doesn't block UI, updates cache only on SUCCESS
+  const scrapeRumbleInBackground = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string, originalTimestamp: number) => {
     try {
       const urlFormats = [
         `https://rumble.com/user/${cleanHandle}`,
@@ -499,20 +473,14 @@ const BioPage: React.FC = () => {
       
       // Only update if we got useful data
       if (finalThumbnail || title !== 'Latest Video') {
-        // Update the UI
-        setRumbleData({
-          title,
-          thumbnail: finalThumbnail,
-          url: videoUrl,
-          views,
-          isLive,
-          liveViewers: 0,
-        });
-        
-        // Save to cache (update the existing row we locked)
-        await supabase
+        // Try to atomically update cache - only succeeds if timestamp hasn't changed
+        // This prevents multiple simultaneous scrapes from overwriting each other
+        const fifteenMinAgo = Date.now() - 15 * 60 * 1000;
+        const { data: updateResult } = await supabase
           .from('rumble_cache')
-          .update({
+          .upsert({
+            talent_id: talentId,
+            rumble_handle: rumbleHandle,
             is_live: isLive,
             live_viewers: 0,
             latest_video_title: title,
@@ -520,8 +488,21 @@ const BioPage: React.FC = () => {
             latest_video_url: videoUrl,
             latest_video_views: views,
             channel_url: successUrl,
-          })
-          .eq('talent_id', talentId);
+            last_checked_at: new Date().toISOString(),
+          }, { onConflict: 'talent_id' })
+          .select('talent_id');
+        
+        // Only update UI if we successfully saved to cache
+        if (updateResult && updateResult.length > 0) {
+          setRumbleData({
+            title,
+            thumbnail: finalThumbnail,
+            url: videoUrl,
+            views,
+            isLive,
+            liveViewers: 0,
+          });
+        }
       }
     } catch (error) {
       console.error('Background Rumble scrape failed:', error);
