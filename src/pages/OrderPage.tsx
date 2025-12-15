@@ -387,6 +387,12 @@ const OrderPage: React.FC = () => {
       }
 
       // Create order in database with payment info
+      // For fully discounted orders (like giveaway), store the original price as the amount
+      // so payouts can be calculated correctly
+      const orderAmount = pricing.total > 0 
+        ? Math.round(pricing.total * 100) 
+        : Math.round((pricing.subtotal) * 100); // Use subtotal if total is 0 (fully discounted)
+      
       logger.log('🔄 Inserting order…', {
         userId: user.id,
         userEmail: user.email,
@@ -394,6 +400,8 @@ const OrderPage: React.FC = () => {
         talentName: talent.temp_full_name || talent.users.full_name,
         transactionId: paymentResult?.id || paymentResult?.transaction_id,
         amount: pricing.total,
+        orderAmount: orderAmount,
+        isFullyDiscounted: pricing.total === 0,
       });
       const { data: order, error: orderError} = await supabase
         .from('orders')
@@ -406,8 +414,8 @@ const OrderPage: React.FC = () => {
             recipient_name: null,
             details_submitted: false,
             occasion: getValues('occasion') || watchedOccasion || orderData.occasion || null,
-            amount: Math.round(pricing.total * 100), // Store in cents
-            original_amount: appliedCoupon ? Math.round((pricing.total + pricing.discount) * 100) : null,
+            amount: orderAmount, // Store original price for fully discounted orders
+            original_amount: appliedCoupon ? Math.round((pricing.subtotal) * 100) : null,
             discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
             coupon_id: appliedCoupon?.id || null,
             coupon_code: appliedCoupon?.code || null,
