@@ -414,7 +414,9 @@ const OrderPage: React.FC = () => {
             admin_fee: Math.round(pricing.adminFee * 100), // Store in cents
             charity_amount: Math.round(pricing.charityAmount * 100), // Store in cents
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
-            payment_transaction_id: paymentResult.id || paymentResult.transaction_id || null,
+            payment_transaction_id: (paymentResult.id === 'CREDITS_ONLY' || paymentResult.transaction_id === 'CREDITS_ONLY' || paymentResult.id === 'FREE_ORDER' || paymentResult.transaction_id === 'FREE_ORDER') 
+              ? null 
+              : (paymentResult.id || paymentResult.transaction_id || null),
             payment_transaction_payload: paymentResult?.payload ?? null,
             is_corporate: getValues('isForBusiness') || orderData.isForBusiness,
             is_corporate_order: getValues('isForBusiness') || orderData.isForBusiness,
@@ -903,7 +905,7 @@ const OrderPage: React.FC = () => {
               />
             )}
 
-            {/* Free order with credits - show confirmation */}
+            {/* Free order - show confirmation (coupon or credits fully cover the order) */}
             {pricing.amountDue === 0 && (
               <div className="light-theme rounded-2xl px-6 py-8 bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 max-w-3xl mx-auto text-center">
                 <div className="flex justify-center mb-4">
@@ -911,13 +913,18 @@ const OrderPage: React.FC = () => {
                     <CurrencyDollarIcon className="h-10 w-10 text-green-600" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold mb-2" style={{ color: '#111827' }}>Order Covered by Credits!</h3>
+                <h3 className="text-2xl font-bold mb-2" style={{ color: '#111827' }}>
+                  {pricing.creditsApplied > 0 ? 'Order Covered by Credits!' : 'Order Fully Discounted!'}
+                </h3>
                 <p className="mb-6" style={{ color: '#4b5563' }}>
-                  Your account credits will cover the full cost of this order.
-                  No payment needed!
+                  {pricing.creditsApplied > 0 
+                    ? 'Your account credits will cover the full cost of this order.'
+                    : 'Your coupon covers the full cost of this order.'
+                  }
+                  {' '}No payment needed!
                 </p>
                 <button
-                  onClick={() => handlePaymentSuccess({ id: 'CREDITS_ONLY', transaction_id: 'CREDITS_ONLY' })}
+                  onClick={() => handlePaymentSuccess({ id: 'FREE_ORDER', transaction_id: 'FREE_ORDER' })}
                   disabled={submitting}
                   className="bg-green-600 hover:bg-green-700 text-white py-3 px-8 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
