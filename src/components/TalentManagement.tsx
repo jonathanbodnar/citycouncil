@@ -66,7 +66,8 @@ const TalentManagement: React.FC = () => {
     facebook_handle: '',
     tiktok_handle: '',
     rumble_handle: '',
-    rumble_type: 'c' as 'c' | 'user' // 'c' for channel, 'user' for user
+    rumble_type: 'c' as 'c' | 'user', // 'c' for channel, 'user' for user
+    youtube_handle: ''
   });
   
   // Charity donation toggle for admin creation
@@ -316,7 +317,8 @@ const TalentManagement: React.FC = () => {
         rumble_handle: '',
         rumble_type: 'c' as 'c' | 'user',
         facebook_handle: '',
-        tiktok_handle: ''
+        tiktok_handle: '',
+        youtube_handle: ''
       });
       fetchTalents();
 
@@ -384,7 +386,8 @@ const TalentManagement: React.FC = () => {
         facebook_handle: editingTalent.facebook_handle || null,
         tiktok_handle: editingTalent.tiktok_handle || null,
         rumble_handle: editingTalent.rumble_handle || null,
-        rumble_type: editingTalent.rumble_type || 'c'
+        rumble_type: editingTalent.rumble_type || 'c',
+        youtube_handle: editingTalent.youtube_handle || null
       };
 
       // Add position field if it exists (after migration)
@@ -495,7 +498,8 @@ const TalentManagement: React.FC = () => {
         { platform: 'instagram', handle: editingTalent.instagram_handle },
         { platform: 'facebook', handle: editingTalent.facebook_handle },
         { platform: 'tiktok', handle: editingTalent.tiktok_handle },
-        { platform: 'rumble', handle: editingTalent.rumble_handle }
+        { platform: 'rumble', handle: editingTalent.rumble_handle },
+        { platform: 'youtube', handle: editingTalent.youtube_handle }
       ].filter(s => s.handle); // Only include non-empty handles
 
       // Delete existing social accounts for this talent
@@ -1268,6 +1272,20 @@ const TalentManagement: React.FC = () => {
                     />
                   </div>
                 </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">YouTube</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
+                    <input
+                      type="text"
+                      value={newTalent.youtube_handle}
+                      onChange={(e) => setNewTalent({...newTalent, youtube_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="channel"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -1624,7 +1642,8 @@ const TalentManagement: React.FC = () => {
                           instagram_handle: talent.instagram_handle || getHandleFromSocial('instagram'),
                           facebook_handle: talent.facebook_handle || getHandleFromSocial('facebook'),
                           tiktok_handle: talent.tiktok_handle || getHandleFromSocial('tiktok'),
-                          rumble_handle: talent.rumble_handle || getHandleFromSocial('rumble')
+                          rumble_handle: talent.rumble_handle || getHandleFromSocial('rumble'),
+                          youtube_handle: talent.youtube_handle || getHandleFromSocial('youtube')
                         });
                         setEditDonateProceeds((talent.charity_percentage || 0) > 0 && !!talent.charity_name);
                       }}
@@ -2108,6 +2127,22 @@ const TalentManagement: React.FC = () => {
                       onChange={(e) => setEditingTalent({...editingTalent, rumble_handle: e.target.value})}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Name"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    YouTube
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">@</span>
+                    <input
+                      type="text"
+                      value={editingTalent.youtube_handle || ''}
+                      onChange={(e) => setEditingTalent({...editingTalent, youtube_handle: e.target.value.replace('@', '')})}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="channel"
                     />
                   </div>
                 </div>

@@ -71,6 +71,7 @@ export interface TalentProfile {
   tiktok_handle?: string;
   rumble_handle?: string;
   rumble_type?: 'c' | 'user'; // 'c' for channel, 'user' for user profile
+  youtube_handle?: string;
 }
 
 export type TalentCategory = 
@@ -95,7 +96,7 @@ export type TalentCategory =
 
 export interface SocialAccount {
   id: string;
-  platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'rumble' | 'linkedin';
+  platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'rumble' | 'linkedin' | 'youtube';
   handle: string;
 }
 

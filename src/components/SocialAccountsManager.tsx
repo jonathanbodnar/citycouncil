@@ -32,6 +32,7 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
     { value: 'instagram', label: 'Instagram', placeholder: '@username' },
     { value: 'tiktok', label: 'TikTok', placeholder: '@username' },
     { value: 'rumble', label: 'Rumble', placeholder: 'ChannelName (from rumble.com/c/...)' },
+    { value: 'youtube', label: 'YouTube', placeholder: '@channel' },
     { value: 'linkedin', label: 'LinkedIn', placeholder: 'username' },
   ];
 
@@ -80,7 +81,7 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
       // Also sync to talent_profiles _handle columns
       const handleColumn = `${newAccount.platform}_handle`;
       const cleanHandle = handle.replace('@', '');
-      if (['twitter', 'instagram', 'facebook', 'tiktok', 'rumble'].includes(newAccount.platform)) {
+      if (['twitter', 'instagram', 'facebook', 'tiktok', 'rumble', 'youtube'].includes(newAccount.platform)) {
         await supabase
           .from('talent_profiles')
           .update({ [handleColumn]: cleanHandle })
@@ -112,7 +113,7 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
       if (error) throw error;
 
       // Also clear the talent_profiles _handle column
-      if (accountToRemove && ['twitter', 'instagram', 'facebook', 'tiktok', 'rumble'].includes(accountToRemove.platform)) {
+      if (accountToRemove && ['twitter', 'instagram', 'facebook', 'tiktok', 'rumble', 'youtube'].includes(accountToRemove.platform)) {
         const handleColumn = `${accountToRemove.platform}_handle`;
         await supabase
           .from('talent_profiles')
@@ -135,6 +136,7 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
       instagram: '📸',
       tiktok: '🎵',
       rumble: '📺',
+      youtube: '▶️',
       linkedin: '💼',
     };
     return icons[platform] || '🔗';
@@ -148,6 +150,7 @@ const SocialAccountsManager: React.FC<SocialAccountsManagerProps> = ({
       instagram: `https://instagram.com/${cleanHandle}`,
       tiktok: `https://tiktok.com/@${cleanHandle}`,
       rumble: `https://rumble.com/c/${cleanHandle}`,
+      youtube: `https://youtube.com/@${cleanHandle}`,
       linkedin: `https://linkedin.com/in/${cleanHandle}`,
     };
     return urls[platform] || '#';
