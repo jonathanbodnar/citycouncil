@@ -323,7 +323,7 @@ const BioPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
-  // Fetch Rumble channel data - show cache immediately, scrape in background if stale
+  // Fetch Rumble channel data - show cache immediately, one visitor per 15 min triggers refresh
   const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
     const cleanHandle = rumbleHandle.replace(/^@/, '');
     const defaultChannelUrl = `https://rumble.com/user/${cleanHandle}`;
@@ -347,18 +347,30 @@ const BioPage: React.FC = () => {
           liveViewers: cachedData.live_viewers || 0,
         });
         
-        // Check if cache is stale (>15 min old) or empty - scrape in background
+        // Check if cache is stale (>15 min old) or empty
         const lastChecked = new Date(cachedData.last_checked_at).getTime();
         const fifteenMinAgo = Date.now() - 15 * 60 * 1000;
         const needsRefresh = !cachedData.latest_video_thumbnail || lastChecked < fifteenMinAgo;
         
         if (needsRefresh) {
-          scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
+          // Try to claim the refresh lock by updating last_checked_at
+          // Only proceeds if we're the first to update (prevents multiple simultaneous scrapes)
+          const { data: updateResult } = await supabase
+            .from('rumble_cache')
+            .update({ last_checked_at: new Date().toISOString() })
+            .eq('talent_id', talentId)
+            .lt('last_checked_at', new Date(fifteenMinAgo).toISOString())
+            .select('talent_id');
+          
+          // Only scrape if we successfully claimed the lock (updated a row)
+          if (updateResult && updateResult.length > 0) {
+            scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
+          }
         }
         return;
       }
       
-      // No cache - show fallback and scrape in background
+      // No cache - show fallback and try to create cache entry
       setRumbleData({
         title: 'Watch on Rumble',
         thumbnail: '',
@@ -367,7 +379,24 @@ const BioPage: React.FC = () => {
         isLive: false,
         liveViewers: 0,
       });
-      scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
+      
+      // Try to insert a placeholder to claim the scrape (prevents race condition)
+      const { error: insertError } = await supabase
+        .from('rumble_cache')
+        .insert({
+          talent_id: talentId,
+          rumble_handle: rumbleHandle,
+          latest_video_title: 'Watch on Rumble',
+          latest_video_thumbnail: '',
+          latest_video_url: defaultChannelUrl,
+          channel_url: defaultChannelUrl,
+          last_checked_at: new Date().toISOString(),
+        });
+      
+      // Only scrape if we successfully inserted (we're the first visitor)
+      if (!insertError) {
+        scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
+      }
       
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
@@ -480,12 +509,10 @@ const BioPage: React.FC = () => {
           liveViewers: 0,
         });
         
-        // Save to cache
+        // Save to cache (update the existing row we locked)
         await supabase
           .from('rumble_cache')
-          .upsert({
-            talent_id: talentId,
-            rumble_handle: rumbleHandle,
+          .update({
             is_live: isLive,
             live_viewers: 0,
             latest_video_title: title,
@@ -493,8 +520,8 @@ const BioPage: React.FC = () => {
             latest_video_url: videoUrl,
             latest_video_views: views,
             channel_url: successUrl,
-            last_checked_at: new Date().toISOString(),
-          }, { onConflict: 'talent_id' });
+          })
+          .eq('talent_id', talentId);
       }
     } catch (error) {
       console.error('Background Rumble scrape failed:', error);
