@@ -322,8 +322,7 @@ const BioPage: React.FC = () => {
     fetchBioData();
   }, [username]);
 
-  // Fetch Rumble channel data - from cache only, no live scraping
-  // The cron job updates the cache every 15 minutes
+  // Fetch Rumble channel data - try cache first, then scrape if needed
   const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
     const cleanHandle = rumbleHandle.replace(/^@/, '');
     const defaultChannelUrl = `https://rumble.com/user/${cleanHandle}`;
@@ -337,21 +336,33 @@ const BioPage: React.FC = () => {
         .single();
       
       if (!cacheError && cachedData) {
-        // Use cached data - it's updated every 15 minutes by cron job
-        // Show whatever we have in cache (even if partial)
+        // Use cached data if it has a thumbnail
+        if (cachedData.latest_video_thumbnail) {
+          setRumbleData({
+            title: cachedData.latest_video_title || 'Watch on Rumble',
+            thumbnail: cachedData.latest_video_thumbnail || '',
+            url: cachedData.latest_video_url || cachedData.channel_url || defaultChannelUrl,
+            views: cachedData.latest_video_views || 0,
+            isLive: cachedData.is_live || false,
+            liveViewers: cachedData.live_viewers || 0,
+          });
+          return;
+        }
+        // Cache exists but empty - show fallback immediately, scrape in background
         setRumbleData({
-          title: cachedData.latest_video_title || 'Watch on Rumble',
-          thumbnail: cachedData.latest_video_thumbnail || '',
-          url: cachedData.latest_video_url || cachedData.channel_url || defaultChannelUrl,
-          views: cachedData.latest_video_views || 0,
-          isLive: cachedData.is_live || false,
-          liveViewers: cachedData.live_viewers || 0,
+          title: 'Watch on Rumble',
+          thumbnail: '',
+          url: cachedData.channel_url || defaultChannelUrl,
+          views: 0,
+          isLive: false,
+          liveViewers: 0,
         });
+        // Scrape in background to update display (but don't block)
+        scrapeRumbleData(cleanHandle, defaultChannelUrl);
         return;
       }
       
-      // No cache exists - show simple fallback card (no scraping)
-      // The cron job will populate the cache on its next run
+      // No cache at all - show fallback immediately, scrape in background
       setRumbleData({
         title: 'Watch on Rumble',
         thumbnail: '',
@@ -360,9 +371,11 @@ const BioPage: React.FC = () => {
         isLive: false,
         liveViewers: 0,
       });
+      // Scrape in background
+      scrapeRumbleData(cleanHandle, defaultChannelUrl);
       
     } catch (error) {
-      console.error('Error fetching Rumble cache:', error);
+      console.error('Error fetching Rumble data:', error);
       // Show fallback card on error
       setRumbleData({
         title: 'Watch on Rumble',
@@ -373,6 +386,111 @@ const BioPage: React.FC = () => {
         liveViewers: 0,
       });
     }
+  };
+
+  // Scrape Rumble channel data directly
+  const scrapeRumbleData = async (cleanHandle: string, defaultChannelUrl: string) => {
+    // Try both /user/ and /c/ URL formats
+    const urlFormats = [
+      `https://rumble.com/user/${cleanHandle}`,
+      `https://rumble.com/c/${cleanHandle}`,
+    ];
+    
+    let html = '';
+    let successUrl = '';
+    
+    // Try each URL format with CORS proxies
+    for (const channelUrl of urlFormats) {
+      const corsProxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(channelUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`,
+      ];
+      
+      for (const proxyUrl of corsProxies) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          
+          const response = await fetch(proxyUrl, {
+            headers: { 'Accept': 'text/html' },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const text = await response.text();
+            if (text.includes('thumbnail__image') || text.includes('thumbnail__title')) {
+              html = text;
+              successUrl = channelUrl;
+              break;
+            }
+          }
+        } catch {
+          // Continue to next proxy
+        }
+      }
+      if (html) break;
+    }
+    
+    if (!html) {
+      setRumbleData({
+        title: 'Watch on Rumble',
+        thumbnail: '',
+        url: defaultChannelUrl,
+        views: 0,
+        isLive: false,
+        liveViewers: 0,
+      });
+      return;
+    }
+    
+    // Parse the HTML
+    const htmlClean = html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+    
+    // Check for live stream
+    const isLive = !!(
+      htmlClean.match(/class="[^"]*videostream__status--live[^"]*"/i) ||
+      htmlClean.match(/class="[^"]*thumbnail__thumb--live[^"]*"/i)
+    );
+    
+    // Find thumbnail
+    let thumbnail = '';
+    const thumbMatch = htmlClean.match(/src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png))"/i);
+    if (thumbMatch) {
+      thumbnail = thumbMatch[1];
+    }
+    
+    // Find title
+    let title = 'Latest Video';
+    const titleMatch = htmlClean.match(/class="thumbnail__title[^"]*"[^>]*title="([^"]{10,200})"/i);
+    if (titleMatch) {
+      title = titleMatch[1].trim();
+    }
+    
+    // Find video URL
+    let videoUrl = successUrl;
+    const urlMatch = htmlClean.match(/href="(\/v[a-z0-9]+-[^"]+\.html)/i);
+    if (urlMatch) {
+      videoUrl = `https://rumble.com${urlMatch[1].split('?')[0]}`;
+    }
+    
+    // Find views
+    let views = 0;
+    const viewsMatch = htmlClean.match(/data-views="(\d+)"/i);
+    if (viewsMatch) {
+      views = parseInt(viewsMatch[1]) || 0;
+    }
+    
+    setRumbleData({
+      title,
+      thumbnail: thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail,
+      url: videoUrl,
+      views,
+      isLive,
+      liveViewers: 0,
+    });
   };
 
 
