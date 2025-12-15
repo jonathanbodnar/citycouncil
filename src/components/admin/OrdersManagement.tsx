@@ -31,6 +31,7 @@ interface Order {
   denied_at?: string;
   refund_id?: string;
   promo_source?: string;
+  coupon_code?: string;
   users: {
     id: string;
     email: string;
@@ -341,6 +342,11 @@ const OrdersManagement: React.FC = () => {
                       <div className="text-xs text-gray-500 truncate">{order.users?.email || 'No email'}</div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {order.coupon_code?.toUpperCase() === 'WINNER100' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          🎁 Giveaway
+                        </span>
+                      )}
                       {getStatusBadge(order.status)}
                       {isExpanded ? (
                         <ChevronUpIcon className="h-5 w-5 text-gray-400" />
@@ -590,7 +596,16 @@ const OrdersManagement: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           ${(order.amount / 100).toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(order.status)}
+                            {order.coupon_code?.toUpperCase() === 'WINNER100' && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                🎁 Giveaway
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {order.promo_source ? (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

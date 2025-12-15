@@ -47,6 +47,11 @@ const SMSManagement: React.FC = () => {
   const [targetAudience, setTargetAudience] = useState<'beta' | 'registered' | 'all' | 'talent' | 'holiday_popup'>('beta');
   const [recipientCount, setRecipientCount] = useState(0);
   const [excludedUserIds, setExcludedUserIds] = useState<Set<string>>(new Set());
+  
+  // Direct SMS state
+  const [directPhone, setDirectPhone] = useState('');
+  const [directMessage, setDirectMessage] = useState('');
+  const [sendingDirect, setSendingDirect] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -219,6 +224,45 @@ const SMSManagement: React.FC = () => {
     }
   };
 
+  // Send direct SMS to a specific phone number
+  const sendDirectSMS = async () => {
+    if (!directPhone.trim() || !directMessage.trim()) {
+      toast.error('Please enter a phone number and message');
+      return;
+    }
+
+    // Clean phone number
+    let cleanedPhone = directPhone.replace(/\D/g, '');
+    if (cleanedPhone.length === 10) {
+      cleanedPhone = '1' + cleanedPhone;
+    }
+    if (!cleanedPhone.startsWith('+')) {
+      cleanedPhone = '+' + cleanedPhone;
+    }
+
+    setSendingDirect(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-sms', {
+        body: {
+          to: cleanedPhone,
+          message: directMessage,
+          from: 'user' // Use user number for admin direct messages
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`SMS sent to ${directPhone}`);
+      setDirectPhone('');
+      setDirectMessage('');
+    } catch (error: any) {
+      console.error('Error sending direct SMS:', error);
+      toast.error('Failed to send SMS: ' + (error.message || 'Unknown error'));
+    } finally {
+      setSendingDirect(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -229,6 +273,57 @@ const SMSManagement: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Direct SMS */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4">📱 Send Direct SMS</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              value={directPhone}
+              onChange={(e) => setDirectPhone(e.target.value)}
+              placeholder="+1 (555) 123-4567"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Message ({directMessage.length}/160)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={directMessage}
+                onChange={(e) => setDirectMessage(e.target.value)}
+                placeholder="Enter your message..."
+                maxLength={160}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                onClick={sendDirectSMS}
+                disabled={sendingDirect || !directPhone.trim() || !directMessage.trim()}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {sendingDirect ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <PhoneIcon className="h-4 w-4" />
+                    Send
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-6">
