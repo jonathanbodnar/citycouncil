@@ -323,13 +323,13 @@ const BioPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
-  // Fetch Rumble channel data - try cache first, then scrape if needed
+  // Fetch Rumble channel data from cache only - cron job updates every 15 min
   const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
     const cleanHandle = rumbleHandle.replace(/^@/, '');
     const defaultChannelUrl = `https://rumble.com/user/${cleanHandle}`;
     
     try {
-      // Try to get cached data from rumble_cache table
+      // Get cached data from rumble_cache table
       const { data: cachedData, error: cacheError } = await supabase
         .from('rumble_cache')
         .select('*')
@@ -337,33 +337,19 @@ const BioPage: React.FC = () => {
         .single();
       
       if (!cacheError && cachedData) {
-        // Use cached data if it has a thumbnail
-        if (cachedData.latest_video_thumbnail) {
-          setRumbleData({
-            title: cachedData.latest_video_title || 'Watch on Rumble',
-            thumbnail: cachedData.latest_video_thumbnail || '',
-            url: cachedData.latest_video_url || cachedData.channel_url || defaultChannelUrl,
-            views: cachedData.latest_video_views || 0,
-            isLive: cachedData.is_live || false,
-            liveViewers: cachedData.live_viewers || 0,
-          });
-          return;
-        }
-        // Cache exists but empty - show fallback immediately, scrape in background
+        // Use cached data - show whatever we have
         setRumbleData({
-          title: 'Watch on Rumble',
-          thumbnail: '',
-          url: cachedData.channel_url || defaultChannelUrl,
-          views: 0,
-          isLive: false,
-          liveViewers: 0,
+          title: cachedData.latest_video_title || 'Watch on Rumble',
+          thumbnail: cachedData.latest_video_thumbnail || '',
+          url: cachedData.latest_video_url || cachedData.channel_url || defaultChannelUrl,
+          views: cachedData.latest_video_views || 0,
+          isLive: cachedData.is_live || false,
+          liveViewers: cachedData.live_viewers || 0,
         });
-        // Scrape in background to update display and cache
-        scrapeRumbleData(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
         return;
       }
       
-      // No cache at all - show fallback immediately, scrape in background
+      // No cache - show fallback (cron job will populate it)
       setRumbleData({
         title: 'Watch on Rumble',
         thumbnail: '',
@@ -372,12 +358,9 @@ const BioPage: React.FC = () => {
         isLive: false,
         liveViewers: 0,
       });
-      // Scrape in background and save to cache
-      scrapeRumbleData(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
       
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
-      // Show fallback card on error
       setRumbleData({
         title: 'Watch on Rumble',
         thumbnail: '',
@@ -388,131 +371,6 @@ const BioPage: React.FC = () => {
       });
     }
   };
-
-  // Scrape Rumble channel data directly and save to cache
-  const scrapeRumbleData = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string) => {
-    // Try both /user/ and /c/ URL formats
-    const urlFormats = [
-      `https://rumble.com/user/${cleanHandle}`,
-      `https://rumble.com/c/${cleanHandle}`,
-    ];
-    
-    let html = '';
-    let successUrl = '';
-    
-    // Try each URL format with CORS proxies
-    for (const channelUrl of urlFormats) {
-      const corsProxies = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(channelUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`,
-      ];
-      
-      for (const proxyUrl of corsProxies) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-          
-          const response = await fetch(proxyUrl, {
-            headers: { 'Accept': 'text/html' },
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          
-          if (response.ok) {
-            const text = await response.text();
-            if (text.includes('thumbnail__image') || text.includes('thumbnail__title')) {
-              html = text;
-              successUrl = channelUrl;
-              break;
-            }
-          }
-        } catch {
-          // Continue to next proxy
-        }
-      }
-      if (html) break;
-    }
-    
-    if (!html) {
-      // Still no data - just keep the fallback
-      return;
-    }
-    
-    // Parse the HTML
-    const htmlClean = html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-    
-    // Check for live stream
-    const isLive = !!(
-      htmlClean.match(/class="[^"]*videostream__status--live[^"]*"/i) ||
-      htmlClean.match(/class="[^"]*thumbnail__thumb--live[^"]*"/i)
-    );
-    
-    // Find thumbnail
-    let thumbnail = '';
-    const thumbMatch = htmlClean.match(/src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png))"/i);
-    if (thumbMatch) {
-      thumbnail = thumbMatch[1];
-    }
-    
-    // Find title
-    let title = 'Latest Video';
-    const titleMatch = htmlClean.match(/class="thumbnail__title[^"]*"[^>]*title="([^"]{10,200})"/i);
-    if (titleMatch) {
-      title = titleMatch[1].trim();
-    }
-    
-    // Find video URL
-    let videoUrl = successUrl;
-    const urlMatch = htmlClean.match(/href="(\/v[a-z0-9]+-[^"]+\.html)/i);
-    if (urlMatch) {
-      videoUrl = `https://rumble.com${urlMatch[1].split('?')[0]}`;
-    }
-    
-    // Find views
-    let views = 0;
-    const viewsMatch = htmlClean.match(/data-views="(\d+)"/i);
-    if (viewsMatch) {
-      views = parseInt(viewsMatch[1]) || 0;
-    }
-    
-    const finalThumbnail = thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail;
-    
-    // Update the UI
-    setRumbleData({
-      title,
-      thumbnail: finalThumbnail,
-      url: videoUrl,
-      views,
-      isLive,
-      liveViewers: 0,
-    });
-    
-    // Save to cache for future visits (upsert)
-    if (finalThumbnail || title !== 'Latest Video') {
-      try {
-        await supabase
-          .from('rumble_cache')
-          .upsert({
-            talent_id: talentId,
-            rumble_handle: rumbleHandle,
-            is_live: isLive,
-            live_viewers: 0,
-            latest_video_title: title,
-            latest_video_thumbnail: finalThumbnail,
-            latest_video_url: videoUrl,
-            latest_video_views: views,
-            channel_url: successUrl,
-            last_checked_at: new Date().toISOString(),
-          }, { onConflict: 'talent_id' });
-        console.log('Rumble cache updated for', rumbleHandle);
-      } catch (cacheErr) {
-        console.error('Failed to update Rumble cache:', cacheErr);
-      }
-    }
-  };
-
 
   // Track link clicks
   const handleLinkClick = async (link: BioLink) => {
