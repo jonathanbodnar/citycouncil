@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrophyIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useCallback } from 'react';
+import { MagnifyingGlassIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrophyIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../../services/supabase';
 import toast from 'react-hot-toast';
@@ -22,9 +22,42 @@ const HolidayPromoSignups: React.FC = () => {
   const [filterUtm, setFilterUtm] = useState<string>('all');
   const [utmSources, setUtmSources] = useState<string[]>([]);
   const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [lastWinnerPhone, setLastWinnerPhone] = useState<string>('');
+  const [countdown, setCountdown] = useState({ hours: 24, minutes: 0, seconds: 0 });
 
   useEffect(() => {
     fetchSignups();
+  }, []);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!showWinnerModal) return;
+    
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        return prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [showWinnerModal]);
+
+  // Blur phone number - show first 4 digits, blur last 7
+  const blurPhoneNumber = useCallback((phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length >= 10) {
+      const visible = cleaned.slice(0, 4);
+      return `+${visible[0]} (${visible.slice(1)}) •••-••••`;
+    }
+    return phone.slice(0, 4) + '•'.repeat(Math.max(0, phone.length - 4));
   }, []);
 
   const fetchSignups = async () => {
@@ -90,6 +123,12 @@ const HolidayPromoSignups: React.FC = () => {
       }
 
       toast.success(`🎉 Winner selected! SMS sent to ${formatPhoneNumber(signup.phone_number)}`);
+      
+      // Show winner celebration modal
+      setLastWinnerPhone(signup.phone_number);
+      setCountdown({ hours: 24, minutes: 0, seconds: 0 });
+      setShowWinnerModal(true);
+      
       fetchSignups();
     } catch (error) {
       console.error('Error selecting winner:', error);
@@ -358,6 +397,70 @@ const HolidayPromoSignups: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Winner Celebration Modal */}
+      {showWinnerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center animate-bounce-in">
+            {/* Close button */}
+            <button
+              onClick={() => setShowWinnerModal(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+
+            {/* Party emoji */}
+            <div className="text-7xl mb-4 animate-bounce">
+              🎉
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Winner was just sent a free ShoutOut!
+            </h2>
+
+            {/* Phone number (blurred) */}
+            <div className="bg-gray-100 rounded-xl py-4 px-6 mb-6">
+              <p className="text-sm text-gray-500 mb-1">Winner's Number</p>
+              <p className="text-xl font-mono font-semibold text-gray-900">
+                {blurPhoneNumber(lastWinnerPhone)}
+              </p>
+            </div>
+
+            {/* Next winner countdown */}
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6">
+              <p className="text-sm font-medium text-yellow-800 mb-2">
+                Next winner chosen in
+              </p>
+              <div className="flex justify-center gap-3">
+                <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                  <span className="text-2xl font-bold text-gray-900">{String(countdown.hours).padStart(2, '0')}</span>
+                  <p className="text-xs text-gray-500">hours</p>
+                </div>
+                <div className="text-2xl font-bold text-gray-400 self-center">:</div>
+                <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                  <span className="text-2xl font-bold text-gray-900">{String(countdown.minutes).padStart(2, '0')}</span>
+                  <p className="text-xs text-gray-500">mins</p>
+                </div>
+                <div className="text-2xl font-bold text-gray-400 self-center">:</div>
+                <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                  <span className="text-2xl font-bold text-gray-900">{String(countdown.seconds).padStart(2, '0')}</span>
+                  <p className="text-xs text-gray-500">secs</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={() => setShowWinnerModal(false)}
+              className="mt-6 w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all"
+            >
+              Awesome! 🎊
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
