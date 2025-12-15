@@ -530,6 +530,8 @@ const BioPage: React.FC = () => {
     const cleanHandle = youtubeHandle.replace(/^@/, '');
     const defaultChannelUrl = `https://youtube.com/@${cleanHandle}`;
     
+    console.log('fetchYouTubeData called:', { talentId, youtubeHandle, cleanHandle, hasApiKey: !!YOUTUBE_API_KEY });
+    
     try {
       // Get cached data from youtube_cache table
       const { data: cachedData, error: cacheError } = await supabase
@@ -595,7 +597,12 @@ const BioPage: React.FC = () => {
   // Background YouTube API fetch - updates cache on SUCCESS only
   const fetchYouTubeInBackground = async (talentId: string, youtubeHandle: string, cleanHandle: string, defaultChannelUrl: string) => {
     try {
-      if (!YOUTUBE_API_KEY) return;
+      if (!YOUTUBE_API_KEY) {
+        console.log('YouTube API key not available in background fetch');
+        return;
+      }
+      
+      console.log('Fetching YouTube data for:', cleanHandle);
       
       // First, get the channel ID from the handle
       let channelId = '';
@@ -605,6 +612,12 @@ const BioPage: React.FC = () => {
         `https://www.googleapis.com/youtube/v3/channels?part=id,snippet&forHandle=${cleanHandle}&key=${YOUTUBE_API_KEY}`
       );
       const handleData = await handleResponse.json();
+      
+      // Log any API errors
+      if (handleData.error) {
+        console.error('YouTube API error:', handleData.error);
+        return;
+      }
       
       if (handleData.items && handleData.items.length > 0) {
         channelId = handleData.items[0].id;
