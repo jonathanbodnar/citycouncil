@@ -167,7 +167,6 @@ const BioPage: React.FC = () => {
   const [randomReview, setRandomReview] = useState<Review | null>(null);
   const [newsletterConfig, setNewsletterConfig] = useState<NewsletterConfig | null>(null);
   const [rumbleData, setRumbleData] = useState<RumbleVideoData | null>(null);
-  const [rumbleLoading, setRumbleLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -323,23 +322,27 @@ const BioPage: React.FC = () => {
     fetchBioData();
   }, [username]);
 
-  // Fetch Rumble channel data - first from cache, then fallback to live scraping
+  // Fetch Rumble channel data - from cache only, no live scraping
+  // The cron job updates the cache every 15 minutes
   const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
+    const cleanHandle = rumbleHandle.replace(/^@/, '');
+    const defaultChannelUrl = `https://rumble.com/user/${cleanHandle}`;
+    
     try {
-      // First, try to get cached data from rumble_cache table (no loading state for cache)
+      // Try to get cached data from rumble_cache table
       const { data: cachedData, error: cacheError } = await supabase
         .from('rumble_cache')
         .select('*')
         .eq('talent_id', talentId)
         .single();
       
-      if (!cacheError && cachedData && cachedData.latest_video_thumbnail) {
+      if (!cacheError && cachedData) {
         // Use cached data - it's updated every 15 minutes by cron job
-        // No loading spinner needed - cache is instant
+        // Show whatever we have in cache (even if partial)
         setRumbleData({
           title: cachedData.latest_video_title || 'Watch on Rumble',
           thumbnail: cachedData.latest_video_thumbnail || '',
-          url: cachedData.latest_video_url || cachedData.channel_url || `https://rumble.com/user/${rumbleHandle.replace(/^@/, '')}`,
+          url: cachedData.latest_video_url || cachedData.channel_url || defaultChannelUrl,
           views: cachedData.latest_video_views || 0,
           isLive: cachedData.is_live || false,
           liveViewers: cachedData.live_viewers || 0,
@@ -347,197 +350,31 @@ const BioPage: React.FC = () => {
         return;
       }
       
-      // Fallback: scrape live if no cache exists - show loading only for live scraping
-      setRumbleLoading(true);
-      const cleanHandle = rumbleHandle.replace(/^@/, '');
-      
-      // Try both /user/ and /c/ URL formats
-      const urlFormats = [
-        `https://rumble.com/user/${cleanHandle}`,
-        `https://rumble.com/c/${cleanHandle}`,
-      ];
-      
-      let html = '';
-      let successUrl = '';
-      
-      // Try each URL format with CORS proxies
-      for (const channelUrl of urlFormats) {
-        const corsProxies = [
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(channelUrl)}`,
-          `https://corsproxy.io/?${encodeURIComponent(channelUrl)}`,
-          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(channelUrl)}`,
-        ];
-        
-        for (const proxyUrl of corsProxies) {
-          try {
-            console.log('Trying Rumble proxy:', proxyUrl);
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-            
-            const response = await fetch(proxyUrl, {
-              headers: {
-                'Accept': 'text/html,application/xhtml+xml',
-              },
-              signal: controller.signal,
-            });
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-              const text = await response.text();
-              console.log('Rumble response length:', text.length);
-              // Check if we got actual video content (not an error page)
-              // Rumble uses various class patterns for thumbnails and CDN domains
-              if (text.includes('thumbnail__image') || text.includes('thumbnail__title') || 
-                  text.includes('1a-1791.com') || text.includes('videostream') || 
-                  text.includes('rmbl.ws')) {
-                html = text;
-                successUrl = channelUrl;
-                console.log('Rumble HTML fetched successfully from:', proxyUrl);
-                break;
-              } else {
-                console.log('Rumble response did not contain expected content');
-              }
-            } else {
-              console.log('Rumble proxy returned status:', response.status);
-            }
-          } catch (e: unknown) {
-            const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-            console.log('Rumble proxy failed:', proxyUrl, errorMessage);
-          }
-        }
-        if (html) break;
-      }
-      
-      if (!html) {
-        console.log('Could not fetch Rumble data - all proxies failed');
-        // Set default data with channel URL
-        setRumbleData({
-          title: 'Watch on Rumble',
-          thumbnail: '',
-          url: `https://rumble.com/user/${cleanHandle}`,
-          views: 0,
-          isLive: false,
-          liveViewers: 0,
-        });
-        setRumbleLoading(false);
-        return;
-      }
-      
-      // Strip out CSS/style sections AND script sections to avoid false positives
-      const htmlWithoutStyles = html
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-      
-      // Check for live stream - look for actual live stream elements in the video grid
-      // The live badge appears as class="videostream__status--live" with text "LIVE"
-      // or there's a live viewer count like "1,234 watching"
-      // Also check for thumbnail__thumb--live class which indicates a live stream thumbnail
-      const liveStatusMatch = htmlWithoutStyles.match(/class="[^"]*videostream__status--live[^"]*"/i) ||
-                              htmlWithoutStyles.match(/class="[^"]*thumbnail__thumb--live[^"]*"/i);
-      const liveViewerMatch = htmlWithoutStyles.match(/class="[^"]*watching-now[^"]*"[^>]*>([\d,]+)/i) ||
-                              htmlWithoutStyles.match(/([\d,]+)\s*watching\s*now/i) ||
-                              htmlWithoutStyles.match(/>([\d,]+)\s*(?:watching|viewers)</i);
-      
-      const isLive: boolean = !!(liveStatusMatch || (liveViewerMatch && parseInt(liveViewerMatch[1].replace(/,/g, '')) > 0));
-      const liveViewers = liveViewerMatch ? parseInt(liveViewerMatch[1].replace(/,/g, '')) : 0;
-      
-      // Try to find thumbnail - look specifically in the video grid section
-      // The video grid contains the channel's own videos, not featured/related content
-      let thumbnail = '';
-      let title = 'Latest Video';
-      let videoUrl = successUrl;
-      let views = 0;
-      
-      // Try to extract the main video grid section (contains channel's videos)
-      const gridMatch = htmlWithoutStyles.match(/class="thumbnail__grid"[\s\S]*?(<article[\s\S]*?<\/article>)/i);
-      const videoSection = gridMatch ? gridMatch[1] : htmlWithoutStyles;
-      
-      // Find all video thumbnails with -small- in URL (these are video thumbs, not profile pics)
-      // Use exec loop instead of matchAll for ES5 compatibility
-      const thumbRegex = /src="(https:\/\/1a-1791\.com\/video\/[^"]*-small-[^"]*\.(jpg|jpeg|webp|png))"/gi;
-      let thumbMatch = thumbRegex.exec(videoSection);
-      if (thumbMatch && thumbMatch[1]) {
-        thumbnail = thumbMatch[1];
-      }
-      
-      // If no thumbnail in video section, try the whole page but be more careful
-      if (!thumbnail) {
-        thumbRegex.lastIndex = 0; // Reset regex state
-        thumbMatch = thumbRegex.exec(htmlWithoutStyles);
-        if (thumbMatch && thumbMatch[1]) {
-          thumbnail = thumbMatch[1];
-        }
-      }
-      
-      // If still no thumbnail, try OG meta tag (should be channel-specific)
-      if (!thumbnail) {
-        const ogMatch = html.match(/property="og:image"[^>]*content="([^"]+)"/i) ||
-                        html.match(/content="([^"]+)"[^>]*property="og:image"/i);
-        if (ogMatch && ogMatch[1]) {
-          thumbnail = ogMatch[1];
-        }
-      }
-      
-      // Find video title - look for thumbnail__title class with title attribute
-      // Pattern: <h3 class="thumbnail__title..." title="Video Title">
-      const titleClassRegex = /class="thumbnail__title[^"]*"[^>]*title="([^"]{10,200})"/gi;
-      let titleMatch = titleClassRegex.exec(videoSection);
-      if (titleMatch && titleMatch[1]) {
-        title = titleMatch[1].trim();
-      } else {
-        // Try whole page
-        titleClassRegex.lastIndex = 0;
-        titleMatch = titleClassRegex.exec(htmlWithoutStyles);
-        if (titleMatch && titleMatch[1]) {
-          title = titleMatch[1].trim();
-        }
-      }
-      
-      // Find video URL from href
-      const videoUrlRegex = /href="(\/v[a-z0-9]+-[^"]+\.html)/gi;
-      let videoUrlMatch = videoUrlRegex.exec(videoSection);
-      if (videoUrlMatch && videoUrlMatch[1]) {
-        videoUrl = `https://rumble.com${videoUrlMatch[1].split('?')[0]}`;
-      } else {
-        videoUrlRegex.lastIndex = 0;
-        videoUrlMatch = videoUrlRegex.exec(htmlWithoutStyles);
-        if (videoUrlMatch && videoUrlMatch[1]) {
-          videoUrl = `https://rumble.com${videoUrlMatch[1].split('?')[0]}`;
-        }
-      }
-      
-      // Try to find views from data-views attribute
-      const viewsMatch = videoSection.match(/data-views="(\d+)"/i) || 
-                         htmlWithoutStyles.match(/data-views="(\d+)"/i);
-      if (viewsMatch && viewsMatch[1]) {
-        views = parseInt(viewsMatch[1]) || 0;
-      }
-      
-      console.log('Rumble data extracted:', { title, thumbnail, videoUrl, views, isLive, liveViewers });
-      
-      setRumbleData({
-        title,
-        thumbnail: thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail,
-        url: videoUrl,
-        views,
-        isLive,
-        liveViewers,
-      });
-    } catch (error) {
-      console.error('Error fetching Rumble data:', error);
-      // Set fallback data so the card still shows
+      // No cache exists - show simple fallback card (no scraping)
+      // The cron job will populate the cache on its next run
       setRumbleData({
         title: 'Watch on Rumble',
         thumbnail: '',
-        url: `https://rumble.com/user/${rumbleHandle.replace(/^@/, '')}`,
+        url: defaultChannelUrl,
         views: 0,
         isLive: false,
         liveViewers: 0,
       });
-    } finally {
-      setRumbleLoading(false);
+      
+    } catch (error) {
+      console.error('Error fetching Rumble cache:', error);
+      // Show fallback card on error
+      setRumbleData({
+        title: 'Watch on Rumble',
+        thumbnail: '',
+        url: defaultChannelUrl,
+        views: 0,
+        isLive: false,
+        liveViewers: 0,
+      });
     }
   };
+
 
   // Track link clicks
   const handleLinkClick = async (link: BioLink) => {
@@ -740,11 +577,7 @@ const BioPage: React.FC = () => {
                 <div className="flex items-stretch">
                   {/* Thumbnail - wider for better video preview */}
                   <div className="w-44 h-[120px] flex-shrink-0 relative bg-black/20">
-                    {rumbleLoading ? (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-400"></div>
-                      </div>
-                    ) : rumbleData?.thumbnail ? (
+                    {rumbleData?.thumbnail ? (
                       <img 
                         src={rumbleData.thumbnail} 
                         alt="" 
