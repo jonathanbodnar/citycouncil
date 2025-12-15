@@ -866,28 +866,18 @@ const BioDashboard: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <SparklesIcon className="h-8 w-8 text-blue-400" />
-              <div>
-                <h1 className="text-xl font-bold text-white">ShoutOut Bio</h1>
-                <p className="text-sm text-gray-400">@{talentProfile?.username || 'username'}</p>
-              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={copyBioUrl}
+                onClick={() => {
+                  copyBioUrl();
+                  window.open(`https://${bioUrl}`, '_blank');
+                }}
                 className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white text-sm hover:bg-white/10 transition-colors"
               >
                 <ClipboardIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">{bioUrl}</span>
               </button>
-              <a
-                href={`https://${bioUrl}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white text-sm hover:bg-white/10 transition-colors"
-              >
-                <EyeIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Preview</span>
-              </a>
               <button
                 onClick={togglePublish}
                 disabled={saving}
