@@ -491,10 +491,8 @@ const BioPage: React.FC = () => {
       
       // Only update if we got useful data
       if (finalThumbnail || title !== 'Latest Video') {
-        // Try to atomically update cache - only succeeds if timestamp hasn't changed
-        // This prevents multiple simultaneous scrapes from overwriting each other
-        const fifteenMinAgo = Date.now() - 15 * 60 * 1000;
-        const { data: updateResult } = await supabase
+        // Update cache with new data
+        await supabase
           .from('rumble_cache')
           .upsert({
             talent_id: talentId,
@@ -507,20 +505,17 @@ const BioPage: React.FC = () => {
             latest_video_views: views,
             channel_url: successUrl,
             last_checked_at: new Date().toISOString(),
-          }, { onConflict: 'talent_id' })
-          .select('talent_id');
+          }, { onConflict: 'talent_id' });
         
-        // Only update UI if we successfully saved to cache
-        if (updateResult && updateResult.length > 0) {
-          setRumbleData({
-            title,
-            thumbnail: finalThumbnail,
-            url: videoUrl,
-            views,
-            isLive,
-            liveViewers: 0,
-          });
-        }
+        // Update UI with new data
+        setRumbleData({
+          title,
+          thumbnail: finalThumbnail,
+          url: videoUrl,
+          views,
+          isLive,
+          liveViewers: 0,
+        });
       }
     } catch (error) {
       console.error('Background Rumble scrape failed:', error);
