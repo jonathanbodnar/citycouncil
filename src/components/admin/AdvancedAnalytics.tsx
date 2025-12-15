@@ -451,6 +451,30 @@ const AdvancedAnalytics: React.FC = () => {
     }
   }, [getDateRange]);
 
+  // Helper to format source names for display
+  const formatSourceName = (source: string): string => {
+    if (!source) return 'Direct';
+    
+    // Map known UTM values to friendly names
+    const sourceMap: Record<string, string> = {
+      '1': 'Self Promo',
+      'self_promo': 'Self Promo',
+      'fb': 'Facebook',
+      'facebook': 'Facebook',
+      'ig': 'Instagram',
+      'instagram': 'Instagram',
+      'meta': 'Meta',
+      'rumble': 'Rumble',
+      'sms': 'SMS',
+      'email': 'Email',
+      'giveaway': 'Giveaway',
+      'direct': 'Direct',
+    };
+    
+    const lowerSource = source.toLowerCase();
+    return sourceMap[lowerSource] || source;
+  };
+
   // Calculate source breakdowns
   const calculateSourceBreakdowns = (
     smsData: any[],
@@ -460,7 +484,7 @@ const AdvancedAnalytics: React.FC = () => {
     // SMS sources (promo_source from the unified query, which is utm_source for SMS)
     const smsSources = new Map<string, number>();
     smsData.forEach(s => {
-      const source = s.promo_source || 'Direct';
+      const source = formatSourceName(s.promo_source || 'Direct');
       smsSources.set(source, (smsSources.get(source) || 0) + 1);
     });
     const smsTotal = smsData.length;
@@ -477,7 +501,7 @@ const AdvancedAnalytics: React.FC = () => {
     // User sources
     const userSources = new Map<string, number>();
     userData.forEach(u => {
-      const source = u.promo_source || 'Direct';
+      const source = formatSourceName(u.promo_source || 'Direct');
       userSources.set(source, (userSources.get(source) || 0) + 1);
     });
     const userTotal = userData.length;
@@ -494,7 +518,7 @@ const AdvancedAnalytics: React.FC = () => {
     // Order sources
     const orderSources = new Map<string, number>();
     orderData.forEach(o => {
-      const source = o.promo_source || 'Direct';
+      const source = formatSourceName(o.promo_source || 'Direct');
       orderSources.set(source, (orderSources.get(source) || 0) + 1);
     });
     const orderTotal = orderData.length;
