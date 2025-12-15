@@ -528,7 +528,7 @@ const BioPage: React.FC = () => {
   };
 
   // YouTube API Key - stored in environment
-  const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
+  const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY || '';
 
   // Fetch YouTube channel data - show cache immediately, one visitor per 15 min triggers refresh
   const fetchYouTubeData = async (talentId: string, youtubeHandle: string) => {
