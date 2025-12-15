@@ -22,6 +22,7 @@ interface TalentProfile {
   social_accounts?: SocialAccount[];
   promo_video_url?: string;
   rumble_handle?: string;
+  youtube_handle?: string;
 }
 
 interface SocialAccount {
@@ -97,6 +98,7 @@ interface BioSettings {
   font_family: string;
   show_shoutout_card: boolean;
   show_rumble_card: boolean;
+  show_youtube_card?: boolean;
   is_published: boolean;
   background_type: string;
   gradient_start: string;
@@ -158,6 +160,16 @@ interface RumbleVideoData {
   liveViewers?: number;
 }
 
+interface YouTubeVideoData {
+  title: string;
+  thumbnail: string;
+  url: string;
+  views: number;
+  isLive: boolean;
+  liveViewers?: number;
+  channelUrl: string;
+}
+
 const BioPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
@@ -167,6 +179,7 @@ const BioPage: React.FC = () => {
   const [randomReview, setRandomReview] = useState<Review | null>(null);
   const [newsletterConfig, setNewsletterConfig] = useState<NewsletterConfig | null>(null);
   const [rumbleData, setRumbleData] = useState<RumbleVideoData | null>(null);
+  const [youtubeData, setYoutubeData] = useState<YouTubeVideoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -309,6 +322,11 @@ const BioPage: React.FC = () => {
         // Fetch Rumble data - first try cache, then fall back to live scraping
         if (profile.rumble_handle) {
           fetchRumbleData(profile.id, profile.rumble_handle);
+        }
+
+        // Fetch YouTube data - same caching strategy
+        if (profile.youtube_handle) {
+          fetchYouTubeData(profile.id, profile.youtube_handle);
         }
 
       } catch (error) {
@@ -506,6 +524,213 @@ const BioPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Background Rumble scrape failed:', error);
+    }
+  };
+
+  // YouTube API Key - stored in environment
+  const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
+
+  // Fetch YouTube channel data - show cache immediately, one visitor per 15 min triggers refresh
+  const fetchYouTubeData = async (talentId: string, youtubeHandle: string) => {
+    const cleanHandle = youtubeHandle.replace(/^@/, '');
+    const defaultChannelUrl = `https://youtube.com/@${cleanHandle}`;
+    
+    try {
+      // Get cached data from youtube_cache table
+      const { data: cachedData, error: cacheError } = await supabase
+        .from('youtube_cache')
+        .select('*')
+        .eq('talent_id', talentId)
+        .single();
+      
+      if (!cacheError && cachedData) {
+        // Show cached data immediately
+        setYoutubeData({
+          title: cachedData.latest_video_title || 'Watch on YouTube',
+          thumbnail: cachedData.latest_video_thumbnail || '',
+          url: cachedData.latest_video_url || defaultChannelUrl,
+          views: cachedData.latest_video_views || 0,
+          isLive: cachedData.is_live || false,
+          liveViewers: cachedData.live_viewers || 0,
+          channelUrl: cachedData.channel_url || defaultChannelUrl,
+        });
+        
+        // Check if cache is stale (>15 min old) or empty
+        const lastChecked = new Date(cachedData.last_checked_at).getTime();
+        const fifteenMinAgo = Date.now() - 15 * 60 * 1000;
+        const needsRefresh = !cachedData.latest_video_thumbnail || lastChecked < fifteenMinAgo;
+        
+        if (needsRefresh && YOUTUBE_API_KEY) {
+          fetchYouTubeInBackground(talentId, youtubeHandle, cleanHandle, defaultChannelUrl);
+        }
+        return;
+      }
+      
+      // No cache - show fallback and fetch in background
+      setYoutubeData({
+        title: 'Watch on YouTube',
+        thumbnail: '',
+        url: defaultChannelUrl,
+        views: 0,
+        isLive: false,
+        liveViewers: 0,
+        channelUrl: defaultChannelUrl,
+      });
+      
+      if (YOUTUBE_API_KEY) {
+        fetchYouTubeInBackground(talentId, youtubeHandle, cleanHandle, defaultChannelUrl);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching YouTube data:', error);
+      setYoutubeData({
+        title: 'Watch on YouTube',
+        thumbnail: '',
+        url: defaultChannelUrl,
+        views: 0,
+        isLive: false,
+        liveViewers: 0,
+        channelUrl: defaultChannelUrl,
+      });
+    }
+  };
+  
+  // Background YouTube API fetch - updates cache on SUCCESS only
+  const fetchYouTubeInBackground = async (talentId: string, youtubeHandle: string, cleanHandle: string, defaultChannelUrl: string) => {
+    try {
+      if (!YOUTUBE_API_KEY) return;
+      
+      // First, get the channel ID from the handle
+      let channelId = '';
+      
+      // Try to get channel by handle (newer @handle format)
+      const handleResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=id,snippet&forHandle=${cleanHandle}&key=${YOUTUBE_API_KEY}`
+      );
+      const handleData = await handleResponse.json();
+      
+      if (handleData.items && handleData.items.length > 0) {
+        channelId = handleData.items[0].id;
+      } else {
+        // Try as username (older format)
+        const usernameResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/channels?part=id,snippet&forUsername=${cleanHandle}&key=${YOUTUBE_API_KEY}`
+        );
+        const usernameData = await usernameResponse.json();
+        
+        if (usernameData.items && usernameData.items.length > 0) {
+          channelId = usernameData.items[0].id;
+        } else {
+          // Maybe it's already a channel ID
+          const idResponse = await fetch(
+            `https://www.googleapis.com/youtube/v3/channels?part=id,snippet&id=${cleanHandle}&key=${YOUTUBE_API_KEY}`
+          );
+          const idData = await idResponse.json();
+          
+          if (idData.items && idData.items.length > 0) {
+            channelId = idData.items[0].id;
+          }
+        }
+      }
+      
+      if (!channelId) {
+        console.log('Could not find YouTube channel for:', cleanHandle);
+        return;
+      }
+      
+      // Check for live streams first
+      const liveResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${YOUTUBE_API_KEY}`
+      );
+      const liveData = await liveResponse.json();
+      
+      let isLive = false;
+      let liveViewers = 0;
+      let videoId = '';
+      let videoTitle = 'Latest Video';
+      let videoThumbnail = '';
+      
+      if (liveData.items && liveData.items.length > 0) {
+        // Channel is live!
+        isLive = true;
+        const liveVideo = liveData.items[0];
+        videoId = liveVideo.id.videoId;
+        videoTitle = liveVideo.snippet.title;
+        videoThumbnail = liveVideo.snippet.thumbnails?.high?.url || liveVideo.snippet.thumbnails?.medium?.url || '';
+        
+        // Get live viewer count
+        const statsResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`
+        );
+        const statsData = await statsResponse.json();
+        
+        if (statsData.items && statsData.items.length > 0 && statsData.items[0].liveStreamingDetails) {
+          liveViewers = parseInt(statsData.items[0].liveStreamingDetails.concurrentViewers || '0');
+        }
+      } else {
+        // Not live - get latest video
+        const videosResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&type=video&maxResults=1&key=${YOUTUBE_API_KEY}`
+        );
+        const videosData = await videosResponse.json();
+        
+        if (videosData.items && videosData.items.length > 0) {
+          const latestVideo = videosData.items[0];
+          videoId = latestVideo.id.videoId;
+          videoTitle = latestVideo.snippet.title;
+          videoThumbnail = latestVideo.snippet.thumbnails?.high?.url || latestVideo.snippet.thumbnails?.medium?.url || '';
+        }
+      }
+      
+      if (!videoId) return;
+      
+      // Get view count for the video
+      let views = 0;
+      const videoStatsResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${YOUTUBE_API_KEY}`
+      );
+      const videoStatsData = await videoStatsResponse.json();
+      
+      if (videoStatsData.items && videoStatsData.items.length > 0) {
+        views = parseInt(videoStatsData.items[0].statistics?.viewCount || '0');
+      }
+      
+      const videoUrl = `https://youtube.com/watch?v=${videoId}`;
+      const channelUrl = `https://youtube.com/channel/${channelId}`;
+      
+      // Save to cache
+      const { data: updateResult } = await supabase
+        .from('youtube_cache')
+        .upsert({
+          talent_id: talentId,
+          youtube_handle: youtubeHandle,
+          channel_id: channelId,
+          is_live: isLive,
+          live_viewers: liveViewers,
+          latest_video_id: videoId,
+          latest_video_title: videoTitle,
+          latest_video_thumbnail: videoThumbnail,
+          latest_video_url: videoUrl,
+          latest_video_views: views,
+          channel_url: channelUrl,
+          last_checked_at: new Date().toISOString(),
+        }, { onConflict: 'talent_id' })
+        .select('talent_id');
+      
+      // Only update UI if we successfully saved to cache
+      if (updateResult && updateResult.length > 0) {
+        setYoutubeData({
+          title: videoTitle,
+          thumbnail: videoThumbnail,
+          url: videoUrl,
+          views,
+          isLive,
+          liveViewers,
+          channelUrl,
+        });
+      }
+    } catch (error) {
+      console.error('Background YouTube fetch failed:', error);
     }
   };
 
@@ -745,6 +970,64 @@ const BioPage: React.FC = () => {
                     {rumbleData?.views && rumbleData.views > 0 && (
                       <p className="text-gray-400 text-xs mt-0.5">
                         {rumbleData.views.toLocaleString()} views
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </a>
+          )}
+
+          {/* YouTube Card - Shows latest video or live status */}
+          {talentProfile?.youtube_handle && bioSettings && bioSettings.show_youtube_card !== false && (
+            <a
+              href={youtubeData?.url || `https://youtube.com/@${talentProfile.youtube_handle.replace(/^@/, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-2xl overflow-hidden border border-red-500/30 hover:border-red-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-stretch">
+                  {/* Thumbnail */}
+                  <div className="w-44 h-[120px] flex-shrink-0 relative bg-black/20">
+                    {youtubeData?.thumbnail ? (
+                      <img 
+                        src={youtubeData.thumbnail} 
+                        alt="" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-600 to-rose-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white/80">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                      </div>
+                    )}
+                    {/* Live indicator - top right */}
+                    {youtubeData?.isLive && (
+                      <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                        LIVE
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 p-3 flex flex-col justify-start">
+                    <div className="flex items-center gap-2 mb-1">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-400">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                      </svg>
+                      <span className="text-red-400 text-xs font-medium">YouTube</span>
+                    </div>
+                    <h3 className="text-white font-medium text-sm line-clamp-2">
+                      {youtubeData?.title || 'Watch on YouTube'}
+                    </h3>
+                    {youtubeData?.views && youtubeData.views > 0 && (
+                      <p className="text-gray-400 text-xs mt-0.5">
+                        {youtubeData.isLive && youtubeData.liveViewers 
+                          ? `${youtubeData.liveViewers.toLocaleString()} watching`
+                          : `${youtubeData.views.toLocaleString()} views`
+                        }
                       </p>
                     )}
                   </div>
