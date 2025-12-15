@@ -429,24 +429,24 @@ const HolidayPromoSignups: React.FC = () => {
             </div>
 
             {/* Next winner countdown */}
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6">
-              <p className="text-sm font-medium text-yellow-800 mb-2">
+            <div className="bg-gray-100 border border-gray-200 rounded-xl p-6">
+              <p className="text-sm font-medium text-gray-700 mb-2">
                 Next winner chosen in
               </p>
               <div className="flex justify-center gap-3">
-                <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
                   <span className="text-2xl font-bold text-gray-900">{String(countdown.hours).padStart(2, '0')}</span>
-                  <p className="text-xs text-gray-500">hours</p>
+                  <p className="text-xs text-gray-600">hours</p>
                 </div>
                 <div className="text-2xl font-bold text-gray-400 self-center">:</div>
-                <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
                   <span className="text-2xl font-bold text-gray-900">{String(countdown.minutes).padStart(2, '0')}</span>
-                  <p className="text-xs text-gray-500">mins</p>
+                  <p className="text-xs text-gray-600">mins</p>
                 </div>
                 <div className="text-2xl font-bold text-gray-400 self-center">:</div>
-                <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
                   <span className="text-2xl font-bold text-gray-900">{String(countdown.seconds).padStart(2, '0')}</span>
-                  <p className="text-xs text-gray-500">secs</p>
+                  <p className="text-xs text-gray-600">secs</p>
                 </div>
               </div>
             </div>
