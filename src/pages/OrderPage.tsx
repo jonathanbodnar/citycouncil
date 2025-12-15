@@ -91,6 +91,7 @@ const OrderPage: React.FC = () => {
     register,
     handleSubmit,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<OrderFormData>({
     defaultValues: {
@@ -100,6 +101,7 @@ const OrderPage: React.FC = () => {
   });
 
   const watchedValue = watch('isForBusiness');
+  const watchedOccasion = watch('occasion');
   const isForBusiness = watchedValue === true || (typeof watchedValue === 'string' && watchedValue === 'true');
   
   // Coupon state
@@ -403,7 +405,7 @@ const OrderPage: React.FC = () => {
             request_details: null,
             recipient_name: null,
             details_submitted: false,
-            occasion: orderData.occasion || null,
+            occasion: getValues('occasion') || watchedOccasion || orderData.occasion || null,
             amount: Math.round(pricing.total * 100), // Store in cents
             original_amount: appliedCoupon ? Math.round((pricing.total + pricing.discount) * 100) : null,
             discount_amount: appliedCoupon ? Math.round(pricing.discount * 100) : null,
@@ -414,16 +416,16 @@ const OrderPage: React.FC = () => {
             fulfillment_deadline: fulfillmentDeadline.toISOString(),
             payment_transaction_id: paymentResult.id || paymentResult.transaction_id || null,
             payment_transaction_payload: paymentResult?.payload ?? null,
-            is_corporate: orderData.isForBusiness,
-            is_corporate_order: orderData.isForBusiness,
-            company_name: orderData.businessName,
-            event_description: orderData.eventDescription,
-            event_audience: orderData.eventAudience,
-            video_setting_request: orderData.videoSettingRequest,
-            approval_status: orderData.isForBusiness ? 'pending' : 'approved',
-            approved_at: orderData.isForBusiness ? null : new Date().toISOString(),
+            is_corporate: getValues('isForBusiness') || orderData.isForBusiness,
+            is_corporate_order: getValues('isForBusiness') || orderData.isForBusiness,
+            company_name: getValues('businessName') || orderData.businessName,
+            event_description: getValues('eventDescription') || orderData.eventDescription,
+            event_audience: getValues('eventAudience') || orderData.eventAudience,
+            video_setting_request: getValues('videoSettingRequest') || orderData.videoSettingRequest,
+            approval_status: (getValues('isForBusiness') || orderData.isForBusiness) ? 'pending' : 'approved',
+            approved_at: (getValues('isForBusiness') || orderData.isForBusiness) ? null : new Date().toISOString(),
             status: 'pending',
-            allow_promotional_use: orderData.allowPromotionalUse ?? true,
+            allow_promotional_use: getValues('allowPromotionalUse') ?? orderData.allowPromotionalUse ?? true,
             promo_source: getPromoSource(talent),
             did_holiday_popup: localStorage.getItem('holiday_popup_submitted') === 'true'
           },
