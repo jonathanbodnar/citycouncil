@@ -357,8 +357,8 @@ const BioPage: React.FC = () => {
           isLive: false,
           liveViewers: 0,
         });
-        // Scrape in background to update display (but don't block)
-        scrapeRumbleData(cleanHandle, defaultChannelUrl);
+        // Scrape in background to update display and cache
+        scrapeRumbleData(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
         return;
       }
       
@@ -371,8 +371,8 @@ const BioPage: React.FC = () => {
         isLive: false,
         liveViewers: 0,
       });
-      // Scrape in background
-      scrapeRumbleData(cleanHandle, defaultChannelUrl);
+      // Scrape in background and save to cache
+      scrapeRumbleData(talentId, rumbleHandle, cleanHandle, defaultChannelUrl);
       
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
@@ -388,8 +388,8 @@ const BioPage: React.FC = () => {
     }
   };
 
-  // Scrape Rumble channel data directly
-  const scrapeRumbleData = async (cleanHandle: string, defaultChannelUrl: string) => {
+  // Scrape Rumble channel data directly and save to cache
+  const scrapeRumbleData = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string) => {
     // Try both /user/ and /c/ URL formats
     const urlFormats = [
       `https://rumble.com/user/${cleanHandle}`,
@@ -433,14 +433,7 @@ const BioPage: React.FC = () => {
     }
     
     if (!html) {
-      setRumbleData({
-        title: 'Watch on Rumble',
-        thumbnail: '',
-        url: defaultChannelUrl,
-        views: 0,
-        isLive: false,
-        liveViewers: 0,
-      });
+      // Still no data - just keep the fallback
       return;
     }
     
@@ -483,14 +476,40 @@ const BioPage: React.FC = () => {
       views = parseInt(viewsMatch[1]) || 0;
     }
     
+    const finalThumbnail = thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail;
+    
+    // Update the UI
     setRumbleData({
       title,
-      thumbnail: thumbnail.startsWith('//') ? `https:${thumbnail}` : thumbnail,
+      thumbnail: finalThumbnail,
       url: videoUrl,
       views,
       isLive,
       liveViewers: 0,
     });
+    
+    // Save to cache for future visits (upsert)
+    if (finalThumbnail || title !== 'Latest Video') {
+      try {
+        await supabase
+          .from('rumble_cache')
+          .upsert({
+            talent_id: talentId,
+            rumble_handle: rumbleHandle,
+            is_live: isLive,
+            live_viewers: 0,
+            latest_video_title: title,
+            latest_video_thumbnail: finalThumbnail,
+            latest_video_url: videoUrl,
+            latest_video_views: views,
+            channel_url: successUrl,
+            last_checked_at: new Date().toISOString(),
+          }, { onConflict: 'talent_id' });
+        console.log('Rumble cache updated for', rumbleHandle);
+      } catch (cacheErr) {
+        console.error('Failed to update Rumble cache:', cacheErr);
+      }
+    }
   };
 
 
