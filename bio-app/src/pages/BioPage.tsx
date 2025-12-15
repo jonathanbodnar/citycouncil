@@ -574,6 +574,8 @@ const BioPage: React.FC = () => {
       
       if (YOUTUBE_API_KEY) {
         fetchYouTubeInBackground(talentId, youtubeHandle, cleanHandle, defaultChannelUrl);
+      } else {
+        console.log('YouTube API key not configured - skipping YouTube data fetch');
       }
       
     } catch (error) {
