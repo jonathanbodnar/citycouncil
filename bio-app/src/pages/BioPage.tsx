@@ -320,6 +320,7 @@ const BioPage: React.FC = () => {
     };
 
     fetchBioData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
   // Fetch Rumble channel data - try cache first, then scrape if needed
