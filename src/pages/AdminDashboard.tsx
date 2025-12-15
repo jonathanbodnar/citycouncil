@@ -11,11 +11,6 @@ const AdminDashboard: React.FC = () => {
   return (
     <AdminLayout>
       <div className="p-3 sm:p-4 md:p-6 lg:p-8">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-sm sm:text-base text-gray-300">Platform overview and management</p>
-        </div>
-
         {/* Management Content - Tab controlled by URL params */}
         <AdminManagementTabs activeTab={activeTab} />
       </div>

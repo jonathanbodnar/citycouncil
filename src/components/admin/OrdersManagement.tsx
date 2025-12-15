@@ -211,6 +211,22 @@ const OrdersManagement: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Calculate occasion stats
+  const occasionStats = React.useMemo(() => {
+    const stats: Record<string, { count: number; revenue: number }> = {};
+    orders.forEach((order) => {
+      const occasion = order.occasion || 'Not specified';
+      if (!stats[occasion]) {
+        stats[occasion] = { count: 0, revenue: 0 };
+      }
+      stats[occasion].count++;
+      stats[occasion].revenue += order.amount || 0;
+    });
+    // Sort by count descending
+    return Object.entries(stats)
+      .sort((a, b) => b[1].count - a[1].count);
+  }, [orders]);
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; icon: any }> = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: ClockIcon },
@@ -250,6 +266,29 @@ const OrdersManagement: React.FC = () => {
         >
           Refresh
         </button>
+      </div>
+
+      {/* Occasion Stats */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Orders by Occasion</h3>
+        <div className="flex flex-wrap gap-2">
+          {occasionStats.map(([occasion, stats]) => (
+            <div 
+              key={occasion} 
+              className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+            >
+              <span className="text-sm font-medium text-gray-700 capitalize">
+                {occasion.replace(/_/g, ' ')}
+              </span>
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold">
+                {stats.count}
+              </span>
+              <span className="text-xs text-gray-500">
+                ${(stats.revenue / 100).toFixed(0)}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Filters */}
