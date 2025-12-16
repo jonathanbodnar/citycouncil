@@ -370,7 +370,7 @@ const TalentManagement: React.FC = () => {
         bio: editingTalent.bio,
         category: editingTalent.category,
         categories: editingTalent.categories,
-        pricing: editingTalent.pricing,
+        pricing: editingTalent.pricing || 100, // Default to $100 if pricing is null/undefined/0
         corporate_pricing: editingTalent.corporate_pricing,
         allow_corporate_pricing: editingTalent.allow_corporate_pricing,
         is_verified: editingTalent.is_verified,
@@ -1954,11 +1954,12 @@ const TalentManagement: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  min="0"
+                  min="1"
                   step="0.01"
-                  value={editingTalent.pricing}
-                  onChange={(e) => setEditingTalent({...editingTalent, pricing: parseFloat(e.target.value)})}
+                  value={editingTalent.pricing || ''}
+                  onChange={(e) => setEditingTalent({...editingTalent, pricing: parseFloat(e.target.value) || 0})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
                 />
               </div>
               
