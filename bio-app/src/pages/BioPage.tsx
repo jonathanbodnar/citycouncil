@@ -530,7 +530,7 @@ const BioPage: React.FC = () => {
     const cleanHandle = youtubeHandle.replace(/^@/, '');
     const defaultChannelUrl = `https://youtube.com/@${cleanHandle}`;
     
-    console.log('fetchYouTubeData called:', { talentId, youtubeHandle, cleanHandle, hasApiKey: !!YOUTUBE_API_KEY });
+    console.log('fetchYouTubeData called:', { talentId, youtubeHandle, cleanHandle, hasApiKey: !!YOUTUBE_API_KEY, keyPreview: YOUTUBE_API_KEY ? YOUTUBE_API_KEY.substring(0, 8) + '...' : 'none' });
     
     try {
       // Get cached data from youtube_cache table
