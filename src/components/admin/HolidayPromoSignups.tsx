@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, GiftIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../../services/supabase';
 import toast from 'react-hot-toast';
 
@@ -27,6 +27,7 @@ const HolidayPromoSignups: React.FC = () => {
   const [filterUtm, setFilterUtm] = useState<string>('all');
   const [filterPrize, setFilterPrize] = useState<string>('all');
   const [utmSources, setUtmSources] = useState<string[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSignups();
@@ -88,6 +89,30 @@ const HolidayPromoSignups: React.FC = () => {
     a.click();
     window.URL.revokeObjectURL(url);
     toast.success('Exported to CSV');
+  };
+
+  const handleDelete = async (signup: PromoSignup) => {
+    if (!window.confirm(`Delete ${formatPhoneNumber(signup.phone_number)} from the giveaway?`)) {
+      return;
+    }
+
+    setDeletingId(signup.id);
+    try {
+      const { error } = await supabase
+        .from('beta_signups')
+        .delete()
+        .eq('id', signup.id);
+
+      if (error) throw error;
+
+      toast.success('Entry deleted');
+      fetchSignups();
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast.error('Failed to delete entry');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   // Calculate prize statistics
@@ -208,6 +233,9 @@ const HolidayPromoSignups: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Prize Won
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white/50 divide-y divide-gray-200">
@@ -251,6 +279,20 @@ const HolidayPromoSignups: React.FC = () => {
                       ) : (
                         <span className="text-gray-400 text-sm">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <button
+                        onClick={() => handleDelete(signup)}
+                        disabled={deletingId === signup.id}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        title="Delete entry"
+                      >
+                        {deletingId === signup.id ? (
+                          <div className="animate-spin h-4 w-4 border-2 border-red-500 border-t-transparent rounded-full"></div>
+                        ) : (
+                          <TrashIcon className="h-4 w-4" />
+                        )}
+                      </button>
                     </td>
                   </tr>
                 );

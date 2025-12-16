@@ -59,6 +59,46 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check for STOP/unsubscribe keywords
+    const stopKeywords = ['stop', 'unsubscribe', 'cancel', 'end', 'quit'];
+    const messageNormalized = (body || '').toLowerCase().trim();
+    
+    if (stopKeywords.includes(messageNormalized)) {
+      console.log('🛑 STOP request received from:', from);
+      
+      // Clean phone number for lookup
+      let cleanPhoneForStop = from.replace(/\D/g, '');
+      if (cleanPhoneForStop.length === 11 && cleanPhoneForStop.startsWith('1')) {
+        cleanPhoneForStop = cleanPhoneForStop.substring(1);
+      }
+      
+      // Try multiple phone formats
+      const phoneFormats = [
+        cleanPhoneForStop,
+        `+1${cleanPhoneForStop}`,
+        `1${cleanPhoneForStop}`,
+        from
+      ];
+      
+      // Delete from beta_signups (giveaway entries)
+      const { error: deleteError } = await supabase
+        .from('beta_signups')
+        .delete()
+        .in('phone_number', phoneFormats);
+      
+      if (deleteError) {
+        console.error('❌ Error deleting from beta_signups:', deleteError);
+      } else {
+        console.log('✅ Removed from beta_signups (giveaway)');
+      }
+      
+      // Return empty response - Twilio will handle the STOP automatically
+      return new Response(
+        '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
+        { headers: { ...corsHeaders, 'Content-Type': 'text/xml' } }
+      );
+    }
+
     // Clean phone number (remove all non-digits)
     let cleanPhone = from.replace(/\D/g, '');
     
