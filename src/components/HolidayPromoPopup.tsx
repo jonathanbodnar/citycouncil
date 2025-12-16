@@ -97,6 +97,8 @@ const HolidayPromoPopup: React.FC = () => {
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const [timeLeft, setTimeLeft] = useState({ minutes: 30, seconds: 0 });
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [giveawayTimeLeft, setGiveawayTimeLeft] = useState({ minutes: 15, seconds: 0 });
+  const [giveawayEndTime, setGiveawayEndTime] = useState<number | null>(null);
 
   // Check if popup can be shown
   const canShowPopup = useCallback(() => {
@@ -207,6 +209,38 @@ const HolidayPromoPopup: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [wonPrize]);
+
+  // Giveaway countdown timer (15 minutes from when popup opens)
+  useEffect(() => {
+    if (!isVisible || hasSubmitted) return;
+
+    // Set end time when popup first becomes visible
+    if (!giveawayEndTime) {
+      setGiveawayEndTime(Date.now() + 15 * 60 * 1000); // 15 minutes
+    }
+
+    const updateGiveawayCountdown = () => {
+      if (!giveawayEndTime) return;
+      
+      const now = Date.now();
+      const diff = giveawayEndTime - now;
+
+      if (diff <= 0) {
+        setGiveawayTimeLeft({ minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const minutes = Math.floor(diff / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setGiveawayTimeLeft({ minutes, seconds });
+    };
+
+    updateGiveawayCountdown();
+    const interval = setInterval(updateGiveawayCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [isVisible, hasSubmitted, giveawayEndTime]);
 
   const formatPhoneNumber = (value: string) => {
     const digits = value.replace(/\D/g, '');
@@ -463,16 +497,21 @@ const HolidayPromoPopup: React.FC = () => {
                       15% Off
                     </span>
                     <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
-                      10% Off
-                    </span>
-                    <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
                       $25 Off
                     </span>
                   </div>
                   
-                  <p className="text-white/70 text-sm mb-5">
+                  <p className="text-white/70 text-sm mb-4">
                     No cc required
                   </p>
+
+                  {/* Giveaway Countdown */}
+                  <div className="mb-4 text-white/90 text-sm font-medium">
+                    Giveaway ends in{' '}
+                    <span className="font-mono font-bold text-yellow-300">
+                      {String(giveawayTimeLeft.minutes).padStart(2, '0')}:{String(giveawayTimeLeft.seconds).padStart(2, '0')}
+                    </span>
+                  </div>
 
                   {/* Phone Form */}
                   <form onSubmit={handleSubmit} className="space-y-4">
