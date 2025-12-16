@@ -444,9 +444,13 @@ const HolidayPromoPopup: React.FC = () => {
               {/* Pre-spin State */}
               {!isSpinning ? (
                 <>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-                    🎁 Free Instant Giveaway
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                    Instant Giveaway 🎁
                   </h2>
+                  
+                  <p className="text-white/90 text-lg mb-4">
+                    Win a free personalized ShoutOut or a discount.
+                  </p>
 
                   {/* Prize Badges */}
                   <div className="flex flex-wrap justify-center gap-2 mb-4">
@@ -467,12 +471,8 @@ const HolidayPromoPopup: React.FC = () => {
                     </span>
                   </div>
                   
-                  <p className="text-white/90 text-lg mb-3">
-                    Win a <span className="text-yellow-300 font-bold">FREE</span> Personalized ShoutOut or a discount.
-                  </p>
-                  
                   <p className="text-white/70 text-sm mb-5">
-                    Instant Giveaway • No cc required
+                    No cc required
                   </p>
 
                   {/* Phone Form */}
