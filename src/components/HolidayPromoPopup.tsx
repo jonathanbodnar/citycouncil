@@ -264,24 +264,51 @@ const HolidayPromoPopup: React.FC = () => {
       const formattedPhone = `+1${cleanDigits}`;
       console.log('📱 Formatted phone for storage:', formattedPhone);
 
-      // Get UTM source for tracking
-      // Supports both simple utm= and Facebook's detailed utm_source=
+      // Get UTM source for tracking - check multiple sources
+      // Priority: URL params > localStorage > sessionStorage
       const urlParams = new URLSearchParams(window.location.search);
       const urlUtm = urlParams.get('utm');
       const storedUtm = safeGetItem('promo_source_global');
       const fbUtmSource = urlParams.get('utm_source');
       
+      // Also check sessionStorage as backup
+      let sessionUtm: string | null = null;
+      try {
+        sessionUtm = sessionStorage.getItem('promo_source_global');
+      } catch (e) {
+        console.log('📱 sessionStorage not available');
+      }
+      
+      // Check for utm_details which might have the source
+      let utmDetailsSource: string | null = null;
+      try {
+        const utmDetails = localStorage.getItem('utm_details');
+        if (utmDetails) {
+          const parsed = JSON.parse(utmDetails);
+          if (parsed.source) {
+            const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+            const normalizedSource = parsed.source.toLowerCase();
+            utmDetailsSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : parsed.source;
+          }
+        }
+      } catch (e) {
+        console.log('📱 Could not parse utm_details');
+      }
+      
       console.log('📱 UTM Debug:', {
         currentUrl: window.location.href,
         urlUtm,
         storedUtm,
+        sessionUtm,
+        utmDetailsSource,
         fbUtmSource,
         allUrlParams: Object.fromEntries(urlParams.entries())
       });
       
-      let utmSource = urlUtm || storedUtm || null;
+      // Try all sources in priority order
+      let utmSource = urlUtm || storedUtm || sessionUtm || utmDetailsSource || null;
       
-      // Check for Facebook-style utm_source if no simple utm
+      // Check for Facebook-style utm_source if still no source
       if (!utmSource && fbUtmSource) {
         // Normalize Facebook sources to 'fb'
         const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];

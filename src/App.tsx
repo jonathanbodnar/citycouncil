@@ -20,8 +20,66 @@ const captureRumbleClickId = () => {
   }
 };
 
+// Capture UTM parameters globally on app load
+// This ensures UTM is captured no matter what page they land on
+const captureGlobalUtm = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // Check for simple utm= param first
+      const utmParam = urlParams.get('utm');
+      // Then check for Facebook-style utm_source=
+      const utmSource = urlParams.get('utm_source');
+      
+      // Only capture if we have a UTM and haven't already stored one
+      // (Don't overwrite existing UTM if user navigates to a page without UTM)
+      const existingUtm = localStorage.getItem('promo_source_global');
+      
+      if (utmParam && utmParam !== '1') {
+        // Simple UTM (not self-promo which is talent-specific)
+        localStorage.setItem('promo_source_global', utmParam);
+        // Also store in sessionStorage as backup
+        try { sessionStorage.setItem('promo_source_global', utmParam); } catch (e) {}
+        console.log('🎯 Global UTM captured from utm=:', utmParam);
+      } else if (utmSource && !existingUtm) {
+        // Facebook-style UTM - normalize Facebook sources to 'fb'
+        const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+        const normalizedSource = utmSource.toLowerCase();
+        const sourceToStore = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : utmSource;
+        localStorage.setItem('promo_source_global', sourceToStore);
+        // Also store in sessionStorage as backup
+        try { sessionStorage.setItem('promo_source_global', sourceToStore); } catch (e) {}
+        console.log('🎯 Global UTM captured from utm_source=:', sourceToStore);
+        
+        // Also store full UTM details
+        const utmDetails = {
+          source: utmSource,
+          medium: urlParams.get('utm_medium'),
+          campaign: urlParams.get('utm_campaign'),
+          content: urlParams.get('utm_content'),
+          term: urlParams.get('utm_term'),
+          capturedAt: new Date().toISOString(),
+          landingPage: window.location.pathname
+        };
+        localStorage.setItem('utm_details', JSON.stringify(utmDetails));
+        console.log('🎯 UTM details captured:', utmDetails);
+      }
+      
+      // Log current UTM state for debugging
+      const currentUtm = localStorage.getItem('promo_source_global');
+      if (currentUtm) {
+        console.log('🎯 Current stored UTM:', currentUtm);
+      }
+    } catch (e) {
+      console.error('Error capturing UTM:', e);
+    }
+  }
+};
+
 // Run immediately on script load
 captureRumbleClickId();
+captureGlobalUtm();
 
 // Loading fallback component
 const PageLoader = () => (
