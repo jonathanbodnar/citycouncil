@@ -444,20 +444,12 @@ const HolidayPromoPopup: React.FC = () => {
               {/* Pre-spin State */}
               {!isSpinning ? (
                 <>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                    🎁 Free Giveaway: Win Instantly 🎁
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                    🎁 Free Instant Giveaway
                   </h2>
-                  
-                  <p className="text-white/90 text-lg mb-3">
-                    Win a <span className="text-yellow-300 font-bold">FREE</span> Personalized ShoutOut or a discount.
-                  </p>
-                  
-                  <p className="text-white/70 text-sm mb-4">
-                    Instant Giveaway • No cc required
-                  </p>
 
                   {/* Prize Badges */}
-                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                  <div className="flex flex-wrap justify-center gap-2 mb-4">
                     <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
                       🏆 Free ShoutOut
                     </span>
@@ -474,18 +466,23 @@ const HolidayPromoPopup: React.FC = () => {
                       $25 Off
                     </span>
                   </div>
+                  
+                  <p className="text-white/90 text-lg mb-3">
+                    Win a <span className="text-yellow-300 font-bold">FREE</span> Personalized ShoutOut or a discount.
+                  </p>
+                  
+                  <p className="text-white/70 text-sm mb-5">
+                    Instant Giveaway • No cc required
+                  </p>
 
                   {/* Phone Form */}
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-white/80 text-sm mb-2">
-                        Enter your phone number:
-                      </label>
                       <input
                         type="tel"
                         value={phoneNumber}
                         onChange={handlePhoneChange}
-                        placeholder="(555) 555-5555"
+                        placeholder="Enter your phone number"
                         className="w-full px-4 py-3 rounded-xl text-center text-lg font-medium focus:ring-2 focus:ring-yellow-300 focus:outline-none"
                         style={{
                           background: 'rgba(255, 255, 255, 0.95)',
@@ -504,7 +501,7 @@ const HolidayPromoPopup: React.FC = () => {
                         color: '#1f2937'
                       }}
                     >
-                      See If I Won 🎰
+                      See If I Won 🎁
                     </button>
                   </form>
                 </>
@@ -515,7 +512,7 @@ const HolidayPromoPopup: React.FC = () => {
                     <div className="absolute inset-0 rounded-full border-4 border-white/20"></div>
                     <div className="absolute inset-0 rounded-full border-4 border-t-yellow-400 animate-spin"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-4xl animate-pulse">🎰</span>
+                      <span className="text-4xl animate-pulse">🎁</span>
                     </div>
                   </div>
                   <p className="text-white text-xl font-medium animate-pulse">
