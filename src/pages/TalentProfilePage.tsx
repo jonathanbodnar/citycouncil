@@ -45,14 +45,27 @@ const TalentProfilePage: React.FC = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
-  const [hasCoupon, setHasCoupon] = useState(false);
+  const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
+
+  // Coupon configurations for instant giveaway prizes
+  const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
+    'WINNER100': { type: 'fixed', value: 100, label: 'FREE' },
+    'SANTA25': { type: 'percentage', value: 25, label: '25% OFF' },
+    'SAVE15': { type: 'percentage', value: 15, label: '15% OFF' },
+    'SAVE10': { type: 'percentage', value: 10, label: '10% OFF' },
+    'TAKE25': { type: 'fixed', value: 25, label: '$25 OFF' },
+  };
 
   // Check for coupon from URL or localStorage
   useEffect(() => {
     const checkCoupon = () => {
       const coupon = localStorage.getItem('auto_apply_coupon');
       console.log('🎟️ Checking coupon:', coupon);
-      setHasCoupon(coupon === 'SANTA25');
+      if (coupon && COUPON_DISCOUNTS[coupon.toUpperCase()]) {
+        setActiveCoupon(coupon.toUpperCase());
+      } else {
+        setActiveCoupon(null);
+      }
     };
     
     // Check URL param first and store it
@@ -61,7 +74,9 @@ const TalentProfilePage: React.FC = () => {
       console.log('🎟️ Found coupon in URL:', couponParam);
       localStorage.setItem('auto_apply_coupon', couponParam.toUpperCase());
       // Set state immediately since we just stored it
-      setHasCoupon(couponParam.toUpperCase() === 'SANTA25');
+      if (COUPON_DISCOUNTS[couponParam.toUpperCase()]) {
+        setActiveCoupon(couponParam.toUpperCase());
+      }
       window.dispatchEvent(new Event('couponApplied'));
     } else {
       // No URL param, check localStorage
@@ -78,9 +93,20 @@ const TalentProfilePage: React.FC = () => {
     };
   }, [searchParams]);
 
-  // Calculate discounted price (25% off)
+  // Calculate discounted price based on active coupon
   const originalPrice = talent?.pricing || 0;
-  const discountedPrice = Math.round(originalPrice * 0.75);
+  const getDiscountedPrice = () => {
+    if (!activeCoupon || !COUPON_DISCOUNTS[activeCoupon]) return originalPrice;
+    const discount = COUPON_DISCOUNTS[activeCoupon];
+    if (discount.type === 'percentage') {
+      return Math.round(originalPrice * (1 - discount.value / 100));
+    } else {
+      return Math.max(0, originalPrice - discount.value);
+    }
+  };
+  const discountedPrice = getDiscountedPrice();
+  const discountLabel = activeCoupon ? COUPON_DISCOUNTS[activeCoupon]?.label : '';
+  const hasCoupon = !!activeCoupon;
 
   // Capture UTM tracking and store in localStorage
   // utm=1 means "self_promo" - ONLY tracks for this specific talent
@@ -736,9 +762,9 @@ const TalentProfilePage: React.FC = () => {
                     className="font-bold bg-clip-text text-transparent"
                     style={{ backgroundImage: 'linear-gradient(to right, #8B5CF6, #3B82F6)' }}
                   >
-                    ${discountedPrice}
+                    {discountedPrice === 0 ? 'FREE' : `$${discountedPrice}`}
                   </span>
-                  <span className="text-xs text-green-400 font-medium">25% OFF</span>
+                  <span className="text-xs text-green-400 font-medium">{discountLabel}</span>
                 </span>
               ) : (
                 <span className="font-bold text-white">${talent.pricing}</span>
@@ -889,7 +915,7 @@ const TalentProfilePage: React.FC = () => {
               {hasCoupon ? (
                 <span className="flex items-center gap-2">
                   Order Now - <span className="line-through opacity-70">${originalPrice}</span>
-                  <span className="font-bold">${discountedPrice}</span>
+                  <span className="font-bold">{discountedPrice === 0 ? 'FREE' : `$${discountedPrice}`}</span>
                 </span>
               ) : (
                 <>Order Now - ${talent.pricing}</>
