@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { 
   StarIcon, 
@@ -19,6 +19,15 @@ import VideoPlayer from '../components/VideoPlayer';
 import ShareModal from '../components/ShareModal';
 import FOMONotification from '../components/FOMONotification';
 import toast from 'react-hot-toast';
+
+// Coupon configurations for instant giveaway prizes - defined outside component
+const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
+  'WINNER100': { type: 'fixed', value: 100, label: 'FREE' },
+  'SANTA25': { type: 'percentage', value: 25, label: '25% OFF' },
+  'SAVE15': { type: 'percentage', value: 15, label: '15% OFF' },
+  'SAVE10': { type: 'percentage', value: 10, label: '10% OFF' },
+  'TAKE25': { type: 'fixed', value: 25, label: '$25 OFF' },
+};
 
 interface TalentWithDetails extends TalentProfile {
   users: {
@@ -47,27 +56,21 @@ const TalentProfilePage: React.FC = () => {
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
 
-  // Coupon configurations for instant giveaway prizes
-  const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
-    'WINNER100': { type: 'fixed', value: 100, label: 'FREE' },
-    'SANTA25': { type: 'percentage', value: 25, label: '25% OFF' },
-    'SAVE15': { type: 'percentage', value: 15, label: '15% OFF' },
-    'SAVE10': { type: 'percentage', value: 10, label: '10% OFF' },
-    'TAKE25': { type: 'fixed', value: 25, label: '$25 OFF' },
-  };
+  // Check coupon from localStorage
+  const checkCoupon = useCallback(() => {
+    const coupon = localStorage.getItem('auto_apply_coupon');
+    console.log('🎟️ Checking coupon from localStorage:', coupon);
+    if (coupon && COUPON_DISCOUNTS[coupon.toUpperCase()]) {
+      console.log('🎟️ Valid coupon found, setting activeCoupon:', coupon.toUpperCase());
+      setActiveCoupon(coupon.toUpperCase());
+    } else {
+      console.log('🎟️ No valid coupon found');
+      setActiveCoupon(null);
+    }
+  }, []);
 
-  // Check for coupon from URL or localStorage
+  // Check for coupon from URL or localStorage on mount and when URL changes
   useEffect(() => {
-    const checkCoupon = () => {
-      const coupon = localStorage.getItem('auto_apply_coupon');
-      console.log('🎟️ Checking coupon:', coupon);
-      if (coupon && COUPON_DISCOUNTS[coupon.toUpperCase()]) {
-        setActiveCoupon(coupon.toUpperCase());
-      } else {
-        setActiveCoupon(null);
-      }
-    };
-    
     // Check URL param first and store it
     const couponParam = searchParams.get('coupon');
     if (couponParam) {
@@ -91,7 +94,7 @@ const TalentProfilePage: React.FC = () => {
       window.removeEventListener('storage', checkCoupon);
       window.removeEventListener('couponApplied', checkCoupon);
     };
-  }, [searchParams]);
+  }, [searchParams, checkCoupon]);
 
   // Calculate discounted price based on active coupon
   const originalPrice = talent?.pricing || 0;
@@ -848,8 +851,8 @@ const TalentProfilePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Pricing Urgency Indicator - flush at bottom */}
-            {ordersRemaining <= 10 && (
+            {/* Pricing Urgency Indicator - flush at bottom (hide if coupon applied) */}
+            {ordersRemaining <= 10 && !hasCoupon && (
               <div className="mt-4 -mx-4 md:-mx-5 -mb-4 md:-mb-5 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-t border-orange-400/50 px-4 py-3">
                 <FireIcon className="h-5 w-5 text-orange-400" />
                 <span className="text-sm font-bold text-orange-100">

@@ -240,17 +240,16 @@ const HolidayPromoPopup: React.FC = () => {
     const canWinFreeShoutout = !todayWinners || todayWinners.length === 0;
 
     // Weighted probabilities (out of 100)
-    // FREE_SHOUTOUT: 1% (if available), 25_OFF: 15%, 15_OFF: 30%, 10_OFF: 34%, 25_DOLLARS: 20%
+    // FREE_SHOUTOUT: 1% (if available), 25_OFF: 20%, 15_OFF: 45%, 25_DOLLARS: 34%
+    // Note: 10_OFF removed from giveaway
     const rand = Math.random() * 100;
     
     if (canWinFreeShoutout && rand < 1) {
       return 'FREE_SHOUTOUT';
-    } else if (rand < 16) {
+    } else if (rand < 21) {
       return '25_OFF';
-    } else if (rand < 46) {
+    } else if (rand < 66) {
       return '15_OFF';
-    } else if (rand < 80) {
-      return '10_OFF';
     } else {
       return '25_DOLLARS';
     }
