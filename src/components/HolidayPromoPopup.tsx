@@ -4,37 +4,74 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
-const POPUP_SUBMITTED_KEY = 'holiday_promo_submitted'; // Only set when phone submitted
-const POPUP_CLOSED_KEY = 'holiday_promo_closed_at'; // Tracks when they last closed it
+const POPUP_SUBMITTED_KEY = 'holiday_promo_submitted';
+const POPUP_CLOSED_KEY = 'holiday_promo_closed_at';
 const POPUP_EXPIRY_KEY = 'holiday_promo_popup_expiry';
-const COUNTDOWN_HOURS = 3;
-const CLOSE_COOLDOWN_MINUTES = 5; // Show again 5 minutes after closing
+const WINNER_PRIZE_KEY = 'giveaway_prize';
+const WINNER_EXPIRY_KEY = 'giveaway_prize_expiry';
+const CLOSE_COOLDOWN_MINUTES = 5;
 
-// Popup delay based on traffic source (in milliseconds)
+// Prize types and their probabilities
+type Prize = 'FREE_SHOUTOUT' | '25_OFF' | '15_OFF' | '10_OFF' | '25_DOLLARS';
+
+interface PrizeInfo {
+  label: string;
+  code: string;
+  shortLabel: string;
+  textMessage: string;
+}
+
+const PRIZES: Record<Prize, PrizeInfo> = {
+  FREE_SHOUTOUT: {
+    label: 'Free ShoutOut',
+    code: 'WINNER100',
+    shortLabel: 'Free ShoutOut',
+    textMessage: 'a FREE personalized ShoutOut (up to $100 value)'
+  },
+  '25_OFF': {
+    label: '25% Off',
+    code: 'SANTA25',
+    shortLabel: '25% Off',
+    textMessage: '25% off'
+  },
+  '15_OFF': {
+    label: '15% Off',
+    code: 'SAVE15',
+    shortLabel: '15% Off',
+    textMessage: '15% off'
+  },
+  '10_OFF': {
+    label: '10% Off',
+    code: 'SAVE10',
+    shortLabel: '10% Off',
+    textMessage: '10% off'
+  },
+  '25_DOLLARS': {
+    label: '$25 Off',
+    code: 'TAKE25',
+    shortLabel: '$25 Off',
+    textMessage: '$25 off'
+  }
+};
+
+// Popup delay based on traffic source
 const getPopupDelay = (): number => {
   const urlParams = new URLSearchParams(window.location.search);
   const utmSource = urlParams.get('utm') || urlParams.get('utm_source') || '';
   const storedSource = safeGetItem('promo_source_global') || '';
   const source = (utmSource || storedSource).trim().toLowerCase();
   
-  console.log('🎁 Popup source detection:', { utmSource, storedSource, finalSource: source });
-  
-  // Fast popup for SMS, giveaway, and rgiveaway sources
   if (source === 'sms' || source === 'giveaway' || source === 'rgiveaway') {
-    console.log(`🎁 ${source} source detected - 3 second delay`);
-    return 3000; // 3 seconds for SMS, giveaway, and rgiveaway campaigns
+    return 3000;
   }
   
-  console.log('🎁 Default source - 15 second delay');
-  return 15000; // 15 seconds for all other sources
+  return 15000;
 };
 
-// Safe localStorage helpers for Safari private browsing (defined outside component)
 const safeGetItem = (key: string): string | null => {
   try {
     return localStorage.getItem(key);
   } catch (e) {
-    console.warn('localStorage not available:', e);
     return null;
   }
 };
@@ -47,84 +84,71 @@ const safeSetItem = (key: string, value: string): void => {
   }
 };
 
+// Dispatch event to update header countdown
+const dispatchCountdownUpdate = () => {
+  window.dispatchEvent(new Event('giveawayCountdownUpdate'));
+};
+
 const HolidayPromoPopup: React.FC = () => {
   const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [wonPrize, setWonPrize] = useState<Prize | null>(null);
+  const [timeLeft, setTimeLeft] = useState({ minutes: 30, seconds: 0 });
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [hasShownInitial, setHasShownInitial] = useState(false);
 
-  // Check if popup can be shown (not submitted, not in cooldown, not talent/admin)
+  // Check if popup can be shown
   const canShowPopup = useCallback(() => {
-    console.log('🎁 canShowPopup check - user:', user?.user_type);
-    
-    // Never show to talent or admin users
     if (user?.user_type === 'talent' || user?.user_type === 'admin') {
-      console.log('🎁 Blocked: talent/admin user');
       return false;
     }
 
-    // Never show if already submitted
     const submitted = safeGetItem(POPUP_SUBMITTED_KEY);
     if (submitted === 'true') {
-      console.log('🎁 Blocked: already submitted');
       return false;
     }
 
-    // Check if countdown expired
     const expiryTime = safeGetItem(POPUP_EXPIRY_KEY);
     if (expiryTime) {
       const expiry = parseInt(expiryTime, 10);
       if (Date.now() > expiry) {
-        console.log('🎁 Blocked: countdown expired');
         return false;
       }
     }
 
-    // Check close cooldown (5 minutes)
     const closedAt = safeGetItem(POPUP_CLOSED_KEY);
     if (closedAt) {
       const closedTime = parseInt(closedAt, 10);
       const cooldownMs = CLOSE_COOLDOWN_MINUTES * 60 * 1000;
       if (Date.now() - closedTime < cooldownMs) {
-        console.log('🎁 Blocked: in cooldown');
         return false;
       }
     }
 
-    console.log('🎁 canShowPopup: TRUE');
     return true;
   }, [user]);
 
-  // Initial popup show - delay based on traffic source
+  // Initial popup show
   useEffect(() => {
     const delay = getPopupDelay();
-    console.log('🎁 Popup timer starting with delay:', delay, 'ms');
     
     const timer = setTimeout(() => {
-      console.log('🎁 Popup timer fired, checking canShowPopup...');
       if (canShowPopup()) {
-        console.log('🎁 Showing popup!');
         setIsVisible(true);
-        setHasShownInitial(true);
         
-        // Set expiry time if not already set
         const expiryTime = safeGetItem(POPUP_EXPIRY_KEY);
         if (!expiryTime) {
-          const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
+          const expiry = Date.now() + (3 * 60 * 60 * 1000); // 3 hours
           safeSetItem(POPUP_EXPIRY_KEY, expiry.toString());
         }
-      } else {
-        console.log('🎁 canShowPopup returned false');
       }
     }, delay);
 
     return () => clearTimeout(timer);
   }, [canShowPopup]);
 
-  // Exit intent detection - tracks mouse position and triggers when leaving top of viewport
+  // Exit intent detection
   useEffect(() => {
     let mouseY = 0;
     
@@ -133,26 +157,20 @@ const HolidayPromoPopup: React.FC = () => {
     };
     
     const handleMouseLeave = (e: MouseEvent) => {
-      // Trigger if mouse leaves near the top (going to close tab, back button, etc.)
       if (e.clientY <= 0 || mouseY <= 100) {
         if (!isVisible && canShowPopup()) {
-          console.log('🚪 Exit intent detected - mouseY:', mouseY, 'clientY:', e.clientY);
           setIsVisible(true);
-          setHasShownInitial(true);
           
-          // Set expiry time if not already set
           const expiryTime = safeGetItem(POPUP_EXPIRY_KEY);
           if (!expiryTime) {
-            const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
+            const expiry = Date.now() + (3 * 60 * 60 * 1000);
             safeSetItem(POPUP_EXPIRY_KEY, expiry.toString());
           }
         }
       }
     };
 
-    // Track mouse position
     document.addEventListener('mousemove', handleMouseMove);
-    // Detect when mouse leaves the document
     document.addEventListener('mouseleave', handleMouseLeave);
     
     return () => {
@@ -161,37 +179,12 @@ const HolidayPromoPopup: React.FC = () => {
     };
   }, [isVisible, canShowPopup]);
 
-  // Back button / history detection for mobile
+  // Countdown timer for prize expiry
   useEffect(() => {
-    const handlePopState = () => {
-      if (!isVisible && canShowPopup()) {
-        console.log('🚪 Back button detected - showing popup');
-        setIsVisible(true);
-        setHasShownInitial(true);
-        
-        const expiryTime = safeGetItem(POPUP_EXPIRY_KEY);
-        if (!expiryTime) {
-          const expiry = Date.now() + (COUNTDOWN_HOURS * 60 * 60 * 1000);
-          safeSetItem(POPUP_EXPIRY_KEY, expiry.toString());
-        }
-      }
-    };
-
-    // Push a dummy state so we can detect back button
-    window.history.pushState({ popup: true }, '');
-    window.addEventListener('popstate', handlePopState);
-    
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [isVisible, canShowPopup]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (!isVisible) return;
+    if (!wonPrize) return;
 
     const updateCountdown = () => {
-      const expiryTime = safeGetItem(POPUP_EXPIRY_KEY);
+      const expiryTime = safeGetItem(WINNER_EXPIRY_KEY);
       if (!expiryTime) return;
 
       const expiry = parseInt(expiryTime, 10);
@@ -199,31 +192,25 @@ const HolidayPromoPopup: React.FC = () => {
       const diff = expiry - now;
 
       if (diff <= 0) {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-        setIsVisible(false);
-        // Countdown expired - don't show again
-        safeSetItem(POPUP_SUBMITTED_KEY, 'true');
+        setTimeLeft({ minutes: 0, seconds: 0 });
         return;
       }
 
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const minutes = Math.floor(diff / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      setTimeLeft({ hours, minutes, seconds });
+      setTimeLeft({ minutes, seconds });
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [isVisible]);
+  }, [wonPrize]);
 
   const formatPhoneNumber = (value: string) => {
-    // Remove all non-digits
     const digits = value.replace(/\D/g, '');
     
-    // Format as (XXX) XXX-XXXX
     if (digits.length <= 3) {
       return digits;
     } else if (digits.length <= 6) {
@@ -238,48 +225,67 @@ const HolidayPromoPopup: React.FC = () => {
     setPhoneNumber(formatted);
   };
 
+  // Determine prize - weighted random selection
+  const determinePrize = async (): Promise<Prize> => {
+    // Check if someone already won the free shoutout today
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todayWinners } = await supabase
+      .from('beta_signups')
+      .select('id')
+      .eq('source', 'holiday_popup')
+      .eq('prize_won', 'FREE_SHOUTOUT')
+      .gte('subscribed_at', `${today}T00:00:00Z`)
+      .limit(1);
+
+    const canWinFreeShoutout = !todayWinners || todayWinners.length === 0;
+
+    // Weighted probabilities (out of 100)
+    // FREE_SHOUTOUT: 1% (if available), 25_OFF: 15%, 15_OFF: 30%, 10_OFF: 34%, 25_DOLLARS: 20%
+    const rand = Math.random() * 100;
+    
+    if (canWinFreeShoutout && rand < 1) {
+      return 'FREE_SHOUTOUT';
+    } else if (rand < 16) {
+      return '25_OFF';
+    } else if (rand < 46) {
+      return '15_OFF';
+    } else if (rand < 80) {
+      return '10_OFF';
+    } else {
+      return '25_DOLLARS';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate phone number (should have 10 digits)
     const digits = phoneNumber.replace(/\D/g, '');
-    
-    // Handle various formats - strip leading 1 if present
     let cleanDigits = digits;
     if (digits.length === 11 && digits.startsWith('1')) {
       cleanDigits = digits.slice(1);
     }
     
     if (cleanDigits.length !== 10) {
-      console.log('❌ Invalid phone number:', phoneNumber, '-> digits:', digits, '-> clean:', cleanDigits);
       toast.error('Please enter a valid 10-digit phone number');
       return;
     }
 
-    setIsSubmitting(true);
-    console.log('📱 Holiday popup - submitting phone:', cleanDigits);
+    setIsSpinning(true);
 
     try {
-      // Format phone number for storage (+1XXXXXXXXXX)
       const formattedPhone = `+1${cleanDigits}`;
-      console.log('📱 Formatted phone for storage:', formattedPhone);
 
-      // Get UTM source for tracking - check multiple sources
-      // Priority: URL params > localStorage > sessionStorage
+      // Get UTM source
       const urlParams = new URLSearchParams(window.location.search);
       const urlUtm = urlParams.get('utm');
       const storedUtm = safeGetItem('promo_source_global');
       const fbUtmSource = urlParams.get('utm_source');
       
-      // Also check sessionStorage as backup
       let sessionUtm: string | null = null;
       try {
         sessionUtm = sessionStorage.getItem('promo_source_global');
-      } catch (e) {
-        console.log('📱 sessionStorage not available');
-      }
+      } catch (e) {}
       
-      // Check for utm_details which might have the source
       let utmDetailsSource: string | null = null;
       try {
         const utmDetails = localStorage.getItem('utm_details');
@@ -291,131 +297,119 @@ const HolidayPromoPopup: React.FC = () => {
             utmDetailsSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : parsed.source;
           }
         }
-      } catch (e) {
-        console.log('📱 Could not parse utm_details');
-      }
+      } catch (e) {}
       
-      console.log('📱 UTM Debug:', {
-        currentUrl: window.location.href,
-        urlUtm,
-        storedUtm,
-        sessionUtm,
-        utmDetailsSource,
-        fbUtmSource,
-        allUrlParams: Object.fromEntries(urlParams.entries())
-      });
-      
-      // Try all sources in priority order
       let utmSource = urlUtm || storedUtm || sessionUtm || utmDetailsSource || null;
       
-      // Check for Facebook-style utm_source if still no source
       if (!utmSource && fbUtmSource) {
-        // Normalize Facebook sources to 'fb'
         const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
         const normalizedSource = fbUtmSource.toLowerCase();
         utmSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : fbUtmSource;
       }
-      console.log('📱 Final UTM source:', utmSource);
 
-      // Save to beta_signups with source "holiday_popup"
+      // Determine prize
+      const prize = await determinePrize();
+      const prizeInfo = PRIZES[prize];
+
+      // Simulate spinning animation (2 seconds)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Save to beta_signups with prize
       const { data, error: insertError } = await supabase
         .from('beta_signups')
         .insert({
           phone_number: formattedPhone,
           source: 'holiday_popup',
           utm_source: utmSource,
-          subscribed_at: new Date().toISOString()
+          subscribed_at: new Date().toISOString(),
+          prize_won: prize
         })
         .select();
 
-      console.log('📱 Insert result:', { data, error: insertError });
-
       if (insertError) {
-        // Check if it's a duplicate
         if (insertError.code === '23505') {
-          console.log('📱 Duplicate phone number - already signed up');
-          toast.success('You\'re already entered! Good luck! 🍀');
-        } else {
-          console.error('❌ Insert error:', insertError);
-          throw insertError;
+          // Already entered - check their existing prize
+          const { data: existing } = await supabase
+            .from('beta_signups')
+            .select('prize_won')
+            .eq('phone_number', formattedPhone)
+            .single();
+          
+          if (existing?.prize_won) {
+            setWonPrize(existing.prize_won as Prize);
+            const existingPrizeInfo = PRIZES[existing.prize_won as Prize];
+            safeSetItem(WINNER_PRIZE_KEY, existing.prize_won);
+            safeSetItem('auto_apply_coupon', existingPrizeInfo.code);
+            toast.success('Welcome back! Your prize is still active! 🎉');
+          } else {
+            toast.error('You\'ve already entered!');
+          }
+          setHasSubmitted(true);
+          setIsSpinning(false);
+          safeSetItem(POPUP_SUBMITTED_KEY, 'true');
+          return;
         }
-      } else {
-        console.log('✅ Phone number saved successfully:', data);
-        
-        // Send SMS via edge function
-        try {
-          console.log('📤 Sending welcome SMS...');
-          const smsResult = await supabase.functions.invoke('send-sms', {
-            body: {
-              to: formattedPhone,
-              message: `You're in! 🎉 You'll get a text if you win the free ShoutOut. Ready to order now? Here's a 25% off coupon (expires in 24hrs): SANTA25 https://shoutout.us?coupon=SANTA25`,
-              useUserNumber: true // Send from user-facing number, not talent number
-            }
-          });
-          console.log('📤 SMS result:', smsResult);
-        } catch (smsError) {
-          console.error('❌ Error sending SMS:', smsError);
-          // Don't fail the whole submission if SMS fails
-        }
-
-        toast.success('You\'re entered! Good luck! 🍀');
-        
-        // Store coupon code in localStorage for auto-apply at checkout
-        safeSetItem('auto_apply_coupon', 'SANTA25');
-        
-        // Track that user submitted the holiday popup (for user/order tracking)
-        safeSetItem('holiday_popup_submitted', 'true');
-        
-        // Dispatch custom event to update TalentCards immediately
-        window.dispatchEvent(new Event('couponApplied'));
-        
-        // Fire Facebook Pixel Lead event
-        console.log('📊 Attempting to fire Lead events...', { 
-          hasFbq: typeof (window as any).fbq === 'function',
-          hasRatag: typeof (window as any).ratag === 'function'
-        });
-        
-        if (typeof window !== 'undefined' && (window as any).fbq) {
-          (window as any).fbq('track', 'Lead', {
-            content_name: 'Holiday Promo Popup',
-            content_category: 'Phone Signup'
-          });
-          console.log('📊 Facebook Pixel Lead event fired');
-        } else {
-          console.warn('⚠️ Facebook Pixel (fbq) not found');
-        }
-        
-        // Fire Rumble Ads Lead conversion
-        if (typeof window !== 'undefined' && (window as any).ratag) {
-          (window as any).ratag('conversion', { to: 3336 });
-          console.log('📊 Rumble Ads Lead conversion fired (3336)');
-        } else {
-          console.warn('⚠️ Rumble Ads (ratag) not found');
-        }
+        throw insertError;
       }
 
-      setHasSubmitted(true);
+      // Send winner SMS
+      try {
+        const winnerMessage = `You just won ${prizeInfo.textMessage} off a personalized ShoutOut from top conservatives! 🎉 Expires in 30 min, find the perfect ShoutOut here: https://shoutout.us?utm=winning&coupon=${prizeInfo.code}`;
+        
+        await supabase.functions.invoke('send-sms', {
+          body: {
+            to: formattedPhone,
+            message: winnerMessage,
+            useUserNumber: true
+          }
+        });
+      } catch (smsError) {
+        console.error('Error sending SMS:', smsError);
+      }
+
+      // Set prize expiry (30 minutes)
+      const prizeExpiry = Date.now() + (30 * 60 * 1000);
+      safeSetItem(WINNER_EXPIRY_KEY, prizeExpiry.toString());
+      safeSetItem(WINNER_PRIZE_KEY, prize);
+      safeSetItem('auto_apply_coupon', prizeInfo.code);
+      safeSetItem('holiday_popup_submitted', 'true');
       
-      // Mark as SUBMITTED - never show again
+      // Dispatch events
+      window.dispatchEvent(new Event('couponApplied'));
+      dispatchCountdownUpdate();
+
+      // Fire tracking events
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Lead', {
+          content_name: 'Instant Giveaway',
+          content_category: 'Phone Signup'
+        });
+      }
+      
+      if (typeof window !== 'undefined' && (window as any).ratag) {
+        (window as any).ratag('conversion', { to: 3336 });
+      }
+
+      setWonPrize(prize);
+      setHasSubmitted(true);
       safeSetItem(POPUP_SUBMITTED_KEY, 'true');
-      setTimeout(() => {
-        setIsVisible(false);
-      }, 3000);
 
     } catch (error: any) {
-      console.error('❌ Error submitting phone number:', error);
-      console.error('❌ Error details:', JSON.stringify(error, null, 2));
+      console.error('Error:', error);
       toast.error('Something went wrong. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setIsSpinning(false);
     }
   };
 
   const handleClose = () => {
     setIsVisible(false);
-    // Just set a cooldown - will show again on exit intent after 5 minutes
     safeSetItem(POPUP_CLOSED_KEY, Date.now().toString());
-    console.log('🔕 Popup closed - will show again on exit intent after 5 minutes');
+  };
+
+  const handleFindShoutOut = () => {
+    setIsVisible(false);
+    window.location.href = '/';
   };
 
   if (!isVisible) return null;
@@ -447,27 +441,107 @@ const HolidayPromoPopup: React.FC = () => {
         <div className="p-8 text-center">
           {!hasSubmitted ? (
             <>
-              {/* Headline */}
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                🎁 Daily Giveaway 🎁
+              {/* Pre-spin State */}
+              {!isSpinning ? (
+                <>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                    🎁 Free Giveaway: Win Instantly 🎁
+                  </h2>
+                  
+                  <p className="text-white/90 text-lg mb-3">
+                    Win a <span className="text-yellow-300 font-bold">FREE</span> Personalized ShoutOut or a discount.
+                  </p>
+                  
+                  <p className="text-white/70 text-sm mb-4">
+                    Instant Giveaway • No cc required
+                  </p>
+
+                  {/* Prize Badges */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
+                      🏆 Free ShoutOut
+                    </span>
+                    <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
+                      25% Off
+                    </span>
+                    <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
+                      15% Off
+                    </span>
+                    <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
+                      10% Off
+                    </span>
+                    <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
+                      $25 Off
+                    </span>
+                  </div>
+
+                  {/* Phone Form */}
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">
+                        Enter your phone number:
+                      </label>
+                      <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={handlePhoneChange}
+                        placeholder="(555) 555-5555"
+                        className="w-full px-4 py-3 rounded-xl text-center text-lg font-medium focus:ring-2 focus:ring-yellow-300 focus:outline-none"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.95)',
+                          color: '#1f2937'
+                        }}
+                        maxLength={14}
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105"
+                      style={{
+                        background: 'linear-gradient(to right, #facc15, #f59e0b)',
+                        color: '#1f2937'
+                      }}
+                    >
+                      See If I Won 🎰
+                    </button>
+                  </form>
+                </>
+              ) : (
+                /* Spinning State */
+                <div className="py-12">
+                  <div className="relative w-24 h-24 mx-auto mb-6">
+                    <div className="absolute inset-0 rounded-full border-4 border-white/20"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-t-yellow-400 animate-spin"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-4xl animate-pulse">🎰</span>
+                    </div>
+                  </div>
+                  <p className="text-white text-xl font-medium animate-pulse">
+                    Revealing your prize...
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Winner State */
+            <div className="py-4">
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Congratulations, you just won {PRIZES[wonPrize!]?.label}! 🎉
               </h2>
               
-              <p className="text-white/90 text-lg mb-2">
-                Win a <span className="text-yellow-300 font-bold text-xl">FREE</span> personalized video ShoutOut!
-              </p>
-              
-              <p className="text-white/70 text-base mb-4">
-                $100 value • New winner every day
-              </p>
+              {/* Prize Code */}
+              <div className="mt-4 bg-white/20 backdrop-blur rounded-xl p-4 mb-4">
+                <p className="text-white/70 text-sm mb-1">Your Code:</p>
+                <p className="text-yellow-300 text-3xl font-mono font-bold">{PRIZES[wonPrize!]?.code}</p>
+              </div>
 
-              {/* Countdown Timer */}
+              {/* Countdown */}
               <div className="mb-6">
-                <p className="text-white/70 text-sm mb-2">Next drawing in:</p>
+                <p className="text-white/70 text-sm mb-2">Expires in...</p>
                 <div className="flex justify-center gap-3">
-                  <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-2">
-                    <span className="text-2xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
-                    <p className="text-xs text-white/70">Hours</p>
-                  </div>
                   <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-2">
                     <span className="text-2xl font-bold text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
                     <p className="text-xs text-white/70">Minutes</p>
@@ -479,69 +553,17 @@ const HolidayPromoPopup: React.FC = () => {
                 </div>
               </div>
 
-              {/* Phone Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-white/80 text-sm mb-2">
-                    Enter your phone number to enter:
-                  </label>
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={handlePhoneChange}
-                    placeholder="(555) 555-5555"
-                    className="w-full px-4 py-3 rounded-xl text-center text-lg font-medium focus:ring-2 focus:ring-yellow-300 focus:outline-none"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      color: '#1f2937'
-                    }}
-                    maxLength={14}
-                    required
-                  />
-                  <p className="text-white/60 text-xs mt-2">
-                    If you win, you'll get a text here.
-                  </p>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background: 'linear-gradient(to right, #facc15, #f59e0b)',
-                    color: '#1f2937'
-                  }}
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="animate-spin h-5 w-5 border-2 border-gray-800 border-t-transparent rounded-full"></div>
-                      Entering...
-                    </span>
-                  ) : (
-                    'Enter to Win 🎉'
-                  )}
-                </button>
-              </form>
-
-              <p className="text-white/50 text-xs mt-4">
-                *Giveaway is a $100 credit. No purchase necessary.
-              </p>
-            </>
-          ) : (
-            /* Success State */
-            <div className="py-8">
-              <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                You're Entered!
-              </h2>
-              <p className="text-white/90 mb-4">
-                Good luck! We'll text you if you win.
-              </p>
-              <div className="mt-4 bg-white/20 backdrop-blur rounded-xl p-4">
-                <p className="text-white/70 text-sm mb-1">Can't wait? Get 25% off now:</p>
-                <p className="text-yellow-300 text-2xl font-mono font-bold">SANTA25</p>
-                <p className="text-white/60 text-xs mt-2">Code expires in 24 hours</p>
-              </div>
+              {/* CTA Button */}
+              <button
+                onClick={handleFindShoutOut}
+                className="w-full py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105"
+                style={{
+                  background: 'linear-gradient(to right, #facc15, #f59e0b)',
+                  color: '#1f2937'
+                }}
+              >
+                Find the Perfect ShoutOut 🎁
+              </button>
             </div>
           )}
         </div>
@@ -555,3 +577,26 @@ const HolidayPromoPopup: React.FC = () => {
 
 export default HolidayPromoPopup;
 
+// Export function to check if user has active prize countdown
+export const getActivePrizeCountdown = (): { prize: string; code: string; expiresAt: number } | null => {
+  try {
+    const prize = localStorage.getItem(WINNER_PRIZE_KEY);
+    const expiry = localStorage.getItem(WINNER_EXPIRY_KEY);
+    
+    if (!prize || !expiry) return null;
+    
+    const expiryTime = parseInt(expiry, 10);
+    if (Date.now() > expiryTime) return null;
+    
+    const prizeInfo = PRIZES[prize as Prize];
+    if (!prizeInfo) return null;
+    
+    return {
+      prize: prizeInfo.label,
+      code: prizeInfo.code,
+      expiresAt: expiryTime
+    };
+  } catch (e) {
+    return null;
+  }
+};

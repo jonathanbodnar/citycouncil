@@ -7,12 +7,14 @@ import {
   ArrowRightOnRectangleIcon,
   BellIcon,
   MagnifyingGlassIcon,
-  XMarkIcon
+  XMarkIcon,
+  GiftIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { Notification } from '../types';
 import Logo from './Logo';
+import { getActivePrizeCountdown } from './HolidayPromoPopup';
 
 interface TalentSearchResult {
   id: string;
@@ -36,12 +38,49 @@ const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<TalentSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [prizeCountdown, setPrizeCountdown] = useState<{ prize: string; code: string; minutes: number; seconds: number } | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
   const notificationRef = React.useRef<HTMLDivElement>(null);
   const searchRef = React.useRef<HTMLDivElement>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Prize countdown timer
+  useEffect(() => {
+    const updatePrizeCountdown = () => {
+      const activePrize = getActivePrizeCountdown();
+      if (activePrize) {
+        const diff = activePrize.expiresAt - Date.now();
+        if (diff > 0) {
+          const minutes = Math.floor(diff / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+          setPrizeCountdown({
+            prize: activePrize.prize,
+            code: activePrize.code,
+            minutes,
+            seconds
+          });
+        } else {
+          setPrizeCountdown(null);
+        }
+      } else {
+        setPrizeCountdown(null);
+      }
+    };
+
+    updatePrizeCountdown();
+    const interval = setInterval(updatePrizeCountdown, 1000);
+
+    // Listen for giveaway updates
+    const handleGiveawayUpdate = () => updatePrizeCountdown();
+    window.addEventListener('giveawayCountdownUpdate', handleGiveawayUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('giveawayCountdownUpdate', handleGiveawayUpdate);
+    };
+  }, []);
 
   // Fetch display name (prioritize talent_profiles.full_name for talent users)
   useEffect(() => {
@@ -310,6 +349,17 @@ const Header: React.FC = () => {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Prize Countdown Banner */}
+            {prizeCountdown && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-medium animate-pulse">
+                <GiftIcon className="h-4 w-4" />
+                <span>{prizeCountdown.prize}</span>
+                <span className="font-mono font-bold">
+                  {String(prizeCountdown.minutes).padStart(2, '0')}:{String(prizeCountdown.seconds).padStart(2, '0')}
+                </span>
+              </div>
+            )}
+
             {/* Search Button */}
             <div className="relative z-[2000]" ref={searchRef}>
               <button
