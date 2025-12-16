@@ -478,6 +478,7 @@ const AdvancedAnalytics: React.FC = () => {
       'instagram': 'Instagram',
       'meta': 'Meta',
       'rumble': 'Rumble',
+      'rgiveaway': 'Rumble',
       'sms': 'SMS',
       'email': 'Email',
       'giveaway': 'Giveaway',
