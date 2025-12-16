@@ -741,10 +741,6 @@ const OrderPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <span className="text-blue-500">✓</span>
-                  <p className="text-sm text-gray-700">Pay securely</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-blue-500">✓</span>
                   <p className="text-sm text-gray-700">Add order details after checkout</p>
                 </div>
                 <div className="flex items-center gap-3">
