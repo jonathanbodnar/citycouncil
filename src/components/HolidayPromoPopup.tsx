@@ -19,10 +19,10 @@ const getPopupDelay = (): number => {
   
   console.log('🎁 Popup source detection:', { utmSource, storedSource, finalSource: source });
   
-  // Fast popup for SMS and giveaway sources
-  if (source === 'sms' || source === 'giveaway') {
+  // Fast popup for SMS, giveaway, and rgiveaway sources
+  if (source === 'sms' || source === 'giveaway' || source === 'rgiveaway') {
     console.log(`🎁 ${source} source detected - 3 second delay`);
-    return 3000; // 3 seconds for SMS and giveaway campaigns
+    return 3000; // 3 seconds for SMS, giveaway, and rgiveaway campaigns
   }
   
   console.log('🎁 Default source - 15 second delay');
