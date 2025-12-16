@@ -309,8 +309,8 @@ const HomePage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white">
 
       {/* Hero Banner */}
-      <div className="rounded-2xl px-6 py-3 mb-6 flex items-center justify-center gap-4 border border-white/10 bg-white/5">
-        <p className="text-white/80 text-sm sm:text-base font-medium">
+      <div className="rounded-2xl px-4 sm:px-6 py-3 mb-6 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 border border-white/10 bg-white/5">
+        <p className="text-white/80 text-sm sm:text-base font-medium text-center">
           Get personalized video ShoutOuts from top conservative voices.
         </p>
         {totalUsers > 0 && (
