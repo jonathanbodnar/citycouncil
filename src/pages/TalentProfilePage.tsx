@@ -775,7 +775,7 @@ const TalentProfilePage: React.FC = () => {
               <span className="text-gray-500">•</span>
               <span className="flex items-center">
                 <ClockIcon className="h-4 w-4 mr-0.5" />
-                {talent.fulfillment_time_hours}h delivery
+                {talent.fulfillment_time_hours || 48}h delivery
               </span>
               {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) && (
                 <>
