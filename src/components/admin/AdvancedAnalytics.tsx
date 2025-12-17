@@ -106,22 +106,27 @@ const LifetimeCostPerFollowerCard: React.FC<LifetimeCostPerFollowerCardProps> = 
 
         if (followerError) throw followerError;
 
-        // Get all ad spend from mapped campaigns
+        // Get the first sync date to filter ad spend
+        const trackingStartDate = followerData && followerData.length > 0 ? followerData[0].date : null;
+
+        // Get ad spend from mapped campaigns ONLY since we started tracking followers
         const mappedCampaignIds = campaignMappings
           .filter(m => m.goals.includes('followers'))
           .map(m => m.campaign_id);
 
         let totalMappedSpend = 0;
         
-        if (mappedCampaignIds.length > 0) {
+        if (mappedCampaignIds.length > 0 && trackingStartDate) {
           const { data: spendData, error: spendError } = await supabase
             .from('ad_spend_daily')
-            .select('spend, campaign_id')
-            .in('campaign_id', mappedCampaignIds);
+            .select('spend, campaign_id, date')
+            .in('campaign_id', mappedCampaignIds)
+            .gte('date', trackingStartDate); // Only spend since we started tracking
 
           if (spendError) throw spendError;
 
           totalMappedSpend = (spendData || []).reduce((sum, row) => sum + (Number(row.spend) || 0), 0);
+          console.log(`💰 Lifetime spend since ${trackingStartDate}:`, totalMappedSpend, 'from', spendData?.length, 'records');
         }
 
         // Calculate total followers gained (last count - first count)
