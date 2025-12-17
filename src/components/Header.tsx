@@ -457,17 +457,6 @@ const Header: React.FC = () => {
 
             {user ? (
               <>
-                {/* Bonus/Promotions Button - Talent Only */}
-                {user.user_type === 'talent' && (
-                  <Link
-                    to="/dashboard?tab=promotion"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-                  >
-                    <span className="text-lg">🎁</span>
-                    <span>Bonus</span>
-                  </Link>
-                )}
-
                 {/* Notifications */}
                 <div className="relative z-[2000]" ref={notificationRef}>
                   <button 

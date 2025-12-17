@@ -67,7 +67,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media' | 'bio'>('analytics');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'media' | 'bio'>('analytics');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -82,11 +82,11 @@ const TalentDashboard: React.FC = () => {
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
   useEffect(() => {
-    const validTabs = ['orders', 'analytics', 'profile', 'payouts', 'promotion', 'media'];
+    const validTabs = ['orders', 'analytics', 'profile', 'payouts', 'media'];
     if (hasBioAccess) validTabs.push('bio');
     
     if (tabParam && validTabs.includes(tabParam)) {
-      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'promotion' | 'media' | 'bio');
+      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'media' | 'bio');
     } else {
       // Default to analytics (stats) when no tab parameter
       setActiveTab('analytics');
@@ -659,7 +659,6 @@ const TalentDashboard: React.FC = () => {
               { key: 'analytics', label: 'Analytics', count: null },
               { key: 'media', label: 'Media Center', count: null },
               { key: 'payouts', label: 'Payouts', count: null, icon: BanknotesIcon },
-              { key: 'promotion', label: 'Promotion 🎁', count: null },
               { key: 'profile', label: 'Profile Settings', count: null },
               // Bio tab - only show for allowed users
               ...(hasBioAccess ? [{ key: 'bio', label: 'ShoutOut Bio ✨', count: null, icon: LinkIcon }] : []),
@@ -1123,11 +1122,11 @@ const TalentDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 mb-2">
-                  {talentProfile.total_orders > 0 
-                    ? ((talentProfile.fulfilled_orders / talentProfile.total_orders) * 100).toFixed(1)
-                    : '0.0'}%
+                  {completedOrders.length > 0 
+                    ? Math.min(100, Math.round((completedOrders.length / Math.max(completedOrders.length, orders.length)) * 100))
+                    : 0}%
                 </div>
-                <div className="text-sm text-gray-600">Fulfillment Rate</div>
+                <div className="text-sm text-gray-600">Completion Rate</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 mb-2">
@@ -1198,184 +1197,6 @@ const TalentDashboard: React.FC = () => {
           avatarUrl={user?.avatar_url}
           promoVideoUrl={talentProfile.promo_video_url}
         />
-      )}
-
-      {/* Promotion Tab */}
-      {activeTab === 'promotion' && (
-        <div className="space-y-6">
-          {/* Onboarding Bonus */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-8">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-3">
-                🎉 Onboarding Bonus
-              </h2>
-              <p className="text-gray-600 text-lg">Get rewarded for starting strong!</p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="glass rounded-2xl p-6 border border-white/30 text-center">
-                <div className="text-5xl font-bold text-green-600 mb-2">$250</div>
-                <div className="text-sm text-gray-600">Bonus Payment</div>
-                <p className="text-xs text-gray-500 mt-2">After 10 orders in 30 days</p>
-              </div>
-              <div className="glass rounded-2xl p-6 border border-white/30 text-center">
-                <div className="text-5xl font-bold text-blue-600 mb-2">0%</div>
-                <div className="text-sm text-gray-600">Platform Fees</div>
-                <p className="text-xs text-gray-500 mt-2">On your first 10 orders</p>
-              </div>
-            </div>
-            
-            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-              <p className="text-sm text-blue-800 text-center">
-                <strong>How it works:</strong> Complete 10 orders within your first 30 days and we'll pay you an extra $250 bonus, plus you keep 100% of your earnings (no platform fees) on those first 10 orders!
-              </p>
-            </div>
-          </div>
-
-          {/* ShoutOut Promotion Package */}
-          <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-8">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-blue-600 bg-clip-text text-transparent mb-3">
-                ShoutOut Promotion Package
-              </h2>
-              <div className="inline-block glass rounded-2xl px-6 py-3 border border-white/30">
-                <span className="text-2xl font-bold text-green-600">$0</span>
-                <span className="text-gray-600 ml-2">/ month</span>
-              </div>
-            </div>
-
-            {/* What You Get */}
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">💎 What You Get:</h3>
-              <div className="glass rounded-2xl p-6 border border-white/30">
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl">📢</div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-lg text-gray-900 mb-2">$300/month in Ad Spend</h4>
-                    <p className="text-gray-600">
-                      We'll spend <strong>$300 per month</strong> directly advertising YOUR profile through Rumble and Instagram ads. 
-                      Get more visibility and orders without spending a dime!
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* How to Get It */}
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">✅ Requirements (You Must):</h3>
-              <div className="space-y-4">
-                <div className="glass rounded-2xl p-4 border border-white/30">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">🔗</div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-1">Put Profile Link in Your Bio</h4>
-                      <p className="text-sm text-gray-600 mb-2">Add your ShoutOut profile link (shoutout.us/yourname) to your link in bio on all socials</p>
-                      <button 
-                        onClick={() => {
-                          const profileUrl = talentProfile?.username 
-                            ? `shoutout.us/${talentProfile.username}`
-                            : `shoutout.us/talent/${talentProfile?.id}`;
-                          navigator.clipboard.writeText(profileUrl);
-                          toast.success('Profile URL copied!');
-                        }}
-                        className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
-                      >
-                        📋 Copy Profile Link
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass rounded-2xl p-4 border border-white/30">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">📱</div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-2">Post Promo Video on Instagram Stories</h4>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Post your promo video on <strong>Instagram stories</strong> (with link to your profile) <strong>at least twice a month</strong>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass rounded-2xl p-4 border border-white/30">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">🎬</div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-1">Post at Least One ShoutOut Video Monthly</h4>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Post <strong>at least one ShoutOut video</strong> on your profile <strong>a month</strong>. Point viewers to your link in bio. 
-                        (Collab with <strong>@shoutoutvoice</strong> on Instagram)
-                      </p>
-                      <button 
-                        onClick={() => {
-                          navigator.clipboard.writeText('@shoutoutvoice');
-                          toast.success('Copied @shoutoutvoice!');
-                        }}
-                        className="glass-strong px-3 py-1 rounded-lg hover:glass transition-all duration-200 text-blue-600 font-medium border border-white/30 text-sm"
-                      >
-                        📋 Copy @shoutoutvoice
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Claim Button */}
-            {!talentProfile?.is_participating_in_promotion ? (
-              <button
-                onClick={async () => {
-                  try {
-                    const { error } = await supabase
-                      .from('talent_profiles')
-                      .update({
-                        is_participating_in_promotion: true,
-                        promotion_claimed_at: new Date().toISOString()
-                      })
-                      .eq('id', talentProfile?.id);
-
-                    if (error) throw error;
-
-                    // Send email notification
-                    if (user?.email && user?.full_name) {
-                      await emailService.sendPromotionClaimed(user.email, user.full_name);
-                    }
-
-                    // Create in-app notification
-                    if (user?.id) {
-                      await notificationService.notifyPromotionClaimed(user.id);
-                    }
-
-                    toast.success('🎉 Promotion Package Claimed! Welcome to the program!');
-                    // Refresh talent data
-                    fetchTalentData();
-                  } catch (error) {
-                    console.error('Error claiming promotion:', error);
-                    toast.error('Failed to claim promotion package');
-                  }
-                }}
-                className="w-full bg-gradient-to-r from-red-600 to-blue-600 text-white py-4 px-8 rounded-2xl font-bold hover:from-red-700 hover:to-blue-700 transition-all duration-300 shadow-modern-lg hover:shadow-modern-xl glow-blue hover:scale-[1.02]"
-              >
-                🎁 Claim Promotion Package
-              </button>
-            ) : (
-              <div className="glass-strong rounded-2xl p-6 border border-green-500/30">
-                <div className="text-center">
-                  <div className="text-4xl mb-3">✅</div>
-                  <h3 className="text-xl font-bold text-white mb-2">You're In the Promotion Program!</h3>
-                  <p className="text-green-400">
-                    Claimed on {new Date(talentProfile.promotion_claimed_at!).toLocaleDateString()}
-                  </p>
-                  <p className="text-sm text-green-300 mt-2">
-                    Keep posting and tagging us to maintain your $300/month ad spend!
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       )}
 
       {/* Profile Tab */}

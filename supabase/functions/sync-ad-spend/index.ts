@@ -99,18 +99,34 @@ serve(async (req) => {
           console.log('📸 Instagram follower count result:', followerCount);
           
           if (followerCount > 0) {
-            // Get today's date in CST (12am CST = new day)
+            // Follower count at midnight represents END OF PREVIOUS DAY
+            // So midnight Dec 17 CST = Dec 16's final count
             const now = new Date();
             // Convert to CST
             const cstOffset = -6; // CST is UTC-6
             const cstDate = new Date(now.getTime() + (cstOffset * 60 * 60 * 1000));
-            const todayStr = cstDate.toISOString().split('T')[0];
             
-            // Upsert today's follower count
+            // Check if this is a midnight sync (within first hour of the day)
+            const cstHour = cstDate.getUTCHours();
+            let dateToStore: string;
+            
+            if (cstHour < 1) {
+              // Midnight sync - this count represents YESTERDAY's end-of-day total
+              const yesterday = new Date(cstDate);
+              yesterday.setDate(yesterday.getDate() - 1);
+              dateToStore = yesterday.toISOString().split('T')[0];
+              console.log(`📸 Midnight sync detected (hour=${cstHour}), storing as previous day: ${dateToStore}`);
+            } else {
+              // Manual/daytime sync - store as today's count
+              dateToStore = cstDate.toISOString().split('T')[0];
+              console.log(`📸 Daytime sync (hour=${cstHour}), storing as today: ${dateToStore}`);
+            }
+            
+            // Upsert follower count for the appropriate date
             const { error: upsertError } = await supabase
               .from('follower_counts')
               .upsert({
-                date: todayStr,
+                date: dateToStore,
                 platform: 'instagram',
                 count: followerCount
               }, { onConflict: 'date,platform' });
