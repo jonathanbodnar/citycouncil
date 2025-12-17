@@ -129,9 +129,9 @@ const ProfileRedirect: React.FC = () => {
   return <Navigate to={`/${username}`} replace />;
 };
 
-// Promo redirect component - redirects short names to home with UTM
-const PromoRedirect: React.FC<{ utm: string }> = ({ utm }) => {
-  // Store the UTM before redirecting
+// Promo redirect component - redirects short names to talent profiles with UTM and coupon
+const PromoRedirect: React.FC<{ utm: string; destination?: string; coupon?: string }> = ({ utm, destination = '/', coupon }) => {
+  // Store the UTM and coupon before redirecting
   if (typeof window !== 'undefined') {
     localStorage.setItem('promo_source_global', utm);
     localStorage.setItem('promo_source', utm);
@@ -139,8 +139,24 @@ const PromoRedirect: React.FC<{ utm: string }> = ({ utm }) => {
       sessionStorage.setItem('promo_source_global', utm);
       sessionStorage.setItem('promo_source', utm);
     } catch (e) {}
+    
+    // Store coupon for auto-apply
+    if (coupon) {
+      localStorage.setItem('auto_coupon', coupon);
+      try {
+        sessionStorage.setItem('auto_coupon', coupon);
+      } catch (e) {}
+    }
   }
-  return <Navigate to={`/?utm=${utm}`} replace />;
+  
+  // Build redirect URL with UTM and coupon
+  const params = new URLSearchParams();
+  params.set('utm', utm);
+  if (coupon) {
+    params.set('coupon', coupon);
+  }
+  
+  return <Navigate to={`${destination}?${params.toString()}`} replace />;
 };
 
 function App() {
@@ -168,18 +184,18 @@ function App() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
             
-            {/* Promo redirects - short name variations to home with UTM */}
-            {/* Shawn variations */}
-            <Route path="/shawn" element={<PromoRedirect utm="shawnlive" />} />
-            <Route path="/shaun" element={<PromoRedirect utm="shawnlive" />} />
-            <Route path="/sean" element={<PromoRedirect utm="shawnlive" />} />
-            <Route path="/shon" element={<PromoRedirect utm="shawnlive" />} />
-            {/* Hayley variations */}
-            <Route path="/hayley" element={<PromoRedirect utm="hayleylive" />} />
-            <Route path="/hailey" element={<PromoRedirect utm="hayleylive" />} />
-            <Route path="/haley" element={<PromoRedirect utm="hayleylive" />} />
-            <Route path="/hailee" element={<PromoRedirect utm="hayleylive" />} />
-            <Route path="/haily" element={<PromoRedirect utm="hayleylive" />} />
+            {/* Promo redirects - short name variations to talent profiles with UTM and auto-discount */}
+            {/* Shawn variations -> shawnfarash profile with 15% off */}
+            <Route path="/shawn" element={<PromoRedirect utm="shawnlive" destination="/shawnfarash" coupon="SAVE15" />} />
+            <Route path="/shaun" element={<PromoRedirect utm="shawnlive" destination="/shawnfarash" coupon="SAVE15" />} />
+            <Route path="/sean" element={<PromoRedirect utm="shawnlive" destination="/shawnfarash" coupon="SAVE15" />} />
+            <Route path="/shon" element={<PromoRedirect utm="shawnlive" destination="/shawnfarash" coupon="SAVE15" />} />
+            {/* Hayley variations -> hayleycaronia profile with 15% off */}
+            <Route path="/hayley" element={<PromoRedirect utm="hayleylive" destination="/hayleycaronia" coupon="SAVE15" />} />
+            <Route path="/hailey" element={<PromoRedirect utm="hayleylive" destination="/hayleycaronia" coupon="SAVE15" />} />
+            <Route path="/haley" element={<PromoRedirect utm="hayleylive" destination="/hayleycaronia" coupon="SAVE15" />} />
+            <Route path="/hailee" element={<PromoRedirect utm="hayleylive" destination="/hayleycaronia" coupon="SAVE15" />} />
+            <Route path="/haily" element={<PromoRedirect utm="hayleylive" destination="/hayleycaronia" coupon="SAVE15" />} />
             <Route path="/s/:code" element={<ShortLinkRedirectPage />} />
             <Route path="/fulfill/:token" element={<OrderFulfillmentPage />} />
             

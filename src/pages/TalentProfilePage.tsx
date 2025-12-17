@@ -56,9 +56,9 @@ const TalentProfilePage: React.FC = () => {
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
 
-  // Check coupon from localStorage
+  // Check coupon from localStorage (check both keys for compatibility)
   const checkCoupon = useCallback(() => {
-    const coupon = localStorage.getItem('auto_apply_coupon');
+    const coupon = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
     console.log('🎟️ Checking coupon from localStorage:', coupon);
     if (coupon && COUPON_DISCOUNTS[coupon.toUpperCase()]) {
       console.log('🎟️ Valid coupon found, setting activeCoupon:', coupon.toUpperCase());
