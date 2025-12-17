@@ -78,84 +78,73 @@ const GOAL_LABELS = {
   orders: 'Orders'
 };
 
-// Lifetime Cost Per Follower Card Component
-interface LifetimeCostPerFollowerCardProps {
-  campaignMappings: CampaignMapping[];
-}
-
-const LifetimeCostPerFollowerCard: React.FC<LifetimeCostPerFollowerCardProps> = ({ campaignMappings }) => {
+// Lifetime Stats Cards Component - simplified cost per follower and SMS
+const LifetimeStatsCards: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
-    totalMappedSpend: 0,
-    totalFollowersGained: 0,
     costPerFollower: 0,
-    firstSyncDate: '',
-    lastSyncDate: ''
+    costPerSMS: 0
   });
 
   useEffect(() => {
     const fetchLifetimeData = async () => {
       setLoading(true);
       try {
-        // Get all follower counts to calculate total gained
-        const { data: followerData, error: followerError } = await supabase
-          .from('follower_counts')
-          .select('date, count')
-          .eq('platform', 'instagram')
-          .order('date', { ascending: true });
-
-        if (followerError) throw followerError;
-
-        // Get the first sync date to filter ad spend
-        const trackingStartDate = followerData && followerData.length > 0 ? followerData[0].date : null;
-
-        // Get ad spend from mapped campaigns ONLY since we started tracking followers
-        const mappedCampaignIds = campaignMappings
-          .filter(m => m.goals.includes('followers'))
-          .map(m => m.campaign_id);
-
-        let totalMappedSpend = 0;
-        
-        if (mappedCampaignIds.length > 0 && trackingStartDate) {
-          const { data: spendData, error: spendError } = await supabase
+        // Fetch follower data, SMS data, and ad spend in parallel
+        const [followerResult, smsResult, fbSpendResult, rumbleSpendResult] = await Promise.all([
+          // Follower counts since Dec 10
+          supabase
+            .from('follower_counts')
+            .select('date, count')
+            .eq('platform', 'instagram')
+            .gte('date', '2025-12-10')
+            .order('date', { ascending: true }),
+          
+          // SMS signups since Dec 8
+          supabase
+            .from('beta_signups')
+            .select('id, subscribed_at')
+            .gte('subscribed_at', '2025-12-08T06:00:00Z'),
+          
+          // Facebook spend since Dec 10 (for followers)
+          supabase
             .from('ad_spend_daily')
-            .select('spend, campaign_id, date')
-            .in('campaign_id', mappedCampaignIds)
-            .gte('date', trackingStartDate); // Only spend since we started tracking
+            .select('spend')
+            .eq('platform', 'facebook')
+            .gte('date', '2025-12-10'),
+          
+          // Rumble spend since Dec 8 (for SMS/users)
+          supabase
+            .from('ad_spend_daily')
+            .select('spend')
+            .eq('platform', 'rumble')
+            .gte('date', '2025-12-08')
+        ]);
 
-          if (spendError) throw spendError;
-
-          totalMappedSpend = (spendData || []).reduce((sum, row) => sum + (Number(row.spend) || 0), 0);
-          console.log(`💰 Lifetime spend since ${trackingStartDate}:`, totalMappedSpend, 'from', spendData?.length, 'records');
-        }
-
-        // Calculate total followers gained (last count - first count)
+        // Calculate followers gained
+        const followerData = followerResult.data || [];
         let totalFollowersGained = 0;
-        let firstSyncDate = '';
-        let lastSyncDate = '';
-
-        if (followerData && followerData.length >= 2) {
-          const firstCount = followerData[0].count;
-          const lastCount = followerData[followerData.length - 1].count;
-          totalFollowersGained = lastCount - firstCount;
-          firstSyncDate = followerData[0].date;
-          lastSyncDate = followerData[followerData.length - 1].date;
-        } else if (followerData && followerData.length === 1) {
-          firstSyncDate = followerData[0].date;
-          lastSyncDate = followerData[0].date;
+        if (followerData.length >= 2) {
+          totalFollowersGained = followerData[followerData.length - 1].count - followerData[0].count;
         }
 
-        const costPerFollower = totalFollowersGained > 0 
-          ? totalMappedSpend / totalFollowersGained 
-          : 0;
+        // Calculate total SMS
+        const totalSMS = smsResult.data?.length || 0;
 
-        setData({
-          totalMappedSpend,
-          totalFollowersGained,
-          costPerFollower,
-          firstSyncDate,
-          lastSyncDate
-        });
+        // Calculate Facebook spend (for followers)
+        const totalFBSpend = (fbSpendResult.data || []).reduce(
+          (sum, row) => sum + (Number(row.spend) || 0), 0
+        );
+
+        // Calculate Rumble spend (for SMS)
+        const totalRumbleSpend = (rumbleSpendResult.data || []).reduce(
+          (sum, row) => sum + (Number(row.spend) || 0), 0
+        );
+
+        const costPerFollower = totalFollowersGained > 0 ? totalFBSpend / totalFollowersGained : 0;
+        const costPerSMS = totalSMS > 0 ? totalRumbleSpend / totalSMS : 0;
+
+        setData({ costPerFollower, costPerSMS });
       } catch (error) {
         console.error('Error fetching lifetime data:', error);
       } finally {
@@ -164,85 +153,48 @@ const LifetimeCostPerFollowerCard: React.FC<LifetimeCostPerFollowerCardProps> = 
     };
 
     fetchLifetimeData();
-  }, [campaignMappings]);
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return 'N/A';
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
+  }, []);
 
   if (loading) {
     return (
-      <div className="glass rounded-xl p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-1/3 mb-4"></div>
-          <div className="h-12 bg-gray-700 rounded w-1/2"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="glass rounded-xl p-6 animate-pulse">
+          <div className="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
+          <div className="h-10 bg-gray-700 rounded w-1/3"></div>
+        </div>
+        <div className="glass rounded-xl p-6 animate-pulse">
+          <div className="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
+          <div className="h-10 bg-gray-700 rounded w-1/3"></div>
         </div>
       </div>
     );
   }
 
-  const mappedToFollowers = campaignMappings.filter(m => m.goals.includes('followers')).length;
-
   return (
-    <div className="glass rounded-xl p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <UserGroupIcon className="h-6 w-6 text-purple-500" />
-        <h3 className="text-lg font-semibold text-white">Lifetime Cost Per Follower</h3>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Cost Per Follower */}
-        <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4">
-          <p className="text-purple-400 text-sm mb-1">Avg Cost / Follower</p>
-          <p className="text-3xl font-bold text-white">
-            ${data.costPerFollower.toFixed(2)}
-          </p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Cost Per Follower */}
+      <div className="glass rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <UserGroupIcon className="h-5 w-5 text-purple-500" />
+          <h3 className="text-lg font-semibold text-white">Avg Cost / Follower</h3>
         </div>
-
-        {/* Total Spend on Mapped Campaigns */}
-        <div className="bg-gray-800/50 rounded-xl p-4">
-          <p className="text-gray-400 text-sm mb-1">Total Mapped Spend</p>
-          <p className="text-2xl font-bold text-white">
-            ${data.totalMappedSpend.toFixed(2)}
-          </p>
-          <p className="text-gray-500 text-xs mt-1">
-            {mappedToFollowers} campaign{mappedToFollowers !== 1 ? 's' : ''} mapped to followers
-          </p>
-        </div>
-
-        {/* Total Followers Gained */}
-        <div className="bg-gray-800/50 rounded-xl p-4">
-          <p className="text-gray-400 text-sm mb-1">Followers Gained</p>
-          <p className="text-2xl font-bold text-white">
-            {data.totalFollowersGained.toLocaleString()}
-          </p>
-          <p className="text-gray-500 text-xs mt-1">
-            Since first sync
-          </p>
-        </div>
-
-        {/* Date Range */}
-        <div className="bg-gray-800/50 rounded-xl p-4">
-          <p className="text-gray-400 text-sm mb-1">Tracking Period</p>
-          <p className="text-lg font-medium text-white">
-            {formatDate(data.firstSyncDate)}
-          </p>
-          <p className="text-gray-500 text-xs">
-            to {formatDate(data.lastSyncDate)}
-          </p>
-        </div>
+        <p className="text-4xl font-bold text-white mb-1">
+          ${data.costPerFollower.toFixed(2)}
+        </p>
+        <p className="text-gray-500 text-sm">since Dec 10</p>
       </div>
 
-      {mappedToFollowers === 0 && (
-        <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-          <p className="text-yellow-400 text-sm">
-            ⚠️ No campaigns mapped to "Followers" goal. Map campaigns below to see accurate cost per follower.
-          </p>
+      {/* Cost Per SMS */}
+      <div className="glass rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <ChatBubbleLeftIcon className="h-5 w-5 text-green-500" />
+          <h3 className="text-lg font-semibold text-white">Avg Cost / SMS</h3>
         </div>
-      )}
+        <p className="text-4xl font-bold text-white mb-1">
+          ${data.costPerSMS.toFixed(2)}
+        </p>
+        <p className="text-gray-500 text-sm">since Dec 8 (Rumble only)</p>
+      </div>
     </div>
   );
 };
@@ -1137,7 +1089,7 @@ const AdvancedAnalytics: React.FC = () => {
 
       {/* Lifetime Cost Per Follower Card (Drill Mode) */}
       {chartMode === 'drill' && (
-        <LifetimeCostPerFollowerCard campaignMappings={campaignMappings} />
+        <LifetimeStatsCards />
       )}
 
       {/* Campaign Mappings (Drill Mode) */}
