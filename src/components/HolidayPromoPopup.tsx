@@ -308,17 +308,24 @@ const HolidayPromoPopup: React.FC = () => {
     try {
       const formattedPhone = `+1${cleanDigits}`;
 
-      // Get UTM source
+      // Get UTM source - check ALL possible storage locations
       const urlParams = new URLSearchParams(window.location.search);
       const urlUtm = urlParams.get('utm');
-      const storedUtm = safeGetItem('promo_source_global');
       const fbUtmSource = urlParams.get('utm_source');
       
+      // Check localStorage
+      const storedUtm = safeGetItem('promo_source_global');
+      const storedPromoSource = safeGetItem('promo_source');
+      
+      // Check sessionStorage
       let sessionUtm: string | null = null;
+      let sessionPromoSource: string | null = null;
       try {
         sessionUtm = sessionStorage.getItem('promo_source_global');
+        sessionPromoSource = sessionStorage.getItem('promo_source');
       } catch (e) {}
       
+      // Check utm_details for Facebook sources
       let utmDetailsSource: string | null = null;
       try {
         const utmDetails = localStorage.getItem('utm_details');
@@ -332,13 +339,29 @@ const HolidayPromoPopup: React.FC = () => {
         }
       } catch (e) {}
       
-      let utmSource = urlUtm || storedUtm || sessionUtm || utmDetailsSource || null;
-      
-      if (!utmSource && fbUtmSource) {
+      // Normalize Facebook utm_source if present in URL
+      let normalizedFbSource: string | null = null;
+      if (fbUtmSource) {
         const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
         const normalizedSource = fbUtmSource.toLowerCase();
-        utmSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : fbUtmSource;
+        normalizedFbSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : fbUtmSource;
       }
+      
+      // Priority: URL params > localStorage > sessionStorage > utm_details
+      let utmSource = urlUtm || normalizedFbSource || storedUtm || storedPromoSource || sessionUtm || sessionPromoSource || utmDetailsSource || null;
+      
+      // Debug logging to help diagnose tracking issues
+      console.log('🔍 UTM Debug:', {
+        urlUtm,
+        fbUtmSource,
+        normalizedFbSource,
+        storedUtm,
+        storedPromoSource,
+        sessionUtm,
+        sessionPromoSource,
+        utmDetailsSource,
+        finalUtmSource: utmSource
+      });
 
       // Determine prize
       const prize = await determinePrize();

@@ -32,24 +32,31 @@ const captureGlobalUtm = () => {
       // Then check for Facebook-style utm_source=
       const utmSource = urlParams.get('utm_source');
       
-      // Only capture if we have a UTM and haven't already stored one
-      // (Don't overwrite existing UTM if user navigates to a page without UTM)
-      const existingUtm = localStorage.getItem('promo_source_global');
+      // ALWAYS capture UTM if present in URL (most recent UTM wins)
+      // This ensures we don't lose tracking when users come from different sources
       
-      if (utmParam && utmParam !== '1') {
-        // Simple UTM (not self-promo which is talent-specific)
+      if (utmParam) {
+        // Simple UTM - store it (including utm=1 for self-promo)
         localStorage.setItem('promo_source_global', utmParam);
+        localStorage.setItem('promo_source', utmParam);
         // Also store in sessionStorage as backup
-        try { sessionStorage.setItem('promo_source_global', utmParam); } catch (e) {}
+        try { 
+          sessionStorage.setItem('promo_source_global', utmParam);
+          sessionStorage.setItem('promo_source', utmParam);
+        } catch (e) {}
         console.log('🎯 Global UTM captured from utm=:', utmParam);
-      } else if (utmSource && !existingUtm) {
+      } else if (utmSource) {
         // Facebook-style UTM - normalize Facebook sources to 'fb'
         const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
         const normalizedSource = utmSource.toLowerCase();
         const sourceToStore = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : utmSource;
         localStorage.setItem('promo_source_global', sourceToStore);
+        localStorage.setItem('promo_source', sourceToStore);
         // Also store in sessionStorage as backup
-        try { sessionStorage.setItem('promo_source_global', sourceToStore); } catch (e) {}
+        try { 
+          sessionStorage.setItem('promo_source_global', sourceToStore);
+          sessionStorage.setItem('promo_source', sourceToStore);
+        } catch (e) {}
         console.log('🎯 Global UTM captured from utm_source=:', sourceToStore);
         
         // Also store full UTM details
@@ -68,9 +75,7 @@ const captureGlobalUtm = () => {
       
       // Log current UTM state for debugging
       const currentUtm = localStorage.getItem('promo_source_global');
-      if (currentUtm) {
-        console.log('🎯 Current stored UTM:', currentUtm);
-      }
+      console.log('🎯 Current stored UTM:', currentUtm || 'none');
     } catch (e) {
       console.error('Error capturing UTM:', e);
     }
