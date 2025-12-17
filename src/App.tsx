@@ -129,6 +129,20 @@ const ProfileRedirect: React.FC = () => {
   return <Navigate to={`/${username}`} replace />;
 };
 
+// Promo redirect component - redirects short names to home with UTM
+const PromoRedirect: React.FC<{ utm: string }> = ({ utm }) => {
+  // Store the UTM before redirecting
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('promo_source_global', utm);
+    localStorage.setItem('promo_source', utm);
+    try {
+      sessionStorage.setItem('promo_source_global', utm);
+      sessionStorage.setItem('promo_source', utm);
+    } catch (e) {}
+  }
+  return <Navigate to={`/?utm=${utm}`} replace />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -153,6 +167,19 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
+            
+            {/* Promo redirects - short name variations to home with UTM */}
+            {/* Shawn variations */}
+            <Route path="/shawn" element={<PromoRedirect utm="shawnlive" />} />
+            <Route path="/shaun" element={<PromoRedirect utm="shawnlive" />} />
+            <Route path="/sean" element={<PromoRedirect utm="shawnlive" />} />
+            <Route path="/shon" element={<PromoRedirect utm="shawnlive" />} />
+            {/* Hayley variations */}
+            <Route path="/hayley" element={<PromoRedirect utm="hayleylive" />} />
+            <Route path="/hailey" element={<PromoRedirect utm="hayleylive" />} />
+            <Route path="/haley" element={<PromoRedirect utm="hayleylive" />} />
+            <Route path="/hailee" element={<PromoRedirect utm="hayleylive" />} />
+            <Route path="/haily" element={<PromoRedirect utm="hayleylive" />} />
             <Route path="/s/:code" element={<ShortLinkRedirectPage />} />
             <Route path="/fulfill/:token" element={<OrderFulfillmentPage />} />
             
