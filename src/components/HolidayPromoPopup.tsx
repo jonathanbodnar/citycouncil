@@ -259,32 +259,45 @@ const HolidayPromoPopup: React.FC = () => {
     setPhoneNumber(formatted);
   };
 
-  // Determine prize - weighted random selection
+  // Determine prize - evenly distributed with one free shoutout per day (CST)
   const determinePrize = async (): Promise<Prize> => {
-    // Check if someone already won the free shoutout today
-    const today = new Date().toISOString().split('T')[0];
+    // Get today's date in CST
+    const now = new Date();
+    const cstOffset = -6 * 60; // CST is UTC-6
+    const cstTime = new Date(now.getTime() + (cstOffset - now.getTimezoneOffset()) * 60000);
+    const todayCST = cstTime.toISOString().split('T')[0];
+    
+    // Calculate CST day boundaries in UTC for query
+    const cstDayStartUTC = new Date(`${todayCST}T00:00:00-06:00`).toISOString();
+    const cstDayEndUTC = new Date(`${todayCST}T23:59:59-06:00`).toISOString();
+    
+    // Check if someone already won the free shoutout today (CST)
     const { data: todayWinners } = await supabase
       .from('beta_signups')
       .select('id')
       .eq('source', 'holiday_popup')
       .eq('prize_won', 'FREE_SHOUTOUT')
-      .gte('subscribed_at', `${today}T00:00:00Z`)
+      .gte('subscribed_at', cstDayStartUTC)
+      .lte('subscribed_at', cstDayEndUTC)
       .limit(1);
 
     const canWinFreeShoutout = !todayWinners || todayWinners.length === 0;
 
-    // Weighted probabilities (out of 100)
-    // FREE_SHOUTOUT: 1% (if available), 25_OFF: 20%, 15_OFF: 45%, 25_DOLLARS: 34%
-    // Note: 10_OFF removed from giveaway
+    // Even distribution: 25% each for 25_OFF, 15_OFF, 25_DOLLARS
+    // FREE_SHOUTOUT: 25% chance IF not already won today, otherwise redistributed
     const rand = Math.random() * 100;
     
-    if (canWinFreeShoutout && rand < 1) {
+    if (canWinFreeShoutout && rand < 25) {
+      // 25% chance to win free shoutout (if available)
       return 'FREE_SHOUTOUT';
-    } else if (rand < 21) {
+    } else if (rand < 50) {
+      // 25% chance for 25% off
       return '25_OFF';
-    } else if (rand < 66) {
+    } else if (rand < 75) {
+      // 25% chance for 15% off
       return '15_OFF';
     } else {
+      // 25% chance for $25 off
       return '25_DOLLARS';
     }
   };
