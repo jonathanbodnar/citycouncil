@@ -78,6 +78,170 @@ const GOAL_LABELS = {
   orders: 'Orders'
 };
 
+// Lifetime Cost Per Follower Card Component
+interface LifetimeCostPerFollowerCardProps {
+  campaignMappings: CampaignMapping[];
+}
+
+const LifetimeCostPerFollowerCard: React.FC<LifetimeCostPerFollowerCardProps> = ({ campaignMappings }) => {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState({
+    totalMappedSpend: 0,
+    totalFollowersGained: 0,
+    costPerFollower: 0,
+    firstSyncDate: '',
+    lastSyncDate: ''
+  });
+
+  useEffect(() => {
+    const fetchLifetimeData = async () => {
+      setLoading(true);
+      try {
+        // Get all follower counts to calculate total gained
+        const { data: followerData, error: followerError } = await supabase
+          .from('follower_counts')
+          .select('date, count')
+          .eq('platform', 'instagram')
+          .order('date', { ascending: true });
+
+        if (followerError) throw followerError;
+
+        // Get all ad spend from mapped campaigns
+        const mappedCampaignIds = campaignMappings
+          .filter(m => m.goals.includes('followers'))
+          .map(m => m.campaign_id);
+
+        let totalMappedSpend = 0;
+        
+        if (mappedCampaignIds.length > 0) {
+          const { data: spendData, error: spendError } = await supabase
+            .from('ad_spend_daily')
+            .select('spend, campaign_id')
+            .in('campaign_id', mappedCampaignIds);
+
+          if (spendError) throw spendError;
+
+          totalMappedSpend = (spendData || []).reduce((sum, row) => sum + (Number(row.spend) || 0), 0);
+        }
+
+        // Calculate total followers gained (last count - first count)
+        let totalFollowersGained = 0;
+        let firstSyncDate = '';
+        let lastSyncDate = '';
+
+        if (followerData && followerData.length >= 2) {
+          const firstCount = followerData[0].count;
+          const lastCount = followerData[followerData.length - 1].count;
+          totalFollowersGained = lastCount - firstCount;
+          firstSyncDate = followerData[0].date;
+          lastSyncDate = followerData[followerData.length - 1].date;
+        } else if (followerData && followerData.length === 1) {
+          firstSyncDate = followerData[0].date;
+          lastSyncDate = followerData[0].date;
+        }
+
+        const costPerFollower = totalFollowersGained > 0 
+          ? totalMappedSpend / totalFollowersGained 
+          : 0;
+
+        setData({
+          totalMappedSpend,
+          totalFollowersGained,
+          costPerFollower,
+          firstSyncDate,
+          lastSyncDate
+        });
+      } catch (error) {
+        console.error('Error fetching lifetime data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLifetimeData();
+  }, [campaignMappings]);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  if (loading) {
+    return (
+      <div className="glass rounded-xl p-6">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-700 rounded w-1/3 mb-4"></div>
+          <div className="h-12 bg-gray-700 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const mappedToFollowers = campaignMappings.filter(m => m.goals.includes('followers')).length;
+
+  return (
+    <div className="glass rounded-xl p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <UserGroupIcon className="h-6 w-6 text-purple-500" />
+        <h3 className="text-lg font-semibold text-white">Lifetime Cost Per Follower</h3>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Cost Per Follower */}
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4">
+          <p className="text-purple-400 text-sm mb-1">Avg Cost / Follower</p>
+          <p className="text-3xl font-bold text-white">
+            ${data.costPerFollower.toFixed(2)}
+          </p>
+        </div>
+
+        {/* Total Spend on Mapped Campaigns */}
+        <div className="bg-gray-800/50 rounded-xl p-4">
+          <p className="text-gray-400 text-sm mb-1">Total Mapped Spend</p>
+          <p className="text-2xl font-bold text-white">
+            ${data.totalMappedSpend.toFixed(2)}
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            {mappedToFollowers} campaign{mappedToFollowers !== 1 ? 's' : ''} mapped to followers
+          </p>
+        </div>
+
+        {/* Total Followers Gained */}
+        <div className="bg-gray-800/50 rounded-xl p-4">
+          <p className="text-gray-400 text-sm mb-1">Followers Gained</p>
+          <p className="text-2xl font-bold text-white">
+            {data.totalFollowersGained.toLocaleString()}
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            Since first sync
+          </p>
+        </div>
+
+        {/* Date Range */}
+        <div className="bg-gray-800/50 rounded-xl p-4">
+          <p className="text-gray-400 text-sm mb-1">Tracking Period</p>
+          <p className="text-lg font-medium text-white">
+            {formatDate(data.firstSyncDate)}
+          </p>
+          <p className="text-gray-500 text-xs">
+            to {formatDate(data.lastSyncDate)}
+          </p>
+        </div>
+      </div>
+
+      {mappedToFollowers === 0 && (
+        <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <p className="text-yellow-400 text-sm">
+            ⚠️ No campaigns mapped to "Followers" goal. Map campaigns below to see accurate cost per follower.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdvancedAnalytics: React.FC = () => {
   // State
   const [chartMode, setChartMode] = useState<ChartMode>('count');
@@ -965,6 +1129,11 @@ const AdvancedAnalytics: React.FC = () => {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Lifetime Cost Per Follower Card (Drill Mode) */}
+      {chartMode === 'drill' && (
+        <LifetimeCostPerFollowerCard campaignMappings={campaignMappings} />
+      )}
 
       {/* Campaign Mappings (Drill Mode) */}
       {chartMode === 'drill' && (
