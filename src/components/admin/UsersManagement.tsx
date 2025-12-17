@@ -68,6 +68,7 @@ const UsersManagement: React.FC = () => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleDateString('en-US', {
+      timeZone: 'America/Chicago',
       month: 'short',
       day: 'numeric',
       year: 'numeric'

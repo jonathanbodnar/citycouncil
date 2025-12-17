@@ -71,11 +71,43 @@ const HolidayPromoSignups: React.FC = () => {
     return phone;
   };
 
+  // Format date to CST
+  const formatDateCST = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      timeZone: 'America/Chicago',
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatTimeCST = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      timeZone: 'America/Chicago',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDateTimeCST = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      timeZone: 'America/Chicago',
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const exportToCSV = () => {
     const headers = ['Phone Number', 'Signed Up', 'UTM Source', 'Prize Won'];
     const rows = filteredSignups.map(s => [
       s.phone_number,
-      new Date(s.subscribed_at).toLocaleString(),
+      formatDateTimeCST(s.subscribed_at),
       s.utm_source || '',
       s.prize_won ? PRIZE_LABELS[s.prize_won]?.label || s.prize_won : ''
     ]);
@@ -257,7 +289,7 @@ const HolidayPromoSignups: React.FC = () => {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <CalendarIcon className="h-4 w-4" />
-                        {new Date(signup.subscribed_at).toLocaleDateString()} {new Date(signup.subscribed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatDateCST(signup.subscribed_at)} {formatTimeCST(signup.subscribed_at)}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
