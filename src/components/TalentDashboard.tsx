@@ -351,29 +351,29 @@ const TalentDashboard: React.FC = () => {
             name: userData?.full_name 
           });
           
-          // Email user that ShoutOut is ready
+          // Email user that ShoutOut is ready (non-blocking)
           if (userData?.email && uploadResult.videoUrl) {
             console.log('📧 Sending delivery email to:', userData.email);
-            await emailService.sendOrderDelivered(
+            emailService.sendOrderDelivered(
               userData.email,
               userData.full_name,
               {
                 talentName: user?.full_name || 'Your talent',
                 videoUrl: uploadResult.videoUrl
               }
-            );
-            console.log('✅ Delivery email sent');
+            ).then(() => console.log('✅ Delivery email sent'))
+             .catch((e) => console.warn('⚠️ Email send failed (non-critical):', e));
           }
 
-          // In-app notification for user
+          // In-app notification for user (non-blocking)
           if ((orderData as any).user_id) {
             console.log('🔔 Creating in-app notification for user:', (orderData as any).user_id);
-            await notificationService.notifyOrderDelivered(
+            notificationService.notifyOrderDelivered(
               (orderData as any).user_id,
               orderId,
               user?.full_name || 'Your talent'
-            );
-            console.log('✅ In-app notification created');
+            ).then(() => console.log('✅ In-app notification created'))
+             .catch((e) => console.warn('⚠️ Notification failed (non-critical):', e));
           } else {
             console.warn('⚠️ No user_id found in order data');
           }
@@ -407,14 +407,11 @@ const TalentDashboard: React.FC = () => {
           willRedirect: !hasMoreOrders
         });
         
-        // If no more pending/in-progress orders, redirect to welcome page
+        // Show success message - stay on dashboard
         if (!hasMoreOrders) {
-          toast.success('All orders completed! 🎉', { duration: 2000 });
-          setTimeout(() => {
-            window.location.href = '/welcome';
-          }, 1500);
+          toast.success('All orders completed! 🎉', { duration: 3000 });
         } else {
-          toast.success(`${remainingOrders.length} order(s) remaining`, { duration: 3000 });
+          toast.success(`Video uploaded! ${remainingOrders.length} order(s) remaining`, { duration: 3000 });
         }
       }
     } catch (error: any) {
