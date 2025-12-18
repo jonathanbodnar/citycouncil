@@ -607,20 +607,60 @@ const TalentDashboard: React.FC = () => {
       {/* Self-Promo Link Banner */}
       {talentProfile && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-red-500/20 border border-green-500/30">
-          <div>
-            <h3 className="font-semibold text-white text-lg">Christmas Games 🎄</h3>
-            <p className="text-sm text-gray-300 mt-1">Use this special link when you promote to <span className="underline font-medium text-white">earn double</span> off every order you generate until Christmas.</p>
-            <button
-              onClick={() => {
-                const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
-                navigator.clipboard.writeText(promoUrl);
-                toast.success('Promo link copied!');
-              }}
-              className="text-sm text-green-300 hover:text-green-200 bg-green-900/30 hover:bg-green-900/50 px-3 py-1.5 rounded mt-2 inline-flex items-center gap-2 transition-colors cursor-pointer"
-            >
-              <span>📋</span>
-              <span>shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
-            </button>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            {/* Left side - Promo Link */}
+            <div className="flex-1">
+              <h3 className="font-semibold text-white text-lg">Christmas Games 🎄</h3>
+              <p className="text-sm text-gray-300 mt-1">Use this special link when you promote to <span className="underline font-medium text-white">earn double</span> off every order you generate until Christmas.</p>
+              <button
+                onClick={() => {
+                  const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
+                  navigator.clipboard.writeText(promoUrl);
+                  toast.success('Promo link copied!');
+                }}
+                className="text-sm text-green-300 hover:text-green-200 bg-green-900/30 hover:bg-green-900/50 px-3 py-1.5 rounded mt-2 inline-flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <span>📋</span>
+                <span>shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
+              </button>
+            </div>
+            
+            {/* Right side - Christmas Deadline */}
+            <div className="flex-1 md:border-l md:border-green-500/30 md:pl-4">
+              <p className="text-sm text-yellow-300 font-medium">⚠️ Important: Set the last day to order a ShoutOut to get it by Christmas!</p>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="date"
+                  value={talentProfile.christmas_deadline || ''}
+                  min={new Date().toISOString().split('T')[0]}
+                  max="2025-12-25"
+                  onChange={async (e) => {
+                    const newDate = e.target.value;
+                    try {
+                      const { error } = await supabase
+                        .from('talent_profiles')
+                        .update({ christmas_deadline: newDate || null })
+                        .eq('id', talentProfile.id);
+                      
+                      if (error) throw error;
+                      
+                      setTalentProfile({ ...talentProfile, christmas_deadline: newDate });
+                      toast.success(newDate ? `Deadline set to ${new Date(newDate).toLocaleDateString()}` : 'Deadline cleared');
+                    } catch (err) {
+                      console.error('Failed to update deadline:', err);
+                      toast.error('Failed to save deadline');
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+                {talentProfile.christmas_deadline && (
+                  <span className="text-xs text-green-300">
+                    ✓ Set to {new Date(talentProfile.christmas_deadline + 'T00:00:00').toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Orders after this date will show a warning that delivery before Christmas isn't guaranteed.</p>
+            </div>
           </div>
         </div>
       )}

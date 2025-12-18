@@ -777,6 +777,28 @@ const TalentProfilePage: React.FC = () => {
                 <ClockIcon className="h-4 w-4 mr-0.5" />
                 {talent.fulfillment_time_hours || 48}h delivery
               </span>
+              {talent.christmas_deadline && (
+                (() => {
+                  const deadline = new Date(talent.christmas_deadline + 'T23:59:59');
+                  const now = new Date();
+                  const isPastDeadline = now > deadline;
+                  const diffMs = deadline.getTime() - now.getTime();
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  
+                  return isPastDeadline ? (
+                    <>
+                      <span className="text-gray-500">•</span>
+                      <span className="text-orange-400 text-xs">⚠️ May not arrive before Christmas</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-gray-500">•</span>
+                      <span className="text-green-400 text-xs">🎄 Order in {diffDays > 0 ? `${diffDays}d ${diffHours}h` : `${diffHours}h`} for Christmas</span>
+                    </>
+                  );
+                })()
+              )}
               {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) && (
                 <>
                   <span className="text-gray-500">•</span>

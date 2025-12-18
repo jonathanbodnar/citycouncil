@@ -970,6 +970,32 @@ const OrderPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Christmas Deadline Warning */}
+            {talent.christmas_deadline && (() => {
+              const deadline = new Date(talent.christmas_deadline + 'T23:59:59');
+              const now = new Date();
+              const isPastDeadline = now > deadline;
+              const diffMs = deadline.getTime() - now.getTime();
+              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+              const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              
+              return isPastDeadline ? (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-xl">
+                  <p className="text-sm text-orange-800 font-medium flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>This order may not be delivered before Christmas.</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="text-sm text-green-800 font-medium flex items-center gap-2">
+                    <span>🎄</span>
+                    <span>Order in the next {diffDays > 0 ? `${diffDays}d ${diffHours}h` : `${diffHours}h`} to get before Christmas!</span>
+                  </p>
+                </div>
+              );
+            })()}
+
             {/* Pricing Urgency Indicator */}
             {ordersRemaining <= 10 && (
               <div className="mb-4 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/50 rounded-xl px-3 py-2.5 animate-pulse">

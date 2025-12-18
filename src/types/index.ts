@@ -72,6 +72,7 @@ export interface TalentProfile {
   rumble_handle?: string;
   rumble_type?: 'c' | 'user'; // 'c' for channel, 'user' for user profile
   youtube_handle?: string;
+  christmas_deadline?: string; // Last day to order for Christmas delivery (YYYY-MM-DD)
 }
 
 export type TalentCategory = 
