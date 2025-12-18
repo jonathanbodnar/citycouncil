@@ -16,7 +16,7 @@ app.use(helmet({
         // Note: 'unsafe-eval' is required for React/Vite in production
         "'unsafe-eval'",
         "'unsafe-inline'", // Required for inline scripts (Rumble, Meta Pixel, etc.)
-        "data:", // Allow data: URIs for base64 encoded scripts (SearchAtlas Otto)
+        "data:", // Allow data: URIs for base64 encoded scripts
         "https://connect.facebook.net",
         "https://static.cloudflareinsights.com",
         "https://js.fortis.tech",
@@ -25,8 +25,6 @@ app.use(helmet({
         "https://*.plaid.com",
         "https://www.googletagmanager.com",
         "https://www.google-analytics.com",
-        "https://dashboard.searchatlas.com",
-        "https://*.searchatlas.com",
         "https://a.ads.rmbl.ws", // Rumble Ads
         "https://*.rmbl.ws" // Rumble Ads wildcard
       ],
@@ -77,8 +75,6 @@ app.use(helmet({
         "https://www.google-analytics.com",
         "https://analytics.google.com",
         "https://www.googletagmanager.com",
-        "https://dashboard.searchatlas.com",
-        "https://*.searchatlas.com",
         "https://a.ads.rmbl.ws", // Rumble Ads
         "https://*.rmbl.ws", // Rumble Ads wildcard
         "https://hooks.zapier.com", // Zapier webhooks
