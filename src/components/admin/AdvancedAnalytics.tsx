@@ -79,53 +79,78 @@ const GOAL_LABELS = {
 };
 
 // Lifetime Stats Cards Component - simplified cost per follower and SMS
-const LifetimeStatsCards: React.FC = () => {
+interface LifetimeStatsCardsProps {
+  startDate: string; // YYYY-MM-DD format
+  endDate: string;   // YYYY-MM-DD format
+  dateRangeLabel: string; // e.g., "7 days", "30 days", "custom"
+}
+
+const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endDate, dateRangeLabel }) => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     costPerFollower: 0,
-    costPerSMS: 0
+    costPerSMS: 0,
+    totalFollowers: 0,
+    totalSMS: 0,
+    totalFBSpend: 0,
+    totalRumbleSpend: 0
   });
 
   useEffect(() => {
     const fetchLifetimeData = async () => {
       setLoading(true);
       try {
+        // Convert dates to proper timestamps for CST queries
+        // Midnight CST = 6:00 AM UTC
+        const startTimestamp = `${startDate}T06:00:00.000Z`;
+        // End of day CST = 5:59:59 AM UTC next day
+        const [year, month, day] = endDate.split('-').map(Number);
+        const nextDay = new Date(year, month - 1, day + 1);
+        const endTimestamp = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}T05:59:59.999Z`;
+
         // Fetch follower data, SMS data, and ad spend in parallel
         const [followerResult, smsResult, fbSpendResult, rumbleSpendResult] = await Promise.all([
-          // Follower counts since Dec 10
+          // Follower counts within date range
           supabase
             .from('follower_counts')
             .select('date, count')
             .eq('platform', 'instagram')
-            .gte('date', '2025-12-10')
+            .gte('date', startDate)
+            .lte('date', endDate)
             .order('date', { ascending: true }),
           
-          // SMS signups since Dec 8
+          // SMS signups within date range
           supabase
             .from('beta_signups')
             .select('id, subscribed_at')
-            .gte('subscribed_at', '2025-12-08T06:00:00Z'),
+            .gte('subscribed_at', startTimestamp)
+            .lte('subscribed_at', endTimestamp),
           
-          // Facebook spend since Dec 10 (for followers)
+          // Facebook spend within date range (for followers)
           supabase
             .from('ad_spend_daily')
             .select('spend')
             .eq('platform', 'facebook')
-            .gte('date', '2025-12-10'),
+            .gte('date', startDate)
+            .lte('date', endDate),
           
-          // Rumble spend since Dec 8 (for SMS/users)
+          // Rumble spend within date range (for SMS/users)
           supabase
             .from('ad_spend_daily')
             .select('spend')
             .eq('platform', 'rumble')
-            .gte('date', '2025-12-08')
+            .gte('date', startDate)
+            .lte('date', endDate)
         ]);
 
-        // Calculate followers gained
+        // Calculate followers gained (first to last in range)
         const followerData = followerResult.data || [];
         let totalFollowersGained = 0;
         if (followerData.length >= 2) {
           totalFollowersGained = followerData[followerData.length - 1].count - followerData[0].count;
+        } else if (followerData.length === 1) {
+          // If only one day, we can't calculate gain
+          totalFollowersGained = 0;
         }
 
         // Calculate total SMS
@@ -144,7 +169,14 @@ const LifetimeStatsCards: React.FC = () => {
         const costPerFollower = totalFollowersGained > 0 ? totalFBSpend / totalFollowersGained : 0;
         const costPerSMS = totalSMS > 0 ? totalRumbleSpend / totalSMS : 0;
 
-        setData({ costPerFollower, costPerSMS });
+        setData({ 
+          costPerFollower, 
+          costPerSMS, 
+          totalFollowers: totalFollowersGained,
+          totalSMS,
+          totalFBSpend,
+          totalRumbleSpend
+        });
       } catch (error) {
         console.error('Error fetching lifetime data:', error);
       } finally {
@@ -153,7 +185,7 @@ const LifetimeStatsCards: React.FC = () => {
     };
 
     fetchLifetimeData();
-  }, []);
+  }, [startDate, endDate]);
 
   if (loading) {
     return (
@@ -181,7 +213,9 @@ const LifetimeStatsCards: React.FC = () => {
         <p className="text-4xl font-bold text-white mb-1">
           ${data.costPerFollower.toFixed(2)}
         </p>
-        <p className="text-gray-500 text-sm">since Dec 10</p>
+        <p className="text-gray-500 text-sm">
+          {dateRangeLabel} • {data.totalFollowers.toLocaleString()} followers • ${data.totalFBSpend.toFixed(0)} FB spend
+        </p>
       </div>
 
       {/* Cost Per SMS */}
@@ -193,7 +227,9 @@ const LifetimeStatsCards: React.FC = () => {
         <p className="text-4xl font-bold text-white mb-1">
           ${data.costPerSMS.toFixed(2)}
         </p>
-        <p className="text-gray-500 text-sm">since Dec 8 (Rumble only)</p>
+        <p className="text-gray-500 text-sm">
+          {dateRangeLabel} • {data.totalSMS.toLocaleString()} SMS • ${data.totalRumbleSpend.toFixed(0)} Rumble spend
+        </p>
       </div>
     </div>
   );
@@ -1088,9 +1124,26 @@ const AdvancedAnalytics: React.FC = () => {
       </div>
 
       {/* Lifetime Cost Per Follower Card (Drill Mode) */}
-      {chartMode === 'drill' && (
-        <LifetimeStatsCards />
-      )}
+      {chartMode === 'drill' && (() => {
+        const { start, end } = getDateRange();
+        const startStr = formatLocalDate(start);
+        const endStr = formatLocalDate(end);
+        const dateRangeLabels: Record<DateRange, string> = {
+          'today': 'Today',
+          '7d': 'Last 7 days',
+          '14d': 'Last 14 days',
+          '30d': 'Last 30 days',
+          '90d': 'Last 90 days',
+          'custom': `${startStr} to ${endStr}`
+        };
+        return (
+          <LifetimeStatsCards 
+            startDate={startStr}
+            endDate={endStr}
+            dateRangeLabel={dateRangeLabels[dateRange]}
+          />
+        );
+      })()}
 
       {/* Campaign Mappings (Drill Mode) */}
       {chartMode === 'drill' && (
