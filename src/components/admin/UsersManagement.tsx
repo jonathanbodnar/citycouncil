@@ -188,150 +188,208 @@ const UsersManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Users Table - Condensed */}
-      <div className="glass rounded-2xl">
-        <table className="w-full divide-y divide-gray-200 table-fixed">
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {filteredUsers.length === 0 ? (
+          <div className="glass rounded-xl p-6 text-center text-gray-500">
+            No users found
+          </div>
+        ) : (
+          filteredUsers.map((user) => (
+            <div key={user.id} className="glass rounded-xl p-4 space-y-2">
+              {/* Header: Avatar, Name, Type */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {user.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name}
+                      className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <UserCircleIcon className="h-10 w-10 text-gray-400 flex-shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate">{user.full_name || 'No name'}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${getUserTypeColor(user.user_type)}`}>
+                  {user.user_type || 'user'}
+                </span>
+              </div>
+              
+              {/* Details */}
+              <div className="flex flex-wrap gap-2 text-xs">
+                {user.phone && (
+                  <span className="flex items-center gap-1 text-gray-600">
+                    <PhoneIcon className="h-3 w-3" />
+                    {user.phone}
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-gray-500">
+                  <CalendarIcon className="h-3 w-3" />
+                  {formatDate(user.created_at)}
+                </span>
+              </div>
+              
+              {/* Source Tags */}
+              {(user.promo_source || user.did_holiday_popup) && (
+                <div className="flex flex-wrap gap-1">
+                  {user.promo_source && (
+                    <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
+                      📣 {user.promo_source}
+                    </span>
+                  )}
+                  {user.did_holiday_popup && (
+                    <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
+                      📱 Popup
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block glass rounded-2xl overflow-x-auto">
+        <table className="w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 User
               </th>
-              <th className="hidden md:table-cell w-32 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Contact
               </th>
-              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Type
               </th>
-              <th className="hidden md:table-cell w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Source
               </th>
-              <th className="hidden lg:table-cell w-24 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="hidden lg:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Tags
               </th>
-              <th className="hidden sm:table-cell w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Joined
               </th>
-              <th className="hidden xl:table-cell w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="hidden xl:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Last Login
               </th>
             </tr>
           </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-3 sm:px-6 py-8 sm:py-12 text-center text-gray-500 text-sm">
-                      No users found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      {/* User Column */}
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <div className="flex items-center min-w-0">
-                          {user.avatar_url ? (
-                            <img
-                              src={user.avatar_url}
-                              alt={user.full_name}
-                              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover flex-shrink-0"
-                            />
-                          ) : (
-                            <UserCircleIcon className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400 flex-shrink-0" />
-                          )}
-                          <div className="ml-2 sm:ml-4 min-w-0">
-                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                              {user.full_name || 'No name'}
-                            </div>
-                            <div className="text-xs text-gray-500 md:hidden truncate">
-                              {user.email}
-                            </div>
-                            <div className="hidden md:block text-xs text-gray-500">
-                              ID: {user.id.slice(0, 8)}...
-                            </div>
-                          </div>
-                        </div>
-                      </td>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  No users found
+                </td>
+              </tr>
+            ) : (
+              filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  {/* User Column */}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      {user.avatar_url ? (
+                        <img
+                          src={user.avatar_url}
+                          alt={user.full_name}
+                          className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <UserCircleIcon className="h-10 w-10 text-gray-400 flex-shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate max-w-[150px]">
+                          {user.full_name || 'No name'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          ID: {user.id.slice(0, 8)}...
+                        </p>
+                      </div>
+                    </div>
+                  </td>
 
-                      {/* Contact Column - Hidden on mobile */}
-                      <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center text-sm text-gray-900 truncate">
-                            <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-                            <span className="truncate">{user.email || 'No email'}</span>
-                          </div>
-                          {user.phone && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <PhoneIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-                              <span>{user.phone}</span>
-                              {user.sms_subscribed && (
-                                <span className="ml-2 text-xs text-green-600">✓ SMS</span>
-                              )}
-                            </div>
-                          )}
+                  {/* Contact Column */}
+                  <td className="px-4 py-3">
+                    <div className="space-y-1 max-w-[200px]">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <EnvelopeIcon className="h-4 w-4 mr-1 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{user.email || 'No email'}</span>
+                      </div>
+                      {user.phone && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <PhoneIcon className="h-4 w-4 mr-1 text-gray-400 flex-shrink-0" />
+                          <span>{user.phone}</span>
                         </div>
-                      </td>
+                      )}
+                    </div>
+                  </td>
 
-                      {/* Type Column */}
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getUserTypeColor(user.user_type)}`}>
-                          {user.user_type || 'user'}
+                  {/* Type Column */}
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.user_type)}`}>
+                      {user.user_type || 'user'}
+                    </span>
+                  </td>
+
+                  {/* Source Column */}
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {user.promo_source && (
+                        <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
+                          📣 {user.promo_source}
                         </span>
-                      </td>
+                      )}
+                      {user.did_holiday_popup && (
+                        <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
+                          📱 Popup
+                        </span>
+                      )}
+                      {!user.promo_source && !user.did_holiday_popup && (
+                        <span className="text-xs text-gray-400">Direct</span>
+                      )}
+                    </div>
+                  </td>
 
-                      {/* Source Column - Shows UTM source and holiday popup */}
-                      <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {user.promo_source && (
-                            <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
-                              📣 {user.promo_source}
-                            </span>
-                          )}
-                          {user.did_holiday_popup && (
-                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
-                              📱 Popup
-                            </span>
-                          )}
-                          {!user.promo_source && !user.did_holiday_popup && (
-                            <span className="text-xs text-gray-400">Direct</span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Tags Column - Hidden on smaller screens */}
-                      <td className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                        {user.user_tags && user.user_tags.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {user.user_tags.map((tag, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full flex items-center"
-                              >
-                                <TagIcon className="h-3 w-3 mr-1" />
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs sm:text-sm text-gray-400">No tags</span>
+                  {/* Tags Column */}
+                  <td className="hidden lg:table-cell px-4 py-3">
+                    {user.user_tags && user.user_tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {user.user_tags.slice(0, 2).map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {user.user_tags.length > 2 && (
+                          <span className="text-xs text-gray-400">+{user.user_tags.length - 2}</span>
                         )}
-                      </td>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
 
-                      {/* Joined Column - Hidden on mobile */}
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-gray-400" />
-                          {formatDate(user.created_at)}
-                        </div>
-                      </td>
+                  {/* Joined Column */}
+                  <td className="px-4 py-3 text-sm text-gray-500">
+                    {formatDate(user.created_at)}
+                  </td>
 
-                      {/* Last Login Column - Hidden on smaller screens */}
-                      <td className="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                        {formatDate(user.last_login)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
+                  {/* Last Login Column */}
+                  <td className="hidden xl:table-cell px-4 py-3 text-sm text-gray-500">
+                    {formatDate(user.last_login)}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
         </table>
       </div>
     </div>
