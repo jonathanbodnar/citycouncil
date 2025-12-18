@@ -505,39 +505,49 @@ const TalentManagement: React.FC = () => {
       console.log('SUCCESS: Talent profile update completed');
 
       // Sync social handles to social_accounts table for backwards compatibility
-      const socialHandles = [
-        { platform: 'twitter', handle: editingTalent.twitter_handle },
-        { platform: 'instagram', handle: editingTalent.instagram_handle },
-        { platform: 'facebook', handle: editingTalent.facebook_handle },
-        { platform: 'tiktok', handle: editingTalent.tiktok_handle },
-        { platform: 'rumble', handle: editingTalent.rumble_handle },
-        { platform: 'youtube', handle: editingTalent.youtube_handle }
-      ].filter(s => s.handle); // Only include non-empty handles
+      try {
+        const socialHandles = [
+          { platform: 'twitter', handle: editingTalent.twitter_handle },
+          { platform: 'instagram', handle: editingTalent.instagram_handle },
+          { platform: 'facebook', handle: editingTalent.facebook_handle },
+          { platform: 'tiktok', handle: editingTalent.tiktok_handle },
+          { platform: 'rumble', handle: editingTalent.rumble_handle },
+          { platform: 'youtube', handle: editingTalent.youtube_handle }
+        ].filter(s => s.handle); // Only include non-empty handles
 
-      // Delete existing social accounts for this talent
-      await supabase
-        .from('social_accounts')
-        .delete()
-        .eq('talent_id', editingTalent.id);
-
-      // Insert new social accounts if any
-      if (socialHandles.length > 0) {
-        const socialAccountsData = socialHandles.map(s => ({
-          talent_id: editingTalent.id,
-          platform: s.platform,
-          handle: s.handle!.startsWith('@') ? s.handle : `@${s.handle}`
-        }));
-
-        const { error: socialError } = await supabase
+        // Delete existing social accounts for this talent
+        const { error: deleteError } = await supabase
           .from('social_accounts')
-          .insert(socialAccountsData);
+          .delete()
+          .eq('talent_id', editingTalent.id);
 
-        if (socialError) {
-          console.error('Error syncing social accounts:', socialError);
-          // Don't throw - main update succeeded
-        } else {
-          console.log('Social accounts synced successfully');
+        if (deleteError) {
+          console.warn('Warning: Could not delete existing social accounts:', deleteError);
+          // Continue anyway - not critical
         }
+
+        // Insert new social accounts if any
+        if (socialHandles.length > 0) {
+          const socialAccountsData = socialHandles.map(s => ({
+            talent_id: editingTalent.id,
+            platform: s.platform,
+            handle: s.handle!.startsWith('@') ? s.handle : `@${s.handle}`
+          }));
+
+          const { error: socialError } = await supabase
+            .from('social_accounts')
+            .insert(socialAccountsData);
+
+          if (socialError) {
+            console.warn('Warning: Error syncing social accounts:', socialError);
+            // Don't throw - main update succeeded
+          } else {
+            console.log('Social accounts synced successfully');
+          }
+        }
+      } catch (socialSyncError) {
+        console.warn('Warning: Social accounts sync failed, but talent update succeeded:', socialSyncError);
+        // Don't fail the whole update for social accounts sync
       }
 
       // Now verify the data was actually saved
@@ -580,9 +590,15 @@ const TalentManagement: React.FC = () => {
       console.log('Forcing talent list refresh after update');
       await fetchTalents();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating talent:', error);
-      toast.error('Failed to update talent profile');
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      });
+      toast.error(`Failed to update talent profile: ${error?.message || 'Unknown error'}`);
     }
   };
 
