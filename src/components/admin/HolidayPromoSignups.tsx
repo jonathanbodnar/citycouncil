@@ -147,15 +147,15 @@ const HolidayPromoSignups: React.FC = () => {
     }
   };
 
-  // Calculate prize statistics
-  const prizeStats = {
-    FREE_SHOUTOUT: signups.filter(s => s.prize_won === 'FREE_SHOUTOUT').length,
-    '25_OFF': signups.filter(s => s.prize_won === '25_OFF').length,
-    '15_OFF': signups.filter(s => s.prize_won === '15_OFF').length,
-    '10_OFF': signups.filter(s => s.prize_won === '10_OFF').length,
-    '25_DOLLARS': signups.filter(s => s.prize_won === '25_DOLLARS').length,
-    none: signups.filter(s => !s.prize_won).length,
-  };
+  // Calculate UTM source statistics
+  const utmStats = signups.reduce((acc, s) => {
+    const source = s.utm_source || 'No UTM';
+    acc[source] = (acc[source] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  
+  // Sort UTM stats by count descending
+  const sortedUtmStats = Object.entries(utmStats).sort((a, b) => b[1] - a[1]);
 
   if (loading) {
     return (
@@ -182,32 +182,20 @@ const HolidayPromoSignups: React.FC = () => {
         </button>
       </div>
 
-      {/* Prize Stats */}
+      {/* UTM Source Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-xl p-4 border-2 border-primary-300">
           <p className="text-sm text-gray-600">Total</p>
           <p className="text-2xl font-bold text-gray-900">{signups.length}</p>
         </div>
-        <div className="glass rounded-xl p-4 border-2 border-yellow-300">
-          <p className="text-sm text-yellow-700">🏆 Free ShoutOut</p>
-          <p className="text-2xl font-bold text-yellow-600">{prizeStats.FREE_SHOUTOUT}</p>
-        </div>
-        <div className="glass rounded-xl p-4">
-          <p className="text-sm text-purple-600">25% Off</p>
-          <p className="text-2xl font-bold text-purple-700">{prizeStats['25_OFF']}</p>
-        </div>
-        <div className="glass rounded-xl p-4">
-          <p className="text-sm text-blue-600">15% Off</p>
-          <p className="text-2xl font-bold text-blue-700">{prizeStats['15_OFF']}</p>
-        </div>
-        <div className="glass rounded-xl p-4">
-          <p className="text-sm text-green-600">10% Off</p>
-          <p className="text-2xl font-bold text-green-700">{prizeStats['10_OFF']}</p>
-        </div>
-        <div className="glass rounded-xl p-4">
-          <p className="text-sm text-pink-600">$25 Off</p>
-          <p className="text-2xl font-bold text-pink-700">{prizeStats['25_DOLLARS']}</p>
-        </div>
+        {sortedUtmStats.map(([source, count]) => (
+          <div key={source} className="glass rounded-xl p-4">
+            <p className="text-sm text-gray-600 truncate" title={source}>
+              {source === 'No UTM' ? '—' : source}
+            </p>
+            <p className="text-2xl font-bold text-primary-600">{count}</p>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
