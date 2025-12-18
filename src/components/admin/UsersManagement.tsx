@@ -188,35 +188,34 @@ const UsersManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Users Table - Condensed */}
       <div className="glass rounded-2xl">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '900px' }}>
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="hidden md:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="hidden md:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Source
-                  </th>
-                  <th className="hidden lg:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tags
-                  </th>
-                  <th className="hidden sm:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Joined
-                  </th>
-                  <th className="hidden xl:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Last Login
-                  </th>
-                </tr>
-              </thead>
+        <table className="w-full divide-y divide-gray-200 table-fixed">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                User
+              </th>
+              <th className="hidden md:table-cell w-32 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Contact
+              </th>
+              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Type
+              </th>
+              <th className="hidden md:table-cell w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Source
+              </th>
+              <th className="hidden lg:table-cell w-24 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Tags
+              </th>
+              <th className="hidden sm:table-cell w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Joined
+              </th>
+              <th className="hidden xl:table-cell w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Last Login
+              </th>
+            </tr>
+          </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.length === 0 ? (
                   <tr>
@@ -333,8 +332,7 @@ const UsersManagement: React.FC = () => {
                   ))
                 )}
               </tbody>
-          </table>
-        </div>
+        </table>
       </div>
     </div>
   );

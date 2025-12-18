@@ -531,102 +531,101 @@ const OrdersManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Desktop Table View */}
+      {/* Desktop Table View - Condensed */}
       <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <table className="w-full divide-y divide-gray-200 table-fixed">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="w-8 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                
+              </th>
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Date
+              </th>
+              <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Customer
+              </th>
+              <th className="w-28 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Talent
+              </th>
+              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Amt
+              </th>
+              <th className="w-24 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Status
+              </th>
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                Source
+              </th>
+              <th className="w-16 px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredOrders.length === 0 ? (
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
-                  
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Talent
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Source
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <td colSpan={8} className="px-2 py-8 text-center text-gray-500">
+                  No orders found
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                    No orders found
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map((order) => {
-                  const isExpanded = expandedOrderId === order.id;
-                  return (
-                    <React.Fragment key={order.id}>
-                      <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {isExpanded ? (
-                            <ChevronUpIcon className="h-5 w-5 text-gray-400" />
-                          ) : (
-                            <ChevronDownIcon className="h-5 w-5 text-gray-400" />
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(order.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{order.users.full_name}</div>
-                          <div className="text-sm text-gray-500">{order.users.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {order.talent_profiles.users.full_name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          ${(order.amount / 100).toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            {getStatusBadge(order.status)}
-                            {order.coupon_code?.toUpperCase() === 'WINNER100' && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                🎁 Giveaway
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {order.promo_source ? (
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              order.promo_source === 'self_promo' 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {order.promo_source === 'self_promo' ? '🎯 Self Promo' : `📣 ${order.promo_source}`}
+            ) : (
+              filteredOrders.map((order) => {
+                const isExpanded = expandedOrderId === order.id;
+                return (
+                  <React.Fragment key={order.id}>
+                    <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}>
+                      <td className="px-2 py-2 text-sm text-gray-500">
+                        {isExpanded ? (
+                          <ChevronUpIcon className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                        )}
+                      </td>
+                      <td className="px-2 py-2 text-xs text-gray-900">
+                        {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="px-2 py-2">
+                        <div className="text-xs font-medium text-gray-900 truncate">{order.users.full_name}</div>
+                        <div className="text-xs text-gray-500 truncate">{order.users.email}</div>
+                      </td>
+                      <td className="px-2 py-2 text-xs text-gray-900 truncate">
+                        {order.talent_profiles.users.full_name}
+                      </td>
+                      <td className="px-2 py-2 text-xs font-medium text-gray-900">
+                        ${(order.amount / 100).toFixed(0)}
+                      </td>
+                      <td className="px-2 py-2">
+                        <div className="flex flex-col gap-1">
+                          {getStatusBadge(order.status)}
+                          {order.coupon_code?.toUpperCase() === 'WINNER100' && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                              🎁
                             </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
                           )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedOrderId(isExpanded ? null : order.id);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 font-medium"
-                          >
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-xs">
+                        {order.promo_source ? (
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium truncate max-w-full ${
+                            order.promo_source === 'self_promo' 
+                              ? 'bg-purple-100 text-purple-800' 
+                              : 'bg-blue-100 text-blue-800'
+                          }`} title={order.promo_source}>
+                            {order.promo_source === 'self_promo' ? '🎯' : order.promo_source.slice(0, 6)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-2 text-right text-xs">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedOrderId(isExpanded ? null : order.id);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
                             {isExpanded ? 'Hide Details' : 'View Details'}
                           </button>
                         </td>
@@ -764,7 +763,6 @@ const OrdersManagement: React.FC = () => {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* Deny Order Modal */}
