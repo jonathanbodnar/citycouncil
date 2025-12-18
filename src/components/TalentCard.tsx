@@ -150,7 +150,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             className="text-[10px] sm:text-xs"
             style={{ color: 'rgba(147, 197, 253, 0.6)' }}
           >
-            {talent.fulfillment_time_hours}h delivery
+            {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h delivery
           </span>
           {(talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name) ? (
             <div className="flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-red-400 font-medium">

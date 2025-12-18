@@ -775,7 +775,7 @@ const TalentProfilePage: React.FC = () => {
               <span className="text-gray-500">•</span>
               <span className="flex items-center">
                 <ClockIcon className="h-4 w-4 mr-0.5" />
-                {talent.fulfillment_time_hours || 48}h delivery
+                {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h delivery
               </span>
               {talent.christmas_deadline && (
                 (() => {

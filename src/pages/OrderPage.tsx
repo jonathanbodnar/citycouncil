@@ -745,7 +745,7 @@ const OrderPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-blue-500">✓</span>
-                  <p className="text-sm text-gray-700">Get your video within {talent.fulfillment_time_hours}h</p>
+                  <p className="text-sm text-gray-700">Get your video within {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-blue-500">✓</span>
@@ -965,7 +965,7 @@ const OrderPage: React.FC = () => {
                 </h3>
                 <div className="flex items-center text-sm text-gray-600">
                   <ClockIcon className="h-4 w-4 mr-1" />
-                  Delivers in {talent.fulfillment_time_hours}h
+                  Delivers in {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h
                 </div>
               </div>
             </div>
@@ -1151,7 +1151,7 @@ const OrderPage: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <ClockIcon className="h-5 w-5 text-orange-500 mr-2" />
-                Delivered within {talent.fulfillment_time_hours} hours
+                Delivered within {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48} hours
               </div>
             </div>
 
