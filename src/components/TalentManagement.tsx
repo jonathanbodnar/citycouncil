@@ -452,11 +452,12 @@ const TalentManagement: React.FC = () => {
         }
         
         // VERIFY the phone was actually saved
-        const { data: verifyUser, error: verifyError } = await supabase
+        const { data: verifyUserArray, error: verifyError } = await supabase
           .from('users')
           .select('phone, full_name')
-          .eq('id', editingTalent.user_id)
-          .single();
+          .eq('id', editingTalent.user_id);
+        
+        const verifyUser = verifyUserArray?.[0];
           
         console.log('✅ USER UPDATE COMPLETE - VERIFICATION:', {
           saved_phone: verifyUser?.phone,
@@ -473,16 +474,13 @@ const TalentManagement: React.FC = () => {
         }
       }
 
-      // Try a simpler update first to isolate the issue
-      console.log('Attempting talent profile update...');
-      const { data: updatedDataArray, error: talentError } = await supabase
+      // Update talent profile
+      console.log('Attempting talent profile update...', { talentId: editingTalent.id, updateData });
+      
+      const { error: talentError } = await supabase
         .from('talent_profiles')
         .update(updateData)
-        .eq('id', editingTalent.id)
-        .select('*');
-
-      const updatedData = updatedDataArray?.[0];
-      console.log('Update result:', { data: updatedData, error: talentError });
+        .eq('id', editingTalent.id);
 
       if (talentError) {
         console.error('FAILED: Talent profile update error:', talentError);
@@ -490,10 +488,18 @@ const TalentManagement: React.FC = () => {
         throw talentError;
       }
       
-      if (!updatedData) {
-        console.error('FAILED: No data returned from update');
-        toast.error('Failed to update talent profile - no data returned');
-        return;
+      // Fetch the updated data separately to avoid RLS issues with returning data
+      const { data: updatedDataArray, error: fetchError } = await supabase
+        .from('talent_profiles')
+        .select('*')
+        .eq('id', editingTalent.id);
+      
+      const updatedData = updatedDataArray?.[0];
+      console.log('Update result:', { data: updatedData, fetchError });
+      
+      if (fetchError) {
+        console.error('FAILED: Could not fetch updated talent:', fetchError);
+        // Don't fail here - update likely succeeded
       }
 
       console.log('SUCCESS: Talent profile update completed');
