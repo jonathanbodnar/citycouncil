@@ -147,9 +147,13 @@ const HolidayPromoSignups: React.FC = () => {
     }
   };
 
-  // Calculate UTM source statistics
+  // Calculate UTM source statistics (group DM variations together)
   const utmStats = signups.reduce((acc, s) => {
-    const source = s.utm_source || 'No UTM';
+    let source = s.utm_source || 'No UTM';
+    // Group all DM variations (dm, dmf, dma, dmb, dmc) into "DM"
+    if (source.toLowerCase().startsWith('dm')) {
+      source = 'DM';
+    }
     acc[source] = (acc[source] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
