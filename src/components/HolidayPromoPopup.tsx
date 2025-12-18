@@ -61,7 +61,7 @@ const getPopupDelay = (): number => {
   const storedSource = safeGetItem('promo_source_global') || '';
   const source = (utmSource || storedSource).trim().toLowerCase();
   
-  if (source === 'sms' || source === 'giveaway' || source === 'rgiveaway') {
+  if (source === 'sms' || source === 'giveaway' || source === 'rgiveaway' || source === 'dm') {
     return 3000;
   }
   
