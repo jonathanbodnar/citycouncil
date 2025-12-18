@@ -475,19 +475,25 @@ const TalentManagement: React.FC = () => {
 
       // Try a simpler update first to isolate the issue
       console.log('Attempting talent profile update...');
-      const { data: updatedData, error: talentError } = await supabase
+      const { data: updatedDataArray, error: talentError } = await supabase
         .from('talent_profiles')
         .update(updateData)
         .eq('id', editingTalent.id)
-        .select('*')
-        .single();
+        .select('*');
 
+      const updatedData = updatedDataArray?.[0];
       console.log('Update result:', { data: updatedData, error: talentError });
 
       if (talentError) {
         console.error('FAILED: Talent profile update error:', talentError);
         toast.error(`Database error: ${talentError.message}`);
         throw talentError;
+      }
+      
+      if (!updatedData) {
+        console.error('FAILED: No data returned from update');
+        toast.error('Failed to update talent profile - no data returned');
+        return;
       }
 
       console.log('SUCCESS: Talent profile update completed');
@@ -529,7 +535,7 @@ const TalentManagement: React.FC = () => {
       }
 
       // Now verify the data was actually saved
-      const { data: verificationData, error: verifyError } = await supabase
+      const { data: verificationDataArray, error: verifyError } = await supabase
         .from('talent_profiles')
         .select(`
           *,
@@ -540,9 +546,9 @@ const TalentManagement: React.FC = () => {
             phone
           )
         `)
-        .eq('id', editingTalent.id)
-        .single();
+        .eq('id', editingTalent.id);
 
+      const verificationData = verificationDataArray?.[0];
       if (verificationData) {
         console.log('VERIFICATION: Data actually in database:', verificationData);
         console.log('VERIFICATION: temp_full_name:', verificationData.temp_full_name);
