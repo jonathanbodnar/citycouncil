@@ -55,18 +55,22 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     // Auto-upload immediately after file selection
     setUploading(true);
     try {
+      console.log('Starting image upload:', { fileName: file.name, fileSize: file.size, uploadPath });
       const result = await uploadImageToWasabi(file, uploadPath);
       
       if (!result.success) {
-        throw new Error(result.error);
+        console.error('Upload failed:', result.error);
+        throw new Error(result.error || 'Upload failed');
       }
 
+      console.log('Upload successful:', result.imageUrl);
       onImageUploaded(result.imageUrl!);
       toast.success('Image uploaded successfully!');
       setSelectedFile(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
-      toast.error('Failed to upload image');
+      const errorMessage = error?.message || 'Failed to upload image';
+      toast.error(errorMessage);
       // Reset on error
       setSelectedFile(null);
       setPreview(currentImageUrl || null);

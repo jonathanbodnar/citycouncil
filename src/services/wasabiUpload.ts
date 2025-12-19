@@ -21,13 +21,25 @@ export const uploadImageToWasabi = async (
       return { success: false, error: 'Image must be less than 5MB' };
     }
 
+    // Check for required environment variables
+    const accessKeyId = process.env.REACT_APP_WASABI_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY;
+    
+    if (!accessKeyId || !secretAccessKey) {
+      console.error('Wasabi credentials missing:', { 
+        hasAccessKey: !!accessKeyId, 
+        hasSecretKey: !!secretAccessKey 
+      });
+      return { success: false, error: 'Storage configuration error - credentials missing' };
+    }
+
     // Upload to Wasabi S3
     const AWS = (await import('aws-sdk')).default;
     
     const wasabi = new AWS.S3({
       endpoint: 's3.us-central-1.wasabisys.com',
-      accessKeyId: process.env.REACT_APP_WASABI_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY!,
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
       region: 'us-central-1',
       s3ForcePathStyle: true,
       signatureVersion: 'v4'
@@ -35,6 +47,8 @@ export const uploadImageToWasabi = async (
 
     const fileExt = file.name.split('.').pop();
     const fileName = `${uploadPath}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    
+    console.log('Uploading to Wasabi:', { fileName, fileType: file.type, fileSize: file.size });
     
     const uploadParams = {
       Bucket: 'shoutout-assets',
@@ -50,14 +64,35 @@ export const uploadImageToWasabi = async (
     // Direct access: https://shoutout-assets.s3.us-central-1.wasabisys.com/path/file.jpg
     const imageUrl = `https://shoutout-assets.s3.us-central-1.wasabisys.com/${fileName}`;
     
+    console.log('Wasabi upload successful:', imageUrl);
+    
     return {
       success: true,
       imageUrl: imageUrl
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image upload error:', error);
-    return { success: false, error: 'Upload failed' };
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      statusCode: error?.statusCode,
+      name: error?.name
+    });
+    
+    // Provide more specific error messages
+    let errorMessage = 'Upload failed';
+    if (error?.code === 'NetworkingError') {
+      errorMessage = 'Network error - check your connection';
+    } else if (error?.code === 'AccessDenied' || error?.statusCode === 403) {
+      errorMessage = 'Access denied - check storage credentials';
+    } else if (error?.code === 'InvalidAccessKeyId') {
+      errorMessage = 'Invalid storage credentials';
+    } else if (error?.message) {
+      errorMessage = error.message;
+    }
+    
+    return { success: false, error: errorMessage };
   }
 };
 
