@@ -503,25 +503,30 @@ const BioDashboard: React.FC = () => {
   const updateLink = async (link: BioLink) => {
     if (!link.id) return;
 
+    console.log('updateLink called with:', { id: link.id, link_format: link.link_format, title: link.title });
+
     try {
+      const updateData = {
+        title: link.title,
+        url: link.url,
+        icon_url: link.icon_url,
+        image_url: link.image_url,
+        grid_size: link.grid_size,
+        is_active: link.is_active,
+        grid_columns: link.grid_columns,
+        background_image_url: link.background_image_url,
+        thumbnail_url: link.thumbnail_url,
+        subtitle: link.subtitle,
+        button_text: link.button_text,
+        is_featured: link.is_featured,
+        link_format: link.link_format,
+        updated_at: new Date().toISOString(),
+      };
+      console.log('Updating bio_links with:', updateData);
+      
       const { error } = await supabase
         .from('bio_links')
-        .update({
-          title: link.title,
-          url: link.url,
-          icon_url: link.icon_url,
-          image_url: link.image_url,
-          grid_size: link.grid_size,
-          is_active: link.is_active,
-          grid_columns: link.grid_columns,
-          background_image_url: link.background_image_url,
-          thumbnail_url: link.thumbnail_url,
-          subtitle: link.subtitle,
-          button_text: link.button_text,
-          is_featured: link.is_featured,
-          link_format: link.link_format,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', link.id);
 
       if (error) throw error;
