@@ -50,14 +50,14 @@ const BIO_FEATURE_ALLOWED_EMAILS = ['jb@apollo.inc'];
 const IS_DEV_ENVIRONMENT = window.location.hostname === 'dev.shoutout.us' || window.location.hostname === 'localhost';
 
 // Helper to get the display amount for an order
-// For ANY coupon order, use original_amount (full price) so talent sees what they'll actually earn
-// Talent gets paid based on full video value minus admin fee, regardless of coupon
+// ALWAYS show the talent's video price (original_amount), not the discounted customer price
+// Talent gets paid based on their video price minus 25% admin fee, regardless of coupon
 const getOrderDisplayAmount = (order: Order): number => {
-  // If the order has original_amount (meaning a coupon was used), use that
-  // This shows talent the full video value they're being paid on
+  // If original_amount exists (set to talent's pricing in cents), use that
   if (order.original_amount && order.original_amount > 0) {
     return Number(order.original_amount);
   }
+  // Fallback to order amount (for orders without coupons, this IS the talent's price)
   return Number(order.amount);
 };
 
@@ -1028,11 +1028,10 @@ const TalentDashboard: React.FC = () => {
                                 )}
                               </p>
                               {(() => {
-                                // Use display amount (original_amount for coupon orders)
+                                // Calculate net payout: talent's video price - 25% admin fee
                                 const displayAmount = getOrderDisplayAmount(order);
-                                const basePrice = displayAmount / 100 / 1.029;
-                                const isPromo = talentProfile?.first_orders_promo_active && (talentProfile?.fulfilled_orders || 0) < 10;
-                                const adminFeePercentage = isPromo ? 0 : (order.admin_fee || talentProfile?.admin_fee_percentage || 25);
+                                const basePrice = displayAmount / 100 / 1.029; // Remove processing fee
+                                const adminFeePercentage = talentProfile?.admin_fee_percentage || 25;
                                 const netPayout = basePrice - (basePrice * (adminFeePercentage / 100));
                                 
                                 return (
@@ -1040,16 +1039,9 @@ const TalentDashboard: React.FC = () => {
                                     <p className="text-xs text-green-400 font-medium">
                                       Net: ${netPayout.toFixed(2)}
                                     </p>
-                                    {isPromo && (
-                                      <span className="text-xs glass-strong text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 font-semibold">
-                                        🎉 0% Fee
-                                      </span>
-                                    )}
-                                    {!isPromo && adminFeePercentage > 0 && (
-                                      <span className="text-xs text-gray-400">
-                                        ({adminFeePercentage}% platform fee)
-                                      </span>
-                                    )}
+                                    <span className="text-xs text-gray-400">
+                                      ({adminFeePercentage}% platform fee)
+                                    </span>
                                   </div>
                                 );
                               })()}

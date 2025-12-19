@@ -1,8 +1,24 @@
--- Fix payout calculation to use ORIGINAL video price (before coupon discount)
--- This ensures talent get paid based on full video value minus admin fee
--- regardless of what coupon the customer used
+-- FINAL FIX: Remove first 10 orders promo and fix payout calculations
+-- 1. Remove first_orders_promo_active for all talent (except historical data)
+-- 2. Fix payout trigger to always use 25% admin fee
+-- 3. Fix Phillip G's order for Jeremy Hambly
+-- 4. Ensure orders tab shows talent video price
 
--- Step 1: Update the trigger to use original_amount when available
+-- =====================================================
+-- Step 1: Disable first 10 orders promo for ALL talent
+-- =====================================================
+UPDATE talent_profiles
+SET 
+  first_orders_promo_active = false,
+  updated_at = NOW();
+
+SELECT 'First 10 orders promo disabled for all talent' as status, COUNT(*) as talent_count FROM talent_profiles;
+
+-- =====================================================
+-- Step 2: Update payout trigger - ALWAYS 25% admin fee
+-- Talent payout = Talent's video price - 25% admin fee
+-- Uses talent's pricing, NOT the order amount (which may be discounted)
+-- =====================================================
 CREATE OR REPLACE FUNCTION create_payout_on_order_completion()
 RETURNS TRIGGER 
 SECURITY DEFINER
@@ -12,56 +28,30 @@ DECLARE
   v_week_end DATE;
   v_admin_fee_amount DECIMAL(10,2);
   v_payout_amount DECIMAL(10,2);
-  v_admin_fee_pct DECIMAL(5,2);
-  v_fulfilled_orders INTEGER;
-  v_first_orders_promo_active BOOLEAN;
-  v_base_price DECIMAL(10,2);
+  v_admin_fee_pct DECIMAL(5,2) := 25; -- ALWAYS 25%
   v_talent_pricing DECIMAL(10,2);
   v_needs_review BOOLEAN := FALSE;
   v_review_reason TEXT := NULL;
 BEGIN
   IF NEW.status = 'completed' AND (OLD.status IS NULL OR OLD.status != 'completed') THEN
     
-    -- Get talent's current pricing and promo status
-    SELECT 
-      pricing,
-      admin_fee_percentage,
-      fulfilled_orders,
-      first_orders_promo_active
-    INTO 
-      v_talent_pricing,
-      v_admin_fee_pct,
-      v_fulfilled_orders,
-      v_first_orders_promo_active
+    -- Get talent's current pricing (this is what they get paid on)
+    SELECT pricing INTO v_talent_pricing
     FROM talent_profiles 
     WHERE id = NEW.talent_id;
     
-    v_admin_fee_pct := COALESCE(v_admin_fee_pct, 25);
-    v_fulfilled_orders := COALESCE(v_fulfilled_orders, 0);
-    v_first_orders_promo_active := COALESCE(v_first_orders_promo_active, true);
-    
-    -- IMPORTANT: Use original_amount (full price before coupon) if available
-    -- This ensures talent get paid on full video value, not discounted amount
-    IF NEW.original_amount IS NOT NULL AND NEW.original_amount > 0 THEN
-      -- original_amount is stored in dollars, use it directly
-      v_base_price := NEW.original_amount;
-      RAISE NOTICE 'Using original_amount (full price): $%', v_base_price;
-    ELSE
-      -- Fallback: Convert amount from cents to dollars and remove processing fee
-      -- amount in cents / 100 / 1.029 to remove 2.9% processing fee
-      v_base_price := (NEW.amount / 100.0) / 1.029;
-      RAISE NOTICE 'Using calculated base price from amount: $%', v_base_price;
+    -- Fallback if pricing is null
+    IF v_talent_pricing IS NULL OR v_talent_pricing <= 0 THEN
+      -- Use order amount as fallback, convert from cents
+      v_talent_pricing := (NEW.amount / 100.0) / 1.029;
+      RAISE NOTICE 'Warning: Talent pricing was null, using order amount: $%', v_talent_pricing;
     END IF;
     
-    -- Apply 0% admin fee for first 10 orders if promo is active
-    IF v_first_orders_promo_active AND v_fulfilled_orders < 10 THEN
-      v_admin_fee_pct := 0;
-      RAISE NOTICE 'First 10 orders promo active - 0 percent admin fee';
-    END IF;
+    -- Calculate admin fee (ALWAYS 25%)
+    v_admin_fee_amount := v_talent_pricing * (v_admin_fee_pct / 100);
     
-    -- Calculate admin fee and payout amount
-    v_admin_fee_amount := v_base_price * (v_admin_fee_pct / 100);
-    v_payout_amount := v_base_price - v_admin_fee_amount;
+    -- Talent payout = their video price - 25% admin fee
+    v_payout_amount := v_talent_pricing - v_admin_fee_amount;
     
     -- SAFEGUARDS: Check for suspicious amounts
     IF v_payout_amount > 1000.00 THEN
@@ -79,7 +69,7 @@ BEGIN
       admin_fee_amount, payout_amount, status,
       week_start_date, week_end_date, created_at, updated_at
     ) VALUES (
-      NEW.talent_id, NEW.id, v_base_price, v_admin_fee_pct,
+      NEW.talent_id, NEW.id, v_talent_pricing, v_admin_fee_pct,
       v_admin_fee_amount, v_payout_amount, 
       CASE WHEN v_needs_review THEN 'pending_review' ELSE 'pending' END,
       v_week_start, v_week_end, NOW(), NOW()
@@ -128,8 +118,8 @@ BEGIN
       END,
       updated_at = NOW();
       
-    RAISE NOTICE 'Payout created: Base price $%, Admin fee $%, Talent payout $%', 
-      v_base_price, v_admin_fee_amount, v_payout_amount;
+    RAISE NOTICE 'Payout created: Talent price $%, Admin fee $% (25 percent), Talent payout $%', 
+      v_talent_pricing, v_admin_fee_amount, v_payout_amount;
   END IF;
   
   RETURN NEW;
@@ -144,23 +134,23 @@ CREATE TRIGGER trigger_create_payout_on_completion
   EXECUTE FUNCTION create_payout_on_order_completion();
 
 -- =====================================================
--- Step 2: Fix Jeremy Hambly's last 2 orders
+-- Step 3: Fix Jeremy Hambly's orders - especially Phillip G
+-- Set original_amount to talent's pricing (in cents) for display
 -- =====================================================
 
--- First, let's find Jeremy Hambly's talent_id and recent orders
 DO $$
 DECLARE
   v_jeremy_talent_id UUID;
+  v_jeremy_pricing DECIMAL(10,2);
   v_order RECORD;
-  v_base_price DECIMAL(10,2);
-  v_admin_fee_pct DECIMAL(5,2);
-  v_admin_fee_amount DECIMAL(10,2);
   v_correct_payout DECIMAL(10,2);
+  v_admin_fee DECIMAL(10,2);
   v_old_payout DECIMAL(10,2);
   v_delta DECIMAL(10,2);
+  v_total_delta DECIMAL(10,2) := 0;
 BEGIN
-  -- Find Jeremy Hambly's talent_id
-  SELECT id INTO v_jeremy_talent_id
+  -- Find Jeremy Hambly
+  SELECT id, pricing INTO v_jeremy_talent_id, v_jeremy_pricing
   FROM talent_profiles
   WHERE username ILIKE '%hambly%' 
      OR slug ILIKE '%hambly%' 
@@ -168,75 +158,74 @@ BEGIN
   LIMIT 1;
   
   IF v_jeremy_talent_id IS NULL THEN
-    RAISE NOTICE 'Could not find Jeremy Hambly talent profile';
-    RETURN;
+    RAISE EXCEPTION 'Could not find Jeremy Hambly';
   END IF;
   
-  RAISE NOTICE 'Found Jeremy Hambly talent_id: %', v_jeremy_talent_id;
+  RAISE NOTICE 'Found Jeremy: talent_id=%, pricing=$%', v_jeremy_talent_id, v_jeremy_pricing;
   
-  -- Get his admin fee percentage
-  SELECT admin_fee_percentage INTO v_admin_fee_pct
-  FROM talent_profiles WHERE id = v_jeremy_talent_id;
-  v_admin_fee_pct := COALESCE(v_admin_fee_pct, 25);
+  -- Fix ALL his orders: set original_amount to his pricing (in cents) for dashboard display
+  UPDATE orders
+  SET original_amount = ROUND(v_jeremy_pricing * 100 * 1.029) -- pricing + processing fee in cents
+  WHERE talent_id = v_jeremy_talent_id
+    AND original_amount IS NULL OR original_amount > 100000; -- Fix null or obviously wrong values
   
-  -- Fix his last 2 completed orders with coupons
+  -- Now fix his payouts for completed orders
   FOR v_order IN 
     SELECT 
       o.id as order_id,
-      o.amount,
-      o.original_amount,
-      o.coupon_code,
+      o.amount as amount_cents,
       p.id as payout_id,
-      p.order_amount as current_order_amount,
-      p.payout_amount as current_payout
+      p.payout_amount as current_payout,
+      p.admin_fee_percentage as current_fee_pct
     FROM orders o
     LEFT JOIN payouts p ON p.order_id = o.id
     WHERE o.talent_id = v_jeremy_talent_id
       AND o.status = 'completed'
-    ORDER BY o.created_at DESC
-    LIMIT 2
+      AND p.id IS NOT NULL
   LOOP
-    -- Use original_amount if available, otherwise calculate from amount
-    IF v_order.original_amount IS NOT NULL AND v_order.original_amount > 0 THEN
-      v_base_price := v_order.original_amount;
-    ELSE
-      v_base_price := (v_order.amount / 100.0) / 1.029;
-    END IF;
-    
-    v_admin_fee_amount := v_base_price * (v_admin_fee_pct / 100);
-    v_correct_payout := v_base_price - v_admin_fee_amount;
     v_old_payout := COALESCE(v_order.current_payout, 0);
-    v_delta := v_correct_payout - v_old_payout;
     
-    RAISE NOTICE 'Order %: original_amount=$%, amount=% cents, base_price=$%, admin_fee=$%, correct_payout=$%, old_payout=$%, delta=$%',
-      v_order.order_id, v_order.original_amount, v_order.amount, v_base_price, v_admin_fee_amount, v_correct_payout, v_old_payout, v_delta;
-    
-    -- Update the payout record
-    IF v_order.payout_id IS NOT NULL THEN
-      UPDATE payouts
-      SET 
-        order_amount = v_base_price,
-        admin_fee_amount = v_admin_fee_amount,
-        payout_amount = v_correct_payout,
-        updated_at = NOW()
-      WHERE id = v_order.payout_id;
-      
-      -- Adjust talent's total earnings
-      IF ABS(v_delta) > 0.01 THEN
-        UPDATE talent_profiles
-        SET 
-          total_earnings = COALESCE(total_earnings, 0) + v_delta,
-          updated_at = NOW()
-        WHERE id = v_jeremy_talent_id;
-        
-        RAISE NOTICE 'Updated payout and adjusted total_earnings by $%', v_delta;
-      END IF;
+    -- Correct calculation: talent pricing - 25% admin fee
+    -- Use current admin fee if it was 0% (historical promo), otherwise recalculate
+    IF v_order.current_fee_pct = 0 THEN
+      -- This was a promo order, keep it at 0% fee
+      v_admin_fee := 0;
+      v_correct_payout := v_jeremy_pricing;
     ELSE
-      RAISE NOTICE 'No payout record found for order %, skipping', v_order.order_id;
+      -- Standard 25% fee
+      v_admin_fee := v_jeremy_pricing * 0.25;
+      v_correct_payout := v_jeremy_pricing - v_admin_fee;
     END IF;
+    
+    v_delta := v_old_payout - v_correct_payout;
+    v_total_delta := v_total_delta + v_delta;
+    
+    RAISE NOTICE 'Order %: pricing=$%, admin_fee=$%, correct_payout=$%, was=$%, delta=$%',
+      v_order.order_id, v_jeremy_pricing, v_admin_fee, v_correct_payout, v_old_payout, v_delta;
+    
+    -- Update the payout
+    UPDATE payouts
+    SET 
+      order_amount = v_jeremy_pricing,
+      admin_fee_amount = v_admin_fee,
+      payout_amount = v_correct_payout,
+      updated_at = NOW()
+    WHERE id = v_order.payout_id;
+    
   END LOOP;
   
-  -- Recalculate batch totals for Jeremy
+  -- Adjust total earnings
+  IF v_total_delta != 0 THEN
+    UPDATE talent_profiles
+    SET 
+      total_earnings = GREATEST(COALESCE(total_earnings, 0) - v_total_delta, 0),
+      updated_at = NOW()
+    WHERE id = v_jeremy_talent_id;
+    
+    RAISE NOTICE 'Adjusted total_earnings by -$%', v_total_delta;
+  END IF;
+  
+  -- Recalculate batch totals
   UPDATE payout_batches pb
   SET 
     total_payout_amount = (
@@ -256,18 +245,22 @@ BEGIN
     updated_at = NOW()
   WHERE pb.talent_id = v_jeremy_talent_id;
   
-  RAISE NOTICE 'Jeremy Hambly payouts updated!';
+  RAISE NOTICE 'Jeremy Hambly orders and payouts FIXED!';
 END $$;
 
--- Verify the fix
+-- =====================================================
+-- Step 4: Verify the fixes
+-- =====================================================
+
+-- Check Jeremy's orders now
 SELECT 
-  'Jeremy Hambly Orders' as check_type,
-  tp.username,
+  'JEREMY ORDERS AFTER FIX' as status,
   o.id::text as order_id,
   o.amount as amount_cents,
   o.original_amount,
   o.coupon_code,
-  p.order_amount as payout_base_price,
+  (o.original_amount / 100.0) as display_price,
+  p.order_amount as payout_base,
   p.admin_fee_percentage,
   p.admin_fee_amount,
   p.payout_amount
@@ -275,7 +268,30 @@ FROM orders o
 JOIN talent_profiles tp ON tp.id = o.talent_id
 LEFT JOIN payouts p ON p.order_id = o.id
 WHERE (tp.username ILIKE '%hambly%' OR tp.slug ILIKE '%hambly%' OR tp.slug ILIKE '%quartering%')
-  AND o.status = 'completed'
 ORDER BY o.created_at DESC
+LIMIT 10;
+
+-- Check his total earnings
+SELECT 
+  'JEREMY EARNINGS' as status,
+  username,
+  pricing,
+  total_earnings,
+  first_orders_promo_active
+FROM talent_profiles
+WHERE username ILIKE '%hambly%' OR slug ILIKE '%hambly%' OR slug ILIKE '%quartering%';
+
+-- Check batch totals
+SELECT 
+  'JEREMY BATCHES' as status,
+  pb.week_start_date,
+  pb.total_orders,
+  pb.total_payout_amount,
+  pb.net_payout_amount,
+  pb.status
+FROM payout_batches pb
+JOIN talent_profiles tp ON tp.id = pb.talent_id
+WHERE (tp.username ILIKE '%hambly%' OR tp.slug ILIKE '%hambly%' OR tp.slug ILIKE '%quartering%')
+ORDER BY pb.week_start_date DESC
 LIMIT 5;
 
