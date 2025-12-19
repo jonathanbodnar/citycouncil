@@ -519,6 +519,7 @@ const BioDashboard: React.FC = () => {
           subtitle: link.subtitle,
           button_text: link.button_text,
           is_featured: link.is_featured,
+          link_format: link.link_format,
           updated_at: new Date().toISOString(),
         })
         .eq('id', link.id);
