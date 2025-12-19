@@ -1,5 +1,7 @@
-// Wasabi S3 Upload Service
-// For production Wasabi S3 integration
+// Image Upload Service
+// Uses Supabase Storage (handles CORS properly)
+
+import { supabase } from './supabase';
 
 interface UploadResponse {
   success: boolean;
@@ -21,54 +23,35 @@ export const uploadImageToWasabi = async (
       return { success: false, error: 'Image must be less than 5MB' };
     }
 
-    // Check for required environment variables
-    const accessKeyId = process.env.REACT_APP_WASABI_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY;
-    
-    if (!accessKeyId || !secretAccessKey) {
-      console.error('Wasabi credentials missing:', { 
-        hasAccessKey: !!accessKeyId, 
-        hasSecretKey: !!secretAccessKey 
-      });
-      return { success: false, error: 'Storage configuration error - credentials missing' };
-    }
-
-    // Upload to Wasabi S3
-    const AWS = (await import('aws-sdk')).default;
-    
-    const wasabi = new AWS.S3({
-      endpoint: 's3.us-central-1.wasabisys.com',
-      accessKeyId: accessKeyId,
-      secretAccessKey: secretAccessKey,
-      region: 'us-central-1',
-      s3ForcePathStyle: true,
-      signatureVersion: 'v4'
-    });
-
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${uploadPath}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     
-    console.log('Uploading to Wasabi:', { fileName, fileType: file.type, fileSize: file.size });
+    console.log('Uploading to Supabase Storage:', { fileName, fileType: file.type, fileSize: file.size });
     
-    const uploadParams = {
-      Bucket: 'shoutout-assets',
-      Key: fileName,
-      Body: file,
-      ContentType: file.type,
-      ACL: 'public-read' as const,
-    };
+    // Upload to Supabase Storage (platform-assets bucket - same as CommsCenterManagement)
+    const { data, error } = await supabase.storage
+      .from('platform-assets')
+      .upload(fileName, file, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: true
+      });
 
-    const result = await wasabi.upload(uploadParams).promise();
+    if (error) {
+      console.error('Supabase storage upload error:', error);
+      return { success: false, error: `Upload failed: ${error.message}` };
+    }
     
-    // Use direct Wasabi URL (CloudFlare CDN can be added later)
-    // Direct access: https://shoutout-assets.s3.us-central-1.wasabisys.com/path/file.jpg
-    const imageUrl = `https://shoutout-assets.s3.us-central-1.wasabisys.com/${fileName}`;
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('platform-assets')
+      .getPublicUrl(fileName);
     
-    console.log('Wasabi upload successful:', imageUrl);
+    console.log('Upload successful:', publicUrl);
     
     return {
       success: true,
-      imageUrl: imageUrl
+      imageUrl: publicUrl
     };
 
   } catch (error: any) {
@@ -80,19 +63,7 @@ export const uploadImageToWasabi = async (
       name: error?.name
     });
     
-    // Provide more specific error messages
-    let errorMessage = 'Upload failed';
-    if (error?.code === 'NetworkingError') {
-      errorMessage = 'Network error - check your connection';
-    } else if (error?.code === 'AccessDenied' || error?.statusCode === 403) {
-      errorMessage = 'Access denied - check storage credentials';
-    } else if (error?.code === 'InvalidAccessKeyId') {
-      errorMessage = 'Invalid storage credentials';
-    } else if (error?.message) {
-      errorMessage = error.message;
-    }
-    
-    return { success: false, error: errorMessage };
+    return { success: false, error: error?.message || 'Upload failed' };
   }
 };
 
