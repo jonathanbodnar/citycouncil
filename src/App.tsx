@@ -131,32 +131,45 @@ const ProfileRedirect: React.FC = () => {
 
 // Promo redirect component - redirects short names to talent profiles with UTM and coupon
 const PromoRedirect: React.FC<{ utm: string; destination?: string; coupon?: string }> = ({ utm, destination = '/', coupon }) => {
-  // Store the UTM and coupon before redirecting
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('promo_source_global', utm);
-    localStorage.setItem('promo_source', utm);
-    try {
-      sessionStorage.setItem('promo_source_global', utm);
-      sessionStorage.setItem('promo_source', utm);
-    } catch (e) {}
-    
-    // Store coupon for auto-apply
-    if (coupon) {
-      localStorage.setItem('auto_coupon', coupon);
+  React.useEffect(() => {
+    // Store the UTM and coupon before redirecting
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('promo_source_global', utm);
+      localStorage.setItem('promo_source', utm);
       try {
-        sessionStorage.setItem('auto_coupon', coupon);
+        sessionStorage.setItem('promo_source_global', utm);
+        sessionStorage.setItem('promo_source', utm);
       } catch (e) {}
+      
+      // Store coupon for auto-apply
+      if (coupon) {
+        localStorage.setItem('auto_coupon', coupon);
+        try {
+          sessionStorage.setItem('auto_coupon', coupon);
+        } catch (e) {}
+      }
+      
+      // Build redirect URL with UTM and coupon
+      const params = new URLSearchParams();
+      params.set('utm', utm);
+      if (coupon) {
+        params.set('coupon', coupon);
+      }
+      
+      // Use full page navigation to ensure proper loading
+      window.location.href = `${destination}?${params.toString()}`;
     }
-  }
+  }, [utm, destination, coupon]);
   
-  // Build redirect URL with UTM and coupon
-  const params = new URLSearchParams();
-  params.set('utm', utm);
-  if (coupon) {
-    params.set('coupon', coupon);
-  }
-  
-  return <Navigate to={`${destination}?${params.toString()}`} replace />;
+  // Show loading while redirecting
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Redirecting...</p>
+      </div>
+    </div>
+  );
 };
 
 function App() {
