@@ -283,12 +283,11 @@ const TalentManagement: React.FC = () => {
       // Create talent profile without user first (user will be created during onboarding)
       const { error } = await supabase
         .from('talent_profiles')
-        .insert([insertData])
-        .select()
-        .single();
+        .insert([insertData]);
 
       if (error) {
         console.error('Error creating talent profile:', error);
+        toast.error(`Database error: ${error.message}`);
         throw error;
       }
 
