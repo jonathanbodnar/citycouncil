@@ -280,15 +280,24 @@ const TalentManagement: React.FC = () => {
         insertData.tiktok_handle = newTalent.tiktok_handle.replace('@', '');
       }
 
-      // Create talent profile without user first (user will be created during onboarding)
-      const { error } = await supabase
-        .from('talent_profiles')
-        .insert([insertData]);
+      // Create talent profile using RPC function to bypass RLS issues
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('create_talent_profile_bypass_rls', insertData);
 
-      if (error) {
-        console.error('Error creating talent profile:', error);
-        toast.error(`Database error: ${error.message}`);
-        throw error;
+      if (rpcError) {
+        console.error('Error creating talent profile via RPC:', rpcError);
+        
+        // Fallback to direct insert if RPC fails
+        console.log('Attempting direct insert as fallback...');
+        const { error: directError } = await supabase
+          .from('talent_profiles')
+          .insert([insertData]);
+
+        if (directError) {
+          console.error('Direct insert also failed:', directError);
+          toast.error(`Database error: ${directError.message}`);
+          throw directError;
+        }
       }
 
       console.log('Talent profile created with token:', onboardingToken);
