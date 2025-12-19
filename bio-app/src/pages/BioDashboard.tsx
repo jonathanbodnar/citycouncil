@@ -263,29 +263,68 @@ const BioDashboard: React.FC = () => {
       try {
         console.log('Bio Dashboard: Authenticating with token:', token);
         
-        const { data: userData, error: userError } = await supabase
-          .from('users')
+        // First, try to find talent profile directly by ID (for admin access)
+        let profile = null;
+        let userData = null;
+        
+        const { data: directProfile, error: directError } = await supabase
+          .from('talent_profiles')
           .select('*')
           .eq('id', token)
           .single();
+        
+        if (!directError && directProfile) {
+          // Token is a talent_profile ID (admin access)
+          console.log('Bio Dashboard: Found talent profile directly by ID');
+          profile = directProfile;
+          
+          // Get user data if available
+          if (directProfile.user_id) {
+            const { data: userFromProfile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', directProfile.user_id)
+              .single();
+            userData = userFromProfile;
+          }
+        } else {
+          // Try token as user ID (normal talent access)
+          const { data: userById, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', token)
+            .single();
 
-        if (userError || !userData) {
-          console.error('Bio Dashboard: User lookup failed:', userError);
-          setAuthError(`Invalid authentication token. Please try again from your ShoutOut dashboard.`);
-          setLoading(false);
-          return;
+          if (userError || !userById) {
+            console.error('Bio Dashboard: User lookup failed:', userError);
+            setAuthError(`Invalid authentication token. Please try again from your ShoutOut dashboard.`);
+            setLoading(false);
+            return;
+          }
+
+          userData = userById;
+
+          const { data: profileByUser, error: profileError } = await supabase
+            .from('talent_profiles')
+            .select('*')
+            .eq('user_id', userData.id)
+            .single();
+
+          if (profileError || !profileByUser) {
+            console.error('Bio Dashboard: Talent profile lookup failed:', profileError);
+            setAuthError(`No talent profile found. You must be a talent to use ShoutOut Bio.`);
+            setLoading(false);
+            return;
+          }
+          
+          profile = profileByUser;
         }
 
-        setUser(userData);
-
-        const { data: profile, error: profileError } = await supabase
-          .from('talent_profiles')
-          .select('*')
-          .eq('user_id', userData.id)
-          .single();
-
-        if (profileError || !profile) {
-          console.error('Bio Dashboard: Talent profile lookup failed:', profileError);
+        if (userData) {
+          setUser(userData);
+        }
+        
+        if (!profile) {
           setAuthError(`No talent profile found. You must be a talent to use ShoutOut Bio.`);
           setLoading(false);
           return;
