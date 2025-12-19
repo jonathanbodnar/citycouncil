@@ -56,7 +56,7 @@ BEGIN
     -- Apply 0% admin fee for first 10 orders if promo is active
     IF v_first_orders_promo_active AND v_fulfilled_orders < 10 THEN
       v_admin_fee_pct := 0;
-      RAISE NOTICE 'First 10 orders promo active - 0%% admin fee';
+      RAISE NOTICE 'First 10 orders promo active - 0 percent admin fee';
     END IF;
     
     -- Calculate admin fee and payout amount
@@ -128,8 +128,8 @@ BEGIN
       END,
       updated_at = NOW();
       
-    RAISE NOTICE 'Payout created: Base price $% | Admin fee: $% (%%) | Talent payout: $% | Coupon used: %', 
-      v_base_price, v_admin_fee_amount, v_admin_fee_pct, v_payout_amount, COALESCE(NEW.coupon_code, 'none');
+    RAISE NOTICE 'Payout created: Base price $%, Admin fee $%, Talent payout $%', 
+      v_base_price, v_admin_fee_amount, v_payout_amount;
   END IF;
   
   RETURN NEW;
