@@ -50,10 +50,12 @@ const BIO_FEATURE_ALLOWED_EMAILS = ['jb@apollo.inc'];
 const IS_DEV_ENVIRONMENT = window.location.hostname === 'dev.shoutout.us' || window.location.hostname === 'localhost';
 
 // Helper to get the display amount for an order
-// For WINNER100 giveaway orders, use original_amount (full price) so talent sees what they'll actually earn
+// For ANY coupon order, use original_amount (full price) so talent sees what they'll actually earn
+// Talent gets paid based on full video value minus admin fee, regardless of coupon
 const getOrderDisplayAmount = (order: Order): number => {
-  // If it's a WINNER100 order and has original_amount, use that
-  if (order.coupon_code?.toUpperCase() === 'WINNER100' && order.original_amount) {
+  // If the order has original_amount (meaning a coupon was used), use that
+  // This shows talent the full video value they're being paid on
+  if (order.original_amount && order.original_amount > 0) {
     return Number(order.original_amount);
   }
   return Number(order.amount);
@@ -767,8 +769,10 @@ const TalentDashboard: React.FC = () => {
                           </h4>
                           <p className="text-sm text-gray-300">
                             ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
-                            {order.coupon_code?.toUpperCase() === 'WINNER100' && (
-                              <span className="ml-2 text-xs text-green-400">🎁 Giveaway</span>
+                            {order.coupon_code && (
+                              <span className="ml-2 text-xs text-green-400">
+                                {order.coupon_code.toUpperCase() === 'WINNER100' ? '🎁 Giveaway' : '🏷️ Promo'}
+                              </span>
                             )}
                           </p>
                           {order.is_corporate_order && order.approval_status === 'pending' ? (
@@ -920,8 +924,10 @@ const TalentDashboard: React.FC = () => {
                           </h4>
                           <p className="text-sm text-gray-300">
                             ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
-                            {order.coupon_code?.toUpperCase() === 'WINNER100' && (
-                              <span className="ml-2 text-xs text-green-400">🎁 Giveaway</span>
+                            {order.coupon_code && (
+                              <span className="ml-2 text-xs text-green-400">
+                                {order.coupon_code.toUpperCase() === 'WINNER100' ? '🎁 Giveaway' : '🏷️ Promo'}
+                              </span>
                             )}
                           </p>
                         </div>
@@ -1015,12 +1021,14 @@ const TalentDashboard: React.FC = () => {
                             <div className="space-y-1">
                               <p className="text-sm text-gray-300">
                                 ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
-                                {order.coupon_code?.toUpperCase() === 'WINNER100' && (
-                                  <span className="ml-2 text-xs text-green-400">🎁 Giveaway</span>
+                                {order.coupon_code && (
+                                  <span className="ml-2 text-xs text-green-400">
+                                    {order.coupon_code.toUpperCase() === 'WINNER100' ? '🎁 Giveaway' : '🏷️ Promo'}
+                                  </span>
                                 )}
                               </p>
                               {(() => {
-                                // Use display amount (original_amount for WINNER100 orders)
+                                // Use display amount (original_amount for coupon orders)
                                 const displayAmount = getOrderDisplayAmount(order);
                                 const basePrice = displayAmount / 100 / 1.029;
                                 const isPromo = talentProfile?.first_orders_promo_active && (talentProfile?.fulfilled_orders || 0) < 10;
