@@ -280,7 +280,7 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
 const AdvancedAnalytics: React.FC = () => {
   // State
   const [chartMode, setChartMode] = useState<ChartMode>('count');
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const [dateRange, setDateRange] = useState<DateRange>('7d');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const [chartData, setChartData] = useState<DailyData[]>([]);
