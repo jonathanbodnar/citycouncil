@@ -17,6 +17,7 @@ interface SendMassSMSRequest {
   message: string;
   target_audience: 'beta' | 'registered' | 'all' | 'talent' | 'holiday_popup';
   excluded_user_ids?: string[];
+  media_url?: string; // For MMS - image or video URL
 }
 
 const corsHeaders = {
@@ -66,15 +67,19 @@ serve(async (req) => {
     }
 
     // Parse request
-    const { campaign_name, message, target_audience, excluded_user_ids = [] }: SendMassSMSRequest = await req.json();
+    const { campaign_name, message, target_audience, excluded_user_ids = [], media_url }: SendMassSMSRequest = await req.json();
 
-    // Validate message length
-    if (message.length > 160) {
-      return new Response(JSON.stringify({ error: 'Message must be 160 characters or less' }), {
+    // Validate message length (allow longer messages for MMS)
+    const maxLength = media_url ? 1600 : 160;
+    if (message.length > maxLength) {
+      return new Response(JSON.stringify({ error: `Message must be ${maxLength} characters or less` }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    
+    const isMMS = !!media_url;
+    console.log(`Campaign type: ${isMMS ? 'MMS' : 'SMS'}${media_url ? `, media: ${media_url}` : ''}`);
 
     // Get recipients
     const { data: allRecipients, error: recipientsError } = await supabase.rpc('get_users_by_segment', {
@@ -129,6 +134,18 @@ serve(async (req) => {
 
     for (const recipient of recipients) {
       try {
+        // Build request body for Twilio
+        const twilioBody: Record<string, string> = {
+          To: recipient.phone_number,
+          From: fromNumber,
+          Body: message
+        };
+        
+        // Add media URL for MMS
+        if (media_url) {
+          twilioBody.MediaUrl = media_url;
+        }
+
         // Send via Twilio
         const twilioResponse = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
@@ -138,17 +155,13 @@ serve(async (req) => {
               'Authorization': 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: new URLSearchParams({
-              To: recipient.phone_number,
-              From: fromNumber,
-              Body: message
-            })
+            body: new URLSearchParams(twilioBody)
           }
         );
 
         const twilioData = await twilioResponse.json();
 
-        // Log SMS
+        // Log SMS/MMS
         await supabase.from('sms_logs').insert({
           campaign_id: campaign.id,
           recipient_id: recipient.id,
@@ -157,7 +170,8 @@ serve(async (req) => {
           status: twilioResponse.ok ? 'sent' : 'failed',
           error_message: twilioResponse.ok ? null : (twilioData.message || 'Unknown error'),
           sent_at: new Date().toISOString(),
-          twilio_sid: twilioData.sid || null
+          twilio_sid: twilioData.sid || null,
+          media_url: media_url || null
         });
 
         if (twilioResponse.ok) {
