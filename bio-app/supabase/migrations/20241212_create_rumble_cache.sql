@@ -70,3 +70,4 @@ CREATE TRIGGER rumble_cache_updated_at
 --   $$
 -- );
 
+

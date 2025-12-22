@@ -52,8 +52,19 @@ const HomePage: React.FC = () => {
   const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Capture coupon from URL (e.g., shoutout.us/?coupon=SANTA25)
+  // Also handles malformed URLs like ?utm=sms?coupon=SANTA25 (double question mark)
   useEffect(() => {
-    const couponParam = searchParams.get('coupon');
+    let couponParam = searchParams.get('coupon');
+    
+    // Handle malformed URLs with double question marks (e.g., ?utm=sms?coupon=SANTA25)
+    if (!couponParam) {
+      const fullUrl = window.location.href;
+      const couponMatch = fullUrl.match(/[?&]coupon=([^&?#]+)/i);
+      if (couponMatch) {
+        couponParam = couponMatch[1];
+      }
+    }
+    
     if (couponParam) {
       localStorage.setItem('auto_apply_coupon', couponParam.toUpperCase());
       // Dispatch event to update TalentCards immediately

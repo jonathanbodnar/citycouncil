@@ -104,3 +104,4 @@ CREATE TRIGGER trigger_increment_fulfilled_orders
     FOR EACH ROW
     EXECUTE FUNCTION increment_fulfilled_orders();
 
+

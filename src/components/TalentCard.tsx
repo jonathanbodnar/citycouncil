@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { StarIcon, HeartIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
+
+// Coupon configurations - must match TalentProfilePage
+const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
+  'WINNER100': { type: 'fixed', value: 100, label: 'FREE' },
+  'SANTA25': { type: 'percentage', value: 25, label: '25% OFF' },
+  'SAVE15': { type: 'percentage', value: 15, label: '15% OFF' },
+  'SAVE10': { type: 'percentage', value: 10, label: '10% OFF' },
+  'TAKE25': { type: 'fixed', value: 25, label: '$25 OFF' },
+};
 
 interface TalentCardProps {
   talent: TalentProfile & {
@@ -16,6 +25,44 @@ interface TalentCardProps {
 const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
   const isComingSoon = talent.is_coming_soon === true;
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
+  const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
+
+  // Check for coupon from localStorage
+  const checkCoupon = useCallback(() => {
+    const coupon = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
+    if (coupon && COUPON_DISCOUNTS[coupon.toUpperCase()]) {
+      setActiveCoupon(coupon.toUpperCase());
+    } else {
+      setActiveCoupon(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkCoupon();
+    
+    // Listen for coupon changes
+    window.addEventListener('storage', checkCoupon);
+    window.addEventListener('couponApplied', checkCoupon);
+    
+    return () => {
+      window.removeEventListener('storage', checkCoupon);
+      window.removeEventListener('couponApplied', checkCoupon);
+    };
+  }, [checkCoupon]);
+
+  // Calculate discounted price
+  const originalPrice = talent.pricing || 0;
+  const getDiscountedPrice = () => {
+    if (!activeCoupon || !COUPON_DISCOUNTS[activeCoupon]) return originalPrice;
+    const discount = COUPON_DISCOUNTS[activeCoupon];
+    if (discount.type === 'percentage') {
+      return Math.round(originalPrice * (1 - discount.value / 100));
+    } else {
+      return Math.max(0, originalPrice - discount.value);
+    }
+  };
+  const discountedPrice = getDiscountedPrice();
+  const hasCoupon = activeCoupon && discountedPrice !== originalPrice;
   
   const demandColors = {
     high: 'bg-red-500/20 text-red-400',
@@ -143,6 +190,27 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         >
           {talent.bio}
         </p>
+
+        {/* Price with coupon discount */}
+        <div className="flex items-center gap-2 mb-2">
+          {hasCoupon ? (
+            <>
+              <span className="text-lg sm:text-xl font-bold text-green-400">
+                ${discountedPrice}
+              </span>
+              <span className="text-sm text-gray-500 line-through">
+                ${originalPrice}
+              </span>
+              <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[10px] sm:text-xs font-bold rounded">
+                {COUPON_DISCOUNTS[activeCoupon!].label}
+              </span>
+            </>
+          ) : (
+            <span className="text-lg sm:text-xl font-bold text-white">
+              ${originalPrice}
+            </span>
+          )}
+        </div>
 
         {/* Delivery time and Charity - Push to bottom */}
         <div className="flex items-center justify-between mt-auto">

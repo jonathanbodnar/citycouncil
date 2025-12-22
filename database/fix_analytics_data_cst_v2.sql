@@ -72,3 +72,4 @@ GROUP BY record_type, cst_date
 ORDER BY cst_date DESC, record_type
 LIMIT 30;
 
+

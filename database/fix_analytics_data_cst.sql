@@ -71,3 +71,4 @@ GRANT EXECUTE ON FUNCTION get_analytics_data_cst(text, text) TO authenticated;
 -- Test the function
 SELECT * FROM get_analytics_data_cst('2025-12-11', '2025-12-14') LIMIT 20;
 
+
