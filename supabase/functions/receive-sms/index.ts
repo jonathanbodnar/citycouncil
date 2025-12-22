@@ -63,6 +63,8 @@ serve(async (req) => {
     const stopKeywords = ['stop', 'unsubscribe', 'cancel', 'end', 'quit'];
     const messageNormalized = (body || '').toLowerCase().trim();
     
+    console.log('📝 Message normalized:', messageNormalized, '| Is STOP keyword:', stopKeywords.includes(messageNormalized));
+    
     if (stopKeywords.includes(messageNormalized)) {
       console.log('🛑 STOP request received from:', from);
       
@@ -72,24 +74,28 @@ serve(async (req) => {
         cleanPhoneForStop = cleanPhoneForStop.substring(1);
       }
       
-      // Try multiple phone formats
+      // Try multiple phone formats - include the + prefix format
       const phoneFormats = [
         cleanPhoneForStop,
         `+1${cleanPhoneForStop}`,
+        `+${cleanPhoneForStop}`,
         `1${cleanPhoneForStop}`,
         from
       ];
       
+      console.log('🔍 Looking for phone formats:', phoneFormats);
+      
       // 1. Delete from beta_signups (giveaway entries)
-      const { error: deleteError } = await supabase
+      const { data: deletedData, error: deleteError } = await supabase
         .from('beta_signups')
         .delete()
-        .in('phone_number', phoneFormats);
+        .in('phone_number', phoneFormats)
+        .select();
       
       if (deleteError) {
         console.error('❌ Error deleting from beta_signups:', deleteError);
       } else {
-        console.log('✅ Removed from beta_signups (giveaway)');
+        console.log('✅ Removed from beta_signups:', deletedData?.length || 0, 'records');
       }
       
       // 2. Mark user as opted out in users table (add sms_opted_out flag)
