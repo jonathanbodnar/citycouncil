@@ -90,8 +90,11 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
   const [data, setData] = useState({
     costPerFollower: 0,
     costPerSMS: 0,
+    costPerSMSSocial: 0,
     totalFollowers: 0,
     totalSMS: 0,
+    totalSMSRumble: 0,
+    totalSMSSocial: 0,
     totalFBSpend: 0,
     totalRumbleSpend: 0
   });
@@ -119,14 +122,14 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
             .lte('date', endDate)
             .order('date', { ascending: true }),
           
-          // SMS signups within date range
+          // SMS signups within date range - include utm_source for filtering
           supabase
             .from('beta_signups')
-            .select('id, subscribed_at')
+            .select('id, subscribed_at, utm_source')
             .gte('subscribed_at', startTimestamp)
             .lte('subscribed_at', endTimestamp),
           
-          // Facebook spend within date range (for followers)
+          // Facebook spend within date range (for followers AND social SMS)
           supabase
             .from('ad_spend_daily')
             .select('spend')
@@ -134,7 +137,7 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
             .gte('date', startDate)
             .lte('date', endDate),
           
-          // Rumble spend within date range (for SMS/users)
+          // Rumble spend within date range (for SMS/users - excluding DM sources)
           supabase
             .from('ad_spend_daily')
             .select('spend')
@@ -153,27 +156,48 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
           totalFollowersGained = 0;
         }
 
-        // Calculate total SMS
-        const totalSMS = smsResult.data?.length || 0;
+        // Separate SMS by source - DM sources vs non-DM (Rumble) sources
+        const allSMS = smsResult.data || [];
+        const dmSources = ['dm', 'dma', 'dmb', 'dmc', 'dmf']; // All DM variations (lowercase for comparison)
+        
+        const smsSocial = allSMS.filter(s => {
+          const source = (s.utm_source || '').toLowerCase();
+          return dmSources.includes(source);
+        });
+        
+        const smsRumble = allSMS.filter(s => {
+          const source = (s.utm_source || '').toLowerCase();
+          return !dmSources.includes(source);
+        });
 
-        // Calculate Facebook spend (for followers)
+        const totalSMS = allSMS.length;
+        const totalSMSSocial = smsSocial.length;
+        const totalSMSRumble = smsRumble.length;
+
+        // Calculate Facebook spend (for followers AND social SMS)
         const totalFBSpend = (fbSpendResult.data || []).reduce(
           (sum, row) => sum + (Number(row.spend) || 0), 0
         );
 
-        // Calculate Rumble spend (for SMS)
+        // Calculate Rumble spend (for non-DM SMS only)
         const totalRumbleSpend = (rumbleSpendResult.data || []).reduce(
           (sum, row) => sum + (Number(row.spend) || 0), 0
         );
 
         const costPerFollower = totalFollowersGained > 0 ? totalFBSpend / totalFollowersGained : 0;
-        const costPerSMS = totalSMS > 0 ? totalRumbleSpend / totalSMS : 0;
+        // Cost per SMS (Rumble) - only counts non-DM signups
+        const costPerSMS = totalSMSRumble > 0 ? totalRumbleSpend / totalSMSRumble : 0;
+        // Cost per SMS Social - FB spend on follower campaigns / DM-sourced signups
+        const costPerSMSSocial = totalSMSSocial > 0 ? totalFBSpend / totalSMSSocial : 0;
 
         setData({ 
           costPerFollower, 
-          costPerSMS, 
+          costPerSMS,
+          costPerSMSSocial,
           totalFollowers: totalFollowersGained,
           totalSMS,
+          totalSMSRumble,
+          totalSMSSocial,
           totalFBSpend,
           totalRumbleSpend
         });
@@ -189,7 +213,11 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass rounded-xl p-6 animate-pulse">
+          <div className="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
+          <div className="h-10 bg-gray-700 rounded w-1/3"></div>
+        </div>
         <div className="glass rounded-xl p-6 animate-pulse">
           <div className="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
           <div className="h-10 bg-gray-700 rounded w-1/3"></div>
@@ -203,7 +231,7 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Cost Per Follower */}
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-2">
@@ -218,7 +246,7 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
         </p>
       </div>
 
-      {/* Cost Per SMS */}
+      {/* Cost Per SMS (Rumble) */}
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-2">
           <ChatBubbleLeftIcon className="h-5 w-5 text-green-500" />
@@ -228,7 +256,21 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
           ${data.costPerSMS.toFixed(2)}
         </p>
         <p className="text-gray-500 text-sm">
-          {dateRangeLabel} • {data.totalSMS.toLocaleString()} SMS • ${data.totalRumbleSpend.toFixed(0)} Rumble spend
+          {dateRangeLabel} • {data.totalSMSRumble.toLocaleString()} SMS (Rumble) • ${data.totalRumbleSpend.toFixed(0)} Rumble spend
+        </p>
+      </div>
+
+      {/* Cost Per SMS Social (DM sources) */}
+      <div className="glass rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <LinkIcon className="h-5 w-5 text-blue-500" />
+          <h3 className="text-lg font-semibold text-white">Avg Cost / SMS Social</h3>
+        </div>
+        <p className="text-4xl font-bold text-white mb-1">
+          ${data.costPerSMSSocial.toFixed(2)}
+        </p>
+        <p className="text-gray-500 text-sm">
+          {dateRangeLabel} • {data.totalSMSSocial.toLocaleString()} SMS (DMs) • ${data.totalFBSpend.toFixed(0)} FB spend
         </p>
       </div>
     </div>
