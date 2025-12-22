@@ -76,6 +76,24 @@ const safeGetItem = (key: string): string | null => {
   }
 };
 
+// Extract domain from referrer URL
+const extractDomain = (url: string): string | null => {
+  try {
+    if (!url) return null;
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace('www.', '');
+  } catch {
+    return null;
+  }
+};
+
+// Get referrer info
+const getReferrerInfo = (): { referrer: string | null; referrerDomain: string | null } => {
+  const referrer = document.referrer || null;
+  const referrerDomain = referrer ? extractDomain(referrer) : null;
+  return { referrer, referrerDomain };
+};
+
 const safeSetItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value);
@@ -383,7 +401,10 @@ const HolidayPromoPopup: React.FC = () => {
       // Simulate spinning animation (2 seconds)
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Save to beta_signups with prize
+      // Get referrer info for tracking
+      const { referrer, referrerDomain } = getReferrerInfo();
+
+      // Save to beta_signups with prize and referrer
       const { data, error: insertError } = await supabase
         .from('beta_signups')
         .insert({
@@ -391,7 +412,9 @@ const HolidayPromoPopup: React.FC = () => {
           source: 'holiday_popup',
           utm_source: utmSource,
           subscribed_at: new Date().toISOString(),
-          prize_won: prize
+          prize_won: prize,
+          referrer: referrer,
+          referrer_domain: referrerDomain
         })
         .select();
 
