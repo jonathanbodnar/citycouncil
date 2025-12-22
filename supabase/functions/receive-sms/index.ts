@@ -80,7 +80,7 @@ serve(async (req) => {
         from
       ];
       
-      // Delete from beta_signups (giveaway entries)
+      // 1. Delete from beta_signups (giveaway entries)
       const { error: deleteError } = await supabase
         .from('beta_signups')
         .delete()
@@ -91,6 +91,30 @@ serve(async (req) => {
       } else {
         console.log('✅ Removed from beta_signups (giveaway)');
       }
+      
+      // 2. Mark user as opted out in users table (add sms_opted_out flag)
+      const { error: userOptOutError } = await supabase
+        .from('users')
+        .update({ sms_opted_out: true, sms_opted_out_at: new Date().toISOString() })
+        .in('phone', phoneFormats);
+      
+      if (userOptOutError) {
+        console.error('❌ Error marking user as opted out:', userOptOutError);
+      } else {
+        console.log('✅ Marked user as SMS opted out');
+      }
+      
+      // 3. Log the opt-out for audit trail
+      await supabase
+        .from('sms_logs')
+        .insert({
+          phone_number: from,
+          message: body,
+          status: 'opt_out',
+          sent_at: new Date().toISOString()
+        })
+        .then(() => console.log('✅ Logged opt-out request'))
+        .catch(err => console.error('❌ Error logging opt-out:', err));
       
       // Return empty response - Twilio will handle the STOP automatically
       return new Response(
