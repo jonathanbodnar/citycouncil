@@ -268,14 +268,36 @@ const TalentDashboard: React.FC = () => {
     
     try {
       // Log upload attempt details
-      console.log('📹 Video upload starting:', {
+      const uploadAttemptInfo = {
         orderId,
         fileName: file.name,
         fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         fileType: file.type,
         talentUsername: talentProfile?.username,
+        talentId: talentProfile?.id,
+        userId: user?.id,
         timestamp: new Date().toISOString()
-      });
+      };
+      console.log('📹 Video upload starting:', uploadAttemptInfo);
+
+      // Log upload attempt to database for tracking
+      try {
+        await supabase.from('admin_audit_log').insert({
+          action: 'video_upload_started',
+          entity_type: 'order',
+          entity_id: orderId,
+          user_id: user?.id,
+          details: {
+            talent_username: talentProfile?.username,
+            talent_id: talentProfile?.id,
+            file_name: file.name,
+            file_size_mb: (file.size / 1024 / 1024).toFixed(2),
+            file_type: file.type
+          }
+        });
+      } catch (logError) {
+        console.warn('Could not log upload start:', logError);
+      }
 
       // Step 1: Upload video to Wasabi S3
       toast.loading('Uploading video...', { id: 'upload' });
@@ -417,15 +439,39 @@ const TalentDashboard: React.FC = () => {
         }
       }
     } catch (error: any) {
-      console.error('❌ Video upload error:', {
+      const errorDetails = {
         orderId,
         error: error,
         errorMessage: error?.message,
         errorCode: error?.code,
         errorDetails: error?.details,
         talentUsername: talentProfile?.username,
+        talentId: talentProfile?.id,
+        userId: user?.id,
         timestamp: new Date().toISOString()
-      });
+      };
+      
+      console.error('❌ Video upload error:', errorDetails);
+      
+      // Log error to database for admin visibility
+      try {
+        await supabase.from('admin_audit_log').insert({
+          action: 'video_upload_error',
+          entity_type: 'order',
+          entity_id: orderId,
+          user_id: user?.id,
+          details: {
+            error_message: error?.message || error?.toString(),
+            error_code: error?.code,
+            talent_username: talentProfile?.username,
+            talent_id: talentProfile?.id,
+            file_info: 'Video upload failed'
+          }
+        });
+        console.log('📝 Error logged to admin_audit_log');
+      } catch (logError) {
+        console.warn('Could not log error to database:', logError);
+      }
       
       // Show more specific error message to user
       const userMessage = error?.message || error?.toString() || 'Failed to upload video. Please try again.';
