@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
-import { PhoneIcon, UserGroupIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { PhoneIcon, UserGroupIcon, CheckCircleIcon, XCircleIcon, ClockIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 interface SMSStats {
@@ -52,6 +52,18 @@ const SMSManagement: React.FC = () => {
   const [directPhone, setDirectPhone] = useState('');
   const [directMessage, setDirectMessage] = useState('');
   const [sendingDirect, setSendingDirect] = useState(false);
+  
+  // Media state for direct SMS
+  const [directMediaFile, setDirectMediaFile] = useState<File | null>(null);
+  const [directMediaPreview, setDirectMediaPreview] = useState<string | null>(null);
+  const [uploadingDirectMedia, setUploadingDirectMedia] = useState(false);
+  const directFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Media state for mass SMS
+  const [massMediaFile, setMassMediaFile] = useState<File | null>(null);
+  const [massMediaPreview, setMassMediaPreview] = useState<string | null>(null);
+  const [uploadingMassMedia, setUploadingMassMedia] = useState(false);
+  const massFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchStats();
@@ -135,13 +147,13 @@ const SMSManagement: React.FC = () => {
   const activeRecipientCount = users.length - excludedUserIds.size;
 
   const sendCampaign = async () => {
-    if (!campaignName.trim() || !message.trim()) {
-      toast.error('Please fill in campaign name and message');
+    if (!campaignName.trim() || (!message.trim() && !massMediaFile)) {
+      toast.error('Please fill in campaign name and message or attach media');
       return;
     }
 
-    if (message.length > 160) {
-      toast.error('Message must be 160 characters or less');
+    if (message.length > 160 && !massMediaFile) {
+      toast.error('Message must be 160 characters or less (or attach media for MMS)');
       return;
     }
 
@@ -153,8 +165,9 @@ const SMSManagement: React.FC = () => {
     const confirm = window.confirm(
       `Send "${campaignName}" to ${activeRecipientCount} ${targetAudience} users?\n\n` +
       `${excludedUserIds.size > 0 ? `(${excludedUserIds.size} users excluded)\n\n` : ''}` +
-      `Message: ${message}\n\n` +
-      `This action cannot be undone.`
+      `Message: ${message}\n` +
+      `${massMediaFile ? `\n📎 Attached: ${massMediaFile.name}\n` : ''}` +
+      `\nThis action cannot be undone.`
     );
 
     if (!confirm) return;
@@ -162,13 +175,27 @@ const SMSManagement: React.FC = () => {
     setSending(true);
 
     try {
+      let mediaUrl: string | null = null;
+
+      // Upload media if present
+      if (massMediaFile) {
+        setUploadingMassMedia(true);
+        mediaUrl = await uploadMedia(massMediaFile);
+        setUploadingMassMedia(false);
+        if (!mediaUrl && !message.trim()) {
+          setSending(false);
+          return;
+        }
+      }
+
       // Call Edge Function to send mass SMS
       const { data, error } = await supabase.functions.invoke('send-mass-sms', {
         body: {
           campaign_name: campaignName,
-          message,
+          message: message || (mediaUrl ? '📎 Media message' : ''),
           target_audience: targetAudience,
-          excluded_user_ids: Array.from(excludedUserIds)
+          excluded_user_ids: Array.from(excludedUserIds),
+          media_url: mediaUrl
         }
       });
 
@@ -183,6 +210,7 @@ const SMSManagement: React.FC = () => {
       setRecipientCount(0);
       setExcludedUserIds(new Set());
       setShowPreview(false);
+      clearMassMedia();
       
       // Refresh data
       await fetchStats();
@@ -224,10 +252,99 @@ const SMSManagement: React.FC = () => {
     }
   };
 
+  // Handle media file selection for direct SMS
+  const handleDirectMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    
+    if (!isImage && !isVideo) {
+      toast.error('Please select an image or video file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    setDirectMediaFile(file);
+    setDirectMediaPreview(URL.createObjectURL(file));
+  };
+
+  // Handle media file selection for mass SMS
+  const handleMassMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    
+    if (!isImage && !isVideo) {
+      toast.error('Please select an image or video file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    setMassMediaFile(file);
+    setMassMediaPreview(URL.createObjectURL(file));
+  };
+
+  // Upload media to Supabase storage
+  const uploadMedia = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `sms-media/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('platform-assets')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('platform-assets')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      toast.error('Failed to upload media');
+      return null;
+    }
+  };
+
+  // Clear direct media selection
+  const clearDirectMedia = () => {
+    setDirectMediaFile(null);
+    setDirectMediaPreview(null);
+    if (directFileInputRef.current) {
+      directFileInputRef.current.value = '';
+    }
+  };
+
+  // Clear mass media selection
+  const clearMassMedia = () => {
+    setMassMediaFile(null);
+    setMassMediaPreview(null);
+    if (massFileInputRef.current) {
+      massFileInputRef.current.value = '';
+    }
+  };
+
   // Send direct SMS to a specific phone number
   const sendDirectSMS = async () => {
-    if (!directPhone.trim() || !directMessage.trim()) {
-      toast.error('Please enter a phone number and message');
+    if (!directPhone.trim() || (!directMessage.trim() && !directMediaFile)) {
+      toast.error('Please enter a phone number and message or attach media');
       return;
     }
 
@@ -242,19 +359,34 @@ const SMSManagement: React.FC = () => {
 
     setSendingDirect(true);
     try {
+      let mediaUrl: string | null = null;
+
+      // Upload media if present
+      if (directMediaFile) {
+        setUploadingDirectMedia(true);
+        mediaUrl = await uploadMedia(directMediaFile);
+        setUploadingDirectMedia(false);
+        if (!mediaUrl && !directMessage.trim()) {
+          setSendingDirect(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: cleanedPhone,
-          message: directMessage,
-          from: 'user' // Use user number for admin direct messages
+          message: directMessage || (mediaUrl ? '📎 Media message' : ''),
+          from: 'user', // Use user number for admin direct messages
+          mediaUrl: mediaUrl
         }
       });
 
       if (error) throw error;
 
-      toast.success(`SMS sent to ${directPhone}`);
+      toast.success(mediaUrl ? `MMS sent to ${directPhone}` : `SMS sent to ${directPhone}`);
       setDirectPhone('');
       setDirectMessage('');
+      clearDirectMedia();
     } catch (error: any) {
       console.error('Error sending direct SMS:', error);
       toast.error('Failed to send SMS: ' + (error.message || 'Unknown error'));
@@ -275,7 +407,7 @@ const SMSManagement: React.FC = () => {
     <div className="p-6 space-y-6">
       {/* Direct SMS */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">📱 Send Direct SMS</h2>
+        <h2 className="text-xl font-bold mb-4">📱 Send Direct SMS/MMS</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -291,23 +423,65 @@ const SMSManagement: React.FC = () => {
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Message ({directMessage.length}/160)
+              Message ({directMessage.length}/160) {directMediaFile && <span className="text-blue-600">+ Media attached</span>}
             </label>
+            
+            {/* Media Preview */}
+            {directMediaPreview && (
+              <div className="mb-3 relative inline-block">
+                {directMediaFile?.type.startsWith('image/') ? (
+                  <img src={directMediaPreview} alt="Preview" className="max-h-24 rounded-lg" />
+                ) : (
+                  <video src={directMediaPreview} className="max-h-24 rounded-lg" />
+                )}
+                <button
+                  onClick={clearDirectMedia}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            
             <div className="flex gap-2">
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={directFileInputRef}
+                onChange={handleDirectMediaSelect}
+                accept="image/*,video/*"
+                className="hidden"
+              />
+              
+              {/* Media button */}
+              <button
+                onClick={() => directFileInputRef.current?.click()}
+                disabled={uploadingDirectMedia}
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                title="Attach image or video"
+              >
+                <PhotoIcon className="h-5 w-5 text-gray-600" />
+              </button>
+              
               <input
                 type="text"
                 value={directMessage}
                 onChange={(e) => setDirectMessage(e.target.value)}
                 placeholder="Enter your message..."
-                maxLength={160}
+                maxLength={directMediaFile ? 1600 : 160}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <button
                 onClick={sendDirectSMS}
-                disabled={sendingDirect || !directPhone.trim() || !directMessage.trim()}
+                disabled={sendingDirect || uploadingDirectMedia || !directPhone.trim() || (!directMessage.trim() && !directMediaFile)}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {sendingDirect ? (
+                {uploadingDirectMedia ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Uploading...
+                  </>
+                ) : sendingDirect ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                     Sending...
@@ -315,7 +489,7 @@ const SMSManagement: React.FC = () => {
                 ) : (
                   <>
                     <PhoneIcon className="h-4 w-4" />
-                    Send
+                    {directMediaFile ? 'Send MMS' : 'Send'}
                   </>
                 )}
               </button>
@@ -414,19 +588,69 @@ const SMSManagement: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Message ({message.length}/160)
+              Message ({message.length}/{massMediaFile ? 1600 : 160}) {massMediaFile && <span className="text-blue-600">+ Media attached (MMS)</span>}
             </label>
+            
+            {/* Mass Media Preview */}
+            {massMediaPreview && (
+              <div className="mb-3 relative inline-block">
+                {massMediaFile?.type.startsWith('image/') ? (
+                  <img src={massMediaPreview} alt="Preview" className="max-h-32 rounded-lg" />
+                ) : (
+                  <video src={massMediaPreview} className="max-h-32 rounded-lg" />
+                )}
+                <button
+                  onClick={clearMassMedia}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            
+            <div className="flex gap-2 mb-2">
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={massFileInputRef}
+                onChange={handleMassMediaSelect}
+                accept="image/*,video/*"
+                className="hidden"
+              />
+              
+              {/* Media button */}
+              <button
+                onClick={() => massFileInputRef.current?.click()}
+                disabled={uploadingMassMedia}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center gap-2"
+                title="Attach image or video for MMS"
+              >
+                <PhotoIcon className="h-5 w-5 text-gray-600" />
+                {massMediaFile ? 'Change Media' : 'Add Media'}
+              </button>
+              {massMediaFile && (
+                <span className="text-sm text-gray-600 self-center">
+                  📎 {massMediaFile.name.length > 30 ? massMediaFile.name.substring(0, 30) + '...' : massMediaFile.name}
+                </span>
+              )}
+            </div>
+            
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter your SMS message..."
-              maxLength={160}
+              maxLength={massMediaFile ? 1600 : 160}
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-            {message.length > 140 && (
+            {!massMediaFile && message.length > 140 && (
               <p className="text-sm text-orange-600 mt-1">
                 ⚠️ Warning: {160 - message.length} characters remaining
+              </p>
+            )}
+            {massMediaFile && (
+              <p className="text-sm text-blue-600 mt-1">
+                📱 MMS mode: Up to 1600 characters allowed with media attachment
               </p>
             )}
           </div>
@@ -442,17 +666,22 @@ const SMSManagement: React.FC = () => {
             
             <button
               onClick={sendCampaign}
-              disabled={sending || !campaignName || !message || activeRecipientCount === 0}
+              disabled={sending || uploadingMassMedia || !campaignName || (!message && !massMediaFile) || activeRecipientCount === 0}
               className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
-              {sending ? (
+              {uploadingMassMedia ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Uploading Media...
+                </>
+              ) : sending ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   Sending...
                 </>
               ) : (
                 <>
-                  Send to {activeRecipientCount} Users
+                  {massMediaFile ? 'Send MMS' : 'Send SMS'} to {activeRecipientCount} Users
                   <PhoneIcon className="h-5 w-5" />
                 </>
               )}
