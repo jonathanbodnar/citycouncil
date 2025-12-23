@@ -519,16 +519,38 @@ const TalentOnboardingPage: React.FC = () => {
 
       console.log('✅ User record created/updated successfully');
 
-      // Update talent profile with user ID and copy temp_full_name to full_name
-      const { error: talentUpdateError } = await supabase
-        .from('talent_profiles')
-        .update({ 
-          user_id: authData.user.id,
-          full_name: onboardingData?.talent.temp_full_name || null
-        })
-        .eq('id', onboardingData?.talent.id);
+      // Link talent profile to user using RPC function (bypasses RLS)
+      console.log('🔗 Linking talent profile to user:', {
+        talentId: onboardingData?.talent.id,
+        userId: authData.user.id,
+        token: token
+      });
+      
+      const { error: linkError } = await supabase.rpc('link_talent_profile_to_user', {
+        p_talent_id: onboardingData?.talent.id,
+        p_user_id: authData.user.id,
+        p_onboarding_token: token,
+        p_full_name: onboardingData?.talent.temp_full_name || null
+      });
 
-      if (talentUpdateError) throw talentUpdateError;
+      if (linkError) {
+        console.error('❌ Failed to link talent profile:', linkError);
+        // Fallback to direct update (in case RPC doesn't exist yet)
+        const { error: talentUpdateError } = await supabase
+          .from('talent_profiles')
+          .update({ 
+            user_id: authData.user.id,
+            full_name: onboardingData?.talent.temp_full_name || null
+          })
+          .eq('id', onboardingData?.talent.id);
+
+        if (talentUpdateError) {
+          console.error('❌ Fallback update also failed:', talentUpdateError);
+          throw new Error('Failed to link your account to your talent profile. Please contact support.');
+        }
+      }
+      
+      console.log('✅ Talent profile linked successfully');
 
       // Check if email confirmation is required
       if (authData.session === null && authData.user.email_confirmed_at === null) {
