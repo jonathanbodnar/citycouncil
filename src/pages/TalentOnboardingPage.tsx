@@ -526,16 +526,24 @@ const TalentOnboardingPage: React.FC = () => {
         token: token
       });
       
-      const { error: linkError } = await supabase.rpc('link_talent_profile_to_user', {
+      const { data: linkResult, error: linkError } = await supabase.rpc('link_talent_profile_to_user', {
         p_talent_id: onboardingData?.talent.id,
         p_user_id: authData.user.id,
         p_onboarding_token: token,
         p_full_name: onboardingData?.talent.temp_full_name || null
       });
 
-      if (linkError) {
-        console.error('❌ Failed to link talent profile:', linkError);
-        // Fallback to direct update (in case RPC doesn't exist yet)
+      console.log('🔗 Link result:', linkResult, 'Error:', linkError);
+
+      // Check both Supabase error AND function-level error
+      const functionFailed = linkError || (linkResult && linkResult.success === false);
+      
+      if (functionFailed) {
+        const errorMsg = linkError?.message || linkResult?.error || 'Unknown error';
+        console.error('❌ Failed to link talent profile:', errorMsg);
+        
+        // Fallback to direct update (in case RPC doesn't exist or failed)
+        console.log('🔄 Attempting fallback direct update...');
         const { error: talentUpdateError } = await supabase
           .from('talent_profiles')
           .update({ 
@@ -548,9 +556,10 @@ const TalentOnboardingPage: React.FC = () => {
           console.error('❌ Fallback update also failed:', talentUpdateError);
           throw new Error('Failed to link your account to your talent profile. Please contact support.');
         }
+        console.log('✅ Fallback update succeeded');
+      } else {
+        console.log('✅ Talent profile linked successfully via RPC');
       }
-      
-      console.log('✅ Talent profile linked successfully');
 
       // Check if email confirmation is required
       if (authData.session === null && authData.user.email_confirmed_at === null) {
