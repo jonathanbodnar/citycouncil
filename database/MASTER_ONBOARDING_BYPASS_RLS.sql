@@ -61,14 +61,14 @@ BEGIN
     full_name = COALESCE(p_full_name, full_name, temp_full_name)
   WHERE id = p_talent_id;
   
-  -- Log for audit
-  INSERT INTO public.admin_audit_log (action, entity_type, entity_id, details)
+  -- Log for audit (admin_id can be null for self-service onboarding)
+  INSERT INTO public.admin_audit_log (admin_id, action, target_user_id, metadata)
   VALUES (
+    COALESCE(auth.uid(), p_user_id),  -- Use the linking user as admin_id
     'talent_profile_linked',
-    'talent_profiles',
-    p_talent_id,
+    p_user_id,
     jsonb_build_object(
-      'user_id', p_user_id,
+      'talent_id', p_talent_id,
       'full_name', p_full_name,
       'linked_at', NOW()
     )
@@ -168,14 +168,14 @@ BEGIN
   WHERE id = p_talent_id;
   
   -- Log completion
-  INSERT INTO public.admin_audit_log (action, entity_type, entity_id, details)
+  INSERT INTO public.admin_audit_log (admin_id, action, target_user_id, metadata)
   VALUES (
+    COALESCE(auth.uid(), v_talent.user_id),
     'talent_onboarding_completed',
-    'talent_profiles',
-    p_talent_id,
+    v_talent.user_id,
     jsonb_build_object(
-      'completed_at', NOW(),
-      'user_id', v_talent.user_id
+      'talent_id', p_talent_id,
+      'completed_at', NOW()
     )
   );
   
