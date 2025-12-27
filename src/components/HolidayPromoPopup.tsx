@@ -401,10 +401,8 @@ const HolidayPromoPopup: React.FC = () => {
       // Simulate spinning animation (2 seconds)
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Get referrer info for tracking
-      const { referrer, referrerDomain } = getReferrerInfo();
-
-      // Save to beta_signups with prize and referrer
+      // Save to beta_signups with prize
+      // Note: referrer tracking columns can be added later with database migration
       const { data, error: insertError } = await supabase
         .from('beta_signups')
         .insert({
@@ -412,9 +410,7 @@ const HolidayPromoPopup: React.FC = () => {
           source: 'holiday_popup',
           utm_source: utmSource,
           subscribed_at: new Date().toISOString(),
-          prize_won: prize,
-          referrer: referrer,
-          referrer_domain: referrerDomain
+          prize_won: prize
         })
         .select();
 
