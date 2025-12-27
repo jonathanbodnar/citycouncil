@@ -111,16 +111,28 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
         const nextDay = new Date(year, month - 1, day + 1);
         const endTimestamp = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}T05:59:59.999Z`;
 
+        // Calculate the day before startDate for baseline follower count
+        const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+        const dayBefore = new Date(startYear, startMonth - 1, startDay - 1);
+        const dayBeforeStr = `${dayBefore.getFullYear()}-${String(dayBefore.getMonth() + 1).padStart(2, '0')}-${String(dayBefore.getDate()).padStart(2, '0')}`;
+
         // Fetch follower data, SMS data, and ad spend in parallel
-        const [followerResult, smsResult, fbSpendResult, rumbleSpendResult] = await Promise.all([
-          // Follower counts within date range
+        const [followerResult, baselineFollowerResult, smsResult, fbSpendResult, rumbleSpendResult] = await Promise.all([
+          // Follower counts within date range (for the end date)
           supabase
             .from('follower_counts')
             .select('date, count')
             .eq('platform', 'instagram')
-            .gte('date', startDate)
-            .lte('date', endDate)
-            .order('date', { ascending: true }),
+            .eq('date', endDate)
+            .single(),
+          
+          // Baseline follower count (day before start date)
+          supabase
+            .from('follower_counts')
+            .select('date, count')
+            .eq('platform', 'instagram')
+            .eq('date', dayBeforeStr)
+            .single(),
           
           // SMS signups within date range - include utm_source for filtering
           supabase
@@ -146,13 +158,14 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
             .lte('date', endDate)
         ]);
 
-        // Calculate followers gained (first to last in range)
-        const followerData = followerResult.data || [];
+        // Calculate followers gained (end date count - baseline count)
+        const endCount = followerResult.data?.count || 0;
+        const baselineCount = baselineFollowerResult.data?.count || 0;
         let totalFollowersGained = 0;
-        if (followerData.length >= 2) {
-          totalFollowersGained = followerData[followerData.length - 1].count - followerData[0].count;
-        } else if (followerData.length === 1) {
-          // If only one day, we can't calculate gain
+        if (endCount > 0 && baselineCount > 0) {
+          totalFollowersGained = endCount - baselineCount;
+        } else if (endCount > 0) {
+          // No baseline available, can't calculate gain accurately
           totalFollowersGained = 0;
         }
 
