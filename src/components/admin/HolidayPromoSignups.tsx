@@ -147,19 +147,38 @@ const HolidayPromoSignups: React.FC = () => {
     }
   };
 
-  // Calculate UTM source statistics (group DM variations together)
+  // Calculate UTM source statistics
+  // Show: DM (all dm variations combined), DM Follower (dmf), DM Giveaway (dmb), plus other sources
   const utmStats = signups.reduce((acc, s) => {
-    let source = s.utm_source || 'No UTM';
-    // Group all DM variations (dm, dmf, dma, dmb, dmc) into "DM"
-    if (source.toLowerCase().startsWith('dm')) {
-      source = 'DM';
+    const source = (s.utm_source || 'No UTM').toLowerCase();
+    
+    // Count individual DM variations for breakdown
+    if (source === 'dmf') {
+      acc['DM Follower'] = (acc['DM Follower'] || 0) + 1;
+      acc['DM'] = (acc['DM'] || 0) + 1; // Also count in total DM
+    } else if (source === 'dmb') {
+      acc['DM Giveaway'] = (acc['DM Giveaway'] || 0) + 1;
+      acc['DM'] = (acc['DM'] || 0) + 1; // Also count in total DM
+    } else if (source.startsWith('dm')) {
+      // Other DM variations (dm, dma, dmc, etc.)
+      acc['DM'] = (acc['DM'] || 0) + 1;
+    } else {
+      // Non-DM sources
+      const displaySource = s.utm_source || 'No UTM';
+      acc[displaySource] = (acc[displaySource] || 0) + 1;
     }
-    acc[source] = (acc[source] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   
-  // Sort UTM stats by count descending
-  const sortedUtmStats = Object.entries(utmStats).sort((a, b) => b[1] - a[1]);
+  // Sort UTM stats: DM first, then DM Follower, DM Giveaway, then others by count
+  const dmStats = ['DM', 'DM Follower', 'DM Giveaway'].filter(k => utmStats[k]);
+  const otherStats = Object.entries(utmStats)
+    .filter(([k]) => !['DM', 'DM Follower', 'DM Giveaway'].includes(k))
+    .sort((a, b) => b[1] - a[1]);
+  const sortedUtmStats: [string, number][] = [
+    ...dmStats.map(k => [k, utmStats[k]] as [string, number]),
+    ...otherStats
+  ];
 
   if (loading) {
     return (
