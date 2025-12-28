@@ -55,6 +55,20 @@ const TalentProfilePage: React.FC = () => {
   const [playingPromoVideo, setPlayingPromoVideo] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
+  const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
+
+  // Fetch Christmas mode setting
+  useEffect(() => {
+    const fetchChristmasMode = async () => {
+      const { data } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'christmas_mode_enabled')
+        .single();
+      setChristmasModeEnabled(data?.setting_value === 'true');
+    };
+    fetchChristmasMode();
+  }, []);
 
   // Check coupon from localStorage (check both keys for compatibility)
   const checkCoupon = useCallback(() => {
@@ -777,7 +791,7 @@ const TalentProfilePage: React.FC = () => {
                 <ClockIcon className="h-4 w-4 mr-0.5" />
                 {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h delivery
               </span>
-              {talent.christmas_deadline && (
+              {christmasModeEnabled && talent.christmas_deadline && (
                 (() => {
                   const deadline = new Date(talent.christmas_deadline + 'T23:59:59');
                   const now = new Date();

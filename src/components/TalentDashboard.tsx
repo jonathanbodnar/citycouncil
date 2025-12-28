@@ -77,6 +77,20 @@ const TalentDashboard: React.FC = () => {
   const [userPhone, setUserPhone] = useState('');
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
+
+  // Fetch Christmas mode setting
+  useEffect(() => {
+    const fetchChristmasMode = async () => {
+      const { data } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'christmas_mode_enabled')
+        .single();
+      setChristmasModeEnabled(data?.setting_value === 'true');
+    };
+    fetchChristmasMode();
+  }, []);
 
   // Check if user has access to Bio feature (only on dev environment)
   const hasBioAccess = IS_DEV_ENVIRONMENT && user?.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase());
@@ -652,8 +666,8 @@ const TalentDashboard: React.FC = () => {
         />
       )}
 
-      {/* Self-Promo Link Banner */}
-      {talentProfile && (
+      {/* Christmas Games Banner - Only show when Christmas mode is enabled */}
+      {christmasModeEnabled && talentProfile && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-red-500/20 border border-green-500/30">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             {/* Left side - Promo Link */}

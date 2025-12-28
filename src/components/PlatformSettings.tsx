@@ -423,6 +423,47 @@ const PlatformSettings: React.FC = () => {
         </div>
       </div>
 
+      {/* Holiday Settings */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">🎄 Holiday Settings</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Control holiday-themed features across the platform.
+        </p>
+        
+        <div className="space-y-4">
+          {/* Christmas Mode Toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <label className="block text-sm font-medium text-gray-900">
+                Christmas Mode
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                Shows Christmas delivery banners on talent profiles and cards, and enables the Christmas Games banner on talent dashboard.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const currentValue = settings.find(s => s.setting_key === 'christmas_mode_enabled')?.setting_value === 'true';
+                updateSetting('christmas_mode_enabled', currentValue ? 'false' : 'true');
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.find(s => s.setting_key === 'christmas_mode_enabled')?.setting_value === 'true'
+                  ? 'bg-green-500'
+                  : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.find(s => s.setting_key === 'christmas_mode_enabled')?.setting_value === 'true'
+                    ? 'translate-x-6'
+                    : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Other Settings */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">General Settings</h3>

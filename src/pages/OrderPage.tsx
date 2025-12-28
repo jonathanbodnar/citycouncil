@@ -53,6 +53,20 @@ const OrderPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
+  const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
+
+  // Fetch Christmas mode setting
+  useEffect(() => {
+    const fetchChristmasMode = async () => {
+      const { data } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'christmas_mode_enabled')
+        .single();
+      setChristmasModeEnabled(data?.setting_value === 'true');
+    };
+    fetchChristmasMode();
+  }, []);
   
   // Check for UTM tracking - check URL param first, then localStorage
   // utm=1 = "self_promo" (talent-specific, only tracks for the talent they landed on)
@@ -970,8 +984,8 @@ const OrderPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Christmas Deadline Warning */}
-            {talent.christmas_deadline && (() => {
+            {/* Christmas Deadline Warning - Only show when Christmas mode is enabled */}
+            {christmasModeEnabled && talent.christmas_deadline && (() => {
               const deadline = new Date(talent.christmas_deadline + 'T23:59:59');
               const now = new Date();
               const isPastDeadline = now > deadline;
