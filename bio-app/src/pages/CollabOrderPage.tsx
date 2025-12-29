@@ -83,6 +83,11 @@ const CollabOrderPage: React.FC = () => {
   const [, setCommerceInstance] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const successHandledRef = useRef(false);
+  
+  // Login mode
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -155,6 +160,29 @@ const CollabOrderPage: React.FC = () => {
   };
 
   const checkExistingUser = async () => {
+    // First check for Supabase session (logged in on shoutout.us)
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // User is logged in via Supabase, fetch their profile
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (existingUser) {
+          setUser(existingUser);
+          localStorage.setItem('collab_user', JSON.stringify(existingUser));
+          setStep('details');
+          return;
+        }
+      }
+    } catch (error) {
+      console.log('No active session:', error);
+    }
+    
+    // Fallback to localStorage
     const savedUser = localStorage.getItem('collab_user');
     if (savedUser) {
       try {
@@ -216,6 +244,42 @@ const CollabOrderPage: React.FC = () => {
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || 'Registration failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: loginEmail.toLowerCase(),
+        password: loginPassword,
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (existingUser) {
+          setUser(existingUser);
+          localStorage.setItem('collab_user', JSON.stringify(existingUser));
+          setStep('details');
+          toast.success('Welcome back!');
+        } else {
+          throw new Error('User profile not found');
+        }
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Login failed. Check your email and password.');
     } finally {
       setSubmitting(false);
     }
@@ -488,56 +552,144 @@ const CollabOrderPage: React.FC = () => {
           >
             {/* Registration Step */}
             {step === 'register' && (
-              <form onSubmit={handleRegister} className="space-y-4">
-                <h2 className="text-xl font-semibold text-white mb-4">Create Account</h2>
-                
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
-                    style={{ borderRadius: getButtonRadius() }}
-                    placeholder="Your name"
+              <div className="space-y-4">
+                {showLoginForm ? (
+                  /* Login Form */
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <h2 className="text-xl font-semibold text-white mb-4">Login to ShoutOut</h2>
+                    
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
+                        style={{ borderRadius: getButtonRadius() }}
+                        placeholder="you@email.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Password</label>
+                      <input
+                        type="password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
+                        style={{ borderRadius: getButtonRadius() }}
+                        placeholder="••••••••"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full py-4 text-white font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                      style={{ backgroundColor: buttonColor, borderRadius: getButtonRadius() }}
+                    >
+                      {submitting ? 'Logging in...' : 'Login'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginForm(false)}
+                      className="w-full py-3 text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      Don't have an account? Create one
+                    </button>
+                  </form>
+                ) : (
+                  /* Registration Form */
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <h2 className="text-xl font-semibold text-white mb-4">Create Account</h2>
+                    
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Full Name</label>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
+                        style={{ borderRadius: getButtonRadius() }}
+                        placeholder="Your name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
+                        style={{ borderRadius: getButtonRadius() }}
+                        placeholder="you@email.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Phone (optional)</label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
+                        style={{ borderRadius: getButtonRadius() }}
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full py-4 text-white font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                      style={{ backgroundColor: buttonColor, borderRadius: getButtonRadius() }}
+                    >
+                      {submitting ? 'Creating Account...' : 'Continue'}
+                    </button>
+
+                    {/* Divider */}
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-white/20"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 text-gray-500" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>or</span>
+                      </div>
+                    </div>
+
+                    {/* Login with ShoutOut */}
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginForm(true)}
+                      className="w-full py-4 bg-white/10 border border-white/20 text-white font-semibold transition-all hover:bg-white/20 flex items-center justify-center gap-3"
+                      style={{ borderRadius: getButtonRadius() }}
+                    >
+                      <img 
+                        src="https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png" 
+                        alt="ShoutOut" 
+                        className="h-5 w-auto brightness-0 invert"
+                      />
+                      Login with ShoutOut
+                    </button>
+                  </form>
+                )}
+
+                {/* ShoutOut Logo at bottom */}
+                <div className="pt-6 flex flex-col items-center">
+                  <p className="text-gray-500 text-xs mb-2">Powered by</p>
+                  <img 
+                    src="https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png" 
+                    alt="ShoutOut" 
+                    className="h-6 w-auto brightness-0 invert opacity-60"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
-                    style={{ borderRadius: getButtonRadius() }}
-                    placeholder="you@email.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Phone (optional)</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
-                    style={{ borderRadius: getButtonRadius() }}
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-4 text-white font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: buttonColor, borderRadius: getButtonRadius() }}
-                >
-                  {submitting ? 'Creating Account...' : 'Continue'}
-                </button>
-              </form>
+              </div>
             )}
 
             {/* Details Step */}
