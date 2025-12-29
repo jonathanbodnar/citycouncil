@@ -446,7 +446,8 @@ const CollabOrderPage: React.FC = () => {
   const gradientDirection = bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg';
   const gradientStart = bioSettings?.gradient_start || '#0a0a0a';
   const gradientEnd = bioSettings?.gradient_end || '#1a1a2e';
-  const buttonColor = bioSettings?.button_color || '#ec4899'; // Pink default for collab
+  // Always use pink for collab buttons - don't use bio button color as it might be white/light
+  const buttonColor = '#ec4899'; // Pink for collab
   const displayName = bioSettings?.display_name || talent?.full_name || 'Creator';
   const profileImage = bioSettings?.profile_image_url || talent?.temp_avatar_url;
 
