@@ -298,15 +298,36 @@ const CollabOrderPage: React.FC = () => {
       const amountCents = Math.round(amount * 100);
       console.log('🔄 Initializing Fortis with amount:', amount, 'cents:', amountCents);
       
-      const { data: intentionData, error: intentionError } = await supabase.functions.invoke('fortis-intention', {
-        body: { amount_cents: amountCents },
-      });
+      let intentionData;
+      let intentionError;
+      
+      try {
+        const response = await supabase.functions.invoke('fortis-intention', {
+          body: { amount_cents: amountCents },
+        });
+        intentionData = response.data;
+        intentionError = response.error;
+        console.log('Fortis intention response:', { data: intentionData, error: intentionError });
+      } catch (fetchError: any) {
+        console.error('Network error calling fortis-intention:', fetchError);
+        throw new Error(`Network error: ${fetchError.message || 'Failed to connect to payment service'}`);
+      }
 
       if (intentionError) {
+        console.error('Fortis intention error:', intentionError);
         throw new Error(intentionError.message || 'Failed to create payment intention');
+      }
+      
+      if (!intentionData) {
+        throw new Error('No response from payment service');
       }
 
       const { clientToken } = intentionData;
+      
+      if (!clientToken) {
+        console.error('No client token in response:', intentionData);
+        throw new Error('Payment service did not return a valid token');
+      }
 
       const waitForCommerce = () => new Promise<void>((resolve, reject) => {
         if ((window as any).Commerce?.elements) {
