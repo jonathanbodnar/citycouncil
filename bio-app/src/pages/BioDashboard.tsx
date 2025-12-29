@@ -344,6 +344,28 @@ const BioDashboard: React.FC = () => {
             platform: s.platform,
             handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
           })));
+          
+          // Sync youtube_handle and rumble_handle if social links exist but handles are missing
+          const youtubeLink = socialData.find(s => s.platform === 'youtube');
+          const rumbleLink = socialData.find(s => s.platform === 'rumble');
+          const needsSync: Record<string, string> = {};
+          
+          if (youtubeLink && !profile.youtube_handle) {
+            needsSync.youtube_handle = youtubeLink.handle.replace(/^@/, '');
+            profile.youtube_handle = needsSync.youtube_handle;
+          }
+          if (rumbleLink && !profile.rumble_handle) {
+            needsSync.rumble_handle = rumbleLink.handle.replace(/^@/, '');
+            profile.rumble_handle = needsSync.rumble_handle;
+          }
+          
+          // Update the database if we found mismatches
+          if (Object.keys(needsSync).length > 0) {
+            await supabase
+              .from('talent_profiles')
+              .update(needsSync)
+              .eq('id', profile.id);
+          }
         }
 
         // Get or create bio settings
@@ -1219,9 +1241,25 @@ const BioDashboard: React.FC = () => {
                               onClick={async () => {
                                 const updated = socialLinks.filter(s => s.id !== social.id);
                                 setSocialLinks(updated);
+                                
+                                // Build the update object
+                                const updateData: Record<string, unknown> = { social_accounts: updated };
+                                
+                                // If removing YouTube, also clear youtube_handle
+                                if (social.platform === 'youtube') {
+                                  updateData.youtube_handle = null;
+                                  setTalentProfile(prev => prev ? { ...prev, youtube_handle: undefined } : prev);
+                                }
+                                
+                                // If removing Rumble, also clear rumble_handle
+                                if (social.platform === 'rumble') {
+                                  updateData.rumble_handle = null;
+                                  setTalentProfile(prev => prev ? { ...prev, rumble_handle: undefined } : prev);
+                                }
+                                
                                 await supabase
                                   .from('talent_profiles')
-                                  .update({ social_accounts: updated })
+                                  .update(updateData)
                                   .eq('id', talentProfile?.id);
                                 toast.success('Social link removed');
                                 setTimeout(refreshPreview, 500);
@@ -1552,9 +1590,27 @@ const BioDashboard: React.FC = () => {
             };
             const updated = [...socialLinks, newSocial];
             setSocialLinks(updated);
+            
+            // Build the update object
+            const updateData: Record<string, unknown> = { social_accounts: updated };
+            
+            // If adding YouTube, also set youtube_handle for the card feature
+            if (social.platform === 'youtube') {
+              updateData.youtube_handle = social.handle.replace(/^@/, '');
+              // Update local state so the card toggle shows immediately
+              setTalentProfile(prev => prev ? { ...prev, youtube_handle: social.handle.replace(/^@/, '') } : prev);
+            }
+            
+            // If adding Rumble, also set rumble_handle for the card feature
+            if (social.platform === 'rumble') {
+              updateData.rumble_handle = social.handle.replace(/^@/, '');
+              // Update local state so the card toggle shows immediately
+              setTalentProfile(prev => prev ? { ...prev, rumble_handle: social.handle.replace(/^@/, '') } : prev);
+            }
+            
             await supabase
               .from('talent_profiles')
-              .update({ social_accounts: updated })
+              .update(updateData)
               .eq('id', talentProfile?.id);
             toast.success('Social link added!');
             setTimeout(refreshPreview, 500);
