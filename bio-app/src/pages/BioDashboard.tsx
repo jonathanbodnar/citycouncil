@@ -64,6 +64,7 @@ interface BioSettings {
   show_shoutout_card: boolean;
   show_rumble_card: boolean;
   show_youtube_card?: boolean;
+  show_newsletter?: boolean;
   is_published: boolean;
   background_type: string;
   gradient_start: string;
@@ -1095,12 +1096,10 @@ const BioDashboard: React.FC = () => {
                             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                               link.link_type === 'basic' ? 'bg-blue-500/20' :
                               link.link_type === 'grid' ? 'bg-purple-500/20' :
-                              link.link_type === 'newsletter' ? 'bg-green-500/20' :
                               'bg-yellow-500/20'
                             }`}>
                               {link.link_type === 'basic' && <LinkIcon className="h-5 w-5 text-blue-400" />}
                               {link.link_type === 'grid' && <Squares2X2Icon className="h-5 w-5 text-purple-400" />}
-                              {link.link_type === 'newsletter' && <EnvelopeIcon className="h-5 w-5 text-green-400" />}
                               {link.link_type === 'sponsor' && <GiftIcon className="h-5 w-5 text-yellow-400" />}
                             </div>
                           )}
@@ -1221,6 +1220,46 @@ const BioDashboard: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Newsletter Toggle */}
+                <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-2xl p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-blue-400 flex-shrink-0 mt-0.5">
+                        <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                        <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+                      </svg>
+                      <div>
+                        <h3 className="font-medium text-white mb-1">Newsletter Signup</h3>
+                        <p className="text-sm text-gray-300">
+                          Collect email signups from visitors on your bio page.
+                        </p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={bioSettings?.show_newsletter !== false}
+                        onChange={(e) => {
+                          if (bioSettings) {
+                            const updated = { ...bioSettings, show_newsletter: e.target.checked };
+                            setBioSettings(updated);
+                            supabase
+                              .from('bio_settings')
+                              .update({ show_newsletter: e.target.checked })
+                              .eq('id', bioSettings.id)
+                              .then(() => {
+                                toast.success(e.target.checked ? 'Newsletter signup enabled' : 'Newsletter signup disabled');
+                                setTimeout(refreshPreview, 500);
+                              });
+                          }
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                  </div>
+                </div>
 
                 {/* Service Offerings Section */}
                 {serviceOfferings.length > 0 && (
@@ -1819,7 +1858,7 @@ const AddLinkModal: React.FC<{
   onAddMultiple?: (links: Omit<BioLink, 'id' | 'display_order'>[]) => void;
   talentId: string;
 }> = ({ onClose, onAdd, onAddMultiple, talentId }) => {
-  const [linkType, setLinkType] = useState<'basic' | 'grid' | 'newsletter' | 'sponsor'>('basic');
+  const [linkType, setLinkType] = useState<'basic' | 'grid' | 'sponsor'>('basic');
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
@@ -1937,7 +1976,6 @@ const AddLinkModal: React.FC<{
   const linkTypes = [
     { type: 'basic' as const, label: 'Basic Link', icon: LinkIcon, color: 'blue', desc: 'Simple link with title' },
     { type: 'grid' as const, label: 'Grid Card', icon: Squares2X2Icon, color: 'purple', desc: 'Image card with link' },
-    { type: 'newsletter' as const, label: 'Newsletter', icon: EnvelopeIcon, color: 'green', desc: 'Email signup form' },
     { type: 'sponsor' as const, label: 'Become a Sponsor', icon: GiftIcon, color: 'yellow', desc: 'Sponsorship CTA' },
   ];
 
@@ -1989,27 +2027,25 @@ const AddLinkModal: React.FC<{
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={linkType === 'newsletter' ? 'Join my newsletter' : 'My Website'}
+                  placeholder="My Website"
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
-              {linkType !== 'newsletter' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
-                  <input
-                    type="text"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onBlur={handleUrlBlur}
-                    placeholder="example.com"
-                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onBlur={handleUrlBlur}
+                  placeholder="example.com"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
+              </div>
 
               {/* Image Upload for basic links */}
               {linkType === 'basic' && (

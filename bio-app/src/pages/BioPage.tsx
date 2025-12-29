@@ -99,6 +99,7 @@ interface BioSettings {
   show_shoutout_card: boolean;
   show_rumble_card: boolean;
   show_youtube_card?: boolean;
+  show_newsletter?: boolean;
   is_published: boolean;
   background_type: string;
   gradient_start: string;
@@ -958,6 +959,39 @@ const BioPage: React.FC = () => {
               {bioSettings.one_liner}
             </p>
           )}
+
+          {/* Newsletter Signup - Inline under profile */}
+          {bioSettings?.show_newsletter !== false && (
+            <form onSubmit={handleNewsletterSignup} className="mt-6 max-w-sm mx-auto">
+              <div className="flex items-center gap-2">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={subscribing || !newsletterConfig}
+                  className="px-5 py-2.5 rounded-full font-medium text-white transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                  style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
+                >
+                  {subscribing ? (
+                    '...'
+                  ) : (
+                    <>
+                      Stay Connected
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         {/* Links */}
@@ -1293,66 +1327,6 @@ const BioPage: React.FC = () => {
             );
           })()}
 
-          {/* Newsletter Signup - Show if there's a newsletter link (with or without config) */}
-          {/* Always use rounded style for newsletter container since pill doesn't work well here */}
-          {hasNewsletterLink && (
-            <div 
-              className="rounded-xl"
-              style={{
-                ...getButtonStyle(),
-                borderRadius: '0.75rem', // Override pill style
-                padding: '20px 24px',
-              }}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <EnvelopeIcon className="h-6 w-6 text-green-400" />
-                <h3 className="text-white font-medium">
-                  {links.find(l => l.link_type === 'newsletter')?.title || 'Join my newsletter'}
-                </h3>
-              </div>
-              <form onSubmit={handleNewsletterSignup} className="space-y-4">
-                <div className="flex gap-3">
-                  <input
-                    type="email"
-                    value={newsletterEmail}
-                    onChange={(e) => setNewsletterEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    required
-                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40"
-                  />
-                  <button
-                    type="submit"
-                    disabled={subscribing || !newsletterConfig || !privacyAccepted}
-                    className="px-6 py-3 rounded-xl font-medium text-white transition-colors disabled:opacity-50"
-                    style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
-                  >
-                    {subscribing ? '...' : 'Join'}
-                  </button>
-                </div>
-                {/* Privacy Policy Checkbox */}
-                <label className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={privacyAccepted}
-                    onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded bg-white/10 border-white/30 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
-                  />
-                  <span className="text-xs text-gray-400 leading-relaxed">
-                    I agree to receive {displayName}'s newsletter and accept their{' '}
-                    <a 
-                      href={`/${username}/privacy`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 underline"
-                    >
-                      Privacy Policy
-                    </a>
-                  </span>
-                </label>
-              </form>
-            </div>
-          )}
-
           {/* Sponsor Links */}
           {links.filter(l => l.link_type === 'sponsor').map((link) => (
             <a
@@ -1538,7 +1512,13 @@ const BioPage: React.FC = () => {
         )}
 
         {/* Footer - White text with opacity for visibility on any background */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-3">
+          {/* Terms of Service for Newsletter */}
+          {bioSettings?.show_newsletter !== false && (
+            <p className="text-white/25 text-[10px] max-w-xs mx-auto leading-relaxed">
+              Terms of service: If you submit your email you agree to receive emails from me. We do not share your data.
+            </p>
+          )}
           <a 
             href="https://shoutout.us"
             target="_blank"

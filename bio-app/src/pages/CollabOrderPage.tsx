@@ -58,13 +58,14 @@ const CollabOrderPage: React.FC = () => {
   // Payment
   const [orderId, setOrderId] = useState<string | null>(null);
   const iframeContainerRef = useRef<HTMLDivElement>(null);
-  const [commerceInstance, setCommerceInstance] = useState<any>(null);
+  const [, setCommerceInstance] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const successHandledRef = useRef(false);
 
   useEffect(() => {
     fetchData();
     checkExistingUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username, serviceId]);
 
   const fetchData = async () => {
@@ -276,7 +277,7 @@ const CollabOrderPage: React.FC = () => {
         throw new Error('Failed to create payment intention');
       }
 
-      const { clientToken, orderReference } = await response.json();
+      const { clientToken } = await response.json();
 
       // Load Fortis Commerce.js
       if (!(window as any).Commerce) {
