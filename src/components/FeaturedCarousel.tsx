@@ -96,16 +96,21 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
         {enhancedImageUrl ? (
-          <div 
-            className="hidden md:block absolute right-0 top-0 w-1/2 h-full"
-            style={{
-              backgroundImage: `url(${enhancedImageUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: currentTalent.featured_image_position || 'center center',
-              maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
-            }}
-          />
+          <div className="hidden md:block absolute right-0 top-0 w-1/2 h-full overflow-hidden">
+            <img
+              src={enhancedImageUrl}
+              alt={currentTalent.temp_full_name || currentTalent.users.full_name}
+              fetchPriority="high"
+              loading="eager"
+              decoding="sync"
+              className="w-full h-full object-cover"
+              style={{
+                objectPosition: currentTalent.featured_image_position || 'center center',
+                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
+              }}
+            />
+          </div>
         ) : (
           /* Desktop Fallback - Show initials */
           <div className="hidden md:flex absolute right-0 top-0 w-1/2 h-full items-center justify-center">
@@ -125,14 +130,18 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         
         {/* Mobile Background with Photo or Gradient */}
         {enhancedImageUrl ? (
-          <div 
-            className="md:hidden absolute inset-0"
-            style={{
-              backgroundImage: `url(${enhancedImageUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: currentTalent.featured_image_position || 'center center',
-            }}
-          >
+          <div className="md:hidden absolute inset-0 overflow-hidden">
+            <img
+              src={enhancedImageUrl}
+              alt={currentTalent.temp_full_name || currentTalent.users.full_name}
+              fetchPriority="high"
+              loading="eager"
+              decoding="sync"
+              className="w-full h-full object-cover"
+              style={{
+                objectPosition: currentTalent.featured_image_position || 'center center',
+              }}
+            />
             {/* Custom gradient overlay for mobile */}
             <div 
               className="absolute inset-0"

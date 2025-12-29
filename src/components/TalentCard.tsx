@@ -96,6 +96,8 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
             decoding="async"
+            width={300}
+            height={300}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-red-100">
