@@ -531,13 +531,30 @@ const HolidayPromoPopup: React.FC = () => {
             <>
               {/* Pre-spin State */}
               {!isSpinning ? (
+                (() => {
+                  // Check UTM to determine if user came from a talent promo link
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const utmSource = (urlParams.get('utm') || safeGetItem('promo_source_global') || '').toLowerCase();
+                  
+                  // Map UTM sources to talent names
+                  const talentNameMap: Record<string, string> = {
+                    'shawnlive': 'Shawn',
+                    'jeremylive': 'Jeremy',
+                    'hayleylive': 'Hayley'
+                  };
+                  const talentName = talentNameMap[utmSource];
+                  
+                  return (
                 <>
                   <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                    Instant Giveaway 🎁
+                    Enter Our Instant Giveaway 🎁
                   </h2>
                   
                   <p className="text-white/90 text-lg mb-4">
-                    Win a free personalized ShoutOut or a discount.
+                    {talentName 
+                      ? `Win a free personalized ShoutOut from ${talentName}!`
+                      : 'Win a free personalized ShoutOut or a discount.'
+                    }
                   </p>
 
                   {/* Prize Badges */}
@@ -594,10 +611,12 @@ const HolidayPromoPopup: React.FC = () => {
                         color: '#1f2937'
                       }}
                     >
-                      See If I Won 🎁
+                      See what I won 🎁
                     </button>
                   </form>
                 </>
+                  );
+                })()
               ) : (
                 /* Spinning State */
                 <div className="py-12">
