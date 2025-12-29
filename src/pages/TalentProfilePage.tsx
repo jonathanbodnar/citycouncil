@@ -829,25 +829,11 @@ const TalentProfilePage: React.FC = () => {
               <p className="text-sm font-medium text-gray-300 text-center">Choose a ShoutOut type</p>
               <div className="grid grid-cols-2 gap-1.5">
                 <Link
-                  to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  🎁 Gag gift for a liberal
-                </Link>
-                <Link
                   to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   💝 Surprise a loved one
-                </Link>
-                <Link
-                  to={user ? `/order/${talent.id}?occasion=holiday` : `/signup?returnTo=/order/${talent.id}?occasion=holiday`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  🎄 Merry Christmas
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=birthday` : `/signup?returnTo=/order/${talent.id}?occasion=birthday`}
@@ -861,7 +847,7 @@ const TalentProfilePage: React.FC = () => {
                   onClick={storePromoSourceOnClick}
                   className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
-                  🔥 Holiday roast
+                  🔥 Friendly roast
                 </Link>
                 <Link
                   to={user ? `/order/${talent.id}?occasion=advice` : `/signup?returnTo=/order/${talent.id}?occasion=advice`}
