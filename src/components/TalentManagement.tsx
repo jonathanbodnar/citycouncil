@@ -241,6 +241,7 @@ const TalentManagement: React.FC = () => {
         category: newTalent.category,
         categories: newTalent.categories.length > 0 ? newTalent.categories : [newTalent.category],
         pricing: newTalent.pricing,
+        base_pricing: newTalent.pricing, // Also set base_pricing for pricing urgency system
         corporate_pricing: newTalent.corporate_pricing,
         allow_corporate_pricing: newTalent.allow_corporate_pricing,
         is_verified: newTalent.is_verified,
@@ -379,6 +380,7 @@ const TalentManagement: React.FC = () => {
         category: editingTalent.category,
         categories: editingTalent.categories,
         pricing: editingTalent.pricing || 100, // Default to $100 if pricing is null/undefined/0
+        base_pricing: editingTalent.pricing || 100, // Also set base_pricing for pricing urgency system
         corporate_pricing: editingTalent.corporate_pricing,
         allow_corporate_pricing: editingTalent.allow_corporate_pricing,
         is_verified: editingTalent.is_verified,

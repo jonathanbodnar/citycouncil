@@ -837,6 +837,7 @@ const TalentOnboardingPage: React.FC = () => {
         category: profileData.category,
         categories: profileData.categories,
         pricing: profileData.pricing,
+        base_pricing: profileData.pricing, // Also set base_pricing for pricing urgency system
         corporate_pricing: profileData.corporate_pricing,
         fulfillment_time_hours: profileData.fulfillment_time_hours,
         charity_percentage: profileData.charity_percentage,
