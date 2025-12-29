@@ -160,6 +160,18 @@ interface RumbleVideoData {
   liveViewers?: number;
 }
 
+interface ServiceOffering {
+  id: string;
+  talent_id: string;
+  service_type: 'instagram_collab' | 'tiktok_collab' | 'youtube_collab';
+  pricing: number; // in cents
+  title: string;
+  description?: string;
+  video_length_seconds: number;
+  benefits: string[];
+  is_active: boolean;
+}
+
 interface YouTubeVideoData {
   title: string;
   thumbnail: string;
@@ -180,6 +192,8 @@ const BioPage: React.FC = () => {
   const [newsletterConfig, setNewsletterConfig] = useState<NewsletterConfig | null>(null);
   const [rumbleData, setRumbleData] = useState<RumbleVideoData | null>(null);
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoData | null>(null);
+  const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
+  const [showCollabModal, setShowCollabModal] = useState<ServiceOffering | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -316,6 +330,21 @@ const BioPage: React.FC = () => {
             id: s.id,
             platform: s.platform,
             handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
+          })));
+        }
+
+        // Get active service offerings
+        const { data: servicesData } = await supabase
+          .from('service_offerings')
+          .select('*')
+          .eq('talent_id', profile.id)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        
+        if (servicesData && servicesData.length > 0) {
+          setServiceOfferings(servicesData.map(s => ({
+            ...s,
+            benefits: Array.isArray(s.benefits) ? s.benefits : JSON.parse(s.benefits || '[]'),
           })));
         }
 
@@ -1345,6 +1374,59 @@ const BioPage: React.FC = () => {
             </a>
           ))}
 
+          {/* Collab Service Cards */}
+          {serviceOfferings.map((service) => (
+            <button
+              key={service.id}
+              onClick={() => setShowCollabModal(service)}
+              className="w-full text-left mt-4"
+            >
+              <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-pink-500/30 hover:border-pink-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-white">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                      </svg>
+                    </div>
+                    <span className="text-pink-400 text-xs font-medium">Instagram Collab</span>
+                    <span className="ml-auto text-white font-bold">${(service.pricing / 100).toFixed(0)}</span>
+                  </div>
+                  <h3 className="text-white font-semibold text-sm mb-2">
+                    {service.title}
+                  </h3>
+                  
+                  {/* Follower counts from connected socials */}
+                  {socialAccounts.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {socialAccounts.slice(0, 3).map((social) => {
+                        const platform = SOCIAL_PLATFORMS[social.platform];
+                        return (
+                          <div key={social.id} className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-0.5">
+                            <span className="text-gray-300">{platform?.icon}</span>
+                            <span className="text-xs text-gray-400">@{social.handle}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Benefits preview */}
+                  <div className="flex flex-wrap gap-1">
+                    {service.benefits.slice(0, 2).map((benefit, i) => (
+                      <span key={i} className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded-full">
+                        ✓ {benefit}
+                      </span>
+                    ))}
+                    {service.benefits.length > 2 && (
+                      <span className="text-xs text-gray-500">+{service.benefits.length - 2} more</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </button>
+          ))}
+
           {/* ShoutOut Card - Always at the bottom (cannot be removed) */}
           {bioSettings && (
             <a
@@ -1466,6 +1548,149 @@ const BioPage: React.FC = () => {
             <span>Powered by</span>
             <span className="font-semibold">ShoutOut</span>
           </a>
+        </div>
+      </div>
+
+      {/* Collab Service Modal */}
+      {showCollabModal && (
+        <CollabModal
+          service={showCollabModal}
+          talentProfile={talentProfile}
+          socialAccounts={socialAccounts}
+          onClose={() => setShowCollabModal(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+// Collab Service Modal Component
+const CollabModal: React.FC<{
+  service: ServiceOffering;
+  talentProfile: TalentProfile | null;
+  socialAccounts: SocialAccount[];
+  onClose: () => void;
+}> = ({ service, talentProfile, socialAccounts, onClose }) => {
+  const displayName = talentProfile?.full_name || 'Creator';
+  
+  // Calculate total followers (placeholder - in real implementation would fetch from APIs)
+  const getTotalFollowers = () => {
+    // This would be fetched from social APIs in a real implementation
+    // For now, show the connected platforms
+    return socialAccounts.length;
+  };
+
+  const handleStartRequest = () => {
+    // Navigate to the collab order page
+    const orderUrl = `/collab/${talentProfile?.username || talentProfile?.id}/${service.id}`;
+    window.location.href = orderUrl;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="relative p-6 pb-4 border-b border-white/10">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-pink-400 text-xs font-medium">Instagram Collab</p>
+              <h2 className="text-xl font-bold text-white">{service.title}</h2>
+            </div>
+          </div>
+          
+          <p className="text-gray-400 text-sm">
+            Work with {displayName} on a sponsored collaboration
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Price */}
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-xl border border-pink-500/20">
+            <span className="text-gray-300">Price</span>
+            <span className="text-2xl font-bold text-white">${(service.pricing / 100).toFixed(0)}</span>
+          </div>
+
+          {/* What you get */}
+          <div>
+            <h3 className="text-white font-semibold mb-3">What you get</h3>
+            <div className="space-y-2">
+              {service.benefits.map((benefit, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                  <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-gray-300 text-sm">{benefit}</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-300 text-sm">{service.video_length_seconds}+ second video</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Connected Platforms */}
+          {socialAccounts.length > 0 && (
+            <div>
+              <h3 className="text-white font-semibold mb-3">Reach</h3>
+              <div className="space-y-2">
+                {socialAccounts.map((social) => {
+                  const platform = SOCIAL_PLATFORMS[social.platform];
+                  if (!platform) return null;
+                  return (
+                    <div key={social.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-300">{platform.icon}</span>
+                        <span className="text-gray-300 text-sm">@{social.handle}</span>
+                      </div>
+                      <span className="text-gray-500 text-sm">{platform.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-gray-500 text-xs mt-2 text-center">
+                {getTotalFollowers()} connected platforms
+              </p>
+            </div>
+          )}
+
+          {/* Description */}
+          {service.description && (
+            <div>
+              <h3 className="text-white font-semibold mb-2">About this service</h3>
+              <p className="text-gray-400 text-sm">{service.description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 pt-0">
+          <button
+            onClick={handleStartRequest}
+            className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold text-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-300 hover:scale-[1.02]"
+          >
+            Start Request
+          </button>
+          <p className="text-gray-500 text-xs text-center mt-3">
+            You won't be charged until {displayName} accepts your request
+          </p>
         </div>
       </div>
     </div>

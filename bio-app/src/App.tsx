@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import BioPage from './pages/BioPage';
 import BioDashboard from './pages/BioDashboard';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import CollabOrderPage from './pages/CollabOrderPage';
 
 function App() {
   return (
@@ -23,6 +24,8 @@ function App() {
         <Route path="/dashboard" element={<BioDashboard />} />
         {/* Root shows a landing/redirect */}
         <Route path="/" element={<BioLanding />} />
+        {/* Collab order page */}
+        <Route path="/collab/:username/:serviceId" element={<CollabOrderPage />} />
         {/* Privacy policy for each talent */}
         <Route path="/:username/privacy" element={<PrivacyPolicy />} />
         {/* Bio pages at /:username */}

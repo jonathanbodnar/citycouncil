@@ -109,6 +109,19 @@ interface NewsletterConfig {
   is_active: boolean;
 }
 
+interface ServiceOffering {
+  id?: string;
+  talent_id: string;
+  service_type: 'instagram_collab' | 'tiktok_collab' | 'youtube_collab';
+  pricing: number; // in cents
+  title: string;
+  description?: string;
+  video_length_seconds: number;
+  benefits: string[];
+  is_active: boolean;
+  display_order: number;
+}
+
 // Gradient presets
 const GRADIENT_PRESETS = [
   { name: 'Midnight', start: '#0a0a0a', end: '#1a1a2e', direction: 'to-b' },
@@ -240,6 +253,9 @@ const BioDashboard: React.FC = () => {
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddSocialModal, setShowAddSocialModal] = useState(false);
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
+  const [editingService, setEditingService] = useState<ServiceOffering | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
@@ -366,6 +382,20 @@ const BioDashboard: React.FC = () => {
               .update(needsSync)
               .eq('id', profile.id);
           }
+        }
+
+        // Load service offerings
+        const { data: servicesData } = await supabase
+          .from('service_offerings')
+          .select('*')
+          .eq('talent_id', profile.id)
+          .order('display_order', { ascending: true });
+        
+        if (servicesData) {
+          setServiceOfferings(servicesData.map(s => ({
+            ...s,
+            benefits: Array.isArray(s.benefits) ? s.benefits : JSON.parse(s.benefits || '[]'),
+          })));
         }
 
         // Get or create bio settings
@@ -1010,6 +1040,13 @@ const BioDashboard: React.FC = () => {
                     Add Link
                   </button>
                   <button
+                    onClick={() => setShowAddServiceModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-medium hover:from-pink-600 hover:to-purple-600 transition-colors"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                    Service
+                  </button>
+                  <button
                     onClick={() => setShowImportModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
                   >
@@ -1182,6 +1219,86 @@ const BioDashboard: React.FC = () => {
                         <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
                       </label>
                     </div>
+                  </div>
+                )}
+
+                {/* Service Offerings Section */}
+                {serviceOfferings.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Services</h3>
+                    {serviceOfferings.map((service) => (
+                      <div
+                        key={service.id}
+                        className={`bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-2xl p-4 ${!service.is_active ? 'opacity-50' : ''}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-white">{service.title}</h3>
+                              <p className="text-sm text-gray-400">
+                                ${(service.pricing / 100).toFixed(0)} • {service.video_length_seconds}s video
+                              </p>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {service.benefits.slice(0, 2).map((benefit, i) => (
+                                  <span key={i} className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded-full">
+                                    {benefit}
+                                  </span>
+                                ))}
+                                {service.benefits.length > 2 && (
+                                  <span className="text-xs text-gray-500">+{service.benefits.length - 2} more</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                              <input
+                                type="checkbox"
+                                checked={service.is_active}
+                                onChange={async (e) => {
+                                  const updated = serviceOfferings.map(s => 
+                                    s.id === service.id ? { ...s, is_active: e.target.checked } : s
+                                  );
+                                  setServiceOfferings(updated);
+                                  await supabase
+                                    .from('service_offerings')
+                                    .update({ is_active: e.target.checked })
+                                    .eq('id', service.id);
+                                  toast.success(e.target.checked ? 'Service enabled' : 'Service disabled');
+                                  setTimeout(refreshPreview, 500);
+                                }}
+                                className="sr-only peer"
+                              />
+                              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                            </label>
+                            <button
+                              onClick={() => setEditingService(service)}
+                              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (confirm('Are you sure you want to delete this service?')) {
+                                  await supabase.from('service_offerings').delete().eq('id', service.id);
+                                  setServiceOfferings(serviceOfferings.filter(s => s.id !== service.id));
+                                  toast.success('Service deleted');
+                                  setTimeout(refreshPreview, 500);
+                                }
+                              }}
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -1617,6 +1734,71 @@ const BioDashboard: React.FC = () => {
             setShowAddSocialModal(false);
           }}
           existingPlatforms={socialLinks.map(s => s.platform)}
+        />
+      )}
+
+      {(showAddServiceModal || editingService) && (
+        <AddServiceModal
+          service={editingService || undefined}
+          onClose={() => {
+            setShowAddServiceModal(false);
+            setEditingService(null);
+          }}
+          onSave={async (service) => {
+            if (editingService) {
+              // Update existing service
+              const { error } = await supabase
+                .from('service_offerings')
+                .update({
+                  title: service.title,
+                  pricing: service.pricing,
+                  video_length_seconds: service.video_length_seconds,
+                  benefits: service.benefits,
+                  description: service.description,
+                  is_active: service.is_active,
+                })
+                .eq('id', editingService.id);
+              
+              if (error) {
+                toast.error('Failed to update service');
+                return;
+              }
+              
+              setServiceOfferings(serviceOfferings.map(s => 
+                s.id === editingService.id ? { ...s, ...service } : s
+              ));
+              toast.success('Service updated!');
+            } else {
+              // Create new service
+              const { data, error } = await supabase
+                .from('service_offerings')
+                .insert([{
+                  talent_id: talentProfile?.id,
+                  service_type: service.service_type,
+                  title: service.title,
+                  pricing: service.pricing,
+                  video_length_seconds: service.video_length_seconds,
+                  benefits: service.benefits,
+                  description: service.description,
+                  is_active: service.is_active,
+                  display_order: serviceOfferings.length,
+                }])
+                .select()
+                .single();
+              
+              if (error) {
+                toast.error('Failed to create service');
+                return;
+              }
+              
+              setServiceOfferings([...serviceOfferings, { ...data, benefits: service.benefits }]);
+              toast.success('Service created!');
+            }
+            
+            setShowAddServiceModal(false);
+            setEditingService(null);
+            setTimeout(refreshPreview, 500);
+          }}
         />
       )}
     </div>
@@ -2983,6 +3165,217 @@ const AddSocialModal: React.FC<{
             </div>
           </form>
         )}
+      </div>
+    </div>
+  );
+};
+
+// Add Service Modal
+const AddServiceModal: React.FC<{
+  service?: ServiceOffering;
+  onClose: () => void;
+  onSave: (service: Partial<ServiceOffering> & { service_type: string }) => void;
+}> = ({ service, onClose, onSave }) => {
+  const [serviceType] = useState<'instagram_collab'>('instagram_collab');
+  const [title, setTitle] = useState(service?.title || 'Collaborate with me');
+  const [pricing, setPricing] = useState(service ? (service.pricing / 100).toString() : '250');
+  const [videoLength, setVideoLength] = useState(service?.video_length_seconds?.toString() || '60');
+  const [benefits, setBenefits] = useState<string[]>(
+    service?.benefits || [
+      'Personalized video mention',
+      'Story share to followers',
+      'Permanent post on feed'
+    ]
+  );
+  const [newBenefit, setNewBenefit] = useState('');
+  const [description, setDescription] = useState(service?.description || '');
+  const [isActive, setIsActive] = useState(service?.is_active !== false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      service_type: serviceType,
+      title,
+      pricing: Math.round(parseFloat(pricing) * 100), // Convert to cents
+      video_length_seconds: parseInt(videoLength),
+      benefits,
+      description,
+      is_active: isActive,
+    });
+  };
+
+  const addBenefit = () => {
+    if (newBenefit.trim()) {
+      setBenefits([...benefits, newBenefit.trim()]);
+      setNewBenefit('');
+    }
+  };
+
+  const removeBenefit = (index: number) => {
+    setBenefits(benefits.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">
+            {service ? 'Edit Service' : 'Add Service'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Service Type (for now just Instagram Collab) */}
+          <div className="p-4 bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-white">Instagram Collab</h3>
+                <p className="text-sm text-gray-400">Sponsored content collaboration</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Card Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Collaborate with me"
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+              required
+            />
+          </div>
+
+          {/* Pricing */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Price</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+              <input
+                type="number"
+                value={pricing}
+                onChange={(e) => setPricing(e.target.value)}
+                min="1"
+                step="1"
+                className="w-full bg-white/5 border border-white/20 rounded-xl pl-8 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Video Length */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Video Length (seconds)</label>
+            <select
+              value={videoLength}
+              onChange={(e) => setVideoLength(e.target.value)}
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500"
+            >
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">60 seconds</option>
+              <option value="90">90 seconds</option>
+              <option value="120">2 minutes</option>
+              <option value="180">3 minutes</option>
+            </select>
+          </div>
+
+          {/* Benefits */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">What they get</label>
+            <div className="space-y-2 mb-3">
+              {benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                  <CheckIcon className="h-4 w-4 text-green-400 flex-shrink-0" />
+                  <span className="flex-1 text-white text-sm">{benefit}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeBenefit(index)}
+                    className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newBenefit}
+                onChange={(e) => setNewBenefit(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addBenefit())}
+                placeholder="Add a benefit..."
+                className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 text-sm"
+              />
+              <button
+                type="button"
+                onClick={addBenefit}
+                className="px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* Description (optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Description (optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Additional details about your collaboration service..."
+              rows={3}
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 resize-none"
+            />
+          </div>
+
+          {/* Active Toggle */}
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+            <div>
+              <h4 className="font-medium text-white">Active</h4>
+              <p className="text-sm text-gray-400">Show this service on your bio page</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+            </label>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-medium hover:from-pink-600 hover:to-purple-600 transition-colors"
+            >
+              {service ? 'Save Changes' : 'Create Service'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

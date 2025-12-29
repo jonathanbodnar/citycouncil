@@ -814,14 +814,19 @@ const TalentDashboard: React.FC = () => {
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-white flex items-center gap-2">
+                          <h4 className="font-semibold text-white flex items-center gap-2 flex-wrap">
                             {order.users.full_name}
                             {order.order_type === 'demo' && (
                               <span className="text-xs glass-strong text-yellow-400 px-2 py-1 rounded-full border border-yellow-500/30 font-semibold">
                                 🎯 Demo Order
                               </span>
                             )}
-                            {order.is_corporate_order && (
+                            {(order as any).service_type === 'social_collab' && (
+                              <span className="text-xs glass-strong text-pink-400 px-2 py-1 rounded-full border border-pink-500/30 font-semibold">
+                                📸 Social Collab
+                              </span>
+                            )}
+                            {order.is_corporate_order && (order as any).service_type !== 'social_collab' && (
                               <span className="text-xs glass-strong text-blue-400 px-2 py-1 rounded-full border border-blue-500/30">
                                 🏢 Business
                               </span>
@@ -912,7 +917,37 @@ const TalentDashboard: React.FC = () => {
                       )}
                     </div>
 
-                    {order.is_corporate_order && (
+                    {/* Social Collab Order Details */}
+                    {(order as any).service_type === 'social_collab' && (
+                      <div className="glass-subtle border border-pink-200/30 rounded-xl p-4" style={{ boxShadow: '0 0 20px rgba(236, 72, 153, 0.1)' }}>
+                        <h5 className="font-medium text-pink-900 mb-3 flex items-center gap-2">
+                          📸 Social Collab Details
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          {order.company_name && (
+                            <div>
+                              <span className="font-medium text-pink-800">Brand/Company:</span>
+                              <p className="text-pink-700">{order.company_name}</p>
+                            </div>
+                          )}
+                          {(order as any).target_audience && (
+                            <div>
+                              <span className="font-medium text-pink-800">Target Audience:</span>
+                              <p className="text-pink-700">{(order as any).target_audience}</p>
+                            </div>
+                          )}
+                          {(order as any).suggested_script && (
+                            <div className="md:col-span-2">
+                              <span className="font-medium text-pink-800">Suggested Script:</span>
+                              <p className="text-pink-700 whitespace-pre-wrap">{(order as any).suggested_script}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Business Order Details (non-collab) */}
+                    {order.is_corporate_order && (order as any).service_type !== 'social_collab' && (
                       <div className="glass-subtle border border-blue-200/30 rounded-xl p-4 glow-blue">
                         <h5 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
                           🏢 Business Order Context
