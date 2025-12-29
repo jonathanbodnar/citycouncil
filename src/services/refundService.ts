@@ -96,7 +96,8 @@ class RefundService {
           users!orders_user_id_fkey (
             id,
             email,
-            full_name
+            full_name,
+            phone
           ),
           talent_profiles!orders_talent_id_fkey (
             users!talent_profiles_user_id_fkey (
@@ -133,24 +134,47 @@ class RefundService {
   }
 
   /**
-   * Send denial notifications (in-app + email)
+   * Send denial notifications (in-app + email + SMS)
    */
   private async sendDenialNotifications(order: any, reason: string, deniedBy: 'admin' | 'talent') {
     try {
       const customerUserId = order.users.id;
       const customerEmail = order.users.email;
       const customerName = order.users.full_name;
+      const customerPhone = order.users.phone;
       const talentName = order.talent_profiles?.users?.full_name || 'the talent';
       const refundAmount = (order.refund_amount || order.amount) / 100;
+      const orderType = order.service_type === 'instagram_collab' ? 'collab request' : 'ShoutOut order';
 
       // Create in-app notification
       await notificationService.createNotification(
         customerUserId,
         'order_denied',
         'Order Denied & Refunded',
-        `Your order for ${talentName} has been denied. ${reason}. A refund of $${refundAmount.toFixed(2)} has been processed to your original payment method.`,
+        `Your ${orderType} for ${talentName} has been denied. ${reason}. A refund of $${refundAmount.toFixed(2)} has been processed to your original payment method.`,
         { order_id: order.id }
       );
+
+      // Send SMS notification if customer has a phone number
+      if (customerPhone) {
+        try {
+          // Truncate reason if too long for SMS
+          const shortReason = reason.length > 80 ? reason.substring(0, 77) + '...' : reason;
+          const smsMessage = `ShoutOut: Your ${orderType} for ${talentName} has been denied. Reason: ${shortReason}. A refund of $${refundAmount.toFixed(2)} is being processed. Check your email for details.`;
+          
+          await supabase.functions.invoke('send-sms', {
+            body: {
+              to: customerPhone,
+              message: smsMessage,
+              useUserNumber: true
+            }
+          });
+          logger.log('Denial SMS sent successfully to:', customerPhone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'));
+        } catch (smsError) {
+          logger.error('Failed to send denial SMS:', smsError);
+          // Don't fail the whole notification process if SMS fails
+        }
+      }
 
       // Send email notification
       const emailHtml = `
@@ -165,7 +189,7 @@ class RefundService {
             </p>
             
             <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-              Unfortunately, your order for <strong>${talentName}</strong> has been denied by ${deniedBy === 'admin' ? 'ShoutOut administration' : 'the talent'}.
+              Unfortunately, your ${orderType} for <strong>${talentName}</strong> has been denied by ${deniedBy === 'admin' ? 'ShoutOut administration' : 'the talent'}.
             </p>
             
             <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444; margin: 20px 0;">
@@ -211,7 +235,7 @@ class RefundService {
         html: emailHtml
       });
 
-      logger.log('Denial notifications sent successfully');
+      logger.log('Denial notifications sent successfully (in-app, email' + (customerPhone ? ', SMS' : '') + ')');
     } catch (error) {
       logger.error('Failed to send denial notifications:', error);
       // Don't throw - notifications are not critical
