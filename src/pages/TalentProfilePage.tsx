@@ -57,8 +57,9 @@ const TalentProfilePage: React.FC = () => {
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
   const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
 
-  // Fetch Christmas mode setting
+  // Fetch Christmas mode setting (non-blocking, low priority)
   useEffect(() => {
+    // Use requestIdleCallback to defer non-critical fetch
     const fetchChristmasMode = async () => {
       const { data } = await supabase
         .from('platform_settings')
@@ -67,7 +68,13 @@ const TalentProfilePage: React.FC = () => {
         .single();
       setChristmasModeEnabled(data?.setting_value === 'true');
     };
-    fetchChristmasMode();
+    
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => fetchChristmasMode());
+    } else {
+      // Fallback: delay slightly to not block initial render
+      setTimeout(fetchChristmasMode, 100);
+    }
   }, []);
 
   // Check coupon from localStorage (check both keys for compatibility)
@@ -367,71 +374,76 @@ const TalentProfilePage: React.FC = () => {
       if (talentError) throw talentError;
 
       // Handle incomplete profiles - create synthetic user object if needed
-      if (!talentData.users) {
-        talentData.users = {
-          id: talentData.user_id || '',
+      if (!talentData.users || (Array.isArray(talentData.users) && talentData.users.length === 0)) {
+        (talentData as any).users = {
+          id: '',
           full_name: talentData.temp_full_name || 'Unknown',
           avatar_url: talentData.temp_avatar_url || null,
         };
       }
 
-      // Fetch reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          users!reviews_user_id_fkey (
-            full_name
-          )
-        `)
-        .eq('talent_id', talentData.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // Fetch reviews, videos, urgency, and related talent IN PARALLEL
+      const [reviewsResult, videosResult, urgencyResult, relatedResult] = await Promise.all([
+        // Reviews
+        supabase
+          .from('reviews')
+          .select(`
+            *,
+            users!reviews_user_id_fkey (
+              full_name
+            )
+          `)
+          .eq('talent_id', talentData.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        
+        // Videos
+        supabase
+          .from('orders')
+          .select('video_url')
+          .eq('talent_id', talentData.id)
+          .eq('status', 'completed')
+          .not('video_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(6),
+        
+        // Pricing urgency
+        supabase
+          .from('talent_pricing_urgency')
+          .select('orders_remaining_at_price')
+          .eq('id', talentData.id)
+          .single(),
+        
+        // Related talent - only fetch essential fields
+        supabase
+          .from('talent_profiles')
+          .select(`
+            id,
+            username,
+            pricing,
+            is_verified,
+            fulfillment_time_hours,
+            temp_full_name,
+            temp_avatar_url,
+            users!talent_profiles_user_id_fkey (
+              id,
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('is_active', true)
+          .neq('id', talentData.id)
+          .limit(8)
+      ]);
 
-      if (reviewsError) throw reviewsError;
+      const { data: reviewsData } = reviewsResult;
+      const { data: videosData } = videosResult;
+      const { data: urgencyData } = urgencyResult;
+      const { data: relatedData } = relatedResult;
 
-      // Fetch recent videos from completed orders
-      console.log('🎬 Fetching videos for talent_id:', talentData.id);
-      const { data: videosData, error: videosError } = await supabase
-        .from('orders')
-        .select('video_url, created_at')
-        .eq('talent_id', talentData.id)
-        .eq('status', 'completed')
-        .not('video_url', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      console.log('🎬 Videos query result:', { videosData, videosError });
-      if (videosError) throw videosError;
-
-      // Fetch pricing urgency data
-      const { data: urgencyData, error: urgencyError } = await supabase
-        .from('talent_pricing_urgency')
-        .select('orders_remaining_at_price')
-        .eq('id', talentData.id)
-        .single();
-
-      if (!urgencyError && urgencyData) {
+      if (urgencyData) {
         setOrdersRemaining(urgencyData.orders_remaining_at_price);
       }
-
-      // Fetch other talent (random, not just same category)
-      // First try same category, then fill with others if needed
-      const { data: relatedData, error: relatedError } = await supabase
-        .from('talent_profiles')
-        .select(`
-          *,
-          users!talent_profiles_user_id_fkey (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('is_active', true)
-        .neq('id', talentData.id)
-        .limit(8); // Fetch more to shuffle and pick from
-
-      if (relatedError) throw relatedError;
       
       // Shuffle the results to show random talent each time
       const shuffled = (relatedData || []).sort(() => Math.random() - 0.5).slice(0, 4);
@@ -442,7 +454,7 @@ const TalentProfilePage: React.FC = () => {
           return {
             ...profile,
             users: {
-              id: profile.user_id || '',
+              id: '',
               full_name: profile.temp_full_name || 'Unknown',
               avatar_url: profile.temp_avatar_url || null,
             },
@@ -457,7 +469,7 @@ const TalentProfilePage: React.FC = () => {
         recent_videos: videosData?.map(v => v.video_url).filter(Boolean) || [],
       });
 
-      setRelatedTalent(relatedWithUsers);
+      setRelatedTalent(relatedWithUsers as TalentWithDetails[]);
     } catch (error) {
       console.error('Error fetching talent profile:', error);
       toast.error('Failed to load talent profile');
@@ -558,12 +570,17 @@ const TalentProfilePage: React.FC = () => {
                 </video>
               ) : (
                 <>
-                  {/* Profile Image */}
+                  {/* Profile Image - LCP element, prioritize loading */}
                   {(talent.temp_avatar_url || talent.users.avatar_url) ? (
                     <img
                       src={talent.temp_avatar_url || talent.users.avatar_url}
                       alt={talent.temp_full_name || talent.users.full_name}
                       className="w-full h-full object-cover"
+                      fetchPriority="high"
+                      loading="eager"
+                      decoding="sync"
+                      width={400}
+                      height={400}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-primary-100">
@@ -1023,6 +1040,10 @@ const TalentProfilePage: React.FC = () => {
                       src={related.temp_avatar_url || related.users.avatar_url}
                       alt={related.temp_full_name || related.users.full_name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      width={150}
+                      height={150}
                     />
                   ) : (
                     <span className="text-2xl font-bold text-white/60">
