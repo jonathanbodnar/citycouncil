@@ -857,9 +857,16 @@ const TalentProfilePage: React.FC = () => {
                   💡 Get advice
                 </Link>
                 <Link
+                  to={user ? `/order/${talent.id}?occasion=new-year` : `/signup?returnTo=/order/${talent.id}?occasion=new-year`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🎆 New Years Party
+                </Link>
+                <Link
                   to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
                   onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center col-span-2"
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
                 >
                   ✨ Other
                 </Link>
