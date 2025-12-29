@@ -4,7 +4,6 @@ import {
   GiftIcon,
   StarIcon,
   ArrowTopRightOnSquareIcon,
-  EnvelopeIcon,
   LinkIcon,
   Squares2X2Icon
 } from '@heroicons/react/24/outline';
@@ -199,7 +198,6 @@ const BioPage: React.FC = () => {
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(true); // Pre-checked
 
   useEffect(() => {
     const fetchBioData = async () => {
@@ -909,7 +907,6 @@ const BioPage: React.FC = () => {
   const gradientDirection = bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg';
   const displayName = talentProfile?.full_name || bioSettings?.display_name || 'Creator';
   const profileImage = talentProfile?.temp_avatar_url || bioSettings?.profile_image_url;
-  const hasNewsletterLink = links.some(l => l.link_type === 'newsletter');
 
   return (
     <div 
