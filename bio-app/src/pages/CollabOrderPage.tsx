@@ -260,24 +260,19 @@ const CollabOrderPage: React.FC = () => {
 
   const initializeFortis = async (orderIdParam: string, amount: number) => {
     try {
-      // Create payment intention via API
-      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/fortis/create-intention`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: Math.round(amount * 100), // Convert to cents
-          orderId: orderIdParam,
-          customerEmail: user?.email,
-          customerName: user?.full_name,
-          description: `Social Collab with ${talent?.full_name}`,
-        }),
+      // Create payment intention via Supabase Edge Function
+      const amountCents = Math.round(amount * 100);
+      console.log('🔄 Initializing Fortis with amount:', amount, 'cents:', amountCents);
+      
+      const { data: intentionData, error: intentionError } = await supabase.functions.invoke('fortis-intention', {
+        body: { amount_cents: amountCents },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create payment intention');
+      if (intentionError) {
+        throw new Error(intentionError.message || 'Failed to create payment intention');
       }
 
-      const { clientToken } = await response.json();
+      const { clientToken } = intentionData;
 
       // Load Fortis Commerce.js
       if (!(window as any).Commerce) {
