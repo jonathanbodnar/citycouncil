@@ -94,6 +94,8 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             src={talent.temp_avatar_url || talent.users.avatar_url}
             alt={talent.temp_full_name || talent.users.full_name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-red-100">

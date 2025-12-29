@@ -115,9 +115,12 @@ const HomePage: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    fetchTalent();
-    fetchFeaturedTalent();
-    fetchTotalUsers();
+    // Run all fetches in parallel for faster page load
+    Promise.all([
+      fetchTalent(),
+      fetchFeaturedTalent(),
+      fetchTotalUsers()
+    ]);
   }, []);
 
   const fetchTalent = async () => {
