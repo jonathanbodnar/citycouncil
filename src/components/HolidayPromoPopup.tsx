@@ -61,7 +61,14 @@ const getPopupDelay = (): number => {
   const storedSource = safeGetItem('promo_source_global') || '';
   const source = (utmSource || storedSource).trim().toLowerCase();
   
-  if (source === 'sms' || source === 'giveaway' || source === 'rgiveaway' || source === 'dm' || source === 'dmf' || source === 'dma' || source === 'dmb' || source === 'dmc') {
+  // 3 second delay for: SMS, giveaway, DM variations, and talent promo links
+  const quickPopupSources = [
+    'sms', 'giveaway', 'rgiveaway', 
+    'dm', 'dmf', 'dma', 'dmb', 'dmc',
+    'shawnlive', 'jeremylive', 'hayleylive'  // Talent promo links
+  ];
+  
+  if (quickPopupSources.includes(source)) {
     return 3000;
   }
   
