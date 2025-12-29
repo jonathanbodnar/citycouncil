@@ -553,7 +553,7 @@ const HolidayPromoPopup: React.FC = () => {
                   
                   return (
                 <>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
                     Enter Our Instant Giveaway 🎁
                   </h2>
                   
