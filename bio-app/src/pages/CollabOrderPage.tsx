@@ -274,28 +274,74 @@ const CollabOrderPage: React.FC = () => {
 
       const { clientToken } = intentionData;
 
-      // Load Fortis Commerce.js
-      if (!(window as any).Commerce) {
-        const script = document.createElement('script');
-        script.src = 'https://js.fortis.tech/commercejs-v1.0.0.min.js';
-        script.async = true;
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = reject;
+      // Load Fortis Commerce.js and wait for it
+      const waitForCommerce = () => new Promise<void>((resolve, reject) => {
+        // Check if already loaded
+        if ((window as any).Commerce?.elements) {
+          resolve();
+          return;
+        }
+        
+        // Load the script if not present
+        if (!document.querySelector('script[src*="commercejs"]')) {
+          const script = document.createElement('script');
+          script.src = 'https://js.fortis.tech/commercejs-v1.0.0.min.js';
+          script.async = true;
           document.body.appendChild(script);
-        });
-      }
-
-      const Commerce = (window as any).Commerce;
-      const commerce = new Commerce(clientToken, {
-        environment: process.env.REACT_APP_FORTIS_ENV || 'production',
+        }
+        
+        let attempts = 0;
+        const interval = setInterval(() => {
+          attempts++;
+          if ((window as any).Commerce?.elements) {
+            clearInterval(interval);
+            resolve();
+          }
+          if (attempts > 50) {
+            clearInterval(interval);
+            reject(new Error('Fortis Commerce JS failed to load'));
+          }
+        }, 100);
       });
 
-      setCommerceInstance(commerce);
+      await waitForCommerce();
+
+      const ElementsCtor = (window as any).Commerce?.elements;
+      if (!ElementsCtor) throw new Error('Commerce elements not available');
+      
+      const elements = new ElementsCtor(clientToken);
+
+      // Helper to handle successful payment
+      const handlePaymentSuccess = async (payload: any) => {
+        if (successHandledRef.current) return;
+        successHandledRef.current = true;
+        setIsProcessing(true);
+
+        console.log('payment_success payload', payload);
+        const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
+
+        try {
+          // Update order with payment info
+          await supabase
+            .from('orders')
+            .update({
+              payment_transaction_id: txId,
+              payment_transaction_payload: payload,
+            })
+            .eq('id', orderIdParam);
+
+          setStep('success');
+          toast.success('Payment successful!');
+        } catch (error) {
+          console.error('Error updating order:', error);
+          toast.error('Payment received but order update failed. Please contact support.');
+        } finally {
+          setIsProcessing(false);
+        }
+      };
 
       // Mount the payment form
       if (iframeContainerRef.current) {
-        const elements = commerce.elements();
         const transaction = elements.create('transaction', {
           container: '#fortis-payment-container',
           showReceipt: false,
@@ -309,31 +355,9 @@ const CollabOrderPage: React.FC = () => {
           },
         });
 
-        transaction.on('done', async (result: any) => {
-          if (successHandledRef.current) return;
-          successHandledRef.current = true;
-          setIsProcessing(true);
-
-          try {
-            // Update order with payment info
-            await supabase
-              .from('orders')
-              .update({
-                payment_transaction_id: result.id || result.transaction?.id,
-                payment_transaction_payload: result,
-              })
-              .eq('id', orderIdParam);
-
-            setStep('success');
-            toast.success('Payment successful!');
-          } catch (error) {
-            console.error('Error updating order:', error);
-            toast.error('Payment received but order update failed. Please contact support.');
-          } finally {
-            setIsProcessing(false);
-          }
-        });
-
+        transaction.on('done', handlePaymentSuccess);
+        transaction.on('ready', () => console.log('Fortis form ready'));
+        
         transaction.on('error', (error: any) => {
           console.error('Payment error:', error);
           toast.error(error.message || 'Payment failed');
@@ -341,6 +365,7 @@ const CollabOrderPage: React.FC = () => {
         });
 
         transaction.mount();
+        setCommerceInstance(transaction);
       }
     } catch (error: any) {
       console.error('Error initializing payment:', error);
