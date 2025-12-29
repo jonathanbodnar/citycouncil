@@ -852,7 +852,8 @@ const TalentDashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2">
-                        {order.is_corporate_order && order.approval_status === 'pending' ? (
+                        {/* Corporate approval buttons - NOT for social collabs (they're auto-approved) */}
+                        {order.is_corporate_order && order.approval_status === 'pending' && (order as any).service_type !== 'social_collab' ? (
                           <>
                             <button
                               onClick={() => handleApproveOrder(order.id)}
@@ -871,7 +872,7 @@ const TalentDashboard: React.FC = () => {
                           </>
                         ) : order.status !== 'completed' && order.status !== 'denied' && order.status !== 'cancelled' ? (
                           <>
-                            {/* Show Deny button for non-corporate pending/in_progress orders */}
+                            {/* Show Deny button for pending/in_progress orders */}
                             <button
                               onClick={() => setRejectingOrderId(order.id)}
                               className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl font-medium hover:from-red-700 hover:to-red-800 shadow-modern transition-all duration-300 flex items-center justify-center gap-2 text-sm"
@@ -892,30 +893,33 @@ const TalentDashboard: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="glass-strong p-4 rounded-md mb-4 border border-white/20">
-                      <h5 className="font-medium text-white mb-2">Request:</h5>
-                      {!order.details_submitted ? (
-                        <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-4 text-center">
-                          <p className="text-amber-300 font-medium">⏳ Pending details from customer</p>
-                          <p className="text-amber-200/70 text-sm mt-1">The customer will fill in their request details soon</p>
-                        </div>
-                      ) : (
-                        <>
-                          {order.recipient_name && (
-                            <div className="mb-3 pb-3 border-b border-white/10">
-                              <span className="text-blue-300 font-medium">Who's it for:</span>
-                              <span className="text-white ml-2">{order.recipient_name}</span>
-                            </div>
-                          )}
-                          <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
-                          <div className="mt-3 pt-3 border-t border-white/10">
-                            <p className="text-sm text-yellow-300 italic">
-                              💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
-                            </p>
+                    {/* Request section - only show for non-collab orders */}
+                    {(order as any).service_type !== 'social_collab' && (
+                      <div className="glass-strong p-4 rounded-md mb-4 border border-white/20">
+                        <h5 className="font-medium text-white mb-2">Request:</h5>
+                        {!order.details_submitted ? (
+                          <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-4 text-center">
+                            <p className="text-amber-300 font-medium">⏳ Pending details from customer</p>
+                            <p className="text-amber-200/70 text-sm mt-1">The customer will fill in their request details soon</p>
                           </div>
-                        </>
-                      )}
-                    </div>
+                        ) : (
+                          <>
+                            {order.recipient_name && (
+                              <div className="mb-3 pb-3 border-b border-white/10">
+                                <span className="text-blue-300 font-medium">Who's it for:</span>
+                                <span className="text-white ml-2">{order.recipient_name}</span>
+                              </div>
+                            )}
+                            <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
+                            <div className="mt-3 pt-3 border-t border-white/10">
+                              <p className="text-sm text-yellow-300 italic">
+                                💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
 
                     {/* Social Collab Order Details */}
                     {(order as any).service_type === 'social_collab' && (
