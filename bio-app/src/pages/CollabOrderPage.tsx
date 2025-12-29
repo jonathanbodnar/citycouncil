@@ -340,33 +340,43 @@ const CollabOrderPage: React.FC = () => {
         }
       };
 
-      // Mount the payment form
-      if (iframeContainerRef.current) {
-        const transaction = elements.create('transaction', {
-          container: '#fortis-payment-container',
-          showReceipt: false,
-          showSubmitButton: true,
-          submitButtonText: 'Pay Now',
-          fields: {
-            additional: [
-              { name: 'description', value: `Social Collab - ${service?.title}` },
-              { name: 'order_id', value: orderIdParam },
-            ],
-          },
-        });
+      // Attach event handlers BEFORE creating the form
+      console.log('Attaching Commerce JS handlers');
+      elements.eventBus.on('ready', () => {
+        console.log('Commerce iframe ready');
+      });
+      elements.eventBus.on('payment_success', handlePaymentSuccess);
+      elements.eventBus.on('success', handlePaymentSuccess);
+      elements.eventBus.on('done', handlePaymentSuccess);
+      elements.eventBus.on('payment_error', (e: any) => {
+        console.error('Payment error:', e);
+        successHandledRef.current = false;
+        toast.error(e?.message || 'Payment failed. Please try again.');
+      });
+      elements.eventBus.on('error', (e: any) => {
+        console.error('Error:', e);
+        successHandledRef.current = false;
+        toast.error(e?.message || 'Payment error. Please try again.');
+      });
 
-        transaction.on('done', handlePaymentSuccess);
-        transaction.on('ready', () => console.log('Fortis form ready'));
-        
-        transaction.on('error', (error: any) => {
-          console.error('Payment error:', error);
-          toast.error(error.message || 'Payment failed');
-          setIsProcessing(false);
-        });
+      // Create the payment form
+      console.log('Creating Commerce iframe');
+      elements.create({
+        container: '#fortis-payment-container',
+        theme: 'dark',
+        environment: 'production',
+        view: 'default',
+        language: 'en-us',
+        defaultCountry: 'US',
+        floatingLabels: true,
+        showReceipt: false,
+        showSubmitButton: true,
+        showValidationAnimation: true,
+        hideAgreementCheckbox: false,
+        hideTotal: false,
+      });
 
-        transaction.mount();
-        setCommerceInstance(transaction);
-      }
+      setCommerceInstance(elements);
     } catch (error: any) {
       console.error('Error initializing payment:', error);
       toast.error('Failed to load payment form');
