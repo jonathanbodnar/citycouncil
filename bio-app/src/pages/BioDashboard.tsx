@@ -41,7 +41,7 @@ interface TalentProfile {
 
 interface SocialAccount {
   id: string;
-  platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'linkedin' | 'youtube' | 'threads' | 'snapchat' | 'pinterest';
+  platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'linkedin' | 'youtube' | 'threads' | 'snapchat' | 'pinterest' | 'rumble';
   handle: string;
 }
 
