@@ -919,27 +919,27 @@ const TalentDashboard: React.FC = () => {
 
                     {/* Social Collab Order Details */}
                     {(order as any).service_type === 'social_collab' && (
-                      <div className="glass-subtle border border-pink-200/30 rounded-xl p-4" style={{ boxShadow: '0 0 20px rgba(236, 72, 153, 0.1)' }}>
-                        <h5 className="font-medium text-pink-900 mb-3 flex items-center gap-2">
+                      <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 rounded-xl p-4">
+                        <h5 className="font-medium text-white mb-3 flex items-center gap-2">
                           📸 Social Collab Details
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                           {order.company_name && (
                             <div>
-                              <span className="font-medium text-pink-800">Brand/Company:</span>
-                              <p className="text-pink-700">{order.company_name}</p>
+                              <span className="font-medium text-pink-300">Brand/Company:</span>
+                              <p className="text-gray-200">{order.company_name}</p>
                             </div>
                           )}
                           {(order as any).target_audience && (
                             <div>
-                              <span className="font-medium text-pink-800">Target Audience:</span>
-                              <p className="text-pink-700">{(order as any).target_audience}</p>
+                              <span className="font-medium text-pink-300">Target Audience:</span>
+                              <p className="text-gray-200">{(order as any).target_audience}</p>
                             </div>
                           )}
                           {(order as any).suggested_script && (
                             <div className="md:col-span-2">
-                              <span className="font-medium text-pink-800">Suggested Script:</span>
-                              <p className="text-pink-700 whitespace-pre-wrap">{(order as any).suggested_script}</p>
+                              <span className="font-medium text-pink-300">Suggested Script:</span>
+                              <p className="text-gray-200 whitespace-pre-wrap">{(order as any).suggested_script}</p>
                             </div>
                           )}
                         </div>

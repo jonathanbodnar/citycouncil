@@ -11,6 +11,7 @@ interface TalentProfile {
   temp_avatar_url?: string;
   admin_fee_percentage?: number;
   fortis_vendor_id?: string;
+  fulfillment_time_hours?: number;
 }
 
 interface ServiceOffering {
@@ -33,6 +34,14 @@ interface User {
 
 type Step = 'register' | 'details' | 'payment' | 'success';
 
+// Store order details until payment succeeds
+interface OrderDetails {
+  companyName: string;
+  suggestedScript: string;
+  targetAudience: string;
+  additionalNotes: string;
+}
+
 const CollabOrderPage: React.FC = () => {
   const { username, serviceId } = useParams<{ username: string; serviceId: string }>();
   const navigate = useNavigate();
@@ -49,14 +58,15 @@ const CollabOrderPage: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   
-  // Order details form
-  const [companyName, setCompanyName] = useState('');
-  const [suggestedScript, setSuggestedScript] = useState('');
-  const [targetAudience, setTargetAudience] = useState('');
-  const [additionalNotes, setAdditionalNotes] = useState('');
+  // Order details form - stored until payment succeeds
+  const [orderDetails, setOrderDetails] = useState<OrderDetails>({
+    companyName: '',
+    suggestedScript: '',
+    targetAudience: '',
+    additionalNotes: '',
+  });
   
   // Payment
-  const [orderId, setOrderId] = useState<string | null>(null);
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [, setCommerceInstance] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -92,7 +102,7 @@ const CollabOrderPage: React.FC = () => {
       }
 
       if (!profile) {
-        toast.error('Creator not found');
+        toast.error('Talent not found');
         navigate('/');
         return;
       }
@@ -100,27 +110,19 @@ const CollabOrderPage: React.FC = () => {
       setTalent(profile);
 
       // Get service offering
-      const { data: serviceData } = await supabase
+      const { data: serviceData, error: serviceError } = await supabase
         .from('service_offerings')
         .select('*')
         .eq('id', serviceId)
-        .eq('talent_id', profile.id)
-        .eq('is_active', true)
         .single();
 
-      if (!serviceData) {
+      if (serviceError || !serviceData) {
         toast.error('Service not found');
-        navigate(`/bio/${username}`);
+        navigate(`/${username}`);
         return;
       }
 
-      setService({
-        ...serviceData,
-        benefits: Array.isArray(serviceData.benefits) 
-          ? serviceData.benefits 
-          : JSON.parse(serviceData.benefits || '[]'),
-      });
-
+      setService(serviceData);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load service');
@@ -130,20 +132,15 @@ const CollabOrderPage: React.FC = () => {
   };
 
   const checkExistingUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (userData) {
-        setUser(userData);
-        setEmail(userData.email);
-        setFullName(userData.full_name);
-        setPhone(userData.phone || '');
+    // Check localStorage for existing user
+    const savedUser = localStorage.getItem('collab_user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
         setStep('details');
+      } catch {
+        localStorage.removeItem('collab_user');
       }
     }
   };
@@ -161,15 +158,16 @@ const CollabOrderPage: React.FC = () => {
         .single();
 
       if (existingUser) {
-        // User exists - sign them in with magic link or proceed
+        // User exists - proceed
         setUser(existingUser);
+        localStorage.setItem('collab_user', JSON.stringify(existingUser));
         setStep('details');
         toast.success('Welcome back!');
       } else {
         // Create new user
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: email.toLowerCase(),
-          password: crypto.randomUUID(), // Generate random password - they can reset later
+          password: crypto.randomUUID(),
           options: {
             data: {
               full_name: fullName,
@@ -195,6 +193,7 @@ const CollabOrderPage: React.FC = () => {
         if (userError) throw userError;
 
         setUser(newUser);
+        localStorage.setItem('collab_user', JSON.stringify(newUser));
         setStep('details');
         toast.success('Account created!');
       }
@@ -210,55 +209,15 @@ const CollabOrderPage: React.FC = () => {
     e.preventDefault();
     if (!user || !talent || !service) return;
     
-    setSubmitting(true);
-
-    try {
-      // Calculate pricing
-      const adminFeePercent = talent.admin_fee_percentage ?? 15;
-      const adminFee = Math.round(service.pricing * (adminFeePercent / 100));
-      const fulfillmentDeadline = new Date();
-      fulfillmentDeadline.setDate(fulfillmentDeadline.getDate() + 7); // 7 day deadline
-
-      // Create the order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          talent_id: talent.id,
-          service_offering_id: service.id,
-          service_type: 'social_collab',
-          amount: service.pricing,
-          admin_fee: adminFee,
-          status: 'pending',
-          approval_status: 'pending', // Collabs need approval
-          is_corporate: true, // Treat as corporate order
-          is_corporate_order: true,
-          company_name: companyName,
-          suggested_script: suggestedScript,
-          target_audience: targetAudience,
-          request_details: additionalNotes || `Instagram Collab: ${service.title}`,
-          fulfillment_deadline: fulfillmentDeadline.toISOString(),
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      setOrderId(order.id);
-      setStep('payment');
-      
-      // Initialize Fortis payment
-      setTimeout(() => initializeFortis(order.id, service.pricing / 100), 100);
-
-    } catch (error: any) {
-      console.error('Error creating order:', error);
-      toast.error(error.message || 'Failed to create order');
-    } finally {
-      setSubmitting(false);
-    }
+    // Store details and proceed to payment
+    // Order will be created AFTER payment succeeds
+    setStep('payment');
+    
+    // Initialize Fortis payment
+    setTimeout(() => initializeFortis(service.pricing / 100), 100);
   };
 
-  const initializeFortis = async (orderIdParam: string, amount: number) => {
+  const initializeFortis = async (amount: number) => {
     try {
       // Create payment intention via Supabase Edge Function
       const amountCents = Math.round(amount * 100);
@@ -276,13 +235,11 @@ const CollabOrderPage: React.FC = () => {
 
       // Load Fortis Commerce.js and wait for it
       const waitForCommerce = () => new Promise<void>((resolve, reject) => {
-        // Check if already loaded
         if ((window as any).Commerce?.elements) {
           resolve();
           return;
         }
         
-        // Load the script if not present
         if (!document.querySelector('script[src*="commercejs"]')) {
           const script = document.createElement('script');
           script.src = 'https://js.fortis.tech/commercejs-v1.0.0.min.js';
@@ -311,7 +268,7 @@ const CollabOrderPage: React.FC = () => {
       
       const elements = new ElementsCtor(clientToken);
 
-      // Helper to handle successful payment
+      // Helper to handle successful payment - CREATE ORDER HERE
       const handlePaymentSuccess = async (payload: any) => {
         if (successHandledRef.current) return;
         successHandledRef.current = true;
@@ -321,20 +278,58 @@ const CollabOrderPage: React.FC = () => {
         const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
 
         try {
-          // Update order with payment info
-          await supabase
+          if (!user || !talent || !service) {
+            throw new Error('Missing required data');
+          }
+
+          // Calculate pricing
+          const adminFeePercent = talent.admin_fee_percentage ?? 15;
+          const adminFee = Math.round(service.pricing * (adminFeePercent / 100));
+          
+          // Calculate fulfillment deadline
+          const fulfillmentDeadline = new Date();
+          const fulfillmentHours = talent.fulfillment_time_hours || 168; // Default 7 days
+          fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + fulfillmentHours);
+
+          // Create order AFTER payment succeeds (like main app)
+          const { data: order, error: orderError } = await supabase
             .from('orders')
-            .update({
+            .insert({
+              user_id: user.id,
+              talent_id: talent.id,
+              service_offering_id: service.id,
+              service_type: 'social_collab',
+              amount: service.pricing,
+              admin_fee: adminFee,
+              status: 'pending',
+              approval_status: 'approved', // Auto-approve since they paid
+              approved_at: new Date().toISOString(),
+              is_corporate: true,
+              is_corporate_order: true,
+              company_name: orderDetails.companyName,
+              suggested_script: orderDetails.suggestedScript,
+              target_audience: orderDetails.targetAudience,
+              request_details: orderDetails.additionalNotes || `Social Collab: ${service.title}`,
+              details_submitted: true,
+              fulfillment_deadline: fulfillmentDeadline.toISOString(),
               payment_transaction_id: txId,
               payment_transaction_payload: payload,
             })
-            .eq('id', orderIdParam);
+            .select()
+            .single();
 
+          if (orderError) throw orderError;
+
+          console.log('✅ Order created:', order.id);
           setStep('success');
-          toast.success('Payment successful!');
+          toast.success('Order placed successfully!');
+          
+          // Clear saved user after successful order
+          localStorage.removeItem('collab_user');
+          
         } catch (error) {
-          console.error('Error updating order:', error);
-          toast.error('Payment received but order update failed. Please contact support.');
+          console.error('Error creating order:', error);
+          toast.error('Payment received but order creation failed. Please contact support.');
         } finally {
           setIsProcessing(false);
         }
@@ -398,7 +393,7 @@ const CollabOrderPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-white mb-4">Service Not Found</h1>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-colors"
+            className="px-6 py-3 bg-pink-500 text-white rounded-xl hover:bg-pink-600"
           >
             Go Home
           </button>
@@ -407,246 +402,249 @@ const CollabOrderPage: React.FC = () => {
     );
   }
 
-  const displayName = talent.full_name || 'Creator';
   const price = service.pricing / 100;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-b border-pink-500/30">
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            {talent.temp_avatar_url && (
-              <img
-                src={talent.temp_avatar_url}
-                alt={displayName}
-                className="w-16 h-16 rounded-full object-cover border-2 border-pink-500/50"
-              />
-            )}
-            <div>
-              <p className="text-pink-400 text-sm font-medium">Instagram Collab</p>
-              <h1 className="text-xl font-bold text-white">{service.title}</h1>
-              <p className="text-gray-400 text-sm">with {displayName}</p>
-            </div>
-            <div className="ml-auto text-right">
-              <p className="text-2xl font-bold text-white">${price}</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a2e]">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <img
+            src={talent.temp_avatar_url || '/default-avatar.png'}
+            alt={talent.full_name}
+            className="w-16 h-16 rounded-full object-cover border-2 border-pink-500/30"
+          />
+          <div>
+            <p className="text-pink-400 text-sm font-medium">Instagram Collab</p>
+            <h1 className="text-2xl font-bold text-white">{service.title}</h1>
+            <p className="text-gray-400">with {talent.full_name}</p>
+          </div>
+          <div className="ml-auto text-right">
+            <p className="text-3xl font-bold text-white">${price.toFixed(0)}</p>
           </div>
         </div>
-      </div>
 
-      {/* Progress Steps */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-center gap-2">
-          {['register', 'details', 'payment', 'success'].map((s, i) => (
-            <React.Fragment key={s}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step === s ? 'bg-pink-500 text-white' :
-                ['register', 'details', 'payment', 'success'].indexOf(step) > i 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-white/10 text-gray-500'
-              }`}>
-                {['register', 'details', 'payment', 'success'].indexOf(step) > i ? '✓' : i + 1}
-              </div>
-              {i < 3 && (
-                <div className={`w-12 h-0.5 ${
-                  ['register', 'details', 'payment', 'success'].indexOf(step) > i 
-                    ? 'bg-green-500' 
-                    : 'bg-white/10'
-                }`} />
-              )}
-            </React.Fragment>
-          ))}
+        {/* Progress Steps */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          {['Account', 'Details', 'Payment', 'Done'].map((label, idx) => {
+            const stepNum = idx + 1;
+            const currentStepNum = step === 'register' ? 1 : step === 'details' ? 2 : step === 'payment' ? 3 : 4;
+            const isComplete = stepNum < currentStepNum;
+            const isCurrent = stepNum === currentStepNum;
+            
+            return (
+              <React.Fragment key={label}>
+                {idx > 0 && (
+                  <div className={`h-0.5 w-12 ${isComplete ? 'bg-pink-500' : 'bg-gray-700'}`} />
+                )}
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    isComplete ? 'bg-pink-500 text-white' :
+                    isCurrent ? 'bg-pink-500 text-white' :
+                    'bg-gray-700 text-gray-400'
+                  }`}>
+                    {isComplete ? '✓' : stepNum}
+                  </div>
+                  <span className={`text-xs mt-1 ${isCurrent ? 'text-white' : 'text-gray-500'}`}>
+                    {label}
+                  </span>
+                </div>
+              </React.Fragment>
+            );
+          })}
         </div>
-        <div className="flex justify-center gap-8 mt-2 text-xs text-gray-500">
-          <span>Account</span>
-          <span>Details</span>
-          <span>Payment</span>
-          <span>Done</span>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {step === 'register' && (
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Create your account</h2>
+        {/* Step Content */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          {/* Registration Step */}
+          {step === 'register' && (
             <form onSubmit={handleRegister} className="space-y-4">
+              <h2 className="text-xl font-semibold text-white mb-4">Create Account</h2>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                <label className="block text-sm text-gray-400 mb-1">Full Name</label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Smith"
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
                   required
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                  placeholder="Your name"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                <label className="block text-sm text-gray-400 mb-1">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="john@company.com"
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
                   required
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                  placeholder="you@email.com"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Phone (optional)</label>
+                <label className="block text-sm text-gray-400 mb-1">Phone (optional)</label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 123-4567"
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                  placeholder="(555) 123-4567"
                 />
               </div>
+
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 transition-colors disabled:opacity-50"
+                className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 disabled:opacity-50"
               >
-                {submitting ? 'Creating account...' : 'Continue'}
+                {submitting ? 'Creating Account...' : 'Continue'}
               </button>
             </form>
-          </div>
-        )}
+          )}
 
-        {step === 'details' && (
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Collaboration Details</h2>
+          {/* Details Step */}
+          {step === 'details' && (
             <form onSubmit={handleSubmitDetails} className="space-y-4">
+              <h2 className="text-xl font-semibold text-white mb-4">Collab Details</h2>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Company / Brand Name *</label>
+                <label className="block text-sm text-gray-400 mb-1">Brand/Company Name *</label>
                 <input
                   type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Your company or brand"
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                  value={orderDetails.companyName}
+                  onChange={(e) => setOrderDetails({ ...orderDetails, companyName: e.target.value })}
                   required
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                  placeholder="Your brand or company"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Suggested Script / Talking Points *</label>
+                <label className="block text-sm text-gray-400 mb-1">Target Audience *</label>
+                <input
+                  type="text"
+                  value={orderDetails.targetAudience}
+                  onChange={(e) => setOrderDetails({ ...orderDetails, targetAudience: e.target.value })}
+                  required
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                  placeholder="Who is this content for?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Suggested Script/Talking Points</label>
                 <textarea
-                  value={suggestedScript}
-                  onChange={(e) => setSuggestedScript(e.target.value)}
-                  placeholder="What would you like the creator to say or showcase? Include key messages, product features, or specific phrases..."
+                  value={orderDetails.suggestedScript}
+                  onChange={(e) => setOrderDetails({ ...orderDetails, suggestedScript: e.target.value })}
                   rows={4}
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 resize-none"
-                  required
+                  placeholder="What would you like them to say or cover?"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Target Audience *</label>
+                <label className="block text-sm text-gray-400 mb-1">Additional Notes</label>
                 <textarea
-                  value={targetAudience}
-                  onChange={(e) => setTargetAudience(e.target.value)}
-                  placeholder="Who is this content for? Describe demographics, interests, or customer type..."
+                  value={orderDetails.additionalNotes}
+                  onChange={(e) => setOrderDetails({ ...orderDetails, additionalNotes: e.target.value })}
                   rows={2}
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 resize-none"
-                  required
+                  placeholder="Any other details..."
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Additional Notes (optional)</label>
-                <textarea
-                  value={additionalNotes}
-                  onChange={(e) => setAdditionalNotes(e.target.value)}
-                  placeholder="Any other details, deadlines, or special requests..."
-                  rows={2}
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 resize-none"
-                />
-              </div>
+
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 transition-colors disabled:opacity-50"
+                className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 disabled:opacity-50"
               >
-                {submitting ? 'Processing...' : `Continue to Payment - $${price}`}
+                Continue to Payment
               </button>
             </form>
-          </div>
-        )}
+          )}
 
-        {step === 'payment' && (
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Payment</h2>
-            
-            {/* Order Summary */}
-            <div className="bg-white/5 rounded-xl p-4 mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-400">{service.title}</span>
-                <span className="text-white">${price.toFixed(2)}</span>
-              </div>
-              <div className="border-t border-white/10 pt-2 mt-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-white font-semibold">Total</span>
-                  <span className="text-white font-bold text-xl">${price.toFixed(2)}</span>
+          {/* Payment Step */}
+          {step === 'payment' && (
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-4">Payment</h2>
+              
+              {/* Order Summary */}
+              <div className="bg-white/5 rounded-xl p-4 mb-6">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-400">{service.title}</span>
+                  <span className="text-white">${price.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-white/10 pt-2 mt-2">
+                  <div className="flex justify-between">
+                    <span className="text-white font-semibold">Total</span>
+                    <span className="text-white font-semibold">${price.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Fortis Payment Form */}
-            <div 
-              id="fortis-payment-container" 
-              ref={iframeContainerRef}
-              className="min-h-[300px] bg-white/5 rounded-xl p-4"
-            >
-              {isProcessing ? (
-                <div className="flex flex-col items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mb-4"></div>
-                  <p className="text-gray-400">Processing payment...</p>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-pink-500"></div>
-                  <span className="ml-3 text-gray-400">Loading payment form...</span>
-                </div>
-              )}
-            </div>
+              {/* Payment Form Container */}
+              <div 
+                id="fortis-payment-container" 
+                ref={iframeContainerRef}
+                className="min-h-[300px] bg-white/5 rounded-xl p-4"
+              >
+                {isProcessing ? (
+                  <div className="flex flex-col items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mb-4"></div>
+                    <p className="text-gray-400">Processing payment...</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-pulse text-gray-400">Loading payment form...</div>
+                  </div>
+                )}
+              </div>
 
-            <p className="text-gray-500 text-xs text-center mt-4">
-              Secure payment powered by Fortis
-            </p>
-          </div>
-        )}
+              <p className="text-center text-gray-500 text-xs mt-4">
+                Secure payment powered by Fortis
+              </p>
+            </div>
+          )}
 
-        {step === 'success' && (
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          {/* Success Step */}
+          {step === 'success' && (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <h2 className="text-2xl font-bold text-white mb-2">Order Placed!</h2>
+              <p className="text-gray-400 mb-6">
+                {talent.full_name} has been notified and will start working on your collab soon.
+              </p>
+
+              <div className="bg-white/5 rounded-xl p-4 mb-6 text-left">
+                <h3 className="text-white font-semibold mb-2">What's Next?</h3>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  <li>• {talent.full_name} will review your request</li>
+                  <li>• You'll receive an email when your content is ready</li>
+                  <li>• Check your email for order confirmation</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => navigate(`/${username}`)}
+                className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600"
+              >
+                Back to Profile
+              </button>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Request Submitted!</h2>
-            <p className="text-gray-400 mb-6">
-              Your collaboration request has been sent to {displayName}. 
-              They'll review your request and get back to you soon.
-            </p>
-            <div className="bg-white/5 rounded-xl p-4 mb-6">
-              <p className="text-gray-500 text-sm">Order ID</p>
-              <p className="text-white font-mono">{orderId}</p>
-            </div>
-            <p className="text-gray-500 text-sm mb-6">
-              You'll receive an email confirmation shortly. Check your inbox for updates on your request.
-            </p>
-            <button
-              onClick={() => navigate(`/bio/${talent.username || talent.id}`)}
-              className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 transition-colors"
-            >
-              Back to Profile
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default CollabOrderPage;
-
