@@ -28,6 +28,7 @@ interface SocialAccount {
   id: string;
   platform: string;
   handle: string;
+  follower_count?: number;
 }
 
 // Social platform configurations with SVG icons
@@ -322,15 +323,20 @@ const BioPage: React.FC = () => {
         // Get social accounts from the social_accounts table
         const { data: socialData } = await supabase
           .from('social_accounts')
-          .select('id, platform, handle')
+          .select('id, platform, handle, follower_count')
           .eq('talent_id', profile.id);
         
         if (socialData && socialData.length > 0) {
-          setSocialAccounts(socialData.map(s => ({
+          const accounts = socialData.map(s => ({
             id: s.id,
             platform: s.platform,
             handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
-          })));
+            follower_count: s.follower_count,
+          }));
+          setSocialAccounts(accounts);
+          
+          // Fetch follower counts for accounts that don't have them cached
+          fetchFollowerCounts(accounts, profile.id);
         }
 
         // Get active service offerings
@@ -370,6 +376,147 @@ const BioPage: React.FC = () => {
     fetchBioData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
+
+  // Fetch follower counts for social accounts
+  const fetchFollowerCounts = async (accounts: SocialAccount[], _talentId: string) => {
+    // Scrape Instagram followers
+    const scrapeInstagram = async (handle: string): Promise<number | null> => {
+      try {
+        const corsProxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.instagram.com/${handle}/`)}`,
+          `https://corsproxy.io/?${encodeURIComponent(`https://www.instagram.com/${handle}/`)}`,
+        ];
+        
+        for (const proxyUrl of corsProxies) {
+          try {
+            const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
+            if (!response.ok) continue;
+            const html = await response.text();
+            
+            // Try to find follower count in various formats
+            const patterns = [
+              /"edge_followed_by":\s*{\s*"count":\s*(\d+)/,
+              /"follower_count":\s*(\d+)/,
+              /(\d+(?:,\d{3})*(?:\.\d+)?[KMkm]?)\s*[Ff]ollowers/,
+              /Followers<\/span><span[^>]*>(\d+(?:,\d{3})*)/,
+            ];
+            
+            for (const pattern of patterns) {
+              const match = html.match(pattern);
+              if (match) {
+                let countStr = match[1].replace(/,/g, '');
+                if (countStr.includes('K') || countStr.includes('k')) {
+                  return Math.round(parseFloat(countStr) * 1000);
+                }
+                if (countStr.includes('M') || countStr.includes('m')) {
+                  return Math.round(parseFloat(countStr) * 1000000);
+                }
+                return parseInt(countStr);
+              }
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+      } catch (e) {
+        console.log('Instagram scrape failed:', e);
+      }
+      return null;
+    };
+
+    // Scrape TikTok followers
+    const scrapeTikTok = async (handle: string): Promise<number | null> => {
+      try {
+        const corsProxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.tiktok.com/@${handle}`)}`,
+          `https://corsproxy.io/?${encodeURIComponent(`https://www.tiktok.com/@${handle}`)}`,
+        ];
+        
+        for (const proxyUrl of corsProxies) {
+          try {
+            const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
+            if (!response.ok) continue;
+            const html = await response.text();
+            
+            const patterns = [
+              /"followerCount":\s*(\d+)/,
+              /"stats":\s*{[^}]*"followerCount":\s*(\d+)/,
+              /(\d+(?:\.\d+)?[KMkm]?)\s*Followers/i,
+            ];
+            
+            for (const pattern of patterns) {
+              const match = html.match(pattern);
+              if (match) {
+                let countStr = match[1].replace(/,/g, '');
+                if (countStr.includes('K') || countStr.includes('k')) {
+                  return Math.round(parseFloat(countStr) * 1000);
+                }
+                if (countStr.includes('M') || countStr.includes('m')) {
+                  return Math.round(parseFloat(countStr) * 1000000);
+                }
+                return parseInt(countStr);
+              }
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+      } catch (e) {
+        console.log('TikTok scrape failed:', e);
+      }
+      return null;
+    };
+
+    // Scrape Twitter/X followers
+    const scrapeTwitter = async (handle: string): Promise<number | null> => {
+      // Twitter is very hard to scrape, would need Nitter or similar
+      // For now, return null - could implement via Nitter proxy later
+      return null;
+    };
+
+    // Process accounts that need follower counts
+    const accountsToUpdate: SocialAccount[] = [];
+    
+    for (const account of accounts) {
+      // Skip if we already have a recent follower count (could add timestamp check)
+      if (account.follower_count && account.follower_count > 0) continue;
+      
+      let count: number | null = null;
+      
+      switch (account.platform) {
+        case 'instagram':
+          count = await scrapeInstagram(account.handle);
+          break;
+        case 'tiktok':
+          count = await scrapeTikTok(account.handle);
+          break;
+        case 'twitter':
+          count = await scrapeTwitter(account.handle);
+          break;
+        // YouTube uses the YouTube API we already have
+        // Facebook, LinkedIn, etc. require auth - skip for now
+      }
+      
+      if (count !== null && count > 0) {
+        accountsToUpdate.push({ ...account, follower_count: count });
+        
+        // Update in database (fire and forget)
+        supabase
+          .from('social_accounts')
+          .update({ follower_count: count })
+          .eq('id', account.id)
+          .then(() => console.log(`Updated ${account.platform} follower count: ${count}`));
+      }
+    }
+    
+    // Update state with new follower counts
+    if (accountsToUpdate.length > 0) {
+      setSocialAccounts(prev => prev.map(acc => {
+        const updated = accountsToUpdate.find(u => u.id === acc.id);
+        return updated || acc;
+      }));
+    }
+  };
 
   // Fetch Rumble channel data - show cache immediately, one visitor per 15 min triggers refresh
   const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
@@ -1356,6 +1503,14 @@ const BioPage: React.FC = () => {
               ? `${servicePlatforms[0].charAt(0).toUpperCase() + servicePlatforms[0].slice(1)} Collab`
               : `Social Collab`;
             
+            // Calculate total followers across platforms
+            const totalFollowers = filteredSocials.reduce((sum, s) => sum + (s.follower_count || 0), 0);
+            const formatFollowers = (count: number): string => {
+              if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+              if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+              return count.toString();
+            };
+            
             return (
               <button
                 key={service.id}
@@ -1389,7 +1544,7 @@ const BioPage: React.FC = () => {
                       {service.title}
                     </h3>
                     
-                    {/* Show handles for platforms in this service */}
+                    {/* Show follower counts per platform */}
                     {filteredSocials.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-2">
                         {filteredSocials.slice(0, 3).map((social) => {
@@ -1397,13 +1552,24 @@ const BioPage: React.FC = () => {
                           return (
                             <div key={social.id} className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-0.5">
                               <span className="text-gray-300 [&>svg]:w-3 [&>svg]:h-3">{platform?.icon}</span>
-                              <span className="text-xs text-gray-400">@{social.handle}</span>
+                              {social.follower_count && social.follower_count > 0 ? (
+                                <span className="text-xs text-pink-400 font-medium">{formatFollowers(social.follower_count)}</span>
+                              ) : (
+                                <span className="text-xs text-gray-400">@{social.handle}</span>
+                              )}
                             </div>
                           );
                         })}
                         {filteredSocials.length > 3 && (
                           <span className="text-xs text-gray-500">+{filteredSocials.length - 3} more</span>
                         )}
+                      </div>
+                    )}
+                    
+                    {/* Total reach */}
+                    {totalFollowers > 0 && (
+                      <div className="text-xs text-gray-400 mb-2">
+                        📊 Total reach: <span className="text-pink-400 font-semibold">{formatFollowers(totalFollowers)}</span> followers
                       </div>
                     )}
                     
@@ -1663,13 +1829,18 @@ const CollabModal: React.FC<{
             </div>
           </div>
 
-          {/* Platforms included in this collab */}
+          {/* Platforms included in this collab with follower counts */}
           <div>
-            <h3 className="text-white font-semibold mb-3">Platforms Included</h3>
+            <h3 className="text-white font-semibold mb-3">Reach & Platforms</h3>
             <div className="space-y-2">
               {servicePlatforms.map((platformId) => {
                 const platform = SOCIAL_PLATFORMS[platformId];
                 const socialAccount = filteredSocials.find(s => s.platform === platformId);
+                const formatFollowers = (count: number): string => {
+                  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+                  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+                  return count.toString();
+                };
                 if (!platform) return null;
                 return (
                   <div key={platformId} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
@@ -1682,16 +1853,38 @@ const CollabModal: React.FC<{
                         )}
                       </div>
                     </div>
-                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                    {socialAccount?.follower_count && socialAccount.follower_count > 0 ? (
+                      <span className="text-pink-400 font-semibold">{formatFollowers(socialAccount.follower_count)}</span>
+                    ) : (
+                      <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
                   </div>
                 );
               })}
             </div>
-            <p className="text-gray-500 text-xs mt-2 text-center">
-              Your content will be posted on {servicePlatforms.length} platform{servicePlatforms.length > 1 ? 's' : ''}
-            </p>
+            {/* Total reach */}
+            {(() => {
+              const totalFollowers = filteredSocials.reduce((sum, s) => sum + (s.follower_count || 0), 0);
+              const formatFollowers = (count: number): string => {
+                if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+                if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+                return count.toString();
+              };
+              return totalFollowers > 0 ? (
+                <div className="mt-3 p-3 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg border border-pink-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 text-sm">📊 Combined Reach</span>
+                    <span className="text-pink-400 font-bold text-lg">{formatFollowers(totalFollowers)}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-xs mt-2 text-center">
+                  Your content will be posted on {servicePlatforms.length} platform{servicePlatforms.length > 1 ? 's' : ''}
+                </p>
+              );
+            })()}
           </div>
 
           {/* Description */}
