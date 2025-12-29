@@ -647,6 +647,7 @@ const TalentDashboard: React.FC = () => {
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const inProgressOrders = orders.filter(o => o.status === 'in_progress');
   const completedOrders = orders.filter(o => o.status === 'completed');
+  const deniedOrders = orders.filter(o => o.status === 'denied' || o.status === 'cancelled' || o.status === 'refunded');
 
   return (
     <div>
@@ -1181,6 +1182,80 @@ const TalentDashboard: React.FC = () => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Denied/Refunded Orders */}
+          {deniedOrders.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Denied/Refunded Orders</h3>
+              <div className="space-y-4">
+                {deniedOrders.map((order) => (
+                  <div 
+                    key={order.id} 
+                    id={`order-${order.id}`}
+                    className="glass rounded-2xl p-6 border border-red-500/30 opacity-75"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                          <span className="text-red-600 font-medium">
+                            {order.users.full_name.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white flex items-center gap-2 flex-wrap">
+                            {order.users.full_name}
+                            {order.order_type === 'demo' && (
+                              <span className="text-xs glass-strong text-yellow-400 px-2 py-1 rounded-full border border-yellow-500/30 font-semibold">
+                                🎯 Demo Order
+                              </span>
+                            )}
+                            {(order as any).service_type === 'social_collab' && (
+                              <span className="text-xs glass-strong text-pink-400 px-2 py-1 rounded-full border border-pink-500/30 font-semibold">
+                                📸 Social Collab
+                              </span>
+                            )}
+                          </h4>
+                          <p className="text-sm text-gray-400">
+                            ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
+                          </p>
+                          {(order as any).denial_reason && (
+                            <p className="text-sm text-red-300 mt-1">
+                              <span className="font-medium">Reason:</span> {(order as any).denial_reason}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <XCircleIcon className="h-5 w-5 text-red-400" />
+                        <span className="text-red-400 text-sm font-medium">
+                          {order.status === 'denied' ? 'Denied & Refunded' : order.status === 'cancelled' ? 'Cancelled' : 'Refunded'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Show original request */}
+                    {order.request_details && (
+                      <div className="glass-strong p-4 rounded-md border border-red-500/20">
+                        <h5 className="font-medium text-gray-400 mb-2">Original Request:</h5>
+                        <p className="text-gray-400 whitespace-pre-wrap">{order.request_details}</p>
+                      </div>
+                    )}
+
+                    {/* Greyed out button */}
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        disabled
+                        className="bg-gray-600 text-gray-400 px-4 py-2 rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-2 text-sm opacity-50"
+                      >
+                        <XCircleIcon className="h-4 w-4" />
+                        Already Refunded
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
