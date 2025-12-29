@@ -667,14 +667,12 @@ const CollabOrderPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowLoginForm(true)}
-                      className="w-full py-4 bg-white/10 border border-white/20 text-white font-semibold transition-all hover:bg-white/20 flex items-center justify-center gap-3"
+                      className="w-full py-4 bg-gradient-to-r from-red-600 to-red-700 border border-red-500/30 text-white font-semibold transition-all hover:from-red-500 hover:to-red-600 flex items-center justify-center gap-3 shadow-lg"
                       style={{ borderRadius: getButtonRadius() }}
                     >
-                      <img 
-                        src="https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png" 
-                        alt="ShoutOut" 
-                        className="h-5 w-auto brightness-0 invert"
-                      />
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2s2-.9 2-2V4c0-1.1-.9-2-2-2zm6.5 9c0 1.93-.63 3.71-1.68 5.15l1.42 1.42C19.45 15.84 20.5 13.52 20.5 11s-1.05-4.84-2.26-6.57l-1.42 1.42C18.37 7.29 18.5 9.07 18.5 11zm-2-5.15l-1.42 1.42C15.63 7.71 16 9.27 16 11s-.37 3.29-.92 3.73l1.42 1.42c.9-1.05 1.5-2.38 1.5-3.85s-.6-2.8-1.5-3.85zM3.5 9v6h3l3.5 2.5V6.5L6.5 9h-3z"/>
+                      </svg>
                       Login with ShoutOut
                     </button>
                   </form>
@@ -683,11 +681,12 @@ const CollabOrderPage: React.FC = () => {
                 {/* ShoutOut Logo at bottom */}
                 <div className="pt-6 flex flex-col items-center">
                   <p className="text-gray-500 text-xs mb-2">Powered by</p>
-                  <img 
-                    src="https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png" 
-                    alt="ShoutOut" 
-                    className="h-6 w-auto brightness-0 invert opacity-60"
-                  />
+                  <div className="flex items-center gap-2 opacity-60">
+                    <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2s2-.9 2-2V4c0-1.1-.9-2-2-2zm6.5 9c0 1.93-.63 3.71-1.68 5.15l1.42 1.42C19.45 15.84 20.5 13.52 20.5 11s-1.05-4.84-2.26-6.57l-1.42 1.42C18.37 7.29 18.5 9.07 18.5 11zm-2-5.15l-1.42 1.42C15.63 7.71 16 9.27 16 11s-.37 3.29-.92 3.73l1.42 1.42c.9-1.05 1.5-2.38 1.5-3.85s-.6-2.8-1.5-3.85zM3.5 9v6h3l3.5 2.5V6.5L6.5 9h-3z"/>
+                    </svg>
+                    <span className="text-white font-semibold text-sm">ShoutOut</span>
+                  </div>
                 </div>
               </div>
             )}
