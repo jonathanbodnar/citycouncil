@@ -1284,7 +1284,7 @@ const BioDashboard: React.FC = () => {
                             </button>
                             <button
                               onClick={async () => {
-                                if (confirm('Are you sure you want to delete this service?')) {
+                                if (window.confirm('Are you sure you want to delete this service?')) {
                                   await supabase.from('service_offerings').delete().eq('id', service.id);
                                   setServiceOfferings(serviceOfferings.filter(s => s.id !== service.id));
                                   toast.success('Service deleted');
