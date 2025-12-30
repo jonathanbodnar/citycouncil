@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { StarIcon, HeartIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
+import { ImageSizes } from '../utils/imageOptimization';
 
 // Coupon configurations - must match TalentProfilePage
 const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
@@ -91,7 +92,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
       <div className="aspect-square bg-gradient-to-br from-blue-50 to-red-50 relative overflow-hidden">
         {(talent.temp_avatar_url || talent.users.avatar_url) ? (
           <img
-            src={talent.temp_avatar_url || talent.users.avatar_url}
+            src={ImageSizes.thumbnail((talent.temp_avatar_url || talent.users.avatar_url)!)}
             alt={talent.temp_full_name || talent.users.full_name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"

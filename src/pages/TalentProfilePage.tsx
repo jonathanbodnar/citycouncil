@@ -19,6 +19,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import ShareModal from '../components/ShareModal';
 import FOMONotification from '../components/FOMONotification';
 import toast from 'react-hot-toast';
+import { ImageSizes } from '../utils/imageOptimization';
 
 // Coupon configurations for instant giveaway prizes - defined outside component
 const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
@@ -573,7 +574,7 @@ const TalentProfilePage: React.FC = () => {
                   {/* Profile Image - LCP element, prioritize loading */}
                   {(talent.temp_avatar_url || talent.users.avatar_url) ? (
                     <img
-                      src={talent.temp_avatar_url || talent.users.avatar_url}
+                      src={ImageSizes.profileHero((talent.temp_avatar_url || talent.users.avatar_url)!)}
                       alt={talent.temp_full_name || talent.users.full_name}
                       className="w-full h-full object-cover"
                       fetchPriority="high"
@@ -1037,7 +1038,7 @@ const TalentProfilePage: React.FC = () => {
                 <div className="aspect-square bg-gray-800 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
                   {(related.temp_avatar_url || related.users.avatar_url) ? (
                     <img
-                      src={related.temp_avatar_url || related.users.avatar_url}
+                      src={ImageSizes.thumbnail((related.temp_avatar_url || related.users.avatar_url)!)}
                       alt={related.temp_full_name || related.users.full_name}
                       className="w-full h-full object-cover"
                       loading="lazy"

@@ -2,15 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { TalentProfile } from '../types';
-
-// Enhanced image quality function for featured card images
-const getEnhancedImageUrl = (imageUrl: string | undefined): string | undefined => {
-  if (!imageUrl) return undefined;
-  
-  // For now, just return the original URL
-  // Cloudinary upscaling can be added later if needed
-  return imageUrl;
-};
+import { ImageSizes } from '../utils/imageOptimization';
 
 interface FeaturedCarouselProps {
   talent: (TalentProfile & {
@@ -78,8 +70,9 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
     return null;
   }
 
-  // Get enhanced image URL for featured card
-  const enhancedImageUrl = getEnhancedImageUrl(currentTalent.temp_avatar_url || currentTalent.users.avatar_url);
+  // Get optimized image URL for featured card
+  const rawImageUrl = currentTalent.temp_avatar_url || currentTalent.users.avatar_url;
+  const optimizedImageUrl = rawImageUrl ? ImageSizes.featured(rawImageUrl) : undefined;
 
   return (
     <div 
@@ -95,10 +88,10 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         ></div>
         
         {/* Desktop Photo - Right Half with Gradient Fade */}
-        {enhancedImageUrl ? (
+        {optimizedImageUrl ? (
           <div className="hidden md:block absolute right-0 top-0 w-1/2 h-full overflow-hidden">
             <img
-              src={enhancedImageUrl}
+              src={optimizedImageUrl}
               alt={currentTalent.temp_full_name || currentTalent.users.full_name}
               fetchPriority="high"
               loading="eager"
@@ -129,10 +122,10 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ talent }) => {
         )}
         
         {/* Mobile Background with Photo or Gradient */}
-        {enhancedImageUrl ? (
+        {optimizedImageUrl ? (
           <div className="md:hidden absolute inset-0 overflow-hidden">
             <img
-              src={enhancedImageUrl}
+              src={optimizedImageUrl}
               alt={currentTalent.temp_full_name || currentTalent.users.full_name}
               fetchPriority="high"
               loading="eager"
