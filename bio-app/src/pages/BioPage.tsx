@@ -378,143 +378,21 @@ const BioPage: React.FC = () => {
   }, [username]);
 
   // Fetch follower counts for social accounts
+  // Note: Most social platforms block direct scraping. Follower counts can be:
+  // 1. Manually entered in the social_accounts table
+  // 2. Fetched via official APIs (requires API keys/auth)
+  // 3. Updated via a backend service with proper authentication
   const fetchFollowerCounts = async (accounts: SocialAccount[], _talentId: string) => {
-    // Scrape Instagram followers
-    const scrapeInstagram = async (handle: string): Promise<number | null> => {
-      try {
-        const corsProxies = [
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.instagram.com/${handle}/`)}`,
-          `https://corsproxy.io/?${encodeURIComponent(`https://www.instagram.com/${handle}/`)}`,
-        ];
-        
-        for (const proxyUrl of corsProxies) {
-          try {
-            const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
-            if (!response.ok) continue;
-            const html = await response.text();
-            
-            // Try to find follower count in various formats
-            const patterns = [
-              /"edge_followed_by":\s*{\s*"count":\s*(\d+)/,
-              /"follower_count":\s*(\d+)/,
-              /(\d+(?:,\d{3})*(?:\.\d+)?[KMkm]?)\s*[Ff]ollowers/,
-              /Followers<\/span><span[^>]*>(\d+(?:,\d{3})*)/,
-            ];
-            
-            for (const pattern of patterns) {
-              const match = html.match(pattern);
-              if (match) {
-                let countStr = match[1].replace(/,/g, '');
-                if (countStr.includes('K') || countStr.includes('k')) {
-                  return Math.round(parseFloat(countStr) * 1000);
-                }
-                if (countStr.includes('M') || countStr.includes('m')) {
-                  return Math.round(parseFloat(countStr) * 1000000);
-                }
-                return parseInt(countStr);
-              }
-            }
-          } catch (e) {
-            continue;
-          }
-        }
-      } catch (e) {
-        console.log('Instagram scrape failed:', e);
-      }
-      return null;
-    };
-
-    // Scrape TikTok followers
-    const scrapeTikTok = async (handle: string): Promise<number | null> => {
-      try {
-        const corsProxies = [
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.tiktok.com/@${handle}`)}`,
-          `https://corsproxy.io/?${encodeURIComponent(`https://www.tiktok.com/@${handle}`)}`,
-        ];
-        
-        for (const proxyUrl of corsProxies) {
-          try {
-            const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
-            if (!response.ok) continue;
-            const html = await response.text();
-            
-            const patterns = [
-              /"followerCount":\s*(\d+)/,
-              /"stats":\s*{[^}]*"followerCount":\s*(\d+)/,
-              /(\d+(?:\.\d+)?[KMkm]?)\s*Followers/i,
-            ];
-            
-            for (const pattern of patterns) {
-              const match = html.match(pattern);
-              if (match) {
-                let countStr = match[1].replace(/,/g, '');
-                if (countStr.includes('K') || countStr.includes('k')) {
-                  return Math.round(parseFloat(countStr) * 1000);
-                }
-                if (countStr.includes('M') || countStr.includes('m')) {
-                  return Math.round(parseFloat(countStr) * 1000000);
-                }
-                return parseInt(countStr);
-              }
-            }
-          } catch (e) {
-            continue;
-          }
-        }
-      } catch (e) {
-        console.log('TikTok scrape failed:', e);
-      }
-      return null;
-    };
-
-    // Scrape Twitter/X followers
-    const scrapeTwitter = async (handle: string): Promise<number | null> => {
-      // Twitter is very hard to scrape, would need Nitter or similar
-      // For now, return null - could implement via Nitter proxy later
-      return null;
-    };
-
-    // Process accounts that need follower counts
-    const accountsToUpdate: SocialAccount[] = [];
+    // For now, we just use whatever is in the database
+    // The follower_count field should be populated either:
+    // - Manually by admin in Supabase
+    // - Via a backend cron job with proper API access
+    // - Via the Bio Dashboard settings
     
-    for (const account of accounts) {
-      // Skip if we already have a recent follower count (could add timestamp check)
-      if (account.follower_count && account.follower_count > 0) continue;
-      
-      let count: number | null = null;
-      
-      switch (account.platform) {
-        case 'instagram':
-          count = await scrapeInstagram(account.handle);
-          break;
-        case 'tiktok':
-          count = await scrapeTikTok(account.handle);
-          break;
-        case 'twitter':
-          count = await scrapeTwitter(account.handle);
-          break;
-        // YouTube uses the YouTube API we already have
-        // Facebook, LinkedIn, etc. require auth - skip for now
-      }
-      
-      if (count !== null && count > 0) {
-        accountsToUpdate.push({ ...account, follower_count: count });
-        
-        // Update in database (fire and forget)
-        supabase
-          .from('social_accounts')
-          .update({ follower_count: count })
-          .eq('id', account.id)
-          .then(() => console.log(`Updated ${account.platform} follower count: ${count}`));
-      }
-    }
-    
-    // Update state with new follower counts
-    if (accountsToUpdate.length > 0) {
-      setSocialAccounts(prev => prev.map(acc => {
-        const updated = accountsToUpdate.find(u => u.id === acc.id);
-        return updated || acc;
-      }));
+    // Log which accounts don't have follower counts for debugging
+    const missingCounts = accounts.filter(a => !a.follower_count || a.follower_count === 0);
+    if (missingCounts.length > 0) {
+      console.log('Accounts missing follower counts:', missingCounts.map(a => `${a.platform}:@${a.handle}`));
     }
   };
 

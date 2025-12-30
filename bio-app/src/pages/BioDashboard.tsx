@@ -43,6 +43,7 @@ interface SocialAccount {
   id: string;
   platform: 'twitter' | 'facebook' | 'instagram' | 'tiktok' | 'linkedin' | 'youtube' | 'threads' | 'snapchat' | 'pinterest' | 'rumble';
   handle: string;
+  follower_count?: number;
 }
 
 interface User {
@@ -353,7 +354,7 @@ const BioDashboard: React.FC = () => {
         // Load social accounts from the social_accounts table (not JSONB field)
         const { data: socialData } = await supabase
           .from('social_accounts')
-          .select('id, platform, handle')
+          .select('id, platform, handle, follower_count')
           .eq('talent_id', profile.id);
         
         if (socialData && socialData.length > 0) {
@@ -361,6 +362,7 @@ const BioDashboard: React.FC = () => {
             id: s.id,
             platform: s.platform,
             handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
+            follower_count: s.follower_count,
           })));
           
           // Sync youtube_handle and rumble_handle if social links exist but handles are missing
@@ -1379,6 +1381,11 @@ const BioDashboard: React.FC = () => {
                   ) : (
                     socialLinks.map((social) => {
                       const platform = SOCIAL_PLATFORMS.find(p => p.id === social.platform);
+                      const formatFollowers = (count: number): string => {
+                        if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+                        if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+                        return count.toString();
+                      };
                       return (
                         <div
                           key={social.id}
@@ -1393,6 +1400,37 @@ const BioDashboard: React.FC = () => {
                                 {platform?.name || social.platform}
                               </h3>
                               <p className="text-sm text-gray-400">@{social.handle}</p>
+                              {/* Follower count input */}
+                              <div className="flex items-center gap-2 mt-2">
+                                <input
+                                  type="number"
+                                  placeholder="Followers"
+                                  value={social.follower_count || ''}
+                                  onChange={async (e) => {
+                                    const count = parseInt(e.target.value) || 0;
+                                    // Update local state
+                                    setSocialLinks(prev => prev.map(s => 
+                                      s.id === social.id ? { ...s, follower_count: count } : s
+                                    ));
+                                  }}
+                                  onBlur={async (e) => {
+                                    const count = parseInt(e.target.value) || 0;
+                                    // Save to database
+                                    await supabase
+                                      .from('social_accounts')
+                                      .update({ follower_count: count })
+                                      .eq('id', social.id);
+                                    toast.success(`Follower count updated: ${formatFollowers(count)}`);
+                                    setTimeout(refreshPreview, 500);
+                                  }}
+                                  className="w-28 px-2 py-1 text-sm bg-white/5 border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                                />
+                                {social.follower_count && social.follower_count > 0 && (
+                                  <span className="text-xs text-pink-400 font-medium">
+                                    {formatFollowers(social.follower_count)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <button
                               onClick={async () => {
