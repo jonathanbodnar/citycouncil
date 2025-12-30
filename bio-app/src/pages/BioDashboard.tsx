@@ -1381,11 +1381,6 @@ const BioDashboard: React.FC = () => {
                   ) : (
                     socialLinks.map((social) => {
                       const platform = SOCIAL_PLATFORMS.find(p => p.id === social.platform);
-                      const formatFollowers = (count: number): string => {
-                        if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-                        if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-                        return count.toString();
-                      };
                       return (
                         <div
                           key={social.id}
@@ -1400,37 +1395,17 @@ const BioDashboard: React.FC = () => {
                                 {platform?.name || social.platform}
                               </h3>
                               <p className="text-sm text-gray-400">@{social.handle}</p>
-                              {/* Follower count input */}
-                              <div className="flex items-center gap-2 mt-2">
-                                <input
-                                  type="number"
-                                  placeholder="Followers"
-                                  value={social.follower_count || ''}
-                                  onChange={async (e) => {
-                                    const count = parseInt(e.target.value) || 0;
-                                    // Update local state
-                                    setSocialLinks(prev => prev.map(s => 
-                                      s.id === social.id ? { ...s, follower_count: count } : s
-                                    ));
-                                  }}
-                                  onBlur={async (e) => {
-                                    const count = parseInt(e.target.value) || 0;
-                                    // Save to database
-                                    await supabase
-                                      .from('social_accounts')
-                                      .update({ follower_count: count })
-                                      .eq('id', social.id);
-                                    toast.success(`Follower count updated: ${formatFollowers(count)}`);
-                                    setTimeout(refreshPreview, 500);
-                                  }}
-                                  className="w-28 px-2 py-1 text-sm bg-white/5 border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
-                                />
-                                {social.follower_count && social.follower_count > 0 && (
-                                  <span className="text-xs text-pink-400 font-medium">
-                                    {formatFollowers(social.follower_count)}
-                                  </span>
-                                )}
-                              </div>
+                              {/* Show follower count if set */}
+                              {social.follower_count && social.follower_count > 0 && (
+                                <p className="text-xs text-pink-400 mt-1">
+                                  {social.follower_count >= 1000000 
+                                    ? `${(social.follower_count / 1000000).toFixed(1)}M followers`
+                                    : social.follower_count >= 1000 
+                                      ? `${(social.follower_count / 1000).toFixed(1)}K followers`
+                                      : `${social.follower_count} followers`
+                                  }
+                                </p>
+                              )}
                             </div>
                             <button
                               onClick={async () => {
@@ -1818,6 +1793,18 @@ const BioDashboard: React.FC = () => {
       {(showAddServiceModal || editingService) && (
         <AddServiceModal
           service={editingService || undefined}
+          socialLinks={socialLinks}
+          onUpdateFollowerCount={async (socialId: string, count: number) => {
+            // Update local state
+            setSocialLinks(prev => prev.map(s => 
+              s.id === socialId ? { ...s, follower_count: count } : s
+            ));
+            // Save to database
+            await supabase
+              .from('social_accounts')
+              .update({ follower_count: count })
+              .eq('id', socialId);
+          }}
           onClose={() => {
             setShowAddServiceModal(false);
             setEditingService(null);
@@ -3259,9 +3246,11 @@ const COLLAB_PLATFORMS = [
 // Add Service Modal
 const AddServiceModal: React.FC<{
   service?: ServiceOffering;
+  socialLinks: SocialAccount[];
+  onUpdateFollowerCount: (socialId: string, count: number) => void;
   onClose: () => void;
   onSave: (service: Partial<ServiceOffering> & { service_type: string }) => void;
-}> = ({ service, onClose, onSave }) => {
+}> = ({ service, socialLinks, onUpdateFollowerCount, onClose, onSave }) => {
   const [serviceType] = useState<'instagram_collab'>('instagram_collab');
   const [title, setTitle] = useState(service?.title || 'Collaborate with me');
   const [pricing, setPricing] = useState(service ? (service.pricing / 100).toString() : '250');
@@ -3397,30 +3386,73 @@ const AddServiceModal: React.FC<{
           {/* Platforms */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Platforms Included</label>
-            <p className="text-xs text-gray-500 mb-3">Select which social platforms this collab covers. Customers will provide their handles for each.</p>
-            <div className="grid grid-cols-2 gap-2">
-              {COLLAB_PLATFORMS.map((platform) => (
-                <button
-                  key={platform.id}
-                  type="button"
-                  onClick={() => togglePlatform(platform.id)}
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-                    selectedPlatforms.includes(platform.id)
-                      ? 'bg-pink-500/20 border-pink-500'
-                      : 'bg-white/5 border-white/10 hover:border-white/30'
-                  }`}
-                >
-                  <div className={`${selectedPlatforms.includes(platform.id) ? 'text-pink-400' : 'text-gray-400'}`}>
-                    {platform.icon}
+            <p className="text-xs text-gray-500 mb-3">Select which social platforms this collab covers. Add follower counts for selected platforms.</p>
+            <div className="space-y-2">
+              {COLLAB_PLATFORMS.map((platform) => {
+                const socialAccount = socialLinks.find(s => s.platform === platform.id);
+                const isSelected = selectedPlatforms.includes(platform.id);
+                const formatFollowers = (count: number): string => {
+                  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+                  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+                  return count.toString();
+                };
+                
+                return (
+                  <div key={platform.id} className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => togglePlatform(platform.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? 'bg-pink-500/20 border-pink-500'
+                          : 'bg-white/5 border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      <div className={`${isSelected ? 'text-pink-400' : 'text-gray-400'}`}>
+                        {platform.icon}
+                      </div>
+                      <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                        {platform.name}
+                      </span>
+                      {socialAccount && (
+                        <span className="text-xs text-gray-500">@{socialAccount.handle}</span>
+                      )}
+                      {isSelected && (
+                        <CheckIcon className="h-4 w-4 text-pink-400 ml-auto" />
+                      )}
+                    </button>
+                    
+                    {/* Follower count input for selected platforms */}
+                    {isSelected && socialAccount && (
+                      <div className="ml-8 flex items-center gap-2 bg-white/5 rounded-lg p-2">
+                        <span className="text-xs text-gray-400">Followers:</span>
+                        <input
+                          type="number"
+                          placeholder="Enter count"
+                          value={socialAccount.follower_count || ''}
+                          onChange={(e) => {
+                            const count = parseInt(e.target.value) || 0;
+                            onUpdateFollowerCount(socialAccount.id, count);
+                          }}
+                          className="w-28 px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                        />
+                        {socialAccount.follower_count && socialAccount.follower_count > 0 && (
+                          <span className="text-xs text-pink-400 font-semibold">
+                            {formatFollowers(socialAccount.follower_count)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Warning if platform selected but no social account linked */}
+                    {isSelected && !socialAccount && (
+                      <div className="ml-8 flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-2">
+                        <span className="text-xs text-yellow-400">⚠️ Add @{platform.name.toLowerCase()} handle in Social tab first</span>
+                      </div>
+                    )}
                   </div>
-                  <span className={`text-sm font-medium ${selectedPlatforms.includes(platform.id) ? 'text-white' : 'text-gray-400'}`}>
-                    {platform.name}
-                  </span>
-                  {selectedPlatforms.includes(platform.id) && (
-                    <CheckIcon className="h-4 w-4 text-pink-400 ml-auto" />
-                  )}
-                </button>
-              ))}
+                );
+              })}
             </div>
           </div>
 
