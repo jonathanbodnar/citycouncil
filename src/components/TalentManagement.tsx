@@ -158,6 +158,7 @@ const TalentManagement: React.FC = () => {
     }
     
     setFilteredTalents(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [talents, searchQuery, statusFilter]);
 
   const fetchTalents = async () => {
@@ -1868,6 +1869,95 @@ const TalentManagement: React.FC = () => {
             >
               Add First Talent
             </button>
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {filteredTalents.length > talentsPerPage && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="text-sm text-gray-600">
+              Showing {((currentPage - 1) * talentsPerPage) + 1} - {Math.min(currentPage * talentsPerPage, filteredTalents.length)} of {filteredTalents.length} talent
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Previous
+              </button>
+              
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const totalPages = Math.ceil(filteredTalents.length / talentsPerPage);
+                  const pages = [];
+                  const maxVisiblePages = 5;
+                  
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                  
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+                  
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i)}
+                        className={`w-8 h-8 text-sm rounded-lg transition-colors ${
+                          currentPage === i
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  return pages;
+                })()}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredTalents.length / talentsPerPage), prev + 1))}
+                disabled={currentPage >= Math.ceil(filteredTalents.length / talentsPerPage)}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  currentPage >= Math.ceil(filteredTalents.length / talentsPerPage)
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.ceil(filteredTalents.length / talentsPerPage))}
+                disabled={currentPage >= Math.ceil(filteredTalents.length / talentsPerPage)}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  currentPage >= Math.ceil(filteredTalents.length / talentsPerPage)
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Last
+              </button>
+            </div>
           </div>
         )}
       </div>
