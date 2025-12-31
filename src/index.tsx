@@ -6,6 +6,24 @@ import reportWebVitals from './reportWebVitals';
 import ErrorBoundary from './components/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
+import { supabase } from './services/supabase';
+
+// Handle magic link authentication from URL hash BEFORE app renders
+// This ensures Supabase processes the token before React takes over
+if (window.location.hash && window.location.hash.includes('access_token')) {
+  console.log('Magic link detected in URL hash, processing...');
+  // Supabase will automatically detect and process the hash
+  // We just need to make sure getSession is called
+  supabase.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      console.error('Error processing magic link:', error);
+    } else if (data.session) {
+      console.log('Magic link session established:', data.session.user?.email);
+      // Clear the hash from URL for cleaner appearance
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  });
+}
 
 // Clear chunk error reload flag on successful app load
 // This prevents the flag from persisting after a successful reload
