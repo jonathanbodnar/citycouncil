@@ -191,6 +191,7 @@ const HomePage: React.FC = () => {
       });
 
       // Map profiles with synthetic user data if needed
+      // Use 'as any' to bypass strict TypeScript checks since we're selecting specific columns
       const talentWithUsers = sortedData.map(profile => {
         if (!profile.users) {
           return {
@@ -200,9 +201,9 @@ const HomePage: React.FC = () => {
               full_name: profile.temp_full_name || 'Unknown',
               avatar_url: profile.temp_avatar_url || null,
             },
-          };
+          } as any;
         }
-        return profile;
+        return profile as any;
       }) as TalentWithUser[];
 
       // Extract featured talent from the same query (no second DB call!)
