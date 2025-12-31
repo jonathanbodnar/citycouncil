@@ -561,7 +561,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setLoginMode('phone')}
-              className="group relative w-full flex justify-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-xl text-gray-300 bg-transparent hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-xl text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
             >
               <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
               Use phone number instead
