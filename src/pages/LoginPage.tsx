@@ -115,8 +115,12 @@ const LoginPage: React.FC = () => {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-    setPhone(digits);
+    let digits = e.target.value.replace(/\D/g, '');
+    // If user typed country code (1), strip it
+    if (digits.length === 11 && digits.startsWith('1')) {
+      digits = digits.slice(1);
+    }
+    setPhone(digits.slice(0, 10));
   };
 
   // Handle OTP input
@@ -485,7 +489,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setLoginMode('password')}
-              className="group relative w-full flex justify-center py-3 px-4 border border-gray-500 text-sm font-medium rounded-xl text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+              className="group relative w-full flex justify-center py-3 px-4 border-2 border-gray-500 text-sm font-medium rounded-xl text-gray-200 bg-gray-800/80 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
             >
               <KeyIcon className="h-5 w-5 mr-2" />
               Use password instead
