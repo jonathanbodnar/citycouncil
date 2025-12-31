@@ -95,7 +95,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
             src={ImageSizes.thumbnail((talent.temp_avatar_url || talent.users.avatar_url)!)}
             alt={talent.temp_full_name || talent.users.full_name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
+            loading="eager"
             decoding="async"
             width={300}
             height={300}
