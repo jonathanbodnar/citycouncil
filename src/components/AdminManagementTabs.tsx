@@ -77,21 +77,25 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
   const fetchData = async () => {
     try {
       if (activeTab === 'analytics') {
-        // Fetch analytics data
+        // Fetch analytics data - OPTIMIZED: only fetch needed columns and use counts where possible
         const [
           { data: orders },
-          { data: users },
+          { count: totalUsers },
           { data: talent },
           { data: payouts },
           { count: holidayPromoCount }
         ] = await Promise.all([
-          supabase.from('orders').select('*'),
-          supabase.from('users').select('*'),
+          // Only fetch order fields we actually need for calculations
+          supabase.from('orders').select('id, status, amount, is_corporate_order, approval_status, created_at, updated_at, approved_at, user_id, talent_id'),
+          // Just count users instead of fetching all data
+          supabase.from('users').select('*', { count: 'exact', head: true }).eq('user_type', 'user'),
+          // Fetch talent with only needed fields
           supabase.from('talent_profiles').select(`
-            *,
+            id, pricing, category, is_active, is_verified, is_participating_in_promotion, average_rating, total_orders, temp_full_name, temp_avatar_url,
             users!talent_profiles_user_id_fkey (full_name, avatar_url)
           `),
-          supabase.from('payouts').select('*'),
+          // Only fetch payout fields we need
+          supabase.from('payouts').select('admin_fee_amount, is_refunded'),
           supabase.from('beta_signups').select('*', { count: 'exact', head: true }).eq('source', 'holiday_popup')
         ]);
 
@@ -126,14 +130,14 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         const refundedOrders = orders?.filter(o => o.status === 'refunded') || [];
         const amountRefunded = refundedOrders.reduce((sum, order) => sum + order.amount, 0) / 100;
         
-        const totalUsers = users?.filter(u => u.user_type === 'user').length || 0;
+        const totalUsersCount = totalUsers || 0;
         const activeTalent = talent?.filter(t => t.is_active).length || 0;
         const verifiedTalent = talent?.filter(t => t.is_verified).length || 0;
         const promotionParticipants = talent?.filter(t => t.is_participating_in_promotion).length || 0;
         const usersWithOrders = new Set(orders?.map(o => o.user_id)).size;
         const totalTalent = talent?.length || 0;
         const avgOrdersPerTalent = totalTalent > 0 ? totalOrders / totalTalent : 0;
-        const avgOrdersPerUser = totalUsers > 0 ? totalOrders / totalUsers : 0;
+        const avgOrdersPerUser = totalUsersCount > 0 ? totalOrders / totalUsersCount : 0;
         
         // Calculate completion rate
         const completionRate = totalOrders > 0 ? (completedOrders.length / totalOrders) * 100 : 0;
@@ -169,7 +173,7 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
           gross_generated: grossGenerated,
           gross_earnings: grossEarnings,
           amount_refunded: amountRefunded,
-          total_users: totalUsers,
+          total_users: totalUsersCount,
           total_users_with_orders: usersWithOrders,
           total_talent: totalTalent,
           active_talent: activeTalent,
@@ -196,52 +200,45 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
 
         setRecentOrders(recentOrdersData || []);
 
-        // Fetch top talent with delivery time calculations
-        const { data: allTalentData } = await supabase
-          .from('talent_profiles')
-          .select(`
-            *,
-            users!talent_profiles_user_id_fkey (full_name, avatar_url)
-          `);
+        // OPTIMIZED: Use existing total_orders from talent_profiles and calculate delivery time from orders we already fetched
+        // Group orders by talent_id for delivery time calculation
+        const ordersByTalent = new Map<string, any[]>();
+        orders?.forEach(order => {
+          const existing = ordersByTalent.get(order.talent_id) || [];
+          existing.push(order);
+          ordersByTalent.set(order.talent_id, existing);
+        });
 
-        // Calculate actual order count and stats for each talent
-        const topTalentWithStats = await Promise.all(
-          (allTalentData || []).map(async (talent) => {
-            // Get ALL orders for this talent (not just completed)
-            const { data: talentOrders } = await supabase
-              .from('orders')
-              .select('created_at, updated_at, approved_at, status')
-              .eq('talent_id', talent.id);
+        // Calculate stats for each talent using already-fetched data
+        const topTalentWithStats = (talent || []).map(t => {
+          const talentOrders = ordersByTalent.get(t.id) || [];
+          const actualTotalOrders = talentOrders.length;
+          
+          // Calculate avg delivery time for completed orders
+          const completedTalentOrders = talentOrders.filter(o => o.status === 'completed');
+          let avgDeliveryTime = 0;
+          
+          if (completedTalentOrders.length > 0) {
+            const deliveryTimes = completedTalentOrders
+              .map(order => {
+                const createdAt = new Date(order.created_at);
+                const approvedAt = order.approved_at ? new Date(order.approved_at) : createdAt;
+                const completedAt = new Date(order.updated_at);
+                return (completedAt.getTime() - approvedAt.getTime()) / (1000 * 60 * 60);
+              })
+              .filter(time => time > 0);
+              
+            avgDeliveryTime = deliveryTimes.length > 0 
+              ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length 
+              : 0;
+          }
 
-            // Count total orders (all statuses)
-            const actualTotalOrders = talentOrders?.length || 0;
-
-            // Calculate avg delivery time for completed orders only
-            const completedOrders = talentOrders?.filter(o => o.status === 'completed') || [];
-            let avgDeliveryTime = 0;
-            
-            if (completedOrders.length > 0) {
-              const deliveryTimes = completedOrders
-                .map(order => {
-                  const createdAt = new Date(order.created_at);
-                  const approvedAt = order.approved_at ? new Date(order.approved_at) : createdAt;
-                  const completedAt = new Date(order.updated_at);
-                  return (completedAt.getTime() - approvedAt.getTime()) / (1000 * 60 * 60);
-                })
-                .filter(time => time > 0);
-                
-              avgDeliveryTime = deliveryTimes.length > 0 
-                ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length 
-                : 0;
-            }
-
-            return {
-              ...talent,
-              total_orders: actualTotalOrders, // Use real count from orders table
-              avg_delivery_time_hours: avgDeliveryTime
-            };
-          })
-        );
+          return {
+            ...t,
+            total_orders: actualTotalOrders,
+            avg_delivery_time_hours: avgDeliveryTime
+          };
+        });
 
         // Sort by actual order count (descending) and take top 5
         const sortedTopTalent = topTalentWithStats
@@ -274,8 +271,22 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
         <div className="space-y-8">
-          {/* Stats Grid */}
-          {stats && (
+          {/* Stats Grid - Show skeleton while loading */}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="glass rounded-2xl p-4 sm:p-6 animate-pulse">
+                  <div className="flex items-center">
+                    <div className="p-2 sm:p-3 rounded-xl bg-white/20 w-10 h-10 sm:w-12 sm:h-12"></div>
+                    <div className="ml-3 sm:ml-4 flex-1">
+                      <div className="h-3 bg-white/20 rounded w-20 mb-2"></div>
+                      <div className="h-6 bg-white/20 rounded w-16"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : stats && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               <StatsCard
                 title="Total Orders"
