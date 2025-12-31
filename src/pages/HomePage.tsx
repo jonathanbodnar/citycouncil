@@ -266,13 +266,17 @@ const HomePage: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+  // Skeleton card component for loading state
+  const SkeletonCard = () => (
+    <div className="glass rounded-2xl sm:rounded-3xl shadow-modern overflow-hidden h-full flex flex-col animate-pulse">
+      <div className="aspect-square bg-white/10"></div>
+      <div className="p-3 sm:p-6 flex flex-col flex-grow">
+        <div className="h-5 bg-white/10 rounded w-3/4 mb-3"></div>
+        <div className="h-4 bg-white/10 rounded w-1/2 mb-2"></div>
+        <div className="h-4 bg-white/10 rounded w-1/4 mt-auto"></div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <>
@@ -307,8 +311,14 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Featured Talent Carousel */}
-      {featuredTalent.length > 0 && (
+      {/* Featured Talent Carousel - Show skeleton while loading */}
+      {loading ? (
+        <div className="mb-12">
+          <div className="glass rounded-3xl p-6 animate-pulse">
+            <div className="h-64 bg-white/10 rounded-2xl"></div>
+          </div>
+        </div>
+      ) : featuredTalent.length > 0 && (
         <div className="mb-12">
           <FeaturedCarousel talent={featuredTalent} />
         </div>
@@ -379,14 +389,19 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Talent Grid */}
+      {/* Talent Grid - Show skeleton cards while loading */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-        {filteredTalent.map(talentProfile => (
-          <TalentCard key={talentProfile.id} talent={talentProfile} />
-        ))}
+        {loading ? (
+          // Show 10 skeleton cards while loading
+          [...Array(10)].map((_, i) => <SkeletonCard key={i} />)
+        ) : (
+          filteredTalent.map(talentProfile => (
+            <TalentCard key={talentProfile.id} talent={talentProfile} />
+          ))
+        )}
       </div>
 
-      {filteredTalent.length === 0 && (
+      {!loading && filteredTalent.length === 0 && (
         <div className="text-center py-12">
           <HeartIcon className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No talent found</h3>
