@@ -197,10 +197,16 @@ const LoginPage: React.FC = () => {
     try {
       const result = await verifyPhoneOtp(phone, code);
       
-      if (result.success && result.magicLink) {
-        toast.success('Verified! Logging you in...');
-        // Redirect to the magic link to complete authentication
-        window.location.href = result.magicLink;
+      if (result.success) {
+        if (result.magicLink) {
+          // Fall back to magic link redirect if needed
+          toast.success('Verified! Logging you in...');
+          window.location.href = result.magicLink;
+        } else {
+          // Session was set directly - the auth state listener will handle redirect
+          toast.success('Welcome back!');
+          // The useEffect watching `user` will handle the redirect
+        }
       } else {
         toast.error(result.error || 'Invalid code');
         // Clear the OTP inputs on error

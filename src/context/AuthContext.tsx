@@ -362,7 +362,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // If we got a magic link, redirect to it to complete the login
+      // If we got session tokens directly, set the session
+      if (data.session?.access_token && data.session?.refresh_token) {
+        console.log('Setting session from OTP verification');
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        
+        if (sessionError) {
+          console.error('Error setting session:', sessionError);
+          // Fall back to magic link if available
+          if (data.magicLink) {
+            return {
+              success: true,
+              magicLink: data.magicLink,
+              user: data.user,
+            };
+          }
+          return {
+            success: false,
+            error: 'Failed to establish session',
+          };
+        }
+        
+        // Session set successfully - no redirect needed!
+        return {
+          success: true,
+          user: data.user,
+        };
+      }
+
+      // Fall back to magic link if no session tokens
       if (data.magicLink) {
         return {
           success: true,
