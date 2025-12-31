@@ -8,8 +8,7 @@ interface LogoProps {
 }
 
 // Hardcoded logo URL for maximum performance - no DB fetch needed
-// Using imgbb which is fast and reliable
-const LOGO_URL = "https://i.ibb.co/hJdY3gwN/1b9b81e0-4fe1-4eea-b617-af006370240a.png";
+const LOGO_URL = "https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png";
 
 const Logo: React.FC<LogoProps> = ({ 
   size = 'md', 
