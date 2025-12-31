@@ -26,7 +26,7 @@ const CLOUDFLARE_DOMAIN = 'https://shoutout.us';
 
 /**
  * Check if an image URL should be transformed via Cloudflare
- * Only transform external images (Supabase, Wasabi, etc.)
+ * Transform ALL external images to improve performance
  */
 function shouldTransform(url: string): boolean {
   if (!url) return false;
@@ -37,15 +37,12 @@ function shouldTransform(url: string): boolean {
   // Don't transform already-transformed URLs
   if (url.includes('/cdn-cgi/image/')) return false;
   
-  // Transform these external image sources
-  const transformableDomains = [
-    'supabase.co',
-    'wasabisys.com',
-    's3.us-central-1',
-    'shoutout-assets',
-  ];
+  // Don't transform local URLs
+  if (url.startsWith('/') && !url.startsWith('//')) return false;
   
-  return transformableDomains.some(domain => url.includes(domain));
+  // Transform ALL external URLs - this ensures everything goes through Cloudflare CDN
+  // This includes: Supabase, Wasabi, imgbb, any other external source
+  return url.startsWith('http://') || url.startsWith('https://');
 }
 
 /**

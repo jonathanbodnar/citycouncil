@@ -403,12 +403,12 @@ const LoginPage: React.FC = () => {
               {loading ? 'Sending code...' : 'Send verification code'}
             </button>
 
-            <div className="relative">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-900 text-gray-400">or</span>
+                <span className="px-3 text-gray-400 bg-transparent">or</span>
               </div>
             </div>
 
@@ -484,7 +484,7 @@ const LoginPage: React.FC = () => {
                 <div className="w-full border-t border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-900 text-gray-400">or</span>
+                <span className="px-3 text-gray-400 bg-transparent">or</span>
               </div>
             </div>
 
@@ -560,7 +560,7 @@ const LoginPage: React.FC = () => {
                 <div className="w-full border-t border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-900 text-gray-400">or</span>
+                <span className="px-3 text-gray-400 bg-transparent">or</span>
               </div>
             </div>
 
