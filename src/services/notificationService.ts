@@ -135,13 +135,19 @@ export const notificationService = {
       message = message.replace(/\{\{talent_name\}\}/g, variables.talent_name || '');
       message = message.replace(/\{\{hours\}\}/g, variables.hours || '');
 
+      // Determine recipient type based on notification type
+      // talent_* notifications go to talent (217 number), user_* notifications go to users (659 number)
+      const isTalentNotification = notificationType.startsWith('talent_');
+      const recipientType = isTalentNotification ? 'talent' : 'user';
+
       // Send SMS via Twilio Edge Function
       const maskedPhone = user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-      logger.log('📱 Sending SMS to:', maskedPhone);
+      logger.log('📱 Sending SMS to:', maskedPhone, 'recipientType:', recipientType);
       const { error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: user.phone,
-          message: message
+          message: message,
+          recipientType: recipientType  // 'talent' uses 217, 'user' uses 659
         }
       });
 

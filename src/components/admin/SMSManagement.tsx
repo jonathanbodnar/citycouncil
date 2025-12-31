@@ -376,7 +376,7 @@ const SMSManagement: React.FC = () => {
         body: {
           to: cleanedPhone,
           message: directMessage || (mediaUrl ? '📎 Media message' : ''),
-          from: 'user', // Use user number for admin direct messages
+          recipientType: 'user', // Use user number (659) for admin direct messages
           mediaUrl: mediaUrl
         }
       });

@@ -268,7 +268,8 @@ const AdminHelpDesk: React.FC = () => {
           const { error: smsError } = await supabase.functions.invoke('send-sms', {
             body: {
               to: userPhone,
-              message: smsMessage
+              message: smsMessage,
+              recipientType: 'user'  // Help desk messages go to users (659 number)
             }
           });
 
