@@ -26,23 +26,13 @@ const CLOUDFLARE_DOMAIN = 'https://shoutout.us';
 
 /**
  * Check if an image URL should be transformed via Cloudflare
- * Transform ALL external images to improve performance
+ * DISABLED: Cloudflare Image Resizing returning 406 errors
+ * TODO: Re-enable once Cloudflare Image Resizing is properly configured
  */
 function shouldTransform(url: string): boolean {
-  if (!url) return false;
-  
-  // Don't transform data URLs or blobs
-  if (url.startsWith('data:') || url.startsWith('blob:')) return false;
-  
-  // Don't transform already-transformed URLs
-  if (url.includes('/cdn-cgi/image/')) return false;
-  
-  // Don't transform local URLs
-  if (url.startsWith('/') && !url.startsWith('//')) return false;
-  
-  // Transform ALL external URLs - this ensures everything goes through Cloudflare CDN
-  // This includes: Supabase, Wasabi, imgbb, any other external source
-  return url.startsWith('http://') || url.startsWith('https://');
+  // Temporarily disabled - returning original URLs
+  // Cloudflare Image Resizing needs to be enabled in Cloudflare dashboard
+  return false;
 }
 
 /**
