@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MagnifyingGlassIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { TalentProfile, TalentCategory } from '../types';
-import { useAuth } from '../context/AuthContext';
 import TalentCard from '../components/TalentCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import SEOHelmet from '../components/SEOHelmet';
@@ -16,6 +15,12 @@ interface TalentWithUser extends TalentProfile {
     avatar_url?: string;
   };
 }
+
+// Cache talent data to avoid refetching on every render
+let cachedTalent: TalentWithUser[] | null = null;
+let cachedFeaturedTalent: TalentWithUser[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 60000; // 1 minute cache
 
 const TALENT_CATEGORIES = [
   { key: 'politician', label: 'Politicians' },
@@ -39,7 +44,6 @@ const TALENT_CATEGORIES = [
 ];
 
 const HomePage: React.FC = () => {
-  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
@@ -47,9 +51,6 @@ const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all' | 'coming_soon'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [totalUsers, setTotalUsers] = useState<number>(0);
-  const onboardingContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Capture coupon from URL (e.g., shoutout.us/?coupon=SANTA25)
   // Also handles malformed URLs like ?utm=sms?coupon=SANTA25 (double question mark)
@@ -115,68 +116,82 @@ const HomePage: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    // Run all fetches in parallel for faster page load
-    Promise.all([
-      fetchTalent(),
-      fetchFeaturedTalent(),
-      fetchTotalUsers()
-    ]);
+    fetchAllData();
   }, []);
 
-  const fetchTalent = async () => {
+  const fetchAllData = async () => {
+    const now = Date.now();
+    
+    // Use cache if available and fresh
+    if (cachedTalent && cachedFeaturedTalent && (now - cacheTimestamp) < CACHE_DURATION) {
+      setTalent(cachedTalent);
+      setFeaturedTalent(cachedFeaturedTalent);
+      
+      // Get available categories from cached data
+      const allCategories = cachedTalent.flatMap(t => 
+        t.categories && t.categories.length > 0 ? t.categories : [t.category]
+      );
+      setAvailableCategories(Array.from(new Set(allCategories)));
+      setLoading(false);
+      return;
+    }
+
     try {
-      console.log('Fetching talent...');
+      // Fetch ONLY the columns we need - much faster than select(*)
       const { data, error } = await supabase
         .from('talent_profiles')
         .select(`
-          *,
+          id,
+          user_id,
+          username,
+          bio,
+          category,
+          categories,
+          pricing,
+          fulfillment_time_hours,
+          is_featured,
+          is_active,
+          is_coming_soon,
+          is_verified,
+          total_orders,
+          average_rating,
+          charity_percentage,
+          charity_name,
+          temp_full_name,
+          temp_avatar_url,
+          display_order,
+          featured_order,
+          featured_image_position,
+          created_at,
           users!talent_profiles_user_id_fkey (
             id,
             full_name,
             avatar_url
           )
         `)
-        .or('is_active.eq.true,is_coming_soon.eq.true'); // Show active OR coming soon
+        .or('is_active.eq.true,is_coming_soon.eq.true');
 
-      if (error) {
-        console.error('Supabase error fetching talent:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      // Sort by display_order (admin-set positioning), then active before coming soon
+      // Sort by display_order, then active before coming soon
       const sortedData = (data || []).sort((a, b) => {
-        // 1. If both have display_order, sort by that (ascending)
         if (a.display_order !== null && b.display_order !== null) {
           return a.display_order - b.display_order;
         }
-        
-        // 2. If only one has display_order, it comes first
         if (a.display_order !== null) return -1;
         if (b.display_order !== null) return 1;
         
-        // 3. For NULL display_order: Active before Coming Soon
         const aIsActive = a.is_active && !a.is_coming_soon;
         const bIsActive = b.is_active && !b.is_coming_soon;
         
         if (aIsActive && !bIsActive) return -1;
         if (!aIsActive && bIsActive) return 1;
         
-        // 4. Within same status, newest first (by created_at)
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
 
-      console.log('Talent data fetched:', sortedData.length, 'profiles');
-
-      // Handle null data
-      if (!sortedData || sortedData.length === 0) {
-        setTalent([]);
-        setAvailableCategories([]);
-        return;
-      }
-
-      // Map profiles - use temp fields if users data is missing (for incomplete onboarding)
+      // Map profiles with synthetic user data if needed
       const talentWithUsers = sortedData.map(profile => {
-        // If no users data, create a synthetic user object from temp fields
         if (!profile.users) {
           return {
             ...profile,
@@ -188,95 +203,31 @@ const HomePage: React.FC = () => {
           };
         }
         return profile;
-      });
+      }) as TalentWithUser[];
+
+      // Extract featured talent from the same query (no second DB call!)
+      const featured = talentWithUsers
+        .filter(t => t.is_featured && t.is_active)
+        .sort((a, b) => (a.featured_order || 999) - (b.featured_order || 999))
+        .slice(0, 5);
+
+      // Update cache
+      cachedTalent = talentWithUsers;
+      cachedFeaturedTalent = featured;
+      cacheTimestamp = now;
 
       setTalent(talentWithUsers);
+      setFeaturedTalent(featured);
 
-      // Get available categories from both single category and categories array
+      // Get available categories
       const allCategories = sortedData.flatMap(t => 
         t.categories && t.categories.length > 0 ? t.categories : [t.category]
       );
-      const categories = Array.from(new Set(allCategories));
-      setAvailableCategories(categories);
+      setAvailableCategories(Array.from(new Set(allCategories)));
     } catch (error) {
       console.error('Error fetching talent:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchFeaturedTalent = async () => {
-    try {
-      console.log('Fetching featured talent...');
-      const { data, error } = await supabase
-        .from('talent_profiles')
-        .select(`
-          *,
-          users!talent_profiles_user_id_fkey (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('is_featured', true)
-        .eq('is_active', true)
-        .order('featured_order', { ascending: true, nullsFirst: false })
-        .limit(5);
-
-      if (error) throw error;
-
-      // Handle null data
-      if (!data || data.length === 0) {
-        setFeaturedTalent([]);
-        return;
-      }
-
-      console.log('Featured talent raw data:', data);
-
-      // Map profiles - use temp fields if users data is missing (for incomplete onboarding)
-      const featuredWithUsers = (data || []).map(profile => {
-        // If no users data, create a synthetic user object from temp fields
-        if (!profile.users) {
-          return {
-            ...profile,
-            users: {
-              id: profile.user_id || '',
-              full_name: profile.temp_full_name || 'Unknown',
-              avatar_url: profile.temp_avatar_url || null,
-            },
-          };
-        }
-        return profile;
-      });
-
-      console.log('Featured talent after mapping:', featuredWithUsers);
-      setFeaturedTalent(featuredWithUsers);
-    } catch (error) {
-      console.error('Error fetching featured talent:', error);
-    }
-  };
-
-  const fetchTotalUsers = async () => {
-    try {
-      // Get count of registered users
-      const { count: usersCount, error: usersError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_type', 'user');
-
-      if (usersError) throw usersError;
-
-      // Get count of beta signups (phone numbers not from registered users)
-      const { count: betaCount, error: betaError } = await supabase
-        .from('beta_signups')
-        .select('*', { count: 'exact', head: true });
-
-      if (betaError) throw betaError;
-
-      const total = (usersCount || 0) + (betaCount || 0);
-      setTotalUsers(total);
-    } catch (error) {
-      console.error('Error fetching total users:', error);
     }
   };
 
@@ -327,24 +278,22 @@ const HomePage: React.FC = () => {
         <p className="text-white/80 text-sm sm:text-base font-medium text-center">
           Get personalized video ShoutOuts from top conservative voices.
         </p>
-        {totalUsers > 0 && (
-          <div className="flex items-center gap-1">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <svg key={i} className="w-4 h-4" viewBox="0 0 20 20" fill="url(#starGradient)">
-                  <defs>
-                    <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#a855f7" />
-                      <stop offset="100%" stopColor="#ec4899" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
-            </div>
-            <span className="text-white/60 text-sm">({totalUsers.toLocaleString()})</span>
+        <div className="flex items-center gap-1">
+          <div className="flex">
+            {[...Array(5)].map((_, i) => (
+              <svg key={i} className="w-4 h-4" viewBox="0 0 20 20" fill="url(#starGradient)">
+                <defs>
+                  <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            ))}
           </div>
-        )}
+          <span className="text-white/60 text-sm">5.0</span>
+        </div>
       </div>
 
       {/* Featured Talent Carousel */}
@@ -435,16 +384,6 @@ const HomePage: React.FC = () => {
           </p>
         </div>
       )}
-
-      {/* Simple overlay to host the <moov-onboarding> drop */}
-      {isOnboardingOpen && (
-        <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-lg w-full max-w-2xl p-4">
-            <div ref={onboardingContainerRef} />
-          </div>
-        </div>
-      )}
-
 
       {/* FOMO Notification - Shows real reviews */}
       <FOMONotification interval={8000} />
