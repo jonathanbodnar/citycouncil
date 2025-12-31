@@ -174,9 +174,11 @@ const HomePage: React.FC = () => {
       if (error) throw error;
 
       // Filter out hidden profiles (keep them accessible via direct URL)
-      const visibleData = (data || []).filter(profile => {
+      const visibleData = (data || []).filter((profile: any) => {
         // Hide Jonathan Bodnar from homepage (still accessible via /jonathanbodnar)
-        const name = profile.temp_full_name || profile.users?.full_name || '';
+        const users = profile.users;
+        const userName = Array.isArray(users) ? users[0]?.full_name : users?.full_name;
+        const name = profile.temp_full_name || userName || '';
         if (name.toLowerCase() === 'jonathan bodnar') return false;
         return true;
       });
