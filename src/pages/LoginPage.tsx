@@ -115,12 +115,8 @@ const LoginPage: React.FC = () => {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let digits = e.target.value.replace(/\D/g, '');
-    // If user typed country code (1), strip it
-    if (digits.length === 11 && digits.startsWith('1')) {
-      digits = digits.slice(1);
-    }
-    setPhone(digits.slice(0, 10));
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(digits);
   };
 
   // Handle OTP input
