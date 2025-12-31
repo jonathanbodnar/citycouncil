@@ -12,6 +12,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
+  sendPhoneOtp: (phone: string) => Promise<{ success: boolean; error?: string; phoneHint?: string; rateLimited?: boolean }>;
+  verifyPhoneOtp: (phone: string, code: string) => Promise<{ success: boolean; error?: string; magicLink?: string; user?: any }>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -285,6 +287,100 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser({ ...user, ...updates });
   };
 
+  // Send OTP code to phone number for login
+  const sendPhoneOtp = async (phone: string): Promise<{ success: boolean; error?: string; phoneHint?: string; rateLimited?: boolean }> => {
+    try {
+      console.log('Sending OTP to phone:', phone);
+      
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+      
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/send-login-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ phone }),
+        }
+      );
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Failed to send verification code',
+          rateLimited: data.rateLimited,
+        };
+      }
+
+      return {
+        success: true,
+        phoneHint: data.phoneHint,
+      };
+    } catch (error: any) {
+      console.error('Error sending phone OTP:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to send verification code',
+      };
+    }
+  };
+
+  // Verify OTP code and log in
+  const verifyPhoneOtp = async (phone: string, code: string): Promise<{ success: boolean; error?: string; magicLink?: string; user?: any }> => {
+    try {
+      console.log('Verifying OTP for phone:', phone);
+      
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+      
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/verify-login-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ phone, code }),
+        }
+      );
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Failed to verify code',
+        };
+      }
+
+      // If we got a magic link, redirect to it to complete the login
+      if (data.magicLink) {
+        return {
+          success: true,
+          magicLink: data.magicLink,
+          user: data.user,
+        };
+      }
+
+      return {
+        success: false,
+        error: 'Authentication failed',
+      };
+    } catch (error: any) {
+      console.error('Error verifying phone OTP:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to verify code',
+      };
+    }
+  };
+
   const value = {
     user,
     supabaseUser,
@@ -294,6 +390,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     updateProfile,
+    sendPhoneOtp,
+    verifyPhoneOtp,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

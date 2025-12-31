@@ -1,28 +1,52 @@
-import React, { useState } from 'react';
-import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
 import { supabase } from '../services/supabase';
 import MFAVerification from '../components/MFAVerification';
+import { DevicePhoneMobileIcon, KeyIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+
+type LoginMode = 'phone' | 'password' | 'otp';
 
 const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const returnTo = searchParams.get('returnTo') || '/';
   
+  // Login mode state
+  const [loginMode, setLoginMode] = useState<LoginMode>('phone');
+  
+  // Phone OTP state
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [phoneHint, setPhoneHint] = useState('');
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  
+  // Password login state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // General state
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [showMFAVerification, setShowMFAVerification] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState('');
-  const { user, signIn } = useAuth();
+  const { user, signIn, sendPhoneOtp, verifyPhoneOtp } = useAuth();
+
+  // Cooldown timer for OTP resend
+  useEffect(() => {
+    if (otpCooldown > 0) {
+      const timer = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCooldown]);
 
   // Handle redirect after successful login
-  React.useEffect(() => {
+  useEffect(() => {
     const handleRedirect = async () => {
       console.log('LoginPage useEffect triggered:', { 
         hasUser: !!user, 
@@ -31,25 +55,17 @@ const LoginPage: React.FC = () => {
         userType: user?.user_type 
       });
       
-      // CRITICAL: Must have both user AND user.id (user object fully populated)
       if (user && user.id && !showMFAVerification) {
         console.log('LoginPage: REDIRECT LOGIC RUNNING');
-        console.log('LoginPage: User object:', user);
-        console.log('LoginPage: User ID:', user.id);
-        console.log('LoginPage: User type from context:', user.user_type);
         
-        // Check if there's a fulfillment token to redirect to
         const fulfillmentToken = sessionStorage.getItem('fulfillment_redirect_token');
-        console.log('LoginPage: Fulfillment token:', fulfillmentToken);
         
         if (fulfillmentToken) {
-          console.log('LoginPage: Found fulfillment token, redirecting to /fulfill/', fulfillmentToken);
           sessionStorage.removeItem('fulfillment_redirect_token');
           navigate(`/fulfill/${fulfillmentToken}`, { replace: true });
           return;
         }
         
-        // Double-check user type from database
         try {
           const { data: userData, error } = await supabase
             .from('users')
@@ -57,27 +73,17 @@ const LoginPage: React.FC = () => {
             .eq('id', user.id)
             .single();
           
-          console.log('LoginPage: Database user type:', userData?.user_type);
-          
           if (!error && userData?.user_type === 'talent') {
-            console.log('LoginPage: ✅ Talent user confirmed, CALLING navigate(/dashboard)');
             navigate('/dashboard', { replace: true });
-            console.log('LoginPage: ✅ navigate() called');
           } else if (user.user_type === 'talent') {
-            console.log('LoginPage: ✅ Talent user from context, CALLING navigate(/dashboard)');
             navigate('/dashboard', { replace: true });
-            console.log('LoginPage: ✅ navigate() called');
           } else {
-            console.log('LoginPage: Regular user, redirecting to:', returnTo);
             navigate(returnTo, { replace: true });
           }
         } catch (err) {
           console.error('LoginPage: Error checking user type:', err);
-          // Fallback to context user_type
           if (user.user_type === 'talent') {
-            console.log('LoginPage: ✅ Fallback - Talent user, CALLING navigate(/dashboard)');
             navigate('/dashboard', { replace: true });
-            console.log('LoginPage: ✅ navigate() called');
           } else {
             navigate(returnTo, { replace: true });
           }
@@ -100,106 +106,198 @@ const LoginPage: React.FC = () => {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Format phone number as user types
+  const formatPhoneDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(digits);
+  };
+
+  // Handle OTP input
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return; // Only allow digits
+    
+    const newOtp = [...otpCode];
+    newOtp[index] = value.slice(-1); // Only take last digit
+    setOtpCode(newOtp);
+    
+    // Auto-focus next input
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const newOtp = [...otpCode];
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtpCode(newOtp);
+    // Focus the last filled input or the next empty one
+    const lastIndex = Math.min(pastedData.length, 5);
+    otpInputRefs.current[lastIndex]?.focus();
+  };
+
+  // Send OTP code
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phone.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const result = await sendPhoneOtp(phone);
+      
+      if (result.rateLimited) {
+        toast.error(result.error || 'Please wait before requesting another code');
+        setOtpCooldown(60);
+      } else if (result.success) {
+        toast.success('Verification code sent!');
+        setPhoneHint(result.phoneHint || '');
+        setLoginMode('otp');
+        setOtpCooldown(60);
+        // Focus first OTP input
+        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+      } else {
+        toast.error(result.error || 'Failed to send code');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send verification code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Verify OTP code
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = otpCode.join('');
+    if (code.length !== 6) {
+      toast.error('Please enter the 6-digit code');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const result = await verifyPhoneOtp(phone, code);
+      
+      if (result.success && result.magicLink) {
+        toast.success('Verified! Logging you in...');
+        // Redirect to the magic link to complete authentication
+        window.location.href = result.magicLink;
+      } else {
+        toast.error(result.error || 'Invalid code');
+        // Clear the OTP inputs on error
+        setOtpCode(['', '', '', '', '', '']);
+        otpInputRefs.current[0]?.focus();
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to verify code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResendOtp = async () => {
+    if (otpCooldown > 0) return;
+    
+    setLoading(true);
+    try {
+      const result = await sendPhoneOtp(phone);
+      
+      if (result.success) {
+        toast.success('New code sent!');
+        setOtpCooldown(60);
+        setOtpCode(['', '', '', '', '', '']);
+        otpInputRefs.current[0]?.focus();
+      } else {
+        toast.error(result.error || 'Failed to resend code');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to resend code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Password login
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Add a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       setLoading(false);
       toast.error('Login is taking too long. Please try again.');
-    }, 10000); // 10 second timeout
+    }, 10000);
 
     try {
-      console.log('Attempting to sign in with:', email);
       const result = await signIn(email, password);
-      console.log('Sign in result:', result);
       clearTimeout(timeout);
 
       // Check if MFA is required
-      const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      console.log('AAL Check:', { aal, aalError });
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       
       if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
-        console.log('MFA is required - fetching factors...');
-        // MFA is required - get the factor ID
-        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
-        console.log('Factors:', { factors, factorsError });
+        const { data: factors } = await supabase.auth.mfa.listFactors();
         
-        // Check for any verified factor (TOTP or Phone)
         let factorId: string | null = null;
         
         if (factors?.totp && factors.totp.length > 0) {
           const verifiedTotp = factors.totp.find((f: any) => f.status === 'verified');
-          if (verifiedTotp) {
-            factorId = verifiedTotp.id;
-            console.log('Found verified TOTP factor:', factorId);
-          }
+          if (verifiedTotp) factorId = verifiedTotp.id;
         }
         
         if (!factorId && factors?.phone && factors.phone.length > 0) {
           const verifiedPhone = factors.phone.find((f: any) => f.status === 'verified');
           if (verifiedPhone) {
             factorId = verifiedPhone.id;
-            console.log('Found verified Phone factor:', factorId);
+            await supabase.auth.mfa.challenge({ factorId });
+            toast.success('Verification code sent to your phone!');
           }
         }
         
         if (factorId) {
-          // For phone factors, we need to send the challenge (SMS) first
-          const isPhoneFactor = factors?.phone?.some((f: any) => f.id === factorId);
-          
-          if (isPhoneFactor) {
-            console.log('Sending SMS challenge...');
-            const { error: challengeError } = await supabase.auth.mfa.challenge({
-              factorId: factorId
-            });
-            
-            if (challengeError) {
-              console.error('Challenge error:', challengeError);
-              toast.error('Failed to send verification code');
-              setLoading(false);
-              return;
-            }
-            
-            toast.success('Verification code sent to your phone!');
-          }
-          
           setMfaFactorId(factorId);
           setShowMFAVerification(true);
           setLoading(false);
           return;
-        } else {
-          console.warn('MFA required but no verified factors found');
         }
-      } else {
-        console.log('MFA not required - current level:', aal?.currentLevel, 'next level:', aal?.nextLevel);
       }
 
       toast.success('Welcome back! Redirecting...');
-      // Navigate to returnTo URL after successful login
-      setTimeout(() => {
-        navigate(returnTo);
-      }, 1000);
+      setTimeout(() => navigate(returnTo), 1000);
     } catch (error: any) {
-      console.error('Sign in error:', error);
       clearTimeout(timeout);
       toast.error(error.message || 'Failed to sign in');
-      setLoading(false); // Make sure to stop loading on error
+      setLoading(false);
     }
   };
 
   const handleMFASuccess = () => {
-    console.log('LoginPage: MFA verification successful, clearing MFA state');
     setShowMFAVerification(false);
     toast.success('Welcome back!');
-    // Let the useEffect handle the redirect based on user type
   };
 
   const handleMFACancel = () => {
     setShowMFAVerification(false);
     setMfaFactorId('');
-    // Sign out the partially authenticated session
     supabase.auth.signOut();
   };
 
@@ -212,41 +310,17 @@ const LoginPage: React.FC = () => {
         ? 'http://localhost:5173/reset-password'
         : 'https://shoutout.us/reset-password';
 
-      console.log('Sending password reset to:', resetEmail);
-      console.log('Redirect URL:', redirectUrl);
-
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout - email service may be unavailable')), 10000)
-      );
-
-      const resetPromise = supabase.auth.resetPasswordForEmail(resetEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: redirectUrl,
       });
 
-      const { data, error } = await Promise.race([resetPromise, timeoutPromise]) as any;
+      if (error) throw error;
 
-      console.log('Reset password response:', { data, error });
-
-      if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
-      }
-
-      // Supabase will send email even if account doesn't exist (for security)
-      // but won't throw an error
-      toast.success('If an account exists with this email, you will receive a password reset link. Check your inbox (and spam folder).');
+      toast.success('If an account exists with this email, you will receive a password reset link.');
       setShowForgotPassword(false);
       setResetEmail('');
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      if (error.message?.includes('timeout')) {
-        toast.error('Email service is currently unavailable. Please try again later or contact support.');
-      } else if (error.message?.includes('redirect')) {
-        toast.error('Configuration error. Please contact support.');
-      } else {
-        toast.error(error.message || 'Failed to send reset email. Please try again.');
-      }
+      toast.error(error.message || 'Failed to send reset email.');
     } finally {
       setResetLoading(false);
     }
@@ -285,76 +359,215 @@ const LoginPage: React.FC = () => {
             </Link>
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
+        {/* Phone OTP Mode */}
+        {loginMode === 'phone' && (
+          <form className="mt-8 space-y-6" onSubmit={handleSendOtp}>
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                Phone Number
               </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">+1</span>
+                </div>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  required
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                  placeholder="(555) 555-5555"
+                  value={formatPhoneDisplay(phone)}
+                  onChange={handlePhoneChange}
+                />
+              </div>
+              <p className="mt-2 text-xs text-gray-400">
+                We'll send you a 6-digit code to verify your identity
+              </p>
             </div>
 
-            <div className="text-sm">
+            <button
+              type="submit"
+              disabled={loading || phone.length !== 10}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
+              {loading ? 'Sending code...' : 'Send verification code'}
+            </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900 text-gray-400">or</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setLoginMode('password')}
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-xl text-gray-300 bg-transparent hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+            >
+              <KeyIcon className="h-5 w-5 mr-2" />
+              Use password instead
+            </button>
+          </form>
+        )}
+
+        {/* OTP Verification Mode */}
+        {loginMode === 'otp' && (
+          <form className="mt-8 space-y-6" onSubmit={handleVerifyOtp}>
+            <div className="text-center">
+              <p className="text-gray-300 mb-2">
+                Enter the 6-digit code sent to
+              </p>
+              <p className="text-white font-medium">{phoneHint || formatPhoneDisplay(phone)}</p>
+            </div>
+
+            <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
+              {otpCode.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => { otpInputRefs.current[index] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                  className="w-12 h-14 text-center text-2xl font-bold border border-gray-600 bg-gray-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              ))}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || otpCode.join('').length !== 6}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? 'Verifying...' : 'Verify & Sign In'}
+            </button>
+
+            <div className="flex items-center justify-between text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginMode('phone');
+                  setOtpCode(['', '', '', '', '', '']);
+                }}
+                className="text-gray-400 hover:text-gray-300 flex items-center"
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-1" />
+                Change number
+              </button>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={otpCooldown > 0 || loading}
+                className="text-blue-400 hover:text-blue-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              >
+                {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Resend code'}
+              </button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900 text-gray-400">or</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setLoginMode('password')}
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-xl text-gray-300 bg-transparent hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+            >
+              <KeyIcon className="h-5 w-5 mr-2" />
+              Use password instead
+            </button>
+          </form>
+        )}
+
+        {/* Password Mode */}
+        {loginMode === 'password' && (
+          <form className="mt-8 space-y-6" onSubmit={handlePasswordSubmit}>
+            <div className="rounded-md shadow-sm -space-y-px">
+              <div>
+                <label htmlFor="email" className="sr-only">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-t-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:z-10 sm:text-sm"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-b-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:z-10 sm:text-sm"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end">
               <button 
                 type="button" 
                 onClick={() => setShowForgotPassword(true)}
-                className="font-medium text-primary-600 hover:text-primary-500"
+                className="text-sm font-medium text-blue-400 hover:text-blue-300"
               >
                 Forgot your password?
               </button>
             </div>
-          </div>
 
-          <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? 'Signing in...' : 'Sign in with password'}
             </button>
-          </div>
-        </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900 text-gray-400">or</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setLoginMode('phone')}
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-xl text-gray-300 bg-transparent hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+            >
+              <DevicePhoneMobileIcon className="h-5 w-5 mr-2" />
+              Use phone number instead
+            </button>
+          </form>
+        )}
       </div>
 
       {/* Forgot Password Modal */}
@@ -377,7 +590,7 @@ const LoginPage: React.FC = () => {
                   required
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full px-4 py-3 glass-strong border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-3 glass-strong border border-white/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="you@example.com"
                 />
               </div>
