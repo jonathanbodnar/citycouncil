@@ -43,6 +43,21 @@ class ErrorBoundary extends Component<Props, State> {
       console.error('Error Boundary caught an error:', error, errorInfo);
     }
 
+    // Handle ChunkLoadError by forcing a hard refresh
+    // This happens when a new deployment invalidates cached JS chunks
+    if (error.name === 'ChunkLoadError' || error.message?.includes('Loading chunk')) {
+      console.log('ChunkLoadError detected, forcing page reload...');
+      // Only reload once to prevent infinite loops
+      const hasReloaded = sessionStorage.getItem('chunk_error_reload');
+      if (!hasReloaded) {
+        sessionStorage.setItem('chunk_error_reload', 'true');
+        window.location.reload();
+        return;
+      }
+      // Clear the flag after showing error (in case user manually refreshes)
+      sessionStorage.removeItem('chunk_error_reload');
+    }
+
     // Update state with error details
     this.setState({
       error,

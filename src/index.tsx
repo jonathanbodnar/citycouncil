@@ -7,6 +7,14 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 
+// Clear chunk error reload flag on successful app load
+// This prevents the flag from persisting after a successful reload
+try {
+  sessionStorage.removeItem('chunk_error_reload');
+} catch (e) {
+  // sessionStorage not available
+}
+
 // Create a client with optimized defaults
 const queryClient = new QueryClient({
   defaultOptions: {
