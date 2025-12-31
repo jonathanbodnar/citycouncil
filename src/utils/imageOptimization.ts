@@ -26,13 +26,35 @@ const CLOUDFLARE_DOMAIN = 'https://shoutout.us';
 
 /**
  * Check if an image URL should be transformed via Cloudflare
- * DISABLED: Cloudflare Image Resizing returning 406 errors
- * TODO: Re-enable once Cloudflare Image Resizing is properly configured
+ * 
+ * IMPORTANT: In Cloudflare Dashboard, you need to enable:
+ * Speed > Optimization > Image Resizing > "Resize images from any origin"
+ * 
+ * Without this setting, Cloudflare will return 406 for external URLs
  */
 function shouldTransform(url: string): boolean {
-  // Temporarily disabled - returning original URLs
-  // Cloudflare Image Resizing needs to be enabled in Cloudflare dashboard
-  return false;
+  if (!url) return false;
+  
+  // Don't transform data URLs or blobs
+  if (url.startsWith('data:') || url.startsWith('blob:')) return false;
+  
+  // Don't transform already-transformed URLs
+  if (url.includes('/cdn-cgi/image/')) return false;
+  
+  // Don't transform local URLs
+  if (url.startsWith('/') && !url.startsWith('//')) return false;
+  
+  // Only transform HTTPS URLs (required by Cloudflare)
+  if (!url.startsWith('https://')) return false;
+  
+  // Transform images from known sources
+  // These are the domains where your images are hosted
+  const supportedSources = [
+    'wasabisys.com',      // Wasabi S3
+    'supabase.co',        // Supabase Storage
+  ];
+  
+  return supportedSources.some(source => url.includes(source));
 }
 
 /**
