@@ -338,6 +338,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
       const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
       
+      // Pass current site URL so magic link redirects back to the correct environment
+      const currentSiteUrl = window.location.origin;
+      
       const response = await fetch(
         `${supabaseUrl}/functions/v1/verify-login-otp`,
         {
@@ -346,7 +349,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${supabaseAnonKey}`,
           },
-          body: JSON.stringify({ phone, code }),
+          body: JSON.stringify({ phone, code, siteUrl: currentSiteUrl }),
         }
       );
 
