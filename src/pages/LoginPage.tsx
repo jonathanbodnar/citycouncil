@@ -446,7 +446,7 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading || otpCode.join('').length !== 6}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
             >
               {loading ? 'Verifying...' : 'Verify & Sign In'}
             </button>
@@ -485,7 +485,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setLoginMode('password')}
-              className="group relative w-full flex justify-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-xl text-gray-300 bg-transparent hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-500 text-sm font-medium rounded-xl text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
             >
               <KeyIcon className="h-5 w-5 mr-2" />
               Use password instead
