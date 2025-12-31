@@ -173,8 +173,16 @@ const HomePage: React.FC = () => {
 
       if (error) throw error;
 
+      // Filter out hidden profiles (keep them accessible via direct URL)
+      const visibleData = (data || []).filter(profile => {
+        // Hide Jonathan Bodnar from homepage (still accessible via /jonathanbodnar)
+        const name = profile.temp_full_name || profile.users?.full_name || '';
+        if (name.toLowerCase() === 'jonathan bodnar') return false;
+        return true;
+      });
+
       // Sort by display_order, then active before coming soon
-      const sortedData = (data || []).sort((a, b) => {
+      const sortedData = visibleData.sort((a, b) => {
         if (a.display_order !== null && b.display_order !== null) {
           return a.display_order - b.display_order;
         }
