@@ -409,7 +409,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setLoginMode('password')}
-              className="group relative w-full flex justify-center py-3 px-4 border-2 border-gray-500 text-sm font-medium rounded-xl text-gray-200 bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+              className="group relative w-full flex justify-center py-3 px-4 glass border border-white/30 text-sm font-medium rounded-xl text-white hover:bg-white hover:text-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
             >
               <KeyIcon className="h-5 w-5 mr-2" />
               Use password instead
@@ -485,7 +485,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setLoginMode('password')}
-              className="group relative w-full flex justify-center py-3 px-4 border-2 border-gray-500 text-sm font-medium rounded-xl text-gray-200 bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+              className="group relative w-full flex justify-center py-3 px-4 glass border border-white/30 text-sm font-medium rounded-xl text-white hover:bg-white hover:text-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
             >
               <KeyIcon className="h-5 w-5 mr-2" />
               Use password instead
