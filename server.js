@@ -1,10 +1,23 @@
 const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
+const compression = require('compression');
 const prerender = require('prerender-node');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Enable gzip compression for all responses
+app.use(compression({
+  level: 6, // Balanced compression level (1-9)
+  threshold: 1024, // Only compress responses > 1KB
+  filter: (req, res) => {
+    // Compress everything except images (they're already compressed)
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
+console.log('✅ Gzip compression enabled');
 
 // Security headers with Helmet
 app.use(helmet({
@@ -184,10 +197,25 @@ app.get('/sitemap.xml', async (req, res) => {
   }
 });
 
-// Serve static files from the React build
+// Serve static files from the React build with proper caching
 app.use(express.static(path.join(__dirname, 'build'), {
-  maxAge: '1d',
-  etag: false
+  maxAge: '1y', // Cache static assets for 1 year (they have hashed filenames)
+  etag: true,
+  immutable: true, // Tell browsers these files never change
+  setHeaders: (res, filePath) => {
+    // HTML files should not be cached (they reference the latest JS/CSS)
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+    // JS and CSS files have content hashes, cache forever
+    else if (filePath.match(/\.(js|css)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+    // Images, fonts, etc - cache for 1 year
+    else if (filePath.match(/\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+    }
+  }
 }));
 
 // Handle React routing - use middleware instead of route
