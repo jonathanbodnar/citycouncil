@@ -171,7 +171,7 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
 
         // Separate SMS by source - DM sources vs non-DM (Rumble) sources
         const allSMS = smsResult.data || [];
-        const dmSources = ['dm', 'dma', 'dmb', 'dmc', 'dmf']; // All DM variations (lowercase for comparison)
+        const dmSources = ['dm', 'dma', 'dmb', 'dmc', 'dmd', 'dme', 'dmf', 'dmfn']; // All DM variations (lowercase for comparison)
         
         const smsSocial = allSMS.filter(s => {
           const source = (s.utm_source || '').toLowerCase();

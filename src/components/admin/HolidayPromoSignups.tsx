@@ -148,19 +148,34 @@ const HolidayPromoSignups: React.FC = () => {
   };
 
   // Calculate UTM source statistics
-  // Show: DM (all dm variations combined), DM Follower (dmf), DM Giveaway (dmb), plus other sources
+  // Show: DM (all dm variations combined), plus individual DM breakdowns, plus other sources
+  // DM variations: dmA, dmB, dmC, dmD, dmE, dmF, dmFN
   const utmStats = signups.reduce((acc, s) => {
     const source = (s.utm_source || 'No UTM').toLowerCase();
     
     // Count individual DM variations for breakdown
-    if (source === 'dmf') {
+    if (source === 'dmf' || source === 'dmfn') {
+      // dmF and dmFN = DM Follower (follower campaigns)
       acc['DM Follower'] = (acc['DM Follower'] || 0) + 1;
       acc['DM'] = (acc['DM'] || 0) + 1; // Also count in total DM
     } else if (source === 'dmb') {
+      // dmB = DM Giveaway (giveaway campaigns)
       acc['DM Giveaway'] = (acc['DM Giveaway'] || 0) + 1;
       acc['DM'] = (acc['DM'] || 0) + 1; // Also count in total DM
+    } else if (source === 'dmc') {
+      // dmC = DM C campaign
+      acc['DM C'] = (acc['DM C'] || 0) + 1;
+      acc['DM'] = (acc['DM'] || 0) + 1;
+    } else if (source === 'dmd') {
+      // dmD = DM D campaign
+      acc['DM D'] = (acc['DM D'] || 0) + 1;
+      acc['DM'] = (acc['DM'] || 0) + 1;
+    } else if (source === 'dme') {
+      // dmE = DM E campaign
+      acc['DM E'] = (acc['DM E'] || 0) + 1;
+      acc['DM'] = (acc['DM'] || 0) + 1;
     } else if (source.startsWith('dm')) {
-      // Other DM variations (dm, dma, dmc, etc.)
+      // Other DM variations (dm, dma, etc.)
       acc['DM'] = (acc['DM'] || 0) + 1;
     } else {
       // Non-DM sources
@@ -170,10 +185,11 @@ const HolidayPromoSignups: React.FC = () => {
     return acc;
   }, {} as Record<string, number>);
   
-  // Sort UTM stats: DM first, then DM Follower, DM Giveaway, then others by count
-  const dmStats = ['DM', 'DM Follower', 'DM Giveaway'].filter(k => utmStats[k]);
+  // Sort UTM stats: DM first, then DM breakdowns, then others by count
+  const dmBreakdownOrder = ['DM', 'DM Follower', 'DM Giveaway', 'DM C', 'DM D', 'DM E'];
+  const dmStats = dmBreakdownOrder.filter(k => utmStats[k]);
   const otherStats = Object.entries(utmStats)
-    .filter(([k]) => !['DM', 'DM Follower', 'DM Giveaway'].includes(k))
+    .filter(([k]) => !dmBreakdownOrder.includes(k))
     .sort((a, b) => b[1] - a[1]);
   const sortedUtmStats: [string, number][] = [
     ...dmStats.map(k => [k, utmStats[k]] as [string, number]),
