@@ -1,4 +1,6 @@
-// Video upload service for Wasabi S3 integration
+// Video upload service - Uses Supabase Storage (handles CORS properly)
+
+import { supabase } from './supabase';
 
 interface UploadResponse {
   success: boolean;
@@ -12,7 +14,7 @@ export const uploadVideoToWasabi = async (
 ): Promise<UploadResponse> => {
   try {
     // Log detailed file information for debugging
-    console.log('🎬 Starting Wasabi upload:', {
+    console.log('🎬 Starting video upload:', {
       fileName: file.name,
       fileSize: file.size,
       fileSizeMB: (file.size / 1024 / 1024).toFixed(2) + ' MB',
@@ -41,77 +43,60 @@ export const uploadVideoToWasabi = async (
       return { success: false, error: 'Video must be less than 1GB' };
     }
     
-    console.log('✅ File validation passed, starting AWS SDK upload...');
+    console.log('✅ File validation passed, starting Supabase Storage upload...');
 
-    // Upload to Wasabi S3
-    const AWS = (await import('aws-sdk')).default;
-    
-    const wasabi = new AWS.S3({
-      endpoint: 's3.us-central-1.wasabisys.com',
-      accessKeyId: process.env.REACT_APP_WASABI_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY!,
-      region: 'us-central-1',
-      s3ForcePathStyle: true,
-      signatureVersion: 'v4'
-    });
-
-    const fileExt = file.name.split('.').pop();
+    // Upload to Supabase Storage (handles CORS properly)
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     const fileName = `videos/${orderId}-${Date.now()}.${fileExt}`;
     
-    const uploadParams = {
-      Bucket: 'shoutoutorders',
-      Key: fileName,
-      Body: file,
-      ContentType: file.type,
-      ACL: 'public-read' as const,
-    };
+    console.log('📤 Uploading to Supabase Storage:', { fileName, bucket: 'platform-assets' });
 
-    const result = await wasabi.upload(uploadParams).promise();
+    const { data, error } = await supabase.storage
+      .from('platform-assets')
+      .upload(fileName, file, {
+        contentType: file.type || 'video/mp4',
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) {
+      console.error('❌ Supabase storage upload error:', error);
+      return { success: false, error: `Upload failed: ${error.message}` };
+    }
     
-    // Use direct Wasabi URL (CloudFlare CDN can be added later)
-    // Direct access: https://shoutoutorders.s3.us-central-1.wasabisys.com/videos/file.mp4
-    const videoUrl = `https://shoutoutorders.s3.us-central-1.wasabisys.com/${fileName}`;
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('platform-assets')
+      .getPublicUrl(fileName);
     
-    console.log('Video uploaded successfully:', videoUrl);
+    console.log('✅ Video uploaded successfully:', publicUrl);
     
     return {
       success: true,
-      videoUrl: videoUrl
+      videoUrl: publicUrl
     };
 
   } catch (error: any) {
-    console.error('❌ Wasabi upload error:', error);
+    console.error('❌ Video upload error:', error);
     console.error('Error details:', {
       message: error?.message,
       code: error?.code,
       statusCode: error?.statusCode,
       name: error?.name,
-      stack: error?.stack,
-      requestId: error?.requestId,
-      region: error?.region,
-      hostname: error?.hostname,
-      retryable: error?.retryable,
-      time: error?.time
+      stack: error?.stack
     });
     
     // Provide more specific error messages
     let errorMessage = 'Upload failed';
     
     if (error?.code === 'NetworkingError' || error?.message?.includes('Network')) {
-      // Network error is often CORS or connectivity issue
-      console.error('🔴 NETWORK ERROR - Possible causes:', {
-        cors: 'Wasabi CORS policy may be blocking mobile browsers',
-        dns: 'DNS resolution failed for Wasabi endpoint',
-        connectivity: 'Cannot reach Wasabi servers',
-        endpoint: 's3.us-central-1.wasabisys.com'
-      });
-      errorMessage = 'Network error - please try again or contact support';
+      errorMessage = 'Network error - please check your connection and try again';
     } else if (error?.code === 'RequestTimeout' || error?.message?.includes('timeout')) {
       errorMessage = 'Upload timeout - file may be too large for your connection';
     } else if (error?.statusCode === 403 || error?.code === 'AccessDenied') {
       errorMessage = 'Access denied - please contact support';
-    } else if (error?.statusCode === 400 || error?.code === 'InvalidRequest') {
-      errorMessage = 'Invalid request - please try a different video file';
+    } else if (error?.statusCode === 413 || error?.message?.includes('too large')) {
+      errorMessage = 'File too large - please use a smaller video';
     } else if (error?.message) {
       errorMessage = `Upload failed: ${error.message}`;
     }
@@ -119,39 +104,3 @@ export const uploadVideoToWasabi = async (
     return { success: false, error: errorMessage };
   }
 };
-
-// For production Wasabi S3 integration, you would use:
-/*
-import AWS from 'aws-sdk';
-
-const wasabi = new AWS.S3({
-  endpoint: new AWS.Endpoint('s3.us-central-1.wasabisys.com'),
-  accessKeyId: process.env.REACT_APP_WASABI_ACCESS_KEY_ID,
-  secretAccessKey: process.env.REACT_APP_WASABI_SECRET_ACCESS_KEY,
-  region: process.env.REACT_APP_WASABI_REGION,
-});
-
-export const uploadVideoToWasabi = async (file: File, orderId: string): Promise<UploadResponse> => {
-  try {
-    const key = `videos/${orderId}-${Date.now()}.${file.name.split('.').pop()}`;
-    
-    const uploadParams = {
-      Bucket: process.env.REACT_APP_WASABI_BUCKET_NAME!,
-      Key: key,
-      Body: file,
-      ContentType: file.type,
-      ACL: 'public-read',
-    };
-
-    const result = await wasabi.upload(uploadParams).promise();
-    
-    return {
-      success: true,
-      videoUrl: result.Location
-    };
-  } catch (error) {
-    console.error('Wasabi upload error:', error);
-    return { success: false, error: 'Upload to Wasabi failed' };
-  }
-};
-*/
