@@ -356,18 +356,23 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         <p className="text-gray-400">Download your promo materials and shareable content</p>
       </div>
 
-      {/* Profile URL - Click to Copy */}
+      {/* Profile URL - Click to Copy (with utm=1 tracking) */}
       {talentUsername && (
         <div className="glass p-4 rounded-xl">
-          <label className="block text-sm font-medium text-gray-400 mb-2">
-            Your Profile URL
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-400">
+              Your Profile URL
+            </label>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-300 text-xs font-medium">
+              💰 +10% earnings
+            </span>
+          </div>
           <button
-            onClick={() => handleCopyToClipboard(`https://shoutout.us/${talentUsername}`, 'Profile URL')}
+            onClick={() => handleCopyToClipboard(`https://shoutout.us/${talentUsername}?utm=1`, 'Profile URL')}
             className="w-full glass-hover p-3 rounded-lg flex items-center justify-between transition-all duration-300"
           >
             <span className="text-white font-mono text-sm">
-              shoutout.us/{talentUsername}
+              shoutout.us/{talentUsername}?utm=1
             </span>
             {copiedItem === 'Profile URL' ? (
               <CheckIcon className="h-5 w-5 text-green-400" />
@@ -375,6 +380,9 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
               <ClipboardDocumentIcon className="h-5 w-5 text-gray-400" />
             )}
           </button>
+          <p className="text-xs text-gray-500 mt-2">
+            Use this link when promoting to earn an extra 10% on every order!
+          </p>
         </div>
       )}
 
