@@ -102,10 +102,10 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       return;
     }
 
-    // Validate file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024;
+    // Validate file size (max 1GB - same as onboarding)
+    const maxSize = 1000 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error('Video must be less than 100MB');
+      toast.error('Video must be less than 1GB');
       return;
     }
 
