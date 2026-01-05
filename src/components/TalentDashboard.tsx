@@ -667,6 +667,40 @@ const TalentDashboard: React.FC = () => {
         />
       )}
 
+      {/* Promo Link Banner - Always visible on all tabs */}
+      {talentProfile && (
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-blue-500/20">
+                <LinkIcon className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-white font-medium">
+                  Promote your ShoutOut profile using your special link:
+                </p>
+                <button
+                  onClick={() => {
+                    const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
+                    navigator.clipboard.writeText(promoUrl);
+                    toast.success('Link copied to clipboard!');
+                  }}
+                  className="text-sm text-blue-300 hover:text-blue-200 hover:underline inline-flex items-center gap-1.5 mt-0.5 cursor-pointer"
+                >
+                  <span>📋</span>
+                  <span className="font-mono">shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
+                </button>
+              </div>
+            </div>
+            <div className="sm:ml-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-300 text-xs font-semibold">
+                💰 Earn an extra 10% for each order from your link
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Christmas Games Banner - Only show when Christmas mode is enabled */}
       {christmasModeEnabled && talentProfile && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-red-500/20 border border-green-500/30">
