@@ -329,10 +329,10 @@ const SignupPage: React.FC = () => {
             <Logo size="lg" theme="dark" />
           </Link>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Create your account
+            Login or Register
           </h2>
           <p className="mt-2 text-center text-sm text-gray-400">
-            Quick signup - just email and phone verification
+            Enter your email and verify with your phone
           </p>
         </div>
 
@@ -484,24 +484,13 @@ const SignupPage: React.FC = () => {
 
         {/* Terms */}
         <p className="text-center text-xs text-gray-500">
-          By creating an account, you agree to our{' '}
+          By continuing, you agree to our{' '}
           <Link to="/terms" className="text-primary-400 hover:text-primary-300">
             Terms
           </Link>{' '}
           and{' '}
           <Link to="/privacy" className="text-primary-400 hover:text-primary-300">
             Privacy Policy
-          </Link>
-        </p>
-
-        {/* Login link */}
-        <p className="text-center text-sm text-gray-400">
-          Already have an account?{' '}
-          <Link
-            to={`/login${returnTo !== '/' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}
-            className="font-medium text-primary-400 hover:text-primary-300"
-          >
-            Sign in
           </Link>
         </p>
       </div>

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -104,8 +104,7 @@ const PublicTalentOnboardingPage = lazy(() => import('./pages/PublicTalentOnboar
 const OrderFulfillmentPage = lazy(() => import('./pages/OrderFulfillmentPage'));
 const OrderPage = lazy(() => import('./pages/OrderPage'));
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'));
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const SignupPage = lazy(() => import('./pages/SignupPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage')); // Unified login/register page
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -127,6 +126,13 @@ const PayoutSetupPage = lazy(() => import('./pages/PayoutSetupPage'));
 const ProfileRedirect: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   return <Navigate to={`/${username}`} replace />;
+};
+
+// Redirect /signup to /login while preserving query params
+const SignupRedirect: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const queryString = searchParams.toString();
+  return <Navigate to={`/login${queryString ? `?${queryString}` : ''}`} replace />;
 };
 
 // Promo redirect component - redirects short names to talent profiles with UTM and coupon
@@ -193,8 +199,9 @@ function App() {
             {/* Demo page - standalone without header/footer */}
             <Route path="/demo" element={<DemoPage />} />
             
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
+            {/* Unified login/register - both routes use same component */}
+            <Route path="/login" element={<SignupPage />} />
+            <Route path="/signup" element={<SignupRedirect />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
             
             {/* Promo redirects - short name variations to talent profiles with UTM and auto-discount */}
