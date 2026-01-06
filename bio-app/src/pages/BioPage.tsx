@@ -1439,7 +1439,6 @@ const BioPage: React.FC = () => {
                         )}
                       </div>
                       <span className="text-pink-400 text-xs font-medium">{platformLabel}</span>
-                      <span className="ml-auto text-white font-bold">${(service.pricing / 100).toFixed(0)}</span>
                     </div>
                     <h3 className="text-white font-semibold text-sm mb-2">
                       {service.title}
