@@ -493,43 +493,39 @@ const SignupPage: React.FC = () => {
                 </p>
               </div>
               
-              {/* OTP Input - Visual boxes that also handle autofill */}
-              <div className="flex justify-center gap-2">
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el) => { otpInputRefs.current[index] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    autoComplete={index === 0 ? "one-time-code" : "off"}
-                    autoFocus={index === 0}
-                    className="w-12 h-14 text-center text-xl font-bold border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    value={digit}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      
-                      // Handle autofill (full code pasted/filled)
-                      if (value.length > 1) {
-                        const digits = value.slice(0, 6).split('');
-                        const newOtp = [...digits, ...Array(6).fill('')].slice(0, 6);
-                        setOtp(newOtp);
-                        if (digits.length === 6) {
-                          handleOtpSubmit(digits.join(''));
-                        } else {
-                          otpInputRefs.current[digits.length]?.focus();
-                        }
-                        return;
-                      }
-                      
-                      // Handle single digit
-                      handleOtpChange(index, value);
-                    }}
-                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                    onPaste={handleOtpPaste}
-                  />
-                ))}
+              {/* Single OTP input for best autofill compatibility (macOS/iOS/Android) */}
+              <div>
+                <input
+                  ref={(el) => { otpInputRefs.current[0] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                  autoFocus
+                  placeholder="000000"
+                  className="w-full h-16 text-center text-3xl font-mono font-bold tracking-[0.5em] border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-600"
+                  value={otp.join('')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    const newOtp = value.split('').concat(Array(6).fill('')).slice(0, 6);
+                    setOtp(newOtp);
+                    
+                    // Auto-submit when 6 digits entered
+                    if (value.length === 6) {
+                      handleOtpSubmit(value);
+                    }
+                  }}
+                  onPaste={(e) => {
+                    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (pastedData.length === 6) {
+                      e.preventDefault();
+                      const newOtp = pastedData.split('');
+                      setOtp(newOtp);
+                      handleOtpSubmit(pastedData);
+                    }
+                  }}
+                />
               </div>
               
               <div className="flex gap-3">
