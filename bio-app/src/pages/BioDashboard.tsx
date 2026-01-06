@@ -390,10 +390,45 @@ const BioDashboard: React.FC = () => {
           }
         }
         
-        // If there are handles in talent_profiles not in social_accounts, sync them
+        // Combine social_accounts data with handles from talent_profiles
+        // This ensures handles added via admin show up even if not in social_accounts table
+        const combinedSocials: SocialAccount[] = [];
+        
+        // First add all from social_accounts table
+        if (socialData && socialData.length > 0) {
+          for (const s of socialData) {
+            combinedSocials.push({
+              id: s.id,
+              platform: s.platform as SocialAccount['platform'],
+              handle: s.handle.replace(/^@/, ''),
+              follower_count: s.follower_count,
+            });
+          }
+        }
+        
+        // Then add any from talent_profiles that aren't already in the list
+        for (const mapping of handleMappings) {
+          const handle = (profile as any)[mapping.field];
+          if (handle) {
+            const existsAlready = combinedSocials.some(s => s.platform === mapping.platform);
+            if (!existsAlready) {
+              combinedSocials.push({
+                id: `profile-${mapping.platform}`, // Temporary ID for display
+                platform: mapping.platform as SocialAccount['platform'],
+                handle: handle.replace(/^@/, ''),
+                follower_count: undefined,
+              });
+            }
+          }
+        }
+        
+        console.log('Bio Dashboard: Combined socials for talent', profile.id, ':', combinedSocials);
+        setSocialLinks(combinedSocials);
+        
+        // Try to sync handles from talent_profiles to social_accounts (best effort)
         if (profileHandles.length > 0 && profile) {
-          console.log('Syncing handles from talent_profiles to social_accounts:', profileHandles);
-          const profileId = profile.id; // Capture for closure
+          console.log('Attempting to sync handles from talent_profiles to social_accounts:', profileHandles);
+          const profileId = profile.id;
           
           const insertData = profileHandles.map(h => ({
             talent_id: profileId,
@@ -401,30 +436,15 @@ const BioDashboard: React.FC = () => {
             handle: h.handle.startsWith('@') ? h.handle : `@${h.handle}`,
           }));
           
-          const { data: newSocials, error: insertError } = await supabase
+          const { error: insertError } = await supabase
             .from('social_accounts')
-            .insert(insertData)
-            .select();
+            .insert(insertData);
           
           if (insertError) {
-            console.warn('Could not sync handles to social_accounts:', insertError);
-          } else if (newSocials) {
-            // Add the new socials to our data
-            const allSocialData = [...(socialData || []), ...newSocials];
-            setSocialLinks(allSocialData.map(s => ({
-              id: s.id,
-              platform: s.platform,
-              handle: s.handle.replace(/^@/, ''),
-              follower_count: s.follower_count,
-            })));
+            console.warn('Could not sync handles to social_accounts (will still display from profile):', insertError);
+          } else {
+            console.log('Successfully synced handles to social_accounts');
           }
-        } else if (socialData && socialData.length > 0) {
-          setSocialLinks(socialData.map(s => ({
-            id: s.id,
-            platform: s.platform,
-            handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
-            follower_count: s.follower_count,
-          })));
         }
         
         // Sync youtube_handle and rumble_handle to talent_profiles if missing
