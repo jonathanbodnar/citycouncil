@@ -70,7 +70,7 @@ const SignupPage: React.FC = () => {
     return digits.length >= 10;
   };
 
-  // Handle email submission - capture email as a user even if they don't finish
+  // Handle email submission - check if user exists with phone, skip to OTP if so
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -79,30 +79,89 @@ const SignupPage: React.FC = () => {
       return;
     }
     
-    // Capture email as a user/lead (fire and forget - don't block the flow)
     const normalizedEmail = email.toLowerCase().trim();
+    setLoading(true);
     
-    fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        email: normalizedEmail,
-        source: 'login_form',
-        utm_source: promoSource,
-      }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          console.log('📧 Email captured as user:', normalizedEmail, data.existing ? '(existing)' : '(new)');
+    try {
+      // Check if user exists with this email and has a phone number
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('email', normalizedEmail)
+        .single();
+      
+      if (existingUser?.phone) {
+        // User exists with phone - send OTP directly and skip to code step
+        console.log('📧 Existing user with phone, skipping to OTP');
+        setPhone(existingUser.phone);
+        
+        const response = await fetch(
+          `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ phone: existingUser.phone, email: normalizedEmail }),
+          }
+        );
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          if (data.rateLimited) {
+            toast.error(data.error);
+            setResendCooldown(60);
+            setStep('otp');
+            setPhoneHint(data.phoneHint || `***-***-${existingUser.phone.slice(-4)}`);
+            return;
+          }
+          throw new Error(data.error);
         }
+        
+        setPhoneHint(data.phoneHint || `***-***-${existingUser.phone.slice(-4)}`);
+        setStep('otp');
+        setResendCooldown(60);
+        toast.success('Welcome back! Code sent to your phone.');
+        
+        setTimeout(() => {
+          otpInputRefs.current[0]?.focus();
+        }, 100);
+        
+        return;
+      }
+      
+      // No existing user with phone - capture email and go to phone step
+      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          source: 'login_form',
+          utm_source: promoSource,
+        }),
       })
-      .catch(err => console.log('Email capture note:', err.message));
-    
-    setStep('phone');
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log('📧 Email captured as user:', normalizedEmail, data.existing ? '(existing)' : '(new)');
+          }
+        })
+        .catch(err => console.log('Email capture note:', err.message));
+      
+      setStep('phone');
+      
+    } catch (error: any) {
+      console.log('Email check error:', error.message);
+      // On error, just proceed to phone step
+      setStep('phone');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle phone submission - send OTP
@@ -388,10 +447,11 @@ const SignupPage: React.FC = () => {
               
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Continue
-                <ArrowRightIcon className="h-4 w-4" />
+                {loading ? 'Checking...' : 'Continue'}
+                {!loading && <ArrowRightIcon className="h-4 w-4" />}
               </button>
             </form>
           )}
