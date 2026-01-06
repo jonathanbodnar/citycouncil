@@ -51,9 +51,10 @@ serve(async (req) => {
     }
 
     const formattedPhone = formatPhone(phone);
-    console.log('Verifying OTP for phone:', formattedPhone);
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log('Verifying OTP for phone:', formattedPhone, 'email:', normalizedEmail);
 
-    // Find the OTP code (can be for login OR registration)
+    // ========== VERIFY OTP CODE ==========
     const { data: otpData, error: otpError } = await supabase
       .from('phone_otp_codes')
       .select('*')
@@ -128,30 +129,82 @@ serve(async (req) => {
 
     console.log('OTP verified successfully');
 
-    // Check if this is LOGIN (user_id exists) or REGISTRATION (user_id is null)
-    const isLogin = !!otpData.user_id;
+    // ========== SMART USER LOOKUP (double-check at verify time) ==========
+    // Re-check for existing user in case something changed between send and verify
+    let existingUser: any = null;
 
-    if (isLogin) {
-      // ========== LOGIN FLOW ==========
-      console.log('Processing as LOGIN for user:', otpData.user_id);
+    // Check by email first
+    const { data: userByEmail } = await supabase
+      .from('users')
+      .select('id, email, phone, full_name, user_type')
+      .eq('email', normalizedEmail)
+      .single();
 
-      // Get user data
-      const { data: userData, error: userError } = await supabase
+    // Check by phone
+    const { data: userByPhone } = await supabase
+      .from('users')
+      .select('id, email, phone, full_name, user_type')
+      .eq('phone', formattedPhone)
+      .single();
+
+    // Also check by OTP user_id if set
+    let userByOtp: any = null;
+    if (otpData.user_id) {
+      const { data } = await supabase
         .from('users')
-        .select('id, email, full_name, user_type')
+        .select('id, email, phone, full_name, user_type')
         .eq('id', otpData.user_id)
         .single();
+      userByOtp = data;
+    }
 
-      if (userError || !userData) {
-        throw new Error("User not found");
+    console.log('Verify lookup:', {
+      userByEmail: userByEmail?.id,
+      userByPhone: userByPhone?.id,
+      userByOtp: userByOtp?.id
+    });
+
+    // Determine the existing user (priority: OTP user_id > email > phone)
+    if (userByOtp) {
+      existingUser = userByOtp;
+    } else if (userByEmail) {
+      existingUser = userByEmail;
+    } else if (userByPhone) {
+      existingUser = userByPhone;
+    }
+
+    if (existingUser) {
+      // ========== LOGIN FLOW ==========
+      console.log('Processing as LOGIN for user:', existingUser.id);
+
+      // Sync user data - ensure both phone and email are up to date
+      const updates: any = {};
+      if (!existingUser.phone || existingUser.phone !== formattedPhone) {
+        updates.phone = formattedPhone;
+      }
+      if (!existingUser.email || existingUser.email !== normalizedEmail) {
+        // Only update email if user doesn't have one (rare)
+        // Don't overwrite existing email as it's the primary identifier
+        if (!existingUser.email) {
+          updates.email = normalizedEmail;
+        }
+      }
+      updates.last_login = new Date().toISOString();
+
+      if (Object.keys(updates).length > 0) {
+        console.log('Syncing user data:', updates);
+        await supabase
+          .from('users')
+          .update(updates)
+          .eq('id', existingUser.id);
       }
 
-      // Generate a magic link token for this user
+      // Generate magic link
       const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: userData.email,
+        email: existingUser.email,
         options: {
-          redirectTo: userData.user_type === 'talent' ? '/dashboard' : '/',
+          redirectTo: existingUser.user_type === 'talent' ? '/dashboard' : '/',
         },
       });
 
@@ -165,13 +218,7 @@ serve(async (req) => {
         throw new Error("Failed to generate authentication link");
       }
 
-      // Update last_login
-      await supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', userData.id);
-
-      console.log('Login successful for:', userData.email);
+      console.log('Login successful for:', existingUser.email);
 
       return new Response(
         JSON.stringify({
@@ -179,10 +226,10 @@ serve(async (req) => {
           isLogin: true,
           magicLink: magicLinkUrl,
           user: {
-            id: userData.id,
-            email: userData.email,
-            fullName: userData.full_name,
-            userType: userData.user_type,
+            id: existingUser.id,
+            email: existingUser.email,
+            fullName: existingUser.full_name,
+            userType: existingUser.user_type,
           },
         }),
         {
@@ -192,58 +239,14 @@ serve(async (req) => {
       );
     } else {
       // ========== REGISTRATION FLOW ==========
-      console.log('Processing as REGISTRATION for email:', email);
+      console.log('Processing as REGISTRATION for email:', normalizedEmail);
 
-      // Double-check user doesn't exist (race condition protection)
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .or(`email.eq.${email.toLowerCase()},phone.eq.${formattedPhone}`)
-        .single();
-
-      if (existingUser) {
-        // User was created between send and verify - treat as login
-        console.log('User created during OTP flow, treating as login');
-        
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id, email, full_name, user_type')
-          .eq('id', existingUser.id)
-          .single();
-
-        if (userData) {
-          const { data: authData } = await supabase.auth.admin.generateLink({
-            type: 'magiclink',
-            email: userData.email,
-            options: { redirectTo: '/' },
-          });
-
-          return new Response(
-            JSON.stringify({
-              success: true,
-              isLogin: true,
-              magicLink: authData?.properties?.action_link,
-              user: {
-                id: userData.id,
-                email: userData.email,
-                fullName: userData.full_name,
-                userType: userData.user_type,
-              },
-            }),
-            {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-              status: 200,
-            }
-          );
-        }
-      }
-
-      // Create the user account with a random password
+      // Create the user account
       const randomPassword = generateRandomPassword();
-      const displayName = email.split('@')[0];
+      const displayName = normalizedEmail.split('@')[0];
 
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         password: randomPassword,
         email_confirm: true,
         user_metadata: {
@@ -256,6 +259,44 @@ serve(async (req) => {
 
       if (authError) {
         console.error('Error creating user:', authError);
+        
+        // If user already exists (race condition), try to log them in instead
+        if (authError.message?.includes('already been registered') || authError.message?.includes('already exists')) {
+          console.log('User created during OTP flow (race condition), attempting login');
+          
+          const { data: raceUser } = await supabase
+            .from('users')
+            .select('id, email, full_name, user_type')
+            .eq('email', normalizedEmail)
+            .single();
+          
+          if (raceUser) {
+            const { data: raceAuthData } = await supabase.auth.admin.generateLink({
+              type: 'magiclink',
+              email: raceUser.email,
+              options: { redirectTo: '/' },
+            });
+
+            return new Response(
+              JSON.stringify({
+                success: true,
+                isLogin: true,
+                magicLink: raceAuthData?.properties?.action_link,
+                user: {
+                  id: raceUser.id,
+                  email: raceUser.email,
+                  fullName: raceUser.full_name,
+                  userType: raceUser.user_type,
+                },
+              }),
+              {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+              }
+            );
+          }
+        }
+        
         throw new Error(authError.message || "Failed to create account");
       }
 
@@ -264,14 +305,19 @@ serve(async (req) => {
       // Wait for trigger to create users table entry
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Update the users table with phone number
-      await supabase
+      // Update the users table with phone and promo source
+      const { error: updateError } = await supabase
         .from('users')
         .update({ 
           phone: formattedPhone,
           promo_source: promoSource || null,
         })
         .eq('id', authData.user.id);
+
+      if (updateError) {
+        console.error('Error updating user:', updateError);
+        // Don't fail - user is created
+      }
 
       // Create user_settings entry
       await supabase
@@ -281,10 +327,10 @@ serve(async (req) => {
           ignoreDuplicates: true
         });
 
-      // Generate magic link to log them in
+      // Generate magic link
       const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         options: {
           redirectTo: '/',
         },
@@ -300,7 +346,7 @@ serve(async (req) => {
         throw new Error("Account created but login failed. Please use login page.");
       }
 
-      console.log('Registration complete for:', email);
+      console.log('Registration complete for:', normalizedEmail);
 
       return new Response(
         JSON.stringify({
@@ -309,7 +355,7 @@ serve(async (req) => {
           magicLink: magicLinkUrl,
           user: {
             id: authData.user.id,
-            email: email.toLowerCase(),
+            email: normalizedEmail,
             fullName: displayName,
             userType: 'user',
           },
