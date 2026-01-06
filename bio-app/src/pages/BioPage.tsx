@@ -1197,7 +1197,7 @@ const BioPage: React.FC = () => {
               );
             }
             
-            // Tall format - rounded square image on left, text on right (horizontal card)
+            // Tall format - image flush left, text on right (horizontal card)
             if (linkFormat === 'tall') {
               return (
                 <a
@@ -1206,24 +1206,30 @@ const BioPage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => handleLinkClick(link)}
-                  className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] overflow-hidden flex items-center gap-4 p-3`}
+                  className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] overflow-hidden`}
                   style={{
                     ...getButtonStyle(),
                     ...featuredStyle,
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'stretch',
+                    padding: 0,
                   }}
                 >
                   {link.thumbnail_url && (
-                    <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden">
-                      <img src={link.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                    <div className="w-24 flex-shrink-0" style={{ minHeight: '96px' }}>
+                      <img src={link.thumbnail_url} alt="" className="w-full h-full object-cover rounded-l-xl" />
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-white font-medium text-left block">{link.title}</span>
-                    {link.subtitle && (
-                      <span className="text-white/60 text-sm text-left block mt-0.5">{link.subtitle}</span>
-                    )}
+                  <div className="flex-1 flex items-center justify-between px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-white font-medium text-left block">{link.title}</span>
+                      {link.subtitle && (
+                        <span className="text-white/60 text-sm text-left block mt-0.5">{link.subtitle}</span>
+                      )}
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60 flex-shrink-0 ml-3" />
                   </div>
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60 flex-shrink-0" />
                 </a>
               );
             }
@@ -1302,8 +1308,8 @@ const BioPage: React.FC = () => {
                     );
                   }
                   
-                  // Tall format - rounded square image on left, text on right (horizontal card)
-                  if (linkFormat === 'tall') {
+                  // Tall format - image flush left, text on right (horizontal card)
+                  if (format === 'tall') {
                     return (
                       <a
                         key={link.id}
@@ -1311,26 +1317,34 @@ const BioPage: React.FC = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => handleLinkClick(link)}
-                        className={`${getRadiusClass()} overflow-hidden group col-span-2 flex items-center gap-4 p-3`}
-                        style={getButtonStyle()}
+                        className={`${getRadiusClass()} overflow-hidden group col-span-2`}
+                        style={{
+                          ...getButtonStyle(),
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'stretch',
+                          padding: 0,
+                        }}
                       >
                         {link.thumbnail_url ? (
-                          <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden">
+                          <div className="w-24 flex-shrink-0" style={{ minHeight: '96px' }}>
                             <img 
                               src={link.thumbnail_url} 
                               alt={link.title || ''} 
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              className="w-full h-full object-cover rounded-l-xl transition-transform duration-300 group-hover:scale-105"
                             />
                           </div>
                         ) : (
-                          <div className="w-20 h-20 flex-shrink-0 rounded-xl flex items-center justify-center bg-white/10">
+                          <div className="w-24 flex-shrink-0 flex items-center justify-center bg-white/10" style={{ minHeight: '96px' }}>
                             <Squares2X2Icon className="h-8 w-8 text-white/40" />
                           </div>
                         )}
-                        <div className="flex-1 min-w-0">
-                          <span className="text-white font-medium text-left block">{link.title}</span>
+                        <div className="flex-1 flex items-center justify-between px-4 py-3">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-white font-medium text-left block">{link.title}</span>
+                          </div>
+                          <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60 flex-shrink-0 ml-3" />
                         </div>
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/60 flex-shrink-0" />
                       </a>
                     );
                   }
