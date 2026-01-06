@@ -572,7 +572,7 @@ const OrderPage: React.FC = () => {
                 talent.users.email,
                 talent.users.full_name,
                 {
-                  userName: user.full_name,
+                  userName: user.full_name || user.email?.split('@')[0] || 'Customer',
                   amount: pricing.total,
                   requestDetails: 'Details pending from customer',
                   deadline: new Date(fulfillmentDeadline).toLocaleDateString()
@@ -590,7 +590,7 @@ const OrderPage: React.FC = () => {
               await notificationService.notifyNewOrder(
                 talent.user_id,
                 order.id,
-                user.full_name,
+                user.full_name || user.email?.split('@')[0] || 'Customer',
                 pricing.total
               );
             } catch (e) {
@@ -605,7 +605,7 @@ const OrderPage: React.FC = () => {
             try {
               await emailService.sendOrderConfirmation(
                 user.email,
-                user.full_name,
+                user.full_name || user.email?.split('@')[0] || 'there',
                 {
                   talentName: talent.temp_full_name || talent.users.full_name,
                   amount: pricing.subtotal,

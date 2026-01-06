@@ -480,11 +480,12 @@ const CollabOrderPage: React.FC = () => {
       // Get background from bio gradient or use dark default
       const themeBgColor = bioSettings?.gradient_start || '#0f172a';
       
-      // Fortis Commerce.js v1.0.0 - use dark theme which has proper dark inputs
+      // Fortis Commerce.js v1.0.0
       // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
+      // Using theme: 'default' and controlling all colors via appearance
       elements.create({
         container: '#fortis-payment-container',
-        theme: 'dark',  // Use dark theme for dark input fields
+        theme: 'default',  // Use default theme, override with appearance
         environment: 'production',
         view: 'default',
         language: 'en-us',
@@ -496,18 +497,19 @@ const CollabOrderPage: React.FC = () => {
         hideAgreementCheckbox: false,
         hideTotal: false,
         appearance: {
-          // Background color - match bio page gradient
+          // Dark background
           colorBackground: themeBgColor,
-          // Text color
+          // White text
           colorText: '#ffffff',
-          // Tab buttons (Credit Card / ACH) - selected state
+          // Tab buttons - unselected state
+          colorButtonBackground: '#374151',
+          colorButtonText: '#d1d5db',
+          // Tab buttons - selected state (theme color)
           colorButtonSelectedBackground: themeButtonColor,
           colorButtonSelectedText: '#ffffff',
-          // Tab buttons - unselected state (try different property names)
-          colorButtonBackground: themeBgColor,
-          colorButtonText: '#ffffff',
           // Font
           fontFamily: 'Montserrat',
+          fontSize: '16px',
           borderRadius: '8px',
         },
       });

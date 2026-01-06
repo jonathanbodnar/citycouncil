@@ -101,8 +101,8 @@ const Header: React.FC = () => {
 
           if (error) throw error;
           
-          // Use talent profile name if available, otherwise fall back to user.full_name
-          const finalName = data?.full_name || user.full_name;
+          // Use talent profile name if available, otherwise fall back to user.full_name or email
+          const finalName = data?.full_name || user.full_name || user.email?.split('@')[0];
           setDisplayName(finalName);
           
           console.log('📝 Header - Name sources:');
@@ -112,11 +112,11 @@ const Header: React.FC = () => {
           console.log('  - First name shown:', finalName?.split(' ')[0]);
         } catch (error) {
           console.error('Error fetching talent profile name:', error);
-          setDisplayName(user.full_name);
+          setDisplayName(user.full_name || user.email?.split('@')[0]);
         }
       } else {
-        // For non-talent users, use user.full_name
-        setDisplayName(user.full_name);
+        // For non-talent users, use user.full_name or email prefix
+        setDisplayName(user.full_name || user.email?.split('@')[0]);
       }
     };
 

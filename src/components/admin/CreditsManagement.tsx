@@ -120,8 +120,8 @@ const CreditsManagement: React.FC = () => {
   };
 
   const filteredUsers = users.filter(user =>
-    user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (user.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getTransactionColor = (type: string) => {
@@ -184,7 +184,7 @@ const CreditsManagement: React.FC = () => {
               <option value="">Choose a user...</option>
               {users.map(user => (
                 <option key={user.id} value={user.id}>
-                  {user.full_name} ({user.email}) - ${user.credits.toFixed(2)}
+                  {user.full_name || user.email?.split('@')[0] || 'User'} ({user.email}) - ${user.credits.toFixed(2)}
                 </option>
               ))}
             </select>
@@ -270,7 +270,7 @@ const CreditsManagement: React.FC = () => {
                 filteredUsers.map(user => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {user.full_name}
+                      {user.full_name || user.email?.split('@')[0] || 'User'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {user.email}
