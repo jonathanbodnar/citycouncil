@@ -498,11 +498,15 @@ const CollabOrderPage: React.FC = () => {
         appearance: {
           // Background color - match bio page gradient
           colorBackground: themeBgColor,
-          // Tab buttons (Credit Card / ACH)
-          colorButtonBackground: '#374151',      // Unselected tab - dark gray
-          colorButtonText: '#9ca3af',            // Unselected tab text - light gray
-          colorButtonSelectedBackground: themeButtonColor,  // Selected tab - theme color
-          colorButtonSelectedText: '#ffffff',    // Selected tab text - white
+          // Text color
+          colorText: '#ffffff',
+          // Tab buttons (Credit Card / ACH) - selected state
+          colorButtonSelectedBackground: themeButtonColor,
+          colorButtonSelectedText: '#ffffff',
+          // Tab buttons - unselected state (try different property names)
+          colorButtonBackground: themeBgColor,
+          colorButtonText: '#ffffff',
+          // Font
           fontFamily: 'Montserrat',
           borderRadius: '8px',
         },
