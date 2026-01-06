@@ -1262,51 +1262,51 @@ const BioPage: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                /* Not logged in - email/phone form inline */
+                /* Not logged in - email/phone form with button inside field */
                 <form onSubmit={handleFollowSignup} className="space-y-3">
-                  {/* Email row - always visible */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="email"
-                      value={newsletterEmail}
-                      onChange={(e) => setNewsletterEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      required
-                      className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
-                    />
-                    {!showPhoneField && (
+                  {/* Email field with button inside */}
+                  {!showPhoneField && (
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={newsletterEmail}
+                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        required
+                        className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-44 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                      />
                       <button
                         type="submit"
                         disabled={subscribing}
-                        className="px-5 py-3 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                        className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1"
                         style={{ 
                           backgroundColor: bioSettings?.button_color || '#3b82f6',
                           color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
                         }}
                       >
-                        {subscribing ? '...' : `Stay connected to ${displayName.split(' ')[0]}`}
+                        {subscribing ? '...' : `Stay connected`}
                         {!subscribing && (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                           </svg>
                         )}
                       </button>
-                    )}
-                  </div>
-                  {/* Phone field - shown inline after email if new user */}
+                    </div>
+                  )}
+                  {/* Phone field with button inside - shown after email if new user */}
                   {showPhoneField && (
-                    <div className="flex items-center gap-2">
+                    <div className="relative">
                       <input
                         type="tel"
                         value={newsletterPhone}
                         onChange={(e) => setNewsletterPhone(e.target.value)}
                         placeholder="Phone (optional)"
-                        className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                        className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-32 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
                       />
                       <button
                         type="submit"
                         disabled={subscribing}
-                        className="px-5 py-3 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                        className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1"
                         style={{ 
                           backgroundColor: bioSettings?.button_color || '#3b82f6',
                           color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
