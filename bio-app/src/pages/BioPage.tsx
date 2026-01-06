@@ -40,6 +40,11 @@ interface TalentProfile {
   bio?: string;
   social_accounts?: SocialAccount[];
   promo_video_url?: string;
+  // Social handles from talent_profiles table
+  twitter_handle?: string;
+  instagram_handle?: string;
+  facebook_handle?: string;
+  tiktok_handle?: string;
   rumble_handle?: string;
   youtube_handle?: string;
 }
@@ -358,17 +363,50 @@ const BioPage: React.FC = () => {
           .select('id, platform, handle, follower_count')
           .eq('talent_id', profile.id);
         
+        // Combine social_accounts with handles from talent_profiles
+        // This ensures handles added via admin show up even if not in social_accounts
+        const combinedAccounts: SocialAccount[] = [];
+        
+        // First add all from social_accounts table
         if (socialData && socialData.length > 0) {
-          const accounts = socialData.map(s => ({
-            id: s.id,
-            platform: s.platform,
-            handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
-            follower_count: s.follower_count,
-          }));
-          setSocialAccounts(accounts);
-          
-          // Fetch follower counts for accounts that don't have them cached
-          fetchFollowerCounts(accounts, profile.id);
+          for (const s of socialData) {
+            combinedAccounts.push({
+              id: s.id,
+              platform: s.platform,
+              handle: s.handle.replace(/^@/, ''),
+              follower_count: s.follower_count,
+            });
+          }
+        }
+        
+        // Then add any handles from talent_profiles that aren't already in the list
+        const handleMappings = [
+          { platform: 'twitter', field: 'twitter_handle' },
+          { platform: 'instagram', field: 'instagram_handle' },
+          { platform: 'facebook', field: 'facebook_handle' },
+          { platform: 'tiktok', field: 'tiktok_handle' },
+          { platform: 'youtube', field: 'youtube_handle' },
+          { platform: 'rumble', field: 'rumble_handle' },
+        ];
+        
+        for (const mapping of handleMappings) {
+          const handle = (profile as any)[mapping.field];
+          if (handle) {
+            const existsAlready = combinedAccounts.some(s => s.platform === mapping.platform);
+            if (!existsAlready) {
+              combinedAccounts.push({
+                id: `profile-${mapping.platform}`,
+                platform: mapping.platform,
+                handle: handle.replace(/^@/, ''),
+                follower_count: undefined,
+              });
+            }
+          }
+        }
+        
+        if (combinedAccounts.length > 0) {
+          setSocialAccounts(combinedAccounts);
+          fetchFollowerCounts(combinedAccounts, profile.id);
         }
 
         // Get active service offerings
