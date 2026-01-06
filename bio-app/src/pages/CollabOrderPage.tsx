@@ -478,11 +478,11 @@ const CollabOrderPage: React.FC = () => {
       // Get theme color - use bio button color or default pink
       const themeButtonColor = bioSettings?.button_color || '#ec4899';
       
-      // Fortis Commerce.js v1.0.0 - supported appearance options
+      // Fortis Commerce.js v1.0.0 - use dark theme which has proper dark inputs
       // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
       elements.create({
         container: '#fortis-payment-container',
-        theme: 'default',
+        theme: 'dark',  // Use dark theme for dark input fields
         environment: 'production',
         view: 'default',
         language: 'en-us',
@@ -494,16 +494,11 @@ const CollabOrderPage: React.FC = () => {
         hideAgreementCheckbox: false,
         hideTotal: false,
         appearance: {
-          // Dark theme colors
-          colorBackground: '#1a1a2e',
-          colorText: '#ffffff',
-          colorButtonBackground: '#2d2d44',
-          colorButtonText: '#ffffff',
+          // Override button colors to match theme
           colorButtonSelectedBackground: themeButtonColor,
           colorButtonSelectedText: '#ffffff',
           fontFamily: 'Montserrat',
-          fontSize: '16px',
-          borderRadius: '12px',
+          borderRadius: '8px',
         },
       });
       
