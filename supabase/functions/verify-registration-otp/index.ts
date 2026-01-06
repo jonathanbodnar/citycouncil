@@ -46,27 +46,89 @@ serve(async (req) => {
 
     const { phone, code, email, promoSource } = await req.json();
 
-    if (!phone || !code || !email) {
-      throw new Error("Phone number, code, and email are required");
+    if (!code || !email) {
+      throw new Error("Code and email are required");
     }
 
-    const formattedPhone = formatPhone(phone);
+    const formattedPhone = phone ? formatPhone(phone) : null;
     const normalizedEmail = email.toLowerCase().trim();
     console.log('Verifying OTP for phone:', formattedPhone, 'email:', normalizedEmail);
 
     // ========== VERIFY OTP CODE ==========
-    const { data: otpData, error: otpError } = await supabase
-      .from('phone_otp_codes')
-      .select('*')
-      .eq('phone', formattedPhone)
-      .eq('verified', false)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    // Try to find OTP by phone first, then by user_id (for existing users who skipped phone entry)
+    let otpData: any = null;
+    let otpError: any = null;
 
-    if (otpError || !otpData) {
-      console.log('No valid OTP found for phone:', formattedPhone);
+    if (formattedPhone) {
+      // Try phone lookup first
+      const result = await supabase
+        .from('phone_otp_codes')
+        .select('*')
+        .eq('phone', formattedPhone)
+        .eq('verified', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      otpData = result.data;
+      otpError = result.error;
+      console.log('Phone lookup result:', { found: !!otpData, error: otpError?.message });
+    }
+
+    // If phone lookup failed, try to find by user's email (for existing users)
+    if (!otpData) {
+      console.log('Phone lookup failed, trying email-based lookup');
+      
+      // First find the user by email
+      const { data: userByEmail } = await supabase
+        .from('users')
+        .select('id, phone')
+        .eq('email', normalizedEmail)
+        .single();
+      
+      if (userByEmail) {
+        console.log('Found user by email:', userByEmail.id, 'phone:', userByEmail.phone);
+        
+        // Try to find OTP by user_id
+        const { data: otpByUser } = await supabase
+          .from('phone_otp_codes')
+          .select('*')
+          .eq('user_id', userByEmail.id)
+          .eq('verified', false)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (otpByUser) {
+          otpData = otpByUser;
+          console.log('Found OTP by user_id');
+        } else if (userByEmail.phone) {
+          // Try the user's stored phone
+          const userFormattedPhone = formatPhone(userByEmail.phone);
+          console.log('Trying user stored phone:', userFormattedPhone);
+          
+          const { data: otpByStoredPhone } = await supabase
+            .from('phone_otp_codes')
+            .select('*')
+            .eq('phone', userFormattedPhone)
+            .eq('verified', false)
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+          
+          if (otpByStoredPhone) {
+            otpData = otpByStoredPhone;
+            console.log('Found OTP by user stored phone');
+          }
+        }
+      }
+    }
+
+    if (!otpData) {
+      console.log('No valid OTP found after all lookups');
       return new Response(
         JSON.stringify({
           success: false,

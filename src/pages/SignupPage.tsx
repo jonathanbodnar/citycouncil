@@ -256,6 +256,8 @@ const SignupPage: React.FC = () => {
     
     setLoading(true);
     
+    console.log('🔐 Verifying OTP:', { phone, email, codeLength: otpCode.length });
+    
     try {
       const response = await fetch(
         `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-registration-otp`,
@@ -491,45 +493,43 @@ const SignupPage: React.FC = () => {
                 </p>
               </div>
               
-              {/* OTP Input - Single input for autofill, visual boxes for display */}
-              <div className="relative">
-                {/* Hidden input for iOS/Android autofill */}
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  className="absolute inset-0 w-full h-14 opacity-0 z-10 cursor-pointer"
-                  value={otp.join('')}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    const newOtp = value.split('').concat(Array(6).fill('')).slice(0, 6);
-                    setOtp(newOtp);
-                    if (value.length === 6) {
-                      handleOtpSubmit(value);
-                    }
-                  }}
-                  onFocus={() => otpInputRefs.current[0]?.focus()}
-                />
-                
-                {/* Visual OTP boxes */}
-                <div className="flex justify-center gap-2">
-                  {otp.map((digit, index) => (
-                    <input
-                      key={index}
-                      ref={(el) => { otpInputRefs.current[index] = el; }}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      autoComplete={index === 0 ? "one-time-code" : "off"}
-                      className="w-12 h-14 text-center text-xl font-bold border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      onPaste={index === 0 ? handleOtpPaste : undefined}
-                    />
-                  ))}
-                </div>
+              {/* OTP Input - Visual boxes that also handle autofill */}
+              <div className="flex justify-center gap-2">
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => { otpInputRefs.current[index] = el; }}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    autoComplete={index === 0 ? "one-time-code" : "off"}
+                    autoFocus={index === 0}
+                    className="w-12 h-14 text-center text-xl font-bold border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    value={digit}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      
+                      // Handle autofill (full code pasted/filled)
+                      if (value.length > 1) {
+                        const digits = value.slice(0, 6).split('');
+                        const newOtp = [...digits, ...Array(6).fill('')].slice(0, 6);
+                        setOtp(newOtp);
+                        if (digits.length === 6) {
+                          handleOtpSubmit(digits.join(''));
+                        } else {
+                          otpInputRefs.current[digits.length]?.focus();
+                        }
+                        return;
+                      }
+                      
+                      // Handle single digit
+                      handleOtpChange(index, value);
+                    }}
+                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onPaste={handleOtpPaste}
+                  />
+                ))}
               </div>
               
               <div className="flex gap-3">
