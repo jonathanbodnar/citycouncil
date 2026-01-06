@@ -476,16 +476,26 @@ const BioDashboard: React.FC = () => {
 
   // Save settings
   const saveSettings = useCallback(async (updates: Partial<BioSettings>) => {
-    if (!bioSettings?.id) return;
+    if (!bioSettings?.id) {
+      console.error('No bioSettings.id to save to');
+      return;
+    }
 
+    console.log('Saving settings:', updates, 'to bioSettings.id:', bioSettings.id);
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('bio_settings')
         .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', bioSettings.id);
+        .eq('id', bioSettings.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error saving settings:', error);
+        throw error;
+      }
+      
+      console.log('Settings saved successfully:', data);
       setBioSettings({ ...bioSettings, ...updates });
       toast.success('Settings saved!');
       // Auto-refresh preview after saving
