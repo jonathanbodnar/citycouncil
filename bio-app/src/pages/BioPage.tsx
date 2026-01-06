@@ -917,7 +917,7 @@ const BioPage: React.FC = () => {
         }
 
         setIsFollowing(true);
-        toast.success(`You're now following ${bioSettings?.display_name || talentProfile?.full_name?.split(' ')[0]}!`);
+        toast.success(`You're now subscribed to ${bioSettings?.display_name || talentProfile?.full_name?.split(' ')[0]}!`);
       } catch (error) {
         console.error('Follow error:', error);
         toast.error('Failed to follow. Please try again.');
@@ -1033,7 +1033,7 @@ const BioPage: React.FC = () => {
       }
 
       setIsFollowing(true);
-      toast.success(`You're now following ${bioSettings?.display_name || talentProfile?.full_name?.split(' ')[0]}!`);
+      toast.success(`You're now subscribed to ${bioSettings?.display_name || talentProfile?.full_name?.split(' ')[0]}!`);
       setNewsletterEmail('');
       setNewsletterPhone('');
       setShowPhoneField(false);
@@ -1190,20 +1190,20 @@ const BioPage: React.FC = () => {
             </p>
           )}
 
-          {/* Follow/Newsletter Signup - Inline under profile */}
+          {/* Follow/Newsletter Signup - Full width like other cards */}
           {bioSettings?.show_newsletter !== false && (
             <div className="mt-6 w-full">
-              {/* Already following message */}
+              {/* Already subscribed message */}
               {isFollowing ? (
-                <div className="text-center">
+                <div className="text-center py-3">
                   <p className="text-white/60 text-sm">
-                    ✓ You're connected to {displayName.split(' ')[0]}
+                    ✓ You're subscribed to {displayName.split(' ')[0]}
                   </p>
                 </div>
               ) : currentUser ? (
-                /* Logged in user - just show follow button */
+                /* Logged in user - show subscribe button */
                 <div className="space-y-2">
-                  <p className="text-white/50 text-xs text-center">
+                  <p className="text-white/40 text-xs text-center">
                     Logged in as {currentUser.email || currentUser.phone}
                   </p>
                   <button
@@ -1215,21 +1215,18 @@ const BioPage: React.FC = () => {
                       color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
                     }}
                   >
-                    {subscribing ? (
-                      '...'
-                    ) : (
-                      <>
-                        Stay connected to {displayName.split(' ')[0]}
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </>
+                    {subscribing ? '...' : `Stay connected to ${displayName.split(' ')[0]}`}
+                    {!subscribing && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
                     )}
                   </button>
                 </div>
               ) : (
-                /* Not logged in - show email/phone form */
-                <form onSubmit={handleFollowSignup} className="space-y-2">
+                /* Not logged in - email/phone form inline */
+                <form onSubmit={handleFollowSignup} className="space-y-3">
+                  {/* Email row - always visible */}
                   <div className="flex items-center gap-2">
                     <input
                       type="email"
@@ -1237,32 +1234,28 @@ const BioPage: React.FC = () => {
                       onChange={(e) => setNewsletterEmail(e.target.value)}
                       placeholder="your@email.com"
                       required
-                      className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                      className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
                     />
                     {!showPhoneField && (
                       <button
                         type="submit"
                         disabled={subscribing}
-                        className="px-5 py-2.5 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                        className="px-5 py-3 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
                         style={{ 
                           backgroundColor: bioSettings?.button_color || '#3b82f6',
                           color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
                         }}
                       >
-                        {subscribing ? (
-                          '...'
-                        ) : (
-                          <>
-                            Stay connected to {displayName.split(' ')[0]}
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                          </>
+                        {subscribing ? '...' : `Stay connected to ${displayName.split(' ')[0]}`}
+                        {!subscribing && (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
                         )}
                       </button>
                     )}
                   </div>
-                  {/* Phone field - shown after email for new users */}
+                  {/* Phone field - shown inline after email if new user */}
                   {showPhoneField && (
                     <div className="flex items-center gap-2">
                       <input
@@ -1270,26 +1263,22 @@ const BioPage: React.FC = () => {
                         value={newsletterPhone}
                         onChange={(e) => setNewsletterPhone(e.target.value)}
                         placeholder="Phone (optional)"
-                        className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                        className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
                       />
                       <button
                         type="submit"
                         disabled={subscribing}
-                        className="px-5 py-2.5 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                        className="px-5 py-3 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
                         style={{ 
                           backgroundColor: bioSettings?.button_color || '#3b82f6',
                           color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
                         }}
                       >
-                        {subscribing ? (
-                          '...'
-                        ) : (
-                          <>
-                            Connect
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                          </>
+                        {subscribing ? '...' : 'Subscribe'}
+                        {!subscribing && (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
                         )}
                       </button>
                     </div>
