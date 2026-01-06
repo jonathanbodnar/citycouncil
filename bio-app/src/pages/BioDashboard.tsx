@@ -1679,20 +1679,6 @@ const BioDashboard: React.FC = () => {
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Instagram Username</label>
-                      <div className="flex items-center">
-                        <span className="text-gray-500 mr-2">@</span>
-                        <input
-                          type="text"
-                          value={bioSettings?.instagram_username || ''}
-                          onChange={(e) => setBioSettings({ ...bioSettings!, instagram_username: e.target.value })}
-                          onBlur={() => saveSettings({ instagram_username: bioSettings?.instagram_username })}
-                          placeholder="username"
-                          className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    </div>
-                    <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">One-liner / Tagline</label>
                       <input
                         type="text"

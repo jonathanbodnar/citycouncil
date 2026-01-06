@@ -1215,18 +1215,6 @@ const BioPage: React.FC = () => {
             )}
           </h1>
 
-          {/* Instagram Username */}
-          {bioSettings?.instagram_username && (
-            <a 
-              href={`https://instagram.com/${bioSettings.instagram_username}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              @{bioSettings.instagram_username}
-            </a>
-          )}
-
           {/* One-liner */}
           {bioSettings?.one_liner && (
             <p className="text-gray-300 mt-3 max-w-sm mx-auto">
