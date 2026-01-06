@@ -109,14 +109,6 @@ const SignupPage: React.FC = () => {
       const data = await response.json();
       
       if (!data.success) {
-        if (data.alreadyRegistered) {
-          toast.error(data.error);
-          // Redirect to login
-          setTimeout(() => {
-            navigate(`/login${returnTo !== '/' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`);
-          }, 2000);
-          return;
-        }
         if (data.rateLimited) {
           toast.error(data.error);
           setResendCooldown(60);
@@ -128,7 +120,13 @@ const SignupPage: React.FC = () => {
       setPhoneHint(data.phoneHint);
       setStep('otp');
       setResendCooldown(60);
-      toast.success('Verification code sent!');
+      
+      // Show appropriate message based on whether user exists
+      if (data.isExistingUser) {
+        toast.success('Welcome back! Login code sent.');
+      } else {
+        toast.success('Verification code sent!');
+      }
       
       // Focus first OTP input
       setTimeout(() => {
@@ -184,7 +182,7 @@ const SignupPage: React.FC = () => {
     }
   };
 
-  // Verify OTP and create account
+  // Verify OTP and create account (or login if existing user)
   const handleOtpSubmit = async (code?: string) => {
     const otpCode = code || otp.join('');
     
@@ -214,28 +212,33 @@ const SignupPage: React.FC = () => {
         throw new Error(data.error);
       }
       
-      toast.success('Account created! Logging you in...');
-      
-      // Fire tracking events
-      if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', 'CompleteRegistration', {
-          content_name: 'User Registration',
-          status: 'complete'
-        });
-      }
-      
-      if (typeof window !== 'undefined' && (window as any).ratag) {
-        (window as any).ratag('conversion', { to: 3337 });
-      }
-      
-      // Send to Zapier
-      supabase.functions.invoke('send-user-webhook', {
-        body: {
-          name: email.split('@')[0],
-          email: email,
-          registered_at: new Date().toISOString()
+      // Show appropriate message based on login vs registration
+      if (data.isLogin) {
+        toast.success('Welcome back! Logging you in...');
+      } else {
+        toast.success('Account created! Logging you in...');
+        
+        // Only fire tracking events for NEW registrations
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+          (window as any).fbq('track', 'CompleteRegistration', {
+            content_name: 'User Registration',
+            status: 'complete'
+          });
         }
-      }).catch(console.error);
+        
+        if (typeof window !== 'undefined' && (window as any).ratag) {
+          (window as any).ratag('conversion', { to: 3337 });
+        }
+        
+        // Send to Zapier only for new registrations
+        supabase.functions.invoke('send-user-webhook', {
+          body: {
+            name: email.split('@')[0],
+            email: email,
+            registered_at: new Date().toISOString()
+          }
+        }).catch(console.error);
+      }
       
       // Use magic link to log in
       if (data.magicLink) {

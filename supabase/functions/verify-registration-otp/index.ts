@@ -51,14 +51,13 @@ serve(async (req) => {
     }
 
     const formattedPhone = formatPhone(phone);
-    console.log('Verifying registration OTP for phone:', formattedPhone);
+    console.log('Verifying OTP for phone:', formattedPhone);
 
-    // Find the OTP code (for registration, user_id will be null)
+    // Find the OTP code (can be for login OR registration)
     const { data: otpData, error: otpError } = await supabase
       .from('phone_otp_codes')
       .select('*')
       .eq('phone', formattedPhone)
-      .is('user_id', null) // Registration OTPs have no user_id
       .eq('verified', false)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -127,97 +126,202 @@ serve(async (req) => {
       .update({ verified: true })
       .eq('id', otpData.id);
 
-    console.log('Registration OTP verified successfully');
+    console.log('OTP verified successfully');
 
-    // Create the user account with a random password (they'll use phone OTP to login)
-    const randomPassword = generateRandomPassword();
-    
-    // Use email prefix as display name (before @)
-    const displayName = email.split('@')[0];
+    // Check if this is LOGIN (user_id exists) or REGISTRATION (user_id is null)
+    const isLogin = !!otpData.user_id;
 
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: email.toLowerCase(),
-      password: randomPassword,
-      email_confirm: true, // Skip email confirmation since we verified phone
-      user_metadata: {
-        full_name: displayName,
-        phone: formattedPhone,
-        user_type: 'user',
-        promo_source: promoSource || null,
-      },
-    });
+    if (isLogin) {
+      // ========== LOGIN FLOW ==========
+      console.log('Processing as LOGIN for user:', otpData.user_id);
 
-    if (authError) {
-      console.error('Error creating user:', authError);
-      throw new Error(authError.message || "Failed to create account");
-    }
+      // Get user data
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, full_name, user_type')
+        .eq('id', otpData.user_id)
+        .single();
 
-    console.log('User created:', authData.user.id);
+      if (userError || !userData) {
+        throw new Error("User not found");
+      }
 
-    // Wait a moment for the trigger to create the users table entry
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Update the users table with phone number (trigger may not set it)
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ 
-        phone: formattedPhone,
-        promo_source: promoSource || null,
-      })
-      .eq('id', authData.user.id);
-
-    if (updateError) {
-      console.error('Error updating user phone:', updateError);
-      // Don't fail - user is created, phone can be updated later
-    }
-
-    // Create user_settings entry
-    await supabase
-      .from('user_settings')
-      .upsert([{ user_id: authData.user.id }], {
-        onConflict: 'user_id',
-        ignoreDuplicates: true
+      // Generate a magic link token for this user
+      const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: userData.email,
+        options: {
+          redirectTo: userData.user_type === 'talent' ? '/dashboard' : '/',
+        },
       });
 
-    // Generate a magic link to log them in
-    const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: email.toLowerCase(),
-      options: {
-        redirectTo: '/',
-      },
-    });
-
-    if (magicLinkError) {
-      console.error('Error generating magic link:', magicLinkError);
-      throw new Error("Account created but login failed. Please use login page.");
-    }
-
-    const magicLinkUrl = magicLinkData.properties?.action_link;
-    if (!magicLinkUrl) {
-      throw new Error("Account created but login failed. Please use login page.");
-    }
-
-    console.log('Registration complete, magic link generated for:', email);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        magicLink: magicLinkUrl,
-        user: {
-          id: authData.user.id,
-          email: email.toLowerCase(),
-          fullName: displayName,
-          userType: 'user',
-        },
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+      if (authError) {
+        console.error('Error generating magic link:', authError);
+        throw new Error("Failed to authenticate user");
       }
-    );
+
+      const magicLinkUrl = authData.properties?.action_link;
+      if (!magicLinkUrl) {
+        throw new Error("Failed to generate authentication link");
+      }
+
+      // Update last_login
+      await supabase
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', userData.id);
+
+      console.log('Login successful for:', userData.email);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          isLogin: true,
+          magicLink: magicLinkUrl,
+          user: {
+            id: userData.id,
+            email: userData.email,
+            fullName: userData.full_name,
+            userType: userData.user_type,
+          },
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    } else {
+      // ========== REGISTRATION FLOW ==========
+      console.log('Processing as REGISTRATION for email:', email);
+
+      // Double-check user doesn't exist (race condition protection)
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .or(`email.eq.${email.toLowerCase()},phone.eq.${formattedPhone}`)
+        .single();
+
+      if (existingUser) {
+        // User was created between send and verify - treat as login
+        console.log('User created during OTP flow, treating as login');
+        
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, full_name, user_type')
+          .eq('id', existingUser.id)
+          .single();
+
+        if (userData) {
+          const { data: authData } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: userData.email,
+            options: { redirectTo: '/' },
+          });
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              isLogin: true,
+              magicLink: authData?.properties?.action_link,
+              user: {
+                id: userData.id,
+                email: userData.email,
+                fullName: userData.full_name,
+                userType: userData.user_type,
+              },
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            }
+          );
+        }
+      }
+
+      // Create the user account with a random password
+      const randomPassword = generateRandomPassword();
+      const displayName = email.split('@')[0];
+
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: email.toLowerCase(),
+        password: randomPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: displayName,
+          phone: formattedPhone,
+          user_type: 'user',
+          promo_source: promoSource || null,
+        },
+      });
+
+      if (authError) {
+        console.error('Error creating user:', authError);
+        throw new Error(authError.message || "Failed to create account");
+      }
+
+      console.log('User created:', authData.user.id);
+
+      // Wait for trigger to create users table entry
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Update the users table with phone number
+      await supabase
+        .from('users')
+        .update({ 
+          phone: formattedPhone,
+          promo_source: promoSource || null,
+        })
+        .eq('id', authData.user.id);
+
+      // Create user_settings entry
+      await supabase
+        .from('user_settings')
+        .upsert([{ user_id: authData.user.id }], {
+          onConflict: 'user_id',
+          ignoreDuplicates: true
+        });
+
+      // Generate magic link to log them in
+      const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: email.toLowerCase(),
+        options: {
+          redirectTo: '/',
+        },
+      });
+
+      if (magicLinkError) {
+        console.error('Error generating magic link:', magicLinkError);
+        throw new Error("Account created but login failed. Please use login page.");
+      }
+
+      const magicLinkUrl = magicLinkData.properties?.action_link;
+      if (!magicLinkUrl) {
+        throw new Error("Account created but login failed. Please use login page.");
+      }
+
+      console.log('Registration complete for:', email);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          isLogin: false,
+          magicLink: magicLinkUrl,
+          user: {
+            id: authData.user.id,
+            email: email.toLowerCase(),
+            fullName: displayName,
+            userType: 'user',
+          },
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
   } catch (error: any) {
-    console.error("Error verifying registration OTP:", error);
+    console.error("Error verifying OTP:", error);
     return new Response(
       JSON.stringify({
         success: false,
@@ -230,4 +334,3 @@ serve(async (req) => {
     );
   }
 });
-

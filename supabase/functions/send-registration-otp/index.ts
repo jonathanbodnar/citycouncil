@@ -55,50 +55,46 @@ serve(async (req) => {
     }
 
     const formattedPhone = formatPhone(phone);
-    console.log('Processing registration OTP request for phone:', formattedPhone, 'email:', email);
+    console.log('Processing OTP request for phone:', formattedPhone, 'email:', email);
 
-    // Check if user already exists with this phone
+    // Check if user already exists with this phone OR email
+    // If they exist, we'll send a LOGIN code instead of registration code
+    let existingUser = null;
+    let isExistingUser = false;
+
+    // Check by phone first
     const { data: existingPhoneUser } = await supabase
       .from('users')
-      .select('id')
+      .select('id, email, phone')
       .eq('phone', formattedPhone)
       .single();
 
     if (existingPhoneUser) {
-      console.log('Phone already registered:', formattedPhone);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "This phone number is already registered. Please log in instead.",
-          alreadyRegistered: true,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
+      existingUser = existingPhoneUser;
+      isExistingUser = true;
+      console.log('Found existing user by phone:', existingUser.id);
+    } else {
+      // Check by email
+      const { data: existingEmailUser } = await supabase
+        .from('users')
+        .select('id, email, phone')
+        .eq('email', email.toLowerCase())
+        .single();
 
-    // Check if user already exists with this email
-    const { data: existingEmailUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email.toLowerCase())
-      .single();
-
-    if (existingEmailUser) {
-      console.log('Email already registered:', email);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "This email is already registered. Please log in instead.",
-          alreadyRegistered: true,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
+      if (existingEmailUser) {
+        existingUser = existingEmailUser;
+        isExistingUser = true;
+        console.log('Found existing user by email:', existingUser.id);
+        
+        // If user exists by email but has different/no phone, update their phone
+        if (existingUser.phone !== formattedPhone) {
+          console.log('Updating user phone from', existingUser.phone, 'to', formattedPhone);
+          await supabase
+            .from('users')
+            .update({ phone: formattedPhone })
+            .eq('id', existingUser.id);
         }
-      );
+      }
     }
 
     // Rate limiting: Check for recent OTP requests (max 1 per minute)
@@ -130,14 +126,15 @@ serve(async (req) => {
     const otpCode = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    // Store OTP in database (without user_id since user doesn't exist yet)
-    // We'll store the email in the phone field temporarily with a prefix
+    // Store OTP in database
+    // If existing user, store their user_id (for login flow)
+    // If new user, user_id is null (for registration flow)
     const { error: insertError } = await supabase
       .from('phone_otp_codes')
       .insert({
         phone: formattedPhone,
         code: otpCode,
-        user_id: null, // No user yet for registration
+        user_id: isExistingUser ? existingUser.id : null,
         expires_at: expiresAt.toISOString(),
       });
 
@@ -150,7 +147,10 @@ serve(async (req) => {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const authHeader = `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`;
 
-    const message = `Your ShoutOut verification code is: ${otpCode}\n\nThis code expires in 5 minutes.`;
+    // Different message for login vs registration
+    const message = isExistingUser
+      ? `Your ShoutOut login code is: ${otpCode}\n\nThis code expires in 5 minutes.`
+      : `Your ShoutOut verification code is: ${otpCode}\n\nThis code expires in 5 minutes.`;
 
     const twilioResponse = await fetch(twilioUrl, {
       method: "POST",
@@ -172,13 +172,14 @@ serve(async (req) => {
     }
 
     const twilioData = await twilioResponse.json();
-    console.log('Registration OTP SMS sent successfully:', twilioData.sid);
+    console.log('OTP SMS sent successfully:', twilioData.sid, 'isExistingUser:', isExistingUser);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Verification code sent!",
+        message: isExistingUser ? "Welcome back! Login code sent." : "Verification code sent!",
         phoneHint: `***-***-${formattedPhone.slice(-4)}`,
+        isExistingUser: isExistingUser, // Tell frontend if this is login or registration
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -186,7 +187,7 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("Error sending registration OTP:", error);
+    console.error("Error sending OTP:", error);
     return new Response(
       JSON.stringify({
         success: false,
@@ -199,4 +200,3 @@ serve(async (req) => {
     );
   }
 });
-
