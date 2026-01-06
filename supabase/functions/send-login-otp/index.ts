@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 // Twilio credentials
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-// OTP codes use dedicated number, fallback to user number, then talent number
+// OTP codes use dedicated number (+19863335069), fallback to user number, then talent number
 const OTP_SMS_PHONE_NUMBER = Deno.env.get("OTP_SMS_PHONE_NUMBER") || Deno.env.get("USER_SMS_PHONE_NUMBER") || Deno.env.get("TWILIO_PHONE_NUMBER");
 
 const corsHeaders = {

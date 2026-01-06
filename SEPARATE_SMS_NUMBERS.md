@@ -14,7 +14,7 @@ Your ShoutOut platform uses **three separate Twilio phone numbers**:
 - **Edge Function**: `send-sms`
 
 ### 2. User Communications
-- **Number**: `+19863335069`
+- **Number**: `+16592185163`
 - **Env Variable**: `USER_SMS_PHONE_NUMBER`
 - **Used for**:
   - Mass SMS campaigns to users (Comms Center "User SMS" tab)
@@ -24,7 +24,7 @@ Your ShoutOut platform uses **three separate Twilio phone numbers**:
 - **Edge Function**: `send-sms`, `send-mass-sms`
 
 ### 3. OTP/Verification Codes
-- **Number**: `+16592185163`
+- **Number**: `+19863335069`
 - **Env Variable**: `OTP_SMS_PHONE_NUMBER`
 - **Used for**:
   - Login verification codes
