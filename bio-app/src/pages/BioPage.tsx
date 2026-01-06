@@ -11,6 +11,26 @@ import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
 
+// Helper to determine if text should be dark or light based on background color
+const getContrastTextColor = (hexColor: string): string => {
+  // Default to white if no color provided
+  if (!hexColor) return '#ffffff';
+  
+  // Remove # if present
+  const hex = hexColor.replace('#', '');
+  
+  // Parse RGB values
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Calculate luminance (perceived brightness)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return dark text for light backgrounds, white text for dark backgrounds
+  return luminance > 0.6 ? '#000000' : '#ffffff';
+};
+
 interface TalentProfile {
   id: string;
   user_id: string;
@@ -999,8 +1019,11 @@ const BioPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={subscribing || !newsletterConfig}
-                  className="px-5 py-2.5 rounded-full font-medium text-white transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
-                  style={{ backgroundColor: bioSettings?.button_color || '#3b82f6' }}
+                  className="px-5 py-2.5 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                  style={{ 
+                    backgroundColor: bioSettings?.button_color || '#3b82f6',
+                    color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
+                  }}
                 >
                   {subscribing ? (
                     '...'
