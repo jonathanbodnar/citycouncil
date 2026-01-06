@@ -65,13 +65,15 @@ serve(async (req) => {
         .single();
       
       if (userByEmail?.phone) {
-        console.log('User found with phone:', userByEmail.phone);
+        // Always format phone to E.164 for consistency
+        const formattedPhone = formatPhone(userByEmail.phone);
+        console.log('User found with phone:', userByEmail.phone, '-> formatted:', formattedPhone);
         
         // Check rate limiting
         const { data: recentOtp } = await supabase
           .from('phone_otp_codes')
           .select('created_at')
-          .eq('phone', userByEmail.phone)
+          .eq('phone', formattedPhone)
           .gte('created_at', new Date(Date.now() - 60000).toISOString())
           .order('created_at', { ascending: false })
           .limit(1)
@@ -83,18 +85,18 @@ serve(async (req) => {
               success: false,
               error: "Please wait 60 seconds before requesting another code.",
               rateLimited: true,
-              phoneHint: `***-***-${userByEmail.phone.slice(-4)}`,
+              phoneHint: `***-***-${formattedPhone.slice(-4)}`,
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
           );
         }
         
-        // Generate and store OTP
+        // Generate and store OTP with formatted phone
         const otpCode = generateOTP();
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
         
         await supabase.from('phone_otp_codes').insert({
-          phone: userByEmail.phone,
+          phone: formattedPhone,
           code: otpCode,
           user_id: userByEmail.id,
           expires_at: expiresAt.toISOString(),
@@ -111,20 +113,20 @@ serve(async (req) => {
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({
-            To: userByEmail.phone,
+            To: formattedPhone,
             From: USER_SMS_PHONE_NUMBER,
             Body: `Your ShoutOut login code is: ${otpCode}\n\nThis code expires in 5 minutes.`,
           }),
         });
         
-        console.log('OTP sent to existing user phone');
+        console.log('OTP sent to existing user phone:', formattedPhone);
         
         return new Response(
           JSON.stringify({
             success: true,
             sentToExistingPhone: true,
-            phoneHint: `***-***-${userByEmail.phone.slice(-4)}`,
-            phone: userByEmail.phone,
+            phoneHint: `***-***-${formattedPhone.slice(-4)}`,
+            phone: formattedPhone,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
