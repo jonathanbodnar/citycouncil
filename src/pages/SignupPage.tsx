@@ -70,7 +70,7 @@ const SignupPage: React.FC = () => {
     return digits.length >= 10;
   };
 
-  // Handle email submission - capture email even if they don't finish
+  // Handle email submission - capture email as a user even if they don't finish
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -79,30 +79,28 @@ const SignupPage: React.FC = () => {
       return;
     }
     
-    // Capture email as a lead (fire and forget - don't block the flow)
-    // This saves the email to beta_signups so we have it even if they abandon
+    // Capture email as a user/lead (fire and forget - don't block the flow)
     const normalizedEmail = email.toLowerCase().trim();
     
-    supabase
-      .from('beta_signups')
-      .insert({
+    fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
         email: normalizedEmail,
         source: 'login_form',
-        utm_source: promoSource || null,
-        subscribed_at: new Date().toISOString(),
-      })
-      .then(({ error }) => {
-        if (error) {
-          // If duplicate email (23505) or column doesn't exist, that's fine
-          if (error.code === '23505') {
-            console.log('📧 Email already captured:', normalizedEmail);
-          } else {
-            console.log('Email capture note:', error.message);
-          }
-        } else {
-          console.log('📧 Email captured:', normalizedEmail);
+        utm_source: promoSource,
+      }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          console.log('📧 Email captured as user:', normalizedEmail, data.existing ? '(existing)' : '(new)');
         }
-      });
+      })
+      .catch(err => console.log('Email capture note:', err.message));
     
     setStep('phone');
   };

@@ -408,8 +408,21 @@ const HolidayPromoPopup: React.FC = () => {
       // Simulate spinning animation (2 seconds)
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Save to beta_signups with prize
-      // Note: referrer tracking columns can be added later with database migration
+      // Capture as a user (fire and forget - don't block prize flow)
+      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          phone: formattedPhone,
+          source: 'holiday_popup',
+          utm_source: utmSource,
+        }),
+      }).catch(err => console.log('User capture note:', err.message));
+
+      // Save to beta_signups with prize (for prize tracking)
       const { data, error: insertError } = await supabase
         .from('beta_signups')
         .insert({
