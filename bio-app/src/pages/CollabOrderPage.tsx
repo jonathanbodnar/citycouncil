@@ -475,10 +475,14 @@ const CollabOrderPage: React.FC = () => {
 
       console.log('Creating Commerce iframe');
       
-      // Fortis Commerce.js v1.0.0 - only these options are supported
+      // Get theme color - use bio button color or default pink
+      const themeButtonColor = bioSettings?.button_color || '#ec4899';
+      
+      // Fortis Commerce.js v1.0.0 - supported appearance options
+      // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
       elements.create({
         container: '#fortis-payment-container',
-        theme: 'dark',
+        theme: 'default',
         environment: 'production',
         view: 'default',
         language: 'en-us',
@@ -489,9 +493,21 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
+        appearance: {
+          // Dark theme colors
+          colorBackground: '#1a1a2e',
+          colorText: '#ffffff',
+          colorButtonBackground: '#2d2d44',
+          colorButtonText: '#ffffff',
+          colorButtonSelectedBackground: themeButtonColor,
+          colorButtonSelectedText: '#ffffff',
+          fontFamily: 'Montserrat',
+          fontSize: '16px',
+          borderRadius: '12px',
+        },
       });
       
-      console.log('Commerce iframe created');
+      console.log('Commerce iframe created with theme color:', themeButtonColor);
 
       setCommerceInstance(elements);
     } catch (error: any) {
