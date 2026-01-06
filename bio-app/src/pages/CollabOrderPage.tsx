@@ -477,6 +477,8 @@ const CollabOrderPage: React.FC = () => {
       
       // Get theme color - use bio button color or default pink
       const themeButtonColor = bioSettings?.button_color || '#ec4899';
+      // Get background from bio gradient or use dark default
+      const themeBgColor = bioSettings?.gradient_start || '#0f172a';
       
       // Fortis Commerce.js v1.0.0 - use dark theme which has proper dark inputs
       // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
@@ -494,6 +496,8 @@ const CollabOrderPage: React.FC = () => {
         hideAgreementCheckbox: false,
         hideTotal: false,
         appearance: {
+          // Background color - try to match bio page
+          colorBackground: themeBgColor,
           // Override button colors to match theme
           colorButtonSelectedBackground: themeButtonColor,
           colorButtonSelectedText: '#ffffff',
@@ -502,7 +506,7 @@ const CollabOrderPage: React.FC = () => {
         },
       });
       
-      console.log('Commerce iframe created with theme color:', themeButtonColor);
+      console.log('Commerce iframe created with bg:', themeBgColor, 'button:', themeButtonColor);
 
       setCommerceInstance(elements);
     } catch (error: any) {
