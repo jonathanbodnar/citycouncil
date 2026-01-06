@@ -204,6 +204,14 @@ interface YouTubeVideoData {
   channelUrl: string;
 }
 
+// User type for current logged-in user
+interface CurrentUser {
+  id: string;
+  email?: string;
+  phone?: string;
+  full_name?: string;
+}
+
 const BioPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
@@ -219,7 +227,11 @@ const BioPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterPhone, setNewsletterPhone] = useState('');
+  const [showPhoneField, setShowPhoneField] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     const fetchBioData = async () => {
@@ -396,6 +408,45 @@ const BioPage: React.FC = () => {
     fetchBioData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
+
+  // Check if user is logged in and if they're already following this talent
+  useEffect(() => {
+    const checkUserSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // User is logged in, get their profile
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, email, phone, full_name')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userData) {
+            setCurrentUser(userData);
+            
+            // Check if already following this talent
+            if (talentProfile?.id) {
+              const { data: followData } = await supabase
+                .from('talent_followers')
+                .select('id')
+                .eq('user_id', userData.id)
+                .eq('talent_id', talentProfile.id)
+                .single();
+              
+              setIsFollowing(!!followData);
+            }
+          }
+        }
+      } catch (error) {
+        console.log('No active session or error checking:', error);
+      }
+    };
+
+    if (talentProfile?.id) {
+      checkUserSession();
+    }
+  }, [talentProfile?.id]);
 
   // Fetch follower counts for social accounts
   // Note: Most social platforms block direct scraping. Follower counts can be:
@@ -829,30 +880,165 @@ const BioPage: React.FC = () => {
     }
   };
 
-  // Handle newsletter signup
-  const handleNewsletterSignup = async (e: React.FormEvent) => {
+  // Handle follow/newsletter signup
+  const handleFollowSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newsletterEmail || !newsletterConfig) return;
+    if (!talentProfile?.id) return;
+
+    // If user is already logged in, just follow
+    if (currentUser) {
+      setSubscribing(true);
+      try {
+        // Add follow relationship
+        const { error: followError } = await supabase
+          .from('talent_followers')
+          .insert({
+            user_id: currentUser.id,
+            talent_id: talentProfile.id,
+          });
+
+        if (followError && !followError.message.includes('duplicate')) {
+          throw followError;
+        }
+
+        // Also send to webhook if configured
+        if (newsletterConfig?.webhook_url) {
+          await fetch(newsletterConfig.webhook_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: currentUser.email,
+              phone: currentUser.phone,
+              talent_id: talentProfile.id,
+              talent_name: bioSettings?.display_name || talentProfile?.full_name,
+              source: 'shoutout_bio_follow',
+            }),
+          });
+        }
+
+        setIsFollowing(true);
+        toast.success(`You're now following ${bioSettings?.display_name || talentProfile?.full_name?.split(' ')[0]}!`);
+      } catch (error) {
+        console.error('Follow error:', error);
+        toast.error('Failed to follow. Please try again.');
+      } finally {
+        setSubscribing(false);
+      }
+      return;
+    }
+
+    // New user flow - need email first
+    if (!newsletterEmail) {
+      toast.error('Please enter your email');
+      return;
+    }
+
+    // If we need phone and don't have it yet, show phone field
+    if (showPhoneField && !newsletterPhone) {
+      toast.error('Please enter your phone number');
+      return;
+    }
 
     setSubscribing(true);
     try {
-      if (newsletterConfig.webhook_url) {
-        // Send to Zapier webhook
+      // Check if user already exists by email
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id, email, phone')
+        .eq('email', newsletterEmail.toLowerCase())
+        .single();
+
+      let userId: string;
+
+      if (existingUser) {
+        // User exists, use their ID
+        userId = existingUser.id;
+        
+        // If they don't have a phone and we collected one, update it
+        if (!existingUser.phone && newsletterPhone) {
+          await supabase
+            .from('users')
+            .update({ phone: newsletterPhone })
+            .eq('id', existingUser.id);
+        }
+      } else {
+        // Create new user with email (and phone if provided)
+        // First check if they have a ShoutOut profile by checking if phone exists
+        if (!showPhoneField) {
+          // Check if this email exists in auth
+          // If not, show phone field to complete registration
+          setShowPhoneField(true);
+          setSubscribing(false);
+          return;
+        }
+
+        // Create the user in the users table
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            email: newsletterEmail.toLowerCase(),
+            phone: newsletterPhone || null,
+            user_type: 'user',
+            full_name: '',
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          // If duplicate key error, user might exist with different case
+          if (createError.message.includes('duplicate')) {
+            const { data: dupUser } = await supabase
+              .from('users')
+              .select('id')
+              .ilike('email', newsletterEmail)
+              .single();
+            if (dupUser) {
+              userId = dupUser.id;
+            } else {
+              throw createError;
+            }
+          } else {
+            throw createError;
+          }
+        } else {
+          userId = newUser.id;
+        }
+      }
+
+      // Now add the follow relationship
+      const { error: followError } = await supabase
+        .from('talent_followers')
+        .insert({
+          user_id: userId!,
+          talent_id: talentProfile.id,
+        });
+
+      if (followError && !followError.message.includes('duplicate')) {
+        throw followError;
+      }
+
+      // Send to webhook if configured
+      if (newsletterConfig?.webhook_url) {
         await fetch(newsletterConfig.webhook_url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: newsletterEmail,
-            talent_id: talentProfile?.id,
+            phone: newsletterPhone || null,
+            talent_id: talentProfile.id,
             talent_name: bioSettings?.display_name || talentProfile?.full_name,
-            source: 'shoutout_bio',
+            source: 'shoutout_bio_follow',
           }),
         });
       }
-      toast.success('Thanks for subscribing!');
+
+      setIsFollowing(true);
+      toast.success(`You're now following ${bioSettings?.display_name || talentProfile?.full_name?.split(' ')[0]}!`);
       setNewsletterEmail('');
+      setNewsletterPhone('');
+      setShowPhoneField(false);
     } catch (error) {
-      console.error('Newsletter signup error:', error);
+      console.error('Follow signup error:', error);
       toast.error('Failed to subscribe. Please try again.');
     } finally {
       setSubscribing(false);
@@ -1004,40 +1190,113 @@ const BioPage: React.FC = () => {
             </p>
           )}
 
-          {/* Newsletter Signup - Inline under profile */}
+          {/* Follow/Newsletter Signup - Inline under profile */}
           {bioSettings?.show_newsletter !== false && (
-            <form onSubmit={handleNewsletterSignup} className="mt-6 max-w-sm mx-auto">
-              <div className="flex items-center gap-2">
-                <input
-                  type="email"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
-                />
-                <button
-                  type="submit"
-                  disabled={subscribing || !newsletterConfig}
-                  className="px-5 py-2.5 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
-                  style={{ 
-                    backgroundColor: bioSettings?.button_color || '#3b82f6',
-                    color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
-                  }}
-                >
-                  {subscribing ? (
-                    '...'
-                  ) : (
-                    <>
-                      Stay Connected
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                    </>
+            <div className="mt-6 w-full">
+              {/* Already following message */}
+              {isFollowing ? (
+                <div className="text-center">
+                  <p className="text-white/60 text-sm">
+                    ✓ You're connected to {displayName.split(' ')[0]}
+                  </p>
+                </div>
+              ) : currentUser ? (
+                /* Logged in user - just show follow button */
+                <div className="space-y-2">
+                  <p className="text-white/50 text-xs text-center">
+                    Logged in as {currentUser.email || currentUser.phone}
+                  </p>
+                  <button
+                    onClick={handleFollowSignup}
+                    disabled={subscribing}
+                    className="w-full py-3 rounded-full font-medium transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                    style={{ 
+                      backgroundColor: bioSettings?.button_color || '#3b82f6',
+                      color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
+                    }}
+                  >
+                    {subscribing ? (
+                      '...'
+                    ) : (
+                      <>
+                        Stay connected to {displayName.split(' ')[0]}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                /* Not logged in - show email/phone form */
+                <form onSubmit={handleFollowSignup} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                      className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                    />
+                    {!showPhoneField && (
+                      <button
+                        type="submit"
+                        disabled={subscribing}
+                        className="px-5 py-2.5 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                        style={{ 
+                          backgroundColor: bioSettings?.button_color || '#3b82f6',
+                          color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
+                        }}
+                      >
+                        {subscribing ? (
+                          '...'
+                        ) : (
+                          <>
+                            Stay connected to {displayName.split(' ')[0]}
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  {/* Phone field - shown after email for new users */}
+                  {showPhoneField && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="tel"
+                        value={newsletterPhone}
+                        onChange={(e) => setNewsletterPhone(e.target.value)}
+                        placeholder="Phone (optional)"
+                        className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                      />
+                      <button
+                        type="submit"
+                        disabled={subscribing}
+                        className="px-5 py-2.5 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-2"
+                        style={{ 
+                          backgroundColor: bioSettings?.button_color || '#3b82f6',
+                          color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
+                        }}
+                      >
+                        {subscribing ? (
+                          '...'
+                        ) : (
+                          <>
+                            Connect
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   )}
-                </button>
-              </div>
-            </form>
+                </form>
+              )}
+            </div>
           )}
         </div>
 
@@ -1613,9 +1872,9 @@ const BioPage: React.FC = () => {
         {/* Footer - White text with opacity for visibility on any background */}
         <div className="mt-8 text-center space-y-3">
           {/* Terms of Service for Newsletter */}
-          {bioSettings?.show_newsletter !== false && (
+          {bioSettings?.show_newsletter !== false && !isFollowing && (
             <p className="text-white/25 text-[10px] max-w-xs mx-auto leading-relaxed">
-              Terms of service: If you submit your email you agree to receive emails from me. We do not share your data.
+              By connecting, you agree to receive updates from {displayName.split(' ')[0]}. We do not share your data.
             </p>
           )}
           <a 
