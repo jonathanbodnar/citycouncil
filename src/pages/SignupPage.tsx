@@ -388,9 +388,6 @@ const SignupPage: React.FC = () => {
                   placeholder="(555) 123-4567"
                   required={true}
                 />
-                <p className="mt-2 text-xs text-gray-500">
-                  We'll text you when your video is ready
-                </p>
               </div>
               
               <div className="flex gap-3">
