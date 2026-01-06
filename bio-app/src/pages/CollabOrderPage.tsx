@@ -496,11 +496,13 @@ const CollabOrderPage: React.FC = () => {
         hideAgreementCheckbox: false,
         hideTotal: false,
         appearance: {
-          // Background color - try to match bio page
+          // Background color - match bio page gradient
           colorBackground: themeBgColor,
-          // Override button colors to match theme
-          colorButtonSelectedBackground: themeButtonColor,
-          colorButtonSelectedText: '#ffffff',
+          // Tab buttons (Credit Card / ACH)
+          colorButtonBackground: '#374151',      // Unselected tab - dark gray
+          colorButtonText: '#9ca3af',            // Unselected tab text - light gray
+          colorButtonSelectedBackground: themeButtonColor,  // Selected tab - theme color
+          colorButtonSelectedText: '#ffffff',    // Selected tab text - white
           fontFamily: 'Montserrat',
           borderRadius: '8px',
         },
@@ -615,12 +617,12 @@ const CollabOrderPage: React.FC = () => {
           })}
         </div>
 
-        {/* Step Content - glass card style */}
+        {/* Step Content - match Fortis form background */}
         <div className="flex-1">
           <div 
-            className="backdrop-blur-md border border-white/20 p-6"
+            className="backdrop-blur-md border border-white/10 p-6"
             style={{ 
-              backgroundColor: 'rgba(255,255,255,0.05)',
+              backgroundColor: gradientStart,
               borderRadius: getButtonRadius(),
             }}
           >
