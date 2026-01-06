@@ -478,17 +478,7 @@ const CollabOrderPage: React.FC = () => {
       // Get theme colors for Fortis styling
       const themeButtonColor = bioSettings?.button_color || '#ec4899';
       
-      // Convert hex to RGB for Fortis
-      const hexToRgb = (hex: string) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16)
-        } : { r: 236, g: 72, b: 153 }; // Default pink
-      };
-      const rgb = hexToRgb(themeButtonColor);
-      
+      // Simple config that matches the main app
       elements.create({
         container: '#fortis-payment-container',
         theme: 'dark',
@@ -502,33 +492,16 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
-        // Try multiple theming approaches
+        // Fortis appearance theming
         appearance: {
+          theme: 'night',
           variables: {
             colorPrimary: themeButtonColor,
-            colorBackground: '#0d1117',
-            colorText: '#ffffff',
-            colorDanger: '#ef4444',
-            borderRadius: '8px',
           },
         },
-        // Alternative color config
-        colors: {
-          primary: themeButtonColor,
-          background: '#0d1117',
-          text: '#ffffff',
-          error: '#ef4444',
-        },
-        // Button styling
-        buttonColor: themeButtonColor,
-        primaryColor: themeButtonColor,
-        // CSS variables approach
-        cssVariables: {
-          '--fortis-primary': themeButtonColor,
-          '--fortis-primary-rgb': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
-          '--fortis-background': '#0d1117',
-        },
       });
+      
+      console.log('Commerce iframe created with theme color:', themeButtonColor);
 
       setCommerceInstance(elements);
     } catch (error: any) {
