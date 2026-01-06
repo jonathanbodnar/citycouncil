@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -55,7 +55,7 @@ const PRIZES: Record<Prize, PrizeInfo> = {
 };
 
 // Step type for the multi-step flow
-type Step = 'email' | 'phone' | 'otp' | 'spinning' | 'winner';
+type Step = 'email' | 'phone' | 'spinning' | 'winner';
 
 // Popup delay based on traffic source
 const getPopupDelay = (): number => {
@@ -131,15 +131,11 @@ const HolidayPromoPopup: React.FC = () => {
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneHint, setPhoneHint] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const [timeLeft, setTimeLeft] = useState({ minutes: 30, seconds: 0 });
   const [giveawayTimeLeft, setGiveawayTimeLeft] = useState({ minutes: 15, seconds: 0 });
   const [giveawayEndTime, setGiveawayEndTime] = useState<number | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const otpInputRef = useRef<HTMLInputElement>(null);
 
   // Check if popup can be shown
   const canShowPopup = useCallback(() => {
@@ -221,14 +217,6 @@ const HolidayPromoPopup: React.FC = () => {
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [isVisible, canShowPopup]);
-
-  // Resend cooldown timer
-  useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendCooldown]);
 
   // Countdown timer for prize expiry
   useEffect(() => {
@@ -339,7 +327,7 @@ const HolidayPromoPopup: React.FC = () => {
     }
   };
 
-  // Handle email submission
+  // Handle email submission - check if user has phone on file
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -352,57 +340,58 @@ const HolidayPromoPopup: React.FC = () => {
     const normalizedEmail = email.toLowerCase().trim();
     
     try {
-      // Use edge function to check if user has phone on file
-      const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
-        {
+      // Check if user exists with phone on file
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('email', normalizedEmail)
+        .single();
+      
+      if (existingUser?.phone) {
+        // User has phone on file - skip to prize reveal!
+        setPhoneNumber(existingUser.phone);
+        await revealPrize(normalizedEmail, existingUser.phone);
+      } else {
+        // Capture email as lead
+        fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             email: normalizedEmail,
-            checkEmailOnly: true
+            source: 'holiday_popup',
+            utm_source: getUtmSource(),
           }),
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (data.success && data.sentToExistingPhone) {
-        // User has phone on file, OTP sent - skip to OTP step
-        setPhoneNumber(data.phone || '');
-        setPhoneHint(data.phoneHint);
-        setStep('otp');
-        setResendCooldown(60);
-        toast.success('Code sent to your phone!');
-        setTimeout(() => otpInputRef.current?.focus(), 100);
-        return;
+        }).catch(err => console.log('Email capture note:', err.message));
+        
+        // Need phone - go to phone step
+        setStep('phone');
       }
-      
-      if (data.rateLimited) {
-        toast.error(data.error);
-        setResendCooldown(60);
-        if (data.phoneHint) {
-          setPhoneHint(data.phoneHint);
-          setStep('otp');
-        }
-        return;
-      }
-      
-      // User needs phone - go to phone step
-      setStep('phone');
-      
     } catch (error: any) {
-      console.log('Email check error:', error.message);
+      // No user found or error - go to phone step
+      // Capture email as lead first
+      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          source: 'holiday_popup',
+          utm_source: getUtmSource(),
+        }),
+      }).catch(err => console.log('Email capture note:', err.message));
+      
       setStep('phone');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle phone submission
+  // Handle phone submission and reveal prize
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -421,105 +410,44 @@ const HolidayPromoPopup: React.FC = () => {
     const formattedPhone = `+1${cleanDigits}`;
     const normalizedEmail = email.toLowerCase().trim();
     
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ phone: formattedPhone, email: normalizedEmail }),
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (!data.success) {
-        if (data.rateLimited) {
-          toast.error(data.error);
-          setResendCooldown(60);
-          setStep('otp');
-          setPhoneHint(data.phoneHint || `***-***-${cleanDigits.slice(-4)}`);
-          return;
-        }
-        throw new Error(data.error);
-      }
-      
-      setPhoneHint(data.phoneHint || `***-***-${cleanDigits.slice(-4)}`);
-      setStep('otp');
-      setResendCooldown(60);
-      toast.success('Code sent!');
-      setTimeout(() => otpInputRef.current?.focus(), 100);
-      
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send code');
-    } finally {
-      setLoading(false);
-    }
+    await revealPrize(normalizedEmail, formattedPhone);
   };
 
-  // Handle OTP verification and prize reveal
-  const handleOtpSubmit = async (code?: string) => {
-    const otpCode = code || otp;
-    
-    if (otpCode.length !== 6) {
-      toast.error('Please enter the 6-digit code');
-      return;
-    }
-    
-    setLoading(true);
+  // Reveal prize - called after we have both email and phone
+  const revealPrize = async (normalizedEmail: string, formattedPhone: string) => {
     setStep('spinning');
     
     try {
-      // Verify OTP
-      const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-registration-otp`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ 
-            phone: phoneNumber, 
-            code: otpCode, 
-            email: email.toLowerCase().trim(),
-            promoSource: getUtmSource()
-          }),
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (!data.success) {
-        setStep('otp');
-        throw new Error(data.error);
-      }
-      
-      // OTP verified - user is now registered/logged in
-      // Use magic link to log them in
-      if (data.magicLink) {
-        // Store the magic link to use after showing prize
-        safeSetItem('pending_magic_link', data.magicLink);
-      }
-      
-      // Determine and award prize
       const utmSource = getUtmSource();
+      
+      // Capture as a user (with both email and phone)
+      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+          source: 'holiday_popup',
+          utm_source: utmSource,
+        }),
+      }).catch(err => console.log('User capture note:', err.message));
+
+      // Determine prize
       const prize = await determinePrize();
       const prizeInfo = PRIZES[prize];
-      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+1${phoneNumber.replace(/\D/g, '')}`;
-      
+
       // Simulate spinning animation
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Save to beta_signups for prize tracking
       const { error: insertError } = await supabase
         .from('beta_signups')
         .insert({
           phone_number: formattedPhone,
-          email: email.toLowerCase().trim(),
+          email: normalizedEmail,
           source: 'holiday_popup',
           utm_source: utmSource,
           subscribed_at: new Date().toISOString(),
@@ -531,7 +459,7 @@ const HolidayPromoPopup: React.FC = () => {
         const { data: existing } = await supabase
           .from('beta_signups')
           .select('prize_won')
-          .or(`phone_number.eq.${formattedPhone},email.eq.${email.toLowerCase().trim()}`)
+          .or(`phone_number.eq.${formattedPhone},email.eq.${normalizedEmail}`)
           .single();
         
         if (existing?.prize_won) {
@@ -578,15 +506,10 @@ const HolidayPromoPopup: React.FC = () => {
           content_name: 'Instant Giveaway',
           content_category: 'Phone Signup'
         });
-        (window as any).fbq('track', 'CompleteRegistration', {
-          content_name: 'Giveaway Registration',
-          status: 'complete'
-        });
       }
       
       if (typeof window !== 'undefined' && (window as any).ratag) {
         (window as any).ratag('conversion', { to: 3336 });
-        (window as any).ratag('conversion', { to: 3337 });
       }
 
       setWonPrize(prize);
@@ -595,44 +518,8 @@ const HolidayPromoPopup: React.FC = () => {
 
     } catch (error: any) {
       console.error('Error:', error);
-      toast.error(error.message || 'Something went wrong. Please try again.');
-      setLoading(false);
-    }
-  };
-
-  // Handle resend OTP
-  const handleResendOtp = async () => {
-    if (resendCooldown > 0) return;
-    
-    setLoading(true);
-    const normalizedEmail = email.toLowerCase().trim();
-    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+1${phoneNumber.replace(/\D/g, '')}`;
-    
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ phone: formattedPhone, email: normalizedEmail }),
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (data.rateLimited) {
-        toast.error(data.error);
-      } else if (data.success) {
-        toast.success('New code sent!');
-      }
-      
-      setResendCooldown(60);
-    } catch (error) {
-      toast.error('Failed to resend code');
-    } finally {
+      toast.error('Something went wrong. Please try again.');
+      setStep('phone');
       setLoading(false);
     }
   };
@@ -643,15 +530,8 @@ const HolidayPromoPopup: React.FC = () => {
   };
 
   const handleFindShoutOut = () => {
-    // Check for pending magic link and use it
-    const magicLink = safeGetItem('pending_magic_link');
-    if (magicLink) {
-      localStorage.removeItem('pending_magic_link');
-      window.location.href = magicLink;
-    } else {
-      setIsVisible(false);
-      window.location.href = '/';
-    }
+    setIsVisible(false);
+    window.location.href = '/';
   };
 
   if (!isVisible) return null;
@@ -780,7 +660,6 @@ const HolidayPromoPopup: React.FC = () => {
               <div className="flex justify-center gap-2 mb-4">
                 <div className={`w-2 h-2 rounded-full transition-colors ${step === 'email' ? 'bg-yellow-400' : 'bg-white/40'}`} />
                 <div className={`w-2 h-2 rounded-full transition-colors ${step === 'phone' ? 'bg-yellow-400' : 'bg-white/40'}`} />
-                <div className={`w-2 h-2 rounded-full transition-colors ${step === 'otp' ? 'bg-yellow-400' : 'bg-white/40'}`} />
               </div>
 
               {/* Giveaway Countdown */}
@@ -853,63 +732,9 @@ const HolidayPromoPopup: React.FC = () => {
                       color: '#1f2937'
                     }}
                   >
-                    {loading ? 'Sending...' : 'Verify 📱'}
+                    {loading ? 'Revealing...' : 'Reveal My Prize 🎁'}
                   </button>
                 </form>
-              )}
-
-              {/* Step 3: OTP */}
-              {step === 'otp' && (
-                <div className="space-y-4">
-                  <p className="text-white/80 text-sm mb-2">
-                    Enter the code sent to {phoneHint || phoneNumber}
-                  </p>
-                  
-                  <input
-                    ref={otpInputRef}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    autoComplete="one-time-code"
-                    value={otp}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                      setOtp(value);
-                      if (value.length === 6) {
-                        handleOtpSubmit(value);
-                      }
-                    }}
-                    placeholder="000000"
-                    className="w-full px-4 py-3 rounded-xl text-center text-3xl font-mono font-bold tracking-[0.3em] focus:ring-2 focus:ring-yellow-300 focus:outline-none"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      color: '#1f2937'
-                    }}
-                  />
-
-                  <button
-                    onClick={() => handleOtpSubmit()}
-                    disabled={loading || otp.length !== 6}
-                    className="w-full py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      background: 'linear-gradient(to right, #facc15, #f59e0b)',
-                      color: '#1f2937'
-                    }}
-                  >
-                    {loading ? 'Verifying...' : 'Reveal My Prize 🎁'}
-                  </button>
-
-                  <button
-                    onClick={handleResendOtp}
-                    disabled={resendCooldown > 0 || loading}
-                    className="text-sm text-white/70 hover:text-white disabled:text-white/40 disabled:cursor-not-allowed"
-                  >
-                    {resendCooldown > 0
-                      ? `Resend code in ${resendCooldown}s`
-                      : "Didn't receive a code? Resend"}
-                  </button>
-                </div>
               )}
 
               <p className="text-white/50 text-xs mt-4">
