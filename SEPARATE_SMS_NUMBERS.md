@@ -1,25 +1,36 @@
 # Separate SMS Numbers Configuration
 
-## 📱 Two Different Twilio Numbers
+## 📱 Three Different Twilio Numbers
 
-Your ShoutOut platform now supports **two separate Twilio phone numbers**:
+Your ShoutOut platform uses **three separate Twilio phone numbers**:
 
 ### 1. Talent Communications
-- **Current number**: Your existing `TWILIO_PHONE_NUMBER`
+- **Number**: `+12175898027`
+- **Env Variable**: `TWILIO_PHONE_NUMBER`
 - **Used for**: 
   - Admin ↔️ Talent SMS (Comms Center "Talent SMS" tab)
   - Individual talent support messages
   - Talent notifications
 - **Edge Function**: `send-sms`
 
-### 2. User Campaigns
-- **New number**: `(659) 218-5163`
-- **Messaging Service ID**: `MGb60f3d97893ce39f291eda0190287bd3`
+### 2. User Communications
+- **Number**: `+19863335069`
+- **Env Variable**: `USER_SMS_PHONE_NUMBER`
 - **Used for**:
   - Mass SMS campaigns to users (Comms Center "User SMS" tab)
-  - Beta user notifications
+  - User order notifications
+  - Giveaway winner SMS
   - Marketing campaigns
-- **Edge Function**: `send-mass-sms`
+- **Edge Function**: `send-sms`, `send-mass-sms`
+
+### 3. OTP/Verification Codes
+- **Number**: `+16592185163`
+- **Env Variable**: `OTP_SMS_PHONE_NUMBER`
+- **Used for**:
+  - Login verification codes
+  - Registration verification codes
+  - Phone number verification
+- **Edge Function**: `send-registration-otp`, `send-login-otp`
 
 ---
 

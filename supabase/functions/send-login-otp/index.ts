@@ -4,7 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 // Twilio credentials
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const USER_SMS_PHONE_NUMBER = Deno.env.get("USER_SMS_PHONE_NUMBER") || Deno.env.get("TWILIO_PHONE_NUMBER");
+// OTP codes use dedicated number, fallback to user number, then talent number
+const OTP_SMS_PHONE_NUMBER = Deno.env.get("OTP_SMS_PHONE_NUMBER") || Deno.env.get("USER_SMS_PHONE_NUMBER") || Deno.env.get("TWILIO_PHONE_NUMBER");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,7 +37,7 @@ serve(async (req) => {
 
   try {
     // Validate Twilio credentials
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !USER_SMS_PHONE_NUMBER) {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !OTP_SMS_PHONE_NUMBER) {
       throw new Error("Twilio credentials not configured");
     }
 
@@ -136,7 +137,7 @@ serve(async (req) => {
       },
       body: new URLSearchParams({
         To: formattedPhone,
-        From: USER_SMS_PHONE_NUMBER,
+        From: OTP_SMS_PHONE_NUMBER,
         Body: message,
       }),
     });
