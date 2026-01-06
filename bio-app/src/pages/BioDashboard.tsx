@@ -35,6 +35,11 @@ interface TalentProfile {
   temp_avatar_url?: string;
   bio?: string;
   social_accounts?: SocialAccount[];
+  // Social handles from talent_profiles table (synced from admin)
+  twitter_handle?: string;
+  instagram_handle?: string;
+  facebook_handle?: string;
+  tiktok_handle?: string;
   rumble_handle?: string;
   youtube_handle?: string;
 }
@@ -283,8 +288,8 @@ const BioDashboard: React.FC = () => {
         console.log('Bio Dashboard: Authenticating with token:', token);
         
         // First, try to find talent profile directly by ID (for admin access)
-        let profile = null;
-        let userData = null;
+        let profile: TalentProfile | null = null;
+        let userData: User | null = null;
         
         const { data: directProfile, error: directError } = await supabase
           .from('talent_profiles')
@@ -321,12 +326,12 @@ const BioDashboard: React.FC = () => {
             return;
           }
 
-          userData = userById;
+          userData = userById as User;
 
           const { data: profileByUser, error: profileError } = await supabase
             .from('talent_profiles')
             .select('*')
-            .eq('user_id', userData.id)
+            .eq('user_id', userById.id)
             .single();
 
           if (profileError || !profileByUser) {
@@ -357,15 +362,73 @@ const BioDashboard: React.FC = () => {
           .select('id, platform, handle, follower_count')
           .eq('talent_id', profile.id);
         
-        if (socialData && socialData.length > 0) {
+        // Also check for handles in talent_profiles that might not be in social_accounts
+        // This syncs handles added via admin > talent management
+        const profileHandles: { platform: string; handle: string }[] = [];
+        
+        // Check each platform handle in talent_profiles
+        const handleMappings = [
+          { platform: 'twitter', field: 'twitter_handle' },
+          { platform: 'instagram', field: 'instagram_handle' },
+          { platform: 'facebook', field: 'facebook_handle' },
+          { platform: 'tiktok', field: 'tiktok_handle' },
+          { platform: 'youtube', field: 'youtube_handle' },
+          { platform: 'rumble', field: 'rumble_handle' },
+        ];
+        
+        for (const mapping of handleMappings) {
+          const handle = (profile as any)[mapping.field];
+          if (handle) {
+            // Check if this platform exists in socialData
+            const existsInSocial = socialData?.some(s => s.platform === mapping.platform);
+            if (!existsInSocial) {
+              profileHandles.push({
+                platform: mapping.platform,
+                handle: handle.replace(/^@/, ''), // Clean handle
+              });
+            }
+          }
+        }
+        
+        // If there are handles in talent_profiles not in social_accounts, sync them
+        if (profileHandles.length > 0 && profile) {
+          console.log('Syncing handles from talent_profiles to social_accounts:', profileHandles);
+          const profileId = profile.id; // Capture for closure
+          
+          const insertData = profileHandles.map(h => ({
+            talent_id: profileId,
+            platform: h.platform,
+            handle: h.handle.startsWith('@') ? h.handle : `@${h.handle}`,
+          }));
+          
+          const { data: newSocials, error: insertError } = await supabase
+            .from('social_accounts')
+            .insert(insertData)
+            .select();
+          
+          if (insertError) {
+            console.warn('Could not sync handles to social_accounts:', insertError);
+          } else if (newSocials) {
+            // Add the new socials to our data
+            const allSocialData = [...(socialData || []), ...newSocials];
+            setSocialLinks(allSocialData.map(s => ({
+              id: s.id,
+              platform: s.platform,
+              handle: s.handle.replace(/^@/, ''),
+              follower_count: s.follower_count,
+            })));
+          }
+        } else if (socialData && socialData.length > 0) {
           setSocialLinks(socialData.map(s => ({
             id: s.id,
             platform: s.platform,
             handle: s.handle.replace(/^@/, ''), // Remove @ prefix if present
             follower_count: s.follower_count,
           })));
-          
-          // Sync youtube_handle and rumble_handle if social links exist but handles are missing
+        }
+        
+        // Sync youtube_handle and rumble_handle to talent_profiles if missing
+        if (socialData && socialData.length > 0) {
           const youtubeLink = socialData.find(s => s.platform === 'youtube');
           const rumbleLink = socialData.find(s => s.platform === 'rumble');
           const needsSync: Record<string, string> = {};
