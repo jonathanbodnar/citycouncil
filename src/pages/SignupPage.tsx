@@ -83,44 +83,30 @@ const SignupPage: React.FC = () => {
     setLoading(true);
     
     try {
-      // Check if user exists with this email and has a phone number
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('phone')
-        .eq('email', normalizedEmail)
-        .single();
-      
-      if (existingUser?.phone) {
-        // User exists with phone - send OTP directly and skip to code step
-        console.log('📧 Existing user with phone, skipping to OTP');
-        setPhone(existingUser.phone);
-        
-        const response = await fetch(
-          `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ phone: existingUser.phone, email: normalizedEmail }),
-          }
-        );
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          if (data.rateLimited) {
-            toast.error(data.error);
-            setResendCooldown(60);
-            setStep('otp');
-            setPhoneHint(data.phoneHint || `***-***-${existingUser.phone.slice(-4)}`);
-            return;
-          }
-          throw new Error(data.error);
+      // Use edge function to check user and send OTP if they have a phone
+      // This bypasses RLS since edge functions use service role
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ 
+            email: normalizedEmail,
+            checkEmailOnly: true // New flag: check if user has phone, send OTP if so
+          }),
         }
-        
-        setPhoneHint(data.phoneHint || `***-***-${existingUser.phone.slice(-4)}`);
+      );
+      
+      const data = await response.json();
+      
+      if (data.success && data.sentToExistingPhone) {
+        // User exists with phone - OTP was sent, skip to code step
+        console.log('📧 Existing user with phone, OTP sent');
+        setPhone(data.phone || '');
+        setPhoneHint(data.phoneHint);
         setStep('otp');
         setResendCooldown(60);
         toast.success('Welcome back! Code sent to your phone.');
@@ -132,26 +118,21 @@ const SignupPage: React.FC = () => {
         return;
       }
       
+      if (data.rateLimited) {
+        toast.error(data.error);
+        setResendCooldown(60);
+        if (data.phoneHint) {
+          setPhoneHint(data.phoneHint);
+          setStep('otp');
+        }
+        return;
+      }
+      
       // No existing user with phone - capture email and go to phone step
-      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          source: 'login_form',
-          utm_source: promoSource,
-        }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            console.log('📧 Email captured as user:', normalizedEmail, data.existing ? '(existing)' : '(new)');
-          }
-        })
-        .catch(err => console.log('Email capture note:', err.message));
+      // The edge function already captured the lead, just proceed
+      if (data.needsPhone) {
+        console.log('📧 User needs phone, proceeding to phone step');
+      }
       
       setStep('phone');
       
