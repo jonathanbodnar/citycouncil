@@ -58,26 +58,36 @@ serve(async (req) => {
     if (checkEmailOnly) {
       console.log('Check email only mode for:', normalizedEmail);
       
-      const { data: userByEmail } = await supabase
+      const { data: userByEmail, error: userLookupError } = await supabase
         .from('users')
         .select('id, email, phone, full_name')
         .eq('email', normalizedEmail)
         .single();
+      
+      console.log('User lookup result:', { 
+        found: !!userByEmail, 
+        hasPhone: !!userByEmail?.phone,
+        phone: userByEmail?.phone,
+        error: userLookupError?.message 
+      });
       
       if (userByEmail?.phone) {
         // Always format phone to E.164 for consistency
         const formattedPhone = formatPhone(userByEmail.phone);
         console.log('User found with phone:', userByEmail.phone, '-> formatted:', formattedPhone);
         
-        // Check rate limiting
+        // Check rate limiting - only for UNVERIFIED OTPs (allow resend if previous was used)
         const { data: recentOtp } = await supabase
           .from('phone_otp_codes')
-          .select('created_at')
+          .select('created_at, verified')
           .eq('phone', formattedPhone)
+          .eq('verified', false)
           .gte('created_at', new Date(Date.now() - 60000).toISOString())
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
+
+        console.log('Rate limit check:', { recentUnverifiedOtp: !!recentOtp });
 
         if (recentOtp) {
           return new Response(
@@ -92,15 +102,24 @@ serve(async (req) => {
         }
         
         // Generate and store OTP with formatted phone
+        // NOTE: Don't include user_id - the FK references auth.users, but user may only exist in public.users
         const otpCode = generateOTP();
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
         
-        await supabase.from('phone_otp_codes').insert({
+        console.log('Creating new OTP:', { phone: formattedPhone, code: otpCode, expiresAt: expiresAt.toISOString() });
+        
+        const { error: insertError } = await supabase.from('phone_otp_codes').insert({
           phone: formattedPhone,
           code: otpCode,
-          user_id: userByEmail.id,
           expires_at: expiresAt.toISOString(),
         });
+        
+        if (insertError) {
+          console.error('Failed to insert OTP:', insertError);
+          throw new Error('Failed to create verification code');
+        }
+        
+        console.log('OTP created successfully');
         
         // Send SMS
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
@@ -240,13 +259,13 @@ serve(async (req) => {
     }
 
     // Generate and store OTP
+    // NOTE: Don't include user_id - the FK references auth.users, but user may only exist in public.users
     const otpCode = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     await supabase.from('phone_otp_codes').insert({
       phone: formattedPhone,
       code: otpCode,
-      user_id: isExistingUser ? existingUser.id : null,
       expires_at: expiresAt.toISOString(),
     });
 

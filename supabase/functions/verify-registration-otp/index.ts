@@ -61,6 +61,18 @@ serve(async (req) => {
 
     if (formattedPhone) {
       // Try phone lookup first
+      console.log('Looking for OTP with phone:', formattedPhone, 'current time:', new Date().toISOString());
+      
+      // First, let's see ALL OTPs for this phone (debug)
+      const { data: allOtps } = await supabase
+        .from('phone_otp_codes')
+        .select('id, phone, verified, expires_at, created_at, user_id')
+        .eq('phone', formattedPhone)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      console.log('All OTPs for phone:', JSON.stringify(allOtps));
+      
       const result = await supabase
         .from('phone_otp_codes')
         .select('*')
@@ -73,7 +85,7 @@ serve(async (req) => {
       
       otpData = result.data;
       otpError = result.error;
-      console.log('Phone lookup result:', { found: !!otpData, error: otpError?.message });
+      console.log('Phone lookup result:', { found: !!otpData, error: otpError?.message, code: otpError?.code });
     }
 
     // If phone lookup failed, try to find by user's email (for existing users)
@@ -128,11 +140,11 @@ serve(async (req) => {
     }
 
     if (!otpData) {
-      console.log('No valid OTP found after all lookups');
+      console.log('No valid OTP found after all lookups - code may have been used or expired');
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Invalid or expired code. Please request a new one.",
+          error: "Code expired or already used. Please request a new one.",
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
