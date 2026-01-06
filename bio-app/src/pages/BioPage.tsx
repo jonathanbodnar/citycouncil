@@ -1197,7 +1197,7 @@ const BioPage: React.FC = () => {
               );
             }
             
-            // Tall format - larger image with title below
+            // Tall format - square image on left, text on right (horizontal card)
             if (linkFormat === 'tall') {
               return (
                 <a
@@ -1206,7 +1206,7 @@ const BioPage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => handleLinkClick(link)}
-                  className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] overflow-hidden block`}
+                  className={`${getRadiusClass()} hover:scale-[1.02] active:scale-[0.98] overflow-hidden flex items-stretch`}
                   style={{
                     ...getButtonStyle(),
                     ...featuredStyle,
@@ -1214,11 +1214,11 @@ const BioPage: React.FC = () => {
                   }}
                 >
                   {link.thumbnail_url && (
-                    <div className="h-32 w-full">
+                    <div className="w-24 h-24 flex-shrink-0">
                       <img src={link.thumbnail_url} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex-1 flex items-center justify-between px-4 py-3">
                     <div className="flex-1">
                       <span className="text-white font-medium text-left block">{link.title}</span>
                       {link.subtitle && (
