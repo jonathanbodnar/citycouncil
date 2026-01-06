@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   StarIcon, 
   HeartIcon, 
@@ -46,9 +46,25 @@ interface TalentWithDetails extends TalentProfile {
 }
 
 const TalentProfilePage: React.FC = () => {
-  const { id, username } = useParams<{ id?: string; username?: string }>();
+  const { id, username: rawUsername } = useParams<{ id?: string; username?: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Normalize username: remove spaces (%20), trim, lowercase
+  // This handles URLs like /melonie%20mac -> /meloniemac
+  const username = rawUsername ? rawUsername.replace(/\s+/g, '').toLowerCase() : undefined;
+  
+  // Redirect if URL contains spaces or uppercase - clean URL for SEO and sharing
+  useEffect(() => {
+    if (rawUsername && rawUsername !== username) {
+      // Preserve query params when redirecting
+      const queryString = searchParams.toString();
+      const newUrl = `/${username}${queryString ? `?${queryString}` : ''}`;
+      navigate(newUrl, { replace: true });
+    }
+  }, [rawUsername, username, searchParams, navigate]);
+  
   const [talent, setTalent] = useState<TalentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [relatedTalent, setRelatedTalent] = useState<TalentWithDetails[]>([]);
