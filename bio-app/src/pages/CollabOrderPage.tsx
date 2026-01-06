@@ -477,7 +477,6 @@ const CollabOrderPage: React.FC = () => {
       
       // Get theme colors for Fortis styling
       const themeButtonColor = bioSettings?.button_color || '#ec4899';
-      const themeGradientStart = bioSettings?.gradient_start || '#0a0a0a';
       
       elements.create({
         container: '#fortis-payment-container',
@@ -492,67 +491,16 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
-        styles: {
-          // Main container styling
-          body: {
-            backgroundColor: 'transparent',
-            fontFamily: 'inherit',
-          },
-          // Input fields
-          input: {
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            borderColor: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            color: '#ffffff',
-            fontSize: '16px',
-            padding: '12px 16px',
-          },
-          inputFocus: {
-            borderColor: themeButtonColor,
-            boxShadow: `0 0 0 2px ${themeButtonColor}33`,
-          },
-          // Labels
-          label: {
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '14px',
-          },
-          // Submit button - use theme color
-          submitButton: {
-            backgroundColor: themeButtonColor,
+        // Fortis appearance API for theming
+        appearance: {
+          variables: {
+            colorPrimary: themeButtonColor,
+            colorBackground: '#1a1a2e',
+            colorText: '#ffffff',
+            colorDanger: '#ef4444',
+            fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+            spacingUnit: '4px',
             borderRadius: '12px',
-            color: '#ffffff',
-            fontSize: '16px',
-            fontWeight: '600',
-            padding: '16px 24px',
-            border: 'none',
-          },
-          submitButtonHover: {
-            backgroundColor: themeButtonColor,
-            opacity: '0.9',
-          },
-          // Card container
-          card: {
-            backgroundColor: 'transparent',
-            border: 'none',
-            padding: '0',
-          },
-          // Checkbox and agreement text
-          checkbox: {
-            accentColor: themeButtonColor,
-          },
-          agreementText: {
-            color: 'rgba(255, 255, 255, 0.6)',
-            fontSize: '12px',
-          },
-          // Total section
-          total: {
-            color: '#ffffff',
-            fontWeight: '600',
-          },
-          // Error messages
-          error: {
-            color: '#ef4444',
-            fontSize: '12px',
           },
         },
       });
