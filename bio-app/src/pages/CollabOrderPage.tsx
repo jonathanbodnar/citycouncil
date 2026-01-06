@@ -474,6 +474,11 @@ const CollabOrderPage: React.FC = () => {
       });
 
       console.log('Creating Commerce iframe');
+      
+      // Get theme colors for Fortis styling
+      const themeButtonColor = bioSettings?.button_color || '#ec4899';
+      const themeGradientStart = bioSettings?.gradient_start || '#0a0a0a';
+      
       elements.create({
         container: '#fortis-payment-container',
         theme: 'dark',
@@ -487,6 +492,69 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
+        styles: {
+          // Main container styling
+          body: {
+            backgroundColor: 'transparent',
+            fontFamily: 'inherit',
+          },
+          // Input fields
+          input: {
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            color: '#ffffff',
+            fontSize: '16px',
+            padding: '12px 16px',
+          },
+          inputFocus: {
+            borderColor: themeButtonColor,
+            boxShadow: `0 0 0 2px ${themeButtonColor}33`,
+          },
+          // Labels
+          label: {
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: '14px',
+          },
+          // Submit button - use theme color
+          submitButton: {
+            backgroundColor: themeButtonColor,
+            borderRadius: '12px',
+            color: '#ffffff',
+            fontSize: '16px',
+            fontWeight: '600',
+            padding: '16px 24px',
+            border: 'none',
+          },
+          submitButtonHover: {
+            backgroundColor: themeButtonColor,
+            opacity: '0.9',
+          },
+          // Card container
+          card: {
+            backgroundColor: 'transparent',
+            border: 'none',
+            padding: '0',
+          },
+          // Checkbox and agreement text
+          checkbox: {
+            accentColor: themeButtonColor,
+          },
+          agreementText: {
+            color: 'rgba(255, 255, 255, 0.6)',
+            fontSize: '12px',
+          },
+          // Total section
+          total: {
+            color: '#ffffff',
+            fontWeight: '600',
+          },
+          // Error messages
+          error: {
+            color: '#ef4444',
+            fontSize: '12px',
+          },
+        },
       });
 
       setCommerceInstance(elements);
@@ -872,12 +940,11 @@ const CollabOrderPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Payment Form Container */}
+                {/* Payment Form Container - clean styling */}
                 <div 
                   id="fortis-payment-container" 
                   ref={iframeContainerRef}
-                  className="min-h-[300px] bg-white/5 p-4"
-                  style={{ borderRadius: getButtonRadius() }}
+                  className="min-h-[400px] -mx-2"
                 >
                   {isProcessing ? (
                     <div className="flex flex-col items-center justify-center h-64">
@@ -891,7 +958,7 @@ const CollabOrderPage: React.FC = () => {
                   )}
                 </div>
 
-                <p className="text-center text-gray-500 text-xs mt-4">
+                <p className="text-center text-gray-500 text-xs mt-2">
                   Secure payment powered by Fortis
                 </p>
               </div>

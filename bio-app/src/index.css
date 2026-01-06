@@ -54,5 +54,34 @@ body {
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Fortis Payment Form Styling */
+#fortis-payment-container {
+  /* Remove any default borders */
+  border: none !important;
+  box-shadow: none !important;
+}
 
+#fortis-payment-container iframe {
+  /* Ensure iframe fills container */
+  width: 100% !important;
+  min-height: 450px !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Override Fortis card container borders */
+#fortis-payment-container .commerce-card,
+#fortis-payment-container [class*="card"],
+#fortis-payment-container [class*="Card"] {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Style the payment info header */
+#fortis-payment-container [class*="header"],
+#fortis-payment-container [class*="title"] {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
+}
 
