@@ -475,10 +475,7 @@ const CollabOrderPage: React.FC = () => {
 
       console.log('Creating Commerce iframe');
       
-      // Get theme colors for Fortis styling
-      const themeButtonColor = bioSettings?.button_color || '#ec4899';
-      
-      // Simple config that matches the main app
+      // Fortis Commerce.js v1.0.0 - only these options are supported
       elements.create({
         container: '#fortis-payment-container',
         theme: 'dark',
@@ -492,16 +489,9 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
-        // Fortis appearance theming
-        appearance: {
-          theme: 'night',
-          variables: {
-            colorPrimary: themeButtonColor,
-          },
-        },
       });
       
-      console.log('Commerce iframe created with theme color:', themeButtonColor);
+      console.log('Commerce iframe created');
 
       setCommerceInstance(elements);
     } catch (error: any) {
