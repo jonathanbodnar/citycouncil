@@ -455,28 +455,47 @@ const TalentOnboardingPage: React.FC = () => {
         throw new Error('Failed to get user after login');
       }
 
-      // Validate we have the talent profile data before linking
-      if (!onboardingData?.talent?.id) {
-        console.error('❌ Missing talent profile data for linking!', {
+      // Get talent profile ID - first try from state, then query by token as fallback
+      let talentId = onboardingData?.talent?.id;
+      let talentName = onboardingData?.talent?.temp_full_name;
+      
+      if (!talentId && token) {
+        console.log('⚠️ onboardingData missing, querying by token...');
+        const { data: talentByToken } = await supabase
+          .from('talent_profiles')
+          .select('id, temp_full_name')
+          .eq('onboarding_token', token)
+          .single();
+        
+        if (talentByToken) {
+          talentId = talentByToken.id;
+          talentName = talentByToken.temp_full_name;
+          console.log('✅ Found talent profile by token:', talentId);
+        }
+      }
+      
+      if (!talentId) {
+        console.error('❌ Could not find talent profile!', {
           hasOnboardingData: !!onboardingData,
           hasTalent: !!onboardingData?.talent,
-          talentId: onboardingData?.talent?.id
+          talentId: onboardingData?.talent?.id,
+          token: token
         });
-        throw new Error('Onboarding data not loaded. Please refresh and try again.');
+        throw new Error('Could not find your talent profile. Please contact support.');
       }
 
       // Link talent profile to user
       console.log('🔗 Linking talent profile to user:', {
-        talentId: onboardingData.talent.id,
+        talentId: talentId,
         userId: user.id,
         token: token
       });
 
       const { data: linkResult, error: linkError } = await supabase.rpc('link_talent_profile_to_user', {
-        p_talent_id: onboardingData.talent.id,
+        p_talent_id: talentId,
         p_user_id: user.id,
         p_onboarding_token: token,
-        p_full_name: onboardingData.talent.temp_full_name || null
+        p_full_name: talentName || null
       });
 
       console.log('🔗 Link RPC result:', { linkResult, linkError });
@@ -485,24 +504,27 @@ const TalentOnboardingPage: React.FC = () => {
         console.error('❌ RPC link failed:', linkError || linkResult);
         
         // Fallback to direct update - try with onboarding_token match for RLS bypass
-        const { error: talentUpdateError } = await supabase
+        const { data: fallbackResult, error: talentUpdateError } = await supabase
           .from('talent_profiles')
           .update({ 
             user_id: user.id,
-            full_name: onboardingData?.talent.temp_full_name || null
+            full_name: talentName || null
           })
-          .eq('id', onboardingData?.talent.id)
-          .eq('onboarding_token', token); // Match token for RLS policy
+          .eq('id', talentId)
+          .eq('onboarding_token', token)
+          .select('id, user_id');
 
         if (talentUpdateError) {
           console.error('❌ Failed to link talent profile (fallback):', talentUpdateError);
-          // Don't throw - let onboarding continue, but log the issue
+          toast.error('Warning: Profile linking may have failed. Please contact support if you have issues.');
+        } else if (!fallbackResult || fallbackResult.length === 0) {
+          console.error('❌ Fallback update returned no rows - RLS may have blocked it');
           toast.error('Warning: Profile linking may have failed. Please contact support if you have issues.');
         } else {
-          console.log('✅ Talent profile linked via fallback update');
+          console.log('✅ Talent profile linked via fallback update:', fallbackResult);
         }
       } else {
-        console.log('✅ Talent profile linked via RPC');
+        console.log('✅ Talent profile linked via RPC:', linkResult);
       }
 
       // Update user record with talent info
@@ -511,8 +533,8 @@ const TalentOnboardingPage: React.FC = () => {
         email: normalizedEmail,
         phone: formattedPhone,
         user_type: 'talent',
-        full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
-        avatar_url: onboardingData?.talent.temp_avatar_url
+        full_name: talentName || onboardingData?.talent?.temp_full_name || 'Talent Member',
+        avatar_url: onboardingData?.talent?.temp_avatar_url
       }, { onConflict: 'id' });
 
       toast.success('Account verified! Let\'s set up your profile.');
