@@ -873,24 +873,32 @@ const TalentProfilePage: React.FC = () => {
             
             {/* Rating */}
             <div className="flex items-center mb-2">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <StarIcon
-                    key={i}
-                    className={`h-4 w-4 ${
-                      i < Math.floor(talent.average_rating || 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="ml-1.5 text-sm font-semibold text-gray-900">
-                {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'}
-              </span>
-              <span className="ml-1 text-xs text-gray-500">
-                ({talent.reviews.length})
-              </span>
+              {talent.reviews.length > 0 ? (
+                <>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <StarIcon
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.floor(talent.average_rating || 0)
+                            ? 'text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="ml-1.5 text-sm font-semibold text-gray-900">
+                    {talent.average_rating ? talent.average_rating.toFixed(1) : '5.0'}
+                  </span>
+                  <span className="ml-1 text-xs text-gray-500">
+                    ({talent.reviews.length})
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                  New
+                </span>
+              )}
               {/* Verified Badge inline */}
               {talent.is_verified && (
                 <CheckBadgeIcon className="h-4 w-4 text-blue-500 ml-2" title="Verified" />
