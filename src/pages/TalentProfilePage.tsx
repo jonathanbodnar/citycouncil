@@ -1136,7 +1136,7 @@ const TalentProfilePage: React.FC = () => {
             </div>
           ) : (
             /* Not logged in - email/phone form */
-            <form onSubmit={handleSubscribe} className="space-y-3">
+            <form onSubmit={handleSubscribe} className="space-y-3 max-w-sm mx-auto">
               {/* Email field with button inside */}
               {!showPhoneField && (
                 <div className="relative">
