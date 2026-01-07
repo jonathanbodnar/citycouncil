@@ -1591,7 +1591,7 @@ const TalentOnboardingPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-white mb-3">
-                      Upload Promo Video *
+                      Upload Promo Video (Optional)
                     </label>
                     <input
                       type="file"
@@ -1656,21 +1656,28 @@ const TalentOnboardingPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(3)}
-                  className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={(!welcomeVideoFile && !welcomeVideoUrl) || uploadingVideo}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-red-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-red-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploadingVideo ? 'Uploading...' : welcomeVideoUrl ? 'Complete Setup' : 'Upload & Complete Setup'}
-                </button>
+              <div className="mt-6 flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(3)}
+                    className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={uploadingVideo}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-red-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-red-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {uploadingVideo ? 'Uploading...' : (welcomeVideoFile || welcomeVideoUrl) ? 'Complete Setup' : 'Skip & Complete Setup'}
+                  </button>
+                </div>
+                {!welcomeVideoFile && !welcomeVideoUrl && (
+                  <p className="text-center text-sm text-gray-500">
+                    You can add a promo video later from your dashboard
+                  </p>
+                )}
               </div>
             </form>
           )}
