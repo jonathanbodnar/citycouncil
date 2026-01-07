@@ -48,10 +48,19 @@ const HomePage: React.FC = () => {
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all' | 'coming_soon'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
   const [totalFans, setTotalFans] = useState<number>(0);
+
+  // Listen for header search events
+  useEffect(() => {
+    const handleHeaderSearch = (event: CustomEvent) => {
+      setSearchQuery(event.detail || '');
+    };
+    window.addEventListener('headerSearch', handleHeaderSearch as EventListener);
+    return () => window.removeEventListener('headerSearch', handleHeaderSearch as EventListener);
+  }, []);
 
   // Capture coupon from URL (e.g., shoutout.us/?coupon=SANTA25)
   // Also handles malformed URLs like ?utm=sms?coupon=SANTA25 (double question mark)
@@ -351,50 +360,7 @@ const HomePage: React.FC = () => {
           </div>
         )}
 
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button
-            onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
-            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10"
-            title="Search talent"
-          >
-            🔍 Search
-          </button>
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
-              selectedCategory === 'all'
-                ? 'bg-white/20 backdrop-blur-md text-white border border-white/30'
-                : 'bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10'
-            }`}
-          >
-            All Categories
-          </button>
-          <button
-            onClick={() => setSelectedCategory('coming_soon')}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
-              selectedCategory === 'coming_soon'
-                ? 'bg-white/20 backdrop-blur-md text-white border border-white/30'
-                : 'bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10'
-            }`}
-          >
-            ⏳ Coming Soon
-          </button>
-          {TALENT_CATEGORIES
-            .filter(cat => availableCategories.includes(cat.key as TalentCategory))
-            .map(category => (
-              <button
-                key={category.key}
-                onClick={() => setSelectedCategory(category.key as TalentCategory)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
-                  selectedCategory === category.key
-                    ? 'bg-white/20 backdrop-blur-md text-white border border-white/30'
-                    : 'bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white border border-white/10'
-                }`}
-              >
-                {category.label}
-              </button>
-            ))}
-        </div>
+        {/* Category bar temporarily hidden */}
       </div>
 
       {/* Talent Grid - Show skeleton cards while loading */}

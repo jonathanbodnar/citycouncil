@@ -137,32 +137,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           )}
         </h3>
         
-        {/* Category - Single category, prefer non-"other" */}
-        <div className="mb-2 sm:mb-3 flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
-          {(() => {
-            // Get the best category to display (prefer non-"other")
-            let displayCategory = talent.category;
-            if (talent.categories && talent.categories.length > 0) {
-              // Find first non-"other" category, or fall back to first category
-              const nonOther = talent.categories.find(c => c.toLowerCase() !== 'other');
-              displayCategory = nonOther || talent.categories[0];
-            }
-            // If still "other", try the single category field
-            if (displayCategory?.toLowerCase() === 'other' && talent.category && talent.category.toLowerCase() !== 'other') {
-              displayCategory = talent.category;
-            }
-            // Don't show category if it's still "other"
-            if (!displayCategory || displayCategory.toLowerCase() === 'other') {
-              return null;
-            }
-            return (
-              <span className="px-2 py-0.5 sm:px-3 sm:py-1 glass-light border border-white/20 text-white text-[10px] sm:text-xs rounded-full font-medium whitespace-nowrap">
-                {displayCategory.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              </span>
-            );
-          })()}
-        </div>
-        
         {/* Rating - Hidden on mobile, shown on sm+ */}
         <div className="hidden sm:flex items-center mb-2">
           <div className="flex items-center">

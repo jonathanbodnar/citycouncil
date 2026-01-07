@@ -197,6 +197,21 @@ const Header: React.FC = () => {
   // Search talent as user types
   useEffect(() => {
     const searchTalent = async () => {
+      // On homepage, update URL params to filter cards instead of showing dropdown
+      if (isHomePage) {
+        const url = new URL(window.location.href);
+        if (searchQuery.trim()) {
+          url.searchParams.set('q', searchQuery.trim());
+        } else {
+          url.searchParams.delete('q');
+        }
+        window.history.replaceState({}, '', url.toString());
+        // Dispatch custom event for HomePage to listen to
+        window.dispatchEvent(new CustomEvent('headerSearch', { detail: searchQuery }));
+        setSearchResults([]);
+        return;
+      }
+
       if (!searchQuery.trim()) {
         setSearchResults([]);
         return;
@@ -233,7 +248,7 @@ const Header: React.FC = () => {
 
     const debounce = setTimeout(searchTalent, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery]);
+  }, [searchQuery, isHomePage]);
 
   const handleSearchResultClick = (talent: TalentSearchResult) => {
     setShowSearch(false);
@@ -390,7 +405,7 @@ const Header: React.FC = () => {
                       <input
                         ref={searchInputRef}
                         type="text"
-                        placeholder="Search talent..."
+                        placeholder={isHomePage ? "Filter talent..." : "Search talent..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -401,7 +416,8 @@ const Header: React.FC = () => {
                       />
                     </div>
 
-                    {/* Search Results */}
+                    {/* Search Results - Only show on non-homepage */}
+                    {!isHomePage && (
                     <div className="mt-3 max-h-80 overflow-y-auto">
                       {isSearching ? (
                         <div className="text-center py-4">
@@ -450,6 +466,11 @@ const Header: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    )}
+                    {/* Homepage hint */}
+                    {isHomePage && (
+                      <p className="mt-2 text-xs text-gray-400 text-center">Type to filter talent cards below</p>
+                    )}
                   </div>
                 </div>
               )}
