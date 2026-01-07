@@ -12,7 +12,7 @@ const WINNER_EXPIRY_KEY = 'giveaway_prize_expiry';
 const CLOSE_COOLDOWN_MINUTES = 5;
 
 // Prize types and their probabilities
-type Prize = 'FREE_SHOUTOUT' | '25_OFF' | '15_OFF' | '10_OFF' | '25_DOLLARS';
+type Prize = 'FREE_SHOUTOUT' | '15_OFF' | '10_OFF' | '25_DOLLARS';
 
 interface PrizeInfo {
   label: string;
@@ -27,12 +27,6 @@ const PRIZES: Record<Prize, PrizeInfo> = {
     code: 'WINNER100',
     shortLabel: 'Free ShoutOut',
     textMessage: 'a FREE personalized ShoutOut (up to $100 value)'
-  },
-  '25_OFF': {
-    label: '25% Off',
-    code: 'SANTA25',
-    shortLabel: '25% Off',
-    textMessage: '25% off'
   },
   '15_OFF': {
     label: '15% Off',
@@ -319,9 +313,9 @@ const HolidayPromoPopup: React.FC = () => {
     if (canWinFreeShoutout && rand < 25) {
       return 'FREE_SHOUTOUT';
     } else if (rand < 50) {
-      return '25_OFF';
-    } else if (rand < 75) {
       return '15_OFF';
+    } else if (rand < 75) {
+      return '10_OFF';
     } else {
       return '25_DOLLARS';
     }
@@ -601,7 +595,8 @@ const HolidayPromoPopup: React.FC = () => {
             <div className="py-4">
               <div className="text-6xl mb-4">🎉</div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Congratulations, you won {PRIZES[wonPrize]?.label}! 🎉
+                Congratulations,<br />
+                you won {PRIZES[wonPrize]?.label}!
               </h2>
               
               {/* Prize Code */}
