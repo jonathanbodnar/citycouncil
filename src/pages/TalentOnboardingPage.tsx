@@ -793,17 +793,40 @@ const TalentOnboardingPage: React.FC = () => {
     e.preventDefault();
     
     try {
+      // Get talent profile ID - first try from state, then query by token as fallback
+      let talentId = onboardingData?.talent?.id;
+      let talentName = onboardingData?.talent?.temp_full_name;
+      
+      if (!talentId && token) {
+        console.log('⚠️ Step 4: onboardingData missing, querying by token...');
+        const { data: talentByToken } = await supabase
+          .from('talent_profiles')
+          .select('id, temp_full_name')
+          .eq('onboarding_token', token)
+          .single();
+        
+        if (talentByToken) {
+          talentId = talentByToken.id;
+          talentName = talentByToken.temp_full_name;
+          console.log('✅ Found talent profile by token:', talentId);
+        }
+      }
+      
+      if (!talentId) {
+        throw new Error('Could not find your talent profile. Please refresh and try again.');
+      }
+      
       let finalVideoUrl = welcomeVideoUrl;
       
       // Only upload if we have a new file AND haven't uploaded it yet
       if (welcomeVideoFile && !welcomeVideoUrl) {
         setUploadingVideo(true);
-        console.log('Uploading welcome video to Wasabi...');
+        console.log('Uploading promo video to Supabase Storage...');
         
         try {
           const uploadResult = await uploadVideoToSupabase(
             welcomeVideoFile, 
-            `welcome-${onboardingData?.talent.id}`
+            `promo-${talentId}`
           );
           
           if (uploadResult.success && uploadResult.videoUrl) {
@@ -868,7 +891,9 @@ const TalentOnboardingPage: React.FC = () => {
       }
 
       // Update promo video and complete onboarding
-      const { error: completeError } = await supabase
+      console.log('📝 Completing onboarding for talent:', talentId, 'with video:', finalVideoUrl);
+      
+      const { data: updateResult, error: completeError } = await supabase
         .from('talent_profiles')
         .update({
           promo_video_url: finalVideoUrl || null,
@@ -878,9 +903,15 @@ const TalentOnboardingPage: React.FC = () => {
           onboarding_token: null,
           onboarding_expires_at: null
         })
-        .eq('id', onboardingData?.talent.id);
+        .eq('id', talentId)
+        .select('id, promo_video_url, onboarding_completed');
 
-      if (completeError) throw completeError;
+      if (completeError) {
+        console.error('❌ Failed to complete onboarding:', completeError);
+        throw completeError;
+      }
+      
+      console.log('✅ Onboarding completed:', updateResult);
 
       // Clear saved progress from localStorage
       const savedKey = `admin_onboarding_progress_${token}`;
@@ -892,8 +923,8 @@ const TalentOnboardingPage: React.FC = () => {
         const { data: { user } } = await supabase.auth.getUser();
         await supabase.functions.invoke('onboarding-complete-notification', {
           body: {
-            talentId: onboardingData?.talent.id,
-            talentName: onboardingData?.talent.temp_full_name || user?.user_metadata?.full_name || 'New Talent',
+            talentId: talentId,
+            talentName: talentName || user?.user_metadata?.full_name || 'New Talent',
             email: user?.email || 'No email provided'
           }
         });
