@@ -139,21 +139,29 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
         
         {/* Rating - Hidden on mobile, shown on sm+ */}
         <div className="hidden sm:flex items-center mb-2">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <StarIcon
-                key={i}
-                className={`h-4 w-4 ${
-                  i < Math.floor(talent.average_rating || 0)
-                    ? 'text-yellow-400'
-                    : 'text-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-          <span className="ml-2 text-sm text-gray-400">
-            {talent.average_rating ? talent.average_rating.toFixed(1) : '0.0'}
-          </span>
+          {talent.average_rating && talent.average_rating > 0 ? (
+            <>
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <StarIcon
+                    key={i}
+                    className={`h-4 w-4 ${
+                      i < Math.floor(talent.average_rating || 0)
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="ml-2 text-sm text-gray-400">
+                {talent.average_rating.toFixed(1)}
+              </span>
+            </>
+          ) : (
+            <span className="text-xs font-medium text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded-full">
+              New
+            </span>
+          )}
         </div>
 
         {/* Bio Preview - Hidden on mobile, shown on sm+ - Fixed height to prevent stretching */}
