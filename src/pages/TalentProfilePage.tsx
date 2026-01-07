@@ -1100,7 +1100,7 @@ const TalentProfilePage: React.FC = () => {
       <div className="mb-8">
         <div className="text-center">
           <h3 className="text-lg font-semibold text-white mb-4">
-            Stay Connected with {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
+            Stay Connected with {talent.temp_full_name || talent.users.full_name}
           </h3>
           
           {/* Already subscribed message */}
