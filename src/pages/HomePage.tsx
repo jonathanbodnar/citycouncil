@@ -318,11 +318,7 @@ const HomePage: React.FC = () => {
             <div className="h-64 bg-white/10 rounded-2xl"></div>
           </div>
         </div>
-      ) : featuredTalent.length > 0 && (
-        <div className="mb-12">
-          <FeaturedCarousel talent={featuredTalent} />
-        </div>
-      )}
+      ) : null /* Featured carousel temporarily hidden */}
 
       {/* Category Filter with Search */}
       <div className="mb-8">
@@ -390,7 +386,7 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Talent Grid - Show skeleton cards while loading */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
         {loading ? (
           // Show 10 skeleton cards while loading
           [...Array(10)].map((_, i) => <SkeletonCard key={i} />)
