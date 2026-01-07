@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   CheckCircleIcon,
   CheckIcon,
   UserIcon, 
   CreditCardIcon, 
-  EyeIcon, 
-  EyeSlashIcon,
   ExclamationTriangleIcon,
   VideoCameraIcon
 } from '@heroicons/react/24/outline';
@@ -24,7 +22,6 @@ import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
 import SecureBankInput from '../components/SecureBankInput';
 import SupportChatWidget from '../components/SupportChatWidget';
-import MFAEnrollmentDual from '../components/MFAEnrollmentDual';
 import toast from 'react-hot-toast';
 
 const TalentOnboardingPage: React.FC = () => {
@@ -34,24 +31,17 @@ const TalentOnboardingPage: React.FC = () => {
   const [onboardingData, setOnboardingData] = useState<TalentOnboardingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showSignInForm, setShowSignInForm] = useState(false); // Toggle between signup and signin
-  const [needsPhoneNumber, setNeedsPhoneNumber] = useState(false); // Show phone prompt after login if missing
-  const [missingPhoneData, setMissingPhoneData] = useState({ phone: '', userId: '' });
   
-  // Step 1: Account Setup
-  const [accountData, setAccountData] = useState({
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
-  });
-
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: '',
-    phone: ''
-  });
+  // Step 1: Account Setup - OTP-based flow (email -> phone -> code)
+  type AuthStep = 'email' | 'phone' | 'otp';
+  const [authStep, setAuthStep] = useState<AuthStep>('email');
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPhone, setAccountPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [existingUserPhone, setExistingUserPhone] = useState<string | null>(null); // Phone from existing user
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
   // Step 2: Profile Details
   const [profileData, setProfileData] = useState({
@@ -83,7 +73,6 @@ const TalentOnboardingPage: React.FC = () => {
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState(''); // Wasabi URL after upload
   const [videoPreviewUrl, setVideoPreviewUrl] = useState(''); // Blob URL for preview
   const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [hasMFAEnrolled, setHasMFAEnrolled] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -93,55 +82,6 @@ const TalentOnboardingPage: React.FC = () => {
   }, [token]);
 
   // Check if user already has MFA enrolled when reaching step 5
-  useEffect(() => {
-    const checkExistingMFA = async () => {
-      if (currentStep === 5) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
-
-          const { data: factors } = await supabase.auth.mfa.listFactors();
-          const hasVerifiedFactor = factors?.all?.some((f: any) => f.status === 'verified');
-          
-          console.log('📱 MFA Status Check:', {
-            hasVerifiedFactor,
-            factors: factors?.all
-          });
-
-          if (hasVerifiedFactor) {
-            console.log('✅ User already has MFA enrolled, skipping enrollment step');
-            setHasMFAEnrolled(true);
-            
-            // Auto-complete onboarding since MFA is already set up
-            const { error: completeError } = await supabase
-              .from('talent_profiles')
-              .update({
-                onboarding_completed: true,
-                current_onboarding_step: 5,
-                is_active: true,
-                onboarding_token: null,
-                onboarding_expires_at: null
-              })
-              .eq('id', onboardingData?.talent.id);
-
-            if (completeError) throw completeError;
-
-            // Clear saved progress
-            const savedKey = `admin_onboarding_progress_${token}`;
-            localStorage.removeItem(savedKey);
-
-            toast.success('Welcome back! Your account is already secured with 2FA.');
-            navigate('/dashboard');
-          }
-        } catch (error) {
-          console.error('Error checking MFA status:', error);
-        }
-      }
-    };
-
-    checkExistingMFA();
-  }, [currentStep, onboardingData, token, navigate]);
-
   // Load saved progress from localStorage
   const loadSavedProgress = () => {
     try {
@@ -342,352 +282,260 @@ const TalentOnboardingPage: React.FC = () => {
     }
   };
 
-  const handleStep1Submit = async (e: React.FormEvent) => {
+  // Format phone number for display
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+  };
+
+  // Handle email submission - check if user exists and has phone
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (accountData.password !== accountData.confirmPassword) {
-      toast.error('Passwords do not match');
+    const normalizedEmail = accountEmail.toLowerCase().trim();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
-    if (accountData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    setSendingOtp(true);
+    try {
+      // Check if user exists with a phone number using the edge function
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          checkEmailOnly: true, // Just check if user exists with phone
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.existingUserWithPhone && data.phone) {
+        // User exists with phone - send OTP to their phone and skip to OTP step
+        setExistingUserPhone(data.phone);
+        setAccountPhone(data.phone);
+        
+        // Send OTP to the existing phone
+        const otpResponse = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            phone: data.phone,
+          }),
+        });
+
+        const otpData = await otpResponse.json();
+        if (!otpResponse.ok) {
+          throw new Error(otpData.error || 'Failed to send verification code');
+        }
+
+        toast.success('We sent a code to your phone!');
+        setAuthStep('otp');
+        setTimeout(() => otpInputRef.current?.focus(), 100);
+      } else {
+        // No existing user with phone - go to phone step
+        setAuthStep('phone');
+      }
+    } catch (error: any) {
+      console.error('Email check error:', error);
+      // On error, just proceed to phone step
+      setAuthStep('phone');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  // Handle phone submission - send OTP
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const digits = accountPhone.replace(/\D/g, '');
+    if (digits.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
       return;
     }
+
+    setSendingOtp(true);
+    const formattedPhone = `+1${digits}`;
+    const normalizedEmail = accountEmail.toLowerCase().trim();
 
     try {
-      // First, check if this talent profile is already linked to a user
-      if (onboardingData?.talent.user_id) {
-        toast.error('This profile is already linked to an account. Please use the login form below.');
-        setLoginData({ email: accountData.email, password: '', phone: '' });
-        await fetchOnboardingData();
-        return;
-      }
-
-      // Create user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: accountData.email,
-        password: accountData.password,
-        options: {
-          data: {
-            full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
-            user_type: 'talent'
-          },
-          emailRedirectTo: `${window.location.origin}/talent-onboarding/${token}`,
-        }
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+        }),
       });
 
-      // Handle "User already registered" error - try logging in and linking account
-      if (authError) {
-        if (authError.message?.includes('User already registered') || authError.message?.includes('already been registered')) {
-          // Try to sign in with the provided credentials
-          try {
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-              email: accountData.email,
-              password: accountData.password,
-            });
-
-            if (signInError) {
-              // Check if it's an unconfirmed email issue
-              if (signInError.message?.includes('Email not confirmed') || signInError.message?.includes('confirm your email')) {
-                toast.error(
-                  'Your account exists but email is not confirmed. Please check your email for a confirmation link, or contact support if you need help.',
-                  { duration: 8000 }
-                );
-                return;
-              }
-              
-              // Password doesn't match - show login form
-              toast.error('An account with this email already exists. Please enter the correct password to continue.');
-              setLoginData({ email: accountData.email, password: '', phone: '' });
-              
-              // Force re-fetch to show login form (don't try to access signInData.user since login failed)
-              await fetchOnboardingData();
-              return;
-            }
-
-            // Login successful! Link the user to talent profile
-            if (signInData.user) {
-              // Format phone
-              const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
-              
-              // Update talent profile with user_id
-              const { error: linkError } = await supabase
-                .from('talent_profiles')
-                .update({ 
-                  user_id: signInData.user.id,
-                  full_name: onboardingData?.talent.temp_full_name || null
-                })
-                .eq('id', onboardingData?.talent.id);
-
-              if (linkError) {
-                console.error('Failed to link user to talent profile:', linkError);
-                throw new Error('Failed to link account. Please contact support.');
-              }
-
-              // Update user metadata
-              await supabase.from('users').update({
-                user_type: 'talent',
-                phone: formattedPhone,
-                full_name: onboardingData?.talent.temp_full_name
-              }).eq('id', signInData.user.id);
-
-              toast.success('Account linked successfully!');
-              setCurrentStep(2);
-              return;
-            }
-          } catch (linkError: any) {
-            console.error('Error during account linking:', linkError);
-            toast.error(linkError.message || 'Failed to link account');
-            return;
-          }
-        }
-        throw authError;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send verification code');
       }
 
-      if (!authData.user) throw new Error('Failed to create user account');
+      toast.success('Verification code sent!');
+      setAuthStep('otp');
+      setTimeout(() => otpInputRef.current?.focus(), 100);
+    } catch (error: any) {
+      console.error('Send OTP error:', error);
+      toast.error(error.message || 'Failed to send verification code');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
 
-      // Format phone to E.164 (+1XXXXXXXXXX)
-      const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
+  // Handle OTP verification and account creation/login
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (otpCode.length !== 6) {
+      toast.error('Please enter the 6-digit code');
+      return;
+    }
 
-      console.log('📝 Attempting to create user record:', {
-        userId: authData.user.id,
-        email: authData.user.email,
-        phone: formattedPhone,
-        full_name: onboardingData?.talent.temp_full_name
+    setVerifyingOtp(true);
+    const normalizedEmail = accountEmail.toLowerCase().trim();
+    const formattedPhone = existingUserPhone || `+1${accountPhone.replace(/\D/g, '')}`;
+
+    try {
+      // Verify OTP and get session
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+          code: otpCode,
+          fullName: onboardingData?.talent.temp_full_name || 'Talent Member',
+          userType: 'talent',
+        }),
       });
 
-      // Create user record in public.users table
-      // First check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', authData.user.id)
-        .single();
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid verification code');
+      }
 
-      if (!existingUser) {
-        // User doesn't exist, create new record
-        const { error: userInsertError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: authData.user.email,
-            user_type: 'talent',
-            phone: formattedPhone,
-            full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
-            avatar_url: onboardingData?.talent.temp_avatar_url
-          });
+      // Set the session directly
+      if (data.session?.access_token && data.session?.refresh_token) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
 
-        if (userInsertError) {
-          console.error('❌ Failed to create user record:', userInsertError);
-          
-          // If it's a phone number conflict, provide a helpful message
-          if (userInsertError.message?.includes('phone') || userInsertError.message?.includes('unique')) {
-            toast.error('This phone number is already registered. Please use a different phone number or contact support.', {
-              duration: 8000
-            });
-            return;
-          }
-          
-          // Show the actual error message to help debug
-          toast.error(`Database error: ${userInsertError.message || 'Failed to save user'}`, {
-            duration: 10000
-          });
-          return;
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw new Error('Failed to establish session');
         }
       } else {
-        // User exists, update their info
-        const { error: userUpdateError } = await supabase
-          .from('users')
-          .update({
-            email: authData.user.email,
-            user_type: 'talent',
-            phone: formattedPhone,
-            full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
-            avatar_url: onboardingData?.talent.temp_avatar_url
-          })
-          .eq('id', authData.user.id);
-
-        if (userUpdateError) {
-          console.error('❌ Failed to update user record:', userUpdateError);
-          toast.error(`Database error: ${userUpdateError.message || 'Failed to update user'}`, {
-            duration: 10000
-          });
-          return;
-        }
+        throw new Error('No session returned from verification');
       }
 
-      console.log('✅ User record created/updated successfully');
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Failed to get user after login');
+      }
 
-      // Link talent profile to user using RPC function (bypasses RLS)
+      // Link talent profile to user
       console.log('🔗 Linking talent profile to user:', {
         talentId: onboardingData?.talent.id,
-        userId: authData.user.id,
+        userId: user.id,
         token: token
       });
-      
+
       const { data: linkResult, error: linkError } = await supabase.rpc('link_talent_profile_to_user', {
         p_talent_id: onboardingData?.talent.id,
-        p_user_id: authData.user.id,
+        p_user_id: user.id,
         p_onboarding_token: token,
         p_full_name: onboardingData?.talent.temp_full_name || null
       });
 
-      console.log('🔗 Link result:', linkResult, 'Error:', linkError);
-
-      // Check both Supabase error AND function-level error
-      const functionFailed = linkError || (linkResult && linkResult.success === false);
-      
-      if (functionFailed) {
-        const errorMsg = linkError?.message || linkResult?.error || 'Unknown error';
-        console.error('❌ Failed to link talent profile:', errorMsg);
-        
-        // Fallback to direct update (in case RPC doesn't exist or failed)
-        console.log('🔄 Attempting fallback direct update...');
+      if (linkError || (linkResult && linkResult.success === false)) {
+        // Fallback to direct update
         const { error: talentUpdateError } = await supabase
           .from('talent_profiles')
           .update({ 
-            user_id: authData.user.id,
+            user_id: user.id,
             full_name: onboardingData?.talent.temp_full_name || null
           })
           .eq('id', onboardingData?.talent.id);
 
         if (talentUpdateError) {
-          console.error('❌ Fallback update also failed:', talentUpdateError);
-          throw new Error('Failed to link your account to your talent profile. Please contact support.');
+          console.error('Failed to link talent profile:', talentUpdateError);
         }
-        console.log('✅ Fallback update succeeded');
-      } else {
-        console.log('✅ Talent profile linked successfully via RPC');
       }
 
-      // Check if email confirmation is required
-      if (authData.session === null && authData.user.email_confirmed_at === null) {
-        toast.success('Account created! Please verify your email, then sign in to continue.', {
-          duration: 8000,
-        });
-        return;
-      }
+      // Update user record with talent info
+      await supabase.from('users').upsert({
+        id: user.id,
+        email: normalizedEmail,
+        phone: formattedPhone,
+        user_type: 'talent',
+        full_name: onboardingData?.talent.temp_full_name || 'Talent Member',
+        avatar_url: onboardingData?.talent.temp_avatar_url
+      }, { onConflict: 'id' });
 
-      toast.success('Account created successfully!');
+      toast.success('Account verified! Let\'s set up your profile.');
       setCurrentStep(2);
       updateOnboardingStep(2);
 
     } catch (error: any) {
-      console.error('Error creating account:', error);
-      toast.error(error.message || 'Failed to create account');
+      console.error('OTP verification error:', error);
+      toast.error(error.message || 'Invalid verification code');
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Resend OTP code
+  const handleResendOtp = async () => {
+    setSendingOtp(true);
+    const normalizedEmail = accountEmail.toLowerCase().trim();
+    const formattedPhone = existingUserPhone || `+1${accountPhone.replace(/\D/g, '')}`;
 
     try {
-      // Sign in existing user
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: loginData.email,
-        password: loginData.password,
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+        }),
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Check if talent profile has no user_id (orphaned state) - auto-link it
-        if (!onboardingData?.talent.user_id) {
-          console.log('🔗 Auto-linking orphaned talent profile to user:', {
-            userId: authData.user.id,
-            talentId: onboardingData?.talent.id,
-            email: authData.user.email
-          });
-
-          // Link the user to the talent profile
-          const { error: linkError } = await supabase
-            .from('talent_profiles')
-            .update({ 
-              user_id: authData.user.id,
-              full_name: onboardingData?.talent.temp_full_name || null
-            })
-            .eq('id', onboardingData?.talent.id);
-
-          if (linkError) {
-            console.error('Failed to link user to talent profile:', linkError);
-            toast.error('Failed to link your account. Please contact support.');
-            return;
-          }
-
-          // Update user type to talent
-          await supabase.from('users').update({
-            user_type: 'talent',
-            full_name: onboardingData?.talent.temp_full_name
-          }).eq('id', authData.user.id);
-
-          toast.success('Account linked successfully!');
-          setShowSignInForm(false);
-          setCurrentStep(2);
-          return;
-        }
-
-        // Verify this user is associated with the talent profile
-        if (authData.user.id !== onboardingData?.talent.user_id) {
-          toast.error('This email is not associated with this talent profile. Please use the email you registered with.');
-          return;
-        }
-
-        // Check if user has a phone number
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('phone')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (!existingUser?.phone) {
-          console.log('📱 User is missing phone number, prompting for it');
-          setMissingPhoneData({ phone: '', userId: authData.user.id });
-          setNeedsPhoneNumber(true);
-          toast.success('Logged in! Please add your phone number to continue.');
-          return;
-        }
-
-        console.log('LOGIN SUCCESS: User authenticated for onboarding:', {
-          userId: authData.user.id,
-          talentUserId: onboardingData?.talent.user_id,
-          email: authData.user.email
-        });
-        
-        toast.success('Logged in successfully!');
-        setCurrentStep(2);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend code');
       }
 
+      toast.success('New code sent!');
+      setOtpCode('');
     } catch (error: any) {
-      console.error('Error logging in:', error);
-      toast.error(error.message || 'Failed to log in');
-    }
-  };
-
-  // Handle saving missing phone number
-  const handleSavePhoneNumber = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!missingPhoneData.phone || missingPhoneData.phone.replace(/\D/g, '').length < 10) {
-      toast.error('Please enter a valid 10-digit phone number');
-      return;
-    }
-
-    try {
-      const formattedPhone = `+1${missingPhoneData.phone.replace(/\D/g, '')}`;
-      
-      const { error } = await supabase.from('users').update({
-        phone: formattedPhone
-      }).eq('id', missingPhoneData.userId);
-
-      if (error) throw error;
-
-      toast.success('Phone number saved!');
-      setNeedsPhoneNumber(false);
-      setCurrentStep(2);
-    } catch (error: any) {
-      console.error('Error saving phone:', error);
-      toast.error(error.message || 'Failed to save phone number');
+      toast.error(error.message || 'Failed to resend code');
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -976,19 +824,43 @@ const TalentOnboardingPage: React.FC = () => {
         }
       }
 
-      // Update promo video (but don't complete onboarding yet)
-      const { error: videoError } = await supabase
+      // Update promo video and complete onboarding
+      const { error: completeError } = await supabase
         .from('talent_profiles')
         .update({
-          promo_video_url: finalVideoUrl || null
+          promo_video_url: finalVideoUrl || null,
+          onboarding_completed: true,
+          current_onboarding_step: 4,
+          is_active: true,
+          onboarding_token: null,
+          onboarding_expires_at: null
         })
         .eq('id', onboardingData?.talent.id);
 
-      if (videoError) throw videoError;
+      if (completeError) throw completeError;
 
-      toast.success('Promo video saved! One more step: Enable MFA security');
-      await updateOnboardingStep(5);
-      setCurrentStep(5);
+      // Clear saved progress from localStorage
+      const savedKey = `admin_onboarding_progress_${token}`;
+      localStorage.removeItem(savedKey);
+      console.log('Admin onboarding progress cleared from localStorage');
+
+      // Send admin notification email
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.functions.invoke('onboarding-complete-notification', {
+          body: {
+            talentId: onboardingData?.talent.id,
+            talentName: onboardingData?.talent.temp_full_name || user?.user_metadata?.full_name || 'New Talent',
+            email: user?.email || 'No email provided'
+          }
+        });
+        console.log('Admin notification sent successfully');
+      } catch (notificationError) {
+        console.error('Failed to send admin notification:', notificationError);
+      }
+
+      toast.success('Welcome to ShoutOut! Your profile is now live.');
+      navigate('/dashboard');
 
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
@@ -1029,8 +901,7 @@ const TalentOnboardingPage: React.FC = () => {
     { number: 1, title: 'Account Setup', icon: UserIcon },
     { number: 2, title: 'Profile Details', icon: UserIcon },
     { number: 3, title: 'Payout Setup', icon: CreditCardIcon },
-    { number: 4, title: 'Promo Video', icon: VideoCameraIcon },
-    { number: 5, title: 'Security (MFA)', icon: CheckBadgeIcon }
+    { number: 4, title: 'Promo Video', icon: VideoCameraIcon }
   ];
 
   return (
@@ -1224,252 +1095,177 @@ const TalentOnboardingPage: React.FC = () => {
 
         {/* Step Content - Mobile Optimized */}
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-          {/* Step 1: Show Sign Up form when no user_id AND not showing sign-in form */}
-          {currentStep === 1 && !onboardingData?.talent.user_id && !showSignInForm && (
-            <form onSubmit={handleStep1Submit}>
+          {/* Step 1: OTP-based Account Setup */}
+          {currentStep === 1 && (
+            <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Step 1: Create Your Account
+                Step 1: {onboardingData?.talent.user_id ? 'Welcome Back!' : 'Create Your Account'}
               </h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={accountData.email}
-                    onChange={(e) => setAccountData({...accountData, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your email"
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={accountData.phone}
-                    onChange={(e) => {
-                      const cleaned = e.target.value.replace(/\D/g, '');
-                      if (cleaned.length <= 10) {
-                        let formatted = cleaned;
-                        if (cleaned.length > 6) {
-                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-                        } else if (cleaned.length > 3) {
-                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-                        } else if (cleaned.length > 0) {
-                          formatted = `(${cleaned}`;
-                        }
-                        setAccountData({...accountData, phone: formatted});
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="(555) 123-4567"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">For account security & payouts</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      minLength={6}
-                      value={accountData.password}
-                      onChange={(e) => setAccountData({...accountData, password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-                      placeholder="Create a password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3"
-                    >
-                      {showPassword ? (
-                        <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm Password *
-                  </label>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={accountData.confirmPassword}
-                    onChange={(e) => setAccountData({...accountData, confirmPassword: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Confirm your password"
-                  />
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Create Account & Continue
-                </button>
-              </div>
-
-              {/* Toggle to Sign In */}
-              <div className="mt-4 text-center">
-                <p className="text-sm text-gray-600">
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSignInForm(true);
-                      setLoginData({ email: accountData.email, password: '', phone: '' });
-                    }}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    Sign in instead
-                  </button>
-                </p>
-              </div>
-            </form>
-          )}
-
-          {/* Step 1: Show Sign In form when user clicks "Sign in instead" OR when user_id exists */}
-          {currentStep === 1 && (onboardingData?.talent.user_id || showSignInForm) && !needsPhoneNumber && (
-            <form onSubmit={handleLoginSubmit}>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Step 1: Welcome Back!
-              </h2>
-              
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
-                <p className="text-blue-800">
-                  You've already created your account. Please log in to continue setting up your profile.
-                </p>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={loginData.email}
-                    onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your email"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-                      placeholder="Enter your password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3"
-                    >
-                      {showPassword ? (
-                        <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Forgot Password Link */}
-              <div className="mt-3 text-right">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!loginData.email) {
-                      toast.error('Please enter your email address first');
-                      return;
-                    }
-                    try {
-                      // Redirect back to this onboarding page after password reset
-                      const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
-                        redirectTo: `${window.location.origin}/reset-password?redirect=/onboard/${token}`,
-                      });
-                      if (error) throw error;
-                      toast.success('Password reset email sent! Check your inbox. After resetting, you\'ll be redirected back here.', { duration: 6000 });
-                    } catch (error: any) {
-                      console.error('Error sending reset email:', error);
-                      toast.error(error.message || 'Failed to send reset email');
-                    }
-                  }}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Forgot password?
-                </button>
-              </div>
-              
-              <div className="mt-4">
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Log In & Continue
-                </button>
-              </div>
-
-              {/* Toggle back to Sign Up (only if profile has no user_id yet) */}
-              {!onboardingData?.talent.user_id && showSignInForm && (
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-gray-600">
-                    Don't have an account?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setShowSignInForm(false)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Create one instead
-                    </button>
+              {onboardingData?.talent.user_id && (
+                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                  <p className="text-blue-800">
+                    You've already started setting up your account. Enter your email to continue.
                   </p>
                 </div>
               )}
-            </form>
+              
+              {/* Email Step */}
+              {authStep === 'email' && (
+                <form onSubmit={handleEmailSubmit}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={accountEmail}
+                        onChange={(e) => setAccountEmail(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your email"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      disabled={sendingOtp}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {sendingOtp ? 'Checking...' : 'Continue'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Phone Step */}
+              {authStep === 'phone' && (
+                <form onSubmit={handlePhoneSubmit}>
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-gray-600">
+                        Email: <span className="font-medium">{accountEmail}</span>
+                        <button
+                          type="button"
+                          onClick={() => setAuthStep('email')}
+                          className="ml-2 text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          Change
+                        </button>
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={accountPhone}
+                        onChange={(e) => setAccountPhone(formatPhoneNumber(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="(555) 123-4567"
+                        autoFocus
+                      />
+                      <p className="text-xs text-gray-500 mt-1">We'll send you a verification code</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      disabled={sendingOtp}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {sendingOtp ? 'Sending code...' : 'Send Verification Code'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* OTP Step */}
+              {authStep === 'otp' && (
+                <form onSubmit={handleOtpSubmit}>
+                  <div className="space-y-4">
+                    <div className="bg-green-50 rounded-lg p-4 mb-4">
+                      <p className="text-green-800 text-sm">
+                        We sent a 6-digit code to{' '}
+                        <span className="font-medium">
+                          {existingUserPhone 
+                            ? `***-***-${existingUserPhone.slice(-4)}`
+                            : accountPhone
+                          }
+                        </span>
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Verification Code
+                      </label>
+                      <input
+                        ref={otpInputRef}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl tracking-[0.5em] font-mono"
+                        placeholder="000000"
+                        autoComplete="one-time-code"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      disabled={verifyingOtp || otpCode.length !== 6}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {verifyingOtp ? 'Verifying...' : 'Verify & Continue'}
+                    </button>
+                  </div>
+
+                  <div className="mt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={sendingOtp}
+                      className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                    >
+                      {sendingOtp ? 'Sending...' : "Didn't receive the code? Resend"}
+                    </button>
+                  </div>
+
+                  <div className="mt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthStep('phone');
+                        setOtpCode('');
+                        setExistingUserPhone(null);
+                      }}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Use a different phone number
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
 
-          {/* Step 1.5: Phone number prompt (shown after login if phone is missing) */}
-          {currentStep === 1 && needsPhoneNumber && (
-            <form onSubmit={handleSavePhoneNumber}>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Almost There! Add Your Phone Number
-              </h2>
-              
-              <div className="bg-amber-50 rounded-lg p-4 mb-6">
-                <p className="text-amber-800">
-                  We need your phone number for account security and to process payouts. This is required to continue.
-                </p>
-              </div>
-              
-              <div className="space-y-4">
+          {/* Placeholder for removed Step 1.5 - keeping structure for other steps */}
+          {currentStep === 1 && false && (
+            <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number *
@@ -1915,71 +1711,12 @@ const TalentOnboardingPage: React.FC = () => {
                   disabled={(!welcomeVideoFile && !welcomeVideoUrl) || uploadingVideo}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-red-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-red-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {uploadingVideo ? 'Uploading...' : welcomeVideoUrl ? 'Continue to Security Setup' : 'Upload & Continue'}
+                  {uploadingVideo ? 'Uploading...' : welcomeVideoUrl ? 'Complete Setup' : 'Upload & Complete Setup'}
                 </button>
               </div>
             </form>
           )}
 
-          {currentStep === 5 && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Step 5: Enable Two-Factor Authentication
-              </h2>
-              
-              <p className="text-gray-600 mb-6">
-                As a talent on ShoutOut, you're required to enable two-factor authentication (MFA) to protect your account and earnings. Choose between an authenticator app or SMS text messages.
-              </p>
-
-              <MFAEnrollmentDual
-                initialPhone={accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : undefined}
-                onComplete={async () => {
-                  // Complete onboarding after MFA is enabled
-                  try {
-                    const { error: completeError } = await supabase
-                      .from('talent_profiles')
-                      .update({
-                        onboarding_completed: true,
-                        current_onboarding_step: 5,
-                        is_active: true,
-                        onboarding_token: null,
-                        onboarding_expires_at: null
-                      })
-                      .eq('id', onboardingData?.talent.id);
-
-                    if (completeError) throw completeError;
-
-                    // Clear saved progress from localStorage
-                    const savedKey = `admin_onboarding_progress_${token}`;
-                    localStorage.removeItem(savedKey);
-                    console.log('Admin onboarding progress cleared from localStorage');
-
-                    // Send admin notification email
-                    try {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      await supabase.functions.invoke('onboarding-complete-notification', {
-                        body: {
-                          talentId: onboardingData?.talent.id,
-                          talentName: onboardingData?.talent.temp_full_name || user?.user_metadata?.full_name || 'New Talent',
-                          email: user?.email || 'No email provided'
-                        }
-                      });
-                      console.log('Admin notification sent successfully');
-                    } catch (notificationError) {
-                      console.error('Failed to send admin notification:', notificationError);
-                    }
-
-                    toast.success('Welcome to ShoutOut! Your account is now fully secured.');
-                    navigate('/dashboard');
-                  } catch (error: any) {
-                    console.error('Error completing onboarding:', error);
-                    toast.error('Failed to complete onboarding');
-                  }
-                }}
-                required={true}
-              />
-            </div>
-          )}
         </div>
       </div>
       
