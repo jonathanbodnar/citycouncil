@@ -444,11 +444,12 @@ const HolidayPromoPopup: React.FC = () => {
 
       // Save to beta_signups for prize tracking
       // First check if they already have a prize from a previous giveaway entry
-      const { data: existingEntry } = await supabase
+      const { data: existingEntries } = await supabase
         .from('beta_signups')
-        .select('id, prize_won, source')
-        .or(`phone_number.eq.${formattedPhone},email.eq.${normalizedEmail}`)
-        .single();
+        .select('id, prize_won, source, phone_number')
+        .or(`phone_number.eq.${formattedPhone},email.eq.${normalizedEmail}`);
+
+      const existingEntry = existingEntries?.[0];
 
       if (existingEntry?.prize_won) {
         // They already won a prize before - show them their existing prize
@@ -462,31 +463,41 @@ const HolidayPromoPopup: React.FC = () => {
         return;
       }
 
-      if (existingEntry) {
-        // Entry exists but no prize - update it with prize and holiday_popup source
-        await supabase
-          .from('beta_signups')
-          .update({
-            source: 'holiday_popup',
-            utm_source: utmSource || existingEntry.source,
-            prize_won: prize
-          })
-          .eq('id', existingEntry.id);
-      } else {
-        // No existing entry - create new one
-        const { error: insertError } = await supabase
-          .from('beta_signups')
-          .insert({
-            phone_number: formattedPhone,
-            email: normalizedEmail,
-            source: 'holiday_popup',
-            utm_source: utmSource,
-            subscribed_at: new Date().toISOString(),
-            prize_won: prize
-          });
+      // Use upsert to handle both insert and update cases
+      // This avoids RLS issues with UPDATE policy
+      const { error: upsertError } = await supabase
+        .from('beta_signups')
+        .upsert({
+          id: existingEntry?.id, // Use existing ID if found, otherwise let DB generate
+          phone_number: formattedPhone,
+          email: normalizedEmail,
+          source: 'holiday_popup',
+          utm_source: utmSource,
+          subscribed_at: existingEntry?.id ? undefined : new Date().toISOString(), // Keep original date if updating
+          prize_won: prize
+        }, {
+          onConflict: 'phone_number', // Use phone as the conflict key
+          ignoreDuplicates: false
+        });
 
-        if (insertError && insertError.code !== '23505') {
-          console.error('Error saving to beta_signups:', insertError);
+      if (upsertError) {
+        console.error('Error saving to beta_signups:', upsertError);
+        // Try insert as fallback (in case upsert fails due to no phone conflict)
+        if (!existingEntry) {
+          const { error: insertError } = await supabase
+            .from('beta_signups')
+            .insert({
+              phone_number: formattedPhone,
+              email: normalizedEmail,
+              source: 'holiday_popup',
+              utm_source: utmSource,
+              subscribed_at: new Date().toISOString(),
+              prize_won: prize
+            });
+          
+          if (insertError && insertError.code !== '23505') {
+            console.error('Fallback insert error:', insertError);
+          }
         }
       }
 
