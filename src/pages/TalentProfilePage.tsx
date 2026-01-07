@@ -1097,46 +1097,46 @@ const TalentProfilePage: React.FC = () => {
       </div>
 
       {/* Subscribe/Follow Widget */}
-      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
+      <div className="mb-8">
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className="text-lg font-semibold text-white mb-4">
             Stay Connected with {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
           </h3>
           
           {/* Already subscribed message */}
           {isFollowing ? (
             <div className="py-3 space-y-1">
-              <p className="text-green-400 text-sm font-medium">
+              <p className="text-white/60 text-sm">
                 ✓ You're subscribed to {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
               </p>
-              <p className="text-gray-500 text-xs">
+              <p className="text-white/40 text-xs">
                 You now have exclusive access to their updates.
               </p>
             </div>
           ) : user ? (
             /* Logged in user - show subscribe button */
             <div className="space-y-2">
-              <p className="text-gray-500 text-xs">
+              <p className="text-white/40 text-xs">
                 Logged in as {user.email || user.phone}
               </p>
               <button
                 onClick={handleSubscribe}
                 disabled={subscribing}
-                className="w-full max-w-sm mx-auto py-3 rounded-full font-medium transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                className="w-full py-3 rounded-full font-medium transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white"
               >
-                {subscribing ? (
-                  <span className="animate-pulse">Subscribing...</span>
-                ) : (
+                {subscribing ? '...' : (
                   <>
-                    <HeartIcon className="h-4 w-4" />
-                    Subscribe to {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
+                    Stay connected
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
                   </>
                 )}
               </button>
             </div>
           ) : (
             /* Not logged in - email/phone form */
-            <form onSubmit={handleSubscribe} className="max-w-sm mx-auto space-y-3">
+            <form onSubmit={handleSubscribe} className="space-y-3">
               {/* Email field with button inside */}
               {!showPhoneField && (
                 <div className="relative">
@@ -1146,17 +1146,18 @@ const TalentProfilePage: React.FC = () => {
                     onChange={(e) => setSubscribeEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
-                    className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-32 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/50 text-sm"
+                    className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-44 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
                   />
                   <button
                     type="submit"
                     disabled={subscribing}
-                    className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white"
+                    style={{ minWidth: '140px' }}
                   >
                     {subscribing ? '...' : (
                       <>
-                        Subscribe
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        Stay connected
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                       </>
@@ -1167,29 +1168,26 @@ const TalentProfilePage: React.FC = () => {
               
               {/* Phone field - shown after email for new users */}
               {showPhoneField && (
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-400">One more step to complete your subscription:</p>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      value={subscribePhone}
-                      onChange={(e) => setSubscribePhone(formatPhoneNumber(e.target.value))}
-                      placeholder="(555) 555-5555"
-                      className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-32 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/50 text-sm"
-                    />
-                    <button
-                      type="submit"
-                      disabled={subscribing}
-                      className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {subscribing ? '...' : 'Confirm'}
-                      {!subscribing && (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    value={subscribePhone}
+                    onChange={(e) => setSubscribePhone(formatPhoneNumber(e.target.value))}
+                    placeholder="(555) 555-5555"
+                    className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-40 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subscribing}
+                    className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    {subscribing ? '...' : 'Confirm Access'}
+                    {!subscribing && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
               )}
             </form>
