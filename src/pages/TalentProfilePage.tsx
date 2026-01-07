@@ -1102,9 +1102,6 @@ const TalentProfilePage: React.FC = () => {
           <h3 className="text-lg font-semibold text-white mb-2">
             Stay Connected with {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
           </h3>
-          <p className="text-sm text-gray-400 mb-4">
-            Get notified about new content, exclusive updates, and special offers.
-          </p>
           
           {/* Already subscribed message */}
           {isFollowing ? (
