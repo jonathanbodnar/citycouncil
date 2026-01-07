@@ -273,9 +273,10 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       // Create iframe in our container (pass selector string to avoid null ref timing)
       console.log('Creating Commerce iframe');
       
-      // Parse customer name into first/last
-      const nameParts = (customerName || '').trim().split(' ');
-      const firstName = nameParts[0] || '';
+      // Parse customer name into first/last - use email as fallback if no name
+      const nameToUse = customerName?.trim() || customerEmail?.split('@')[0] || 'Customer';
+      const nameParts = nameToUse.split(' ');
+      const firstName = nameParts[0] || 'Customer';
       const lastName = nameParts.slice(1).join(' ') || '';
       
       elements.create({
@@ -300,6 +301,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         },
         appearance: {
           colorBackground: '#11161f',
+          colorPrimary: '#8b5cf6', // Purple for Pay Now button
           colorButtonSelectedBackground: '#8b5cf6', // Purple to match ShoutOut theme
           colorButtonSelectedText: '#ffffff',
           fontFamily: 'Montserrat',
