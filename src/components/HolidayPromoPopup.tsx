@@ -666,10 +666,10 @@ const HolidayPromoPopup: React.FC = () => {
                   🏆 Free ShoutOut
                 </span>
                 <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
-                  25% Off
+                  15% Off
                 </span>
                 <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
-                  15% Off
+                  10% Off
                 </span>
                 <span className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
                   $25 Off
