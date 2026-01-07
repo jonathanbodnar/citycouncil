@@ -414,20 +414,24 @@ const HolidayPromoPopup: React.FC = () => {
     try {
       const utmSource = getUtmSource();
       
-      // Capture as a user (with both email and phone)
-      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          phone: formattedPhone,
-          source: 'holiday_popup',
-          utm_source: utmSource,
-        }),
-      }).catch(err => console.log('User capture note:', err.message));
+      // Capture as a user (with both email and phone) - AWAIT this to ensure user is updated
+      try {
+        await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            phone: formattedPhone,
+            source: 'holiday_popup',
+            utm_source: utmSource,
+          }),
+        });
+      } catch (err: any) {
+        console.log('User capture note:', err.message);
+      }
 
       // Determine prize
       const prize = await determinePrize();
