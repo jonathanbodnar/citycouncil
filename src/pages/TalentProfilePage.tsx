@@ -1115,10 +1115,7 @@ const TalentProfilePage: React.FC = () => {
             </div>
           ) : user ? (
             /* Logged in user - show subscribe button */
-            <div className="space-y-2">
-              <p className="text-white/40 text-xs">
-                Logged in as {user.email || user.phone}
-              </p>
+            <div className="space-y-2 max-w-sm mx-auto">
               <button
                 onClick={handleSubscribe}
                 disabled={subscribing}
@@ -1133,6 +1130,9 @@ const TalentProfilePage: React.FC = () => {
                   </>
                 )}
               </button>
+              <p className="text-white/40 text-xs">
+                Logged in as {user.email || user.phone}
+              </p>
             </div>
           ) : (
             /* Not logged in - email/phone form */
