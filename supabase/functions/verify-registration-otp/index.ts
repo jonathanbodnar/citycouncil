@@ -273,7 +273,7 @@ serve(async (req) => {
           .eq('id', existingUser.id);
       }
 
-      // Generate magic link
+      // Generate magic link and extract tokens from it
       const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
         email: existingUser.email,
@@ -292,7 +292,71 @@ serve(async (req) => {
         throw new Error("Failed to generate authentication link");
       }
 
-      console.log('Login successful for:', existingUser.email);
+      // Verify the magic link server-side to get session tokens
+      // Parse the token from the magic link URL
+      const magicLinkUrlObj = new URL(magicLinkUrl);
+      const token = magicLinkUrlObj.searchParams.get('token');
+      const type = magicLinkUrlObj.searchParams.get('type');
+      
+      if (token && type === 'magiclink') {
+        // Verify the OTP to get a session
+        const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'magiclink',
+        });
+        
+        if (sessionError) {
+          console.error('Error verifying magic link token:', sessionError);
+          // Fall back to returning the magic link URL
+          console.log('Falling back to magic link redirect');
+          return new Response(
+            JSON.stringify({
+              success: true,
+              isLogin: true,
+              magicLink: magicLinkUrl,
+              user: {
+                id: existingUser.id,
+                email: existingUser.email,
+                fullName: existingUser.full_name,
+                userType: existingUser.user_type,
+              },
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            }
+          );
+        }
+        
+        if (sessionData.session) {
+          console.log('Login successful with direct session for:', existingUser.email);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              isLogin: true,
+              session: {
+                access_token: sessionData.session.access_token,
+                refresh_token: sessionData.session.refresh_token,
+                expires_in: sessionData.session.expires_in,
+                expires_at: sessionData.session.expires_at,
+              },
+              user: {
+                id: existingUser.id,
+                email: existingUser.email,
+                fullName: existingUser.full_name,
+                userType: existingUser.user_type,
+              },
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            }
+          );
+        }
+      }
+
+      // Fallback to magic link
+      console.log('Login successful (magic link fallback) for:', existingUser.email);
 
       return new Response(
         JSON.stringify({
@@ -401,7 +465,7 @@ serve(async (req) => {
           ignoreDuplicates: true
         });
 
-      // Generate magic link
+      // Generate magic link and extract session tokens
       const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
         email: normalizedEmail,
@@ -420,7 +484,46 @@ serve(async (req) => {
         throw new Error("Account created but login failed. Please use login page.");
       }
 
-      console.log('Registration complete for:', normalizedEmail);
+      // Try to verify the magic link server-side to get session tokens
+      const regMagicLinkUrlObj = new URL(magicLinkUrl);
+      const regToken = regMagicLinkUrlObj.searchParams.get('token');
+      const regType = regMagicLinkUrlObj.searchParams.get('type');
+      
+      if (regToken && regType === 'magiclink') {
+        const { data: regSessionData, error: regSessionError } = await supabase.auth.verifyOtp({
+          token_hash: regToken,
+          type: 'magiclink',
+        });
+        
+        if (!regSessionError && regSessionData.session) {
+          console.log('Registration complete with direct session for:', normalizedEmail);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              isLogin: false,
+              session: {
+                access_token: regSessionData.session.access_token,
+                refresh_token: regSessionData.session.refresh_token,
+                expires_in: regSessionData.session.expires_in,
+                expires_at: regSessionData.session.expires_at,
+              },
+              user: {
+                id: authData.user.id,
+                email: normalizedEmail,
+                fullName: displayName,
+                userType: 'user',
+              },
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            }
+          );
+        }
+      }
+
+      // Fallback to magic link
+      console.log('Registration complete (magic link fallback) for:', normalizedEmail);
 
       return new Response(
         JSON.stringify({

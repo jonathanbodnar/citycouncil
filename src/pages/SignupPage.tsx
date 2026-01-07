@@ -305,11 +305,34 @@ const SignupPage: React.FC = () => {
         }).catch(console.error);
       }
       
-      // Use magic link to log in
+      // Set session directly if tokens are provided (preferred method)
+      if (data.session?.access_token && data.session?.refresh_token) {
+        console.log('Setting session directly with tokens');
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        
+        if (sessionError) {
+          console.error('Error setting session:', sessionError);
+          // Fall back to magic link if available
+          if (data.magicLink) {
+            window.location.href = data.magicLink;
+            return;
+          }
+        } else {
+          // Session set successfully, navigate
+          console.log('Session set successfully, navigating to:', returnTo);
+          navigate(returnTo, { replace: true });
+          return;
+        }
+      }
+      
+      // Fallback: use magic link to log in
       if (data.magicLink) {
         window.location.href = data.magicLink;
       } else {
-        navigate(returnTo);
+        navigate(returnTo, { replace: true });
       }
       
     } catch (error: any) {
