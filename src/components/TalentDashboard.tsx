@@ -1099,6 +1099,11 @@ const TalentDashboard: React.FC = () => {
                                 🎯 Demo Order
                               </span>
                             )}
+                            {(order as any).service_type === 'social_collab' && (
+                              <span className="text-xs glass-strong text-pink-400 px-2 py-1 rounded-full border border-pink-500/30 font-semibold">
+                                📸 Social Collab
+                              </span>
+                            )}
                           </h4>
                           <p className="text-sm text-gray-300">
                             ${(getOrderDisplayAmount(order) / 100).toFixed(2)} • {new Date(order.created_at).toLocaleDateString()}
@@ -1142,21 +1147,94 @@ const TalentDashboard: React.FC = () => {
                         })()}
                       </div>
                     </div>
-                    <div className="glass-strong p-4 rounded-md border border-white/20">
-                      <h5 className="font-medium text-white mb-2">Request:</h5>
-                      {order.recipient_name && (
-                        <div className="mb-3 pb-3 border-b border-white/10">
-                          <span className="text-blue-300 font-medium">Who's it for:</span>
-                          <span className="text-white ml-2">{order.recipient_name}</span>
+                    {/* Regular order request details - only show for non-collab orders */}
+                    {(order as any).service_type !== 'social_collab' && (
+                      <div className="glass-strong p-4 rounded-md border border-white/20">
+                        <h5 className="font-medium text-white mb-2">Request:</h5>
+                        {order.recipient_name && (
+                          <div className="mb-3 pb-3 border-b border-white/10">
+                            <span className="text-blue-300 font-medium">Who's it for:</span>
+                            <span className="text-white ml-2">{order.recipient_name}</span>
+                          </div>
+                        )}
+                        <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
+                        <div className="mt-3 pt-3 border-t border-white/10">
+                          <p className="text-sm text-yellow-300 italic">
+                            💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
+                          </p>
                         </div>
-                      )}
-                      <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
-                      <div className="mt-3 pt-3 border-t border-white/10">
-                        <p className="text-sm text-yellow-300 italic">
-                          💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
-                        </p>
                       </div>
-                    </div>
+                    )}
+
+                    {/* Social Collab Order Details - In Progress */}
+                    {(order as any).service_type === 'social_collab' && (
+                      <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 rounded-xl p-4">
+                        <h5 className="font-medium text-white mb-3 flex items-center gap-2">
+                          📸 Social Collab Details
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          {/* Customer Social Handles - Click to Copy */}
+                          {(order as any).customer_socials && Object.keys((order as any).customer_socials).length > 0 && (
+                            <div className="md:col-span-2">
+                              <span className="font-medium text-pink-300 block mb-2">Customer Social Handles:</span>
+                              <div className="flex flex-wrap gap-2">
+                                {Object.entries((order as any).customer_socials).map(([platform, handle]) => {
+                                  const platformIcons: Record<string, string> = {
+                                    instagram: '📸',
+                                    tiktok: '🎵',
+                                    youtube: '▶️',
+                                    twitter: '🐦',
+                                    facebook: '👤'
+                                  };
+                                  const platformNames: Record<string, string> = {
+                                    instagram: 'Instagram',
+                                    tiktok: 'TikTok',
+                                    youtube: 'YouTube',
+                                    twitter: 'Twitter/X',
+                                    facebook: 'Facebook'
+                                  };
+                                  return (
+                                    <button
+                                      key={platform}
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(handle as string);
+                                        toast.success(`Copied ${platformNames[platform] || platform} handle!`);
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer"
+                                      title={`Click to copy ${handle}`}
+                                    >
+                                      <span>{platformIcons[platform] || '🔗'}</span>
+                                      <span className="text-white font-medium">{handle as string}</span>
+                                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                      </svg>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {(order as any).collab_platforms && (
+                            <div>
+                              <span className="font-medium text-pink-300">Platforms:</span>
+                              <span className="text-white ml-2">{(order as any).collab_platforms.join(', ')}</span>
+                            </div>
+                          )}
+                          {(order as any).collab_content_type && (
+                            <div>
+                              <span className="font-medium text-pink-300">Content Type:</span>
+                              <span className="text-white ml-2">{(order as any).collab_content_type}</span>
+                            </div>
+                          )}
+                          {(order as any).collab_description && (
+                            <div className="md:col-span-2">
+                              <span className="font-medium text-pink-300">Description:</span>
+                              <p className="text-white mt-1">{(order as any).collab_description}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

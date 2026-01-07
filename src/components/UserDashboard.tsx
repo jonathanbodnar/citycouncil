@@ -36,6 +36,7 @@ interface OrderWithTalent extends Order {
 
 interface ReviewWithTalent extends Review {
   talent_profiles: {
+    username?: string;
     users: {
       full_name: string;
     };
