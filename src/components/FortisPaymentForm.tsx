@@ -269,11 +269,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       });
 
       // Create iframe in our container
-      // ShoutOut theme colors - purple accent on dark background
-      const shoutoutBgColor = '#0f172a'; // Dark slate background
-      const shoutoutButtonColor = '#8b5cf6'; // Purple accent
-      
-      console.log('Creating Commerce iframe with ShoutOut theme');
+      console.log('Creating Commerce iframe');
       elements.create({
         container: '#payment',
         theme: 'dark',
@@ -288,16 +284,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         hideAgreementCheckbox: false,
         hideTotal: true,
         digitalWallets: ['ApplePay', 'GooglePay'],
-        appearance: {
-          colorBackground: shoutoutBgColor,
-          colorButtonSelectedBackground: shoutoutButtonColor,
-          colorButtonSelectedText: '#ffffff',
-          fontFamily: 'Montserrat',
-          borderRadius: '8px',
-        },
       });
-      
-      console.log('Commerce iframe created with bg:', shoutoutBgColor, 'button:', shoutoutButtonColor);
 
       setCommerceInstance(elements);
 
