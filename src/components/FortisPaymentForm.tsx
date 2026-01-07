@@ -144,12 +144,15 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         language: 'en-us',
         defaultCountry: 'US',
         floatingLabels: true,
-        showReceipt: true,
+        showReceipt: false,
         showSubmitButton: true,
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
-        hideTotal: false,
+        hideTotal: true,
         digitalWallets: ['ApplePay', 'GooglePay'],
+        appearance: {
+          colorBackground: '#11161f',
+        },
       });
 
       setCommerceInstance(elements);
