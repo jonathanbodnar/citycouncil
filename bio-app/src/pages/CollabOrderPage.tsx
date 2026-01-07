@@ -482,12 +482,11 @@ const CollabOrderPage: React.FC = () => {
       
       // Fortis Commerce.js v1.0.0
       // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
-      // Using view: 'card' to show only credit card (no ACH tab)
       elements.create({
         container: '#fortis-payment-container',
         theme: 'dark',
         environment: 'production',
-        view: 'card',  // Card only - removes ACH tab
+        view: 'default',
         language: 'en-us',
         defaultCountry: 'US',
         floatingLabels: true,
