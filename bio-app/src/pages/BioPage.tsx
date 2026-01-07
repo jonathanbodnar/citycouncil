@@ -11,6 +11,21 @@ import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
 
+// Helper to format phone number as user types
+const formatPhoneNumber = (value: string): string => {
+  // Remove all non-digits
+  const digits = value.replace(/\D/g, '');
+  
+  // Limit to 10 digits
+  const limited = digits.slice(0, 10);
+  
+  // Format as (XXX) XXX-XXXX
+  if (limited.length === 0) return '';
+  if (limited.length <= 3) return `(${limited}`;
+  if (limited.length <= 6) return `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+  return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`;
+};
+
 // Helper to determine if text should be dark or light based on background color
 const getContrastTextColor = (hexColor: string): string => {
   // Default to white if no color provided
@@ -1345,8 +1360,8 @@ const BioPage: React.FC = () => {
                       <input
                         type="tel"
                         value={newsletterPhone}
-                        onChange={(e) => setNewsletterPhone(e.target.value)}
-                        placeholder="Phone (optional)"
+                        onChange={(e) => setNewsletterPhone(formatPhoneNumber(e.target.value))}
+                        placeholder="(555) 555-5555"
                         className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-32 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
                       />
                       <button
