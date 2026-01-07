@@ -51,6 +51,7 @@ const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TalentCategory | 'all' | 'coming_soon'>('all');
   const [availableCategories, setAvailableCategories] = useState<TalentCategory[]>([]);
+  const [totalFans, setTotalFans] = useState<number>(0);
 
   // Capture coupon from URL (e.g., shoutout.us/?coupon=SANTA25)
   // Also handles malformed URLs like ?utm=sms?coupon=SANTA25 (double question mark)
@@ -235,6 +236,14 @@ const HomePage: React.FC = () => {
         t.categories && t.categories.length > 0 ? t.categories : [t.category]
       );
       setAvailableCategories(Array.from(new Set(allCategories)));
+
+      // Fetch total fans count (users with phone numbers)
+      const { count: fansCount } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .not('phone', 'is', null);
+      
+      setTotalFans(fansCount || 0);
     } catch (error) {
       console.error('Error fetching talent:', error);
     } finally {
@@ -291,7 +300,7 @@ const HomePage: React.FC = () => {
       {/* Hero Banner */}
       <div className="rounded-2xl px-4 sm:px-6 py-3 mb-6 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 border border-white/10 bg-white/5">
         <p className="text-white/80 text-sm sm:text-base font-medium text-center">
-          Get personalized video ShoutOuts from top conservative voices.
+          Connect with your favorite conservative voices through personalized video ShoutOuts.
         </p>
         <div className="flex items-center gap-1">
           <div className="flex">
@@ -308,6 +317,9 @@ const HomePage: React.FC = () => {
             ))}
           </div>
           <span className="text-white/60 text-sm">5.0</span>
+          {totalFans > 0 && (
+            <span className="text-white/50 text-sm">({totalFans.toLocaleString()} Fans)</span>
+          )}
         </div>
       </div>
 
