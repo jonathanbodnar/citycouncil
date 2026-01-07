@@ -133,6 +133,16 @@ const HolidayPromoPopup: React.FC = () => {
 
   // Check if popup can be shown
   const canShowPopup = useCallback(() => {
+    // Don't show on onboarding pages
+    if (window.location.pathname.startsWith('/onboard')) {
+      return false;
+    }
+
+    // Don't show on admin pages
+    if (window.location.pathname.startsWith('/admin')) {
+      return false;
+    }
+
     if (user?.user_type === 'talent' || user?.user_type === 'admin') {
       return false;
     }
