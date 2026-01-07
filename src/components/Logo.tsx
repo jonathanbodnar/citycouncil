@@ -36,9 +36,6 @@ const Logo: React.FC<LogoProps> = ({
         width={sizeClasses.px}
         height={sizeClasses.px}
       />
-      <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-        beta
-      </span>
     </div>
   );
 };
