@@ -105,6 +105,7 @@ const OrderFulfillmentPage = lazy(() => import('./pages/OrderFulfillmentPage'));
 const OrderPage = lazy(() => import('./pages/OrderPage'));
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'));
 const SignupPage = lazy(() => import('./pages/SignupPage')); // Unified login/register page
+const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage')); // Admin-only login
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -202,6 +203,7 @@ function App() {
             {/* Unified login/register - both routes use same component */}
             <Route path="/login" element={<SignupPage />} />
             <Route path="/signup" element={<SignupRedirect />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
             
             {/* Promo redirects - short name variations to talent profiles with UTM and auto-discount */}

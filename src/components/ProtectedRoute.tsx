@@ -23,8 +23,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user) {
-    // Redirect to login (not signup) with returnTo parameter
-    // Users accessing protected pages are likely already registered
+    // Redirect to appropriate login page
+    // Admin routes go to admin login, others go to regular login
+    if (requiredUserType === 'admin') {
+      return <Navigate to="/admin/login" replace />;
+    }
     const returnTo = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
   }
