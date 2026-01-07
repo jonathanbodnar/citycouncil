@@ -481,11 +481,11 @@ const CollabOrderPage: React.FC = () => {
       const themeBgColor = bioSettings?.gradient_start || '#0f172a';
       
       // Fortis Commerce.js v1.0.0
-      // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
-      // Using dark theme for proper dark inputs, with appearance overrides
+      // Using dark theme - this is Fortis's built-in dark styling
+      // Minimal customization to avoid breaking the form
       elements.create({
         container: '#fortis-payment-container',
-        theme: 'dark',  // Dark theme for dark inputs with visible text
+        theme: 'dark',
         environment: 'production',
         view: 'default',
         language: 'en-us',
@@ -496,21 +496,6 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
-        appearance: {
-          // Background - match bio gradient
-          colorBackground: themeBgColor,
-          // Unselected tab/button styling (dark with light text)
-          colorButtonBackground: '#1e293b',
-          colorButtonText: '#94a3b8',
-          // Selected tab uses bio button color
-          colorButtonSelectedBackground: themeButtonColor,
-          colorButtonSelectedText: '#ffffff',
-          // Primary button (Pay Now)
-          colorPrimary: themeButtonColor,
-          // Font
-          fontFamily: 'Montserrat',
-          borderRadius: '8px',
-        },
       });
       
       console.log('Commerce iframe created with bg:', themeBgColor, 'button:', themeButtonColor);
