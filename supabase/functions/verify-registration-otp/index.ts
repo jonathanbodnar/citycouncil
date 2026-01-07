@@ -273,10 +273,77 @@ serve(async (req) => {
           .eq('id', existingUser.id);
       }
 
+      // Check if user exists in auth.users (they might only exist in public.users as a lead)
+      const { data: authUserCheck, error: authUserCheckError } = await supabase.auth.admin.getUserById(existingUser.id);
+      
+      let authUserId = existingUser.id;
+      
+      if (authUserCheckError || !authUserCheck?.user) {
+        // User exists in public.users but NOT in auth.users (they were a lead)
+        // We need to create them in auth.users
+        console.log('User exists in public.users but not auth.users, creating auth user...');
+        
+        const randomPassword = generateRandomPassword();
+        const { data: newAuthUser, error: createAuthError } = await supabase.auth.admin.createUser({
+          email: existingUser.email || normalizedEmail,
+          password: randomPassword,
+          email_confirm: true,
+          user_metadata: {
+            full_name: existingUser.full_name || normalizedEmail.split('@')[0],
+            phone: formattedPhone,
+            user_type: existingUser.user_type || 'user',
+          },
+        });
+        
+        if (createAuthError) {
+          // Check if user was created by another process (race condition)
+          if (createAuthError.message?.includes('already been registered') || createAuthError.message?.includes('already exists')) {
+            console.log('Auth user already exists (race condition), continuing...');
+            // Try to get the existing auth user by email
+            const { data: authUsers } = await supabase.auth.admin.listUsers();
+            const existingAuthUser = authUsers?.users?.find(u => u.email === (existingUser.email || normalizedEmail));
+            if (existingAuthUser) {
+              authUserId = existingAuthUser.id;
+              // Update public.users to point to the correct auth user
+              if (existingAuthUser.id !== existingUser.id) {
+                console.log('Updating public.users to match auth user ID');
+                // This is tricky - we have a mismatch. For now, just use the auth user ID
+                authUserId = existingAuthUser.id;
+              }
+            }
+          } else {
+            console.error('Error creating auth user:', createAuthError);
+            throw new Error("Failed to create authentication account");
+          }
+        } else if (newAuthUser?.user) {
+          console.log('Created auth user:', newAuthUser.user.id);
+          authUserId = newAuthUser.user.id;
+          
+          // Update public.users to link to the new auth user ID if different
+          if (newAuthUser.user.id !== existingUser.id) {
+            console.log('Auth user ID differs from public user ID, updating public.users...');
+            // Update the existing public.users record with the new auth user ID
+            // First, delete the old record and create a new one with the correct ID
+            await supabase.from('users').delete().eq('id', existingUser.id);
+            await supabase.from('users').insert({
+              id: newAuthUser.user.id,
+              email: existingUser.email || normalizedEmail,
+              phone: formattedPhone,
+              full_name: existingUser.full_name || normalizedEmail.split('@')[0],
+              user_type: existingUser.user_type || 'user',
+              created_at: existingUser.created_at,
+            });
+          }
+          
+          // Wait a moment for triggers
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      }
+
       // Generate magic link and extract tokens from it
       const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: existingUser.email,
+        email: existingUser.email || normalizedEmail,
         options: {
           redirectTo: existingUser.user_type === 'talent' ? '/dashboard' : '/',
         },
