@@ -499,9 +499,14 @@ const CollabOrderPage: React.FC = () => {
         appearance: {
           // Background - match bio gradient
           colorBackground: themeBgColor,
+          // Unselected tab/button styling (dark with light text)
+          colorButtonBackground: '#1e293b',
+          colorButtonText: '#94a3b8',
           // Selected tab uses bio button color
           colorButtonSelectedBackground: themeButtonColor,
           colorButtonSelectedText: '#ffffff',
+          // Primary button (Pay Now)
+          colorPrimary: themeButtonColor,
           // Font
           fontFamily: 'Montserrat',
           borderRadius: '8px',
