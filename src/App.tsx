@@ -115,6 +115,7 @@ const HelpPage = lazy(() => import('./pages/HelpPage'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
+const CommunityGuidelinesPage = lazy(() => import('./pages/CommunityGuidelinesPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const EmailTestPage = lazy(() => import('./pages/EmailTestPage'));
 const InstagramCallbackPage = lazy(() => import('./pages/InstagramCallbackPage'));
@@ -236,6 +237,7 @@ function App() {
             <Route path="/instagram/callback" element={<InstagramCallbackPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            <Route path="/community-guidelines" element={<CommunityGuidelinesPage />} />
             
             {/* Main app routes with layout */}
             <Route path="/" element={<Layout />}>

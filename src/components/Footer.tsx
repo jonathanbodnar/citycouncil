@@ -76,11 +76,6 @@ const Footer: React.FC = () => {
                     Help & Support
                   </Link>
                 </li>
-                <li>
-                  <a href="mailto:support@shoutout.com" className="text-gray-400 hover:text-white">
-                    Contact Us
-                  </a>
-                </li>
               </ul>
             </div>
 
