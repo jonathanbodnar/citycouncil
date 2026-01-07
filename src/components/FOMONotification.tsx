@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 
@@ -12,6 +13,8 @@ interface Review {
   };
   talent_profiles?: {
     temp_full_name: string;
+    username: string;
+    id: string;
   };
 }
 
@@ -21,6 +24,7 @@ interface FOMONotificationProps {
 }
 
 const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) => {
+  const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [currentReview, setCurrentReview] = useState<Review | null>(null);
@@ -41,7 +45,9 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
               full_name
             ),
             talent_profiles!reviews_talent_id_fkey (
-              temp_full_name
+              id,
+              temp_full_name,
+              username
             )
           `)
           .gte('rating', 4) // Only show 4-5 star reviews
@@ -126,6 +132,16 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
     return fullName?.split(' ')[0] || 'Customer';
   };
 
+  // Handle click to navigate to talent profile
+  const handleClick = () => {
+    if (!currentReview?.talent_profiles) return;
+    
+    const talent = currentReview.talent_profiles as any;
+    const profileUrl = talent.username ? `/${talent.username}` : `/talent/${talent.id}`;
+    navigate(profileUrl);
+    setVisible(false);
+  };
+
   if (!currentReview) return null;
 
   return (
@@ -140,7 +156,10 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
         maxWidth: '320px'
       }}
     >
-      <div className="glass-strong rounded-xl px-4 py-3 shadow-modern-lg border border-white/30 backdrop-blur-xl">
+      <div 
+        className="glass-strong rounded-xl px-4 py-3 shadow-modern-lg border border-white/30 backdrop-blur-xl cursor-pointer hover:border-white/50 transition-colors"
+        onClick={handleClick}
+      >
         {/* Header with stars and name */}
         <div className="flex items-center gap-2 mb-2">
           <div className="flex">
@@ -165,8 +184,8 @@ const FOMONotification: React.FC<FOMONotificationProps> = ({ interval = 8000 }) 
         
         {/* Talent name if available */}
         {(currentReview.talent_profiles as any)?.temp_full_name && (
-          <p className="text-xs text-gray-400 mt-2">
-            Review for {(currentReview.talent_profiles as any).temp_full_name}
+          <p className="text-xs text-blue-400 mt-2 hover:text-blue-300">
+            Review for {(currentReview.talent_profiles as any).temp_full_name} →
           </p>
         )}
       </div>
