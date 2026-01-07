@@ -483,11 +483,6 @@ const CollabOrderPage: React.FC = () => {
       // Fortis Commerce.js v1.0.0
       // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
       
-      // Parse customer name into first/last for the agreement checkbox
-      const nameParts = (user?.full_name || '').trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
       elements.create({
         container: '#fortis-payment-container',
         theme: 'dark',
@@ -501,12 +496,6 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
-        // Pass customer info to fix "I CC agree" text
-        contact: {
-          firstName: firstName,
-          lastName: lastName,
-          email: user?.email || '',
-        },
         appearance: {
           colorBackground: themeBgColor,
           colorButtonSelectedBackground: themeButtonColor,
