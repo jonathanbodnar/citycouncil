@@ -1036,9 +1036,12 @@ const BioPage: React.FC = () => {
         }
 
         // Create the user in the users table
+        // Generate a UUID for the user ID
+        const newUserId = crypto.randomUUID();
         const { data: newUser, error: createError } = await supabase
           .from('users')
           .insert({
+            id: newUserId,
             email: newsletterEmail.toLowerCase(),
             phone: newsletterPhone || null,
             user_type: 'user',
@@ -1251,9 +1254,12 @@ const BioPage: React.FC = () => {
             <div className="mt-6 w-full">
               {/* Already subscribed message */}
               {isFollowing ? (
-                <div className="text-center py-3">
+                <div className="text-center py-3 space-y-1">
                   <p className="text-white/60 text-sm">
                     ✓ You're subscribed to {displayName.split(' ')[0]}
+                  </p>
+                  <p className="text-white/40 text-xs">
+                    You now have exclusive access to {displayName}'s updates.
                   </p>
                 </div>
               ) : currentUser ? (
@@ -1356,35 +1362,30 @@ const BioPage: React.FC = () => {
                   )}
                   {/* Phone field with button inside - shown after email if new user */}
                   {showPhoneField && (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <input
-                          type="tel"
-                          value={newsletterPhone}
-                          onChange={(e) => setNewsletterPhone(formatPhoneNumber(e.target.value))}
-                          placeholder="(555) 555-5555"
-                          className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-40 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
-                        />
-                        <button
-                          type="submit"
-                          disabled={subscribing}
-                          className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1"
-                          style={{ 
-                            backgroundColor: bioSettings?.button_color || '#3b82f6',
-                            color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
-                          }}
-                        >
-                          {subscribing ? '...' : 'Confirm Access'}
-                          {!subscribing && (
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                      <p className="text-white/50 text-xs text-center">
-                        You now have exclusive access to {displayName}'s updates.
-                      </p>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        value={newsletterPhone}
+                        onChange={(e) => setNewsletterPhone(formatPhoneNumber(e.target.value))}
+                        placeholder="(555) 555-5555"
+                        className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-40 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/40 text-sm"
+                      />
+                      <button
+                        type="submit"
+                        disabled={subscribing}
+                        className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1"
+                        style={{ 
+                          backgroundColor: bioSettings?.button_color || '#3b82f6',
+                          color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
+                        }}
+                      >
+                        {subscribing ? '...' : 'Confirm Access'}
+                        {!subscribing && (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                   )}
                 </form>
