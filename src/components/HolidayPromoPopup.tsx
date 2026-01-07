@@ -653,15 +653,11 @@ const HolidayPromoPopup: React.FC = () => {
                 Enter Our Instant Giveaway 🎁
               </h2>
               
-              <p className="text-white/60 text-base mb-2">
+              <p className="text-white/60 text-base mb-4">
                 {talentName 
                   ? `Win a free personalized video ShoutOut from ${talentName}!`
                   : 'Win a free personalized video ShoutOut from your favorite conservative personality.'
                 }
-              </p>
-              
-              <p className="text-white/40 text-xs mb-4">
-                No cc required. No purchase necessary.
               </p>
 
               {/* Prize Badges */}
@@ -723,6 +719,10 @@ const HolidayPromoPopup: React.FC = () => {
                   >
                     {loading ? 'Checking...' : 'See what I won 🎁'}
                   </button>
+                  
+                  <p className="text-white/40 text-xs text-center mt-3">
+                    No cc required. No purchase necessary.
+                  </p>
                 </form>
               )}
 
@@ -758,12 +758,12 @@ const HolidayPromoPopup: React.FC = () => {
                   >
                     {loading ? 'Revealing...' : 'Reveal My Prize 🎁'}
                   </button>
+                  
+                  <p className="text-white/40 text-xs text-center mt-3">
+                    No cc required. No purchase necessary.
+                  </p>
                 </form>
               )}
-
-              <p className="text-white/50 text-xs mt-4">
-                No cc required
-              </p>
             </>
           )}
         </div>
