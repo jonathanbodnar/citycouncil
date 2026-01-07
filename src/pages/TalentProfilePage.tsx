@@ -973,127 +973,131 @@ const TalentProfilePage: React.FC = () => {
               {talent.bio}
             </p>
 
-            {/* Stats - Simple inline text */}
-            <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-gray-400 mb-3">
-              {hasCoupon ? (
-                <span className="flex items-center gap-2">
-                  <span className="text-gray-400 line-through">${originalPrice}</span>
-                  <span 
-                    className="font-bold bg-clip-text text-transparent"
-                    style={{ backgroundImage: 'linear-gradient(to right, #8B5CF6, #3B82F6)' }}
-                  >
-                    {discountedPrice === 0 ? 'FREE' : `$${discountedPrice}`}
-                  </span>
-                  <span className="text-xs text-green-400 font-medium">{discountLabel}</span>
-                </span>
-              ) : (
-                <span className="font-bold text-white">${talent.pricing}</span>
-              )}
-              <span className="text-gray-500">•</span>
-              <span className="flex items-center">
-                <ClockIcon className="h-4 w-4 mr-0.5" />
-                {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h delivery
-              </span>
-              {christmasModeEnabled && talent.christmas_deadline && (
-                (() => {
-                  const deadline = new Date(talent.christmas_deadline + 'T23:59:59');
-                  const now = new Date();
-                  const isPastDeadline = now > deadline;
-                  const diffMs = deadline.getTime() - now.getTime();
-                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                  
-                  return isPastDeadline ? (
-                    <>
-                      <span className="text-gray-500">•</span>
-                      <span className="text-orange-400 text-xs">⚠️ May not arrive before Christmas</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-gray-500">•</span>
-                      <span className="text-green-400 text-xs">🎄 Order in {diffDays > 0 ? `${diffDays}d ${diffHours}h` : `${diffHours}h`} for Christmas</span>
-                    </>
-                  );
-                })()
-              )}
-              {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) && (
-                <>
-                  <span className="text-gray-500">•</span>
-                  <span className="flex items-center text-purple-400">
-                    <HeartIcon className="h-4 w-4 mr-0.5" />
-                    {talent.charity_percentage}% to {talent.charity_name}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Order Ideas - Click any to order */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-300 text-center">Choose a personalized video ShoutOut</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                <Link
-                  to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  💝 Surprise a loved one
-                </Link>
-                <Link
-                  to={user ? `/order/${talent.id}?occasion=birthday` : `/signup?returnTo=/order/${talent.id}?occasion=birthday`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  🎂 Happy Birthday
-                </Link>
-                <Link
-                  to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  🔥 Friendly roast
-                </Link>
-                <Link
-                  to={user ? `/order/${talent.id}?occasion=advice` : `/signup?returnTo=/order/${talent.id}?occasion=advice`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  💡 Get advice
-                </Link>
-                <Link
-                  to={user ? `/order/${talent.id}?occasion=new-year` : `/signup?returnTo=/order/${talent.id}?occasion=new-year`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  🎆 New Years Party
-                </Link>
-                <Link
-                  to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
-                  onClick={storePromoSourceOnClick}
-                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-                >
-                  ✨ Other
-                </Link>
-              </div>
-            </div>
-
-            {/* Trust Indicators */}
-            <div className="mt-2 text-center">
-              <div className="text-sm font-medium text-gray-400">
-                🔒 Money-Back Guarantee • 🛡️ Secure • ⚡ Fast
-              </div>
-            </div>
-
-            {/* Pricing Urgency Indicator - flush at bottom (hide if coupon applied) */}
-            {ordersRemaining <= 10 && !hasCoupon && (
-              <div className="mt-4 -mx-4 md:-mx-5 -mb-4 md:-mb-5 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-t border-orange-400/50 px-4 py-3">
-                <FireIcon className="h-5 w-5 text-orange-400" />
-                <span className="text-sm font-bold text-orange-100">
-                  Only {ordersRemaining} left at this price!
-                </span>
-              </div>
-            )}
           </div>
         </div>
+      </div>
+
+      {/* Order Card - Pricing and CTAs */}
+      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-4 md:p-5 mb-8">
+        {/* Stats - Simple inline text */}
+        <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-sm text-gray-400 mb-4">
+          {hasCoupon ? (
+            <span className="flex items-center gap-2">
+              <span className="text-gray-400 line-through">${originalPrice}</span>
+              <span 
+                className="font-bold bg-clip-text text-transparent text-lg"
+                style={{ backgroundImage: 'linear-gradient(to right, #8B5CF6, #3B82F6)' }}
+              >
+                {discountedPrice === 0 ? 'FREE' : `$${discountedPrice}`}
+              </span>
+              <span className="text-xs text-green-400 font-medium">{discountLabel}</span>
+            </span>
+          ) : (
+            <span className="font-bold text-white text-lg">${talent.pricing}</span>
+          )}
+          <span className="text-gray-500">•</span>
+          <span className="flex items-center">
+            <ClockIcon className="h-4 w-4 mr-0.5" />
+            {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h delivery
+          </span>
+          {christmasModeEnabled && talent.christmas_deadline && (
+            (() => {
+              const deadline = new Date(talent.christmas_deadline + 'T23:59:59');
+              const now = new Date();
+              const isPastDeadline = now > deadline;
+              const diffMs = deadline.getTime() - now.getTime();
+              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+              const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              
+              return isPastDeadline ? (
+                <>
+                  <span className="text-gray-500">•</span>
+                  <span className="text-orange-400 text-xs">⚠️ May not arrive before Christmas</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-gray-500">•</span>
+                  <span className="text-green-400 text-xs">🎄 Order in {diffDays > 0 ? `${diffDays}d ${diffHours}h` : `${diffHours}h`} for Christmas</span>
+                </>
+              );
+            })()
+          )}
+          {(talent.charity_percentage && Number(talent.charity_percentage) > 0 && talent.charity_name) && (
+            <>
+              <span className="text-gray-500">•</span>
+              <span className="flex items-center text-purple-400">
+                <HeartIcon className="h-4 w-4 mr-0.5" />
+                {talent.charity_percentage}% to {talent.charity_name}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Order Ideas - Click any to order */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-300 text-center">Choose a personalized video ShoutOut</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            <Link
+              to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
+              onClick={storePromoSourceOnClick}
+              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+            >
+              💝 Surprise a loved one
+            </Link>
+            <Link
+              to={user ? `/order/${talent.id}?occasion=birthday` : `/signup?returnTo=/order/${talent.id}?occasion=birthday`}
+              onClick={storePromoSourceOnClick}
+              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+            >
+              🎂 Happy Birthday
+            </Link>
+            <Link
+              to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
+              onClick={storePromoSourceOnClick}
+              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+            >
+              🔥 Friendly roast
+            </Link>
+            <Link
+              to={user ? `/order/${talent.id}?occasion=advice` : `/signup?returnTo=/order/${talent.id}?occasion=advice`}
+              onClick={storePromoSourceOnClick}
+              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+            >
+              💡 Get advice
+            </Link>
+            <Link
+              to={user ? `/order/${talent.id}?occasion=new-year` : `/signup?returnTo=/order/${talent.id}?occasion=new-year`}
+              onClick={storePromoSourceOnClick}
+              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+            >
+              🎆 New Years Party
+            </Link>
+            <Link
+              to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
+              onClick={storePromoSourceOnClick}
+              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+            >
+              ✨ Other
+            </Link>
+          </div>
+        </div>
+
+        {/* Trust Indicators */}
+        <div className="mt-4 text-center">
+          <div className="text-sm font-medium text-gray-400">
+            🔒 Money-Back Guarantee • 🛡️ Secure • ⚡ Fast
+          </div>
+        </div>
+
+        {/* Pricing Urgency Indicator - flush at bottom (hide if coupon applied) */}
+        {ordersRemaining <= 10 && !hasCoupon && (
+          <div className="mt-4 -mx-4 md:-mx-5 -mb-4 md:-mb-5 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-t border-orange-400/50 px-4 py-3 rounded-b-3xl">
+            <FireIcon className="h-5 w-5 text-orange-400" />
+            <span className="text-sm font-bold text-orange-100">
+              Only {ordersRemaining} left at this price!
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Subscribe/Follow Widget */}
