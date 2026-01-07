@@ -246,11 +246,10 @@ const HomePage: React.FC = () => {
       );
       setAvailableCategories(Array.from(new Set(allCategories)));
 
-      // Fetch total fans count (users with phone numbers)
+      // Fetch total fans count (all users)
       const { count: fansCount } = await supabase
         .from('users')
-        .select('*', { count: 'exact', head: true })
-        .not('phone', 'is', null);
+        .select('*', { count: 'exact', head: true });
       
       setTotalFans(fansCount || 0);
     } catch (error) {
@@ -311,7 +310,7 @@ const HomePage: React.FC = () => {
         <p className="text-white/80 text-sm sm:text-base font-medium text-center">
           Connect with your favorite conservative voices through personalized video ShoutOuts.
         </p>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap justify-center">
           <div className="flex">
             {[...Array(5)].map((_, i) => (
               <svg key={i} className="w-4 h-4" viewBox="0 0 20 20" fill="url(#starGradient)">
@@ -327,7 +326,7 @@ const HomePage: React.FC = () => {
           </div>
           <span className="text-white/60 text-sm">5.0</span>
           {totalFans > 0 && (
-            <span className="text-white/50 text-sm">({totalFans.toLocaleString()} Fans)</span>
+            <span className="text-white/50 text-sm whitespace-nowrap">({totalFans.toLocaleString()} Fans)</span>
           )}
         </div>
       </div>
