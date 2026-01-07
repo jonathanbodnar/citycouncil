@@ -238,6 +238,15 @@ const BioPage: React.FC = () => {
   const [subscribing, setSubscribing] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [buttonTextIndex, setButtonTextIndex] = useState(0); // For rotating button text
+
+  // Rotate button text every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setButtonTextIndex(prev => (prev + 1) % 2);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchBioData = async () => {
@@ -1241,15 +1250,40 @@ const BioPage: React.FC = () => {
                   <button
                     onClick={handleFollowSignup}
                     disabled={subscribing}
-                    className="w-full py-3 rounded-full font-medium transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-full font-medium transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2 overflow-hidden"
                     style={{ 
                       backgroundColor: bioSettings?.button_color || '#3b82f6',
                       color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
                     }}
                   >
-                    {subscribing ? '...' : `Stay connected with ${displayName.split(' ')[0]}`}
+                    {subscribing ? '...' : (
+                      <span className="relative h-5 flex items-center justify-center">
+                        <span 
+                          className="transition-all duration-500 ease-in-out"
+                          style={{
+                            display: 'inline-block',
+                            transform: buttonTextIndex === 0 ? 'translateY(0)' : 'translateY(-100%)',
+                            opacity: buttonTextIndex === 0 ? 1 : 0,
+                            position: buttonTextIndex === 0 ? 'relative' : 'absolute'
+                          }}
+                        >
+                          Stay connected
+                        </span>
+                        <span 
+                          className="transition-all duration-500 ease-in-out"
+                          style={{
+                            display: 'inline-block',
+                            transform: buttonTextIndex === 1 ? 'translateY(0)' : 'translateY(100%)',
+                            opacity: buttonTextIndex === 1 ? 1 : 0,
+                            position: buttonTextIndex === 1 ? 'relative' : 'absolute'
+                          }}
+                        >
+                          with {displayName.split(' ')[0]}
+                        </span>
+                      </span>
+                    )}
                     {!subscribing && (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
                     )}
@@ -1272,15 +1306,40 @@ const BioPage: React.FC = () => {
                       <button
                         type="submit"
                         disabled={subscribing}
-                        className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1"
+                        className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1 overflow-hidden"
                         style={{ 
                           backgroundColor: bioSettings?.button_color || '#3b82f6',
                           color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
                         }}
                       >
-                        {subscribing ? '...' : `Stay connected`}
+                        {subscribing ? '...' : (
+                          <span className="relative h-5 flex items-center">
+                            <span 
+                              className="transition-all duration-500 ease-in-out"
+                              style={{
+                                display: 'inline-block',
+                                transform: buttonTextIndex === 0 ? 'translateY(0)' : 'translateY(-100%)',
+                                opacity: buttonTextIndex === 0 ? 1 : 0,
+                                position: buttonTextIndex === 0 ? 'relative' : 'absolute'
+                              }}
+                            >
+                              Stay connected
+                            </span>
+                            <span 
+                              className="transition-all duration-500 ease-in-out"
+                              style={{
+                                display: 'inline-block',
+                                transform: buttonTextIndex === 1 ? 'translateY(0)' : 'translateY(100%)',
+                                opacity: buttonTextIndex === 1 ? 1 : 0,
+                                position: buttonTextIndex === 1 ? 'relative' : 'absolute'
+                              }}
+                            >
+                              with {displayName.split(' ')[0]}
+                            </span>
+                          </span>
+                        )}
                         {!subscribing && (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                           </svg>
                         )}
