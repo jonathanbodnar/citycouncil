@@ -911,7 +911,15 @@ const CollabOrderPage: React.FC = () => {
                 </div>
 
                 <p className="text-center text-gray-500 text-xs mt-2">
-                  Secure payment powered by Fortis
+                  Secure payment powered by{' '}
+                  <a 
+                    href="https://lunarpay.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-500 hover:text-gray-400 transition-colors"
+                  >
+                    LunarPay
+                  </a>
                 </p>
               </div>
             )}
