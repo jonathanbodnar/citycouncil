@@ -75,6 +75,13 @@ const TalentProfilePage: React.FC = () => {
   const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
   const [reviewsPage, setReviewsPage] = useState(1);
   const REVIEWS_PER_PAGE = 3;
+  
+  // Subscribe/Follow state
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeEmail, setSubscribeEmail] = useState('');
+  const [subscribePhone, setSubscribePhone] = useState('');
+  const [showPhoneField, setShowPhoneField] = useState(false);
 
   // Fetch Christmas mode setting (non-blocking, low priority)
   useEffect(() => {
@@ -150,6 +157,166 @@ const TalentProfilePage: React.FC = () => {
   const discountedPrice = getDiscountedPrice();
   const discountLabel = activeCoupon ? COUPON_DISCOUNTS[activeCoupon]?.label : '';
   const hasCoupon = !!activeCoupon;
+
+  // Check if user is already following this talent
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (!talent?.id) return;
+      
+      if (user) {
+        // Logged in user - check by user ID
+        const { data } = await supabase
+          .from('talent_followers')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('talent_id', talent.id)
+          .single();
+        setIsFollowing(!!data);
+      }
+    };
+    checkFollowStatus();
+  }, [talent?.id, user]);
+
+  // Format phone number for display
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
+    return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`;
+  };
+
+  // Handle subscribe/follow
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!talent?.id) return;
+
+    // If user is already logged in, just follow
+    if (user) {
+      setSubscribing(true);
+      try {
+        const { error: followError } = await supabase
+          .from('talent_followers')
+          .insert({
+            user_id: user.id,
+            talent_id: talent.id,
+          });
+
+        if (followError && !followError.message.includes('duplicate')) {
+          throw followError;
+        }
+
+        setIsFollowing(true);
+        toast.success(`You're now subscribed to ${talent.temp_full_name || talent.users.full_name}!`);
+      } catch (error) {
+        console.error('Follow error:', error);
+        toast.error('Failed to subscribe. Please try again.');
+      } finally {
+        setSubscribing(false);
+      }
+      return;
+    }
+
+    // New user flow - need email first
+    if (!subscribeEmail) {
+      toast.error('Please enter your email');
+      return;
+    }
+
+    // If we need phone and don't have it yet, show phone field
+    if (showPhoneField && !subscribePhone) {
+      toast.error('Please enter your phone number');
+      return;
+    }
+
+    setSubscribing(true);
+    try {
+      // Check if user already exists by email
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id, email, phone')
+        .eq('email', subscribeEmail.toLowerCase())
+        .single();
+
+      let userId: string;
+
+      if (existingUser) {
+        // User exists, use their ID
+        userId = existingUser.id;
+        
+        // If they don't have a phone and we collected one, update it
+        if (!existingUser.phone && subscribePhone) {
+          await supabase
+            .from('users')
+            .update({ phone: subscribePhone })
+            .eq('id', existingUser.id);
+        }
+      } else {
+        // New user - show phone field if not already shown
+        if (!showPhoneField) {
+          setShowPhoneField(true);
+          setSubscribing(false);
+          return;
+        }
+
+        // Create new user
+        const newUserId = crypto.randomUUID();
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            id: newUserId,
+            email: subscribeEmail.toLowerCase(),
+            phone: subscribePhone || null,
+            user_type: 'user',
+            full_name: subscribeEmail.split('@')[0],
+            promo_source: `talent_profile_${talent.username || talent.id}`,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          if (createError.message.includes('duplicate')) {
+            const { data: dupUser } = await supabase
+              .from('users')
+              .select('id')
+              .ilike('email', subscribeEmail)
+              .single();
+            if (dupUser) {
+              userId = dupUser.id;
+            } else {
+              throw createError;
+            }
+          } else {
+            throw createError;
+          }
+        } else {
+          userId = newUser.id;
+        }
+      }
+
+      // Add the follow relationship
+      const { error: followError } = await supabase
+        .from('talent_followers')
+        .insert({
+          user_id: userId!,
+          talent_id: talent.id,
+        });
+
+      if (followError && !followError.message.includes('duplicate')) {
+        throw followError;
+      }
+
+      setIsFollowing(true);
+      toast.success(`You're now subscribed to ${talent.temp_full_name || talent.users.full_name}!`);
+      setSubscribeEmail('');
+      setSubscribePhone('');
+      setShowPhoneField(false);
+    } catch (error) {
+      console.error('Subscribe error:', error);
+      toast.error('Failed to subscribe. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   // Capture UTM tracking and store in localStorage
   // utm=1 means "self_promo" - ONLY tracks for this specific talent
@@ -929,6 +1096,109 @@ const TalentProfilePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Subscribe/Follow Widget */}
+      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-white mb-2">
+            Stay Connected with {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
+          </h3>
+          <p className="text-sm text-gray-400 mb-4">
+            Get notified about new content, exclusive updates, and special offers.
+          </p>
+          
+          {/* Already subscribed message */}
+          {isFollowing ? (
+            <div className="py-3 space-y-1">
+              <p className="text-green-400 text-sm font-medium">
+                ✓ You're subscribed to {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
+              </p>
+              <p className="text-gray-500 text-xs">
+                You now have exclusive access to their updates.
+              </p>
+            </div>
+          ) : user ? (
+            /* Logged in user - show subscribe button */
+            <div className="space-y-2">
+              <p className="text-gray-500 text-xs">
+                Logged in as {user.email || user.phone}
+              </p>
+              <button
+                onClick={handleSubscribe}
+                disabled={subscribing}
+                className="w-full max-w-sm mx-auto py-3 rounded-full font-medium transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
+                {subscribing ? (
+                  <span className="animate-pulse">Subscribing...</span>
+                ) : (
+                  <>
+                    <HeartIcon className="h-4 w-4" />
+                    Subscribe to {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            /* Not logged in - email/phone form */
+            <form onSubmit={handleSubscribe} className="max-w-sm mx-auto space-y-3">
+              {/* Email field with button inside */}
+              {!showPhoneField && (
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={subscribeEmail}
+                    onChange={(e) => setSubscribeEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-32 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/50 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subscribing}
+                    className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {subscribing ? '...' : (
+                      <>
+                        Subscribe
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+              
+              {/* Phone field - shown after email for new users */}
+              {showPhoneField && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-400">One more step to complete your subscription:</p>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      value={subscribePhone}
+                      onChange={(e) => setSubscribePhone(formatPhoneNumber(e.target.value))}
+                      placeholder="(555) 555-5555"
+                      className="w-full bg-white/10 border border-white/20 rounded-full pl-4 pr-32 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/50 text-sm"
+                    />
+                    <button
+                      type="submit"
+                      disabled={subscribing}
+                      className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {subscribing ? '...' : 'Confirm'}
+                      {!subscribing && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+      </div>
 
       {/* Recent Orders Section - Show videos if available, or "Be the first" CTA if no videos */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-6 mb-8">
