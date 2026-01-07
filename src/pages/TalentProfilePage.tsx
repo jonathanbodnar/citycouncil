@@ -979,6 +979,11 @@ const TalentProfilePage: React.FC = () => {
 
       {/* Order Card - Pricing and CTAs */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-4 md:p-5 mb-8">
+        {/* Section Header */}
+        <h2 className="text-lg font-semibold text-white text-center mb-4">
+          Get a personalized video ShoutOut from {talent.temp_full_name || talent.users.full_name}
+        </h2>
+        
         {/* Stats - Simple inline text */}
         <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-sm text-gray-400 mb-4">
           {hasCoupon ? (
@@ -1035,7 +1040,6 @@ const TalentProfilePage: React.FC = () => {
 
         {/* Order Ideas - Click any to order */}
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-300 text-center">Choose a personalized video ShoutOut</p>
           <div className="grid grid-cols-2 gap-1.5">
             <Link
               to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
