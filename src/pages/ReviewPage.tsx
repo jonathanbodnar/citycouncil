@@ -107,6 +107,20 @@ const ReviewPage: React.FC = () => {
         throw error;
       }
 
+      // Update talent's average rating
+      const { data: allReviews } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('talent_id', order.talent_id);
+      
+      if (allReviews && allReviews.length > 0) {
+        const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+        await supabase
+          .from('talent_profiles')
+          .update({ average_rating: Math.round(avgRating * 100) / 100 })
+          .eq('id', order.talent_id);
+      }
+
       console.log('Review submitted successfully');
       toast.success('Review submitted successfully!');
       
