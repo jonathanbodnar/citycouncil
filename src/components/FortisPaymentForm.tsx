@@ -16,6 +16,8 @@ interface FortisPaymentFormProps {
 
 const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   amount,
+  customerEmail,
+  customerName,
   onPaymentSuccess,
   onPaymentError,
 }) => {
@@ -270,6 +272,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
       // Create iframe in our container (pass selector string to avoid null ref timing)
       console.log('Creating Commerce iframe');
+      
+      // Parse customer name into first/last
+      const nameParts = (customerName || '').trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       elements.create({
         container: '#payment',
         theme: 'dark',
@@ -284,6 +292,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         hideAgreementCheckbox: false,
         hideTotal: false,
         digitalWallets: ['ApplePay', 'GooglePay'],
+        // Pass customer info to pre-fill the form and fix "I CC agree" text
+        contact: {
+          firstName: firstName,
+          lastName: lastName,
+          email: customerEmail || '',
+        },
         appearance: {
           colorBackground: '#11161f',
           colorButtonSelectedBackground: '#8b5cf6', // Purple to match ShoutOut theme
