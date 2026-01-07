@@ -889,22 +889,25 @@ const CollabOrderPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Payment Form Container - clean styling */}
-                <div 
-                  id="fortis-payment-container" 
-                  ref={iframeContainerRef}
-                  className="min-h-[400px] -mx-2"
-                >
-                  {isProcessing ? (
-                    <div className="flex flex-col items-center justify-center h-64">
-                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 mb-4" style={{ borderColor: buttonColor }}></div>
-                      <p className="text-gray-400">Processing payment...</p>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-64">
-                      <div className="animate-pulse text-gray-400">Loading payment form...</div>
-                    </div>
-                  )}
+                {/* Payment Form Container - clip top 100px to hide tabs */}
+                <div className="overflow-hidden">
+                  <div 
+                    id="fortis-payment-container" 
+                    ref={iframeContainerRef}
+                    className="min-h-[400px] -mx-2"
+                    style={{ marginTop: '-100px', paddingTop: '0px' }}
+                  >
+                    {isProcessing ? (
+                      <div className="flex flex-col items-center justify-center h-64" style={{ marginTop: '100px' }}>
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 mb-4" style={{ borderColor: buttonColor }}></div>
+                        <p className="text-gray-400">Processing payment...</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-64" style={{ marginTop: '100px' }}>
+                        <div className="animate-pulse text-gray-400">Loading payment form...</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <p className="text-center text-gray-500 text-xs mt-2">
