@@ -269,7 +269,11 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       });
 
       // Create iframe in our container
-      console.log('Creating Commerce iframe - fresh config');
+      // ShoutOut theme colors - purple accent on dark background
+      const shoutoutBgColor = '#0f172a'; // Dark slate background
+      const shoutoutButtonColor = '#8b5cf6'; // Purple accent
+      
+      console.log('Creating Commerce iframe with ShoutOut theme');
       elements.create({
         container: '#payment',
         theme: 'dark',
@@ -284,7 +288,16 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         hideAgreementCheckbox: false,
         hideTotal: true,
         digitalWallets: ['ApplePay', 'GooglePay'],
+        appearance: {
+          colorBackground: shoutoutBgColor,
+          colorButtonSelectedBackground: shoutoutButtonColor,
+          colorButtonSelectedText: '#ffffff',
+          fontFamily: 'Montserrat',
+          borderRadius: '8px',
+        },
       });
+      
+      console.log('Commerce iframe created with bg:', shoutoutBgColor, 'button:', shoutoutButtonColor);
 
       setCommerceInstance(elements);
 
@@ -329,21 +342,20 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           )}
 
           {/* Commerce.js iframe container - clip top to hide payment type tabs */}
-          <div className="overflow-hidden rounded-xl">
+          <div className="overflow-hidden">
             <div 
               id="payment"
               ref={iframeContainerRef}
               className="min-h-[400px]"
               style={{ marginTop: '-100px' }}
-            />
-          </div>
-          
-          {isLoading && (
-            <div className="flex items-center justify-center py-4" style={{ marginTop: '100px' }}>
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
-              <span className="ml-2 text-sm text-slate-400">Loading payment form...</span>
+            >
+              {isLoading && (
+                <div className="flex items-center justify-center h-64" style={{ marginTop: '100px' }}>
+                  <div className="animate-pulse text-gray-400">Loading payment form...</div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
 
