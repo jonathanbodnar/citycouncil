@@ -285,7 +285,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         showSubmitButton: true,
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
-        hideTotal: false,
+        hideTotal: true,
         digitalWallets: ['ApplePay', 'GooglePay'],
         appearance: {
           colorBackground: '#11161f',

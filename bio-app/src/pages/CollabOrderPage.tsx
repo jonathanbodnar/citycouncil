@@ -495,7 +495,7 @@ const CollabOrderPage: React.FC = () => {
         showSubmitButton: true,
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
-        hideTotal: false,
+        hideTotal: true,
         appearance: {
           colorBackground: themeBgColor,
           colorButtonSelectedBackground: themeButtonColor,
