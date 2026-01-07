@@ -481,13 +481,13 @@ const CollabOrderPage: React.FC = () => {
       const themeBgColor = bioSettings?.gradient_start || '#0f172a';
       
       // Fortis Commerce.js v1.0.0
-      // Using dark theme - this is Fortis's built-in dark styling
-      // Minimal customization to avoid breaking the form
+      // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
+      // Using view: 'card' to show only credit card (no ACH tab)
       elements.create({
         container: '#fortis-payment-container',
         theme: 'dark',
         environment: 'production',
-        view: 'default',
+        view: 'card',  // Card only - removes ACH tab
         language: 'en-us',
         defaultCountry: 'US',
         floatingLabels: true,
@@ -496,6 +496,13 @@ const CollabOrderPage: React.FC = () => {
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
+        appearance: {
+          colorBackground: themeBgColor,
+          colorButtonSelectedBackground: themeButtonColor,
+          colorButtonSelectedText: '#ffffff',
+          fontFamily: 'Montserrat',
+          borderRadius: '8px',
+        },
       });
       
       console.log('Commerce iframe created with bg:', themeBgColor, 'button:', themeButtonColor);
