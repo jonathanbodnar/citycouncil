@@ -1969,7 +1969,7 @@ const BioPage: React.FC = () => {
           {/* Terms of Service for Newsletter */}
           {bioSettings?.show_newsletter !== false && !isFollowing && (
             <p className="text-white/25 text-[10px] max-w-xs mx-auto leading-relaxed">
-              By connecting, you agree to receive updates from {displayName.split(' ')[0]}. We do not share your data.
+              By connecting, you agree to receive updates from {displayName.split(' ')[0]} and ShoutOut, LLC. We do not share or sell your data.
             </p>
           )}
           <a 
