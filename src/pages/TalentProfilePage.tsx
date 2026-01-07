@@ -995,7 +995,6 @@ const TalentProfilePage: React.FC = () => {
               >
                 {discountedPrice === 0 ? 'FREE' : `$${discountedPrice}`}
               </span>
-              <span className="text-xs text-green-400 font-medium">{discountLabel}</span>
             </span>
           ) : (
             <span className="font-bold text-white text-lg">${talent.pricing}</span>
