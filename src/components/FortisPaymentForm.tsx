@@ -268,8 +268,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         onPaymentError('Payment was declined. Please try a different card.');
       });
 
-      // Create iframe in our container (pass selector string to avoid null ref timing)
-      console.log('Creating Commerce iframe');
+      // Create iframe in our container
+      console.log('Creating Commerce iframe - fresh config');
       elements.create({
         container: '#payment',
         theme: 'dark',
@@ -282,15 +282,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         showSubmitButton: true,
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
-        hideTotal: false,
+        hideTotal: true,
         digitalWallets: ['ApplePay', 'GooglePay'],
-        appearance: {
-          colorBackground: '#11161f',
-          colorButtonSelectedBackground: '#8b5cf6', // Purple to match ShoutOut theme
-          colorButtonSelectedText: '#ffffff',
-          fontFamily: 'Montserrat',
-          borderRadius: '8px',
-        },
       });
 
       setCommerceInstance(elements);
@@ -310,7 +303,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
 
 
   return (
-    <div className="rounded-2xl px-4 py-5 md:p-6 bg-gradient-to-br from-slate-900/40 to-slate-800/20 border border-white/10 shadow-xl max-w-3xl mx-auto">
+    <div className="rounded-2xl px-4 py-5 md:p-6 max-w-3xl mx-auto">
       {/* Fortis Commerce.js Payment Form */}
       {paymentMethod === 'card' && (
         <div className="space-y-4">
@@ -336,16 +329,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           )}
 
           {/* Commerce.js iframe container - clip top to hide payment type tabs */}
-          <div style={{ overflow: 'hidden' }}>
+          <div className="overflow-hidden rounded-xl">
             <div 
               id="payment"
               ref={iframeContainerRef}
-              style={{
-                background: '#11161f',
-                borderRadius: '8px',
-                minHeight: '400px',
-                marginTop: '-100px',
-              }}
+              className="min-h-[400px]"
+              style={{ marginTop: '-100px' }}
             />
           </div>
           
