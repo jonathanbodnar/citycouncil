@@ -483,10 +483,9 @@ const CollabOrderPage: React.FC = () => {
       // Fortis Commerce.js v1.0.0
       // fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
       
-      // Parse customer name into first/last - use email as fallback if no name
-      const nameToUse = user?.full_name?.trim() || user?.email?.split('@')[0] || 'Customer';
-      const nameParts = nameToUse.split(' ');
-      const firstName = nameParts[0] || 'Customer';
+      // Parse customer name into first/last for the agreement checkbox
+      const nameParts = (user?.full_name || '').trim().split(' ');
+      const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
       elements.create({

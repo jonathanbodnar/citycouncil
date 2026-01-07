@@ -273,10 +273,9 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       // Create iframe in our container (pass selector string to avoid null ref timing)
       console.log('Creating Commerce iframe');
       
-      // Parse customer name into first/last - use email as fallback if no name
-      const nameToUse = customerName?.trim() || customerEmail?.split('@')[0] || 'Customer';
-      const nameParts = nameToUse.split(' ');
-      const firstName = nameParts[0] || 'Customer';
+      // Parse customer name into first/last for the agreement checkbox
+      const nameParts = (customerName || '').trim().split(' ');
+      const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
       elements.create({
