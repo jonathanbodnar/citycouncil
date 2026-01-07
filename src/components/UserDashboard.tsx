@@ -330,7 +330,8 @@ const UserDashboard: React.FC = () => {
     
     try {
       const { downloadVideo } = await import('../utils/mobileDownload');
-      const filename = `shoutout-${order.talent_profiles.users.full_name.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
+      const talentName = order.talent_profiles.users.full_name || order.talent_profiles.username || 'talent';
+      const filename = `shoutout-${talentName.replace(/\s+/g, '-')}-${order.id.slice(0, 8)}.mp4`;
       
       await downloadVideo({
         url: order.video_url!,
@@ -361,7 +362,7 @@ const UserDashboard: React.FC = () => {
   const handleCopyCaptionAndDownload = async () => {
     if (!pendingDownloadOrder) return;
     
-    const talentName = pendingDownloadOrder.talent_profiles.users.full_name;
+    const talentName = pendingDownloadOrder.talent_profiles.users.full_name || pendingDownloadOrder.talent_profiles.username || 'this talent';
     const talentUsername = pendingDownloadOrder.talent_profiles.username;
     const suggestedCaption = `Just got my personalized ShoutOut from ${talentName}! 🎉 Get yours at ShoutOut.us/${talentUsername} 🎥 @shoutoutvoice`;
     
@@ -494,18 +495,18 @@ const UserDashboard: React.FC = () => {
                         {order.talent_profiles.users.avatar_url ? (
                           <img
                             src={order.talent_profiles.users.avatar_url}
-                            alt={order.talent_profiles.users.full_name}
+                            alt={order.talent_profiles.users.full_name || order.talent_profiles.username}
                             className="w-full h-full rounded-full object-cover"
                           />
                         ) : (
                           <span className="text-xl font-bold text-primary-600">
-                            {order.talent_profiles.users.full_name.charAt(0)}
+                            {(order.talent_profiles.users.full_name || order.talent_profiles.username || 'T').charAt(0)}
                           </span>
                         )}
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {order.talent_profiles.users.full_name}
+                          {order.talent_profiles.users.full_name || order.talent_profiles.username}
                         </h3>
                         <p className="text-sm text-gray-600">
                           {order.talent_profiles.category} • ${(Number(order.amount) / 100).toFixed(2)}
@@ -745,14 +746,14 @@ const UserDashboard: React.FC = () => {
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
                       <span className="text-primary-600 font-medium">
-                        {review.talent_profiles.users.full_name.charAt(0)}
+                        {(review.talent_profiles.users.full_name || review.talent_profiles.username || 'T').charAt(0)}
                       </span>
                     </div>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-gray-900">
-                        {review.talent_profiles.users.full_name}
+                        {review.talent_profiles.users.full_name || review.talent_profiles.username}
                       </h3>
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
@@ -928,7 +929,7 @@ const UserDashboard: React.FC = () => {
             setShareModalOpen(false);
             setShareOrderData(null);
           }}
-          talentName={shareOrderData.talent_profiles.users.full_name}
+          talentName={shareOrderData.talent_profiles.users.full_name || shareOrderData.talent_profiles.username || 'Talent'}
           talentSocialHandles={{
             // We'll need to fetch these from the talent's social accounts
             twitter: '@TuckerCarlson', // This should be fetched dynamically
@@ -984,7 +985,7 @@ const UserDashboard: React.FC = () => {
                 </label>
                 <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
                   <p className="text-base text-gray-900 leading-relaxed">
-                    Just got my personalized ShoutOut from {pendingDownloadOrder.talent_profiles.users.full_name}! 🎉 Get yours at ShoutOut.us/{pendingDownloadOrder.talent_profiles.username} 🎥 @shoutoutvoice
+                    Just got my personalized ShoutOut from {pendingDownloadOrder.talent_profiles.users.full_name || pendingDownloadOrder.talent_profiles.username}! 🎉 Get yours at ShoutOut.us/{pendingDownloadOrder.talent_profiles.username} 🎥 @shoutoutvoice
                   </p>
                 </div>
               </div>
