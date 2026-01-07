@@ -443,11 +443,12 @@ const HolidayPromoPopup: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Save to beta_signups for prize tracking
+      // Note: beta_signups only has phone_number column, not email
       // First check if they already have a prize from a previous giveaway entry
       const { data: existingEntries } = await supabase
         .from('beta_signups')
         .select('id, prize_won, source, phone_number')
-        .or(`phone_number.eq.${formattedPhone},email.eq.${normalizedEmail}`);
+        .eq('phone_number', formattedPhone);
 
       const existingEntry = existingEntries?.[0];
 
@@ -464,13 +465,11 @@ const HolidayPromoPopup: React.FC = () => {
       }
 
       // Use upsert to handle both insert and update cases
-      // This avoids RLS issues with UPDATE policy
       const { error: upsertError } = await supabase
         .from('beta_signups')
         .upsert({
           id: existingEntry?.id, // Use existing ID if found, otherwise let DB generate
           phone_number: formattedPhone,
-          email: normalizedEmail,
           source: 'holiday_popup',
           utm_source: utmSource,
           subscribed_at: existingEntry?.id ? undefined : new Date().toISOString(), // Keep original date if updating
@@ -488,7 +487,6 @@ const HolidayPromoPopup: React.FC = () => {
             .from('beta_signups')
             .insert({
               phone_number: formattedPhone,
-              email: normalizedEmail,
               source: 'holiday_popup',
               utm_source: utmSource,
               subscribed_at: new Date().toISOString(),

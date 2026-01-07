@@ -87,31 +87,35 @@ serve(async (req) => {
 
       // IMPORTANT: Still ensure beta_signups entry exists for giveaway tracking
       // This handles the case where user exists but hasn't done the giveaway popup yet
-      if (source === 'holiday_popup' && (formattedPhone || normalizedEmail)) {
+      // Note: beta_signups only has phone_number column, not email
+      if (source === 'holiday_popup' && formattedPhone) {
         // Check if they already have a beta_signups entry
         const { data: existingSignup } = await supabase
           .from('beta_signups')
           .select('id, source')
-          .or(`phone_number.eq.${formattedPhone || ''},email.eq.${normalizedEmail || ''}`)
+          .eq('phone_number', formattedPhone)
           .single();
 
         if (!existingSignup) {
           // Create new entry
-          await supabase
+          const { error: insertErr } = await supabase
             .from('beta_signups')
             .insert({
               phone_number: formattedPhone,
-              email: normalizedEmail,
               source: 'holiday_popup',
               utm_source: utm_source || null,
               subscribed_at: new Date().toISOString(),
             });
-          console.log('Created beta_signups entry for existing user');
+          if (insertErr) {
+            console.error('Error creating beta_signups:', insertErr.message);
+          } else {
+            console.log('Created beta_signups entry for existing user');
+          }
         } else if (existingSignup.source !== 'holiday_popup') {
           // Update existing entry to mark as holiday_popup
           await supabase
             .from('beta_signups')
-            .update({ source: 'holiday_popup', utm_source: utm_source || existingSignup.source })
+            .update({ source: 'holiday_popup', utm_source: utm_source || null })
             .eq('id', existingSignup.id);
           console.log('Updated beta_signups source to holiday_popup');
         }
@@ -157,22 +161,32 @@ serve(async (req) => {
 
     console.log('New lead captured:', newUser.id);
 
-    // Also save to beta_signups for backwards compatibility with analytics
-    if (formattedPhone || normalizedEmail) {
-      await supabase
+    // Also save to beta_signups for giveaway tracking and analytics
+    // Note: beta_signups only has phone_number, not email column
+    if (formattedPhone) {
+      console.log('Inserting into beta_signups:', { 
+        phone: formattedPhone, 
+        source: source || 'login_form' 
+      });
+      
+      const { error: betaError } = await supabase
         .from('beta_signups')
         .insert({
           phone_number: formattedPhone,
-          email: normalizedEmail,
           source: source || 'login_form',
           utm_source: utm_source || null,
           subscribed_at: new Date().toISOString(),
-        })
-        .then(({ error }) => {
-          if (error && error.code !== '23505') {
-            console.log('Beta signup insert note:', error.message);
-          }
         });
+      
+      if (betaError) {
+        console.error('Beta signup insert error:', betaError.code, betaError.message);
+        // If it's a duplicate, that's fine - but log it
+        if (betaError.code === '23505') {
+          console.log('Beta signup already exists (duplicate key)');
+        }
+      } else {
+        console.log('Beta signup created successfully');
+      }
     }
 
     return new Response(
