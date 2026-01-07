@@ -729,8 +729,11 @@ const TalentProfilePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Hero + Order Card Container - Side by side on desktop */}
+      <div className="flex flex-col lg:flex-row gap-6 mb-8">
+      
       {/* Hero Section */}
-      <div className="gradient-border rounded-3xl shadow-modern-xl mb-8">
+      <div className="gradient-border rounded-3xl shadow-modern-xl lg:flex-1">
         <div className="md:flex rounded-3xl overflow-hidden relative">
           {/* Background Gradient - Desktop */}
           <div 
@@ -978,7 +981,7 @@ const TalentProfilePage: React.FC = () => {
       </div>
 
       {/* Order Card - Pricing and CTAs */}
-      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-4 md:p-5 mb-8">
+      <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-4 md:p-5 lg:w-96 lg:flex-shrink-0">
         {/* Section Header */}
         <h2 className="text-base font-semibold text-white text-center mb-4">
           Get a personalized video ShoutOut from {talent.temp_full_name || talent.users.full_name}
@@ -1102,6 +1105,8 @@ const TalentProfilePage: React.FC = () => {
           </div>
         )}
       </div>
+      
+      </div>{/* End Hero + Order Card Container */}
 
       {/* Subscribe/Follow Widget */}
       <div className="mb-8">
