@@ -838,7 +838,7 @@ const TalentProfilePage: React.FC = () => {
                               href={`https://x.com/${twitterHandle}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 text-gray-400 hover:text-gray-600"
+                              className="p-1.5 text-white/60 hover:text-white/90 transition-colors"
                               title={`@${twitterHandle}`}
                             >
                               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -851,7 +851,7 @@ const TalentProfilePage: React.FC = () => {
                               href={`https://instagram.com/${instagramHandle}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 text-gray-400 hover:text-gray-600"
+                              className="p-1.5 text-white/60 hover:text-white/90 transition-colors"
                               title={`@${instagramHandle}`}
                             >
                               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -864,7 +864,7 @@ const TalentProfilePage: React.FC = () => {
                               href={`https://facebook.com/${facebookHandle}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 text-gray-400 hover:text-gray-600"
+                              className="p-1.5 text-white/60 hover:text-white/90 transition-colors"
                               title={`@${facebookHandle}`}
                             >
                               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -877,7 +877,7 @@ const TalentProfilePage: React.FC = () => {
                               href={`https://tiktok.com/@${tiktokHandle}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 text-gray-400 hover:text-gray-600"
+                              className="p-1.5 text-white/60 hover:text-white/90 transition-colors"
                               title={`@${tiktokHandle}`}
                             >
                               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -890,7 +890,7 @@ const TalentProfilePage: React.FC = () => {
                               href={`https://rumble.com/${rumbleType}/${rumbleHandle.replace('@', '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 text-gray-400 hover:text-gray-600"
+                              className="p-1.5 text-white/60 hover:text-white/90 transition-colors"
                               title={`Rumble: ${rumbleHandle.replace('@', '')}`}
                             >
                               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -903,7 +903,7 @@ const TalentProfilePage: React.FC = () => {
                               href={`https://youtube.com/@${youtubeHandle.replace('@', '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 text-gray-400 hover:text-gray-600"
+                              className="p-1.5 text-white/60 hover:text-white/90 transition-colors"
                               title={`YouTube: @${youtubeHandle.replace('@', '')}`}
                             >
                               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -917,7 +917,7 @@ const TalentProfilePage: React.FC = () => {
                     {/* Share Button */}
                     <button 
                       onClick={() => setShareModalOpen(true)}
-                      className="p-1.5 text-gray-400 hover:text-gray-600"
+                      className="p-1.5 text-white/60 hover:text-white/90 transition-colors"
                       title="Share talent profile"
                     >
                       <ShareIcon className="h-5 w-5" />
