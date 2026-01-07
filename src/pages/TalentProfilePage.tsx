@@ -980,7 +980,7 @@ const TalentProfilePage: React.FC = () => {
       {/* Order Card - Pricing and CTAs */}
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-4 md:p-5 mb-8">
         {/* Section Header */}
-        <h2 className="text-lg font-semibold text-white text-center mb-4">
+        <h2 className="text-base font-semibold text-white text-center mb-4">
           Get a personalized video ShoutOut from {talent.temp_full_name || talent.users.full_name}
         </h2>
         
