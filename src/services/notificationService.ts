@@ -98,9 +98,14 @@ export const notificationService = {
       // Build template variables
       const firstName = user.full_name?.split(' ')[0] || 'there';
       
-      // Get short link for SMS (much shorter URLs!)
+      // Determine if this is a talent or user notification
+      const isTalentNotification = notificationType.startsWith('talent_');
+      
+      // Get appropriate link for SMS
       let orderLink = `${window.location.origin}/dashboard?order=${orderId}`;
-      if (order?.fulfillment_token) {
+      
+      if (isTalentNotification && order?.fulfillment_token) {
+        // Talent notifications: use fulfillment link (for talent to fulfill orders)
         try {
           // Check if a short link exists for this order
           const { data: shortLink } = await supabase
@@ -114,7 +119,7 @@ export const notificationService = {
           if (shortLink?.short_code) {
             // Use short link: shoutout.us/s/ABC123
             orderLink = `${window.location.origin}/s/${shortLink.short_code}`;
-            logger.log('✅ Using short link:', orderLink);
+            logger.log('✅ Using short link for talent:', orderLink);
           } else {
             // Fallback to full URL with magic auth
             orderLink = await magicAuthService.generateFulfillmentUrl(orderId, order.fulfillment_token);
@@ -124,6 +129,10 @@ export const notificationService = {
           logger.error('Error getting short link, using fallback:', error);
           orderLink = `${window.location.origin}/fulfill/${order.fulfillment_token}`;
         }
+      } else {
+        // User notifications: use dashboard link (for users to view/download their videos)
+        orderLink = `${window.location.origin}/dashboard?order=${orderId}`;
+        logger.log('✅ Using dashboard link for user:', orderLink);
       }
 
       // Replace template variables
