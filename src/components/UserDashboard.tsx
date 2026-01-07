@@ -118,6 +118,7 @@ const UserDashboard: React.FC = () => {
         .select(`
           *,
           talent_profiles!reviews_talent_id_fkey (
+            username,
             users!talent_profiles_user_id_fkey (
               full_name
             )
