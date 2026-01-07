@@ -278,12 +278,19 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         language: 'en-us',
         defaultCountry: 'US',
         floatingLabels: true,
-        showReceipt: true,
+        showReceipt: false,
         showSubmitButton: true,
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: false,
         digitalWallets: ['ApplePay', 'GooglePay'],
+        appearance: {
+          colorBackground: '#11161f',
+          colorButtonSelectedBackground: '#8b5cf6', // Purple to match ShoutOut theme
+          colorButtonSelectedText: '#ffffff',
+          fontFamily: 'Montserrat',
+          borderRadius: '8px',
+        },
       });
 
       setCommerceInstance(elements);
@@ -328,23 +335,24 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             </div>
           )}
 
-          {/* Commerce.js iframe container - handles everything */}
-          <div 
-            id="payment"
-            ref={iframeContainerRef}
-            style={{
-              background: '#11161f',
-              padding: '30px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              minHeight: '400px'
-            }}
-          />
+          {/* Commerce.js iframe container - clip top to hide payment type tabs */}
+          <div style={{ overflow: 'hidden' }}>
+            <div 
+              id="payment"
+              ref={iframeContainerRef}
+              style={{
+                background: '#11161f',
+                borderRadius: '8px',
+                minHeight: '400px',
+                marginTop: '-100px',
+              }}
+            />
+          </div>
           
           {isLoading && (
-            <div className="flex items-center justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-sm text-gray-600">Loading payment form...</span>
+            <div className="flex items-center justify-center py-4" style={{ marginTop: '100px' }}>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+              <span className="ml-2 text-sm text-slate-400">Loading payment form...</span>
             </div>
           )}
         </div>
