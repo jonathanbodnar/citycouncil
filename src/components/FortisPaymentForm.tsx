@@ -301,7 +301,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         },
         appearance: {
           colorBackground: '#11161f',
-          colorPrimary: '#8b5cf6', // Purple for Pay Now button
           colorButtonSelectedBackground: '#8b5cf6', // Purple to match ShoutOut theme
           colorButtonSelectedText: '#ffffff',
           fontFamily: 'Montserrat',

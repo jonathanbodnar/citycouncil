@@ -510,7 +510,6 @@ const CollabOrderPage: React.FC = () => {
         },
         appearance: {
           colorBackground: themeBgColor,
-          colorPrimary: themeButtonColor, // For Pay Now button
           colorButtonSelectedBackground: themeButtonColor,
           colorButtonSelectedText: '#ffffff',
           fontFamily: 'Montserrat',
