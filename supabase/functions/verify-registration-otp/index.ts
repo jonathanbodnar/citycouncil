@@ -277,6 +277,7 @@ serve(async (req) => {
       const { data: authUserCheck, error: authUserCheckError } = await supabase.auth.admin.getUserById(existingUser.id);
       
       let authUserId = existingUser.id;
+      const oldPublicUserId = existingUser.id;
       
       if (authUserCheckError || !authUserCheck?.user) {
         // User exists in public.users but NOT in auth.users (they were a lead)
@@ -298,18 +299,12 @@ serve(async (req) => {
         if (createAuthError) {
           // Check if user was created by another process (race condition)
           if (createAuthError.message?.includes('already been registered') || createAuthError.message?.includes('already exists')) {
-            console.log('Auth user already exists (race condition), continuing...');
+            console.log('Auth user already exists (race condition), finding them...');
             // Try to get the existing auth user by email
             const { data: authUsers } = await supabase.auth.admin.listUsers();
             const existingAuthUser = authUsers?.users?.find(u => u.email === (existingUser.email || normalizedEmail));
             if (existingAuthUser) {
               authUserId = existingAuthUser.id;
-              // Update public.users to point to the correct auth user
-              if (existingAuthUser.id !== existingUser.id) {
-                console.log('Updating public.users to match auth user ID');
-                // This is tricky - we have a mismatch. For now, just use the auth user ID
-                authUserId = existingAuthUser.id;
-              }
             }
           } else {
             console.error('Error creating auth user:', createAuthError);
@@ -318,25 +313,58 @@ serve(async (req) => {
         } else if (newAuthUser?.user) {
           console.log('Created auth user:', newAuthUser.user.id);
           authUserId = newAuthUser.user.id;
+        }
+        
+        // If the auth user ID differs from the public user ID, we need to migrate data
+        if (authUserId !== oldPublicUserId) {
+          console.log('Migrating user data from', oldPublicUserId, 'to', authUserId);
           
-          // Update public.users to link to the new auth user ID if different
-          if (newAuthUser.user.id !== existingUser.id) {
-            console.log('Auth user ID differs from public user ID, updating public.users...');
-            // Update the existing public.users record with the new auth user ID
-            // First, delete the old record and create a new one with the correct ID
-            await supabase.from('users').delete().eq('id', existingUser.id);
-            await supabase.from('users').insert({
-              id: newAuthUser.user.id,
-              email: existingUser.email || normalizedEmail,
-              phone: formattedPhone,
-              full_name: existingUser.full_name || normalizedEmail.split('@')[0],
-              user_type: existingUser.user_type || 'user',
-              created_at: existingUser.created_at,
-            });
+          // CRITICAL: Update all related tables to point to new user ID
+          // This preserves orders, reviews, etc.
+          const tablesToUpdate = [
+            { table: 'orders', column: 'user_id' },
+            { table: 'reviews', column: 'user_id' },
+            { table: 'user_settings', column: 'user_id' },
+            { table: 'user_credits', column: 'user_id' },
+            { table: 'credit_transactions', column: 'user_id' },
+          ];
+          
+          for (const { table, column } of tablesToUpdate) {
+            const { error: updateError } = await supabase
+              .from(table)
+              .update({ [column]: authUserId })
+              .eq(column, oldPublicUserId);
+            
+            if (updateError) {
+              console.log(`Note: Could not update ${table}.${column}:`, updateError.message);
+              // Don't fail - table might not exist or have no matching rows
+            } else {
+              console.log(`Updated ${table}.${column}`);
+            }
           }
           
-          // Wait a moment for triggers
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Delete the old public.users record (the new one will be created by trigger)
+          await supabase.from('users').delete().eq('id', oldPublicUserId);
+          
+          // Wait for trigger to create the new user record
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Update the new record with the original user's data
+          const { error: finalUpdateError } = await supabase.from('users').update({
+            phone: formattedPhone || existingUser.phone,
+            full_name: existingUser.full_name || normalizedEmail.split('@')[0],
+            user_type: existingUser.user_type || 'user',
+            promo_source: existingUser.promo_source,
+            sms_subscribed: existingUser.sms_subscribed,
+            credits: existingUser.credits || 0,
+          }).eq('id', authUserId);
+          
+          if (finalUpdateError) {
+            console.log('Note: Could not update new user record:', finalUpdateError.message);
+          }
+          
+          // Update existingUser reference for the rest of the function
+          existingUser.id = authUserId;
         }
       }
 
