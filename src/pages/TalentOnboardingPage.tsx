@@ -1099,7 +1099,7 @@ const TalentOnboardingPage: React.FC = () => {
           {currentStep === 1 && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Step 1: {onboardingData?.talent.user_id ? 'Welcome Back!' : 'Create Your Account'}
+                Step 1: {onboardingData?.talent.user_id ? 'Welcome Back!' : 'Create or Login to Your Account'}
               </h2>
 
               {onboardingData?.talent.user_id && (
