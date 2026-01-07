@@ -146,7 +146,6 @@ export const notificationService = {
 
       // Determine recipient type based on notification type
       // talent_* notifications go to talent (217 number), user_* notifications go to users (659 number)
-      const isTalentNotification = notificationType.startsWith('talent_');
       const recipientType = isTalentNotification ? 'talent' : 'user';
 
       // Send SMS via Twilio Edge Function
