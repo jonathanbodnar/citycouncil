@@ -1735,10 +1735,8 @@ const TalentManagement: React.FC = () => {
                             localStorage.setItem('admin_return_email', currentAdmin.email || '');
                           }
                           
-                          // Sign out current admin
-                          await supabase.auth.signOut();
-                          
-                          // Set the new session for the talent user
+                          // Set the new session for the talent user FIRST (this will replace the admin session)
+                          // Don't sign out first - setSession will handle the session swap
                           const { error: sessionError } = await supabase.auth.setSession({
                             access_token: data.session.access_token,
                             refresh_token: data.session.refresh_token
@@ -1750,10 +1748,8 @@ const TalentManagement: React.FC = () => {
                           
                           toast.success('Logged in as ' + (talent.users?.full_name || talent.temp_full_name || 'talent'), { id: 'login-as' });
                           
-                          // Redirect to talent dashboard
-                          setTimeout(() => {
-                            window.location.href = '/dashboard';
-                          }, 500);
+                          // Use window.location.replace for immediate redirect (avoids React state issues)
+                          window.location.replace('/dashboard');
                           
                         } catch (error: any) {
                           console.error('Error logging in as talent:', error);
