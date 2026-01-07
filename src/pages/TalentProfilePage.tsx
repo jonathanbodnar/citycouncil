@@ -73,6 +73,8 @@ const TalentProfilePage: React.FC = () => {
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
   const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const REVIEWS_PER_PAGE = 3;
 
   // Fetch Christmas mode setting (non-blocking, low priority)
   useEffect(() => {
@@ -998,7 +1000,7 @@ const TalentProfilePage: React.FC = () => {
             Reviews ({talent.reviews.length})
           </h2>
           <div className="space-y-6">
-            {talent.reviews.map((review) => (
+            {talent.reviews.slice(0, reviewsPage * REVIEWS_PER_PAGE).map((review) => (
               <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
@@ -1035,6 +1037,15 @@ const TalentProfilePage: React.FC = () => {
               </div>
             ))}
           </div>
+          {/* Show More Button */}
+          {talent.reviews.length > reviewsPage * REVIEWS_PER_PAGE && (
+            <button
+              onClick={() => setReviewsPage(prev => prev + 1)}
+              className="mt-4 w-full py-2 text-sm font-medium text-primary-600 hover:text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
+            >
+              Show More Reviews ({talent.reviews.length - reviewsPage * REVIEWS_PER_PAGE} remaining)
+            </button>
+          )}
         </div>
       )}
 
