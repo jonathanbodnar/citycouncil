@@ -653,11 +653,15 @@ const HolidayPromoPopup: React.FC = () => {
                 Enter Our Instant Giveaway 🎁
               </h2>
               
-              <p className="text-white/60 text-base mb-4">
+              <p className="text-white/60 text-base mb-2">
                 {talentName 
                   ? `Win a free personalized video ShoutOut from ${talentName}!`
                   : 'Win a free personalized video ShoutOut from your favorite conservative personality.'
                 }
+              </p>
+              
+              <p className="text-white/40 text-xs mb-4">
+                No cc required. No purchase necessary.
               </p>
 
               {/* Prize Badges */}
