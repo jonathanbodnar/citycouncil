@@ -675,7 +675,7 @@ const TalentDashboard: React.FC = () => {
               <div className="p-2 rounded-full bg-blue-500/20">
                 <LinkIcon className="h-5 w-5 text-blue-400" />
               </div>
-              <div>
+          <div>
                 <p className="text-sm text-white font-medium">
                   Promote your ShoutOut profile using your special link:
                 </p>
@@ -707,19 +707,19 @@ const TalentDashboard: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             {/* Left side - Promo Link */}
             <div className="flex-1">
-              <h3 className="font-semibold text-white text-lg">Christmas Games 🎄</h3>
-              <p className="text-sm text-gray-300 mt-1">Use this special link when you promote to <span className="underline font-medium text-white">earn double</span> off every order you generate until Christmas.</p>
-              <button
-                onClick={() => {
-                  const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
-                  navigator.clipboard.writeText(promoUrl);
-                  toast.success('Promo link copied!');
-                }}
-                className="text-sm text-green-300 hover:text-green-200 bg-green-900/30 hover:bg-green-900/50 px-3 py-1.5 rounded mt-2 inline-flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <span>📋</span>
-                <span>shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
-              </button>
+            <h3 className="font-semibold text-white text-lg">Christmas Games 🎄</h3>
+            <p className="text-sm text-gray-300 mt-1">Use this special link when you promote to <span className="underline font-medium text-white">earn double</span> off every order you generate until Christmas.</p>
+            <button
+              onClick={() => {
+                const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
+                navigator.clipboard.writeText(promoUrl);
+                toast.success('Promo link copied!');
+              }}
+              className="text-sm text-green-300 hover:text-green-200 bg-green-900/30 hover:bg-green-900/50 px-3 py-1.5 rounded mt-2 inline-flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <span>📋</span>
+              <span>shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
+            </button>
             </div>
             
             {/* Right side - Christmas Deadline */}
@@ -930,30 +930,30 @@ const TalentDashboard: React.FC = () => {
                     
                     {/* Request section - only show for non-collab orders */}
                     {(order as any).service_type !== 'social_collab' && (
-                      <div className="glass-strong p-4 rounded-md mb-4 border border-white/20">
-                        <h5 className="font-medium text-white mb-2">Request:</h5>
-                        {!order.details_submitted ? (
-                          <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-4 text-center">
-                            <p className="text-amber-300 font-medium">⏳ Pending details from customer</p>
-                            <p className="text-amber-200/70 text-sm mt-1">The customer will fill in their request details soon</p>
-                          </div>
-                        ) : (
-                          <>
-                            {order.recipient_name && (
-                              <div className="mb-3 pb-3 border-b border-white/10">
-                                <span className="text-blue-300 font-medium">Who's it for:</span>
-                                <span className="text-white ml-2">{order.recipient_name}</span>
-                              </div>
-                            )}
-                            <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
-                            <div className="mt-3 pt-3 border-t border-white/10">
-                              <p className="text-sm text-yellow-300 italic">
-                                💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
-                              </p>
+                    <div className="glass-strong p-4 rounded-md mb-4 border border-white/20">
+                      <h5 className="font-medium text-white mb-2">Request:</h5>
+                      {!order.details_submitted ? (
+                        <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-4 text-center">
+                          <p className="text-amber-300 font-medium">⏳ Pending details from customer</p>
+                          <p className="text-amber-200/70 text-sm mt-1">The customer will fill in their request details soon</p>
+                        </div>
+                      ) : (
+                        <>
+                          {order.recipient_name && (
+                            <div className="mb-3 pb-3 border-b border-white/10">
+                              <span className="text-blue-300 font-medium">Who's it for:</span>
+                              <span className="text-white ml-2">{order.recipient_name}</span>
                             </div>
-                          </>
-                        )}
-                      </div>
+                          )}
+                          <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
+                          <div className="mt-3 pt-3 border-t border-white/10">
+                            <p className="text-sm text-yellow-300 italic">
+                              💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
                     )}
 
                     {/* Social Collab Order Details */}
@@ -1217,9 +1217,9 @@ const TalentDashboard: React.FC = () => {
                                     <p className="text-xs text-green-400 font-medium">
                                       Net: ${netPayout.toFixed(2)}
                                     </p>
-                                    <span className="text-xs text-gray-400">
-                                      ({adminFeePercentage}% platform fee)
-                                    </span>
+                                      <span className="text-xs text-gray-400">
+                                        ({adminFeePercentage}% platform fee)
+                                      </span>
                                   </div>
                                 );
                               })()}

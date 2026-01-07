@@ -443,34 +443,50 @@ const HolidayPromoPopup: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Save to beta_signups for prize tracking
-      const { error: insertError } = await supabase
+      // First check if they already have a prize from a previous giveaway entry
+      const { data: existingEntry } = await supabase
         .from('beta_signups')
-        .insert({
-          phone_number: formattedPhone,
-          email: normalizedEmail,
-          source: 'holiday_popup',
-          utm_source: utmSource,
-          subscribed_at: new Date().toISOString(),
-          prize_won: prize
-        });
+        .select('id, prize_won, source')
+        .or(`phone_number.eq.${formattedPhone},email.eq.${normalizedEmail}`)
+        .single();
 
-      if (insertError && insertError.code === '23505') {
-        // Already entered - check their existing prize
-        const { data: existing } = await supabase
+      if (existingEntry?.prize_won) {
+        // They already won a prize before - show them their existing prize
+        setWonPrize(existingEntry.prize_won as Prize);
+        const existingPrizeInfo = PRIZES[existingEntry.prize_won as Prize];
+        safeSetItem(WINNER_PRIZE_KEY, existingEntry.prize_won);
+        safeSetItem('auto_apply_coupon', existingPrizeInfo.code);
+        toast.success('Welcome back! Your prize is still active! 🎉');
+        setStep('winner');
+        safeSetItem(POPUP_SUBMITTED_KEY, 'true');
+        return;
+      }
+
+      if (existingEntry) {
+        // Entry exists but no prize - update it with prize and holiday_popup source
+        await supabase
           .from('beta_signups')
-          .select('prize_won')
-          .or(`phone_number.eq.${formattedPhone},email.eq.${normalizedEmail}`)
-          .single();
-        
-        if (existing?.prize_won) {
-          setWonPrize(existing.prize_won as Prize);
-          const existingPrizeInfo = PRIZES[existing.prize_won as Prize];
-          safeSetItem(WINNER_PRIZE_KEY, existing.prize_won);
-          safeSetItem('auto_apply_coupon', existingPrizeInfo.code);
-          toast.success('Welcome back! Your prize is still active! 🎉');
-          setStep('winner');
-          safeSetItem(POPUP_SUBMITTED_KEY, 'true');
-          return;
+          .update({
+            source: 'holiday_popup',
+            utm_source: utmSource || existingEntry.source,
+            prize_won: prize
+          })
+          .eq('id', existingEntry.id);
+      } else {
+        // No existing entry - create new one
+        const { error: insertError } = await supabase
+          .from('beta_signups')
+          .insert({
+            phone_number: formattedPhone,
+            email: normalizedEmail,
+            source: 'holiday_popup',
+            utm_source: utmSource,
+            subscribed_at: new Date().toISOString(),
+            prize_won: prize
+          });
+
+        if (insertError && insertError.code !== '23505') {
+          console.error('Error saving to beta_signups:', insertError);
         }
       }
 
