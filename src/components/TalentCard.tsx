@@ -196,27 +196,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent }) => {
           {talent.bio}
         </p>
 
-        {/* Price with coupon discount */}
-        <div className="flex items-center gap-2 mb-2">
-          {hasCoupon ? (
-            <>
-              <span className="text-lg sm:text-xl font-bold text-green-400">
-                ${discountedPrice}
-              </span>
-              <span className="text-sm text-gray-500 line-through">
-                ${originalPrice}
-              </span>
-              <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[10px] sm:text-xs font-bold rounded">
-                {COUPON_DISCOUNTS[activeCoupon!].label}
-              </span>
-            </>
-          ) : (
-            <span className="text-lg sm:text-xl font-bold text-white">
-              ${originalPrice}
-            </span>
-          )}
-        </div>
-
         {/* Delivery time and Charity - Push to bottom */}
         <div className="flex items-center justify-between mt-auto">
           <span 
