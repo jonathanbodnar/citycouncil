@@ -1046,6 +1046,7 @@ const BioPage: React.FC = () => {
             phone: newsletterPhone || null,
             user_type: 'user',
             full_name: '',
+            promo_source: 'Shout.bio', // Track that user came from bio page
           })
           .select()
           .single();

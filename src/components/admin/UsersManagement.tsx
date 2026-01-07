@@ -16,6 +16,19 @@ interface User {
   user_tags?: string[];
   promo_source?: string;
   did_holiday_popup?: boolean;
+  subscribed_talents?: string[]; // Names of talents this user follows
+}
+
+interface TalentFollower {
+  user_id: string;
+  talent_profiles: {
+    id: string;
+    users: {
+      full_name: string;
+    } | {
+      full_name: string;
+    }[];
+  } | null;
 }
 
 const UsersManagement: React.FC = () => {
@@ -31,13 +44,52 @@ const UsersManagement: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch users
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (usersError) throw usersError;
+
+      // Fetch talent followers to get subscription info
+      const { data: followersData } = await supabase
+        .from('talent_followers')
+        .select(`
+          user_id,
+          talent_profiles!talent_followers_talent_id_fkey (
+            id,
+            users!talent_profiles_user_id_fkey (
+              full_name
+            )
+          )
+        `);
+
+      // Create a map of user_id -> talent names they follow
+      const userSubscriptions: Record<string, string[]> = {};
+      if (followersData) {
+        for (const follower of followersData as any[]) {
+          const userId = follower.user_id;
+          // Handle both single object and array cases from Supabase
+          const users = follower.talent_profiles?.users;
+          const talentName = Array.isArray(users) ? users[0]?.full_name : users?.full_name;
+          if (talentName) {
+            if (!userSubscriptions[userId]) {
+              userSubscriptions[userId] = [];
+            }
+            userSubscriptions[userId].push(talentName);
+          }
+        }
+      }
+
+      // Merge subscription data into users
+      const usersWithSubscriptions = (usersData || []).map(user => ({
+        ...user,
+        subscribed_talents: userSubscriptions[user.id] || []
+      }));
+
+      setUsers(usersWithSubscriptions);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -356,25 +408,40 @@ const UsersManagement: React.FC = () => {
                     </div>
                   </td>
 
-                  {/* Tags Column */}
+                  {/* Tags Column - includes user_tags and subscribed talents */}
                   <td className="hidden lg:table-cell px-4 py-3">
-                    {user.user_tags && user.user_tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {user.user_tags.slice(0, 2).map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {user.user_tags.length > 2 && (
-                          <span className="text-xs text-gray-400">+{user.user_tags.length - 2}</span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
+                    <div className="flex flex-wrap gap-1">
+                      {/* User tags */}
+                      {user.user_tags && user.user_tags.slice(0, 2).map((tag, idx) => (
+                        <span
+                          key={`tag-${idx}`}
+                          className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {user.user_tags && user.user_tags.length > 2 && (
+                        <span className="text-xs text-gray-400">+{user.user_tags.length - 2}</span>
+                      )}
+                      {/* Subscribed talents */}
+                      {user.subscribed_talents && user.subscribed_talents.slice(0, 2).map((talentName, idx) => (
+                        <span
+                          key={`sub-${idx}`}
+                          className="px-2 py-0.5 text-xs bg-pink-100 text-pink-700 rounded-full"
+                          title={`Subscribed to ${talentName}`}
+                        >
+                          ❤️ {talentName.split(' ')[0]}
+                        </span>
+                      ))}
+                      {user.subscribed_talents && user.subscribed_talents.length > 2 && (
+                        <span className="text-xs text-pink-400">+{user.subscribed_talents.length - 2} more</span>
+                      )}
+                      {/* Show dash if no tags or subscriptions */}
+                      {(!user.user_tags || user.user_tags.length === 0) && 
+                       (!user.subscribed_talents || user.subscribed_talents.length === 0) && (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Joined Column */}
