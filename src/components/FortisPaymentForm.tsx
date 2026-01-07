@@ -271,7 +271,10 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       });
 
       // Create iframe in our container (pass selector string to avoid null ref timing)
-      console.log('Creating Commerce iframe');
+      console.log('Creating Commerce iframe with appearance:', {
+        colorBackground: '#11161f',
+        colorButtonSelectedBackground: '#8b5cf6',
+      });
       
       elements.create({
         container: '#payment',
