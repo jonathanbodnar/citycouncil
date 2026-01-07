@@ -1257,25 +1257,21 @@ const BioPage: React.FC = () => {
                     }}
                   >
                     {subscribing ? '...' : (
-                      <span className="relative h-5 flex items-center justify-center">
+                      <span className="relative h-5 flex items-center justify-center" style={{ minWidth: '140px' }}>
                         <span 
-                          className="transition-all duration-500 ease-in-out"
+                          className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
                           style={{
-                            display: 'inline-block',
                             transform: buttonTextIndex === 0 ? 'translateY(0)' : 'translateY(-100%)',
                             opacity: buttonTextIndex === 0 ? 1 : 0,
-                            position: buttonTextIndex === 0 ? 'relative' : 'absolute'
                           }}
                         >
                           Stay connected
                         </span>
                         <span 
-                          className="transition-all duration-500 ease-in-out"
+                          className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
                           style={{
-                            display: 'inline-block',
                             transform: buttonTextIndex === 1 ? 'translateY(0)' : 'translateY(100%)',
                             opacity: buttonTextIndex === 1 ? 1 : 0,
-                            position: buttonTextIndex === 1 ? 'relative' : 'absolute'
                           }}
                         >
                           with {displayName.split(' ')[0]}
@@ -1306,32 +1302,29 @@ const BioPage: React.FC = () => {
                       <button
                         type="submit"
                         disabled={subscribing}
-                        className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center gap-1 overflow-hidden"
+                        className="absolute right-1 top-1 bottom-1 px-4 rounded-full font-medium transition-colors disabled:opacity-50 text-sm whitespace-nowrap flex items-center justify-center gap-1 overflow-hidden"
                         style={{ 
                           backgroundColor: bioSettings?.button_color || '#3b82f6',
-                          color: getContrastTextColor(bioSettings?.button_color || '#3b82f6')
+                          color: getContrastTextColor(bioSettings?.button_color || '#3b82f6'),
+                          minWidth: '140px'
                         }}
                       >
                         {subscribing ? '...' : (
-                          <span className="relative h-5 flex items-center">
+                          <span className="relative h-5 flex items-center justify-center" style={{ minWidth: '110px' }}>
                             <span 
-                              className="transition-all duration-500 ease-in-out"
+                              className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
                               style={{
-                                display: 'inline-block',
                                 transform: buttonTextIndex === 0 ? 'translateY(0)' : 'translateY(-100%)',
                                 opacity: buttonTextIndex === 0 ? 1 : 0,
-                                position: buttonTextIndex === 0 ? 'relative' : 'absolute'
                               }}
                             >
                               Stay connected
                             </span>
                             <span 
-                              className="transition-all duration-500 ease-in-out"
+                              className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
                               style={{
-                                display: 'inline-block',
                                 transform: buttonTextIndex === 1 ? 'translateY(0)' : 'translateY(100%)',
                                 opacity: buttonTextIndex === 1 ? 1 : 0,
-                                position: buttonTextIndex === 1 ? 'relative' : 'absolute'
                               }}
                             >
                               with {displayName.split(' ')[0]}
