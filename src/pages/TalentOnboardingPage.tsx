@@ -1263,48 +1263,6 @@ const TalentOnboardingPage: React.FC = () => {
             </div>
           )}
 
-          {/* Placeholder for removed Step 1.5 - keeping structure for other steps */}
-          {currentStep === 1 && false && (
-            <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={missingPhoneData.phone}
-                    onChange={(e) => {
-                      const cleaned = e.target.value.replace(/\D/g, '');
-                      if (cleaned.length <= 10) {
-                        let formatted = cleaned;
-                        if (cleaned.length > 6) {
-                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-                        } else if (cleaned.length > 3) {
-                          formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-                        } else if (cleaned.length > 0) {
-                          formatted = `(${cleaned}`;
-                        }
-                        setMissingPhoneData({...missingPhoneData, phone: formatted});
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="(555) 123-4567"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">For account security & payouts</p>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Save & Continue
-                </button>
-              </div>
-            </form>
-          )}
 
           {currentStep === 2 && (
             <form onSubmit={handleStep2Submit}>
