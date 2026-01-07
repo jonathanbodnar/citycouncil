@@ -455,33 +455,54 @@ const TalentOnboardingPage: React.FC = () => {
         throw new Error('Failed to get user after login');
       }
 
+      // Validate we have the talent profile data before linking
+      if (!onboardingData?.talent?.id) {
+        console.error('❌ Missing talent profile data for linking!', {
+          hasOnboardingData: !!onboardingData,
+          hasTalent: !!onboardingData?.talent,
+          talentId: onboardingData?.talent?.id
+        });
+        throw new Error('Onboarding data not loaded. Please refresh and try again.');
+      }
+
       // Link talent profile to user
       console.log('🔗 Linking talent profile to user:', {
-        talentId: onboardingData?.talent.id,
+        talentId: onboardingData.talent.id,
         userId: user.id,
         token: token
       });
 
       const { data: linkResult, error: linkError } = await supabase.rpc('link_talent_profile_to_user', {
-        p_talent_id: onboardingData?.talent.id,
+        p_talent_id: onboardingData.talent.id,
         p_user_id: user.id,
         p_onboarding_token: token,
-        p_full_name: onboardingData?.talent.temp_full_name || null
+        p_full_name: onboardingData.talent.temp_full_name || null
       });
 
+      console.log('🔗 Link RPC result:', { linkResult, linkError });
+
       if (linkError || (linkResult && linkResult.success === false)) {
-        // Fallback to direct update
+        console.error('❌ RPC link failed:', linkError || linkResult);
+        
+        // Fallback to direct update - try with onboarding_token match for RLS bypass
         const { error: talentUpdateError } = await supabase
           .from('talent_profiles')
           .update({ 
             user_id: user.id,
             full_name: onboardingData?.talent.temp_full_name || null
           })
-          .eq('id', onboardingData?.talent.id);
+          .eq('id', onboardingData?.talent.id)
+          .eq('onboarding_token', token); // Match token for RLS policy
 
         if (talentUpdateError) {
-          console.error('Failed to link talent profile:', talentUpdateError);
+          console.error('❌ Failed to link talent profile (fallback):', talentUpdateError);
+          // Don't throw - let onboarding continue, but log the issue
+          toast.error('Warning: Profile linking may have failed. Please contact support if you have issues.');
+        } else {
+          console.log('✅ Talent profile linked via fallback update');
         }
+      } else {
+        console.log('✅ Talent profile linked via RPC');
       }
 
       // Update user record with talent info
