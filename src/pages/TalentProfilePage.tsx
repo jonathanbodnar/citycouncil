@@ -734,10 +734,10 @@ const TalentProfilePage: React.FC = () => {
       
       {/* Hero Section */}
       <div className="gradient-border rounded-3xl shadow-modern-xl lg:flex-1">
-        <div className="md:flex rounded-3xl overflow-hidden relative">
+        <div className="md:flex rounded-3xl overflow-hidden relative h-full">
           {/* Background Gradient - Desktop */}
           <div 
-            className="hidden md:block absolute inset-0"
+            className="hidden md:block absolute inset-0 rounded-3xl"
             style={{
               background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
             }}
