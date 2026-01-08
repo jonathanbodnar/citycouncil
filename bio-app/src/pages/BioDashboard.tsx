@@ -3180,11 +3180,44 @@ const BioDashboard: React.FC = () => {
             setSocialLinks(prev => prev.map(s => 
               s.id === socialId ? { ...s, follower_count: count } : s
             ));
-            // Save to database
-            await supabase
-              .from('social_accounts')
-              .update({ follower_count: count })
-              .eq('id', socialId);
+            
+            // Check if this is a temporary ID (from talent_profiles) or a real database ID
+            if (socialId.startsWith('profile-')) {
+              // This is a temporary ID - need to create/update by platform and talent_id
+              const platform = socialId.replace('profile-', '');
+              const social = socialLinks.find(s => s.id === socialId);
+              if (social && talentProfile?.id) {
+                // Try to upsert the social account
+                const { error } = await supabase
+                  .from('social_accounts')
+                  .upsert({
+                    talent_id: talentProfile.id,
+                    platform: platform,
+                    handle: social.handle.startsWith('@') ? social.handle : `@${social.handle}`,
+                    follower_count: count,
+                  }, { onConflict: 'talent_id,platform' });
+                
+                if (error) {
+                  console.error('Failed to save follower count:', error);
+                  toast.error('Failed to save follower count');
+                } else {
+                  toast.success('Follower count saved');
+                }
+              }
+            } else {
+              // This is a real database ID - update directly
+              const { error } = await supabase
+                .from('social_accounts')
+                .update({ follower_count: count })
+                .eq('id', socialId);
+              
+              if (error) {
+                console.error('Failed to save follower count:', error);
+                toast.error('Failed to save follower count');
+              } else {
+                toast.success('Follower count saved');
+              }
+            }
           }}
           onClose={() => {
             setShowAddServiceModal(false);

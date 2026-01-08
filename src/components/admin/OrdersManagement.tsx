@@ -109,28 +109,49 @@ const OrdersManagement: React.FC = () => {
       return;
     }
 
-    if (!selectedOrder.payment_transaction_id) {
-      toast.error('Cannot refund: No transaction ID found');
-      return;
-    }
-
     setProcessing(true);
     try {
-      const result = await refundService.processRefund({
-        orderId: selectedOrder.id,
-        transactionId: selectedOrder.payment_transaction_id,
-        reason: denyReason,
-        deniedBy: 'admin',
-      });
+      // Check if this is a free/coupon order (no payment to refund)
+      const isFreeOrder = !selectedOrder.payment_transaction_id || 
+        (selectedOrder.discount_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
 
-      if (result.success) {
-        toast.success('Order denied and refund processed successfully');
+      if (isFreeOrder) {
+        // Just update the order status without processing a refund
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            status: 'denied',
+            denial_reason: denyReason,
+            denied_by: 'admin',
+            denied_at: new Date().toISOString(),
+          })
+          .eq('id', selectedOrder.id);
+
+        if (error) throw error;
+
+        toast.success('Order denied successfully (no refund needed - free/coupon order)');
         setShowDenyModal(false);
         setSelectedOrder(null);
         setDenyReason('');
         fetchOrders();
       } else {
-        toast.error(result.error || 'Failed to process refund');
+        // Process refund for paid orders
+        const result = await refundService.processRefund({
+          orderId: selectedOrder.id,
+          transactionId: selectedOrder.payment_transaction_id,
+          reason: denyReason,
+          deniedBy: 'admin',
+        });
+
+        if (result.success) {
+          toast.success('Order denied and refund processed successfully');
+          setShowDenyModal(false);
+          setSelectedOrder(null);
+          setDenyReason('');
+          fetchOrders();
+        } else {
+          toast.error(result.error || 'Failed to process refund');
+        }
       }
     } catch (error: any) {
       logger.error('Error denying order:', error);
@@ -158,28 +179,49 @@ const OrdersManagement: React.FC = () => {
       return;
     }
 
-    if (!selectedOrder.payment_transaction_id) {
-      toast.error('Cannot refund: No transaction ID found');
-      return;
-    }
-
     setProcessing(true);
     try {
-      const result = await refundService.processRefund({
-        orderId: selectedOrder.id,
-        transactionId: selectedOrder.payment_transaction_id,
-        reason: refundReason,
-        deniedBy: 'admin',
-      });
+      // Check if this is a free/coupon order (no payment to refund)
+      const isFreeOrder = !selectedOrder.payment_transaction_id || 
+        (selectedOrder.discount_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
 
-      if (result.success) {
-        toast.success('Refund processed successfully');
+      if (isFreeOrder) {
+        // Just update the order status without processing a refund
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            status: 'refunded',
+            denial_reason: refundReason,
+            denied_by: 'admin',
+            denied_at: new Date().toISOString(),
+          })
+          .eq('id', selectedOrder.id);
+
+        if (error) throw error;
+
+        toast.success('Order cancelled successfully (no refund needed - free/coupon order)');
         setShowRefundModal(false);
         setSelectedOrder(null);
         setRefundReason('');
         fetchOrders();
       } else {
-        toast.error(result.error || 'Failed to process refund');
+        // Process refund for paid orders
+        const result = await refundService.processRefund({
+          orderId: selectedOrder.id,
+          transactionId: selectedOrder.payment_transaction_id,
+          reason: refundReason,
+          deniedBy: 'admin',
+        });
+
+        if (result.success) {
+          toast.success('Refund processed successfully');
+          setShowRefundModal(false);
+          setSelectedOrder(null);
+          setRefundReason('');
+          fetchOrders();
+        } else {
+          toast.error(result.error || 'Failed to process refund');
+        }
       }
     } catch (error: any) {
       logger.error('Error processing refund:', error);
