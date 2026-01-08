@@ -2146,50 +2146,14 @@ const BioPage: React.FC = () => {
                       </div>
                       <span className="text-pink-400 text-xs font-medium">{platformLabel}</span>
                     </div>
-                    <h3 className="text-white font-semibold text-sm mb-2">
+                    <h3 className="text-white font-semibold text-sm mb-1">
                       {service.title}
                     </h3>
                     
-                    {/* Show follower counts per platform */}
-                    {filteredSocials.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {filteredSocials.slice(0, 3).map((social) => {
-                          const platform = SOCIAL_PLATFORMS[social.platform];
-                          return (
-                            <div key={social.id} className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-0.5">
-                              <span className="text-gray-300 [&>svg]:w-3 [&>svg]:h-3">{platform?.icon}</span>
-                              {social.follower_count && social.follower_count > 0 ? (
-                                <span className="text-xs text-pink-400 font-medium">{formatFollowers(social.follower_count)}</span>
-                              ) : (
-                                <span className="text-xs text-gray-400">@{social.handle}</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                        {filteredSocials.length > 3 && (
-                          <span className="text-xs text-gray-500">+{filteredSocials.length - 3} more</span>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Total reach */}
+                    {/* Total followers */}
                     {totalFollowers > 0 && (
-                      <div className="text-xs text-gray-400 mb-2">
-                        📊 Total reach: <span className="text-pink-400 font-semibold">{formatFollowers(totalFollowers)}</span> followers
-                      </div>
-                    )}
-                    
-                    {/* Benefits preview */}
-                    {service.benefits && service.benefits.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {service.benefits.slice(0, 2).map((benefit, i) => (
-                          <span key={i} className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded-full">
-                            ✓ {benefit}
-                          </span>
-                        ))}
-                        {service.benefits.length > 2 && (
-                          <span className="text-xs text-gray-500">+{service.benefits.length - 2} more</span>
-                        )}
+                      <div className="text-xs text-gray-400">
+                        <span className="text-pink-400 font-semibold">{formatFollowers(totalFollowers)}</span> followers
                       </div>
                     )}
                   </div>
