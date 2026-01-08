@@ -32,6 +32,8 @@ interface Order {
   refund_id?: string;
   promo_source?: string;
   coupon_code?: string;
+  original_amount?: number;
+  discount_amount?: number;
   users: {
     id: string;
     email: string;
@@ -113,7 +115,7 @@ const OrdersManagement: React.FC = () => {
     try {
       // Check if this is a free/coupon order (no payment to refund)
       const isFreeOrder = !selectedOrder.payment_transaction_id || 
-        (selectedOrder.discount_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
+        (selectedOrder.discount_amount && selectedOrder.original_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
 
       if (isFreeOrder) {
         // Just update the order status without processing a refund
@@ -183,7 +185,7 @@ const OrdersManagement: React.FC = () => {
     try {
       // Check if this is a free/coupon order (no payment to refund)
       const isFreeOrder = !selectedOrder.payment_transaction_id || 
-        (selectedOrder.discount_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
+        (selectedOrder.discount_amount && selectedOrder.original_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
 
       if (isFreeOrder) {
         // Just update the order status without processing a refund
