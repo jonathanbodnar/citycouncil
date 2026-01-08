@@ -4993,6 +4993,7 @@ const AddEventModal: React.FC<{
   const [imageUrl, setImageUrl] = useState('');
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Load event data when editing
   const loadEventForEdit = (event: BioEvent) => {
@@ -5213,13 +5214,72 @@ const AddEventModal: React.FC<{
                 placeholder="Ticket/Registration URL"
                 className="col-span-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
               />
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Image URL (optional)"
-                className="col-span-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
-              />
+              {/* Image Upload */}
+              <div className="col-span-2">
+                <label className="block text-xs text-gray-400 mb-1">Event Image (optional)</label>
+                {imageUrl ? (
+                  <div className="relative">
+                    <img 
+                      src={imageUrl} 
+                      alt="Event" 
+                      className="w-full h-32 object-cover rounded-lg border border-white/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl('')}
+                      className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer">
+                    <div className="flex items-center justify-center w-full h-24 border-2 border-dashed border-white/20 rounded-lg hover:border-orange-500/50 transition-colors bg-white/5">
+                      {uploadingImage ? (
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span className="text-sm">Uploading...</span>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg className="w-8 h-8 text-gray-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-xs text-gray-400">Click to upload image</span>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUploadingImage(true);
+                          try {
+                            const result = await uploadImageToWasabi(file, 'event-images');
+                            if (result.imageUrl) {
+                              setImageUrl(result.imageUrl);
+                              toast.success('Image uploaded!');
+                            } else {
+                              toast.error('Failed to upload image');
+                            }
+                          } catch (error) {
+                            console.error('Upload error:', error);
+                            toast.error('Failed to upload image');
+                          } finally {
+                            setUploadingImage(false);
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
             </div>
           )}
 
