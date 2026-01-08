@@ -294,7 +294,8 @@ const BioDashboard: React.FC = () => {
   const [emailImageLinkUrl, setEmailImageLinkUrl] = useState(''); // URL the image links to when clicked
   const [emailScheduledDate, setEmailScheduledDate] = useState('');
   const [emailScheduledTime, setEmailScheduledTime] = useState('');
-  // Draft auto-saves - no need for manual save state
+  const [emailDraftId, setEmailDraftId] = useState<string | null>(null);
+  const [draftSaveStatus, setDraftSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
   const [randomReview, setRandomReview] = useState<{ rating: number; comment?: string; users?: { full_name: string } } | null>(null);
   const [showButtonFields, setShowButtonFields] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
@@ -308,6 +309,69 @@ const BioDashboard: React.FC = () => {
   const refreshPreview = useCallback(() => {
     setPreviewKey(prev => prev + 1);
   }, []);
+
+  // Auto-save email draft to database
+  const saveDraftToDb = useCallback(async () => {
+    if (!talentProfile?.id) return;
+    
+    // Don't save if there's nothing to save
+    if (!emailSubject && !emailContent && !emailButtonText && !emailButtonUrl && !emailImageUrl) {
+      return;
+    }
+
+    setDraftSaveStatus('saving');
+    
+    try {
+      const draftData = {
+        talent_id: talentProfile.id,
+        subject: emailSubject || null,
+        content: emailContent || null,
+        button_text: emailButtonText || null,
+        button_url: emailButtonUrl || null,
+        image_url: emailImageUrl || null,
+        image_link_url: emailImageLinkUrl || null,
+        scheduled_date: emailScheduledDate || null,
+        scheduled_time: emailScheduledTime || null,
+        status: 'draft',
+        updated_at: new Date().toISOString()
+      };
+
+      if (emailDraftId) {
+        // Update existing draft
+        await supabase
+          .from('email_drafts')
+          .update(draftData)
+          .eq('id', emailDraftId);
+      } else {
+        // Create new draft
+        const { data } = await supabase
+          .from('email_drafts')
+          .insert([draftData])
+          .select()
+          .single();
+        
+        if (data) {
+          setEmailDraftId(data.id);
+        }
+      }
+      
+      setDraftSaveStatus('saved');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      setDraftSaveStatus('idle');
+    }
+  }, [talentProfile?.id, emailDraftId, emailSubject, emailContent, emailButtonText, emailButtonUrl, emailImageUrl, emailImageLinkUrl, emailScheduledDate, emailScheduledTime]);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (!talentProfile?.id) return;
+    
+    const timeoutId = setTimeout(() => {
+      saveDraftToDb();
+    }, 1500); // Save 1.5 seconds after last change
+
+    return () => clearTimeout(timeoutId);
+  }, [emailSubject, emailContent, emailButtonText, emailButtonUrl, emailImageUrl, emailImageLinkUrl, emailScheduledDate, emailScheduledTime, saveDraftToDb, talentProfile?.id]);
 
   // Authenticate user from token
   useEffect(() => {
@@ -551,6 +615,32 @@ const BioDashboard: React.FC = () => {
         if (reviews && reviews.length > 0) {
           const randomIndex = Math.floor(Math.random() * reviews.length);
           setRandomReview(reviews[randomIndex]);
+        }
+
+        // Load existing email draft
+        const { data: existingDraft } = await supabase
+          .from('email_drafts')
+          .select('*')
+          .eq('talent_id', profile.id)
+          .eq('status', 'draft')
+          .single();
+
+        if (existingDraft) {
+          setEmailDraftId(existingDraft.id);
+          setEmailSubject(existingDraft.subject || '');
+          setEmailContent(existingDraft.content || '');
+          setEmailButtonText(existingDraft.button_text || '');
+          setEmailButtonUrl(existingDraft.button_url || '');
+          setEmailImageUrl(existingDraft.image_url || '');
+          setEmailImageLinkUrl(existingDraft.image_link_url || '');
+          setEmailScheduledDate(existingDraft.scheduled_date || '');
+          setEmailScheduledTime(existingDraft.scheduled_time || '');
+          if (existingDraft.button_text || existingDraft.button_url) {
+            setShowButtonFields(true);
+          }
+          if (existingDraft.image_url) {
+            setShowImageUpload(true);
+          }
         }
 
         // Get or create bio settings
@@ -1947,10 +2037,19 @@ const BioDashboard: React.FC = () => {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white">Compose Update</h3>
-                  {(emailSubject || emailContent) && (
+                  {draftSaveStatus === 'saving' && (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  )}
+                  {draftSaveStatus === 'saved' && (
                     <span className="text-xs text-green-400 flex items-center gap-1">
                       <CheckIcon className="w-3 h-3" />
-                      Auto-saved
+                      Saved
                     </span>
                   )}
                 </div>
