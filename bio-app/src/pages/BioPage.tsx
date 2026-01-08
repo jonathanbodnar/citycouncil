@@ -2103,9 +2103,8 @@ const BioPage: React.FC = () => {
 
           {/* Collab Service Cards */}
           {serviceOfferings.map((service) => {
-            // Filter social accounts to only show platforms included in this service
+            // Get platforms included in this service
             const servicePlatforms = service.platforms || ['instagram'];
-            const filteredSocials = socialAccounts.filter(s => servicePlatforms.includes(s.platform));
             const platformLabel = servicePlatforms.length === 1 
               ? `${servicePlatforms[0].charAt(0).toUpperCase() + servicePlatforms[0].slice(1)} Collab`
               : `Social Collab`;
@@ -2157,12 +2156,6 @@ const BioPage: React.FC = () => {
                     <h3 className="text-white font-semibold text-sm">
                       {service.title}
                     </h3>
-                  </div>
-                    {totalFollowers > 0 && (
-                      <div className="text-xs text-gray-400">
-                        <span className="text-pink-400 font-semibold">{formatFollowers(totalFollowers)}</span> followers
-                      </div>
-                    )}
                   </div>
                 </div>
               </button>
