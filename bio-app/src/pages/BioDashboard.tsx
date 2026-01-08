@@ -2581,7 +2581,7 @@ const BioDashboard: React.FC = () => {
                     </div>
 
                     {/* Footer */}
-                    <div className="text-center pt-4 space-y-3">
+                    <div className="text-center pt-6 space-y-3 border-t border-white/5 mt-4">
                       <p className="text-gray-500 text-[10px] leading-relaxed">
                         You subscribed to {talentProfile?.full_name?.split(' ')[0] || 'this creator'} through their link in bio on their social platforms.
                       </p>
@@ -2595,6 +2595,15 @@ const BioDashboard: React.FC = () => {
                           </text>
                         </svg>
                       </a>
+                      <div className="text-gray-600 text-[9px] leading-relaxed space-y-1">
+                        <p>ShoutOut, LLC</p>
+                        <p>1201 N Riverfront Blvd Ste 100, Dallas, TX 75207</p>
+                        <p className="pt-1">
+                          <a href="#" className="text-gray-500 hover:text-gray-400 underline">Unsubscribe</a>
+                          {' · '}
+                          <a href="https://shoutout.us/privacy" className="text-gray-500 hover:text-gray-400 underline">Privacy Policy</a>
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
