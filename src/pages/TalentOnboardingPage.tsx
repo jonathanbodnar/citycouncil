@@ -484,36 +484,23 @@ const TalentOnboardingPage: React.FC = () => {
         throw new Error('Could not find your talent profile. Please contact support.');
       }
 
-      // IMPORTANT: Create user record FIRST (before linking) due to foreign key constraint
-      console.log('👤 Creating/updating user record...');
-      const { error: userError } = await supabase.from('users').upsert({
-        id: user.id,
-        email: normalizedEmail,
-        phone: formattedPhone,
-        user_type: 'talent',
-        full_name: talentName || onboardingData?.talent?.temp_full_name || 'Talent Member',
-        avatar_url: onboardingData?.talent?.temp_avatar_url
-      }, { onConflict: 'id' });
-      
-      if (userError) {
-        console.error('❌ Failed to create user record:', userError);
-        // Continue anyway - the user might already exist
-      } else {
-        console.log('✅ User record created/updated');
-      }
-
-      // Link talent profile to user
-      console.log('🔗 Linking talent profile to user:', {
+      // Link talent profile to user AND create user record in one RPC call
+      // This uses SECURITY DEFINER to bypass RLS
+      console.log('🔗 Linking talent profile to user (with user creation):', {
         talentId: talentId,
         userId: user.id,
-        token: token
+        token: token,
+        email: normalizedEmail
       });
 
       const { data: linkResult, error: linkError } = await supabase.rpc('link_talent_profile_to_user', {
         p_talent_id: talentId,
         p_user_id: user.id,
         p_onboarding_token: token,
-        p_full_name: talentName || null
+        p_full_name: talentName || null,
+        p_email: normalizedEmail,
+        p_phone: formattedPhone,
+        p_avatar_url: onboardingData?.talent?.temp_avatar_url || null
       });
 
       console.log('🔗 Link RPC result:', { linkResult, linkError });
