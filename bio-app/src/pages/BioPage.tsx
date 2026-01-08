@@ -400,6 +400,18 @@ const BioPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Update page title with talent name
+  useEffect(() => {
+    if (talentProfile?.full_name) {
+      document.title = talentProfile.full_name;
+    } else if (bioSettings?.display_name) {
+      document.title = bioSettings.display_name;
+    }
+    return () => {
+      document.title = 'ShoutOut Bio';
+    };
+  }, [talentProfile?.full_name, bioSettings?.display_name]);
+
   useEffect(() => {
     const fetchBioData = async () => {
       if (!username) {
