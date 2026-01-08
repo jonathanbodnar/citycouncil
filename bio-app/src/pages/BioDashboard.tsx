@@ -280,6 +280,7 @@ const BioDashboard: React.FC = () => {
   const [showImportFansModal, setShowImportFansModal] = useState(false);
   const [showAddSocialModal, setShowAddSocialModal] = useState(false);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const [showStreamChannelModal, setShowStreamChannelModal] = useState<'rumble' | 'youtube' | null>(null);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [editingService, setEditingService] = useState<ServiceOffering | null>(null);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
@@ -1419,20 +1420,7 @@ const BioDashboard: React.FC = () => {
                             <h3 className="font-medium text-white text-sm">Rumble</h3>
                             <span className="text-xs text-gray-500">@{talentProfile.rumble_handle}</span>
                             <button
-                              onClick={() => {
-                                const newHandle = prompt('Enter Rumble channel handle:', talentProfile.rumble_handle);
-                                if (newHandle && newHandle !== talentProfile.rumble_handle) {
-                                  supabase
-                                    .from('talent_profiles')
-                                    .update({ rumble_handle: newHandle })
-                                    .eq('id', talentProfile.id)
-                                    .then(() => {
-                                      setTalentProfile({ ...talentProfile, rumble_handle: newHandle });
-                                      toast.success('Rumble channel updated');
-                                      setTimeout(refreshPreview, 500);
-                                    });
-                                }
-                              }}
+                              onClick={() => setShowStreamChannelModal('rumble')}
                               className="p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-colors"
                             >
                               <PencilIcon className="h-3 w-3" />
@@ -1480,20 +1468,7 @@ const BioDashboard: React.FC = () => {
                             <h3 className="font-medium text-white text-sm">YouTube</h3>
                             <span className="text-xs text-gray-500">@{talentProfile.youtube_handle}</span>
                             <button
-                              onClick={() => {
-                                const newHandle = prompt('Enter YouTube channel handle:', talentProfile.youtube_handle);
-                                if (newHandle && newHandle !== talentProfile.youtube_handle) {
-                                  supabase
-                                    .from('talent_profiles')
-                                    .update({ youtube_handle: newHandle })
-                                    .eq('id', talentProfile.id)
-                                    .then(() => {
-                                      setTalentProfile({ ...talentProfile, youtube_handle: newHandle });
-                                      toast.success('YouTube channel updated');
-                                      setTimeout(refreshPreview, 500);
-                                    });
-                                }
-                              }}
+                              onClick={() => setShowStreamChannelModal('youtube')}
                               className="p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-colors"
                             >
                               <PencilIcon className="h-3 w-3" />
@@ -2913,6 +2888,54 @@ const BioDashboard: React.FC = () => {
         />
       )}
 
+      {/* Stream Channel Selection Modal */}
+      {showStreamChannelModal && (
+        <StreamChannelModal
+          platform={showStreamChannelModal}
+          socialLinks={socialLinks}
+          currentHandle={showStreamChannelModal === 'rumble' ? talentProfile?.rumble_handle : talentProfile?.youtube_handle}
+          onClose={() => setShowStreamChannelModal(null)}
+          onSelect={async (handle) => {
+            const field = showStreamChannelModal === 'rumble' ? 'rumble_handle' : 'youtube_handle';
+            await supabase
+              .from('talent_profiles')
+              .update({ [field]: handle })
+              .eq('id', talentProfile?.id);
+            
+            setTalentProfile(prev => prev ? { ...prev, [field]: handle } : prev);
+            toast.success(`${showStreamChannelModal === 'rumble' ? 'Rumble' : 'YouTube'} channel updated`);
+            setTimeout(refreshPreview, 500);
+            setShowStreamChannelModal(null);
+          }}
+          onAddNew={async (handle) => {
+            // Add to social links
+            const platform = showStreamChannelModal as 'rumble' | 'youtube';
+            const newSocial: SocialAccount = {
+              id: `social-${Date.now()}`,
+              platform: platform,
+              handle: handle,
+            };
+            const updated = [...socialLinks, newSocial];
+            setSocialLinks(updated);
+            
+            // Update talent profile with social accounts and the handle
+            const field = platform === 'rumble' ? 'rumble_handle' : 'youtube_handle';
+            await supabase
+              .from('talent_profiles')
+              .update({ 
+                social_accounts: updated,
+                [field]: handle 
+              })
+              .eq('id', talentProfile?.id);
+            
+            setTalentProfile(prev => prev ? { ...prev, [field]: handle } : prev);
+            toast.success(`${platform === 'rumble' ? 'Rumble' : 'YouTube'} channel added`);
+            setTimeout(refreshPreview, 500);
+            setShowStreamChannelModal(null);
+          }}
+        />
+      )}
+
       {showImportModal && (
         <ImportModal
           onClose={() => setShowImportModal(false)}
@@ -4029,6 +4052,158 @@ const EditLinkModal: React.FC<{
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Stream Channel Selection Modal
+const StreamChannelModal: React.FC<{
+  platform: 'rumble' | 'youtube';
+  socialLinks: SocialAccount[];
+  currentHandle?: string;
+  onClose: () => void;
+  onSelect: (handle: string) => void;
+  onAddNew: (handle: string) => void;
+}> = ({ platform, socialLinks, currentHandle, onClose, onSelect, onAddNew }) => {
+  const [newHandle, setNewHandle] = useState('');
+  const [showAddNew, setShowAddNew] = useState(false);
+  
+  // Filter social links for this platform
+  const platformAccounts = socialLinks.filter(s => s.platform === platform);
+  
+  const platformInfo = {
+    rumble: {
+      name: 'Rumble',
+      color: 'green',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-green-400">
+          <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
+        </svg>
+      ),
+    },
+    youtube: {
+      name: 'YouTube',
+      color: 'red',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-red-400">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+      ),
+    },
+  };
+  
+  const info = platformInfo[platform];
+  
+  const handleAddNew = () => {
+    if (newHandle.trim()) {
+      const cleanHandle = newHandle.trim().replace(/^@/, '');
+      onAddNew(cleanHandle);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-md">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            {info.icon}
+            <h2 className="text-xl font-bold text-white">Select {info.name} Channel</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+        
+        <p className="text-gray-400 text-sm mb-4">
+          Choose which {info.name} channel to display on your bio page.
+        </p>
+        
+        {/* Existing accounts */}
+        <div className="space-y-2 mb-4">
+          {platformAccounts.length > 0 ? (
+            platformAccounts.map((account) => (
+              <button
+                key={account.id}
+                onClick={() => onSelect(account.handle.replace(/^@/, ''))}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors ${
+                  currentHandle === account.handle.replace(/^@/, '')
+                    ? `bg-${info.color}-500/20 border-${info.color}-500/50`
+                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {info.icon}
+                  <span className="text-white">@{account.handle.replace(/^@/, '')}</span>
+                </div>
+                {currentHandle === account.handle.replace(/^@/, '') && (
+                  <svg className={`w-5 h-5 text-${info.color}-400`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            ))
+          ) : (
+            <div className="text-center py-4 text-gray-500 text-sm">
+              No {info.name} channels added yet
+            </div>
+          )}
+        </div>
+        
+        {/* Add new section */}
+        {showAddNew ? (
+          <div className="border-t border-white/10 pt-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Add New {info.name} Channel
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">@</span>
+                <input
+                  type="text"
+                  value={newHandle}
+                  onChange={(e) => setNewHandle(e.target.value)}
+                  placeholder={`${info.name} handle`}
+                  className="w-full bg-white/5 border border-white/20 rounded-xl pl-8 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddNew()}
+                />
+              </div>
+              <button
+                onClick={handleAddNew}
+                disabled={!newHandle.trim()}
+                className={`px-4 py-3 bg-${info.color}-500 text-white rounded-xl font-medium hover:bg-${info.color}-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                Add
+              </button>
+            </div>
+            <button
+              onClick={() => setShowAddNew(false)}
+              className="mt-2 text-sm text-gray-500 hover:text-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowAddNew(true)}
+            className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-white/20 rounded-xl text-gray-400 hover:text-white hover:border-white/40 transition-colors"
+          >
+            <PlusIcon className="w-5 h-5" />
+            Add New {info.name} Channel
+          </button>
+        )}
+        
+        <div className="flex justify-end mt-6">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

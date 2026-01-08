@@ -368,12 +368,13 @@ serve(async (req) => {
         }
       }
 
-      // Generate magic link and extract tokens from it
+      // Generate magic link - must use absolute URL for redirectTo
+      const siteUrl = Deno.env.get("SITE_URL") || "https://shoutout.us";
       const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
         email: existingUser.email || normalizedEmail,
         options: {
-          redirectTo: existingUser.user_type === 'talent' ? '/dashboard' : '/',
+          redirectTo: existingUser.user_type === 'talent' ? `${siteUrl}/dashboard` : siteUrl,
         },
       });
 
@@ -445,10 +446,11 @@ serve(async (req) => {
             .single();
           
           if (raceUser) {
+            const raceSiteUrl = Deno.env.get("SITE_URL") || "https://shoutout.us";
             const { data: raceAuthData } = await supabase.auth.admin.generateLink({
               type: 'magiclink',
               email: raceUser.email,
-              options: { redirectTo: '/' },
+              options: { redirectTo: raceSiteUrl },
             });
 
             return new Response(
@@ -501,12 +503,13 @@ serve(async (req) => {
           ignoreDuplicates: true
         });
 
-      // Generate magic link and extract session tokens
+      // Generate magic link - must use absolute URL for redirectTo
+      const regSiteUrl = Deno.env.get("SITE_URL") || "https://shoutout.us";
       const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
         email: normalizedEmail,
         options: {
-          redirectTo: '/',
+          redirectTo: regSiteUrl,
         },
       });
 
