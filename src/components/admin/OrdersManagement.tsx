@@ -114,8 +114,10 @@ const OrdersManagement: React.FC = () => {
     setProcessing(true);
     try {
       // Check if this is a free/coupon order (no payment to refund)
+      const discountAmt = selectedOrder.discount_amount || 0;
+      const originalAmt = selectedOrder.original_amount || 0;
       const isFreeOrder = !selectedOrder.payment_transaction_id || 
-        (selectedOrder.discount_amount && selectedOrder.original_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
+        (discountAmt > 0 && originalAmt > 0 && discountAmt >= originalAmt);
 
       if (isFreeOrder) {
         // Just update the order status without processing a refund
@@ -184,8 +186,10 @@ const OrdersManagement: React.FC = () => {
     setProcessing(true);
     try {
       // Check if this is a free/coupon order (no payment to refund)
+      const discountAmount = selectedOrder.discount_amount || 0;
+      const originalAmount = selectedOrder.original_amount || 0;
       const isFreeOrder = !selectedOrder.payment_transaction_id || 
-        (selectedOrder.discount_amount && selectedOrder.original_amount && selectedOrder.discount_amount >= selectedOrder.original_amount);
+        (discountAmount > 0 && originalAmount > 0 && discountAmount >= originalAmount);
 
       if (isFreeOrder) {
         // Just update the order status without processing a refund
