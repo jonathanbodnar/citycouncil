@@ -1897,10 +1897,21 @@ const BioPage: React.FC = () => {
             );
           })}
 
-          {/* Events - Tall Format Cards */}
-          {bioEvents.map((event) => {
-            const eventDateFormatted = event.event_date 
-              ? new Date(event.event_date).toLocaleDateString('en-US', { 
+          {/* Next Upcoming Event - Only show one */}
+          {(() => {
+            // Get the next upcoming event (soonest date, or first if no dates)
+            const nextEvent = [...bioEvents]
+              .filter(e => e.is_active)
+              .sort((a, b) => {
+                if (!a.event_date) return 1;
+                if (!b.event_date) return -1;
+                return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
+              })[0];
+            
+            if (!nextEvent) return null;
+            
+            const eventDateFormatted = nextEvent.event_date 
+              ? new Date(nextEvent.event_date).toLocaleDateString('en-US', { 
                   weekday: 'short', 
                   month: 'short', 
                   day: 'numeric' 
@@ -1909,8 +1920,7 @@ const BioPage: React.FC = () => {
             
             return (
               <a
-                key={event.id}
-                href={event.registration_url || '#'}
+                href={nextEvent.registration_url || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block mt-4"
@@ -1924,10 +1934,10 @@ const BioPage: React.FC = () => {
                   <div className="flex items-stretch">
                     {/* Event Image */}
                     <div className="w-24 flex-shrink-0 relative bg-black/20">
-                      {event.image_url ? (
+                      {nextEvent.image_url ? (
                         <img 
-                          src={event.image_url} 
-                          alt={event.title} 
+                          src={nextEvent.image_url} 
+                          alt={nextEvent.title} 
                           className="w-full h-full object-cover"
                           style={{ minHeight: '96px' }}
                         />
@@ -1944,16 +1954,16 @@ const BioPage: React.FC = () => {
                     <div className="flex-1 p-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-semibold text-sm leading-tight">{event.title}</h3>
-                          {(eventDateFormatted || event.event_time || event.location) && (
+                          <h3 className="text-white font-semibold text-sm leading-tight">{nextEvent.title}</h3>
+                          {(eventDateFormatted || nextEvent.event_time || nextEvent.location) && (
                             <p className="text-orange-300/80 text-xs mt-1">
                               {eventDateFormatted && <span>📅 {eventDateFormatted}</span>}
-                              {event.event_time && <span> • {event.event_time}</span>}
-                              {event.location && <span className="block mt-0.5">📍 {event.location}</span>}
+                              {nextEvent.event_time && <span> • {nextEvent.event_time}</span>}
+                              {nextEvent.location && <span className="block mt-0.5">📍 {nextEvent.location}</span>}
                             </p>
                           )}
-                          {event.description && (
-                            <p className="text-gray-400 text-xs mt-1 line-clamp-2">{event.description}</p>
+                          {nextEvent.description && (
+                            <p className="text-gray-400 text-xs mt-1 line-clamp-2">{nextEvent.description}</p>
                           )}
                         </div>
                         <span 
@@ -1963,7 +1973,7 @@ const BioPage: React.FC = () => {
                             color: getContrastTextColor(bioSettings?.button_color || '#f97316')
                           }}
                         >
-                          {event.button_text || 'Get Tickets'}
+                          {nextEvent.button_text || 'Get Tickets'}
                         </span>
                       </div>
                     </div>
@@ -1971,7 +1981,7 @@ const BioPage: React.FC = () => {
                 </div>
               </a>
             );
-          })}
+          })()}
 
           {/* ShoutOut Card - Always at the bottom (cannot be removed) */}
           {bioSettings && (

@@ -283,7 +283,6 @@ const BioDashboard: React.FC = () => {
   const [editingService, setEditingService] = useState<ServiceOffering | null>(null);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [bioEvents, setBioEvents] = useState<BioEvent[]>([]);
-  const [editingEvent, setEditingEvent] = useState<BioEvent | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
@@ -1462,78 +1461,38 @@ const BioDashboard: React.FC = () => {
                   </div>
                 )}
 
-                {/* Events Section */}
+                {/* Events Summary Card */}
                 {bioEvents.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Events</h3>
-                    {bioEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className={`bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-2xl p-4 ${!event.is_active ? 'opacity-50' : ''}`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0">
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
-                                <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-white">{event.title}</h3>
-                              <p className="text-sm text-gray-400">
-                                {event.event_date && new Date(event.event_date).toLocaleDateString()}
-                                {event.event_time && ` • ${event.event_time}`}
-                                {event.location && ` • ${event.location}`}
-                              </p>
-                              <span className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded-full mt-2 inline-block">
-                                {event.source_type === 'manual' ? 'Manual' : event.source_type === 'ical' ? 'iCal Feed' : 'RSS Feed'}
-                              </span>
-                            </div>
-                          </div>
+                  <div 
+                    onClick={() => setShowAddEventModal(true)}
+                    className="bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-xl p-3 cursor-pointer hover:border-orange-500/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-orange-400 flex-shrink-0">
+                          <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" />
+                        </svg>
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                              <input
-                                type="checkbox"
-                                checked={event.is_active}
-                                onChange={async (e) => {
-                                  const updated = bioEvents.map(ev => 
-                                    ev.id === event.id ? { ...ev, is_active: e.target.checked } : ev
-                                  );
-                                  setBioEvents(updated);
-                                  await supabase
-                                    .from('bio_events')
-                                    .update({ is_active: e.target.checked })
-                                    .eq('id', event.id);
-                                  toast.success(e.target.checked ? 'Event enabled' : 'Event disabled');
-                                  setTimeout(refreshPreview, 500);
-                                }}
-                                className="sr-only peer"
-                              />
-                              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-                            </label>
-                            <button
-                              onClick={() => setEditingEvent(event)}
-                              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                            >
-                              <PencilIcon className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                if (window.confirm('Are you sure you want to delete this event?')) {
-                                  await supabase.from('bio_events').delete().eq('id', event.id);
-                                  setBioEvents(bioEvents.filter(ev => ev.id !== event.id));
-                                  toast.success('Event deleted');
-                                  setTimeout(refreshPreview, 500);
-                                }
-                              }}
-                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            >
-                              <TrashIcon className="h-5 w-5" />
-                            </button>
+                            <h3 className="font-medium text-white text-sm">Events</h3>
+                            <span className="text-xs text-orange-400">{bioEvents.length} event{bioEvents.length !== 1 ? 's' : ''}</span>
                           </div>
+                          <p className="text-xs text-gray-400">
+                            Next: {(() => {
+                              const nextEvent = [...bioEvents]
+                                .filter(e => e.is_active)
+                                .sort((a, b) => {
+                                  if (!a.event_date) return 1;
+                                  if (!b.event_date) return -1;
+                                  return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
+                                })[0];
+                              return nextEvent ? `${nextEvent.title}${nextEvent.event_date ? ` • ${new Date(nextEvent.event_date).toLocaleDateString()}` : ''}` : 'No upcoming events';
+                            })()}
+                          </p>
                         </div>
                       </div>
-                    ))}
+                      <PencilIcon className="h-4 w-4 text-gray-500" />
+                    </div>
                   </div>
                 )}
 
@@ -2048,83 +2007,16 @@ const BioDashboard: React.FC = () => {
         />
       )}
 
-      {(showAddEventModal || editingEvent) && (
+      {showAddEventModal && talentProfile && (
         <AddEventModal
-          event={editingEvent || undefined}
+          events={bioEvents}
+          talentId={talentProfile.id}
           onClose={() => {
             setShowAddEventModal(false);
-            setEditingEvent(null);
-          }}
-          onSave={async (event) => {
-            if (editingEvent) {
-              // Update existing event
-              const { error } = await supabase
-                .from('bio_events')
-                .update({
-                  title: event.title,
-                  description: event.description,
-                  event_date: event.event_date,
-                  event_time: event.event_time,
-                  location: event.location,
-                  registration_url: event.registration_url,
-                  button_text: event.button_text,
-                  image_url: event.image_url,
-                  source_type: event.source_type,
-                  source_url: event.source_url,
-                  is_active: event.is_active,
-                })
-                .eq('id', editingEvent.id);
-              
-              if (error) {
-                toast.error('Failed to update event');
-                return;
-              }
-              
-              setBioEvents(bioEvents.map(ev => 
-                ev.id === editingEvent.id ? { ...ev, ...event } : ev
-              ));
-              toast.success('Event updated!');
-            } else {
-              // Create new event
-              console.log('Creating event with data:', {
-                talent_id: talentProfile?.id,
-                title: event.title,
-                source_type: event.source_type,
-              });
-              
-              const { data, error } = await supabase
-                .from('bio_events')
-                .insert([{
-                  talent_id: talentProfile?.id,
-                  title: event.title,
-                  description: event.description || null,
-                  event_date: event.event_date || null,
-                  event_time: event.event_time || null,
-                  location: event.location || null,
-                  registration_url: event.registration_url || null,
-                  button_text: event.button_text,
-                  image_url: event.image_url || null,
-                  source_type: event.source_type,
-                  source_url: event.source_url || null,
-                  is_active: event.is_active ?? true,
-                  display_order: bioEvents.length,
-                }])
-                .select()
-                .single();
-              
-              if (error) {
-                console.error('Failed to create event:', error);
-                toast.error(`Failed to create event: ${error.message}`);
-                return;
-              }
-              
-              setBioEvents([...bioEvents, data]);
-              toast.success('Event created!');
-            }
-            
-            setShowAddEventModal(false);
-            setEditingEvent(null);
             setTimeout(refreshPreview, 500);
+          }}
+          onEventsChange={(newEvents) => {
+            setBioEvents(newEvents);
           }}
         />
       )}
@@ -3804,25 +3696,55 @@ const AddServiceModal: React.FC<{
   );
 };
 
-// Add Event Modal
+// Events Manager Modal - manages multiple events, shows table of all events
 const AddEventModal: React.FC<{
-  event?: BioEvent;
+  events: BioEvent[];
+  talentId: string;
   onClose: () => void;
-  onSave: (event: Partial<BioEvent> & { source_type: string; button_text: string }) => void;
-}> = ({ event, onClose, onSave }) => {
-  const [sourceType, setSourceType] = useState<'manual' | 'ical' | 'rss'>(event?.source_type || 'manual');
-  const [title, setTitle] = useState(event?.title || '');
-  const [description, setDescription] = useState(event?.description || '');
-  const [eventDate, setEventDate] = useState(event?.event_date || '');
-  const [eventTime, setEventTime] = useState(event?.event_time || '');
-  const [location, setLocation] = useState(event?.location || '');
-  const [registrationUrl, setRegistrationUrl] = useState(event?.registration_url || '');
-  const [buttonText, setButtonText] = useState(event?.button_text || 'Get Tickets');
-  const [sourceUrl, setSourceUrl] = useState(event?.source_url || '');
-  const [imageUrl, setImageUrl] = useState(event?.image_url || '');
-  const [isActive, setIsActive] = useState(event?.is_active ?? true);
+  onEventsChange: (events: BioEvent[]) => void;
+}> = ({ events, talentId, onClose, onEventsChange }) => {
+  const [sourceType, setSourceType] = useState<'manual' | 'ical' | 'rss'>('manual');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [eventTime, setEventTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [registrationUrl, setRegistrationUrl] = useState('');
+  const [buttonText, setButtonText] = useState('Get Tickets');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load event data when editing
+  const loadEventForEdit = (event: BioEvent) => {
+    setEditingEventId(event.id || null);
+    setSourceType(event.source_type);
+    setTitle(event.title);
+    setDescription(event.description || '');
+    setEventDate(event.event_date || '');
+    setEventTime(event.event_time || '');
+    setLocation(event.location || '');
+    setRegistrationUrl(event.registration_url || '');
+    setButtonText(event.button_text || 'Get Tickets');
+    setSourceUrl(event.source_url || '');
+    setImageUrl(event.image_url || '');
+  };
+
+  const clearForm = () => {
+    setEditingEventId(null);
+    setTitle('');
+    setDescription('');
+    setEventDate('');
+    setEventTime('');
+    setLocation('');
+    setRegistrationUrl('');
+    setButtonText('Get Tickets');
+    setSourceUrl('');
+    setImageUrl('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (sourceType === 'manual' && !title) {
@@ -3835,9 +3757,12 @@ const AddEventModal: React.FC<{
       return;
     }
 
-    onSave({
-      title,
-      description,
+    setSaving(true);
+
+    const eventData = {
+      talent_id: talentId,
+      title: sourceType === 'manual' ? title : `${sourceType.toUpperCase()} Feed`,
+      description: description || undefined,
       event_date: eventDate || undefined,
       event_time: eventTime || undefined,
       location: location || undefined,
@@ -3846,17 +3771,70 @@ const AddEventModal: React.FC<{
       source_type: sourceType,
       source_url: sourceUrl || undefined,
       image_url: imageUrl || undefined,
-      is_active: isActive,
-    });
+      is_active: true,
+    };
+
+    try {
+      if (editingEventId) {
+        // Update existing event
+        const { error } = await supabase
+          .from('bio_events')
+          .update(eventData)
+          .eq('id', editingEventId);
+        
+        if (error) throw error;
+        
+        onEventsChange(events.map(ev => 
+          ev.id === editingEventId ? { ...ev, ...eventData } : ev
+        ));
+        toast.success('Event updated!');
+      } else {
+        // Create new event
+        const { data, error } = await supabase
+          .from('bio_events')
+          .insert([{ ...eventData, display_order: events.length }])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        onEventsChange([...events, data]);
+        toast.success('Event added!');
+      }
+      clearForm();
+    } catch (error: any) {
+      console.error('Failed to save event:', error);
+      toast.error(`Failed to save event: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleDelete = async (eventId: string) => {
+    if (!window.confirm('Delete this event?')) return;
+    
+    try {
+      await supabase.from('bio_events').delete().eq('id', eventId);
+      onEventsChange(events.filter(ev => ev.id !== eventId));
+      toast.success('Event deleted');
+      if (editingEventId === eventId) clearForm();
+    } catch (error) {
+      toast.error('Failed to delete event');
+    }
+  };
+
+  // Sort events by date (soonest first)
+  const sortedEvents = [...events].sort((a, b) => {
+    if (!a.event_date) return 1;
+    if (!b.event_date) return -1;
+    return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
+  });
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-white/10 p-6">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">
-            {event ? 'Edit Event' : 'Add Event'}
-          </h2>
+          <h2 className="text-xl font-bold text-white">Manage Events</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -3865,198 +3843,187 @@ const AddEventModal: React.FC<{
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <p className="text-sm text-gray-400 mb-4">
+          Only the next upcoming event will be shown on your bio page.
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Source Type Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">Event Source</label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setSourceType('manual')}
-                className={`p-3 rounded-xl transition-all text-center ${
-                  sourceType === 'manual'
-                    ? 'bg-orange-500/20 border-2 border-orange-500 text-white'
-                    : 'bg-white/5 border-2 border-white/10 text-gray-400 hover:border-white/30'
-                }`}
-              >
-                <span className="text-lg block mb-1">✏️</span>
-                <span className="text-xs">Manual</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSourceType('ical')}
-                className={`p-3 rounded-xl transition-all text-center ${
-                  sourceType === 'ical'
-                    ? 'bg-orange-500/20 border-2 border-orange-500 text-white'
-                    : 'bg-white/5 border-2 border-white/10 text-gray-400 hover:border-white/30'
-                }`}
-              >
-                <span className="text-lg block mb-1">📅</span>
-                <span className="text-xs">iCal Feed</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSourceType('rss')}
-                className={`p-3 rounded-xl transition-all text-center ${
-                  sourceType === 'rss'
-                    ? 'bg-orange-500/20 border-2 border-orange-500 text-white'
-                    : 'bg-white/5 border-2 border-white/10 text-gray-400 hover:border-white/30'
-                }`}
-              >
-                <span className="text-lg block mb-1">📡</span>
-                <span className="text-xs">RSS Feed</span>
-              </button>
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setSourceType('manual')}
+              className={`p-2 rounded-lg transition-all text-center text-sm ${
+                sourceType === 'manual'
+                  ? 'bg-orange-500/20 border border-orange-500 text-white'
+                  : 'bg-white/5 border border-white/10 text-gray-400 hover:border-white/30'
+              }`}
+            >
+              ✏️ Manual
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceType('ical')}
+              className={`p-2 rounded-lg transition-all text-center text-sm ${
+                sourceType === 'ical'
+                  ? 'bg-orange-500/20 border border-orange-500 text-white'
+                  : 'bg-white/5 border border-white/10 text-gray-400 hover:border-white/30'
+              }`}
+            >
+              📅 iCal
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceType('rss')}
+              className={`p-2 rounded-lg transition-all text-center text-sm ${
+                sourceType === 'rss'
+                  ? 'bg-orange-500/20 border border-orange-500 text-white'
+                  : 'bg-white/5 border border-white/10 text-gray-400 hover:border-white/30'
+              }`}
+            >
+              📡 RSS
+            </button>
           </div>
 
           {/* Feed URL for iCal/RSS */}
           {(sourceType === 'ical' || sourceType === 'rss') && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                {sourceType === 'ical' ? 'iCal Feed URL' : 'RSS Feed URL'}
-              </label>
               <input
                 type="url"
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
                 placeholder={sourceType === 'ical' ? 'https://calendar.google.com/...' : 'https://example.com/events.rss'}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
               />
-              <p className="text-xs text-gray-500 mt-2">
-                {sourceType === 'ical' 
-                  ? 'Paste your calendar\'s public iCal URL to automatically sync events'
-                  : 'Paste an RSS feed URL to import events automatically'
-                }
-              </p>
+              <p className="text-xs text-gray-500 mt-1">Most recent event from feed will be shown</p>
             </div>
           )}
 
           {/* Manual Event Fields */}
           {sourceType === 'manual' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Event Title *</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Live Comedy Show"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description of the event..."
-                  rows={2}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
-                  <input
-                    type="date"
-                    value={eventDate}
-                    onChange={(e) => setEventDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-orange-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
-                  <input
-                    type="time"
-                    value={eventTime}
-                    onChange={(e) => setEventTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-orange-500/50"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., The Comedy Store, Los Angeles"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Registration/Ticket Link</label>
-                <input
-                  type="url"
-                  value={registrationUrl}
-                  onChange={(e) => setRegistrationUrl(e.target.value)}
-                  placeholder="https://tickets.example.com/..."
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Event Image URL</label>
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://example.com/event-image.jpg"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
-                />
-                {imageUrl && (
-                  <div className="mt-2 rounded-lg overflow-hidden">
-                    <img src={imageUrl} alt="Event preview" className="w-full h-24 object-cover" />
-                  </div>
-                )}
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Event Title *"
+                className="col-span-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+              />
+              <input
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500/50"
+              />
+              <input
+                type="time"
+                value={eventTime}
+                onChange={(e) => setEventTime(e.target.value)}
+                className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500/50"
+              />
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Location"
+                className="col-span-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+              />
+              <input
+                type="url"
+                value={registrationUrl}
+                onChange={(e) => setRegistrationUrl(e.target.value)}
+                placeholder="Ticket/Registration URL"
+                className="col-span-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+              />
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Image URL (optional)"
+                className="col-span-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+              />
+            </div>
           )}
 
           {/* Button Text */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Button Text</label>
-            <input
-              type="text"
-              value={buttonText}
-              onChange={(e) => setButtonText(e.target.value)}
-              placeholder="Get Tickets"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
-            />
-            <p className="text-xs text-gray-500 mt-2">Text shown on the event button (default: "Get Tickets")</p>
-          </div>
+          <input
+            type="text"
+            value={buttonText}
+            onChange={(e) => setButtonText(e.target.value)}
+            placeholder="Button Text (default: Get Tickets)"
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+          />
 
-          {/* Active Toggle */}
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              className="w-5 h-5 rounded bg-white/10 border-white/20 text-orange-500 focus:ring-orange-500"
-            />
-            <span className="text-white">Event is active</span>
-          </label>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
-            >
-              Cancel
-            </button>
+          <div className="flex gap-2">
+            {editingEventId && (
+              <button
+                type="button"
+                onClick={clearForm}
+                className="px-4 py-2 bg-white/10 text-white rounded-lg text-sm hover:bg-white/20 transition-colors"
+              >
+                Cancel Edit
+              </button>
+            )}
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
+              disabled={saving}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg text-sm font-medium hover:from-orange-600 hover:to-amber-600 transition-colors disabled:opacity-50"
             >
-              {event ? 'Save Changes' : 'Create Event'}
+              {saving ? 'Saving...' : editingEventId ? 'Update Event' : 'Add Event'}
             </button>
           </div>
         </form>
+
+        {/* Events Table */}
+        {events.length > 0 && (
+          <div className="mt-6 border-t border-white/10 pt-4">
+            <h3 className="text-sm font-medium text-gray-400 mb-3">Your Events ({events.length})</h3>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {sortedEvents.map((event, index) => (
+                <div
+                  key={event.id}
+                  className={`flex items-center justify-between p-2 rounded-lg ${
+                    index === 0 ? 'bg-orange-500/20 border border-orange-500/30' : 'bg-white/5'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {index === 0 && <span className="text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded">NEXT</span>}
+                      <span className="text-white text-sm truncate">{event.title}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {event.event_date ? new Date(event.event_date).toLocaleDateString() : 'No date'}
+                      {event.location && ` • ${event.location}`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => loadEventForEdit(event)}
+                      className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(event.id!)}
+                      className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-colors"
+          >
+            Done
+          </button>
+        </div>
       </div>
     </div>
   );
