@@ -1210,11 +1210,25 @@ const BioPage: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen"
+      className="min-h-screen relative"
       style={{
         background: `linear-gradient(${gradientDirection}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
       }}
     >
+      {/* ShoutOut Logo - Top Left Corner */}
+      <a 
+        href="https://shoutout.us" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="absolute top-4 left-4 z-10 opacity-60 hover:opacity-100 transition-opacity"
+      >
+        <img
+          src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png"
+          alt="ShoutOut"
+          className="h-6 w-auto brightness-0 invert"
+        />
+      </a>
+
       <div className="max-w-lg mx-auto px-4 py-8 min-h-screen flex flex-col">
         {/* Profile Header */}
         <div className="text-center mb-8">
