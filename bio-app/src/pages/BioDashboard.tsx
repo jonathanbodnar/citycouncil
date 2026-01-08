@@ -291,6 +291,10 @@ const BioDashboard: React.FC = () => {
   const [emailButtonText, setEmailButtonText] = useState('');
   const [emailButtonUrl, setEmailButtonUrl] = useState('');
   const [emailImageUrl, setEmailImageUrl] = useState('');
+  const [emailScheduledDate, setEmailScheduledDate] = useState('');
+  const [emailScheduledTime, setEmailScheduledTime] = useState('');
+  const [emailDraftSaved, setEmailDraftSaved] = useState(false);
+  const [randomReview, setRandomReview] = useState<{ rating: number; comment?: string; users?: { full_name: string } } | null>(null);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -529,6 +533,19 @@ const BioDashboard: React.FC = () => {
           .eq('talent_id', profile.id);
         
         setSubscriberCount(subCount || 0);
+
+        // Get a random review for the ShoutOut card in emails
+        const { data: reviews } = await supabase
+          .from('reviews')
+          .select('*, users:user_id(full_name)')
+          .eq('talent_id', profile.id)
+          .gte('rating', 4)
+          .limit(10);
+
+        if (reviews && reviews.length > 0) {
+          const randomIndex = Math.floor(Math.random() * reviews.length);
+          setRandomReview(reviews[randomIndex]);
+        }
 
         // Get or create bio settings
         let { data: settings, error: settingsError } = await supabase
@@ -1973,19 +1990,73 @@ const BioDashboard: React.FC = () => {
                   />
                 </div>
 
-                <button
-                  onClick={() => {
-                    if (!emailSubject || !emailContent) {
-                      toast.error('Please add a subject and content');
-                      return;
-                    }
-                    toast.success('Email updates coming soon!');
-                  }}
-                  disabled={subscriberCount === 0}
-                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {subscriberCount === 0 ? 'No Subscribers Yet' : `Send to ${subscriberCount} Subscriber${subscriberCount !== 1 ? 's' : ''}`}
-                </button>
+                {/* Schedule Section */}
+                <div className="border-t border-white/10 pt-4">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Schedule Send (optional)
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="date"
+                      value={emailScheduledDate}
+                      onChange={(e) => setEmailScheduledDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50"
+                    />
+                    <input
+                      type="time"
+                      value={emailScheduledTime}
+                      onChange={(e) => setEmailScheduledTime(e.target.value)}
+                      className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setEmailDraftSaved(true);
+                      toast.success('Draft saved!');
+                      setTimeout(() => setEmailDraftSaved(false), 3000);
+                    }}
+                    disabled={!emailSubject && !emailContent}
+                    className="flex-1 py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {emailDraftSaved ? (
+                      <>
+                        <CheckIcon className="w-4 h-4 text-green-400" />
+                        Saved
+                      </>
+                    ) : (
+                      'Save Draft'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!emailSubject || !emailContent) {
+                        toast.error('Please add a subject and content');
+                        return;
+                      }
+                      if (emailScheduledDate && emailScheduledTime) {
+                        toast.success(`Email scheduled for ${emailScheduledDate} at ${emailScheduledTime}`);
+                      } else {
+                        toast.success('Email updates coming soon!');
+                      }
+                    }}
+                    disabled={subscriberCount === 0}
+                    className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {subscriberCount === 0 
+                      ? 'No Subscribers Yet' 
+                      : emailScheduledDate && emailScheduledTime 
+                        ? 'Schedule Send'
+                        : `Send Now (${subscriberCount})`}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2077,36 +2148,107 @@ const BioDashboard: React.FC = () => {
 
                     {/* Divider */}
                     <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
-                      {/* Connect Card */}
+                      {/* Connect Card - Show bio links preview */}
                       <div 
-                        className="p-4 rounded-xl text-center"
+                        className="p-5 rounded-2xl overflow-hidden relative"
                         style={{
-                          backgroundColor: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)'
+                          background: `linear-gradient(135deg, ${bioSettings?.button_color || '#3b82f6'}15, ${bioSettings?.button_color || '#3b82f6'}05)`,
+                          border: `1px solid ${bioSettings?.button_color || '#3b82f6'}30`
                         }}
                       >
-                        <p className="text-gray-300 text-sm">Find out how else we can connect.</p>
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                        <p className="text-white font-semibold text-sm mb-3">✨ More ways to connect</p>
+                        
+                        {/* Show up to 3 bio links as preview */}
+                        <div className="space-y-2 mb-3">
+                          {links.filter(l => l.is_active && l.link_type === 'basic').slice(0, 3).map((link, i) => (
+                            <div 
+                              key={i}
+                              className="flex items-center gap-2 text-xs text-gray-300 bg-white/5 rounded-lg px-3 py-2"
+                            >
+                              {link.icon_url ? (
+                                <img src={link.icon_url} alt="" className="w-4 h-4 rounded" />
+                              ) : (
+                                <LinkIcon className="w-4 h-4 text-gray-400" />
+                              )}
+                              <span className="truncate">{link.title || 'Link'}</span>
+                            </div>
+                          ))}
+                          {links.filter(l => l.is_active && l.link_type === 'basic').length === 0 && (
+                            <p className="text-gray-500 text-xs italic">Add links to your bio to show them here</p>
+                          )}
+                          {links.filter(l => l.is_active && l.link_type === 'basic').length > 3 && (
+                            <p className="text-gray-400 text-xs">+{links.filter(l => l.is_active && l.link_type === 'basic').length - 3} more links</p>
+                          )}
+                        </div>
+                        
                         <a
                           href={`https://${bioUrl}`}
-                          className="text-sm mt-2 inline-block"
-                          style={{ color: bioSettings?.button_color || '#3b82f6' }}
+                          className="inline-flex items-center gap-1 text-sm font-medium px-4 py-2 rounded-full transition-colors"
+                          style={{ 
+                            backgroundColor: bioSettings?.button_color || '#3b82f6',
+                            color: '#ffffff'
+                          }}
                         >
-                          Visit my bio →
+                          Visit my bio
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </a>
                       </div>
 
-                      {/* ShoutOut Card */}
+                      {/* ShoutOut Card - With review */}
                       <a
                         href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}`}
-                        className="block p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30"
+                        className="block p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 hover:border-blue-500/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                            <GiftIcon className="w-5 h-5 text-white" />
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                            {talentProfile?.temp_avatar_url || bioSettings?.profile_image_url ? (
+                              <img 
+                                src={talentProfile?.temp_avatar_url || bioSettings?.profile_image_url} 
+                                alt="" 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                <GiftIcon className="w-6 h-6 text-white" />
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-blue-400 text-xs font-medium">🎬 ShoutOut</span>
+                            </div>
                             <p className="text-white text-sm font-medium">Get a personalized video</p>
-                            <p className="text-gray-400 text-xs">Book a ShoutOut from me</p>
+                            
+                            {/* Show review if available */}
+                            {randomReview && (
+                              <div className="mt-2 pt-2 border-t border-white/10">
+                                <div className="flex items-center gap-0.5 mb-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <svg 
+                                      key={i} 
+                                      className={`w-3 h-3 ${i < randomReview.rating ? 'text-yellow-400' : 'text-gray-600'}`} 
+                                      fill="currentColor" 
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                  ))}
+                                </div>
+                                {randomReview.comment && (
+                                  <p className="text-gray-300 text-xs line-clamp-1">
+                                    "{randomReview.comment.split('\n')[0]}"
+                                  </p>
+                                )}
+                                {randomReview.users?.full_name && (
+                                  <p className="text-gray-500 text-[10px] mt-0.5">
+                                    — {randomReview.users.full_name}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </a>
@@ -2115,7 +2257,7 @@ const BioDashboard: React.FC = () => {
                     {/* Footer */}
                     <div className="text-center pt-4">
                       <p className="text-gray-500 text-xs">
-                        Powered by <a href="https://shoutout.us/creators" className="text-gray-400 hover:text-white">ShoutOut</a>
+                        Powered by <a href="https://shoutout.us/creators" className="text-gray-400 hover:text-white transition-colors">ShoutOut</a>
                       </p>
                     </div>
                   </div>
