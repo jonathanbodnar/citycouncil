@@ -368,26 +368,52 @@ serve(async (req) => {
         }
       }
 
-      // Use admin API to generate session tokens directly
-      // This creates tokens that can be used by the client without any server-side session
-      const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession(existingUser.id);
+      // Generate a temporary password and sign in the user
+      const tempPassword = generateRandomPassword();
       
-      if (sessionError || !sessionData.session) {
-        console.error('Error creating session:', sessionError);
+      // Update the user's password using admin API
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        existingUser.id,
+        { password: tempPassword }
+      );
+      
+      if (updateError) {
+        console.error('Error updating user password:', updateError);
         throw new Error("Failed to authenticate user");
       }
       
-      console.log('Login successful with admin-created session for:', existingUser.email);
+      // Create a fresh client with anon key for signing in (not service role)
+      // This ensures the session is created properly for client use
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const anonClient = createClient(supabaseUrl, anonKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
+      
+      // Sign in with the anon client
+      const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
+        email: existingUser.email || normalizedEmail,
+        password: tempPassword,
+      });
+      
+      if (signInError || !signInData.session) {
+        console.error('Error signing in user:', signInError);
+        throw new Error("Failed to authenticate user");
+      }
+      
+      console.log('Login successful for:', existingUser.email);
 
       return new Response(
         JSON.stringify({
           success: true,
           isLogin: true,
           session: {
-            access_token: sessionData.session.access_token,
-            refresh_token: sessionData.session.refresh_token,
-            expires_in: sessionData.session.expires_in,
-            expires_at: sessionData.session.expires_at,
+            access_token: signInData.session.access_token,
+            refresh_token: signInData.session.refresh_token,
+            expires_in: signInData.session.expires_in,
+            expires_at: signInData.session.expires_at,
           },
           user: {
             id: existingUser.id,
@@ -492,25 +518,37 @@ serve(async (req) => {
           ignoreDuplicates: true
         });
 
-      // Use admin API to generate session tokens directly for the new user
-      const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession(authData.user.id);
+      // Create a fresh client with anon key for signing in
+      const regAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const regAnonClient = createClient(supabaseUrl, regAnonKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
       
-      if (sessionError || !sessionData.session) {
-        console.error('Error creating session for new user:', sessionError);
+      // Sign in the newly created user with the anon client
+      const { data: signInData, error: signInError } = await regAnonClient.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: randomPassword,
+      });
+      
+      if (signInError || !signInData.session) {
+        console.error('Error signing in new user:', signInError);
         throw new Error("Account created but login failed. Please use login page.");
       }
       
-      console.log('Registration complete with admin-created session for:', normalizedEmail);
+      console.log('Registration complete for:', normalizedEmail);
 
       return new Response(
         JSON.stringify({
           success: true,
           isLogin: false,
           session: {
-            access_token: sessionData.session.access_token,
-            refresh_token: sessionData.session.refresh_token,
-            expires_in: sessionData.session.expires_in,
-            expires_at: sessionData.session.expires_at,
+            access_token: signInData.session.access_token,
+            refresh_token: signInData.session.refresh_token,
+            expires_in: signInData.session.expires_in,
+            expires_at: signInData.session.expires_at,
           },
           user: {
             id: authData.user.id,
