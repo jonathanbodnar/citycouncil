@@ -2592,17 +2592,21 @@ const BioDashboard: React.FC = () => {
                         const gridItems: Array<{
                           type: 'event' | 'collab' | 'link';
                           title: string;
+                          subtitle?: string;
                           image?: string;
                           icon?: React.ReactNode;
                         }> = [];
 
-                        // Add event if exists
+                        // Add event if exists - show details, not image
                         const activeEvent = bioEvents.find(e => e.is_active);
                         if (activeEvent) {
+                          const eventDate = activeEvent.event_date 
+                            ? new Date(activeEvent.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : '';
                           gridItems.push({
                             type: 'event',
                             title: activeEvent.title || 'Upcoming Event',
-                            image: activeEvent.image_url,
+                            subtitle: eventDate || activeEvent.location || undefined,
                             icon: (
                               <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -2611,12 +2615,11 @@ const BioDashboard: React.FC = () => {
                           });
                         }
 
-                        // Add collab if exists
+                        // Add collab if exists - no image, just icon
                         if (serviceOfferings.length > 0) {
                           gridItems.push({
                             type: 'collab',
-                            title: 'Collaborate',
-                            image: talentProfile?.temp_avatar_url || bioSettings?.profile_image_url,
+                            title: 'Collaborate with me',
                             icon: (
                               <svg className="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/>
@@ -2625,13 +2628,17 @@ const BioDashboard: React.FC = () => {
                           });
                         }
 
-                        // Add links with images
+                        // Add links - show images if they have them
                         links.filter(l => l.is_active && (l.link_type === 'basic' || l.link_type === 'grid')).slice(0, 4 - gridItems.length).forEach(link => {
                           gridItems.push({
                             type: 'link',
                             title: link.title || 'Link',
-                            image: link.image_url || link.icon_url,
-                            icon: <LinkIcon className="w-4 h-4 text-blue-400" />
+                            image: link.image_url || undefined, // Only use actual images, not icons
+                            icon: link.icon_url ? (
+                              <img src={link.icon_url} alt="" className="w-4 h-4 rounded" />
+                            ) : (
+                              <LinkIcon className="w-4 h-4 text-blue-400" />
+                            )
                           });
                         });
 
@@ -2678,7 +2685,8 @@ const BioDashboard: React.FC = () => {
                                     itemCount === 3 && i === 2 ? 'col-span-2' : ''
                                   }`}
                                 >
-                                  {item.image ? (
+                                  {/* Links with images show the image */}
+                                  {item.type === 'link' && item.image ? (
                                     <div className="relative">
                                       <img 
                                         src={item.image} 
@@ -2693,11 +2701,17 @@ const BioDashboard: React.FC = () => {
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className={`flex items-center gap-2 p-2 ${
+                                    /* Events show details, collab and links without images show icon + text */
+                                    <div className={`flex items-center gap-2 p-2.5 ${
                                       itemCount === 3 && i === 2 ? 'justify-center' : ''
                                     }`}>
                                       {item.icon}
-                                      <span className="text-gray-300 text-[10px] truncate">{item.title}</span>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-gray-200 text-[10px] font-medium truncate">{item.title}</p>
+                                        {item.subtitle && (
+                                          <p className="text-gray-500 text-[9px] truncate">{item.subtitle}</p>
+                                        )}
+                                      </div>
                                     </div>
                                   )}
                                 </div>
