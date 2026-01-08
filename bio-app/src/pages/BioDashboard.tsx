@@ -3196,7 +3196,7 @@ const BioDashboard: React.FC = () => {
                   .single();
                 
                 if (existing) {
-                  // Update existing record
+                  // Update existing record in social_accounts
                   const { error } = await supabase
                     .from('social_accounts')
                     .update({ follower_count: count })
@@ -3213,10 +3213,24 @@ const BioDashboard: React.FC = () => {
                     ));
                   }
                 } else {
-                  // No record exists - save to talent_profiles instead
-                  // This is a workaround for the enum constraint issue
-                  console.log('No social_accounts record found, saving follower count to profile');
-                  toast.error('Please add this social account in the Social tab first, then add follower count');
+                  // No record in social_accounts - save to talent_profiles.follower_counts instead
+                  console.log('No social_accounts record found, saving to talent_profiles.follower_counts');
+                  const currentCounts = (talentProfile as any).follower_counts || {};
+                  const updatedCounts = { ...currentCounts, [platform]: count };
+                  
+                  const { error } = await supabase
+                    .from('talent_profiles')
+                    .update({ follower_counts: updatedCounts })
+                    .eq('id', talentProfile.id);
+                  
+                  if (error) {
+                    console.error('Failed to save follower count to profile:', error);
+                    toast.error('Failed to save follower count');
+                  } else {
+                    toast.success('Follower count saved');
+                    // Update local talentProfile state
+                    setTalentProfile(prev => prev ? { ...prev, follower_counts: updatedCounts } as any : null);
+                  }
                 }
               }
             } else {

@@ -550,6 +550,9 @@ const BioPage: React.FC = () => {
           { platform: 'rumble', field: 'rumble_handle' },
         ];
         
+        // Get follower_counts from talent_profiles (fallback storage)
+        const profileFollowerCounts = (profile as any).follower_counts || {};
+        
         for (const mapping of handleMappings) {
           const handle = (profile as any)[mapping.field];
           if (handle) {
@@ -559,8 +562,14 @@ const BioPage: React.FC = () => {
                 id: `profile-${mapping.platform}`,
                 platform: mapping.platform,
                 handle: handle.replace(/^@/, ''),
-                follower_count: undefined,
+                follower_count: profileFollowerCounts[mapping.platform] || undefined,
               });
+            } else {
+              // If it exists but doesn't have a follower count, try to get it from profile
+              const existingAccount = combinedAccounts.find(s => s.platform === mapping.platform);
+              if (existingAccount && !existingAccount.follower_count && profileFollowerCounts[mapping.platform]) {
+                existingAccount.follower_count = profileFollowerCounts[mapping.platform];
+              }
             }
           }
         }
