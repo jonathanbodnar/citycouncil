@@ -2432,50 +2432,84 @@ const BioDashboard: React.FC = () => {
                         <div className="w-full border-t border-white/10"></div>
                       </div>
                       <div className="relative flex justify-center text-xs">
-                        <span className="px-2 bg-gray-900 text-gray-500">or connect</span>
+                        <span className="px-2 bg-gray-900 text-gray-500">or sync from email provider</span>
                       </div>
                     </div>
 
-                    {/* Email Integrations */}
+                    {/* Email Integrations - Use existing newsletter providers */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-3">Import from Email Provider</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          onClick={() => toast.success('Mailchimp integration coming soon!')}
-                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                            <span className="text-yellow-400 font-bold text-sm">MC</span>
+                      {/* Show connected integrations first */}
+                      {newsletterConfigs.some(c => c.is_active) ? (
+                        <>
+                          <label className="block text-sm font-medium text-gray-300 mb-3">Connected Integrations</label>
+                          <div className="space-y-2 mb-4">
+                            {newsletterConfigs.filter(c => c.is_active).map(config => {
+                              const provider = NEWSLETTER_PROVIDERS.find(p => p.id === config.provider);
+                              return (
+                                <div
+                                  key={config.id}
+                                  className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/30 rounded-xl"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-lg">{provider?.icon}</span>
+                                    <div>
+                                      <span className="text-green-400 font-medium text-sm">{provider?.name}</span>
+                                      <p className="text-green-400/60 text-xs">Connected</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => {
+                                        setShowImportFansModal(false);
+                                        setShowNewsletterModal(true);
+                                      }}
+                                      className="text-xs text-green-400 hover:text-green-300"
+                                    >
+                                      Edit
+                                    </button>
+                                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <span className="text-gray-300 text-sm">Mailchimp</span>
-                        </button>
-                        <button
-                          onClick={() => toast.success('ConvertKit integration coming soon!')}
-                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                            <span className="text-red-400 font-bold text-sm">CK</span>
-                          </div>
-                          <span className="text-gray-300 text-sm">ConvertKit</span>
-                        </button>
-                        <button
-                          onClick={() => toast.success('ActiveCampaign integration coming soon!')}
-                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                            <span className="text-blue-400 font-bold text-sm">AC</span>
-                          </div>
-                          <span className="text-gray-300 text-sm">ActiveCampaign</span>
-                        </button>
-                        <button
-                          onClick={() => toast.success('GetResponse integration coming soon!')}
-                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-                            <span className="text-green-400 font-bold text-sm">GR</span>
-                          </div>
-                          <span className="text-gray-300 text-sm">GetResponse</span>
-                        </button>
+                          <p className="text-gray-500 text-xs mb-3">
+                            New fans will automatically sync to your connected email provider.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-sm font-medium text-gray-300 mb-3">Connect Email Provider</label>
+                          <p className="text-gray-500 text-xs mb-3">
+                            Connect your email provider to automatically sync new fans.
+                          </p>
+                        </>
+                      )}
+
+                      {/* Show available providers to connect */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {NEWSLETTER_PROVIDERS.map((provider) => {
+                          const config = newsletterConfigs.find(c => c.provider === provider.id);
+                          const isConnected = config?.is_active;
+                          
+                          if (isConnected) return null; // Don't show already connected ones in grid
+                          
+                          return (
+                            <button
+                              key={provider.id}
+                              onClick={() => {
+                                setShowImportFansModal(false);
+                                setShowNewsletterModal(true);
+                              }}
+                              className="flex items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <span className="text-base">{provider.icon}</span>
+                              <span className="text-gray-300 text-sm">{provider.name}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
