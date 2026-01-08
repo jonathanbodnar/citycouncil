@@ -152,6 +152,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         digitalWallets: ['ApplePay', 'GooglePay'],
         appearance: {
           colorBackground: 'transparent',
+          // Fortis Commerce.js v1.0.0 - fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
+          fontFamily: 'OpenSans',
         },
       });
 
