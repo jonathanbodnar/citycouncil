@@ -1985,6 +1985,19 @@ const BioPage: React.FC = () => {
                       </div>
                     )}
                     
+                    {/* Benefits preview */}
+                    {service.benefits && service.benefits.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {service.benefits.slice(0, 2).map((benefit, i) => (
+                          <span key={i} className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded-full">
+                            ✓ {benefit}
+                          </span>
+                        ))}
+                        {service.benefits.length > 2 && (
+                          <span className="text-xs text-gray-500">+{service.benefits.length - 2} more</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>
