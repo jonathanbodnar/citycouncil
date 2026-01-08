@@ -3187,21 +3187,44 @@ const BioDashboard: React.FC = () => {
               const platform = socialId.replace('profile-', '');
               const social = socialLinks.find(s => s.id === socialId);
               if (social && talentProfile?.id) {
-                // Try to upsert the social account
-                const { error } = await supabase
+                // First check if a record exists
+                const { data: existing } = await supabase
                   .from('social_accounts')
-                  .upsert({
-                    talent_id: talentProfile.id,
-                    platform: platform,
-                    handle: social.handle.startsWith('@') ? social.handle : `@${social.handle}`,
-                    follower_count: count,
-                  }, { onConflict: 'talent_id,platform' });
+                  .select('id')
+                  .eq('talent_id', talentProfile.id)
+                  .eq('platform', platform)
+                  .single();
                 
-                if (error) {
-                  console.error('Failed to save follower count:', error);
-                  toast.error('Failed to save follower count');
+                if (existing) {
+                  // Update existing record
+                  const { error } = await supabase
+                    .from('social_accounts')
+                    .update({ follower_count: count })
+                    .eq('id', existing.id);
+                  
+                  if (error) {
+                    console.error('Failed to save follower count:', error);
+                    toast.error('Failed to save follower count');
+                  } else {
+                    toast.success('Follower count saved');
+                  }
                 } else {
-                  toast.success('Follower count saved');
+                  // Insert new record
+                  const { error } = await supabase
+                    .from('social_accounts')
+                    .insert({
+                      talent_id: talentProfile.id,
+                      platform: platform,
+                      handle: social.handle.startsWith('@') ? social.handle : `@${social.handle}`,
+                      follower_count: count,
+                    });
+                  
+                  if (error) {
+                    console.error('Failed to save follower count:', error);
+                    toast.error('Failed to save follower count');
+                  } else {
+                    toast.success('Follower count saved');
+                  }
                 }
               }
             } else {
