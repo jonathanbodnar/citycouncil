@@ -2824,7 +2824,7 @@ const BioDashboard: React.FC = () => {
                                 )}
                               </div>
                             ) : (
-                              <p className="text-gray-400 text-xs">Book a personalized video message</p>
+                              <p className="text-gray-400 text-xs">From {talentProfile?.full_name || 'your favorite creator'}</p>
                             )}
                           </div>
                         </div>
