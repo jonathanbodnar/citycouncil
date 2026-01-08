@@ -387,71 +387,12 @@ serve(async (req) => {
         throw new Error("Failed to generate authentication link");
       }
 
-      // Verify the magic link server-side to get session tokens
-      // Parse the token from the magic link URL
-      const magicLinkUrlObj = new URL(magicLinkUrl);
-      const token = magicLinkUrlObj.searchParams.get('token');
-      const type = magicLinkUrlObj.searchParams.get('type');
-      
-      if (token && type === 'magiclink') {
-        // Verify the OTP to get a session
-        const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'magiclink',
-        });
-        
-        if (sessionError) {
-          console.error('Error verifying magic link token:', sessionError);
-          // Fall back to returning the magic link URL
-          console.log('Falling back to magic link redirect');
-          return new Response(
-            JSON.stringify({
-              success: true,
-              isLogin: true,
-              magicLink: magicLinkUrl,
-              user: {
-                id: existingUser.id,
-                email: existingUser.email,
-                fullName: existingUser.full_name,
-                userType: existingUser.user_type,
-              },
-            }),
-            {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-              status: 200,
-            }
-          );
-        }
-        
-        if (sessionData.session) {
-          console.log('Login successful with direct session for:', existingUser.email);
-          return new Response(
-            JSON.stringify({
-              success: true,
-              isLogin: true,
-              session: {
-                access_token: sessionData.session.access_token,
-                refresh_token: sessionData.session.refresh_token,
-                expires_in: sessionData.session.expires_in,
-                expires_at: sessionData.session.expires_at,
-              },
-              user: {
-                id: existingUser.id,
-                email: existingUser.email,
-                fullName: existingUser.full_name,
-                userType: existingUser.user_type,
-              },
-            }),
-            {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-              status: 200,
-            }
-          );
-        }
-      }
-
-      // Fallback to magic link
-      console.log('Login successful (magic link fallback) for:', existingUser.email);
+      // Return the magic link for client-side verification
+      // NOTE: We used to verify server-side and return tokens, but this caused issues
+      // because magic link tokens are one-time use. The server verification would consume
+      // the token, and then when the client tried to use the session, it would fail.
+      // Now we just return the magic link URL and let the client handle it.
+      console.log('Login successful, returning magic link for:', existingUser.email);
 
       return new Response(
         JSON.stringify({
@@ -579,46 +520,9 @@ serve(async (req) => {
         throw new Error("Account created but login failed. Please use login page.");
       }
 
-      // Try to verify the magic link server-side to get session tokens
-      const regMagicLinkUrlObj = new URL(magicLinkUrl);
-      const regToken = regMagicLinkUrlObj.searchParams.get('token');
-      const regType = regMagicLinkUrlObj.searchParams.get('type');
-      
-      if (regToken && regType === 'magiclink') {
-        const { data: regSessionData, error: regSessionError } = await supabase.auth.verifyOtp({
-          token_hash: regToken,
-          type: 'magiclink',
-        });
-        
-        if (!regSessionError && regSessionData.session) {
-          console.log('Registration complete with direct session for:', normalizedEmail);
-          return new Response(
-            JSON.stringify({
-              success: true,
-              isLogin: false,
-              session: {
-                access_token: regSessionData.session.access_token,
-                refresh_token: regSessionData.session.refresh_token,
-                expires_in: regSessionData.session.expires_in,
-                expires_at: regSessionData.session.expires_at,
-              },
-              user: {
-                id: authData.user.id,
-                email: normalizedEmail,
-                fullName: displayName,
-                userType: 'user',
-              },
-            }),
-            {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-              status: 200,
-            }
-          );
-        }
-      }
-
-      // Fallback to magic link
-      console.log('Registration complete (magic link fallback) for:', normalizedEmail);
+      // Return the magic link for client-side verification
+      // NOTE: We used to verify server-side and return tokens, but this caused session issues.
+      console.log('Registration complete, returning magic link for:', normalizedEmail);
 
       return new Response(
         JSON.stringify({
