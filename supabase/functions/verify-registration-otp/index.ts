@@ -368,43 +368,26 @@ serve(async (req) => {
         }
       }
 
-      // Generate a temporary password and sign in the user directly
-      // This bypasses magic link issues entirely
-      const tempPassword = generateRandomPassword();
+      // Use admin API to generate session tokens directly
+      // This creates tokens that can be used by the client without any server-side session
+      const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession(existingUser.id);
       
-      // Update the user's password
-      const { error: updateError } = await supabase.auth.admin.updateUserById(
-        existingUser.id,
-        { password: tempPassword }
-      );
-      
-      if (updateError) {
-        console.error('Error updating user password:', updateError);
+      if (sessionError || !sessionData.session) {
+        console.error('Error creating session:', sessionError);
         throw new Error("Failed to authenticate user");
       }
       
-      // Sign in with the new password to get session tokens
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: existingUser.email || normalizedEmail,
-        password: tempPassword,
-      });
-      
-      if (signInError || !signInData.session) {
-        console.error('Error signing in user:', signInError);
-        throw new Error("Failed to authenticate user");
-      }
-      
-      console.log('Login successful with direct session for:', existingUser.email);
+      console.log('Login successful with admin-created session for:', existingUser.email);
 
       return new Response(
         JSON.stringify({
           success: true,
           isLogin: true,
           session: {
-            access_token: signInData.session.access_token,
-            refresh_token: signInData.session.refresh_token,
-            expires_in: signInData.session.expires_in,
-            expires_at: signInData.session.expires_at,
+            access_token: sessionData.session.access_token,
+            refresh_token: sessionData.session.refresh_token,
+            expires_in: sessionData.session.expires_in,
+            expires_at: sessionData.session.expires_at,
           },
           user: {
             id: existingUser.id,
@@ -509,28 +492,25 @@ serve(async (req) => {
           ignoreDuplicates: true
         });
 
-      // Sign in the newly created user directly with their password
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password: randomPassword,
-      });
+      // Use admin API to generate session tokens directly for the new user
+      const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession(authData.user.id);
       
-      if (signInError || !signInData.session) {
-        console.error('Error signing in new user:', signInError);
+      if (sessionError || !sessionData.session) {
+        console.error('Error creating session for new user:', sessionError);
         throw new Error("Account created but login failed. Please use login page.");
       }
       
-      console.log('Registration complete with direct session for:', normalizedEmail);
+      console.log('Registration complete with admin-created session for:', normalizedEmail);
 
       return new Response(
         JSON.stringify({
           success: true,
           isLogin: false,
           session: {
-            access_token: signInData.session.access_token,
-            refresh_token: signInData.session.refresh_token,
-            expires_in: signInData.session.expires_in,
-            expires_at: signInData.session.expires_at,
+            access_token: sessionData.session.access_token,
+            refresh_token: sessionData.session.refresh_token,
+            expires_in: sessionData.session.expires_in,
+            expires_at: sessionData.session.expires_at,
           },
           user: {
             id: authData.user.id,
