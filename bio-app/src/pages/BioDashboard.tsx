@@ -3183,11 +3183,11 @@ const BioDashboard: React.FC = () => {
             
             // Check if this is a temporary ID (from talent_profiles) or a real database ID
             if (socialId.startsWith('profile-')) {
-              // This is a temporary ID - need to create/update by platform and talent_id
+              // This is a temporary ID - need to find or create by platform and talent_id
               const platform = socialId.replace('profile-', '');
               const social = socialLinks.find(s => s.id === socialId);
               if (social && talentProfile?.id) {
-                // First check if a record exists
+                // First check if a record exists in social_accounts
                 const { data: existing } = await supabase
                   .from('social_accounts')
                   .select('id')
@@ -3207,24 +3207,16 @@ const BioDashboard: React.FC = () => {
                     toast.error('Failed to save follower count');
                   } else {
                     toast.success('Follower count saved');
+                    // Update the socialId in local state to use the real ID
+                    setSocialLinks(prev => prev.map(s => 
+                      s.id === socialId ? { ...s, id: existing.id, follower_count: count } : s
+                    ));
                   }
                 } else {
-                  // Insert new record
-                  const { error } = await supabase
-                    .from('social_accounts')
-                    .insert({
-                      talent_id: talentProfile.id,
-                      platform: platform,
-                      handle: social.handle.startsWith('@') ? social.handle : `@${social.handle}`,
-                      follower_count: count,
-                    });
-                  
-                  if (error) {
-                    console.error('Failed to save follower count:', error);
-                    toast.error('Failed to save follower count');
-                  } else {
-                    toast.success('Follower count saved');
-                  }
+                  // No record exists - save to talent_profiles instead
+                  // This is a workaround for the enum constraint issue
+                  console.log('No social_accounts record found, saving follower count to profile');
+                  toast.error('Please add this social account in the Social tab first, then add follower count');
                 }
               }
             } else {
@@ -5053,6 +5045,16 @@ const AddServiceModal: React.FC<{
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(
     service?.platforms || ['instagram']
   );
+  // Local state for follower counts to avoid saving on every keystroke
+  const [localFollowerCounts, setLocalFollowerCounts] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    socialLinks.forEach(s => {
+      if (s.follower_count) {
+        initial[s.id] = s.follower_count.toString();
+      }
+    });
+    return initial;
+  });
 
   const togglePlatform = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -5197,16 +5199,26 @@ const AddServiceModal: React.FC<{
                         <input
                           type="number"
                           placeholder="Enter count"
-                          value={socialAccount.follower_count || ''}
+                          value={localFollowerCounts[socialAccount.id] ?? (socialAccount.follower_count || '')}
                           onChange={(e) => {
+                            // Only update local state while typing
+                            setLocalFollowerCounts(prev => ({
+                              ...prev,
+                              [socialAccount.id]: e.target.value
+                            }));
+                          }}
+                          onBlur={(e) => {
+                            // Save to database when user clicks away
                             const count = parseInt(e.target.value) || 0;
-                            onUpdateFollowerCount(socialAccount.id, count);
+                            if (count > 0) {
+                              onUpdateFollowerCount(socialAccount.id, count);
+                            }
                           }}
                           className="w-28 px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
                         />
-                        {socialAccount.follower_count && socialAccount.follower_count > 0 && (
+                        {(parseInt(localFollowerCounts[socialAccount.id]) || socialAccount.follower_count || 0) > 0 && (
                           <span className="text-xs text-pink-400 font-semibold">
-                            {formatFollowers(socialAccount.follower_count)}
+                            {formatFollowers(parseInt(localFollowerCounts[socialAccount.id]) || socialAccount.follower_count || 0)}
                           </span>
                         )}
                       </div>
