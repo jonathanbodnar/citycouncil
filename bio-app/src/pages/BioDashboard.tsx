@@ -3242,15 +3242,23 @@ const BioDashboard: React.FC = () => {
               }
             } else {
               // This is a real database ID - update directly
-              const { error } = await supabase
+              console.log('Updating social_accounts directly with ID:', socialId, 'count:', count);
+              const { data, error } = await supabase
                 .from('social_accounts')
                 .update({ follower_count: count })
-                .eq('id', socialId);
+                .eq('id', socialId)
+                .select();
+              
+              console.log('Update result:', { data, error });
               
               if (error) {
                 console.error('Failed to save follower count:', error);
                 toast.error('Failed to save follower count');
+              } else if (!data || data.length === 0) {
+                console.error('Update returned no rows - ID might not exist:', socialId);
+                toast.error('Failed to save - account not found');
               } else {
+                console.log('Successfully updated follower count:', data);
                 toast.success('Follower count saved');
               }
             }
