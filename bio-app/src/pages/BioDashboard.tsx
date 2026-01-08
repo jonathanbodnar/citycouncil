@@ -1596,7 +1596,7 @@ const BioDashboard: React.FC = () => {
                             <div className="flex-1 min-w-0">
                               <h3 className="font-medium text-white">{service.title}</h3>
                               <p className="text-sm text-gray-400">
-                                ${(service.pricing / 100).toFixed(0)} • {service.video_length_seconds}s video
+                                ${(service.pricing / 100).toFixed(0)}
                               </p>
                             </div>
                           </div>
@@ -5017,7 +5017,6 @@ const AddServiceModal: React.FC<{
   const [serviceType] = useState<'instagram_collab'>('instagram_collab');
   const [title, setTitle] = useState(service?.title || 'Collaborate with me');
   const [pricing, setPricing] = useState(service ? (service.pricing / 100).toString() : '250');
-  const [videoLength, setVideoLength] = useState(service?.video_length_seconds?.toString() || '60');
   const [benefits, setBenefits] = useState<string[]>(
     service?.benefits || [
       'Personalized video mention',
@@ -5049,7 +5048,7 @@ const AddServiceModal: React.FC<{
       service_type: serviceType,
       title,
       pricing: Math.round(parseFloat(pricing) * 100), // Convert to cents
-      video_length_seconds: parseInt(videoLength),
+      video_length_seconds: 60, // Default value
       benefits,
       platforms: selectedPlatforms,
       description,
@@ -5127,23 +5126,6 @@ const AddServiceModal: React.FC<{
                 required
               />
             </div>
-          </div>
-
-          {/* Video Length */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Video Length (seconds)</label>
-            <select
-              value={videoLength}
-              onChange={(e) => setVideoLength(e.target.value)}
-              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500"
-            >
-              <option value="15">15 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="60">60 seconds</option>
-              <option value="90">90 seconds</option>
-              <option value="120">2 minutes</option>
-              <option value="180">3 minutes</option>
-            </select>
           </div>
 
           {/* Platforms */}
