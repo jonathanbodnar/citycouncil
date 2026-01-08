@@ -277,6 +277,7 @@ const BioDashboard: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showImportFansModal, setShowImportFansModal] = useState(false);
   const [showAddSocialModal, setShowAddSocialModal] = useState(false);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
@@ -301,7 +302,7 @@ const BioDashboard: React.FC = () => {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [uploadingEmailImage, setUploadingEmailImage] = useState(false);
-  const [importingSubscribers, setImportingSubscribers] = useState(false);
+  const [importingFans, setImportingFans] = useState(false);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -2018,11 +2019,11 @@ const BioDashboard: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-3xl font-bold text-white">{subscriberCount}</p>
-                      <p className="text-gray-400 text-sm">Subscribers</p>
+                      <p className="text-gray-400 text-sm">Fans</p>
                     </div>
                   </div>
                   <button
-                    onClick={() => setShowImportModal(true)}
+                    onClick={() => setShowImportFansModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:bg-white/10 transition-colors text-sm"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2296,7 +2297,7 @@ const BioDashboard: React.FC = () => {
                     className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {subscriberCount === 0 
-                      ? 'No Subscribers Yet' 
+                      ? 'No Fans Yet' 
                       : `Send Now (${subscriberCount})`}
                   </button>
                 </div>
@@ -2372,13 +2373,13 @@ const BioDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Import Subscribers Modal */}
-            {showImportModal && (
+            {/* Import Fans Modal */}
+            {showImportFansModal && (
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                 <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-lg">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-white">Import Subscribers</h3>
-                    <button onClick={() => setShowImportModal(false)} className="text-gray-400 hover:text-white">
+                    <h3 className="text-lg font-semibold text-white">Import Fans</h3>
+                    <button onClick={() => setShowImportFansModal(false)} className="text-gray-400 hover:text-white">
                       <XMarkIcon className="w-5 h-5" />
                     </button>
                   </div>
@@ -2389,7 +2390,7 @@ const BioDashboard: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-300 mb-3">Upload CSV</label>
                       <label className="block">
                         <div className="flex items-center justify-center w-full h-28 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors bg-white/5">
-                          {importingSubscribers ? (
+                          {importingFans ? (
                             <div className="flex items-center gap-2 text-gray-400">
                               <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -2414,11 +2415,11 @@ const BioDashboard: React.FC = () => {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              setImportingSubscribers(true);
-                              // TODO: Parse CSV and import subscribers
+                              setImportingFans(true);
+                              // TODO: Parse CSV and import fans
                               setTimeout(() => {
                                 toast.success('CSV import coming soon!');
-                                setImportingSubscribers(false);
+                                setImportingFans(false);
                               }, 1000);
                             }
                           }}
@@ -2481,7 +2482,7 @@ const BioDashboard: React.FC = () => {
 
                   <div className="flex justify-end mt-6">
                     <button
-                      onClick={() => setShowImportModal(false)}
+                      onClick={() => setShowImportFansModal(false)}
                       className="px-6 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors"
                     >
                       Close
