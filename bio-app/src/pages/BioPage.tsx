@@ -2312,9 +2312,20 @@ const BioPage: React.FC = () => {
                       <GiftIcon className="h-4 w-4 text-blue-400" />
                       <span className="text-blue-400 text-xs font-medium">ShoutOut</span>
                     </div>
-                    <h3 className="text-white font-semibold text-sm mb-1">
-                      Get a personalized video from {displayName}
-                    </h3>
+                    {randomReview ? (
+                      <h3 className="text-white font-semibold text-sm mb-1">
+                        Get a personalized video from {displayName}
+                      </h3>
+                    ) : (
+                      <>
+                        <h3 className="text-blue-400 font-semibold text-sm mb-0.5">
+                          Get a personalized video ShoutOut
+                        </h3>
+                        <p className="text-white text-sm font-medium">
+                          From {talent?.full_name || displayName}
+                        </p>
+                      </>
+                    )}
                     
                     {/* Random Review - Show first line only */}
                     {randomReview && (
