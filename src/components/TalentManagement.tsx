@@ -321,6 +321,7 @@ const TalentManagement: React.FC = () => {
         fulfillment_time_hours: 48,
         allow_corporate_pricing: false,
         is_verified: false,
+        promote_on_launch: false,
         charity_percentage: 5,
         charity_name: '',
         admin_fee_percentage: defaultAdminFee, // Use platform settings default
