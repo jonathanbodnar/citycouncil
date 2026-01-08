@@ -143,6 +143,13 @@ const HolidayPromoPopup: React.FC = () => {
       return false;
     }
 
+    // Don't show for SMS followup traffic (they already have a coupon)
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmSource = urlParams.get('utm') || urlParams.get('utm_source') || '';
+    if (utmSource === 'followup' || utmSource === 'thread') {
+      return false;
+    }
+
     if (user?.user_type === 'talent' || user?.user_type === 'admin') {
       return false;
     }
