@@ -552,6 +552,7 @@ const BioPage: React.FC = () => {
         
         // Get follower_counts from talent_profiles (fallback storage)
         const profileFollowerCounts = (profile as any).follower_counts || {};
+        console.log('Profile follower_counts from DB:', profileFollowerCounts);
         
         for (const mapping of handleMappings) {
           const handle = (profile as any)[mapping.field];
