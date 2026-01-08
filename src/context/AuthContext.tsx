@@ -74,14 +74,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        console.log('User profile not found, creating from auth data...');
-        // If user profile doesn't exist, try to create it from auth user data
+        console.log('User profile fetch error:', error.code, error.message);
+        
+        // If it's just "no rows returned" (PGRST116), try to create the profile
+        // If it's an RLS error (42501) or other permission error, create a minimal user object
         const { data: { user: authUser } } = await supabase.auth.getUser();
+        
         if (authUser) {
-          console.log('Creating user profile for:', authUser.email);
+          console.log('Auth user found, attempting to create/fetch profile for:', authUser.email);
           
-          // First check if user actually exists (might have been a race condition)
-          const { data: existingUser } = await supabase
+          // First check if user actually exists (might have been a race condition or RLS blocking initial read)
+          const { data: existingUser, error: checkError } = await supabase
             .from('users')
             .select('*')
             .eq('id', authUser.id)
@@ -91,8 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // User exists, just use it (don't overwrite user_type!)
             console.log('User already exists, using existing profile:', existingUser);
             setUser(existingUser);
-          } else {
-            // User doesn't exist, create new one
+          } else if (checkError?.code === 'PGRST116') {
+            // User truly doesn't exist, try to create
+            console.log('User does not exist, creating new profile...');
             const { data: createdUser, error: createError } = await supabase
               .from('users')
               .insert([
@@ -108,14 +112,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (createError) {
               console.error('Error creating user profile:', createError);
-              throw createError;
+              // FALLBACK: Create a minimal user object from auth data so user isn't logged out
+              console.log('Using fallback user object from auth data');
+              setUser({
+                id: authUser.id,
+                email: authUser.email || '',
+                full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                user_type: authUser.user_metadata?.user_type || 'user',
+                avatar_url: authUser.user_metadata?.avatar_url || null,
+                phone: authUser.phone || null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              } as User);
+            } else {
+              console.log('User profile created successfully:', createdUser);
+              setUser(createdUser);
             }
-            
-            console.log('User profile created successfully:', createdUser);
-            setUser(createdUser);
+          } else {
+            // Some other error (likely RLS) - use fallback user object
+            console.log('RLS or other error, using fallback user object. Error:', checkError);
+            setUser({
+              id: authUser.id,
+              email: authUser.email || '',
+              full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+              user_type: authUser.user_metadata?.user_type || 'user',
+              avatar_url: authUser.user_metadata?.avatar_url || null,
+              phone: authUser.phone || null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            } as User);
           }
         } else {
-          throw error;
+          // No auth user - this is a real logout scenario
+          console.log('No auth user found, setting user to null');
+          setUser(null);
         }
       } else {
         console.log('User profile found:', data);
@@ -123,8 +153,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Error fetching/creating user profile:', error);
-      // Don't throw error, just set loading to false so UI doesn't hang
-      setUser(null);
+      // FALLBACK: Try to get auth user and create minimal profile
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          console.log('Exception caught but auth user exists, using fallback');
+          setUser({
+            id: authUser.id,
+            email: authUser.email || '',
+            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+            user_type: authUser.user_metadata?.user_type || 'user',
+            avatar_url: authUser.user_metadata?.avatar_url || null,
+            phone: authUser.phone || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as User);
+        } else {
+          setUser(null);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        setUser(null);
+      }
     } finally {
       console.log('Setting loading to false');
       setLoading(false);

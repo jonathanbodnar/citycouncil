@@ -2629,6 +2629,7 @@ const BioDashboard: React.FC = () => {
                           subtitle?: string;
                           image?: string;
                           icon?: React.ReactNode;
+                          platformIcons?: Array<{ id: string; icon: React.ReactNode } | null>;
                         }> = [];
 
                         // Add event if exists - show details, not image
@@ -2649,11 +2650,26 @@ const BioDashboard: React.FC = () => {
                           });
                         }
 
-                        // Add collab if exists - no image, just icon
+                        // Add collab if exists - show social icons and total followers
                         if (serviceOfferings.length > 0) {
+                          const collab = serviceOfferings[0];
+                          // Calculate total followers from selected platforms
+                          const totalFollowers = collab.platforms?.reduce((total, platformId) => {
+                            const social = socialLinks.find(s => s.platform === platformId);
+                            return total + (social?.follower_count || 0);
+                          }, 0) || 0;
+                          
+                          // Get social icons for the platforms
+                          const platformIcons = collab.platforms?.slice(0, 3).map(platformId => {
+                            const platform = COLLAB_PLATFORMS.find(p => p.id === platformId);
+                            return platform ? { id: platformId, icon: platform.icon } : null;
+                          }).filter(Boolean) || [];
+                          
                           gridItems.push({
                             type: 'collab',
                             title: 'Collaborate with me',
+                            subtitle: totalFollowers > 0 ? `${totalFollowers >= 1000000 ? (totalFollowers / 1000000).toFixed(1) + 'M' : totalFollowers >= 1000 ? (totalFollowers / 1000).toFixed(0) + 'K' : totalFollowers} followers` : undefined,
+                            platformIcons: platformIcons,
                             icon: (
                               <svg className="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/>
@@ -2667,12 +2683,8 @@ const BioDashboard: React.FC = () => {
                           gridItems.push({
                             type: 'link',
                             title: link.title || 'Link',
-                            image: link.image_url || undefined, // Only use actual images, not icons
-                            icon: link.icon_url ? (
-                              <img src={link.icon_url} alt="" className="w-4 h-4 rounded" />
-                            ) : (
-                              <LinkIcon className="w-4 h-4 text-blue-400" />
-                            )
+                            image: link.image_url || link.icon_url || undefined, // Use image_url or icon_url
+                            icon: <LinkIcon className="w-4 h-4 text-blue-400" />
                           });
                         });
 
@@ -2734,8 +2746,27 @@ const BioDashboard: React.FC = () => {
                                         <p className="text-white text-[10px] font-medium truncate">{item.title}</p>
                                       </div>
                                     </div>
+                                  ) : item.type === 'collab' && item.platformIcons && item.platformIcons.length > 0 ? (
+                                    /* Collab shows social platform icons and follower count */
+                                    <div className={`flex items-center gap-2 p-2.5 ${
+                                      itemCount === 3 && i === 2 ? 'justify-center' : ''
+                                    }`}>
+                                      <div className="flex -space-x-1">
+                                        {item.platformIcons.map((p, idx) => p && (
+                                          <div key={p.id} className="w-4 h-4 text-purple-400" style={{ zIndex: 10 - idx }}>
+                                            {p.icon}
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-gray-200 text-[10px] font-medium truncate">{item.title}</p>
+                                        {item.subtitle && (
+                                          <p className="text-purple-400 text-[9px] truncate">{item.subtitle}</p>
+                                        )}
+                                      </div>
+                                    </div>
                                   ) : (
-                                    /* Events show details, collab and links without images show icon + text */
+                                    /* Events show details, links without images show icon + text */
                                     <div className={`flex items-center gap-2 p-2.5 ${
                                       itemCount === 3 && i === 2 ? 'justify-center' : ''
                                     }`}>
