@@ -3255,8 +3255,30 @@ const BioDashboard: React.FC = () => {
                 console.error('Failed to save follower count:', error);
                 toast.error('Failed to save follower count');
               } else if (!data || data.length === 0) {
-                console.error('Update returned no rows - ID might not exist:', socialId);
-                toast.error('Failed to save - account not found');
+                // ID doesn't exist in social_accounts - find the platform and save to talent_profiles
+                console.log('ID not in social_accounts, finding platform from local state...');
+                const social = socialLinks.find(s => s.id === socialId);
+                if (social && talentProfile?.id) {
+                  console.log('Found platform:', social.platform, '- saving to talent_profiles.follower_counts');
+                  const currentCounts = (talentProfile as any).follower_counts || {};
+                  const updatedCounts = { ...currentCounts, [social.platform]: count };
+                  
+                  const { error: profileError } = await supabase
+                    .from('talent_profiles')
+                    .update({ follower_counts: updatedCounts })
+                    .eq('id', talentProfile.id);
+                  
+                  if (profileError) {
+                    console.error('Failed to save to talent_profiles:', profileError);
+                    toast.error('Failed to save follower count');
+                  } else {
+                    console.log('Saved to talent_profiles.follower_counts:', updatedCounts);
+                    toast.success('Follower count saved');
+                    setTalentProfile(prev => prev ? { ...prev, follower_counts: updatedCounts } as any : null);
+                  }
+                } else {
+                  toast.error('Failed to save - account not found');
+                }
               } else {
                 console.log('Successfully updated follower count:', data);
                 toast.success('Follower count saved');
