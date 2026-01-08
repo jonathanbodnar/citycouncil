@@ -314,7 +314,7 @@ const SMSFlowManagement: React.FC = () => {
   };
 
   const deleteMessage = async (messageId: string) => {
-    if (!confirm('Are you sure you want to delete this message?')) return;
+    if (!window.confirm('Are you sure you want to delete this message?')) return;
 
     try {
       const { error } = await supabase
