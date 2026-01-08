@@ -524,6 +524,8 @@ const BioPage: React.FC = () => {
           .select('id, platform, handle, follower_count')
           .eq('talent_id', profile.id);
         
+        console.log('Social accounts from DB:', socialData);
+        
         // Combine social_accounts with handles from talent_profiles
         // This ensures handles added via admin show up even if not in social_accounts
         const combinedAccounts: SocialAccount[] = [];
