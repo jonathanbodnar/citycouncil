@@ -38,6 +38,7 @@ const navItems: NavItem[] = [
   { key: 'orders', label: 'Orders', icon: ShoppingCartIcon },
   { key: 'users', label: 'Users', icon: UsersIcon },
   { key: 'giveaway', label: 'Giveaway', icon: GiftIcon },
+  { key: 'sms-flows', label: 'SMS Flows', icon: ChatBubbleLeftRightIcon },
   { key: 'talent', label: 'Talent', icon: UsersIcon },
   { key: 'payouts', label: 'Payouts', icon: CurrencyDollarIcon },
   { key: 'w9s', label: 'W-9 Forms', icon: DocumentTextIcon },

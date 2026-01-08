@@ -57,6 +57,7 @@ const TalentManagement: React.FC = () => {
     fulfillment_time_hours: 48,
     allow_corporate_pricing: false,
     is_verified: false,
+    promote_on_launch: false, // Send SMS announcement when profile goes live
     charity_percentage: 5,
     charity_name: '',
     admin_fee_percentage: 25, // Will be updated from platform settings
@@ -246,6 +247,7 @@ const TalentManagement: React.FC = () => {
         corporate_pricing: newTalent.corporate_pricing,
         allow_corporate_pricing: newTalent.allow_corporate_pricing,
         is_verified: newTalent.is_verified,
+        promote_on_launch: newTalent.promote_on_launch, // SMS announcement when profile goes live
         fulfillment_time_hours: newTalent.fulfillment_time_hours,
         charity_percentage: newTalent.charity_percentage,
         charity_name: newTalent.charity_name,
@@ -1143,6 +1145,15 @@ const TalentManagement: React.FC = () => {
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Verified Talent ✓</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTalent.promote_on_launch}
+                      onChange={(e) => setNewTalent({...newTalent, promote_on_launch: e.target.checked})}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">📢 Promote on Launch</span>
                   </label>
                 </div>
               </div>
