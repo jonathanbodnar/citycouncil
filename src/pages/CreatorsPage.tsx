@@ -75,44 +75,83 @@ export default function CreatorsPage() {
       <div className="relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent)]" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:pt-32 sm:pb-24">
-          <div className="text-center">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-              The only <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">free-speech, commerce-ready</span> bio link that helps you secure your uncancellable audience.
-            </h1>
-            <p className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8">
-              Our mission at ShoutOut is to empower free-speech creators through richer experiences for their audience.
-            </p>
-            
-            {/* Badge Section */}
-            <div className="flex flex-wrap justify-center gap-3 mb-10">
-              <span className="px-5 py-2.5 bg-blue-500/10 border border-blue-400/30 rounded-full text-blue-300 font-medium text-sm backdrop-blur-sm">
-                Security
-              </span>
-              <span className="px-5 py-2.5 bg-purple-500/10 border border-purple-400/30 rounded-full text-purple-300 font-medium text-sm backdrop-blur-sm">
-                Simplicity
-              </span>
-              <span className="px-5 py-2.5 bg-pink-500/10 border border-pink-400/30 rounded-full text-pink-300 font-medium text-sm backdrop-blur-sm">
-                Sovereignty
-              </span>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Text Content */}
+            <div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                The only <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">free-speech, commerce-ready</span> bio link that helps you secure your uncancellable audience.
+              </h1>
+              <p className="text-xl sm:text-2xl text-gray-300 leading-relaxed mb-8">
+                Our mission at ShoutOut is to empower free-speech creators through richer experiences for their audience.
+              </p>
+              
+              {/* Badge Section */}
+              <div className="flex flex-wrap gap-3 mb-8">
+                <span className="px-5 py-2.5 bg-blue-500/10 border border-blue-400/30 rounded-full text-blue-300 font-medium text-sm backdrop-blur-sm">
+                  Security
+                </span>
+                <span className="px-5 py-2.5 bg-purple-500/10 border border-purple-400/30 rounded-full text-purple-300 font-medium text-sm backdrop-blur-sm">
+                  Simplicity
+                </span>
+                <span className="px-5 py-2.5 bg-pink-500/10 border border-pink-400/30 rounded-full text-pink-300 font-medium text-sm backdrop-blur-sm">
+                  Sovereignty
+                </span>
+              </div>
+
+              <div className="mb-8">
+                <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4">
+                  Your link in bio is one of the most powerful tools you have as a creator. Use it wisely.
+                </p>
+                <p className="text-lg sm:text-xl text-gray-300 leading-relaxed">
+                  Best part? We already built it for you. If you are a creator on ShoutOut, you have a <strong className="text-white font-semibold">Shout.bio</strong> pre-built and pre-integrated. No additional setup required.
+                </p>
+              </div>
+
+              {/* CTA Button */}
+              <div className="mt-8">
+                <Link
+                  to="/onboard"
+                  className="inline-block px-8 py-4 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
+                >
+                  Start for free
+                </Link>
+              </div>
             </div>
 
-            <div className="max-w-3xl mx-auto mb-10">
-              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4">
-                Your link in bio is one of the most powerful tools you have as a creator. Use it wisely.
-              </p>
-              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed">
-                Best part? We already built it for you. If you are a creator on ShoutOut, you have a <strong className="text-white font-semibold">Shout.bio</strong> pre-built and pre-integrated. No additional setup required.
-              </p>
-            </div>
-
-            {/* CTA Button */}
-            <div className="mt-10">
-              <Link
-                to="/onboard"
-                className="inline-block px-8 py-4 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
-              >
-                Start for free
-              </Link>
+            {/* Right Column - Example Images */}
+            <div className="relative">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                  <div className="relative bg-gray-800 rounded-2xl overflow-hidden border border-gray-700/50">
+                    <img 
+                      src="/creatorbios/JP.png" 
+                      alt="JP Bio Example" 
+                      className="w-full h-auto object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="relative group mt-8">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                  <div className="relative bg-gray-800 rounded-2xl overflow-hidden border border-gray-700/50">
+                    <img 
+                      src="/creatorbios/Lydia.png" 
+                      alt="Lydia Bio Example" 
+                      className="w-full h-auto object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="relative group mt-4">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                  <div className="relative bg-gray-800 rounded-2xl overflow-hidden border border-gray-700/50">
+                    <img 
+                      src="/creatorbios/Melonie.png" 
+                      alt="Melonie Bio Example" 
+                      className="w-full h-auto object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
