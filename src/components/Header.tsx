@@ -344,6 +344,12 @@ const Header: React.FC = () => {
                 Personalities
               </Link>
             )}
+            <Link 
+              to="/creators" 
+              className="text-gray-700 hover:text-primary-600 font-medium"
+            >
+              For Creators
+            </Link>
             {user && (
               <Link 
                 to="/dashboard" 

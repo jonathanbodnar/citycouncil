@@ -973,7 +973,7 @@ const TalentManagement: React.FC = () => {
 
       {/* Add Talent Form Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: '#111827' }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700">
@@ -1972,7 +1972,7 @@ const TalentManagement: React.FC = () => {
 
       {/* Edit Talent Modal */}
       {editingTalent && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: '#111827' }}>
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Edit Talent Profile</h3>
             
