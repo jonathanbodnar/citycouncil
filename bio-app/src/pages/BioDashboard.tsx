@@ -2837,8 +2837,8 @@ const BioDashboard: React.FC = () => {
                                   ))}
                                 </div>
                                 {randomReview.comment && (
-                                  <p className="text-gray-300 text-xs line-clamp-2">
-                                    "{randomReview.comment.split('\n')[0]}"
+                                  <p className="text-gray-300 text-xs line-clamp-1">
+                                    "{randomReview.comment}"
                                   </p>
                                 )}
                                 {randomReview.users?.full_name && (
