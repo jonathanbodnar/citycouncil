@@ -1854,7 +1854,13 @@ const BioDashboard: React.FC = () => {
                     <div className="w-3 h-3 rounded-full bg-green-500/60"></div>
                   </div>
                   <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5 ml-2">
-                    <span className="text-gray-400 text-xs truncate flex-1">{bioUrl}</span>
+                    <button
+                      onClick={copyBioUrl}
+                      className="text-gray-400 hover:text-white transition-colors text-xs truncate flex-1 text-left cursor-pointer"
+                      title="Click to copy URL"
+                    >
+                      {bioUrl}
+                    </button>
                     <button
                       onClick={copyBioUrl}
                       className="text-gray-400 hover:text-white transition-colors"
