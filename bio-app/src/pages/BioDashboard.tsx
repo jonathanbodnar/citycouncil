@@ -299,6 +299,7 @@ const BioDashboard: React.FC = () => {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [uploadingEmailImage, setUploadingEmailImage] = useState(false);
+  const [importingSubscribers, setImportingSubscribers] = useState(false);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -1917,16 +1918,27 @@ const BioDashboard: React.FC = () => {
             <div className="space-y-6">
               {/* Stats */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold text-white">{subscriberCount}</p>
+                      <p className="text-gray-400 text-sm">Subscribers</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:bg-white/10 transition-colors text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-white">{subscriberCount}</p>
-                    <p className="text-gray-400 text-sm">Subscribers</p>
-                  </div>
+                    Import
+                  </button>
                 </div>
               </div>
 
@@ -2224,6 +2236,125 @@ const BioDashboard: React.FC = () => {
               </div>
             )}
 
+            {/* Import Subscribers Modal */}
+            {showImportModal && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-lg">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-white">Import Subscribers</h3>
+                    <button onClick={() => setShowImportModal(false)} className="text-gray-400 hover:text-white">
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* CSV Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Upload CSV</label>
+                      <label className="block">
+                        <div className="flex items-center justify-center w-full h-28 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors bg-white/5">
+                          {importingSubscribers ? (
+                            <div className="flex items-center gap-2 text-gray-400">
+                              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Importing...
+                            </div>
+                          ) : (
+                            <div className="text-center">
+                              <svg className="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span className="text-sm text-gray-400">Drop CSV file or click to browse</span>
+                              <p className="text-xs text-gray-500 mt-1">Format: email, name (optional)</p>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept=".csv"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setImportingSubscribers(true);
+                              // TODO: Parse CSV and import subscribers
+                              setTimeout(() => {
+                                toast.success('CSV import coming soon!');
+                                setImportingSubscribers(false);
+                              }, 1000);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-white/10"></div>
+                      </div>
+                      <div className="relative flex justify-center text-xs">
+                        <span className="px-2 bg-gray-900 text-gray-500">or connect</span>
+                      </div>
+                    </div>
+
+                    {/* Email Integrations */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Import from Email Provider</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => toast.success('Mailchimp integration coming soon!')}
+                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+                            <span className="text-yellow-400 font-bold text-sm">MC</span>
+                          </div>
+                          <span className="text-gray-300 text-sm">Mailchimp</span>
+                        </button>
+                        <button
+                          onClick={() => toast.success('ConvertKit integration coming soon!')}
+                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                            <span className="text-red-400 font-bold text-sm">CK</span>
+                          </div>
+                          <span className="text-gray-300 text-sm">ConvertKit</span>
+                        </button>
+                        <button
+                          onClick={() => toast.success('ActiveCampaign integration coming soon!')}
+                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                            <span className="text-blue-400 font-bold text-sm">AC</span>
+                          </div>
+                          <span className="text-gray-300 text-sm">ActiveCampaign</span>
+                        </button>
+                        <button
+                          onClick={() => toast.success('GetResponse integration coming soon!')}
+                          className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                            <span className="text-green-400 font-bold text-sm">GR</span>
+                          </div>
+                          <span className="text-gray-300 text-sm">GetResponse</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end mt-6">
+                    <button
+                      onClick={() => setShowImportModal(false)}
+                      className="px-6 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Right Column - Email Preview */}
             <div className="lg:sticky lg:top-24 lg:self-start">
               <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
@@ -2450,10 +2581,20 @@ const BioDashboard: React.FC = () => {
                     </div>
 
                     {/* Footer */}
-                    <div className="text-center pt-4">
-                      <p className="text-gray-500 text-xs">
-                        Powered by <a href="https://shoutout.us/creators" className="text-gray-400 hover:text-white transition-colors">ShoutOut</a>
+                    <div className="text-center pt-4 space-y-3">
+                      <p className="text-gray-500 text-[10px] leading-relaxed">
+                        You subscribed to {talentProfile?.full_name?.split(' ')[0] || 'this creator'} through their link in bio on their social platforms.
                       </p>
+                      <a href="https://shoutout.us/creators" className="inline-block opacity-40 hover:opacity-60 transition-opacity">
+                        <svg className="h-5 w-auto" viewBox="0 0 120 24" fill="white">
+                          <text x="0" y="18" fontFamily="system-ui, -apple-system, sans-serif" fontSize="14" fontWeight="600" letterSpacing="-0.5">
+                            Powered by
+                          </text>
+                          <text x="78" y="18" fontFamily="system-ui, -apple-system, sans-serif" fontSize="14" fontWeight="700" letterSpacing="-0.5">
+                            ShoutOut
+                          </text>
+                        </svg>
+                      </a>
                     </div>
                   </div>
                 </div>
