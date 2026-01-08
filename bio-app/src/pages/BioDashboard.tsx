@@ -1452,16 +1452,6 @@ const BioDashboard: React.FC = () => {
                               <p className="text-sm text-gray-400">
                                 ${(service.pricing / 100).toFixed(0)} • {service.video_length_seconds}s video
                               </p>
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {service.benefits.slice(0, 2).map((benefit, i) => (
-                                  <span key={i} className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded-full">
-                                    {benefit}
-                                  </span>
-                                ))}
-                                {service.benefits.length > 2 && (
-                                  <span className="text-xs text-gray-500">+{service.benefits.length - 2} more</span>
-                                )}
-                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
