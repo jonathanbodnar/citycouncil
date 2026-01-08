@@ -293,8 +293,12 @@ const BioDashboard: React.FC = () => {
   const [emailImageUrl, setEmailImageUrl] = useState('');
   const [emailScheduledDate, setEmailScheduledDate] = useState('');
   const [emailScheduledTime, setEmailScheduledTime] = useState('');
-  const [emailDraftSaved, setEmailDraftSaved] = useState(false);
+  // Draft auto-saves - no need for manual save state
   const [randomReview, setRandomReview] = useState<{ rating: number; comment?: string; users?: { full_name: string } } | null>(null);
+  const [showButtonFields, setShowButtonFields] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [uploadingEmailImage, setUploadingEmailImage] = useState(false);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -1928,7 +1932,15 @@ const BioDashboard: React.FC = () => {
 
               {/* Email Composer */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-white">Compose Update</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Compose Update</h3>
+                  {(emailSubject || emailContent) && (
+                    <span className="text-xs text-green-400 flex items-center gap-1">
+                      <CheckIcon className="w-3 h-3" />
+                      Auto-saved
+                    </span>
+                  )}
+                </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-2">Subject</label>
@@ -1952,83 +1964,172 @@ const BioDashboard: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">Button Text (optional)</label>
-                    <input
-                      type="text"
-                      value={emailButtonText}
-                      onChange={(e) => setEmailButtonText(e.target.value)}
-                      placeholder="Learn More"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">Button URL</label>
-                    <input
-                      type="url"
-                      value={emailButtonUrl}
-                      onChange={(e) => setEmailButtonUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                    />
-                  </div>
+                {/* Add Button/Image Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowButtonFields(!showButtonFields)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      showButtonFields || (emailButtonText && emailButtonUrl)
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    {emailButtonText && emailButtonUrl ? 'Edit Button' : 'Add Button'}
+                  </button>
+                  <button
+                    onClick={() => setShowImageUpload(!showImageUpload)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      showImageUpload || emailImageUrl
+                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                        : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {emailImageUrl ? 'Edit Image' : 'Add Image'}
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">Image URL (optional)</label>
-                  <input
-                    type="url"
-                    value={emailImageUrl}
-                    onChange={(e) => setEmailImageUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                  />
-                </div>
+                {/* Button Fields (collapsible) */}
+                {showButtonFields && (
+                  <div className="bg-white/5 rounded-xl p-4 space-y-3 border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-300">Button Settings</span>
+                      {emailButtonText && emailButtonUrl && (
+                        <button
+                          onClick={() => {
+                            setEmailButtonText('');
+                            setEmailButtonUrl('');
+                            setShowButtonFields(false);
+                          }}
+                          className="text-xs text-red-400 hover:text-red-300"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={emailButtonText}
+                        onChange={(e) => setEmailButtonText(e.target.value)}
+                        placeholder="Button text"
+                        className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                      />
+                      <input
+                        type="url"
+                        value={emailButtonUrl}
+                        onChange={(e) => setEmailButtonUrl(e.target.value)}
+                        placeholder="https://..."
+                        className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                      />
+                    </div>
+                  </div>
+                )}
 
-                {/* Schedule Section */}
-                <div className="border-t border-white/10 pt-4">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3">
+                {/* Image Upload (collapsible) */}
+                {showImageUpload && (
+                  <div className="bg-white/5 rounded-xl p-4 space-y-3 border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-300">Image</span>
+                      {emailImageUrl && (
+                        <button
+                          onClick={() => {
+                            setEmailImageUrl('');
+                            setShowImageUpload(false);
+                          }}
+                          className="text-xs text-red-400 hover:text-red-300"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    
+                    {emailImageUrl ? (
+                      <div className="relative">
+                        <img src={emailImageUrl} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                        <button
+                          onClick={() => setEmailImageUrl('')}
+                          className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
+                        >
+                          <XMarkIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <label className="block">
+                          <div className="flex items-center justify-center w-full h-24 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-white/40 transition-colors">
+                            {uploadingEmailImage ? (
+                              <div className="flex items-center gap-2 text-gray-400">
+                                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Uploading...
+                              </div>
+                            ) : (
+                              <div className="text-center">
+                                <CloudArrowUpIcon className="w-8 h-8 text-gray-500 mx-auto mb-1" />
+                                <span className="text-sm text-gray-400">Click to upload image</span>
+                              </div>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setUploadingEmailImage(true);
+                                try {
+                                  const result = await uploadImageToWasabi(file, `email-images/${talentProfile?.id}`);
+                                  if (result.success && result.imageUrl) {
+                                    setEmailImageUrl(result.imageUrl);
+                                    toast.success('Image uploaded!');
+                                  } else {
+                                    toast.error(result.error || 'Failed to upload image');
+                                  }
+                                } catch (error) {
+                                  toast.error('Failed to upload image');
+                                }
+                                setUploadingEmailImage(false);
+                              }
+                            }}
+                          />
+                        </label>
+                        <div className="text-center text-gray-500 text-xs">or</div>
+                        <input
+                          type="url"
+                          value={emailImageUrl}
+                          onChange={(e) => setEmailImageUrl(e.target.value)}
+                          placeholder="Paste image URL..."
+                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowScheduleModal(true)}
+                    className="flex-1 py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Schedule Send (optional)
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="date"
-                      value={emailScheduledDate}
-                      onChange={(e) => setEmailScheduledDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50"
-                    />
-                    <input
-                      type="time"
-                      value={emailScheduledTime}
-                      onChange={(e) => setEmailScheduledTime(e.target.value)}
-                      className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50"
-                    />
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setEmailDraftSaved(true);
-                      toast.success('Draft saved!');
-                      setTimeout(() => setEmailDraftSaved(false), 3000);
-                    }}
-                    disabled={!emailSubject && !emailContent}
-                    className="flex-1 py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {emailDraftSaved ? (
-                      <>
-                        <CheckIcon className="w-4 h-4 text-green-400" />
-                        Saved
-                      </>
+                    {emailScheduledDate && emailScheduledTime ? (
+                      <span className="text-blue-400">
+                        {new Date(`${emailScheduledDate}T${emailScheduledTime}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      </span>
                     ) : (
-                      'Save Draft'
+                      'Schedule'
                     )}
                   </button>
                   <button
@@ -2043,18 +2144,85 @@ const BioDashboard: React.FC = () => {
                         toast.success('Email updates coming soon!');
                       }
                     }}
-                    disabled={subscriberCount === 0}
+                    disabled={subscriberCount === 0 || !emailSubject || !emailContent}
                     className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {subscriberCount === 0 
                       ? 'No Subscribers Yet' 
-                      : emailScheduledDate && emailScheduledTime 
-                        ? 'Schedule Send'
-                        : `Send Now (${subscriberCount})`}
+                      : `Send Now (${subscriberCount})`}
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* Schedule Modal */}
+            {showScheduleModal && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-md">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-white">Schedule Send</h3>
+                    <button onClick={() => setShowScheduleModal(false)} className="text-gray-400 hover:text-white">
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Date</label>
+                      <input
+                        type="date"
+                        value={emailScheduledDate}
+                        onChange={(e) => setEmailScheduledDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Time</label>
+                      <input
+                        type="time"
+                        value={emailScheduledTime}
+                        onChange={(e) => setEmailScheduledTime(e.target.value)}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                    {emailScheduledDate && emailScheduledTime && (
+                      <button
+                        onClick={() => {
+                          setEmailScheduledDate('');
+                          setEmailScheduledTime('');
+                        }}
+                        className="px-4 py-2 text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Clear
+                      </button>
+                    )}
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => setShowScheduleModal(false)}
+                      className="px-6 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (emailScheduledDate && emailScheduledTime) {
+                          toast.success('Schedule set!');
+                        }
+                        setShowScheduleModal(false);
+                      }}
+                      disabled={!emailScheduledDate || !emailScheduledTime}
+                      className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Set Schedule
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Right Column - Email Preview */}
             <div className="lg:sticky lg:top-24 lg:self-start">
