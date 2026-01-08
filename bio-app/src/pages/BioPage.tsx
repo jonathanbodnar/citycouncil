@@ -1221,12 +1221,12 @@ const BioPage: React.FC = () => {
           href="https://shoutout.us" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="absolute top-4 left-4 z-10 opacity-60 hover:opacity-100 transition-opacity"
+          className="absolute top-4 left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
         >
           <img
             src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png"
             alt="ShoutOut"
-            className="h-6 w-auto brightness-0 invert"
+            className="h-7 w-auto brightness-0 invert"
           />
         </a>
         {/* Profile Header */}
