@@ -221,6 +221,7 @@ interface ServiceOffering {
   benefits: string[];
   platforms: string[]; // Which platforms are included in this collab
   is_active: boolean;
+  total_followers?: number;
 }
 
 interface BioEvent {
@@ -2121,15 +2122,14 @@ const BioPage: React.FC = () => {
               ? `${servicePlatforms[0].charAt(0).toUpperCase() + servicePlatforms[0].slice(1)} Collab`
               : `Social Collab`;
             
-            // Calculate total followers across all social accounts (not just filtered ones)
-            // This ensures we show total reach even if platforms don't match exactly
-            const totalFollowers = socialAccounts.reduce((sum, s) => sum + (s.follower_count || 0), 0);
+            // Use total_followers from the service directly
+            const totalFollowers = service.total_followers || 0;
             
             // Debug logging
             console.log('Collab card debug:', {
               servicePlatforms,
-              socialAccounts: socialAccounts.map(s => ({ platform: s.platform, follower_count: s.follower_count })),
-              totalFollowers
+              totalFollowers,
+              serviceId: service.id
             });
             const formatFollowers = (count: number): string => {
               if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;

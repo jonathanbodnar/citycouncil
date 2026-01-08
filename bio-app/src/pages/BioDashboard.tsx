@@ -132,6 +132,7 @@ interface ServiceOffering {
   platforms: string[]; // Which social platforms are included (instagram, tiktok, youtube, twitter, facebook)
   is_active: boolean;
   display_order: number;
+  total_followers?: number;
 }
 
 interface BioEvent {
@@ -3302,6 +3303,7 @@ const BioDashboard: React.FC = () => {
                   platforms: service.platforms,
                   description: service.description,
                   is_active: service.is_active,
+                  total_followers: service.total_followers || 0,
                 })
                 .eq('id', editingService.id);
               
@@ -3329,6 +3331,7 @@ const BioDashboard: React.FC = () => {
                   description: service.description,
                   is_active: service.is_active,
                   display_order: serviceOfferings.length,
+                  total_followers: service.total_followers || 0,
                 }])
                 .select()
                 .single();
@@ -5083,6 +5086,7 @@ const AddServiceModal: React.FC<{
   const [serviceType] = useState<'instagram_collab'>('instagram_collab');
   const [title, setTitle] = useState(service?.title || 'Collaborate with me');
   const [pricing, setPricing] = useState(service ? (service.pricing / 100).toString() : '250');
+  const [totalFollowers, setTotalFollowers] = useState(service?.total_followers?.toString() || '');
   const [benefits, setBenefits] = useState<string[]>(
     service?.benefits || [
       'Personalized video mention',
@@ -5129,6 +5133,7 @@ const AddServiceModal: React.FC<{
       platforms: selectedPlatforms,
       description,
       is_active: isActive,
+      total_followers: parseInt(totalFollowers) || 0,
     });
   };
 
@@ -5204,10 +5209,32 @@ const AddServiceModal: React.FC<{
             </div>
           </div>
 
+          {/* Total Followers */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Total Followers</label>
+            <p className="text-xs text-gray-500 mb-2">Your combined follower count across all platforms</p>
+            <input
+              type="number"
+              value={totalFollowers}
+              onChange={(e) => setTotalFollowers(e.target.value)}
+              placeholder="e.g. 500000"
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+            />
+            {parseInt(totalFollowers) > 0 && (
+              <p className="text-xs text-pink-400 mt-1">
+                {parseInt(totalFollowers) >= 1000000 
+                  ? `${(parseInt(totalFollowers) / 1000000).toFixed(1)}M followers`
+                  : parseInt(totalFollowers) >= 1000
+                    ? `${(parseInt(totalFollowers) / 1000).toFixed(1)}K followers`
+                    : `${totalFollowers} followers`}
+              </p>
+            )}
+          </div>
+
           {/* Platforms */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Platforms Included</label>
-            <p className="text-xs text-gray-500 mb-3">Select which social platforms this collab covers. Add follower counts for selected platforms.</p>
+            <p className="text-xs text-gray-500 mb-3">Select which social platforms this collab covers.</p>
             <div className="space-y-2">
               {COLLAB_PLATFORMS.map((platform) => {
                 const socialAccount = socialLinks.find(s => s.platform === platform.id);
@@ -5243,37 +5270,6 @@ const AddServiceModal: React.FC<{
                       )}
                     </button>
                     
-                    {/* Follower count input for selected platforms */}
-                    {isSelected && socialAccount && (
-                      <div className="ml-8 flex items-center gap-2 bg-white/5 rounded-lg p-2">
-                        <span className="text-xs text-gray-400">Followers:</span>
-                        <input
-                          type="number"
-                          placeholder="Enter count"
-                          value={localFollowerCounts[socialAccount.id] ?? (socialAccount.follower_count || '')}
-                          onChange={(e) => {
-                            // Only update local state while typing
-                            setLocalFollowerCounts(prev => ({
-                              ...prev,
-                              [socialAccount.id]: e.target.value
-                            }));
-                          }}
-                          onBlur={(e) => {
-                            // Save to database when user clicks away
-                            const count = parseInt(e.target.value) || 0;
-                            if (count > 0) {
-                              onUpdateFollowerCount(socialAccount.id, count);
-                            }
-                          }}
-                          className="w-28 px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
-                        />
-                        {(parseInt(localFollowerCounts[socialAccount.id]) || socialAccount.follower_count || 0) > 0 && (
-                          <span className="text-xs text-pink-400 font-semibold">
-                            {formatFollowers(parseInt(localFollowerCounts[socialAccount.id]) || socialAccount.follower_count || 0)}
-                          </span>
-                        )}
-                      </div>
-                    )}
                     
                     {/* Warning if platform selected but no social account linked */}
                     {isSelected && !socialAccount && (
