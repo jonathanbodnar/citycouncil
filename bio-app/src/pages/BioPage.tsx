@@ -64,6 +64,8 @@ interface TalentProfile {
   rumble_handle?: string;
   rumble_type?: 'user' | 'channel';
   youtube_handle?: string;
+  podcast_rss_url?: string;
+  podcast_name?: string;
 }
 
 interface SocialAccount {
@@ -141,6 +143,7 @@ interface BioSettings {
   show_shoutout_card: boolean;
   show_rumble_card: boolean;
   show_youtube_card?: boolean;
+  show_podcast_card?: boolean;
   show_newsletter?: boolean;
   is_published: boolean;
   background_type: string;
@@ -245,6 +248,17 @@ interface YouTubeVideoData {
   isLive: boolean;
   liveViewers?: number;
   channelUrl: string;
+}
+
+interface PodcastEpisodeData {
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  url: string;
+  pubDate?: string;
+  duration?: string;
+  podcastName: string;
+  feedUrl: string;
 }
 
 // User type for current logged-in user
@@ -363,6 +377,7 @@ const BioPage: React.FC = () => {
   const [newsletterConfig, setNewsletterConfig] = useState<NewsletterConfig | null>(null);
   const [rumbleData, setRumbleData] = useState<RumbleVideoData | null>(null);
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoData | null>(null);
+  const [podcastData, setPodcastData] = useState<PodcastEpisodeData | null>(null);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [showCollabModal, setShowCollabModal] = useState<ServiceOffering | null>(null);
   const [bioEvents, setBioEvents] = useState<BioEvent[]>([]);
@@ -591,6 +606,11 @@ const BioPage: React.FC = () => {
         // Fetch YouTube data - same caching strategy
         if (profile.youtube_handle) {
           fetchYouTubeData(profile.id, profile.youtube_handle);
+        }
+
+        // Fetch Podcast data if RSS feed is configured
+        if (profile.podcast_rss_url) {
+          fetchPodcastData(profile.podcast_rss_url, profile.podcast_name || 'Podcast');
         }
 
       } catch (error) {
@@ -1067,6 +1087,113 @@ const BioPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Background YouTube fetch failed:', error);
+    }
+  };
+
+  // Fetch podcast data from RSS feed
+  const fetchPodcastData = async (rssUrl: string, podcastName: string) => {
+    try {
+      // Use a CORS proxy to fetch the RSS feed
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch podcast RSS:', response.status);
+        return;
+      }
+
+      const text = await response.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      
+      // Check for parse errors
+      const parseError = xml.querySelector('parsererror');
+      if (parseError) {
+        console.error('RSS parse error:', parseError.textContent);
+        return;
+      }
+
+      const channel = xml.querySelector('channel');
+      if (!channel) {
+        console.error('No channel found in RSS feed');
+        return;
+      }
+
+      // Get podcast title from feed if not provided
+      const feedTitle = channel.querySelector('title')?.textContent || podcastName;
+      
+      // Get the latest episode (first item)
+      const item = channel.querySelector('item');
+      if (!item) {
+        console.error('No episodes found in podcast feed');
+        return;
+      }
+
+      const title = item.querySelector('title')?.textContent || 'Latest Episode';
+      const description = item.querySelector('description')?.textContent || '';
+      const pubDate = item.querySelector('pubDate')?.textContent || '';
+      
+      // Get episode link - try different common formats
+      let episodeUrl = item.querySelector('link')?.textContent || '';
+      
+      // Try to get enclosure URL (direct audio link)
+      const enclosure = item.querySelector('enclosure');
+      const audioUrl = enclosure?.getAttribute('url') || '';
+      
+      // Prefer episode page link over direct audio
+      if (!episodeUrl && audioUrl) {
+        episodeUrl = audioUrl;
+      }
+      
+      // Get thumbnail - try iTunes image first, then channel image
+      let thumbnail = '';
+      
+      // Try iTunes image on the item
+      const itunesImage = item.querySelector('image');
+      if (itunesImage) {
+        thumbnail = itunesImage.getAttribute('href') || itunesImage.textContent || '';
+      }
+      
+      // Try media:thumbnail
+      if (!thumbnail) {
+        const mediaThumbnail = item.querySelector('thumbnail');
+        if (mediaThumbnail) {
+          thumbnail = mediaThumbnail.getAttribute('url') || '';
+        }
+      }
+      
+      // Fall back to channel image
+      if (!thumbnail) {
+        const channelImage = channel.querySelector('image > url');
+        if (channelImage) {
+          thumbnail = channelImage.textContent || '';
+        }
+      }
+      
+      // Try iTunes channel image
+      if (!thumbnail) {
+        const itunesChannelImage = channel.querySelector('image[href]');
+        if (itunesChannelImage) {
+          thumbnail = itunesChannelImage.getAttribute('href') || '';
+        }
+      }
+      
+      // Get duration if available
+      const durationEl = item.querySelector('duration');
+      const duration = durationEl?.textContent || '';
+
+      setPodcastData({
+        title,
+        description: description.replace(/<[^>]*>/g, '').substring(0, 200), // Strip HTML and truncate
+        thumbnail,
+        url: episodeUrl || rssUrl,
+        pubDate,
+        duration,
+        podcastName: feedTitle,
+        feedUrl: rssUrl,
+      });
+    } catch (error) {
+      console.error('Error fetching podcast data:', error);
     }
   };
 
@@ -1655,6 +1782,68 @@ const BioPage: React.FC = () => {
                           ? `${youtubeData.liveViewers.toLocaleString()} watching`
                           : `${youtubeData.views.toLocaleString()} views`
                         }
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </a>
+          )}
+
+          {/* Podcast Card - Shows latest episode */}
+          {podcastData && bioSettings && bioSettings.show_podcast_card !== false && (
+            <a
+              href={podcastData.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-stretch">
+                  {/* Thumbnail */}
+                  <div className="w-[120px] h-[120px] flex-shrink-0 relative bg-black/20">
+                    {podcastData.thumbnail ? (
+                      <img 
+                        src={podcastData.thumbnail} 
+                        alt="" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-white/80">
+                          <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                          <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
+                          <circle cx="12" cy="12" r="2"/>
+                          <path d="M12 16l-1 6h2l-1-6z"/>
+                        </svg>
+                      </div>
+                    )}
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white ml-0.5">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 p-3 flex flex-col justify-start min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-purple-400 flex-shrink-0">
+                        <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                        <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
+                        <circle cx="12" cy="12" r="2"/>
+                      </svg>
+                      <span className="text-purple-400 text-xs font-medium truncate">{podcastData.podcastName}</span>
+                    </div>
+                    <h3 className="text-white font-medium text-sm line-clamp-2">
+                      {podcastData.title}
+                    </h3>
+                    {podcastData.pubDate && (
+                      <p className="text-gray-400 text-xs mt-1">
+                        {new Date(podcastData.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {podcastData.duration && ` • ${podcastData.duration}`}
                       </p>
                     )}
                   </div>

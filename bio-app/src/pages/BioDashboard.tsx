@@ -43,6 +43,8 @@ interface TalentProfile {
   rumble_handle?: string;
   rumble_type?: 'user' | 'channel'; // Whether it's a user profile or channel on Rumble
   youtube_handle?: string;
+  podcast_rss_url?: string;
+  podcast_name?: string;
 }
 
 interface SocialAccount {
@@ -71,6 +73,7 @@ interface BioSettings {
   show_shoutout_card: boolean;
   show_rumble_card: boolean;
   show_youtube_card?: boolean;
+  show_podcast_card?: boolean;
   show_newsletter?: boolean;
   is_published: boolean;
   background_type: string;
@@ -282,6 +285,7 @@ const BioDashboard: React.FC = () => {
   const [showAddSocialModal, setShowAddSocialModal] = useState(false);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [showStreamChannelModal, setShowStreamChannelModal] = useState<'rumble' | 'youtube' | null>(null);
+  const [showPodcastModal, setShowPodcastModal] = useState(false);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [editingService, setEditingService] = useState<ServiceOffering | null>(null);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
@@ -1503,6 +1507,74 @@ const BioDashboard: React.FC = () => {
                       </label>
                     </div>
                   </div>
+                )}
+
+                {/* Podcast Card Toggle - Compact */}
+                {talentProfile?.podcast_rss_url ? (
+                  <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-purple-400 flex-shrink-0">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                          <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
+                          <circle cx="12" cy="12" r="2"/>
+                          <path d="M12 16l-1 6h2l-1-6z"/>
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-white text-sm">Podcast</h3>
+                            <span className="text-xs text-gray-500 truncate max-w-[120px]">{talentProfile.podcast_name || 'RSS Feed'}</span>
+                            <button
+                              onClick={() => setShowPodcastModal(true)}
+                              className="p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-colors"
+                            >
+                              <PencilIcon className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-400">Shows your latest podcast episode</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={bioSettings?.show_podcast_card !== false}
+                          onChange={(e) => {
+                            if (bioSettings) {
+                              const updated = { ...bioSettings, show_podcast_card: e.target.checked };
+                              setBioSettings(updated);
+                              supabase
+                                .from('bio_settings')
+                                .update({ show_podcast_card: e.target.checked })
+                                .eq('id', bioSettings.id)
+                                .then(() => {
+                                  toast.success(e.target.checked ? 'Podcast card enabled' : 'Podcast card disabled');
+                                  setTimeout(refreshPreview, 500);
+                                });
+                            }
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowPodcastModal(true)}
+                    className="w-full flex items-center gap-3 p-3 bg-white/5 border border-dashed border-white/20 rounded-xl text-gray-400 hover:text-white hover:border-purple-500/50 hover:bg-purple-500/10 transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-purple-400">
+                      <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                      <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
+                      <circle cx="12" cy="12" r="2"/>
+                      <path d="M12 16l-1 6h2l-1-6z"/>
+                    </svg>
+                    <div className="text-left">
+                      <p className="text-sm font-medium">Add Podcast</p>
+                      <p className="text-xs text-gray-500">Show your latest episode</p>
+                    </div>
+                  </button>
                 )}
 
                 {/* Service Offerings Section */}
@@ -3012,6 +3084,45 @@ const BioDashboard: React.FC = () => {
         />
       )}
 
+      {/* Podcast Modal */}
+      {showPodcastModal && (
+        <PodcastModal
+          currentRssUrl={talentProfile?.podcast_rss_url}
+          currentPodcastName={talentProfile?.podcast_name}
+          onClose={() => setShowPodcastModal(false)}
+          onSave={async (rssUrl, podcastName) => {
+            await supabase
+              .from('talent_profiles')
+              .update({ podcast_rss_url: rssUrl, podcast_name: podcastName })
+              .eq('id', talentProfile?.id);
+            
+            setTalentProfile(prev => prev ? { 
+              ...prev, 
+              podcast_rss_url: rssUrl,
+              podcast_name: podcastName
+            } : prev);
+            toast.success('Podcast settings saved');
+            setTimeout(refreshPreview, 500);
+            setShowPodcastModal(false);
+          }}
+          onRemove={async () => {
+            await supabase
+              .from('talent_profiles')
+              .update({ podcast_rss_url: null, podcast_name: null })
+              .eq('id', talentProfile?.id);
+            
+            setTalentProfile(prev => prev ? { 
+              ...prev, 
+              podcast_rss_url: undefined,
+              podcast_name: undefined
+            } : prev);
+            toast.success('Podcast removed');
+            setTimeout(refreshPreview, 500);
+            setShowPodcastModal(false);
+          }}
+        />
+      )}
+
       {showImportModal && (
         <ImportModal
           onClose={() => setShowImportModal(false)}
@@ -4321,6 +4432,146 @@ const StreamChannelModal: React.FC<{
             className="px-6 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors"
           >
             Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Podcast Modal - Configure podcast RSS feed
+const PodcastModal: React.FC<{
+  currentRssUrl?: string;
+  currentPodcastName?: string;
+  onClose: () => void;
+  onSave: (rssUrl: string, podcastName: string) => void;
+  onRemove: () => void;
+}> = ({ currentRssUrl, currentPodcastName, onClose, onSave, onRemove }) => {
+  const [rssUrl, setRssUrl] = useState(currentRssUrl || '');
+  const [podcastName, setPodcastName] = useState(currentPodcastName || '');
+  const [validating, setValidating] = useState(false);
+  const [error, setError] = useState('');
+
+  const validateAndSave = async () => {
+    if (!rssUrl.trim()) {
+      setError('Please enter an RSS feed URL');
+      return;
+    }
+
+    setValidating(true);
+    setError('');
+
+    try {
+      // Try to fetch and parse the RSS feed to validate it
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        throw new Error('Could not fetch RSS feed');
+      }
+
+      const text = await response.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      
+      // Check if it's a valid RSS feed
+      const channel = xml.querySelector('channel');
+      if (!channel) {
+        throw new Error('Invalid RSS feed format');
+      }
+
+      // Get podcast name from feed if not provided
+      const feedTitle = channel.querySelector('title')?.textContent || '';
+      const finalName = podcastName.trim() || feedTitle || 'My Podcast';
+
+      onSave(rssUrl.trim(), finalName);
+    } catch (err: any) {
+      console.error('RSS validation error:', err);
+      setError('Could not validate RSS feed. Please check the URL and try again.');
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-md">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-white">
+                <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
+                <circle cx="12" cy="12" r="2"/>
+                <path d="M12 16l-1 6h2l-1-6z"/>
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-white">Podcast Settings</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+        <p className="text-gray-400 text-sm mb-4">
+          Add your podcast RSS feed to display your latest episode on your bio page.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">RSS Feed URL *</label>
+            <input
+              type="url"
+              value={rssUrl}
+              onChange={(e) => setRssUrl(e.target.value)}
+              placeholder="https://feeds.example.com/podcast.rss"
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Find this in your podcast host (Spotify for Podcasters, Apple Podcasts Connect, etc.)
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Podcast Name (optional)</label>
+            <input
+              type="text"
+              value={podcastName}
+              onChange={(e) => setPodcastName(e.target.value)}
+              placeholder="Auto-detected from feed"
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+            />
+          </div>
+
+          {error && (
+            <p className="text-red-400 text-sm">{error}</p>
+          )}
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          {currentRssUrl && (
+            <button
+              onClick={onRemove}
+              className="px-4 py-2.5 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl font-medium hover:bg-red-500/30 transition-colors"
+            >
+              Remove
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="flex-1 px-6 py-2.5 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={validateAndSave}
+            disabled={validating || !rssUrl.trim()}
+            className="flex-1 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {validating ? 'Validating...' : 'Save'}
           </button>
         </div>
       </div>
