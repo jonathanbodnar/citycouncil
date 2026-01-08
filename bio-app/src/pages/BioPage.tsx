@@ -2112,6 +2112,13 @@ const BioPage: React.FC = () => {
             // Calculate total followers across all social accounts (not just filtered ones)
             // This ensures we show total reach even if platforms don't match exactly
             const totalFollowers = socialAccounts.reduce((sum, s) => sum + (s.follower_count || 0), 0);
+            
+            // Debug logging
+            console.log('Collab card debug:', {
+              servicePlatforms,
+              socialAccounts: socialAccounts.map(s => ({ platform: s.platform, follower_count: s.follower_count })),
+              totalFollowers
+            });
             const formatFollowers = (count: number): string => {
               if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
               if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
