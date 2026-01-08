@@ -1149,21 +1149,21 @@ const TalentDashboard: React.FC = () => {
                     </div>
                     {/* Regular order request details - only show for non-collab orders */}
                     {(order as any).service_type !== 'social_collab' && (
-                      <div className="glass-strong p-4 rounded-md border border-white/20">
-                        <h5 className="font-medium text-white mb-2">Request:</h5>
-                        {order.recipient_name && (
-                          <div className="mb-3 pb-3 border-b border-white/10">
-                            <span className="text-blue-300 font-medium">Who's it for:</span>
-                            <span className="text-white ml-2">{order.recipient_name}</span>
-                          </div>
-                        )}
-                        <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
-                        <div className="mt-3 pt-3 border-t border-white/10">
-                          <p className="text-sm text-yellow-300 italic">
-                            💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
-                          </p>
+                    <div className="glass-strong p-4 rounded-md border border-white/20">
+                      <h5 className="font-medium text-white mb-2">Request:</h5>
+                      {order.recipient_name && (
+                        <div className="mb-3 pb-3 border-b border-white/10">
+                          <span className="text-blue-300 font-medium">Who's it for:</span>
+                          <span className="text-white ml-2">{order.recipient_name}</span>
                         </div>
+                      )}
+                      <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <p className="text-sm text-yellow-300 italic">
+                          💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
+                        </p>
                       </div>
+                    </div>
                     )}
 
                     {/* Social Collab Order Details - In Progress */}
