@@ -1260,22 +1260,39 @@ const BioDashboard: React.FC = () => {
                   )}
                 </div>
 
-                {/* Rumble Card Toggle */}
+                {/* Rumble Card Toggle - Compact */}
                 {talentProfile?.rumble_handle && (
-                  <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-2xl p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-green-400 flex-shrink-0 mt-0.5">
+                  <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-green-400 flex-shrink-0">
                           <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
                         </svg>
-                        <div>
-                          <h3 className="font-medium text-white mb-1">Rumble Card</h3>
-                          <p className="text-sm text-gray-300">
-                            Shows your latest Rumble video or live stream at the top of your bio page.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Channel: @{talentProfile.rumble_handle}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-white text-sm">Rumble</h3>
+                            <span className="text-xs text-gray-500">@{talentProfile.rumble_handle}</span>
+                            <button
+                              onClick={() => {
+                                const newHandle = prompt('Enter Rumble channel handle:', talentProfile.rumble_handle);
+                                if (newHandle && newHandle !== talentProfile.rumble_handle) {
+                                  supabase
+                                    .from('talent_profiles')
+                                    .update({ rumble_handle: newHandle })
+                                    .eq('id', talentProfile.id)
+                                    .then(() => {
+                                      setTalentProfile({ ...talentProfile, rumble_handle: newHandle });
+                                      toast.success('Rumble channel updated');
+                                      setTimeout(refreshPreview, 500);
+                                    });
+                                }
+                              }}
+                              className="p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-colors"
+                            >
+                              <PencilIcon className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-400">Shows your latest video or live stream</p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
@@ -1298,28 +1315,45 @@ const BioDashboard: React.FC = () => {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                        <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
                       </label>
                     </div>
                   </div>
                 )}
 
-                {/* YouTube Card Toggle */}
+                {/* YouTube Card Toggle - Compact */}
                 {talentProfile?.youtube_handle && (
-                  <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 rounded-2xl p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5">
+                  <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 rounded-xl p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-red-400 flex-shrink-0">
                           <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                         </svg>
-                        <div>
-                          <h3 className="font-medium text-white mb-1">YouTube Card</h3>
-                          <p className="text-sm text-gray-300">
-                            Shows your latest YouTube video or live stream at the top of your bio page.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Channel: @{talentProfile.youtube_handle}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-white text-sm">YouTube</h3>
+                            <span className="text-xs text-gray-500">@{talentProfile.youtube_handle}</span>
+                            <button
+                              onClick={() => {
+                                const newHandle = prompt('Enter YouTube channel handle:', talentProfile.youtube_handle);
+                                if (newHandle && newHandle !== talentProfile.youtube_handle) {
+                                  supabase
+                                    .from('talent_profiles')
+                                    .update({ youtube_handle: newHandle })
+                                    .eq('id', talentProfile.id)
+                                    .then(() => {
+                                      setTalentProfile({ ...talentProfile, youtube_handle: newHandle });
+                                      toast.success('YouTube channel updated');
+                                      setTimeout(refreshPreview, 500);
+                                    });
+                                }
+                              }}
+                              className="p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-colors"
+                            >
+                              <PencilIcon className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-400">Shows your latest video or live stream</p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
@@ -1342,7 +1376,7 @@ const BioDashboard: React.FC = () => {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                        <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
                       </label>
                     </div>
                   </div>
