@@ -368,38 +368,44 @@ serve(async (req) => {
         }
       }
 
-      // Generate magic link - must use absolute URL for redirectTo
-      const siteUrl = Deno.env.get("SITE_URL") || "https://shoutout.us";
-      const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email: existingUser.email || normalizedEmail,
-        options: {
-          redirectTo: existingUser.user_type === 'talent' ? `${siteUrl}/dashboard` : siteUrl,
-        },
-      });
-
-      if (authError) {
-        console.error('Error generating magic link:', authError);
+      // Generate a temporary password and sign in the user directly
+      // This bypasses magic link issues entirely
+      const tempPassword = generateRandomPassword();
+      
+      // Update the user's password
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        existingUser.id,
+        { password: tempPassword }
+      );
+      
+      if (updateError) {
+        console.error('Error updating user password:', updateError);
         throw new Error("Failed to authenticate user");
       }
-
-      const magicLinkUrl = authData.properties?.action_link;
-      if (!magicLinkUrl) {
-        throw new Error("Failed to generate authentication link");
+      
+      // Sign in with the new password to get session tokens
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: existingUser.email || normalizedEmail,
+        password: tempPassword,
+      });
+      
+      if (signInError || !signInData.session) {
+        console.error('Error signing in user:', signInError);
+        throw new Error("Failed to authenticate user");
       }
-
-      // Return the magic link for client-side verification
-      // NOTE: We used to verify server-side and return tokens, but this caused issues
-      // because magic link tokens are one-time use. The server verification would consume
-      // the token, and then when the client tried to use the session, it would fail.
-      // Now we just return the magic link URL and let the client handle it.
-      console.log('Login successful, returning magic link for:', existingUser.email);
+      
+      console.log('Login successful with direct session for:', existingUser.email);
 
       return new Response(
         JSON.stringify({
           success: true,
           isLogin: true,
-          magicLink: magicLinkUrl,
+          session: {
+            access_token: signInData.session.access_token,
+            refresh_token: signInData.session.refresh_token,
+            expires_in: signInData.session.expires_in,
+            expires_at: signInData.session.expires_at,
+          },
           user: {
             id: existingUser.id,
             email: existingUser.email,
@@ -503,35 +509,29 @@ serve(async (req) => {
           ignoreDuplicates: true
         });
 
-      // Generate magic link - must use absolute URL for redirectTo
-      const regSiteUrl = Deno.env.get("SITE_URL") || "https://shoutout.us";
-      const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
+      // Sign in the newly created user directly with their password
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
-        options: {
-          redirectTo: regSiteUrl,
-        },
+        password: randomPassword,
       });
-
-      if (magicLinkError) {
-        console.error('Error generating magic link:', magicLinkError);
+      
+      if (signInError || !signInData.session) {
+        console.error('Error signing in new user:', signInError);
         throw new Error("Account created but login failed. Please use login page.");
       }
-
-      const magicLinkUrl = magicLinkData.properties?.action_link;
-      if (!magicLinkUrl) {
-        throw new Error("Account created but login failed. Please use login page.");
-      }
-
-      // Return the magic link for client-side verification
-      // NOTE: We used to verify server-side and return tokens, but this caused session issues.
-      console.log('Registration complete, returning magic link for:', normalizedEmail);
+      
+      console.log('Registration complete with direct session for:', normalizedEmail);
 
       return new Response(
         JSON.stringify({
           success: true,
           isLogin: false,
-          magicLink: magicLinkUrl,
+          session: {
+            access_token: signInData.session.access_token,
+            refresh_token: signInData.session.refresh_token,
+            expires_in: signInData.session.expires_in,
+            expires_at: signInData.session.expires_at,
+          },
           user: {
             id: authData.user.id,
             email: normalizedEmail,

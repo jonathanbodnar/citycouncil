@@ -305,15 +305,26 @@ const SignupPage: React.FC = () => {
         }).catch(console.error);
       }
       
-      // Use magic link to complete authentication
-      // NOTE: We always use magic link now instead of setting session directly
-      // because server-side token verification was causing session invalidation issues
-      if (data.magicLink) {
-        console.log('Redirecting to magic link for authentication');
-        window.location.href = data.magicLink;
+      // Set session directly with tokens from server
+      if (data.session?.access_token && data.session?.refresh_token) {
+        console.log('Setting session directly with tokens');
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        
+        if (sessionError) {
+          console.error('Error setting session:', sessionError);
+          toast.error('Login failed. Please try again.');
+          return;
+        }
+        
+        // Session set successfully, navigate
+        console.log('Session set successfully, navigating to:', returnTo);
+        navigate(returnTo, { replace: true });
       } else {
-        // No magic link provided - this shouldn't happen but handle gracefully
-        console.error('No magic link provided in response');
+        // No session provided - this shouldn't happen
+        console.error('No session tokens provided in response');
         toast.error('Authentication error. Please try again.');
       }
       
