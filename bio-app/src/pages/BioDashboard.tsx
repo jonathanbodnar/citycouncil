@@ -130,6 +130,23 @@ interface ServiceOffering {
   display_order: number;
 }
 
+interface BioEvent {
+  id?: string;
+  talent_id: string;
+  title: string;
+  description?: string;
+  event_date?: string;
+  event_time?: string;
+  location?: string;
+  registration_url?: string;
+  button_text: string;
+  image_url?: string;
+  source_type: 'manual' | 'ical' | 'rss';
+  source_url?: string; // For ical/rss feeds
+  is_active: boolean;
+  display_order: number;
+}
+
 // Gradient presets
 const GRADIENT_PRESETS = [
   { name: 'Midnight', start: '#0a0a0a', end: '#1a1a2e', direction: 'to-b' },
@@ -264,6 +281,9 @@ const BioDashboard: React.FC = () => {
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [editingService, setEditingService] = useState<ServiceOffering | null>(null);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [bioEvents, setBioEvents] = useState<BioEvent[]>([]);
+  const [editingEvent, setEditingEvent] = useState<BioEvent | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
@@ -483,6 +503,17 @@ const BioDashboard: React.FC = () => {
             ...s,
             benefits: Array.isArray(s.benefits) ? s.benefits : JSON.parse(s.benefits || '[]'),
           })));
+        }
+
+        // Load bio events
+        const { data: eventsData } = await supabase
+          .from('bio_events')
+          .select('*')
+          .eq('talent_id', profile.id)
+          .order('display_order', { ascending: true });
+        
+        if (eventsData) {
+          setBioEvents(eventsData);
         }
 
         // Get or create bio settings
@@ -1144,6 +1175,13 @@ const BioDashboard: React.FC = () => {
                     Service
                   </button>
                   <button
+                    onClick={() => setShowAddEventModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                    Event
+                  </button>
+                  <button
                     onClick={() => setShowImportModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
                   >
@@ -1317,46 +1355,6 @@ const BioDashboard: React.FC = () => {
                   </div>
                 )}
 
-                {/* Newsletter Toggle */}
-                <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-2xl p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-blue-400 flex-shrink-0 mt-0.5">
-                        <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
-                        <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
-                      </svg>
-                      <div>
-                        <h3 className="font-medium text-white mb-1">Newsletter Signup</h3>
-                        <p className="text-sm text-gray-300">
-                          Collect email signups from visitors on your bio page.
-                        </p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                      <input
-                        type="checkbox"
-                        checked={bioSettings?.show_newsletter !== false}
-                        onChange={(e) => {
-                          if (bioSettings) {
-                            const updated = { ...bioSettings, show_newsletter: e.target.checked };
-                            setBioSettings(updated);
-                            supabase
-                              .from('bio_settings')
-                              .update({ show_newsletter: e.target.checked })
-                              .eq('id', bioSettings.id)
-                              .then(() => {
-                                toast.success(e.target.checked ? 'Newsletter signup enabled' : 'Newsletter signup disabled');
-                                setTimeout(refreshPreview, 500);
-                              });
-                          }
-                        }}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-                    </label>
-                  </div>
-                </div>
-
                 {/* Service Offerings Section */}
                 {serviceOfferings.length > 0 && (
                   <div className="space-y-3">
@@ -1423,6 +1421,81 @@ const BioDashboard: React.FC = () => {
                                   await supabase.from('service_offerings').delete().eq('id', service.id);
                                   setServiceOfferings(serviceOfferings.filter(s => s.id !== service.id));
                                   toast.success('Service deleted');
+                                  setTimeout(refreshPreview, 500);
+                                }
+                              }}
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Events Section */}
+                {bioEvents.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Events</h3>
+                    {bioEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className={`bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 rounded-2xl p-4 ${!event.is_active ? 'opacity-50' : ''}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
+                                <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-white">{event.title}</h3>
+                              <p className="text-sm text-gray-400">
+                                {event.event_date && new Date(event.event_date).toLocaleDateString()}
+                                {event.event_time && ` • ${event.event_time}`}
+                                {event.location && ` • ${event.location}`}
+                              </p>
+                              <span className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded-full mt-2 inline-block">
+                                {event.source_type === 'manual' ? 'Manual' : event.source_type === 'ical' ? 'iCal Feed' : 'RSS Feed'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                              <input
+                                type="checkbox"
+                                checked={event.is_active}
+                                onChange={async (e) => {
+                                  const updated = bioEvents.map(ev => 
+                                    ev.id === event.id ? { ...ev, is_active: e.target.checked } : ev
+                                  );
+                                  setBioEvents(updated);
+                                  await supabase
+                                    .from('bio_events')
+                                    .update({ is_active: e.target.checked })
+                                    .eq('id', event.id);
+                                  toast.success(e.target.checked ? 'Event enabled' : 'Event disabled');
+                                  setTimeout(refreshPreview, 500);
+                                }}
+                                className="sr-only peer"
+                              />
+                              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                            </label>
+                            <button
+                              onClick={() => setEditingEvent(event)}
+                              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (window.confirm('Are you sure you want to delete this event?')) {
+                                  await supabase.from('bio_events').delete().eq('id', event.id);
+                                  setBioEvents(bioEvents.filter(ev => ev.id !== event.id));
+                                  toast.success('Event deleted');
                                   setTimeout(refreshPreview, 500);
                                 }
                               }}
@@ -1943,6 +2016,80 @@ const BioDashboard: React.FC = () => {
             
             setShowAddServiceModal(false);
             setEditingService(null);
+            setTimeout(refreshPreview, 500);
+          }}
+        />
+      )}
+
+      {(showAddEventModal || editingEvent) && (
+        <AddEventModal
+          event={editingEvent || undefined}
+          onClose={() => {
+            setShowAddEventModal(false);
+            setEditingEvent(null);
+          }}
+          onSave={async (event) => {
+            if (editingEvent) {
+              // Update existing event
+              const { error } = await supabase
+                .from('bio_events')
+                .update({
+                  title: event.title,
+                  description: event.description,
+                  event_date: event.event_date,
+                  event_time: event.event_time,
+                  location: event.location,
+                  registration_url: event.registration_url,
+                  button_text: event.button_text,
+                  image_url: event.image_url,
+                  source_type: event.source_type,
+                  source_url: event.source_url,
+                  is_active: event.is_active,
+                })
+                .eq('id', editingEvent.id);
+              
+              if (error) {
+                toast.error('Failed to update event');
+                return;
+              }
+              
+              setBioEvents(bioEvents.map(ev => 
+                ev.id === editingEvent.id ? { ...ev, ...event } : ev
+              ));
+              toast.success('Event updated!');
+            } else {
+              // Create new event
+              const { data, error } = await supabase
+                .from('bio_events')
+                .insert([{
+                  talent_id: talentProfile?.id,
+                  title: event.title,
+                  description: event.description,
+                  event_date: event.event_date,
+                  event_time: event.event_time,
+                  location: event.location,
+                  registration_url: event.registration_url,
+                  button_text: event.button_text,
+                  image_url: event.image_url,
+                  source_type: event.source_type,
+                  source_url: event.source_url,
+                  is_active: event.is_active ?? true,
+                  display_order: bioEvents.length,
+                }])
+                .select()
+                .single();
+              
+              if (error) {
+                toast.error('Failed to create event');
+                return;
+              }
+              
+              setBioEvents([...bioEvents, data]);
+              toast.success('Event created!');
+            }
+            
+            setShowAddEventModal(false);
+            setEditingEvent(null);
             setTimeout(refreshPreview, 500);
           }}
         />
@@ -3615,6 +3762,246 @@ const AddServiceModal: React.FC<{
               className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-medium hover:from-pink-600 hover:to-purple-600 transition-colors"
             >
               {service ? 'Save Changes' : 'Create Service'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Add Event Modal
+const AddEventModal: React.FC<{
+  event?: BioEvent;
+  onClose: () => void;
+  onSave: (event: Partial<BioEvent> & { source_type: string; button_text: string }) => void;
+}> = ({ event, onClose, onSave }) => {
+  const [sourceType, setSourceType] = useState<'manual' | 'ical' | 'rss'>(event?.source_type || 'manual');
+  const [title, setTitle] = useState(event?.title || '');
+  const [description, setDescription] = useState(event?.description || '');
+  const [eventDate, setEventDate] = useState(event?.event_date || '');
+  const [eventTime, setEventTime] = useState(event?.event_time || '');
+  const [location, setLocation] = useState(event?.location || '');
+  const [registrationUrl, setRegistrationUrl] = useState(event?.registration_url || '');
+  const [buttonText, setButtonText] = useState(event?.button_text || 'Get Tickets');
+  const [sourceUrl, setSourceUrl] = useState(event?.source_url || '');
+  const [isActive, setIsActive] = useState(event?.is_active ?? true);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (sourceType === 'manual' && !title) {
+      toast.error('Please enter an event title');
+      return;
+    }
+    
+    if ((sourceType === 'ical' || sourceType === 'rss') && !sourceUrl) {
+      toast.error('Please enter a feed URL');
+      return;
+    }
+
+    onSave({
+      title,
+      description,
+      event_date: eventDate || undefined,
+      event_time: eventTime || undefined,
+      location: location || undefined,
+      registration_url: registrationUrl || undefined,
+      button_text: buttonText,
+      source_type: sourceType,
+      source_url: sourceUrl || undefined,
+      is_active: isActive,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-white/10 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">
+            {event ? 'Edit Event' : 'Add Event'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Source Type Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">Event Source</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setSourceType('manual')}
+                className={`p-3 rounded-xl transition-all text-center ${
+                  sourceType === 'manual'
+                    ? 'bg-orange-500/20 border-2 border-orange-500 text-white'
+                    : 'bg-white/5 border-2 border-white/10 text-gray-400 hover:border-white/30'
+                }`}
+              >
+                <span className="text-lg block mb-1">✏️</span>
+                <span className="text-xs">Manual</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourceType('ical')}
+                className={`p-3 rounded-xl transition-all text-center ${
+                  sourceType === 'ical'
+                    ? 'bg-orange-500/20 border-2 border-orange-500 text-white'
+                    : 'bg-white/5 border-2 border-white/10 text-gray-400 hover:border-white/30'
+                }`}
+              >
+                <span className="text-lg block mb-1">📅</span>
+                <span className="text-xs">iCal Feed</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourceType('rss')}
+                className={`p-3 rounded-xl transition-all text-center ${
+                  sourceType === 'rss'
+                    ? 'bg-orange-500/20 border-2 border-orange-500 text-white'
+                    : 'bg-white/5 border-2 border-white/10 text-gray-400 hover:border-white/30'
+                }`}
+              >
+                <span className="text-lg block mb-1">📡</span>
+                <span className="text-xs">RSS Feed</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Feed URL for iCal/RSS */}
+          {(sourceType === 'ical' || sourceType === 'rss') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                {sourceType === 'ical' ? 'iCal Feed URL' : 'RSS Feed URL'}
+              </label>
+              <input
+                type="url"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder={sourceType === 'ical' ? 'https://calendar.google.com/...' : 'https://example.com/events.rss'}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                {sourceType === 'ical' 
+                  ? 'Paste your calendar\'s public iCal URL to automatically sync events'
+                  : 'Paste an RSS feed URL to import events automatically'
+                }
+              </p>
+            </div>
+          )}
+
+          {/* Manual Event Fields */}
+          {sourceType === 'manual' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Event Title *</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Live Comedy Show"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief description of the event..."
+                  rows={2}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
+                  <input
+                    type="date"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-orange-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
+                  <input
+                    type="time"
+                    value={eventTime}
+                    onChange={(e) => setEventTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-orange-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g., The Comedy Store, Los Angeles"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Registration/Ticket Link</label>
+                <input
+                  type="url"
+                  value={registrationUrl}
+                  onChange={(e) => setRegistrationUrl(e.target.value)}
+                  placeholder="https://tickets.example.com/..."
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Button Text */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Button Text</label>
+            <input
+              type="text"
+              value={buttonText}
+              onChange={(e) => setButtonText(e.target.value)}
+              placeholder="Get Tickets"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+            />
+            <p className="text-xs text-gray-500 mt-2">Text shown on the event button (default: "Get Tickets")</p>
+          </div>
+
+          {/* Active Toggle */}
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="w-5 h-5 rounded bg-white/10 border-white/20 text-orange-500 focus:ring-orange-500"
+            />
+            <span className="text-white">Event is active</span>
+          </label>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
+            >
+              {event ? 'Save Changes' : 'Create Event'}
             </button>
           </div>
         </form>
