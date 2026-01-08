@@ -188,8 +188,12 @@ interface Review {
 
 interface NewsletterConfig {
   id: string;
+  talent_id: string;
   provider: string;
-  webhook_url?: string;
+  api_key?: string | null;
+  list_id?: string | null;
+  webhook_url?: string | null;
+  form_id?: string | null;
   is_active: boolean;
 }
 
@@ -249,6 +253,104 @@ interface CurrentUser {
   phone?: string;
   full_name?: string;
 }
+
+// Helper function to send subscriber data to newsletter integrations
+const sendToNewsletterIntegration = async (
+  config: NewsletterConfig,
+  data: {
+    email: string;
+    phone?: string | null;
+    name?: string;
+    talent_id: string;
+    talent_name: string;
+  }
+) => {
+  const { provider, api_key, list_id, webhook_url } = config;
+
+  // Always send to webhook if configured (works for Zapier, custom webhooks, etc.)
+  if (webhook_url) {
+    await fetch(webhook_url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...data,
+        source: 'shoutout_bio_follow',
+        provider,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+  }
+
+  // Provider-specific API calls (if API key is configured)
+  if (api_key && list_id) {
+    switch (provider) {
+      case 'mailchimp':
+        // Mailchimp uses a datacenter in the API key (e.g., us1, us2)
+        const dc = api_key.split('-').pop() || 'us1';
+        await fetch(`https://${dc}.api.mailchimp.com/3.0/lists/${list_id}/members`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${btoa(`anystring:${api_key}`)}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email_address: data.email,
+            status: 'subscribed',
+            merge_fields: {
+              FNAME: data.name?.split(' ')[0] || '',
+              LNAME: data.name?.split(' ').slice(1).join(' ') || '',
+              PHONE: data.phone || '',
+            },
+            tags: ['shoutout_bio', data.talent_name],
+          }),
+        });
+        break;
+
+      case 'getresponse':
+        await fetch('https://api.getresponse.com/v3/contacts', {
+          method: 'POST',
+          headers: {
+            'X-Auth-Token': `api-key ${api_key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: data.email,
+            campaign: { campaignId: list_id },
+            name: data.name || data.email.split('@')[0],
+            customFieldValues: [
+              { customFieldId: 'phone', value: [data.phone || ''] },
+              { customFieldId: 'source', value: ['shoutout_bio'] },
+            ],
+          }),
+        });
+        break;
+
+      case 'activecampaign':
+        // ActiveCampaign API URL is usually like: https://youraccountname.api-us1.com
+        // The list_id here would be the account URL
+        await fetch(`${list_id}/api/3/contacts`, {
+          method: 'POST',
+          headers: {
+            'Api-Token': api_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contact: {
+              email: data.email,
+              firstName: data.name?.split(' ')[0] || '',
+              lastName: data.name?.split(' ').slice(1).join(' ') || '',
+              phone: data.phone || '',
+            },
+          }),
+        });
+        break;
+
+      // For other providers, rely on webhook
+      default:
+        console.log(`Provider ${provider} uses webhook integration`);
+    }
+  }
+};
 
 const BioPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -994,19 +1096,20 @@ const BioPage: React.FC = () => {
           throw followError;
         }
 
-        // Also send to webhook if configured
-        if (newsletterConfig?.webhook_url) {
-          await fetch(newsletterConfig.webhook_url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: currentUser.email,
-              phone: currentUser.phone,
+        // Also send to newsletter integration if configured
+        if (newsletterConfig) {
+          try {
+            await sendToNewsletterIntegration(newsletterConfig, {
+              email: currentUser.email || '',
+              phone: currentUser.phone || null,
+              name: currentUser.full_name || '',
               talent_id: talentProfile.id,
-              talent_name: bioSettings?.display_name || talentProfile?.full_name,
-              source: 'shoutout_bio_follow',
-            }),
-          });
+              talent_name: bioSettings?.display_name || talentProfile?.full_name || '',
+            });
+            console.log('Newsletter integration triggered successfully');
+          } catch (webhookError) {
+            console.error('Newsletter integration error:', webhookError);
+          }
         }
 
         setIsFollowing(true);
@@ -1114,19 +1217,21 @@ const BioPage: React.FC = () => {
         throw followError;
       }
 
-      // Send to webhook if configured
-      if (newsletterConfig?.webhook_url) {
-        await fetch(newsletterConfig.webhook_url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+      // Send to newsletter integration if configured
+      if (newsletterConfig) {
+        try {
+          await sendToNewsletterIntegration(newsletterConfig, {
             email: newsletterEmail,
             phone: newsletterPhone || null,
+            name: '', // We don't collect name in the form
             talent_id: talentProfile.id,
-            talent_name: bioSettings?.display_name || talentProfile?.full_name,
-            source: 'shoutout_bio_follow',
-          }),
-        });
+            talent_name: bioSettings?.display_name || talentProfile?.full_name || '',
+          });
+          console.log('Newsletter integration triggered successfully');
+        } catch (webhookError) {
+          // Don't fail the whole signup if newsletter integration fails
+          console.error('Newsletter integration error:', webhookError);
+        }
       }
 
       setIsFollowing(true);
