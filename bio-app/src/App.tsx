@@ -5,6 +5,7 @@ import BioPage from './pages/BioPage';
 import BioDashboard from './pages/BioDashboard';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import CollabOrderPage from './pages/CollabOrderPage';
+import UnsubscribePage from './pages/UnsubscribePage';
 
 function App() {
   return (
@@ -24,6 +25,8 @@ function App() {
         <Route path="/dashboard" element={<BioDashboard />} />
         {/* Root shows a landing/redirect */}
         <Route path="/" element={<BioLanding />} />
+        {/* Unsubscribe page */}
+        <Route path="/unsubscribe/:token" element={<UnsubscribePage />} />
         {/* Collab order page */}
         <Route path="/collab/:username/:serviceId" element={<CollabOrderPage />} />
         {/* Privacy policy for each talent */}

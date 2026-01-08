@@ -305,6 +305,7 @@ const BioDashboard: React.FC = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [uploadingEmailImage, setUploadingEmailImage] = useState(false);
   const [importingFans, setImportingFans] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -2258,21 +2259,69 @@ const BioDashboard: React.FC = () => {
                     )}
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       if (!emailSubject || !emailContent) {
                         toast.error('Please add a subject and content');
                         return;
                       }
+                      if (!emailDraftId) {
+                        toast.error('Please wait for draft to save');
+                        return;
+                      }
                       if (emailScheduledDate && emailScheduledTime) {
+                        // TODO: Implement scheduled sends
                         toast.success(`Email scheduled for ${emailScheduledDate} at ${emailScheduledTime}`);
-                      } else {
-                        toast.success('Email updates coming soon!');
+                        return;
+                      }
+                      
+                      // Confirm before sending
+                      if (!window.confirm(`Send this email to ${subscriberCount} fans?`)) {
+                        return;
+                      }
+                      
+                      setSendingEmail(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('send-talent-update', {
+                          body: {
+                            draft_id: emailDraftId,
+                            talent_id: talentProfile?.id,
+                          },
+                        });
+                        
+                        if (error) throw error;
+                        
+                        if (data?.success) {
+                          toast.success(`Email sent to ${data.sent} fans!`);
+                          // Clear the form after successful send
+                          setEmailSubject('');
+                          setEmailContent('');
+                          setEmailButtonText('');
+                          setEmailButtonUrl('');
+                          setEmailImageUrl('');
+                          setEmailImageLinkUrl('');
+                          setEmailDraftId(null);
+                        } else {
+                          toast.error(data?.error || 'Failed to send email');
+                        }
+                      } catch (error: any) {
+                        console.error('Send error:', error);
+                        toast.error(error.message || 'Failed to send email');
+                      } finally {
+                        setSendingEmail(false);
                       }
                     }}
-                    disabled={subscriberCount === 0 || !emailSubject || !emailContent}
+                    disabled={subscriberCount === 0 || !emailSubject || !emailContent || sendingEmail}
                     className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {subscriberCount === 0 
+                    {sendingEmail ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending...
+                      </span>
+                    ) : subscriberCount === 0 
                       ? 'No Fans Yet' 
                       : `Send Now (${subscriberCount})`}
                   </button>
