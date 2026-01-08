@@ -41,6 +41,7 @@ interface TalentProfile {
   facebook_handle?: string;
   tiktok_handle?: string;
   rumble_handle?: string;
+  rumble_type?: 'user' | 'channel'; // Whether it's a user profile or channel on Rumble
   youtube_handle?: string;
 }
 
@@ -2894,20 +2895,36 @@ const BioDashboard: React.FC = () => {
           platform={showStreamChannelModal}
           socialLinks={socialLinks}
           currentHandle={showStreamChannelModal === 'rumble' ? talentProfile?.rumble_handle : talentProfile?.youtube_handle}
+          currentRumbleType={talentProfile?.rumble_type}
           onClose={() => setShowStreamChannelModal(null)}
-          onSelect={async (handle) => {
-            const field = showStreamChannelModal === 'rumble' ? 'rumble_handle' : 'youtube_handle';
+          onSelect={async (handle, rumbleType) => {
+            const platform = showStreamChannelModal;
+            const updateData: Record<string, unknown> = {};
+            
+            if (platform === 'rumble') {
+              updateData.rumble_handle = handle;
+              if (rumbleType) updateData.rumble_type = rumbleType;
+            } else {
+              updateData.youtube_handle = handle;
+            }
+            
             await supabase
               .from('talent_profiles')
-              .update({ [field]: handle })
+              .update(updateData)
               .eq('id', talentProfile?.id);
             
-            setTalentProfile(prev => prev ? { ...prev, [field]: handle } : prev);
-            toast.success(`${showStreamChannelModal === 'rumble' ? 'Rumble' : 'YouTube'} channel updated`);
+            setTalentProfile(prev => prev ? { 
+              ...prev, 
+              ...(platform === 'rumble' 
+                ? { rumble_handle: handle, rumble_type: rumbleType } 
+                : { youtube_handle: handle }
+              )
+            } : prev);
+            toast.success(`${platform === 'rumble' ? 'Rumble' : 'YouTube'} channel updated`);
             setTimeout(refreshPreview, 500);
             setShowStreamChannelModal(null);
           }}
-          onAddNew={async (handle) => {
+          onAddNew={async (handle, rumbleType) => {
             // Add to social links
             const platform = showStreamChannelModal as 'rumble' | 'youtube';
             const newSocial: SocialAccount = {
@@ -2919,16 +2936,26 @@ const BioDashboard: React.FC = () => {
             setSocialLinks(updated);
             
             // Update talent profile with social accounts and the handle
-            const field = platform === 'rumble' ? 'rumble_handle' : 'youtube_handle';
+            const updateData: Record<string, unknown> = { social_accounts: updated };
+            if (platform === 'rumble') {
+              updateData.rumble_handle = handle;
+              if (rumbleType) updateData.rumble_type = rumbleType;
+            } else {
+              updateData.youtube_handle = handle;
+            }
+            
             await supabase
               .from('talent_profiles')
-              .update({ 
-                social_accounts: updated,
-                [field]: handle 
-              })
+              .update(updateData)
               .eq('id', talentProfile?.id);
             
-            setTalentProfile(prev => prev ? { ...prev, [field]: handle } : prev);
+            setTalentProfile(prev => prev ? { 
+              ...prev, 
+              ...(platform === 'rumble' 
+                ? { rumble_handle: handle, rumble_type: rumbleType } 
+                : { youtube_handle: handle }
+              )
+            } : prev);
             toast.success(`${platform === 'rumble' ? 'Rumble' : 'YouTube'} channel added`);
             setTimeout(refreshPreview, 500);
             setShowStreamChannelModal(null);
@@ -4062,12 +4089,14 @@ const StreamChannelModal: React.FC<{
   platform: 'rumble' | 'youtube';
   socialLinks: SocialAccount[];
   currentHandle?: string;
+  currentRumbleType?: 'user' | 'channel';
   onClose: () => void;
-  onSelect: (handle: string) => void;
-  onAddNew: (handle: string) => void;
-}> = ({ platform, socialLinks, currentHandle, onClose, onSelect, onAddNew }) => {
+  onSelect: (handle: string, rumbleType?: 'user' | 'channel') => void;
+  onAddNew: (handle: string, rumbleType?: 'user' | 'channel') => void;
+}> = ({ platform, socialLinks, currentHandle, currentRumbleType, onClose, onSelect, onAddNew }) => {
   const [newHandle, setNewHandle] = useState('');
   const [showAddNew, setShowAddNew] = useState(false);
+  const [rumbleType, setRumbleType] = useState<'user' | 'channel'>(currentRumbleType || 'channel');
   
   // Filter social links for this platform
   const platformAccounts = socialLinks.filter(s => s.platform === platform);
@@ -4098,7 +4127,7 @@ const StreamChannelModal: React.FC<{
   const handleAddNew = () => {
     if (newHandle.trim()) {
       const cleanHandle = newHandle.trim().replace(/^@/, '');
-      onAddNew(cleanHandle);
+      onAddNew(cleanHandle, platform === 'rumble' ? rumbleType : undefined);
     }
   };
   
@@ -4119,8 +4148,49 @@ const StreamChannelModal: React.FC<{
         </div>
         
         <p className="text-gray-400 text-sm mb-4">
-          Choose which {info.name} channel to display on your bio page.
+          Choose which {info.name} {platform === 'rumble' ? 'user or channel' : 'channel'} to display on your bio page.
         </p>
+        
+        {/* Rumble Type Selector */}
+        {platform === 'rumble' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">Account Type</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRumbleType('user')}
+                className={`flex-1 p-3 rounded-xl border text-sm font-medium transition-colors ${
+                  rumbleType === 'user'
+                    ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  User
+                </div>
+                <p className="text-xs text-gray-500 mt-1">rumble.com/user/...</p>
+              </button>
+              <button
+                onClick={() => setRumbleType('channel')}
+                className={`flex-1 p-3 rounded-xl border text-sm font-medium transition-colors ${
+                  rumbleType === 'channel'
+                    ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Channel
+                </div>
+                <p className="text-xs text-gray-500 mt-1">rumble.com/c/...</p>
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* Existing accounts */}
         <div className="space-y-2 mb-4">
@@ -4128,7 +4198,7 @@ const StreamChannelModal: React.FC<{
             platformAccounts.map((account) => (
               <button
                 key={account.id}
-                onClick={() => onSelect(account.handle.replace(/^@/, ''))}
+                onClick={() => onSelect(account.handle.replace(/^@/, ''), platform === 'rumble' ? rumbleType : undefined)}
                 className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors ${
                   currentHandle === account.handle.replace(/^@/, '')
                     ? `bg-${info.color}-500/20 border-${info.color}-500/50`
@@ -4148,7 +4218,7 @@ const StreamChannelModal: React.FC<{
             ))
           ) : (
             <div className="text-center py-4 text-gray-500 text-sm">
-              No {info.name} channels added yet
+              No {info.name} {platform === 'rumble' ? 'accounts' : 'channels'} added yet
             </div>
           )}
         </div>
@@ -4157,7 +4227,7 @@ const StreamChannelModal: React.FC<{
         {showAddNew ? (
           <div className="border-t border-white/10 pt-4">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Add New {info.name} Channel
+              Add New {info.name} {platform === 'rumble' ? (rumbleType === 'user' ? 'User' : 'Channel') : 'Channel'}
             </label>
             <div className="flex gap-2">
               <div className="flex-1 relative">
@@ -4192,7 +4262,7 @@ const StreamChannelModal: React.FC<{
             className="w-full flex items-center justify-center gap-2 p-3 border border-dashed border-white/20 rounded-xl text-gray-400 hover:text-white hover:border-white/40 transition-colors"
           >
             <PlusIcon className="w-5 h-5" />
-            Add New {info.name} Channel
+            Add New {info.name} {platform === 'rumble' ? (rumbleType === 'user' ? 'User' : 'Channel') : 'Channel'}
           </button>
         )}
         

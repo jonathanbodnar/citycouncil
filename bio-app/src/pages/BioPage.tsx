@@ -62,6 +62,7 @@ interface TalentProfile {
   facebook_handle?: string;
   tiktok_handle?: string;
   rumble_handle?: string;
+  rumble_type?: 'user' | 'channel';
   youtube_handle?: string;
 }
 
@@ -584,7 +585,7 @@ const BioPage: React.FC = () => {
 
         // Fetch Rumble data - first try cache, then fall back to live scraping
         if (profile.rumble_handle) {
-          fetchRumbleData(profile.id, profile.rumble_handle);
+          fetchRumbleData(profile.id, profile.rumble_handle, profile.rumble_type);
         }
 
         // Fetch YouTube data - same caching strategy
@@ -663,9 +664,10 @@ const BioPage: React.FC = () => {
   };
 
   // Fetch Rumble channel data - show cache immediately, one visitor per 15 min triggers refresh
-  const fetchRumbleData = async (talentId: string, rumbleHandle: string) => {
+  const fetchRumbleData = async (talentId: string, rumbleHandle: string, rumbleType?: 'user' | 'channel') => {
     const cleanHandle = rumbleHandle.replace(/^@/, '');
-    const defaultChannelUrl = `https://rumble.com/user/${cleanHandle}`;
+    const urlPrefix = rumbleType === 'channel' ? 'c' : 'user';
+    const defaultChannelUrl = `https://rumble.com/${urlPrefix}/${cleanHandle}`;
     
     try {
       // Get cached data from rumble_cache table
@@ -693,7 +695,7 @@ const BioPage: React.FC = () => {
         
         if (needsRefresh) {
           // Scrape in background - timestamp only updates on SUCCESS
-          scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl, lastChecked);
+          scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl, lastChecked, rumbleType);
         }
         return;
       }
@@ -709,7 +711,7 @@ const BioPage: React.FC = () => {
       });
       
       // Scrape in background - will create cache entry on success
-      scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl, 0);
+      scrapeRumbleInBackground(talentId, rumbleHandle, cleanHandle, defaultChannelUrl, 0, rumbleType);
       
     } catch (error) {
       console.error('Error fetching Rumble data:', error);
@@ -725,12 +727,15 @@ const BioPage: React.FC = () => {
   };
   
   // Background scrape - doesn't block UI, updates cache only on SUCCESS
-  const scrapeRumbleInBackground = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string, originalTimestamp: number) => {
+  const scrapeRumbleInBackground = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string, originalTimestamp: number, rumbleType?: 'user' | 'channel') => {
     try {
-      const urlFormats = [
-        `https://rumble.com/user/${cleanHandle}`,
-        `https://rumble.com/c/${cleanHandle}`,
-      ];
+      // If rumble_type is set, only try that URL format; otherwise try both
+      const urlFormats = rumbleType 
+        ? [`https://rumble.com/${rumbleType === 'channel' ? 'c' : 'user'}/${cleanHandle}`]
+        : [
+            `https://rumble.com/user/${cleanHandle}`,
+            `https://rumble.com/c/${cleanHandle}`,
+          ];
       
       let html = '';
       let successUrl = '';
@@ -1548,7 +1553,7 @@ const BioPage: React.FC = () => {
           {/* Rumble Card - Shows latest video or live status - AT THE TOP */}
           {talentProfile?.rumble_handle && bioSettings && bioSettings.show_rumble_card !== false && (
             <a
-              href={rumbleData?.url || `https://rumble.com/user/${talentProfile.rumble_handle.replace(/^@/, '')}`}
+              href={rumbleData?.url || `https://rumble.com/${talentProfile.rumble_type === 'channel' ? 'c' : 'user'}/${talentProfile.rumble_handle.replace(/^@/, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block"
