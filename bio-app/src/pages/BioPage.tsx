@@ -2322,7 +2322,7 @@ const BioPage: React.FC = () => {
                           Get a personalized video ShoutOut
                         </h3>
                         <p className="text-white text-sm font-medium">
-                          From {talent?.full_name || displayName}
+                          From {talentProfile?.full_name || displayName}
                         </p>
                       </>
                     )}
