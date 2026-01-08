@@ -284,6 +284,13 @@ const BioDashboard: React.FC = () => {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [bioEvents, setBioEvents] = useState<BioEvent[]>([]);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [mainView, setMainView] = useState<'customize' | 'send_updates'>('customize');
+  const [subscriberCount, setSubscriberCount] = useState(0);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailContent, setEmailContent] = useState('');
+  const [emailButtonText, setEmailButtonText] = useState('');
+  const [emailButtonUrl, setEmailButtonUrl] = useState('');
+  const [emailImageUrl, setEmailImageUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -514,6 +521,14 @@ const BioDashboard: React.FC = () => {
         if (eventsData) {
           setBioEvents(eventsData);
         }
+
+        // Get subscriber count
+        const { count: subCount } = await supabase
+          .from('talent_followers')
+          .select('*', { count: 'exact', head: true })
+          .eq('talent_id', profile.id);
+        
+        setSubscriberCount(subCount || 0);
 
         // Get or create bio settings
         let { data: settings, error: settingsError } = await supabase
@@ -1088,20 +1103,36 @@ const BioDashboard: React.FC = () => {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <SparklesIcon className="h-8 w-8 text-blue-400" />
+              {/* Main View Tabs */}
+              <div className="flex bg-white/5 rounded-xl p-1">
+                <button
+                  onClick={() => setMainView('customize')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    mainView === 'customize'
+                      ? 'bg-white/20 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Customize
+                </button>
+                <button
+                  onClick={() => setMainView('send_updates')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                    mainView === 'send_updates'
+                      ? 'bg-white/20 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Send Updates
+                  {subscriberCount > 0 && (
+                    <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">{subscriberCount}</span>
+                  )}
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  copyBioUrl();
-                  window.open(`https://${bioUrl}`, '_blank');
-                }}
-                className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white text-sm hover:bg-white/10 transition-colors"
-              >
-                <ClipboardIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">{bioUrl}</span>
-              </button>
               <button
                 onClick={togglePublish}
                 disabled={saving}
@@ -1114,7 +1145,7 @@ const BioDashboard: React.FC = () => {
                 {bioSettings?.is_published ? (
                   <>
                     <CheckIcon className="h-4 w-4" />
-                    Live
+                    Published
                   </>
                 ) : (
                   <>
@@ -1129,28 +1160,30 @@ const BioDashboard: React.FC = () => {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {[
-            { key: 'links', label: 'Links', icon: LinkIcon },
-            { key: 'social', label: 'Social', icon: SparklesIcon },
-            { key: 'style', label: 'Style', icon: PaintBrushIcon },
-            { key: 'settings', label: 'Settings', icon: Cog6ToothIcon },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as typeof activeTab)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
-                activeTab === tab.key
-                  ? 'bg-white/20 text-white'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {mainView === 'customize' ? (
+          <>
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              {[
+                { key: 'links', label: 'Links', icon: LinkIcon },
+                { key: 'social', label: 'Social', icon: SparklesIcon },
+                { key: 'style', label: 'Style', icon: PaintBrushIcon },
+                { key: 'settings', label: 'Settings', icon: Cog6ToothIcon },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
+                    activeTab === tab.key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Left Column - Editor */}
@@ -1795,20 +1828,38 @@ const BioDashboard: React.FC = () => {
           {/* Right Column - Live Preview */}
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
-                <h3 className="text-sm font-medium text-gray-400">Live Preview</h3>
-                <a
-                  href={`https://${bioUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                >
-                  Open <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                </a>
+              {/* Browser Chrome */}
+              <div className="bg-gray-900/80 px-3 py-2 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/60"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500/60"></div>
+                  </div>
+                  <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5 ml-2">
+                    <span className="text-gray-400 text-xs truncate flex-1">{bioUrl}</span>
+                    <button
+                      onClick={copyBioUrl}
+                      className="text-gray-400 hover:text-white transition-colors"
+                      title="Copy URL"
+                    >
+                      <ClipboardIcon className="h-4 w-4" />
+                    </button>
+                    <a
+                      href={`https://${bioUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white transition-colors"
+                      title="Open in new tab"
+                    >
+                      <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                    </a>
+                  </div>
+                </div>
               </div>
               
               {/* Iframe Embed */}
-              <div className="relative w-full" style={{ height: '700px' }}>
+              <div className="relative w-full" style={{ height: '680px' }}>
                 {bioSettings?.is_published ? (
                   <iframe
                     id="bio-preview-iframe"
@@ -1841,16 +1892,238 @@ const BioDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+          </>
+        ) : (
+          /* Send Updates View */
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Left Column - Email Composer */}
+            <div className="space-y-6">
+              {/* Stats */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">{subscriberCount}</p>
+                    <p className="text-gray-400 text-sm">Subscribers</p>
+                  </div>
+                </div>
+              </div>
 
-        {/* Back to ShoutOut link */}
-        <div className="mt-8 text-center">
-          <a
-            href="https://shoutout.us/dashboard"
-            className="text-gray-500 hover:text-gray-400 text-sm transition-colors"
-          >
-            ← Back to ShoutOut Dashboard
-          </a>
-        </div>
+              {/* Email Composer */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-white">Compose Update</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Subject</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    placeholder="What's new this week..."
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Content</label>
+                  <textarea
+                    value={emailContent}
+                    onChange={(e) => setEmailContent(e.target.value)}
+                    placeholder="Share your latest news, upcoming events, or anything you want your subscribers to know..."
+                    rows={6}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">Button Text (optional)</label>
+                    <input
+                      type="text"
+                      value={emailButtonText}
+                      onChange={(e) => setEmailButtonText(e.target.value)}
+                      placeholder="Learn More"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">Button URL</label>
+                    <input
+                      type="url"
+                      value={emailButtonUrl}
+                      onChange={(e) => setEmailButtonUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Image URL (optional)</label>
+                  <input
+                    type="url"
+                    value={emailImageUrl}
+                    onChange={(e) => setEmailImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (!emailSubject || !emailContent) {
+                      toast.error('Please add a subject and content');
+                      return;
+                    }
+                    toast.success('Email updates coming soon!');
+                  }}
+                  disabled={subscriberCount === 0}
+                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {subscriberCount === 0 ? 'No Subscribers Yet' : `Send to ${subscriberCount} Subscriber${subscriberCount !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column - Email Preview */}
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                {/* Browser Chrome */}
+                <div className="bg-gray-900/80 px-3 py-2 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-red-500/60"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500/60"></div>
+                    </div>
+                    <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5 ml-2">
+                      <span className="text-gray-400 text-xs">Email Preview</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Email Preview */}
+                <div 
+                  className="p-6 overflow-y-auto"
+                  style={{ 
+                    height: '680px',
+                    background: `linear-gradient(${bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg'}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
+                  }}
+                >
+                  {/* Email Content */}
+                  <div className="max-w-md mx-auto space-y-6">
+                    {/* Header with profile */}
+                    <div className="text-center">
+                      <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-2 border-white/20 shadow-xl">
+                        {talentProfile?.temp_avatar_url || bioSettings?.profile_image_url ? (
+                          <img 
+                            src={talentProfile?.temp_avatar_url || bioSettings?.profile_image_url} 
+                            alt={talentProfile?.full_name || ''} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl text-white font-bold">
+                            {(talentProfile?.full_name || 'C')[0]}
+                          </div>
+                        )}
+                      </div>
+                      <h2 className="text-xl font-bold text-white">{talentProfile?.full_name || 'Creator'}</h2>
+                    </div>
+
+                    {/* Subject */}
+                    {emailSubject && (
+                      <h1 className="text-2xl font-bold text-white text-center">{emailSubject}</h1>
+                    )}
+
+                    {/* Image */}
+                    {emailImageUrl && (
+                      <div className="rounded-xl overflow-hidden">
+                        <img src={emailImageUrl} alt="" className="w-full h-auto" />
+                      </div>
+                    )}
+
+                    {/* Content */}
+                    {emailContent ? (
+                      <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+                        {emailContent}
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-center py-8">
+                        Your message will appear here...
+                      </div>
+                    )}
+
+                    {/* Button */}
+                    {emailButtonText && emailButtonUrl && (
+                      <div className="text-center">
+                        <a
+                          href={emailButtonUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block px-8 py-3 rounded-full font-medium transition-colors"
+                          style={{
+                            backgroundColor: bioSettings?.button_color || '#3b82f6',
+                            color: '#ffffff'
+                          }}
+                        >
+                          {emailButtonText}
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
+                      {/* Connect Card */}
+                      <div 
+                        className="p-4 rounded-xl text-center"
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                      >
+                        <p className="text-gray-300 text-sm">Find out how else we can connect.</p>
+                        <a
+                          href={`https://${bioUrl}`}
+                          className="text-sm mt-2 inline-block"
+                          style={{ color: bioSettings?.button_color || '#3b82f6' }}
+                        >
+                          Visit my bio →
+                        </a>
+                      </div>
+
+                      {/* ShoutOut Card */}
+                      <a
+                        href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}`}
+                        className="block p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                            <GiftIcon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium">Get a personalized video</p>
+                            <p className="text-gray-400 text-xs">Book a ShoutOut from me</p>
+                          </div>
+                        </div>
+                      </a>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center pt-4">
+                      <p className="text-gray-500 text-xs">
+                        Powered by <a href="https://shoutout.us/creators" className="text-gray-400 hover:text-white">ShoutOut</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
