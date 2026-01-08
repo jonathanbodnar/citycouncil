@@ -215,6 +215,23 @@ interface ServiceOffering {
   is_active: boolean;
 }
 
+interface BioEvent {
+  id: string;
+  talent_id: string;
+  title: string;
+  description?: string;
+  event_date?: string;
+  event_time?: string;
+  location?: string;
+  registration_url?: string;
+  button_text: string;
+  image_url?: string;
+  source_type: 'manual' | 'ical' | 'rss';
+  source_url?: string;
+  is_active: boolean;
+  display_order: number;
+}
+
 interface YouTubeVideoData {
   title: string;
   thumbnail: string;
@@ -245,6 +262,7 @@ const BioPage: React.FC = () => {
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoData | null>(null);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [showCollabModal, setShowCollabModal] = useState<ServiceOffering | null>(null);
+  const [bioEvents, setBioEvents] = useState<BioEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -448,6 +466,18 @@ const BioPage: React.FC = () => {
             benefits: Array.isArray(s.benefits) ? s.benefits : JSON.parse(s.benefits || '[]'),
             platforms: Array.isArray(s.platforms) ? s.platforms : JSON.parse(s.platforms || '["instagram"]'),
           })));
+        }
+
+        // Get active bio events
+        const { data: eventsData } = await supabase
+          .from('bio_events')
+          .select('*')
+          .eq('talent_id', profile.id)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        
+        if (eventsData && eventsData.length > 0) {
+          setBioEvents(eventsData);
         }
 
         // Fetch Rumble data - first try cache, then fall back to live scraping
@@ -1864,6 +1894,82 @@ const BioPage: React.FC = () => {
                   </div>
                 </div>
               </button>
+            );
+          })}
+
+          {/* Events - Tall Format Cards */}
+          {bioEvents.map((event) => {
+            const eventDateFormatted = event.event_date 
+              ? new Date(event.event_date).toLocaleDateString('en-US', { 
+                  weekday: 'short', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })
+              : null;
+            
+            return (
+              <a
+                key={event.id}
+                href={event.registration_url || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block mt-4"
+              >
+                <div 
+                  className="rounded-2xl overflow-hidden border border-orange-500/30 hover:border-orange-500/50 transition-all duration-300 hover:scale-[1.02]"
+                  style={{
+                    background: `linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(245, 158, 11, 0.2))`,
+                  }}
+                >
+                  <div className="flex items-stretch">
+                    {/* Event Image */}
+                    <div className="w-24 flex-shrink-0 relative bg-black/20">
+                      {event.image_url ? (
+                        <img 
+                          src={event.image_url} 
+                          alt={event.title} 
+                          className="w-full h-full object-cover"
+                          style={{ minHeight: '96px' }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-500 to-amber-500" style={{ minHeight: '96px' }}>
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white">
+                            <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Event Details */}
+                    <div className="flex-1 p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-semibold text-sm leading-tight">{event.title}</h3>
+                          {(eventDateFormatted || event.event_time || event.location) && (
+                            <p className="text-orange-300/80 text-xs mt-1">
+                              {eventDateFormatted && <span>📅 {eventDateFormatted}</span>}
+                              {event.event_time && <span> • {event.event_time}</span>}
+                              {event.location && <span className="block mt-0.5">📍 {event.location}</span>}
+                            </p>
+                          )}
+                          {event.description && (
+                            <p className="text-gray-400 text-xs mt-1 line-clamp-2">{event.description}</p>
+                          )}
+                        </div>
+                        <span 
+                          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: bioSettings?.button_color || '#f97316',
+                            color: getContrastTextColor(bioSettings?.button_color || '#f97316')
+                          }}
+                        >
+                          {event.button_text || 'Get Tickets'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
             );
           })}
 

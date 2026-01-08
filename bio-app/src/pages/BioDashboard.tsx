@@ -2059,20 +2059,26 @@ const BioDashboard: React.FC = () => {
               toast.success('Event updated!');
             } else {
               // Create new event
+              console.log('Creating event with data:', {
+                talent_id: talentProfile?.id,
+                title: event.title,
+                source_type: event.source_type,
+              });
+              
               const { data, error } = await supabase
                 .from('bio_events')
                 .insert([{
                   talent_id: talentProfile?.id,
                   title: event.title,
-                  description: event.description,
-                  event_date: event.event_date,
-                  event_time: event.event_time,
-                  location: event.location,
-                  registration_url: event.registration_url,
+                  description: event.description || null,
+                  event_date: event.event_date || null,
+                  event_time: event.event_time || null,
+                  location: event.location || null,
+                  registration_url: event.registration_url || null,
                   button_text: event.button_text,
-                  image_url: event.image_url,
+                  image_url: event.image_url || null,
                   source_type: event.source_type,
-                  source_url: event.source_url,
+                  source_url: event.source_url || null,
                   is_active: event.is_active ?? true,
                   display_order: bioEvents.length,
                 }])
@@ -2080,7 +2086,8 @@ const BioDashboard: React.FC = () => {
                 .single();
               
               if (error) {
-                toast.error('Failed to create event');
+                console.error('Failed to create event:', error);
+                toast.error(`Failed to create event: ${error.message}`);
                 return;
               }
               
@@ -3785,6 +3792,7 @@ const AddEventModal: React.FC<{
   const [registrationUrl, setRegistrationUrl] = useState(event?.registration_url || '');
   const [buttonText, setButtonText] = useState(event?.button_text || 'Get Tickets');
   const [sourceUrl, setSourceUrl] = useState(event?.source_url || '');
+  const [imageUrl, setImageUrl] = useState(event?.image_url || '');
   const [isActive, setIsActive] = useState(event?.is_active ?? true);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -3810,6 +3818,7 @@ const AddEventModal: React.FC<{
       button_text: buttonText,
       source_type: sourceType,
       source_url: sourceUrl || undefined,
+      image_url: imageUrl || undefined,
       is_active: isActive,
     });
   };
@@ -3961,6 +3970,22 @@ const AddEventModal: React.FC<{
                   placeholder="https://tickets.example.com/..."
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Event Image URL</label>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://example.com/event-image.jpg"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+                />
+                {imageUrl && (
+                  <div className="mt-2 rounded-lg overflow-hidden">
+                    <img src={imageUrl} alt="Event preview" className="w-full h-24 object-cover" />
+                  </div>
+                )}
               </div>
             </>
           )}
