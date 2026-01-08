@@ -82,6 +82,15 @@ const TalentProfilePage: React.FC = () => {
   const [subscribeEmail, setSubscribeEmail] = useState('');
   const [subscribePhone, setSubscribePhone] = useState('');
   const [showPhoneField, setShowPhoneField] = useState(false);
+  const [buttonTextIndex, setButtonTextIndex] = useState(0); // For rotating button text
+
+  // Rotate button text every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setButtonTextIndex(prev => (prev + 1) % 2);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch Christmas mode setting (non-blocking, low priority)
   useEffect(() => {
@@ -1199,12 +1208,31 @@ const TalentProfilePage: React.FC = () => {
                 className="w-full py-3 rounded-full font-medium transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white"
               >
                 {subscribing ? '...' : (
-                  <>
-                    Stay connected
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </>
+                  <span className="relative h-5 flex items-center justify-center" style={{ minWidth: '140px' }}>
+                    <span 
+                      className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
+                      style={{
+                        transform: buttonTextIndex === 0 ? 'translateY(0)' : 'translateY(-100%)',
+                        opacity: buttonTextIndex === 0 ? 1 : 0,
+                      }}
+                    >
+                      Stay connected
+                    </span>
+                    <span 
+                      className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
+                      style={{
+                        transform: buttonTextIndex === 1 ? 'translateY(0)' : 'translateY(100%)',
+                        opacity: buttonTextIndex === 1 ? 1 : 0,
+                      }}
+                    >
+                      with {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
+                    </span>
+                  </span>
+                )}
+                {!subscribing && (
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
                 )}
               </button>
               <p className="text-white/40 text-xs">
@@ -1232,12 +1260,31 @@ const TalentProfilePage: React.FC = () => {
                     style={{ minWidth: '140px' }}
                   >
                     {subscribing ? '...' : (
-                      <>
-                        Stay connected
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </>
+                      <span className="relative h-5 flex items-center justify-center" style={{ minWidth: '110px' }}>
+                        <span 
+                          className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
+                          style={{
+                            transform: buttonTextIndex === 0 ? 'translateY(0)' : 'translateY(-100%)',
+                            opacity: buttonTextIndex === 0 ? 1 : 0,
+                          }}
+                        >
+                          Stay connected
+                        </span>
+                        <span 
+                          className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-in-out"
+                          style={{
+                            transform: buttonTextIndex === 1 ? 'translateY(0)' : 'translateY(100%)',
+                            opacity: buttonTextIndex === 1 ? 1 : 0,
+                          }}
+                        >
+                          with {(talent.temp_full_name || talent.users.full_name).split(' ')[0]}
+                        </span>
+                      </span>
+                    )}
+                    {!subscribing && (
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
                     )}
                   </button>
                 </div>
