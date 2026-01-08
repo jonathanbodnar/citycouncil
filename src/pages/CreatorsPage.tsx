@@ -1,13 +1,10 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  ShieldCheckIcon,
-  UserGroupIcon,
   ShoppingBagIcon,
   TicketIcon,
   UserPlusIcon,
-  VideoCameraIcon,
-  SparklesIcon
+  VideoCameraIcon
 } from '@heroicons/react/24/outline';
 
 export default function CreatorsPage() {
