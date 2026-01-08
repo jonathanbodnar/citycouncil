@@ -4,7 +4,11 @@ import {
   ShoppingBagIcon,
   TicketIcon,
   UserPlusIcon,
-  VideoCameraIcon
+  VideoCameraIcon,
+  ShieldCheckIcon,
+  ChartBarIcon,
+  BoltIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 
 export default function CreatorsPage() {
@@ -47,89 +51,147 @@ export default function CreatorsPage() {
     }
   ];
 
+  const features = [
+    {
+      icon: ShieldCheckIcon,
+      title: 'Security',
+      description: 'Your data and audience are protected with enterprise-grade security.'
+    },
+    {
+      icon: BoltIcon,
+      title: 'Simplicity',
+      description: 'Pre-built and pre-integrated. No additional setup required.'
+    },
+    {
+      icon: ChartBarIcon,
+      title: 'Sovereignty',
+      description: 'Own your audience data and grow without platform restrictions.'
+    }
+  ];
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-900">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-purple-600/10" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <div className="relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent)]" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:pt-32 sm:pb-24">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-              The only <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">free-speech, commerce-ready</span> bio link that helps you secure your uncancellable audience.
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+              The only <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">free-speech, commerce-ready</span> bio link that helps you secure your uncancellable audience.
             </h1>
             <p className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8">
               Our mission at ShoutOut is to empower free-speech creators through richer experiences for their audience.
             </p>
             
             {/* Badge Section */}
-            <div className="flex flex-wrap justify-center gap-3 mb-8">
-              <span className="px-4 py-2 bg-blue-500/20 border border-blue-400/50 rounded-full text-blue-300 font-medium">
+            <div className="flex flex-wrap justify-center gap-3 mb-10">
+              <span className="px-5 py-2.5 bg-blue-500/10 border border-blue-400/30 rounded-full text-blue-300 font-medium text-sm backdrop-blur-sm">
                 Security
               </span>
-              <span className="px-4 py-2 bg-purple-500/20 border border-purple-400/50 rounded-full text-purple-300 font-medium">
+              <span className="px-5 py-2.5 bg-purple-500/10 border border-purple-400/30 rounded-full text-purple-300 font-medium text-sm backdrop-blur-sm">
                 Simplicity
               </span>
-              <span className="px-4 py-2 bg-pink-500/20 border border-pink-400/50 rounded-full text-pink-300 font-medium">
+              <span className="px-5 py-2.5 bg-pink-500/10 border border-pink-400/30 rounded-full text-pink-300 font-medium text-sm backdrop-blur-sm">
                 Sovereignty
               </span>
             </div>
 
-            <div className="max-w-3xl mx-auto">
-              <p className="text-lg text-gray-300 leading-relaxed mb-4">
+            <div className="max-w-3xl mx-auto mb-10">
+              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4">
                 Your link in bio is one of the most powerful tools you have as a creator. Use it wisely.
               </p>
-              <p className="text-lg text-gray-300 leading-relaxed">
-                Best part? We already built it for you. If you are a creator on ShoutOut, you have a <strong className="text-white">Shout.bio</strong> pre-built and pre-integrated. No additional setup required.
+              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed">
+                Best part? We already built it for you. If you are a creator on ShoutOut, you have a <strong className="text-white font-semibold">Shout.bio</strong> pre-built and pre-integrated. No additional setup required.
               </p>
+            </div>
+
+            {/* CTA Button */}
+            <div className="mt-10">
+              <Link
+                to="/onboard"
+                className="inline-block px-8 py-4 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
+              >
+                Start for free
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Features Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="grid md:grid-cols-3 gap-8">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div 
+                key={index}
+                className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300"
+              >
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mb-6">
+                  <Icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-400 leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Own Your Audience Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="glass rounded-2xl p-8 sm:p-12 shadow-2xl">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 text-center">
-            Own your audience.
-          </h2>
-          <div className="prose prose-lg prose-invert max-w-none">
-            <p className="text-gray-300 text-lg leading-relaxed mb-6">
-              Social platforms only show your posts to <strong className="text-white">~2.6% of your followers</strong>. Your hard earned audience is being stolen.
-            </p>
-            <p className="text-gray-300 text-lg leading-relaxed mb-6">
-              <strong className="text-white">Shout.bio</strong> turns followers into an owned audience—fast.
-            </p>
-            <p className="text-gray-300 text-lg leading-relaxed mb-8">
-              Creators using shout.bio convert <strong className="text-white">~6% of profile views</strong> into instantly reachable fans, all on auto pilot.
-            </p>
-            <p className="text-gray-300 text-lg leading-relaxed">
-              Send updates directly from your dashboard—without clunky tools like Mailchimp.
-            </p>
-          </div>
+      <div className="bg-gray-800/30 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
+                Own your audience.
+              </h2>
+              <div className="space-y-6">
+                <p className="text-lg text-gray-300 leading-relaxed">
+                  Social platforms only show your posts to <strong className="text-white font-semibold">~2.6% of your followers</strong>. Your hard earned audience is being stolen.
+                </p>
+                <p className="text-lg text-gray-300 leading-relaxed">
+                  <strong className="text-white font-semibold">Shout.bio</strong> turns followers into an owned audience—fast.
+                </p>
+                <p className="text-lg text-gray-300 leading-relaxed">
+                  Creators using shout.bio convert <strong className="text-white font-semibold">~6% of profile views</strong> into instantly reachable fans, all on auto pilot.
+                </p>
+                <p className="text-lg text-gray-300 leading-relaxed">
+                  Send updates directly from your dashboard—without clunky tools like Mailchimp.
+                </p>
+              </div>
 
-          {/* Badge */}
-          <div className="mt-8 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/50 rounded-xl">
-            <p className="text-green-300 font-semibold text-center">
-              ✨ Plus we build your fan list FOR you! Driving users on shoutout to subscribe to your list.
-            </p>
-          </div>
+              {/* Badge */}
+              <div className="mt-8 p-5 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-400/30 rounded-xl backdrop-blur-sm">
+                <p className="text-green-300 font-semibold flex items-center gap-2">
+                  <span className="text-xl">✨</span>
+                  <span>Plus we build your fan list FOR you! Driving users on shoutout to subscribe to your list.</span>
+                </p>
+              </div>
+            </div>
 
-          {/* Placeholder for image */}
-          <div className="mt-12 rounded-xl overflow-hidden bg-gray-800/50 border border-white/10">
-            <div className="aspect-video flex items-center justify-center">
-              <p className="text-gray-400 text-lg">[Image Placeholder: Audience Growth Visualization]</p>
+            {/* Placeholder for image */}
+            <div className="rounded-2xl overflow-hidden bg-gray-800/50 border border-gray-700/50">
+              <div className="aspect-[4/3] flex items-center justify-center">
+                <p className="text-gray-500 text-center px-4">[Image Placeholder: Audience Growth Visualization]</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Services Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
             Fuel your platform's growth
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
             Through simple, easy to use, services already integrated into your ShoutOut profile.
           </p>
         </div>
@@ -140,9 +202,9 @@ export default function CreatorsPage() {
             return (
               <div 
                 key={index}
-                className="glass rounded-xl p-6 hover:glass-strong transition-all duration-300 hover:transform hover:scale-105"
+                className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:transform hover:scale-105"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">
@@ -157,45 +219,77 @@ export default function CreatorsPage() {
         </div>
 
         <div className="text-center">
-          <p className="text-lg text-gray-300 mb-4">
-            …all with <strong className="text-white">zero effort</strong>.
+          <p className="text-xl text-gray-300">
+            …all with <strong className="text-white font-semibold">zero effort</strong>.
           </p>
         </div>
 
         {/* Placeholder for service images */}
-        <div className="mt-12 grid md:grid-cols-2 gap-6">
-          <div className="rounded-xl overflow-hidden bg-gray-800/50 border border-white/10">
+        <div className="mt-16 grid md:grid-cols-2 gap-6">
+          <div className="rounded-2xl overflow-hidden bg-gray-800/50 border border-gray-700/50">
             <div className="aspect-video flex items-center justify-center">
-              <p className="text-gray-400 text-sm">[Image Placeholder: Service Example 1]</p>
+              <p className="text-gray-500 text-sm">[Image Placeholder: Service Example 1]</p>
             </div>
           </div>
-          <div className="rounded-xl overflow-hidden bg-gray-800/50 border border-white/10">
+          <div className="rounded-2xl overflow-hidden bg-gray-800/50 border border-gray-700/50">
             <div className="aspect-video flex items-center justify-center">
-              <p className="text-gray-400 text-sm">[Image Placeholder: Service Example 2]</p>
+              <p className="text-gray-500 text-sm">[Image Placeholder: Service Example 2]</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mb-16">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 sm:p-12 text-center shadow-2xl">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+      {/* Stats Section */}
+      <div className="bg-gray-800/30 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
+                ~6%
+              </div>
+              <div className="text-gray-400 text-sm sm:text-base">Conversion Rate</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2">
+                100%
+              </div>
+              <div className="text-gray-400 text-sm sm:text-base">Owned Audience</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-red-400 mb-2">
+                0
+              </div>
+              <div className="text-gray-400 text-sm sm:text-base">Setup Required</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-2">
+                ∞
+              </div>
+              <div className="text-gray-400 text-sm sm:text-base">Free Speech</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Final CTA Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-12 sm:p-16 text-center shadow-2xl">
+          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
             Ready to Own Your Audience?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
             Join ShoutOut as a creator and get your Shout.bio link automatically set up and ready to go.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/onboard"
-              className="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors shadow-lg"
+              className="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
             >
               Apply as Creator
             </Link>
             <Link
               to="/"
-              className="inline-block px-8 py-4 bg-transparent text-white font-semibold rounded-lg border-2 border-white hover:bg-white/10 transition-colors"
+              className="inline-block px-8 py-4 bg-transparent text-white font-semibold rounded-lg border-2 border-white hover:bg-white/10 transition-all duration-200 text-lg"
             >
               Learn More
             </Link>
@@ -205,4 +299,3 @@ export default function CreatorsPage() {
     </div>
   );
 }
-
