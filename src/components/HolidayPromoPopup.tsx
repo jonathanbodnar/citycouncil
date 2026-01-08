@@ -26,25 +26,25 @@ const PRIZES: Record<Prize, PrizeInfo> = {
     label: 'Free ShoutOut',
     code: 'WINNER100',
     shortLabel: 'Free ShoutOut',
-    textMessage: 'a FREE personalized ShoutOut (up to $100 value)'
+    textMessage: 'a FREE personalized ShoutOut (up to $100 value) from top conservatives'
   },
   '15_OFF': {
     label: '15% Off',
     code: 'SAVE15',
     shortLabel: '15% Off',
-    textMessage: '15% off'
+    textMessage: '15% off a personalized ShoutOut from top conservatives'
   },
   '10_OFF': {
     label: '10% Off',
     code: 'SAVE10',
     shortLabel: '10% Off',
-    textMessage: '10% off'
+    textMessage: '10% off a personalized ShoutOut from top conservatives'
   },
   '25_DOLLARS': {
     label: '$25 Off',
     code: 'TAKE25',
     shortLabel: '$25 Off',
-    textMessage: '$25 off'
+    textMessage: '$25 off a personalized ShoutOut from top conservatives'
   }
 };
 
@@ -509,7 +509,7 @@ const HolidayPromoPopup: React.FC = () => {
 
       // Send winner SMS
       try {
-        const winnerMessage = `You just won ${prizeInfo.textMessage} off a personalized ShoutOut from top conservatives! 🎉 Expires in 30 min: https://shoutout.us?utm=winning&coupon=${prizeInfo.code}`;
+        const winnerMessage = `🎉 You just won ${prizeInfo.textMessage}! Expires in 30 min: https://shoutout.us?utm=winning&coupon=${prizeInfo.code}`;
         
         await supabase.functions.invoke('send-sms', {
           body: {

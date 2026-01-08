@@ -5100,16 +5100,6 @@ const AddServiceModal: React.FC<{
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(
     service?.platforms || ['instagram']
   );
-  // Local state for follower counts to avoid saving on every keystroke
-  const [localFollowerCounts, setLocalFollowerCounts] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    socialLinks.forEach(s => {
-      if (s.follower_count) {
-        initial[s.id] = s.follower_count.toString();
-      }
-    });
-    return initial;
-  });
 
   const togglePlatform = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -5239,11 +5229,6 @@ const AddServiceModal: React.FC<{
               {COLLAB_PLATFORMS.map((platform) => {
                 const socialAccount = socialLinks.find(s => s.platform === platform.id);
                 const isSelected = selectedPlatforms.includes(platform.id);
-                const formatFollowers = (count: number): string => {
-                  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-                  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-                  return count.toString();
-                };
                 
                 return (
                   <div key={platform.id} className="space-y-2">
