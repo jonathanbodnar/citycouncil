@@ -1353,7 +1353,7 @@ const BioPage: React.FC = () => {
       <div className="max-w-lg mx-auto px-4 py-8 min-h-screen flex flex-col relative">
         {/* ShoutOut Logo - Top Left Corner (within content container) */}
         <a 
-          href="https://shoutout.us" 
+          href="https://shoutout.us/creators" 
           target="_blank" 
           rel="noopener noreferrer"
           className="absolute top-4 left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
@@ -2196,7 +2196,7 @@ const BioPage: React.FC = () => {
             </p>
           )}
           <a 
-            href="https://shoutout.us"
+            href="https://shoutout.us/creators"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-white/40 hover:text-white/60 text-sm transition-colors"
