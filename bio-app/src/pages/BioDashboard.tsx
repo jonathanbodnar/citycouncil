@@ -2152,11 +2152,10 @@ const BioDashboard: React.FC = () => {
                       <div 
                         className="p-5 rounded-2xl overflow-hidden relative"
                         style={{
-                          background: `linear-gradient(135deg, ${bioSettings?.button_color || '#3b82f6'}15, ${bioSettings?.button_color || '#3b82f6'}05)`,
-                          border: `1px solid ${bioSettings?.button_color || '#3b82f6'}30`
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.15)'
                         }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
                         <p className="text-white font-semibold text-sm mb-3">✨ More ways to connect</p>
                         
                         {/* Show up to 3 bio links as preview */}
@@ -2164,7 +2163,7 @@ const BioDashboard: React.FC = () => {
                           {links.filter(l => l.is_active && l.link_type === 'basic').slice(0, 3).map((link, i) => (
                             <div 
                               key={i}
-                              className="flex items-center gap-2 text-xs text-gray-300 bg-white/5 rounded-lg px-3 py-2"
+                              className="flex items-center gap-2 text-xs text-gray-300 bg-black/30 rounded-lg px-3 py-2"
                             >
                               {link.icon_url ? (
                                 <img src={link.icon_url} alt="" className="w-4 h-4 rounded" />
@@ -2184,11 +2183,7 @@ const BioDashboard: React.FC = () => {
                         
                         <a
                           href={`https://${bioUrl}`}
-                          className="inline-flex items-center gap-1 text-sm font-medium px-4 py-2 rounded-full transition-colors"
-                          style={{ 
-                            backgroundColor: bioSettings?.button_color || '#3b82f6',
-                            color: '#ffffff'
-                          }}
+                          className="inline-flex items-center gap-1 text-sm font-medium px-4 py-2 rounded-full transition-colors bg-gradient-to-r from-blue-500 to-purple-500 text-white"
                         >
                           Visit my bio
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2197,13 +2192,14 @@ const BioDashboard: React.FC = () => {
                         </a>
                       </div>
 
-                      {/* ShoutOut Card - With review */}
+                      {/* ShoutOut Card - Redesigned with flush image */}
                       <a
                         href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}`}
-                        className="block p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 hover:border-blue-500/50 transition-colors"
+                        className="block rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 hover:border-blue-500/50 transition-colors overflow-hidden"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                        <div className="flex items-stretch">
+                          {/* Image flush to edges with play button */}
+                          <div className="w-24 flex-shrink-0 relative bg-black/30">
                             {talentProfile?.temp_avatar_url || bioSettings?.profile_image_url ? (
                               <img 
                                 src={talentProfile?.temp_avatar_url || bioSettings?.profile_image_url} 
@@ -2212,19 +2208,26 @@ const BioDashboard: React.FC = () => {
                               />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                                <GiftIcon className="w-6 h-6 text-white" />
+                                <GiftIcon className="w-8 h-8 text-white" />
                               </div>
                             )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-blue-400 text-xs font-medium">🎬 ShoutOut</span>
+                            {/* Play button overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                                <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z"/>
+                                </svg>
+                              </div>
                             </div>
-                            <p className="text-white text-sm font-medium">Get a personalized video</p>
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="flex-1 p-4 min-w-0">
+                            <p className="text-white text-sm font-semibold mb-1">Get a Personalized Video Shoutout</p>
                             
-                            {/* Show review if available */}
-                            {randomReview && (
-                              <div className="mt-2 pt-2 border-t border-white/10">
+                            {/* Show review */}
+                            {randomReview ? (
+                              <div>
                                 <div className="flex items-center gap-0.5 mb-1">
                                   {[...Array(5)].map((_, i) => (
                                     <svg 
@@ -2238,16 +2241,18 @@ const BioDashboard: React.FC = () => {
                                   ))}
                                 </div>
                                 {randomReview.comment && (
-                                  <p className="text-gray-300 text-xs line-clamp-1">
+                                  <p className="text-gray-300 text-xs line-clamp-2">
                                     "{randomReview.comment.split('\n')[0]}"
                                   </p>
                                 )}
                                 {randomReview.users?.full_name && (
-                                  <p className="text-gray-500 text-[10px] mt-0.5">
+                                  <p className="text-gray-500 text-[10px] mt-1">
                                     — {randomReview.users.full_name}
                                   </p>
                                 )}
                               </div>
+                            ) : (
+                              <p className="text-gray-400 text-xs">Book a personalized video message</p>
                             )}
                           </div>
                         </div>
