@@ -3176,6 +3176,8 @@ const BioDashboard: React.FC = () => {
           service={editingService || undefined}
           socialLinks={socialLinks}
           onUpdateFollowerCount={async (socialId: string, count: number) => {
+            console.log('onUpdateFollowerCount called:', { socialId, count });
+            
             // Update local state
             setSocialLinks(prev => prev.map(s => 
               s.id === socialId ? { ...s, follower_count: count } : s
@@ -3185,15 +3187,18 @@ const BioDashboard: React.FC = () => {
             if (socialId.startsWith('profile-')) {
               // This is a temporary ID - need to find or create by platform and talent_id
               const platform = socialId.replace('profile-', '');
+              console.log('Profile-based social, platform:', platform);
               const social = socialLinks.find(s => s.id === socialId);
               if (social && talentProfile?.id) {
                 // First check if a record exists in social_accounts
-                const { data: existing } = await supabase
+                const { data: existing, error: lookupError } = await supabase
                   .from('social_accounts')
                   .select('id')
                   .eq('talent_id', talentProfile.id)
                   .eq('platform', platform)
                   .single();
+                
+                console.log('Lookup result:', { existing, lookupError });
                 
                 if (existing) {
                   // Update existing record in social_accounts
@@ -3214,9 +3219,11 @@ const BioDashboard: React.FC = () => {
                   }
                 } else {
                   // No record in social_accounts - save to talent_profiles.follower_counts instead
-                  console.log('No social_accounts record found, saving to talent_profiles.follower_counts');
+                  console.log('No social_accounts record found, saving to talent_profiles.follower_counts for platform:', platform);
                   const currentCounts = (talentProfile as any).follower_counts || {};
+                  console.log('Current follower_counts:', currentCounts);
                   const updatedCounts = { ...currentCounts, [platform]: count };
+                  console.log('Updated follower_counts to save:', updatedCounts);
                   
                   const { error } = await supabase
                     .from('talent_profiles')
