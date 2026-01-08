@@ -334,7 +334,7 @@ function buildEmailHtml(draft: EmailDraft, talent: TalentProfile, unsubscribeUrl
               </p>
               <div style="margin-top: 16px;">
                 <a href="https://shoutout.us/creators" style="opacity: 0.5;">
-                  <img src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" alt="ShoutOut" height="24" style="filter: brightness(0) invert(1);">
+                  <img src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" alt="ShoutOut" height="32" style="filter: brightness(0) invert(1);">
                 </a>
               </div>
             </td>

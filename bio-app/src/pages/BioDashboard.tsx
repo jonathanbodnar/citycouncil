@@ -2957,12 +2957,12 @@ const BioDashboard: React.FC = () => {
                       <p className="text-gray-500 text-[10px] leading-relaxed">
                         You subscribed to {talentProfile?.full_name?.split(' ')[0] || 'this creator'} through their link in bio on their social platforms.
                       </p>
-                      <a href="https://shoutout.us/creators" className="inline-flex items-center gap-1.5 opacity-50 hover:opacity-70 transition-opacity">
+                      <a href="https://shoutout.us/creators" className="inline-flex items-center gap-2 opacity-50 hover:opacity-70 transition-opacity">
                         <span className="text-gray-400 text-[10px]">Powered by</span>
                         <img 
                           src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" 
                           alt="ShoutOut" 
-                          className="h-4 w-auto brightness-0 invert"
+                          className="h-6 w-auto brightness-0 invert"
                         />
                       </a>
                       <div className="text-gray-600 text-[9px] leading-relaxed space-y-1">
