@@ -291,6 +291,7 @@ const BioDashboard: React.FC = () => {
   const [emailButtonText, setEmailButtonText] = useState('');
   const [emailButtonUrl, setEmailButtonUrl] = useState('');
   const [emailImageUrl, setEmailImageUrl] = useState('');
+  const [emailImageLinkUrl, setEmailImageLinkUrl] = useState(''); // URL the image links to when clicked
   const [emailScheduledDate, setEmailScheduledDate] = useState('');
   const [emailScheduledTime, setEmailScheduledTime] = useState('');
   // Draft auto-saves - no need for manual save state
@@ -2052,6 +2053,7 @@ const BioDashboard: React.FC = () => {
                         <button
                           onClick={() => {
                             setEmailImageUrl('');
+                            setEmailImageLinkUrl('');
                             setShowImageUpload(false);
                           }}
                           className="text-xs text-red-400 hover:text-red-300"
@@ -2062,67 +2064,70 @@ const BioDashboard: React.FC = () => {
                     </div>
                     
                     {emailImageUrl ? (
-                      <div className="relative">
-                        <img src={emailImageUrl} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
-                        <button
-                          onClick={() => setEmailImageUrl('')}
-                          className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                        </button>
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <img src={emailImageUrl} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                          <button
+                            onClick={() => setEmailImageUrl('')}
+                            className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {/* Link URL for the image */}
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Link URL (optional)</label>
+                          <input
+                            type="url"
+                            value={emailImageLinkUrl}
+                            onChange={(e) => setEmailImageLinkUrl(e.target.value)}
+                            placeholder="https://... (where image links to when clicked)"
+                            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                          />
+                        </div>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <label className="block">
-                          <div className="flex items-center justify-center w-full h-24 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-white/40 transition-colors">
-                            {uploadingEmailImage ? (
-                              <div className="flex items-center gap-2 text-gray-400">
-                                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Uploading...
-                              </div>
-                            ) : (
-                              <div className="text-center">
-                                <CloudArrowUpIcon className="w-8 h-8 text-gray-500 mx-auto mb-1" />
-                                <span className="text-sm text-gray-400">Click to upload image</span>
-                              </div>
-                            )}
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setUploadingEmailImage(true);
-                                try {
-                                  const result = await uploadImageToWasabi(file, `email-images/${talentProfile?.id}`);
-                                  if (result.success && result.imageUrl) {
-                                    setEmailImageUrl(result.imageUrl);
-                                    toast.success('Image uploaded!');
-                                  } else {
-                                    toast.error(result.error || 'Failed to upload image');
-                                  }
-                                } catch (error) {
-                                  toast.error('Failed to upload image');
-                                }
-                                setUploadingEmailImage(false);
-                              }
-                            }}
-                          />
-                        </label>
-                        <div className="text-center text-gray-500 text-xs">or</div>
+                      <label className="block">
+                        <div className="flex items-center justify-center w-full h-24 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-white/40 transition-colors">
+                          {uploadingEmailImage ? (
+                            <div className="flex items-center gap-2 text-gray-400">
+                              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Uploading...
+                            </div>
+                          ) : (
+                            <div className="text-center">
+                              <CloudArrowUpIcon className="w-8 h-8 text-gray-500 mx-auto mb-1" />
+                              <span className="text-sm text-gray-400">Click to upload image</span>
+                            </div>
+                          )}
+                        </div>
                         <input
-                          type="url"
-                          value={emailImageUrl}
-                          onChange={(e) => setEmailImageUrl(e.target.value)}
-                          placeholder="Paste image URL..."
-                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setUploadingEmailImage(true);
+                              try {
+                                const result = await uploadImageToWasabi(file, `email-images/${talentProfile?.id}`);
+                                if (result.success && result.imageUrl) {
+                                  setEmailImageUrl(result.imageUrl);
+                                  toast.success('Image uploaded!');
+                                } else {
+                                  toast.error(result.error || 'Failed to upload image');
+                                }
+                              } catch (error) {
+                                toast.error('Failed to upload image');
+                              }
+                              setUploadingEmailImage(false);
+                            }
+                          }}
                         />
-                      </div>
+                      </label>
                     )}
                   </div>
                 )}
@@ -2407,9 +2412,15 @@ const BioDashboard: React.FC = () => {
 
                     {/* Image */}
                     {emailImageUrl && (
-                      <div className="rounded-xl overflow-hidden">
-                        <img src={emailImageUrl} alt="" className="w-full h-auto" />
-                      </div>
+                      emailImageLinkUrl ? (
+                        <a href={emailImageLinkUrl} target="_blank" rel="noopener noreferrer" className="block rounded-xl overflow-hidden hover:opacity-90 transition-opacity">
+                          <img src={emailImageUrl} alt="" className="w-full h-auto" />
+                        </a>
+                      ) : (
+                        <div className="rounded-xl overflow-hidden">
+                          <img src={emailImageUrl} alt="" className="w-full h-auto" />
+                        </div>
+                      )
                     )}
 
                     {/* Content */}
@@ -2599,7 +2610,7 @@ const BioDashboard: React.FC = () => {
                         <p>ShoutOut, LLC</p>
                         <p>1201 N Riverfront Blvd Ste 100, Dallas, TX 75207</p>
                         <p className="pt-1">
-                          <a href="#" className="text-gray-500 hover:text-gray-400 underline">Unsubscribe</a>
+                          <span className="text-gray-500 hover:text-gray-400 underline cursor-pointer">Unsubscribe</span>
                           {' · '}
                           <a href="https://shoutout.us/privacy" className="text-gray-500 hover:text-gray-400 underline">Privacy Policy</a>
                         </p>
