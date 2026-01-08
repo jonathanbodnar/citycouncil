@@ -973,8 +973,10 @@ const TalentManagement: React.FC = () => {
 
       {/* Add Talent Form Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: '#111827' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: 'rgba(17, 24, 39, 0.98)' }}>
+          {/* Solid backdrop to block everything behind */}
+          <div className="absolute inset-0 bg-gray-900" style={{ backgroundColor: '#0f172a' }}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700">
               <h3 className="text-xl font-bold text-white">Add New Talent</h3>
@@ -1972,8 +1974,10 @@ const TalentManagement: React.FC = () => {
 
       {/* Edit Talent Modal */}
       {editingTalent && (
-        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: '#111827' }}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: 'rgba(17, 24, 39, 0.98)' }}>
+          {/* Solid backdrop to block everything behind */}
+          <div className="absolute inset-0 bg-gray-900" style={{ backgroundColor: '#0f172a' }}></div>
+          <div className="relative bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Edit Talent Profile</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
