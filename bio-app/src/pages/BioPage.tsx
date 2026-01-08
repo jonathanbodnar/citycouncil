@@ -2110,8 +2110,9 @@ const BioPage: React.FC = () => {
               ? `${servicePlatforms[0].charAt(0).toUpperCase() + servicePlatforms[0].slice(1)} Collab`
               : `Social Collab`;
             
-            // Calculate total followers across platforms
-            const totalFollowers = filteredSocials.reduce((sum, s) => sum + (s.follower_count || 0), 0);
+            // Calculate total followers across all social accounts (not just filtered ones)
+            // This ensures we show total reach even if platforms don't match exactly
+            const totalFollowers = socialAccounts.reduce((sum, s) => sum + (s.follower_count || 0), 0);
             const formatFollowers = (count: number): string => {
               if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
               if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
@@ -2145,12 +2146,18 @@ const BioPage: React.FC = () => {
                         )}
                       </div>
                       <span className="text-pink-400 text-xs font-medium">{platformLabel}</span>
+                      {/* Show total followers inline with platform label */}
+                      {totalFollowers > 0 && (
+                        <span className="text-gray-400 text-xs">•</span>
+                      )}
+                      {totalFollowers > 0 && (
+                        <span className="text-pink-400 text-xs font-medium">{formatFollowers(totalFollowers)} followers</span>
+                      )}
                     </div>
-                    <h3 className="text-white font-semibold text-sm mb-1">
+                    <h3 className="text-white font-semibold text-sm">
                       {service.title}
                     </h3>
-                    
-                    {/* Total followers */}
+                  </div>
                     {totalFollowers > 0 && (
                       <div className="text-xs text-gray-400">
                         <span className="text-pink-400 font-semibold">{formatFollowers(totalFollowers)}</span> followers

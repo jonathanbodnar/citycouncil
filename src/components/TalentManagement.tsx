@@ -970,190 +970,192 @@ const TalentManagement: React.FC = () => {
 
       {/* Add Talent Form Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Add New Talent Member</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTalent.full_name}
-                  onChange={(e) => setNewTalent({...newTalent, full_name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter full name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Position <span className="text-gray-500">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={newTalent.position}
-                  onChange={(e) => setNewTalent({...newTalent, position: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Congressman, Judge, Senator"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Title that appears above their name on profiles
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Username * (shoutout.us/username)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTalent.username}
-                  onChange={(e) => setNewTalent({...newTalent, username: e.target.value.toLowerCase()})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="username"
-                />
-                <p className="text-xs text-gray-500 mt-1">Letters, numbers, hyphens, and underscores only</p>
-              </div>
-              
-              <div className="md:col-span-2">
-                <ImageUpload
-                  currentImageUrl={newTalent.avatar_url}
-                  onImageUploaded={(imageUrl) => setNewTalent({...newTalent, avatar_url: imageUrl})}
-                  uploadPath="talent-avatars"
-                  maxSizeMB={5}
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bio *
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={newTalent.bio}
-                  onChange={(e) => setNewTalent({...newTalent, bio: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter bio/description"
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <CategorySelector
-                  selectedCategories={newTalent.categories}
-                  onCategoryChange={(categories) => setNewTalent({...newTalent, categories, category: categories[0] || 'other'})}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Average Delivery Time (hours)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="168"
-                  value={newTalent.fulfillment_time_hours}
-                  onChange={(e) => setNewTalent({...newTalent, fulfillment_time_hours: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  How long it typically takes to fulfill orders
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Personal Pricing ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newTalent.pricing}
-                  onChange={(e) => setNewTalent({...newTalent, pricing: parseFloat(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Corporate Pricing ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newTalent.corporate_pricing}
-                  onChange={(e) => setNewTalent({...newTalent, corporate_pricing: parseFloat(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="allow_corporate_pricing"
-                    checked={newTalent.allow_corporate_pricing}
-                    onChange={(e) => setNewTalent({...newTalent, allow_corporate_pricing: e.target.checked})}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="allow_corporate_pricing" className="ml-2 block text-sm font-medium text-gray-700">
-                    Allow Corporate Pricing
-                  </label>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">Enable business/corporate pricing option for this talent</p>
-              </div>
-              
-              <div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_verified"
-                    checked={newTalent.is_verified}
-                    onChange={(e) => setNewTalent({...newTalent, is_verified: e.target.checked})}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="is_verified" className="ml-2 block text-sm font-medium text-gray-700">
-                    Verified Talent
-                  </label>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">Show verification badge on talent profile</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Admin Fee (%)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={newTalent.admin_fee_percentage}
-                  onChange={(e) => setNewTalent({...newTalent, admin_fee_percentage: parseFloat(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+        <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700">
+              <h3 className="text-xl font-bold text-white">Add New Talent</h3>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             
-            {/* Charity Donation Toggle */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Enable charity donations?
-                  </label>
-                  <p className="text-xs text-gray-500">
-                    Allow this talent to donate a percentage to charity
-                  </p>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Basic Info Section */}
+              <div className="bg-gray-50 rounded-xl p-5">
+                <h4 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Basic Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newTalent.full_name}
+                      onChange={(e) => setNewTalent({...newTalent, full_name: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-sm">shoutout.us/</span>
+                      <input
+                        type="text"
+                        required
+                        value={newTalent.username}
+                        onChange={(e) => setNewTalent({...newTalent, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')})}
+                        className="w-full pl-24 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        placeholder="username"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Position <span className="text-gray-400 font-normal">(Optional)</span></label>
+                    <input
+                      type="text"
+                      value={newTalent.position}
+                      onChange={(e) => setNewTalent({...newTalent, position: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      placeholder="e.g., Congressman, Judge"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="168"
+                        value={newTalent.fulfillment_time_hours}
+                        onChange={(e) => setNewTalent({...newTalent, fulfillment_time_hours: parseInt(e.target.value)})}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      />
+                      <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">hours</span>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={newTalent.bio}
+                      onChange={(e) => setNewTalent({...newTalent, bio: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white resize-none"
+                      placeholder="Brief description of the talent..."
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <ImageUpload
+                      currentImageUrl={newTalent.avatar_url}
+                      onImageUploaded={(imageUrl) => setNewTalent({...newTalent, avatar_url: imageUrl})}
+                      uploadPath="talent-avatars"
+                      maxSizeMB={5}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <CategorySelector
+                      selectedCategories={newTalent.categories}
+                      onCategoryChange={(categories) => setNewTalent({...newTalent, categories, category: categories[0] || 'other'})}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center">
+              </div>
+
+              {/* Pricing Section */}
+              <div className="bg-gray-50 rounded-xl p-5">
+                <h4 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Pricing & Fees
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Personal Price</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={newTalent.pricing}
+                        onChange={(e) => setNewTalent({...newTalent, pricing: parseFloat(e.target.value)})}
+                        className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Corporate Price</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={newTalent.corporate_pricing}
+                        onChange={(e) => setNewTalent({...newTalent, corporate_pricing: parseFloat(e.target.value)})}
+                        className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Admin Fee</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={newTalent.admin_fee_percentage}
+                        onChange={(e) => setNewTalent({...newTalent, admin_fee_percentage: parseFloat(e.target.value)})}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      />
+                      <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">%</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-6 mt-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTalent.allow_corporate_pricing}
+                      onChange={(e) => setNewTalent({...newTalent, allow_corporate_pricing: e.target.checked})}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Allow Corporate Pricing</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTalent.is_verified}
+                      onChange={(e) => setNewTalent({...newTalent, is_verified: e.target.checked})}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Verified Talent ✓</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Charity Section */}
+              <div className="bg-gray-50 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    Charity Donations
+                  </h4>
                   <button
                     type="button"
                     onClick={() => {
@@ -1165,180 +1167,178 @@ const TalentManagement: React.FC = () => {
                         setNewTalent({...newTalent, charity_percentage: 5});
                       }
                     }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      adminDonateProceeds ? 'bg-blue-600' : 'bg-gray-200'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      adminDonateProceeds ? 'bg-red-500' : 'bg-gray-300'
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow ${
                         adminDonateProceeds ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
-                  <span className="ml-3 text-sm font-medium text-gray-700">
-                    {adminDonateProceeds ? 'Yes' : 'No'}
-                  </span>
                 </div>
+
+                {adminDonateProceeds && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Charity Name *</label>
+                      <select
+                        value={newTalent.charity_name}
+                        onChange={(e) => setNewTalent({...newTalent, charity_name: e.target.value})}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                        required={adminDonateProceeds}
+                      >
+                        <option value="">Select a charity...</option>
+                        <option value="American Red Cross">American Red Cross</option>
+                        <option value="St. Jude Children's Research Hospital">St. Jude Children's Research Hospital</option>
+                        <option value="Wounded Warrior Project">Wounded Warrior Project</option>
+                        <option value="Doctors Without Borders">Doctors Without Borders</option>
+                        <option value="Habitat for Humanity">Habitat for Humanity</option>
+                        <option value="United Way">United Way</option>
+                        <option value="Salvation Army">Salvation Army</option>
+                        <option value="Make-A-Wish Foundation">Make-A-Wish Foundation</option>
+                        <option value="American Cancer Society">American Cancer Society</option>
+                        <option value="Other">Other (specify in bio)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Donation Percentage *</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="5"
+                          max="100"
+                          value={newTalent.charity_percentage || ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? 0 : Math.max(5, Math.min(100, parseInt(e.target.value)));
+                            setNewTalent({...newTalent, charity_percentage: value});
+                          }}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                          placeholder="5-100"
+                          required={adminDonateProceeds}
+                        />
+                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">%</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Min 5%, Max 100%</p>
+                    </div>
+                  </div>
+                )}
+                {!adminDonateProceeds && (
+                  <p className="text-sm text-gray-500">Enable to allow this talent to donate a percentage of earnings to charity.</p>
+                )}
               </div>
 
-              {/* Charity Fields - Only show when enabled */}
-              {adminDonateProceeds && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-red-50 rounded-lg border border-red-200">
+              {/* Social Links Section */}
+              <div className="bg-gray-50 rounded-xl p-5">
+                <h4 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  Social Links <span className="text-gray-400 font-normal">(Optional)</span>
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Charity Name *
-                    </label>
-                    <select
-                      value={newTalent.charity_name}
-                      onChange={(e) => setNewTalent({...newTalent, charity_name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required={adminDonateProceeds}
-                    >
-                      <option value="">Select a charity</option>
-                      <option value="American Red Cross">American Red Cross</option>
-                      <option value="St. Jude Children's Research Hospital">St. Jude Children's Research Hospital</option>
-                      <option value="Wounded Warrior Project">Wounded Warrior Project</option>
-                      <option value="Doctors Without Borders">Doctors Without Borders</option>
-                      <option value="Habitat for Humanity">Habitat for Humanity</option>
-                      <option value="United Way">United Way</option>
-                      <option value="Salvation Army">Salvation Army</option>
-                      <option value="Make-A-Wish Foundation">Make-A-Wish Foundation</option>
-                      <option value="American Cancer Society">American Cancer Society</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Donation Percentage * (Min 5%, Max 100%)
-                    </label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Twitter/X</label>
                     <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-sm">@</span>
                       <input
-                        type="number"
-                        min="5"
-                        max="100"
-                        value={newTalent.charity_percentage}
-                        onChange={(e) => {
-                          const value = Math.max(5, Math.min(100, parseInt(e.target.value) || 5));
-                          setNewTalent({...newTalent, charity_percentage: value});
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="5"
-                        required={adminDonateProceeds}
+                        type="text"
+                        value={newTalent.twitter_handle}
+                        onChange={(e) => setNewTalent({...newTalent, twitter_handle: e.target.value.replace('@', '')})}
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        placeholder="username"
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <span className="text-gray-500">%</span>
-                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Instagram</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-sm">@</span>
+                      <input
+                        type="text"
+                        value={newTalent.instagram_handle}
+                        onChange={(e) => setNewTalent({...newTalent, instagram_handle: e.target.value.replace('@', '')})}
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        placeholder="username"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Facebook</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-sm">@</span>
+                      <input
+                        type="text"
+                        value={newTalent.facebook_handle}
+                        onChange={(e) => setNewTalent({...newTalent, facebook_handle: e.target.value.replace('@', '')})}
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        placeholder="username"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">TikTok</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-sm">@</span>
+                      <input
+                        type="text"
+                        value={newTalent.tiktok_handle}
+                        onChange={(e) => setNewTalent({...newTalent, tiktok_handle: e.target.value.replace('@', '')})}
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        placeholder="username"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">YouTube</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-sm">@</span>
+                      <input
+                        type="text"
+                        value={newTalent.youtube_handle}
+                        onChange={(e) => setNewTalent({...newTalent, youtube_handle: e.target.value.replace('@', '')})}
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        placeholder="channel"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Rumble</label>
+                    <div className="flex gap-1">
+                      <select
+                        value={newTalent.rumble_type}
+                        onChange={(e) => setNewTalent({...newTalent, rumble_type: e.target.value as 'c' | 'user'})}
+                        className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-xs"
+                      >
+                        <option value="c">/c/</option>
+                        <option value="user">/user/</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={newTalent.rumble_handle}
+                        onChange={(e) => setNewTalent({...newTalent, rumble_handle: e.target.value})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        placeholder="name"
+                      />
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Social Links Section */}
-            <div className="border-t border-gray-200 pt-4 mt-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Social Links (Optional)</h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Twitter/X</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
-                    <input
-                      type="text"
-                      value={newTalent.twitter_handle}
-                      onChange={(e) => setNewTalent({...newTalent, twitter_handle: e.target.value.replace('@', '')})}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="username"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Instagram</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
-                    <input
-                      type="text"
-                      value={newTalent.instagram_handle}
-                      onChange={(e) => setNewTalent({...newTalent, instagram_handle: e.target.value.replace('@', '')})}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="username"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Facebook</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
-                    <input
-                      type="text"
-                      value={newTalent.facebook_handle}
-                      onChange={(e) => setNewTalent({...newTalent, facebook_handle: e.target.value.replace('@', '')})}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="username"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">TikTok</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
-                    <input
-                      type="text"
-                      value={newTalent.tiktok_handle}
-                      onChange={(e) => setNewTalent({...newTalent, tiktok_handle: e.target.value.replace('@', '')})}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="username"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Rumble</label>
-                  <div className="flex gap-2">
-                    <select
-                      value={newTalent.rumble_type}
-                      onChange={(e) => setNewTalent({...newTalent, rumble_type: e.target.value as 'c' | 'user'})}
-                      className="px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
-                    >
-                      <option value="c">Channel (/c/)</option>
-                      <option value="user">User (/user/)</option>
-                    </select>
-                    <input
-                      type="text"
-                      value={newTalent.rumble_handle}
-                      onChange={(e) => setNewTalent({...newTalent, rumble_handle: e.target.value})}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Name"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">YouTube</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">@</span>
-                    <input
-                      type="text"
-                      value={newTalent.youtube_handle}
-                      onChange={(e) => setNewTalent({...newTalent, youtube_handle: e.target.value.replace('@', '')})}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="channel"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
-            
-            <div className="flex gap-3">
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={createTalent}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 Create Talent Profile
               </button>
