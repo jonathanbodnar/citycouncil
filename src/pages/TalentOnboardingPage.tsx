@@ -1049,11 +1049,11 @@ const TalentOnboardingPage: React.FC = () => {
                   </div>
 
                   {/* Charity Badge */}
-                  {donateProceeds && onboardingData.talent.charity_percentage && onboardingData.talent.charity_percentage > 0 && (
+                  {donateProceeds && Number(onboardingData.talent.charity_percentage) > 0 ? (
                     <div className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm">
                       <HeartIcon className="h-6 w-6 text-red-500" />
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
@@ -1135,18 +1135,18 @@ const TalentOnboardingPage: React.FC = () => {
                       </div>
                     )}
 
-                    {(donateProceeds && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0) && (
+                    {donateProceeds && Number(onboardingData.talent.charity_percentage) > 0 ? (
                       <div className="text-center">
                         <div className="text-xl sm:text-2xl font-bold text-red-600">
                           {onboardingData.talent.charity_percentage}%
                         </div>
                         <div className="text-xs sm:text-sm text-gray-600">To Charity</div>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Charity Info */}
-                  {donateProceeds && onboardingData.talent.charity_name && onboardingData.talent.charity_percentage && Number(onboardingData.talent.charity_percentage) > 0 && (
+                  {donateProceeds && onboardingData.talent.charity_name && Number(onboardingData.talent.charity_percentage) > 0 ? (
                     <div className="bg-red-50 rounded-lg p-3 sm:p-4">
                       <div className="flex items-center text-red-800">
                         <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
@@ -1155,7 +1155,7 @@ const TalentOnboardingPage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>

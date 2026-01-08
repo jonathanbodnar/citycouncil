@@ -1168,7 +1168,7 @@ const OrderPage: React.FC = () => {
             </div>
 
             {/* Charity Info */}
-            {(talent.charity_name && talent.charity_percentage && Number(talent.charity_percentage) > 0) && (
+            {talent.charity_name && Number(talent.charity_percentage) > 0 ? (
               <div className="mt-6 p-4 bg-red-50 rounded-lg">
                 <div className="flex items-center text-red-800">
                   <HeartIcon className="h-5 w-5 mr-2" />
@@ -1177,7 +1177,7 @@ const OrderPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
