@@ -24,7 +24,10 @@ ALTER TABLE bio_events ENABLE ROW LEVEL SECURITY;
 -- Index for fast lookups
 CREATE INDEX IF NOT EXISTS idx_bio_events_talent_id ON bio_events(talent_id);
 
--- RLS Policies
+-- RLS Policies (drop existing first to avoid conflicts)
+DROP POLICY IF EXISTS "Talents can manage their own events" ON bio_events;
+DROP POLICY IF EXISTS "Public can view active events" ON bio_events;
+DROP POLICY IF EXISTS "Admins can manage all events" ON bio_events;
 
 -- Talents can manage their own events
 CREATE POLICY "Talents can manage their own events" ON bio_events

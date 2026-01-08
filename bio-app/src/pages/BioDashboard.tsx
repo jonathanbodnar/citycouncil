@@ -1181,13 +1181,6 @@ const BioDashboard: React.FC = () => {
                     <PlusIcon className="h-5 w-5" />
                     Event
                   </button>
-                  <button
-                    onClick={() => setShowImportModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
-                  >
-                    <CloudArrowUpIcon className="h-5 w-5" />
-                    Import Links
-                  </button>
                 </div>
 
                 {/* Links List */}
