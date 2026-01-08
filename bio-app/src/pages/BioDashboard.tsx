@@ -2144,9 +2144,10 @@ const BioDashboard: React.FC = () => {
 
                     {/* Divider */}
                     <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
-                      {/* Connect Card - Show bio links preview */}
-                      <div 
-                        className="p-5 rounded-2xl overflow-hidden relative"
+                      {/* Connect Card - Whole card is clickable */}
+                      <a 
+                        href={`https://${bioUrl}`}
+                        className="block p-5 rounded-2xl overflow-hidden relative hover:scale-[1.02] transition-transform"
                         style={{
                           background: 'rgba(255,255,255,0.05)',
                           border: '1px solid rgba(255,255,255,0.15)'
@@ -2154,9 +2155,30 @@ const BioDashboard: React.FC = () => {
                       >
                         <p className="text-white font-semibold text-sm mb-3">✨ More ways to connect</p>
                         
-                        {/* Show up to 3 bio links as preview */}
-                        <div className="space-y-2 mb-3">
-                          {links.filter(l => l.is_active && l.link_type === 'basic').slice(0, 3).map((link, i) => (
+                        {/* Show what's available on their bio */}
+                        <div className="space-y-2">
+                          {/* Events */}
+                          {bioEvents.filter(e => e.is_active).length > 0 && (
+                            <div className="flex items-center gap-2 text-xs text-gray-300 bg-black/30 rounded-lg px-3 py-2">
+                              <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span>See upcoming events</span>
+                            </div>
+                          )}
+                          
+                          {/* Instagram Collab */}
+                          {serviceOfferings.length > 0 && (
+                            <div className="flex items-center gap-2 text-xs text-gray-300 bg-black/30 rounded-lg px-3 py-2">
+                              <svg className="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                              </svg>
+                              <span>Collaborate with me</span>
+                            </div>
+                          )}
+                          
+                          {/* Links summary */}
+                          {links.filter(l => l.is_active && l.link_type === 'basic').slice(0, 2).map((link, i) => (
                             <div 
                               key={i}
                               className="flex items-center gap-2 text-xs text-gray-300 bg-black/30 rounded-lg px-3 py-2"
@@ -2164,29 +2186,33 @@ const BioDashboard: React.FC = () => {
                               {link.icon_url ? (
                                 <img src={link.icon_url} alt="" className="w-4 h-4 rounded" />
                               ) : (
-                                <LinkIcon className="w-4 h-4 text-gray-400" />
+                                <LinkIcon className="w-4 h-4 text-blue-400" />
                               )}
                               <span className="truncate">{link.title || 'Link'}</span>
                             </div>
                           ))}
-                          {links.filter(l => l.is_active && l.link_type === 'basic').length === 0 && (
-                            <p className="text-gray-500 text-xs italic">Add links to your bio to show them here</p>
-                          )}
-                          {links.filter(l => l.is_active && l.link_type === 'basic').length > 3 && (
-                            <p className="text-gray-400 text-xs">+{links.filter(l => l.is_active && l.link_type === 'basic').length - 3} more links</p>
+                          
+                          {/* Show count of additional items */}
+                          {(() => {
+                            const totalItems = links.filter(l => l.is_active && l.link_type === 'basic').length;
+                            const shownLinks = Math.min(totalItems, 2);
+                            const remainingLinks = totalItems - shownLinks;
+                            if (remainingLinks > 0) {
+                              return (
+                                <p className="text-gray-400 text-xs pl-1">+{remainingLinks} more link{remainingLinks > 1 ? 's' : ''}</p>
+                              );
+                            }
+                            return null;
+                          })()}
+                          
+                          {/* Empty state */}
+                          {bioEvents.filter(e => e.is_active).length === 0 && 
+                           serviceOfferings.length === 0 && 
+                           links.filter(l => l.is_active && l.link_type === 'basic').length === 0 && (
+                            <p className="text-gray-500 text-xs italic">Add content to your bio to show here</p>
                           )}
                         </div>
-                        
-                        <a
-                          href={`https://${bioUrl}`}
-                          className="inline-flex items-center gap-1 text-sm font-medium px-4 py-2 rounded-full transition-colors bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                        >
-                          Visit my bio
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </a>
-                      </div>
+                      </a>
 
                       {/* ShoutOut Card - Redesigned with flush image */}
                       <a
