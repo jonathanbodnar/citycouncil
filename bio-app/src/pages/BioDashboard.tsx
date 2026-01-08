@@ -2680,10 +2680,12 @@ const BioDashboard: React.FC = () => {
 
                         // Add links - show images if they have them
                         links.filter(l => l.is_active && (l.link_type === 'basic' || l.link_type === 'grid')).slice(0, 4 - gridItems.length).forEach(link => {
+                          // Check all possible image fields
+                          const linkImage = link.image_url || link.thumbnail_url || link.icon_url || link.background_image_url;
                           gridItems.push({
                             type: 'link',
                             title: link.title || 'Link',
-                            image: link.image_url || link.icon_url || undefined, // Use image_url or icon_url
+                            image: linkImage || undefined,
                             icon: <LinkIcon className="w-4 h-4 text-blue-400" />
                           });
                         });
