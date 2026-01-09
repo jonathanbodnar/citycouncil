@@ -235,24 +235,24 @@ export default function CreatorsPage() {
                 </h2>
 
                 {/* Stats row */}
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-3 gap-3 mb-8">
                   <div className="glass rounded-xl p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
-                      2.6%
+                      ~2.6%
                     </div>
-                    <p className="text-gray-400 text-xs sm:text-sm">Social reach</p>
+                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">of followers see your posts</p>
                   </div>
                   <div className="glass rounded-xl p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
-                      6%
+                      ~6%
                     </div>
-                    <p className="text-emerald-300 text-xs sm:text-sm">Shout.bio</p>
+                    <p className="text-emerald-300 text-xs sm:text-sm leading-tight">of views become reachable fans</p>
                   </div>
                   <div className="glass rounded-xl p-4 border border-purple-500/30 text-center bg-gradient-to-br from-purple-500/5 to-transparent">
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
-                      2.3x
+                      100%
                     </div>
-                    <p className="text-gray-400 text-xs sm:text-sm">More fans</p>
+                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">owned audience you control</p>
                   </div>
                 </div>
                 
