@@ -2222,11 +2222,6 @@ const BioDashboard: React.FC = () => {
                         return;
                       }
                       
-                      // Confirm before sending
-                      if (!window.confirm(`Send this email to ${subscriberCount} fans?`)) {
-                        return;
-                      }
-                      
                       setSendingEmail(true);
                       try {
                         const { data, error } = await supabase.functions.invoke('send-talent-update', {
