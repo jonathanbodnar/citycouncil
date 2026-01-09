@@ -279,25 +279,40 @@ export default function CreatorsPage() {
                 </div>
               </div>
 
-              {/* Right: Stats */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="glass rounded-3xl p-8 border border-red-500/20 text-center group hover:border-red-500/40 transition-all duration-300 bg-gradient-to-br from-red-500/5 to-transparent">
-                  <div className="text-5xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 mb-3">
-                    2.6%
+              {/* Right: Visual examples */}
+              <div className="space-y-6">
+                {/* Stay Connected - How fans subscribe */}
+                <div className="group">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <span className="text-emerald-400 font-bold text-sm">1</span>
+                    </div>
+                    <p className="text-white font-semibold">Fans subscribe on your bio</p>
                   </div>
-                  <p className="text-gray-400 font-medium">Typical social reach</p>
+                  <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl group-hover:border-emerald-500/30 transition-all duration-300">
+                    <img 
+                      src="/creatorbios/stayconnected.png" 
+                      alt="Stay connected - How fans subscribe"
+                      className="w-full h-auto"
+                    />
+                  </div>
                 </div>
-                <div className="glass rounded-3xl p-8 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5 group hover:from-emerald-500/15 transition-all duration-300">
-                  <div className="text-5xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-3">
-                    6%
+
+                {/* Send Update - How creators communicate */}
+                <div className="group">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                      <span className="text-purple-400 font-bold text-sm">2</span>
+                    </div>
+                    <p className="text-white font-semibold">Send updates from your dashboard</p>
                   </div>
-                  <p className="text-emerald-300 font-medium">Shout.bio conversion</p>
-                </div>
-                <div className="glass rounded-3xl p-8 border border-purple-500/30 text-center col-span-2 group hover:border-purple-500/50 transition-all duration-300 bg-gradient-to-br from-purple-500/5 to-transparent">
-                  <div className="text-5xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 mb-3">
-                    2.3x
+                  <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl group-hover:border-purple-500/30 transition-all duration-300">
+                    <img 
+                      src="/creatorbios/sendupdate.png" 
+                      alt="Send update - How creators reach their audience"
+                      className="w-full h-auto"
+                    />
                   </div>
-                  <p className="text-gray-400 font-medium">More fans with Shout.bio vs typical bio links</p>
                 </div>
               </div>
             </div>
