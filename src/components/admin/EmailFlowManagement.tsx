@@ -479,14 +479,14 @@ const EmailFlowManagement: React.FC = () => {
           <tr>
             <td>
               <a href="https://shoutout.us?utm=email_flow&coupon={{coupon_code}}" target="_blank" style="text-decoration: none; display: block;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px; overflow: hidden;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #7c3aed 0%, #c026d3 50%, #f43f5e 100%); border-radius: 16px; overflow: hidden;">
                   <tr>
                     <td style="padding: 24px;">
                       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                         <tr>
                           <td style="vertical-align: middle;">
                             <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 8px;">Get a Personalized Video ShoutOut</div>
-                            <div style="color: #c4b5fd; font-size: 14px;">From top free-speech personalities — starting at $47</div>
+                            <div style="color: rgba(255,255,255,0.8); font-size: 14px;">From top free-speech personalities — starting at $47</div>
                           </td>
                         </tr>
                         <tr>
@@ -1553,14 +1553,14 @@ const EmailFlowManagement: React.FC = () => {
                       rel="noopener noreferrer"
                       className="block rounded-2xl p-6 mb-6 hover:opacity-95 transition-opacity"
                       style={{ 
-                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        background: 'linear-gradient(135deg, #7c3aed 0%, #c026d3 50%, #f43f5e 100%)',
                         textDecoration: 'none'
                       }}
                     >
                       <h3 className="text-white font-bold text-lg mb-1">
                         Get a Personalized Video ShoutOut
                       </h3>
-                      <p className="text-purple-200 text-sm mb-4">
+                      <p className="text-white/80 text-sm mb-4">
                         From top free-speech personalities — starting at $47
                       </p>
                       
