@@ -96,7 +96,7 @@ export default function CreatorsPage() {
         />
 
         {/* Hero Section */}
-        <section className="relative pt-8 pb-20 sm:pt-16 sm:pb-32">
+        <section className="relative pt-6 pb-8 sm:pt-10 sm:pb-12">
           {/* Animated gradient mesh */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-0 -left-40 w-[500px] h-[500px] bg-gradient-to-r from-emerald-600/30 to-teal-600/20 rounded-full blur-[120px] animate-pulse" />
@@ -106,7 +106,7 @@ export default function CreatorsPage() {
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Main headline */}
-            <div className="text-center max-w-5xl mx-auto mb-16">
+            <div className="text-center max-w-5xl mx-auto mb-8">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
                 The only{' '}
                 <span className="relative inline-block">
@@ -163,7 +163,7 @@ export default function CreatorsPage() {
             </div>
 
             {/* Info box */}
-            <div className="max-w-3xl mx-auto mb-16">
+            <div className="max-w-3xl mx-auto mb-8">
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/50 via-cyan-500/50 to-purple-500/50 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition duration-500" />
                 <div className="relative glass rounded-2xl p-6 sm:p-8 border border-white/20 bg-black/30">
@@ -223,14 +223,14 @@ export default function CreatorsPage() {
         </section>
 
         {/* Own Your Audience Section */}
-        <section className="py-24 sm:py-36 relative">
+        <section className="py-12 sm:py-16 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent" />
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               {/* Left: Content */}
               <div>
-                <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-10 leading-tight">
+                <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                   Own your{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400">
                     audience.
@@ -268,7 +268,7 @@ export default function CreatorsPage() {
                 </div>
 
                 {/* Special badge */}
-                <div className="mt-10 relative group">
+                <div className="mt-6 relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/30 to-orange-500/30 rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition" />
                   <div className="relative flex items-center gap-4 px-6 py-5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
@@ -308,11 +308,11 @@ export default function CreatorsPage() {
         </section>
 
         {/* Services Section */}
-        <section className="py-24 sm:py-36 relative">
+        <section className="py-12 sm:py-16 relative">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-cyan-500/10 via-blue-500/5 to-purple-500/10 rounded-full blur-[100px]" />
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-20">
+            <div className="text-center mb-10">
               <p className="text-cyan-400 font-semibold uppercase tracking-widest mb-4">Services</p>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                 Fuel your platform's{' '}
@@ -325,7 +325,7 @@ export default function CreatorsPage() {
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {services.map((service, index) => (
                 <div
                   key={index}
@@ -356,11 +356,11 @@ export default function CreatorsPage() {
         </section>
 
         {/* Final CTA Section */}
-        <section className="py-24 sm:py-36 relative">
+        <section className="py-12 sm:py-16 relative">
           <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-emerald-900/20 to-transparent" />
           
           <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 mb-10">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 mb-6">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-gray-300 font-medium">Ready to own your audience?</span>
             </div>
@@ -373,7 +373,7 @@ export default function CreatorsPage() {
               {' '}creator economy.
             </h2>
             
-            <p className="text-xl sm:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto">
+            <p className="text-xl sm:text-2xl text-gray-300 max-w-2xl mx-auto">
               Your Shout.bio is waiting. Start building your owned audience today—completely free.
             </p>
 
