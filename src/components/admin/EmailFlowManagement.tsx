@@ -430,8 +430,8 @@ const EmailFlowManagement: React.FC = () => {
       </td>
     `).join('');
     
-    // White logo URL from public folder
-    const logoUrl = "https://shoutout.us/logowhite.png";
+    // White logo URL from Supabase storage
+    const logoUrl = "https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png";
 
     return `<!DOCTYPE html>
 <html>
@@ -1540,7 +1540,7 @@ const EmailFlowManagement: React.FC = () => {
                     {/* Logo */}
                     <div className="text-center mb-6">
                       <img 
-                        src="https://shoutout.us/logowhite.png" 
+                        src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png" 
                         alt="ShoutOut" 
                         className="h-10 mx-auto"
                       />
@@ -1654,7 +1654,7 @@ const EmailFlowManagement: React.FC = () => {
                     <div className="text-center pt-6 border-t border-white/10">
                       {/* Logo */}
                       <img 
-                        src="https://shoutout.us/logowhite.png" 
+                        src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png" 
                         alt="ShoutOut" 
                         className="h-6 mx-auto opacity-50 mb-4"
                       />

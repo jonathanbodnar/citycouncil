@@ -552,33 +552,43 @@ function buildEmailHtml(
   }
 
   // Build ShoutOut card - using table layout for email compatibility
-  // Uses theme colors for gradient
+  // Use dark blue to purple gradient (#1e3a5f to #4c1d95)
+  // Note: CSS gradients don't work in most email clients, so we use VML for Outlook
+  // and a solid fallback color for other clients
   const shoutoutCardHtml = `
     <tr>
       <td style="padding-top: 16px;">
         <a href="https://shoutout.us/${talent.username || ''}" target="_blank" style="text-decoration: none; display: block;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.accentColor2} 100%); border-radius: 16px; overflow: hidden;">
+          <!--[if mso]>
+          <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:100%;height:120px;">
+            <v:fill type="gradient" color="#4c1d95" color2="#1e3a5f" angle="135"/>
+            <v:textbox inset="0,0,0,0">
+          <![endif]-->
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #1e3a5f 0%, #4c1d95 100%); background-color: #2d2a6e; border-radius: 16px; overflow: hidden;">
             <tr>
               ${profileImage ? `
-              <td width="120" style="vertical-align: middle;">
+              <td width="120" style="vertical-align: middle; background-color: transparent;">
                 <img src="${profileImage}" alt="" width="120" height="120" style="width: 120px; height: 120px; object-fit: cover; display: block;">
               </td>
               ` : ''}
-              <td style="padding: 20px; vertical-align: middle;">
-                <div style="color: ${theme.lightAccent}; font-size: 15px; font-weight: 600;">Get a Personalized Video Shoutout</div>
+              <td style="padding: 20px; vertical-align: middle; background-color: transparent;">
+                <div style="color: #93c5fd; font-size: 15px; font-weight: 600;">Get a Personalized Video Shoutout</div>
                 <div style="color: #ffffff; font-size: 14px; margin-top: 6px;">From ${talentName}</div>
               </td>
             </tr>
           </table>
+          <!--[if mso]>
+            </v:textbox>
+          </v:rect>
+          <![endif]-->
         </a>
       </td>
     </tr>
   `;
   
-  // ShoutOut logo - use the hosted Supabase logo with CSS filter for white
-  // The logo is hosted on Supabase storage and we apply brightness/invert filter
-  const shoutoutLogoUrl = "https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png";
-  const shoutoutLogoHtml = `<img src="${shoutoutLogoUrl}" alt="ShoutOut" height="24" style="height: 24px; vertical-align: middle; filter: brightness(0) invert(1); -webkit-filter: brightness(0) invert(1);">`;
+  // ShoutOut logo - use the white logo from shoutout.us
+  const shoutoutLogoUrl = "https://shoutout.us/logowhite.png";
+  const shoutoutLogoHtml = `<img src="${shoutoutLogoUrl}" alt="ShoutOut" height="24" style="height: 24px; vertical-align: middle;">`;
 
   return `
 <!DOCTYPE html>
