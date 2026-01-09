@@ -89,6 +89,7 @@ const SMSFlowManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'flows' | 'queue' | 'logs'>('flows');
   const [userStatuses, setUserStatuses] = useState<UserFlowStatus[]>([]);
   const [sendLogs, setSendLogs] = useState<SMSSendLog[]>([]);
+  const [recentFollowupLogs, setRecentFollowupLogs] = useState<SMSSendLog[]>([]);
   const [stats, setStats] = useState({
     totalInQueue: 0,
     sentToday: 0,
@@ -225,6 +226,22 @@ const SMSFlowManagement: React.FC = () => {
       setSendLogs(data || []);
     } catch (error: any) {
       console.error('Error fetching send logs:', error);
+    }
+  };
+
+  const fetchRecentFollowupLogs = async (flowId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('sms_send_log')
+        .select('*')
+        .eq('flow_id', flowId)
+        .order('sent_at', { ascending: false })
+        .limit(4);
+
+      if (error) throw error;
+      setRecentFollowupLogs(data || []);
+    } catch (error: any) {
+      console.error('Error fetching recent followup logs:', error);
     }
   };
 
@@ -487,7 +504,13 @@ const SMSFlowManagement: React.FC = () => {
               {/* Flow Header */}
               <div
                 className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
-                onClick={() => setExpandedFlowId(expandedFlowId === flow.id ? null : flow.id)}
+                onClick={() => {
+                  const newExpandedId = expandedFlowId === flow.id ? null : flow.id;
+                  setExpandedFlowId(newExpandedId);
+                  if (newExpandedId && flow.name === 'giveaway_followup') {
+                    fetchRecentFollowupLogs(flow.id);
+                  }
+                }}
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-3 h-3 rounded-full ${flow.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
@@ -588,6 +611,33 @@ const SMSFlowManagement: React.FC = () => {
                       <PlusIcon className="h-5 w-5" />
                       Add Message to Flow
                     </button>
+
+                    {/* Recent 72-hour follow-ups section - only for giveaway_followup flow */}
+                    {flow.name === 'giveaway_followup' && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                          <ClockIcon className="h-4 w-4 text-blue-500" />
+                          Recent 72-Hour Follow-ups Sent
+                        </h4>
+                        {recentFollowupLogs.length === 0 ? (
+                          <p className="text-sm text-gray-500 italic">No follow-up messages sent yet</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {recentFollowupLogs.map((log) => (
+                              <div key={log.id} className="bg-blue-50 rounded-lg p-3 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-2 h-2 rounded-full ${log.status === 'sent' ? 'bg-green-500' : log.status === 'failed' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                                  <span className="text-sm font-mono text-gray-700">{log.phone}</span>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(log.sent_at).toLocaleString()}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
