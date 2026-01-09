@@ -486,7 +486,7 @@ const EmailFlowManagement: React.FC = () => {
                         <tr>
                           <td style="vertical-align: middle;">
                             <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 8px;">Get a Personalized Video ShoutOut</div>
-                            <div style="color: #c4b5fd; font-size: 14px;">From top free-speech personalities</div>
+                            <div style="color: #c4b5fd; font-size: 14px;">From top free-speech personalities — starting at $47</div>
                           </td>
                         </tr>
                         <tr>
@@ -1547,17 +1547,21 @@ const EmailFlowManagement: React.FC = () => {
                     <div className="border-t border-white/10 my-6"></div>
 
                     {/* ShoutOut Promo Card */}
-                    <div 
-                      className="rounded-2xl p-6 mb-6"
+                    <a 
+                      href="https://shoutout.us"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-2xl p-6 mb-6 hover:opacity-95 transition-opacity"
                       style={{ 
-                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        textDecoration: 'none'
                       }}
                     >
                       <h3 className="text-white font-bold text-lg mb-1">
                         Get a Personalized Video ShoutOut
                       </h3>
                       <p className="text-purple-200 text-sm mb-4">
-                        From top free-speech personalities
+                        From top free-speech personalities — starting at $47
                       </p>
                       
                       {/* Talent Images */}
@@ -1584,7 +1588,7 @@ const EmailFlowManagement: React.FC = () => {
                           <span className="text-white text-xs font-semibold">+50</span>
                         </div>
                       </div>
-                    </div>
+                    </a>
 
                     {/* Footer */}
                     <div className="text-center pt-6 border-t border-white/10">

@@ -1427,15 +1427,12 @@ const BioDashboard: React.FC = () => {
 
                 {/* Podcast Card - Add New (only if no podcast configured) */}
                 {!talentProfile?.podcast_rss_url && (
-                  <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-3">
+                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-3 opacity-50 hover:opacity-100 transition-opacity">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-purple-400 flex-shrink-0">
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                          <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
-                          <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
-                          <circle cx="12" cy="12" r="2"/>
-                          <path d="M12 16l-1 6h2l-1-6z"/>
+                          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                         </svg>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium text-white text-sm">Podcast</h3>
@@ -4460,11 +4457,8 @@ const StreamCardsSection: React.FC<{
                     </svg>
                   </div>
                   <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-purple-400 flex-shrink-0">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
-                    <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
-                    <circle cx="12" cy="12" r="2"/>
-                    <path d="M12 16l-1 6h2l-1-6z"/>
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                   </svg>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
