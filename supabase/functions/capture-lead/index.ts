@@ -30,7 +30,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, phone, source, utm_source } = await req.json();
+    const { email, phone, source, utm_source, talent_slug } = await req.json();
 
     if (!email && !phone) {
       return new Response(
@@ -161,6 +161,9 @@ serve(async (req) => {
 
     console.log('New lead captured:', newUser.id);
 
+    // Enroll user in appropriate email flow based on source
+    await enrollInEmailFlow(supabase, normalizedEmail, newUser.id, source, talent_slug, utm_source);
+
     // Also save to beta_signups for giveaway tracking and analytics
     // Note: beta_signups only has phone_number, not email column
     if (formattedPhone) {
@@ -202,4 +205,83 @@ serve(async (req) => {
     );
   }
 });
+
+// Enroll user in email flow based on their source
+async function enrollInEmailFlow(
+  supabase: any, 
+  email: string | null, 
+  userId: string, 
+  source: string | null,
+  talentSlug: string | null,
+  utmSource: string | null
+) {
+  if (!email) return;
+
+  try {
+    // Determine which flow to enroll in based on source
+    let flowId: string | null = null;
+    
+    if (source === 'bio_page' || talentSlug) {
+      flowId = 'aaaa1111-1111-1111-1111-111111111111'; // bio_page_welcome
+    } else if (source === 'holiday_popup' || source === 'giveaway') {
+      flowId = 'aaaa2222-2222-2222-2222-222222222222'; // giveaway_welcome
+    } else if (source === 'login_form' || source === 'signup' || source === 'direct') {
+      flowId = 'aaaa3333-3333-3333-3333-333333333333'; // direct_signup_welcome
+    }
+
+    if (!flowId) {
+      console.log('No email flow for source:', source);
+      return;
+    }
+
+    // Check if already enrolled in this flow
+    const { data: existing } = await supabase
+      .from('user_email_flow_status')
+      .select('id')
+      .eq('email', email)
+      .eq('flow_id', flowId)
+      .single();
+
+    if (existing) {
+      console.log('User already enrolled in email flow:', flowId);
+      return;
+    }
+
+    // Get the first message to determine initial delay
+    const { data: firstMessage } = await supabase
+      .from('email_flow_messages')
+      .select('delay_minutes, delay_hours, delay_days')
+      .eq('flow_id', flowId)
+      .eq('sequence_order', 1)
+      .eq('is_active', true)
+      .single();
+
+    // Calculate when to send first email
+    const nextScheduledAt = new Date();
+    if (firstMessage) {
+      nextScheduledAt.setDate(nextScheduledAt.getDate() + (firstMessage.delay_days || 0));
+      nextScheduledAt.setHours(nextScheduledAt.getHours() + (firstMessage.delay_hours || 0));
+      nextScheduledAt.setMinutes(nextScheduledAt.getMinutes() + (firstMessage.delay_minutes || 0));
+    }
+
+    // Enroll in flow
+    const { error } = await supabase.from('user_email_flow_status').insert({
+      email: email,
+      user_id: userId,
+      flow_id: flowId,
+      current_message_order: 0,
+      next_email_scheduled_at: nextScheduledAt.toISOString(),
+      source_url: utmSource || null,
+      source_talent_slug: talentSlug || null,
+    });
+
+    if (error && !error.message?.includes('duplicate')) {
+      console.error('Error enrolling in email flow:', error);
+    } else {
+      console.log('Enrolled in email flow:', flowId);
+    }
+  } catch (err) {
+    console.error('Error in enrollInEmailFlow:', err);
+  }
+}
 
