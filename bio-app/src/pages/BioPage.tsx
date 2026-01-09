@@ -157,6 +157,7 @@ interface BioSettings {
   card_opacity: number;
   profile_image_url?: string;
   display_name?: string;
+  stream_card_order?: string[];
 }
 
 interface BioLink {
@@ -1702,121 +1703,173 @@ const BioPage: React.FC = () => {
 
         {/* Links */}
         <div className="flex-1 space-y-4">
-          {/* Rumble Card - Shows latest video or live status - AT THE TOP */}
-          {talentProfile?.rumble_handle && bioSettings && bioSettings.show_rumble_card !== false && (
-            <a
-              href={rumbleData?.url || `https://rumble.com/${talentProfile.rumble_type === 'channel' ? 'c' : 'user'}/${talentProfile.rumble_handle.replace(/^@/, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl overflow-hidden border border-green-500/30 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-stretch">
-                  {/* Thumbnail - wider for better video preview */}
-                  <div className="w-44 h-[120px] flex-shrink-0 relative bg-black/20">
-                    {rumbleData?.thumbnail ? (
-                      <img 
-                        src={rumbleData.thumbnail} 
-                        alt="" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-600 to-emerald-600">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white/80">
-                          <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
-                        </svg>
+          {/* Stream Cards - Rendered in order based on stream_card_order setting */}
+          {(() => {
+            const defaultOrder = ['rumble', 'youtube', 'podcast'];
+            const cardOrder = bioSettings?.stream_card_order || defaultOrder;
+            // Include any cards not in the order at the end
+            const fullOrder = [...cardOrder, ...defaultOrder.filter(c => !cardOrder.includes(c))];
+            
+            return fullOrder.map((cardType) => {
+              // Rumble Card
+              if (cardType === 'rumble' && talentProfile?.rumble_handle && bioSettings && bioSettings.show_rumble_card !== false) {
+                return (
+                  <a
+                    key="rumble"
+                    href={rumbleData?.url || `https://rumble.com/${talentProfile.rumble_type === 'channel' ? 'c' : 'user'}/${talentProfile.rumble_handle.replace(/^@/, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl overflow-hidden border border-green-500/30 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
+                      <div className="flex items-stretch">
+                        <div className="w-44 h-[120px] flex-shrink-0 relative bg-black/20">
+                          {rumbleData?.thumbnail ? (
+                            <img src={rumbleData.thumbnail} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-600 to-emerald-600">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white/80">
+                                <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
+                              </svg>
+                            </div>
+                          )}
+                          {rumbleData?.isLive && (
+                            <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                              LIVE
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 p-3 flex flex-col justify-start">
+                          <div className="flex items-center gap-2 mb-1">
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-green-400">
+                              <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
+                            </svg>
+                            <span className="text-green-400 text-xs font-medium">Rumble</span>
+                          </div>
+                          <h3 className="text-white font-medium text-sm line-clamp-2">{rumbleData?.title || 'Watch on Rumble'}</h3>
+                          {rumbleData?.views && rumbleData.views > 0 && (
+                            <p className="text-gray-400 text-xs mt-0.5">{rumbleData.views.toLocaleString()} views</p>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {/* Live indicator - top right */}
-                    {rumbleData?.isLive && (
-                      <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                        LIVE
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 p-3 flex flex-col justify-start">
-                    <div className="flex items-center gap-2 mb-1">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-green-400">
-                        <path d="M14.4528 13.5458c0.8064 -0.6542 0.9297 -1.8381 0.2756 -2.6445a1.8802 1.8802 0 0 0 -0.2756 -0.2756 21.2127 21.2127 0 0 0 -4.3121 -2.776c-1.066 -0.51 -2.256 0.2 -2.4261 1.414a23.5226 23.5226 0 0 0 -0.14 5.5021c0.116 1.23 1.292 1.964 2.372 1.492a19.6285 19.6285 0 0 0 4.5062 -2.704v-0.008zm6.9322 -5.4002c2.0335 2.228 2.0396 5.637 0.014 7.8723A26.1487 26.1487 0 0 1 8.2946 23.846c-2.6848 0.6713 -5.4168 -0.914 -6.1662 -3.5781 -1.524 -5.2002 -1.3 -11.0803 0.17 -16.3045 0.772 -2.744 3.3521 -4.4661 6.0102 -3.832 4.9242 1.174 9.5443 4.196 13.0764 8.0121v0.002z"/>
-                      </svg>
-                      <span className="text-green-400 text-xs font-medium">Rumble</span>
                     </div>
-                    <h3 className="text-white font-medium text-sm line-clamp-2">
-                      {rumbleData?.title || 'Watch on Rumble'}
-                    </h3>
-                    {rumbleData?.views && rumbleData.views > 0 && (
-                      <p className="text-gray-400 text-xs mt-0.5">
-                        {rumbleData.views.toLocaleString()} views
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </a>
-          )}
-
-          {/* YouTube Card - Shows latest video or live status */}
-          {talentProfile?.youtube_handle && bioSettings && bioSettings.show_youtube_card !== false && (
-            <a
-              href={youtubeData?.url || `https://youtube.com/@${talentProfile.youtube_handle.replace(/^@/, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-2xl overflow-hidden border border-red-500/30 hover:border-red-500/50 transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-stretch">
-                  {/* Thumbnail */}
-                  <div className="w-44 h-[120px] flex-shrink-0 relative bg-black/20">
-                    {youtubeData?.thumbnail ? (
-                      <img 
-                        src={youtubeData.thumbnail} 
-                        alt="" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-600 to-rose-600">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white/80">
-                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                        </svg>
+                  </a>
+                );
+              }
+              
+              // YouTube Card
+              if (cardType === 'youtube' && talentProfile?.youtube_handle && bioSettings && bioSettings.show_youtube_card !== false) {
+                return (
+                  <a
+                    key="youtube"
+                    href={youtubeData?.url || `https://youtube.com/@${talentProfile.youtube_handle.replace(/^@/, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-2xl overflow-hidden border border-red-500/30 hover:border-red-500/50 transition-all duration-300 hover:scale-[1.02]">
+                      <div className="flex items-stretch">
+                        <div className="w-44 h-[120px] flex-shrink-0 relative bg-black/20">
+                          {youtubeData?.thumbnail ? (
+                            <img src={youtubeData.thumbnail} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-600 to-rose-600">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white/80">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                              </svg>
+                            </div>
+                          )}
+                          {youtubeData?.isLive && (
+                            <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                              LIVE
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 p-3 flex flex-col justify-start">
+                          <div className="flex items-center gap-2 mb-1">
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-400">
+                              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                            <span className="text-red-400 text-xs font-medium">YouTube</span>
+                          </div>
+                          <h3 className="text-white font-medium text-sm line-clamp-2">{youtubeData?.title || 'Watch on YouTube'}</h3>
+                          {youtubeData?.views && youtubeData.views > 0 && (
+                            <p className="text-gray-400 text-xs mt-0.5">
+                              {youtubeData.isLive && youtubeData.liveViewers 
+                                ? `${youtubeData.liveViewers.toLocaleString()} watching`
+                                : `${youtubeData.views.toLocaleString()} views`
+                              }
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {/* Live indicator - top right */}
-                    {youtubeData?.isLive && (
-                      <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                        LIVE
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 p-3 flex flex-col justify-start">
-                    <div className="flex items-center gap-2 mb-1">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-400">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                      </svg>
-                      <span className="text-red-400 text-xs font-medium">YouTube</span>
                     </div>
-                    <h3 className="text-white font-medium text-sm line-clamp-2">
-                      {youtubeData?.title || 'Watch on YouTube'}
-                    </h3>
-                    {youtubeData?.views && youtubeData.views > 0 && (
-                      <p className="text-gray-400 text-xs mt-0.5">
-                        {youtubeData.isLive && youtubeData.liveViewers 
-                          ? `${youtubeData.liveViewers.toLocaleString()} watching`
-                          : `${youtubeData.views.toLocaleString()} views`
-                        }
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </a>
-          )}
+                  </a>
+                );
+              }
+              
+              // Podcast Card
+              if (cardType === 'podcast' && podcastData && bioSettings && bioSettings.show_podcast_card !== false) {
+                return (
+                  <a
+                    key="podcast"
+                    href={podcastData.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
+                      <div className="flex items-stretch">
+                        <div className="w-[120px] h-[120px] flex-shrink-0 relative bg-black/20">
+                          {podcastData.thumbnail ? (
+                            <img src={podcastData.thumbnail} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-white/80">
+                                <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                                <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
+                                <circle cx="12" cy="12" r="2"/>
+                                <path d="M12 16l-1 6h2l-1-6z"/>
+                              </svg>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white ml-0.5">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 p-3 flex flex-col justify-start">
+                          <div className="flex items-center gap-2 mb-1">
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-purple-400">
+                              <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                              <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
+                              <circle cx="12" cy="12" r="2"/>
+                              <path d="M12 16l-1 6h2l-1-6z"/>
+                            </svg>
+                            <span className="text-purple-400 text-xs font-medium">{podcastData.podcastName || 'Podcast'}</span>
+                          </div>
+                          <h3 className="text-white font-medium text-sm line-clamp-2">{podcastData.title}</h3>
+                          {podcastData.duration && (
+                            <p className="text-gray-400 text-xs mt-0.5">{podcastData.duration}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                );
+              }
+              
+              return null;
+            });
+          })()}
 
-          {/* Podcast Card - Shows latest episode */}
-          {podcastData && bioSettings && bioSettings.show_podcast_card !== false && (
+          {/* Remaining Podcast Card section removed - now handled in the loop above */}
+          {false && podcastData && bioSettings && bioSettings.show_podcast_card !== false && (
             <a
               href={podcastData.url}
               target="_blank"
