@@ -2896,6 +2896,8 @@ const BioDashboard: React.FC = () => {
           onClose={() => setShowStreamChannelModal(null)}
           onSelect={async (handle, rumbleType) => {
             const platform = showStreamChannelModal;
+            console.log('StreamChannelModal onSelect called:', { platform, handle, rumbleType, talentId: talentProfile?.id });
+            
             const updateData: Record<string, unknown> = {};
             
             if (platform === 'rumble') {
@@ -2905,10 +2907,20 @@ const BioDashboard: React.FC = () => {
               updateData.youtube_handle = handle;
             }
             
-            await supabase
+            console.log('Updating talent_profiles with:', updateData);
+            
+            const { error } = await supabase
               .from('talent_profiles')
               .update(updateData)
               .eq('id', talentProfile?.id);
+            
+            if (error) {
+              console.error('Error updating talent profile:', error);
+              toast.error('Failed to update channel');
+              return;
+            }
+            
+            console.log('Successfully updated talent_profiles');
             
             setTalentProfile(prev => prev ? { 
               ...prev, 
@@ -4584,27 +4596,34 @@ const StreamChannelModal: React.FC<{
         {/* Existing accounts */}
         <div className="space-y-2 mb-4">
           {platformAccounts.length > 0 ? (
-            platformAccounts.map((account) => (
-              <button
-                key={account.id}
-                onClick={() => onSelect(account.handle.replace(/^@/, ''), platform === 'rumble' ? rumbleType : undefined)}
-                className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors ${
-                  currentHandle === account.handle.replace(/^@/, '')
-                    ? `bg-${info.color}-500/20 border-${info.color}-500/50`
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {info.icon}
-                  <span className="text-white">@{account.handle.replace(/^@/, '')}</span>
-                </div>
-                {currentHandle === account.handle.replace(/^@/, '') && (
-                  <svg className={`w-5 h-5 text-${info.color}-400`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </button>
-            ))
+            platformAccounts.map((account) => {
+              const isSelected = currentHandle === account.handle.replace(/^@/, '');
+              const selectedBg = platform === 'rumble' ? 'bg-green-500/20 border-green-500/50' : 'bg-red-500/20 border-red-500/50';
+              const checkColor = platform === 'rumble' ? 'text-green-400' : 'text-red-400';
+              
+              return (
+                <button
+                  key={account.id}
+                  onClick={() => {
+                    console.log('StreamChannelModal: Selecting account', account.handle, 'for platform', platform);
+                    onSelect(account.handle.replace(/^@/, ''), platform === 'rumble' ? rumbleType : undefined);
+                  }}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors ${
+                    isSelected ? selectedBg : 'bg-white/5 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {info.icon}
+                    <span className="text-white">@{account.handle.replace(/^@/, '')}</span>
+                  </div>
+                  {isSelected && (
+                    <svg className={`w-5 h-5 ${checkColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })
           ) : (
             <div className="text-center py-4 text-gray-500 text-sm">
               No {info.name} {platform === 'rumble' ? 'accounts' : 'channels'} added yet
@@ -4633,7 +4652,7 @@ const StreamChannelModal: React.FC<{
               <button
                 onClick={handleAddNew}
                 disabled={!newHandle.trim()}
-                className={`px-4 py-3 bg-${info.color}-500 text-white rounded-xl font-medium hover:bg-${info.color}-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`px-4 py-3 ${platform === 'rumble' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 Add
               </button>
