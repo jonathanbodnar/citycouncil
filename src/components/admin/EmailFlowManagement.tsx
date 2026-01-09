@@ -7,7 +7,6 @@ import {
   PencilIcon,
   TrashIcon,
   ClockIcon,
-  CheckCircleIcon,
   XCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
@@ -18,6 +17,10 @@ import {
   CalendarDaysIcon,
   EyeIcon,
   DocumentDuplicateIcon,
+  LinkIcon,
+  PhotoIcon,
+  CodeBracketIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 
 interface EmailFlow {
@@ -86,12 +89,80 @@ interface EmailSendLog {
 
 const TRIGGER_TYPE_LABELS: Record<string, { label: string; color: string; icon: string }> = {
   bio_page: { label: 'Bio Page', color: 'bg-purple-100 text-purple-800', icon: '🔗' },
-  giveaway: { label: 'Giveaway', color: 'bg-yellow-100 text-yellow-800', icon: '🎁' },
+  giveaway: { label: 'Giveaway', color: 'bg-amber-100 text-amber-800', icon: '🎁' },
   direct_signup: { label: 'Direct Signup', color: 'bg-blue-100 text-blue-800', icon: '👋' },
   order_complete: { label: 'Order Complete', color: 'bg-green-100 text-green-800', icon: '📦' },
   talent_signup: { label: 'Talent Signup', color: 'bg-pink-100 text-pink-800', icon: '⭐' },
   manual: { label: 'Manual', color: 'bg-gray-100 text-gray-800', icon: '✋' },
 };
+
+// ShoutOut branded email template
+const SHOUTOUT_EMAIL_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShoutOut</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f172a;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%;">
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" width="150" style="display: block;">
+            </td>
+          </tr>
+          <!-- Main Content Card -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); padding: 40px;">
+              <!-- Greeting -->
+              <h1 style="margin: 0 0 20px 0; font-size: 28px; font-weight: bold; color: #ffffff;">
+                Hey {{first_name}}! 👋
+              </h1>
+              
+              <!-- Body Content - EDIT THIS -->
+              <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #cbd5e1;">
+                Your email content goes here. Share your message with your audience.
+              </p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 30px 0;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); border-radius: 12px;">
+                    <a href="https://shoutout.us?utm=email&coupon={{coupon_code}}" style="display: inline-block; padding: 16px 32px; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none;">
+                      Browse Personalities →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Signature -->
+              <p style="margin: 30px 0 0 0; font-size: 14px; color: #94a3b8;">
+                Cheers,<br>
+                The ShoutOut Team
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 30px 20px;">
+              <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;">
+                ShoutOut - Personalized Videos from Your Favorite Personalities
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #475569;">
+                <a href="{{unsubscribe_url}}" style="color: #7c3aed; text-decoration: underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
 const EmailFlowManagement: React.FC = () => {
   const [flows, setFlows] = useState<EmailFlow[]>([]);
@@ -105,12 +176,26 @@ const EmailFlowManagement: React.FC = () => {
   const [userStatuses, setUserStatuses] = useState<UserFlowStatus[]>([]);
   const [sendLogs, setSendLogs] = useState<EmailSendLog[]>([]);
   const [recentFlowLogs, setRecentFlowLogs] = useState<EmailSendLog[]>([]);
+  const [editorMode, setEditorMode] = useState<'visual' | 'code'>('visual');
   const [stats, setStats] = useState({
     totalInQueue: 0,
     sentToday: 0,
     sentThisWeek: 0,
     openRate: 0,
     activeFlows: 0,
+  });
+
+  // Visual editor state
+  const [visualContent, setVisualContent] = useState({
+    greeting: 'Hey {{first_name}}! 👋',
+    bodyText: '',
+    buttonText: 'Browse Personalities →',
+    buttonUrl: 'https://shoutout.us?utm=email&coupon={{coupon_code}}',
+    showButton: true,
+    imageUrl: '',
+    imageLinkUrl: '',
+    showImage: false,
+    signature: 'Cheers,\nThe ShoutOut Team',
   });
 
   // Message form state
@@ -142,6 +227,84 @@ const EmailFlowManagement: React.FC = () => {
       fetchSendLogs();
     }
   }, [activeTab]);
+
+  // Build HTML from visual content
+  const buildHtmlFromVisual = () => {
+    const bodyParagraphs = visualContent.bodyText.split('\n\n').map(p => 
+      `<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #cbd5e1;">${p.replace(/\n/g, '<br>')}</p>`
+    ).join('\n              ');
+
+    const imageHtml = visualContent.showImage && visualContent.imageUrl ? `
+              <!-- Image -->
+              ${visualContent.imageLinkUrl ? `<a href="${visualContent.imageLinkUrl}">` : ''}
+              <img src="${visualContent.imageUrl}" alt="" style="display: block; max-width: 100%; border-radius: 12px; margin: 20px 0;">
+              ${visualContent.imageLinkUrl ? '</a>' : ''}` : '';
+
+    const buttonHtml = visualContent.showButton ? `
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 30px 0;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); border-radius: 12px;">
+                    <a href="${visualContent.buttonUrl}" style="display: inline-block; padding: 16px 32px; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none;">
+                      ${visualContent.buttonText}
+                    </a>
+                  </td>
+                </tr>
+              </table>` : '';
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShoutOut</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f172a;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%;">
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" width="150" style="display: block;">
+            </td>
+          </tr>
+          <!-- Main Content Card -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); padding: 40px;">
+              <!-- Greeting -->
+              <h1 style="margin: 0 0 20px 0; font-size: 28px; font-weight: bold; color: #ffffff;">
+                ${visualContent.greeting}
+              </h1>
+              ${imageHtml}
+              <!-- Body Content -->
+              ${bodyParagraphs}
+              ${buttonHtml}
+              <!-- Signature -->
+              <p style="margin: 30px 0 0 0; font-size: 14px; color: #94a3b8;">
+                ${visualContent.signature.replace(/\n/g, '<br>')}
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 30px 20px;">
+              <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;">
+                ShoutOut - Personalized Videos from Your Favorite Personalities
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #475569;">
+                <a href="{{unsubscribe_url}}" style="color: #7c3aed; text-decoration: underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  };
 
   const fetchFlows = async () => {
     try {
@@ -308,6 +471,7 @@ const EmailFlowManagement: React.FC = () => {
       coupon_code: message.coupon_code || '',
       is_active: message.is_active,
     });
+    setEditorMode('code'); // Start in code mode for existing messages
     setShowMessageModal(true);
   };
 
@@ -317,63 +481,56 @@ const EmailFlowManagement: React.FC = () => {
     
     setCurrentFlowId(flowId);
     setEditingMessage(null);
+    setVisualContent({
+      greeting: 'Hey {{first_name}}! 👋',
+      bodyText: '',
+      buttonText: 'Browse Personalities →',
+      buttonUrl: 'https://shoutout.us?utm=email&coupon={{coupon_code}}',
+      showButton: true,
+      imageUrl: '',
+      imageLinkUrl: '',
+      showImage: false,
+      signature: 'Cheers,\nThe ShoutOut Team',
+    });
     setMessageForm({
       subject: '',
       preview_text: '',
-      html_content: getDefaultEmailTemplate(),
+      html_content: SHOUTOUT_EMAIL_TEMPLATE,
       plain_text_content: '',
       delay_minutes: 0,
       delay_hours: 0,
-      delay_days: nextOrder === 1 ? 0 : 1, // First email immediate, others 1 day later
+      delay_days: nextOrder === 1 ? 0 : 1,
       send_at_time: '',
       include_coupon: false,
       coupon_code: '',
       is_active: true,
     });
+    setEditorMode('visual');
     setShowMessageModal(true);
-  };
-
-  const getDefaultEmailTemplate = () => {
-    return `<html>
-<head>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
-    .container { background: white; border-radius: 12px; padding: 30px; }
-    h1 { color: #7c3aed; }
-    .button { display: inline-block; background: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; }
-    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Your Subject Here</h1>
-    <p>Hey {{first_name}}!</p>
-    <p>Your email content goes here...</p>
-    <p><a href="https://shoutout.us?utm=email&coupon={{coupon_code}}" class="button">Call to Action →</a></p>
-    <div class="footer">
-      <p>ShoutOut - Personalized Videos from Your Favorite Personalities</p>
-      <p><a href="{{unsubscribe_url}}">Unsubscribe</a></p>
-    </div>
-  </div>
-</body>
-</html>`;
   };
 
   const saveMessage = async () => {
     try {
-      if (!messageForm.subject.trim() || !messageForm.html_content.trim()) {
-        toast.error('Subject and HTML content are required');
+      if (!messageForm.subject.trim()) {
+        toast.error('Subject is required');
+        return;
+      }
+
+      // Build HTML from visual editor if in visual mode
+      const finalHtml = editorMode === 'visual' ? buildHtmlFromVisual() : messageForm.html_content;
+
+      if (!finalHtml.trim()) {
+        toast.error('Email content is required');
         return;
       }
 
       if (editingMessage) {
-        // Update existing message
         const { error } = await supabase
           .from('email_flow_messages')
           .update({
             subject: messageForm.subject,
             preview_text: messageForm.preview_text,
-            html_content: messageForm.html_content,
+            html_content: finalHtml,
             plain_text_content: messageForm.plain_text_content,
             delay_minutes: messageForm.delay_minutes,
             delay_hours: messageForm.delay_hours,
@@ -389,7 +546,6 @@ const EmailFlowManagement: React.FC = () => {
         if (error) throw error;
         toast.success('Email updated');
       } else {
-        // Create new message
         const flow = flows.find(f => f.id === currentFlowId);
         const nextOrder = (flow?.messages?.length || 0) + 1;
 
@@ -400,7 +556,7 @@ const EmailFlowManagement: React.FC = () => {
             sequence_order: nextOrder,
             subject: messageForm.subject,
             preview_text: messageForm.preview_text,
-            html_content: messageForm.html_content,
+            html_content: finalHtml,
             plain_text_content: messageForm.plain_text_content,
             delay_minutes: messageForm.delay_minutes,
             delay_hours: messageForm.delay_hours,
@@ -460,7 +616,7 @@ const EmailFlowManagement: React.FC = () => {
           send_at_time: message.send_at_time,
           include_coupon: message.include_coupon,
           coupon_code: message.coupon_code,
-          is_active: false, // Start as inactive
+          is_active: false,
         });
 
       if (error) throw error;
@@ -592,8 +748,8 @@ const EmailFlowManagement: React.FC = () => {
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <PlayIcon className="h-6 w-6 text-yellow-600" />
+            <div className="p-2 bg-emerald-100 rounded-lg">
+              <PlayIcon className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.activeFlows}</p>
@@ -661,7 +817,7 @@ const EmailFlowManagement: React.FC = () => {
                     <h3 className="font-semibold text-gray-900">{flow.display_name}</h3>
                     <p className="text-sm text-gray-500">{flow.description}</p>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${TRIGGER_TYPE_LABELS[flow.trigger_type]?.color || 'bg-gray-100'}`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${TRIGGER_TYPE_LABELS[flow.trigger_type]?.color || 'bg-gray-100 text-gray-800'}`}>
                     {TRIGGER_TYPE_LABELS[flow.trigger_type]?.icon} {TRIGGER_TYPE_LABELS[flow.trigger_type]?.label || flow.trigger_type}
                   </span>
                 </div>
@@ -716,7 +872,7 @@ const EmailFlowManagement: React.FC = () => {
                                 </span>
                               )}
                               {message.include_coupon && (
-                                <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">
+                                <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded">
                                   + Coupon
                                 </span>
                               )}
@@ -867,7 +1023,7 @@ const EmailFlowManagement: React.FC = () => {
                           {status.unsubscribed ? (
                             <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs">Unsubscribed</span>
                           ) : status.is_paused ? (
-                            <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs">Paused</span>
+                            <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs">Paused</span>
                           ) : (
                             <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Active</span>
                           )}
@@ -878,7 +1034,7 @@ const EmailFlowManagement: React.FC = () => {
                             className={`p-1.5 rounded-lg transition-colors ${
                               status.is_paused
                                 ? 'text-green-600 hover:bg-green-50'
-                                : 'text-yellow-600 hover:bg-yellow-50'
+                                : 'text-amber-600 hover:bg-amber-50'
                             }`}
                             title={status.is_paused ? 'Resume' : 'Pause'}
                           >
@@ -958,7 +1114,7 @@ const EmailFlowManagement: React.FC = () => {
       {showMessageModal && (
         <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: 'rgba(17, 24, 39, 0.95)' }}>
           <div className="absolute inset-0 bg-gray-900" style={{ backgroundColor: '#0f172a' }}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-600 to-purple-700">
               <h3 className="text-xl font-bold text-white">
                 {editingMessage ? 'Edit Email' : 'Add Email to Flow'}
@@ -1050,23 +1206,198 @@ const EmailFlowManagement: React.FC = () => {
                 </p>
               </div>
 
-              {/* HTML Content */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">HTML Content *</label>
-                <textarea
-                  value={messageForm.html_content}
-                  onChange={(e) => setMessageForm({ ...messageForm, html_content: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
-                  rows={12}
-                  placeholder="<html>...</html>"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Variables: {'{{first_name}}'}, {'{{coupon_code}}'}, {'{{talent_name}}'}, {'{{unsubscribe_url}}'}
-                </p>
+              {/* Editor Mode Toggle */}
+              <div className="flex items-center gap-2 border-b border-gray-200 pb-4">
+                <button
+                  onClick={() => {
+                    if (editorMode === 'code') {
+                      setEditorMode('visual');
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    editorMode === 'visual'
+                      ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <SparklesIcon className="h-4 w-4" />
+                  Visual Editor
+                </button>
+                <button
+                  onClick={() => {
+                    if (editorMode === 'visual') {
+                      // Convert visual to code
+                      setMessageForm({ ...messageForm, html_content: buildHtmlFromVisual() });
+                      setEditorMode('code');
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    editorMode === 'code'
+                      ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <CodeBracketIcon className="h-4 w-4" />
+                  HTML Code
+                </button>
               </div>
 
+              {/* Visual Editor */}
+              {editorMode === 'visual' && (
+                <div className="space-y-4">
+                  {/* Greeting */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
+                    <input
+                      type="text"
+                      value={visualContent.greeting}
+                      onChange={(e) => setVisualContent({ ...visualContent, greeting: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="Hey {{first_name}}! 👋"
+                    />
+                  </div>
+
+                  {/* Body Content */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Content</label>
+                    <textarea
+                      value={visualContent.bodyText}
+                      onChange={(e) => setVisualContent({ ...visualContent, bodyText: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                      rows={6}
+                      placeholder="Share your message with your audience..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use double line breaks for new paragraphs. Variables: {'{{first_name}}'}, {'{{coupon_code}}'}, {'{{talent_name}}'}
+                    </p>
+                  </div>
+
+                  {/* Add Button/Image Buttons */}
+                  <div className="flex gap-2">
+                    <div className="relative">
+                      <button
+                        onClick={() => setVisualContent({ ...visualContent, showButton: !visualContent.showButton })}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          visualContent.showButton
+                            ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                            : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                        }`}
+                      >
+                        <LinkIcon className="h-4 w-4" />
+                        {visualContent.showButton ? 'Button Added' : 'Add Button'}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <button
+                        onClick={() => setVisualContent({ ...visualContent, showImage: !visualContent.showImage })}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          visualContent.showImage
+                            ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                            : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                        }`}
+                      >
+                        <PhotoIcon className="h-4 w-4" />
+                        {visualContent.showImage ? 'Image Added' : 'Add Image'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Button Fields */}
+                  {visualContent.showButton && (
+                    <div className="bg-purple-50 rounded-xl p-4 space-y-3 border border-purple-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-purple-800">Button Settings</span>
+                        <button
+                          onClick={() => setVisualContent({ ...visualContent, showButton: false, buttonText: '', buttonUrl: '' })}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          type="text"
+                          value={visualContent.buttonText}
+                          onChange={(e) => setVisualContent({ ...visualContent, buttonText: e.target.value })}
+                          placeholder="Button text"
+                          className="px-3 py-2 bg-white border border-purple-200 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                        <input
+                          type="url"
+                          value={visualContent.buttonUrl}
+                          onChange={(e) => setVisualContent({ ...visualContent, buttonUrl: e.target.value })}
+                          placeholder="https://shoutout.us?utm=email&coupon={{coupon_code}}"
+                          className="px-3 py-2 bg-white border border-purple-200 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Image Fields */}
+                  {visualContent.showImage && (
+                    <div className="bg-blue-50 rounded-xl p-4 space-y-3 border border-blue-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-blue-800">Image Settings</span>
+                        <button
+                          onClick={() => setVisualContent({ ...visualContent, showImage: false, imageUrl: '', imageLinkUrl: '' })}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        <input
+                          type="url"
+                          value={visualContent.imageUrl}
+                          onChange={(e) => setVisualContent({ ...visualContent, imageUrl: e.target.value })}
+                          placeholder="Image URL (https://...)"
+                          className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input
+                          type="url"
+                          value={visualContent.imageLinkUrl}
+                          onChange={(e) => setVisualContent({ ...visualContent, imageLinkUrl: e.target.value })}
+                          placeholder="Link when clicked (optional)"
+                          className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Signature */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Signature</label>
+                    <textarea
+                      value={visualContent.signature}
+                      onChange={(e) => setVisualContent({ ...visualContent, signature: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                      rows={2}
+                      placeholder="Cheers,&#10;The ShoutOut Team"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* HTML Code Editor */}
+              {editorMode === 'code' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">HTML Content *</label>
+                  <textarea
+                    value={messageForm.html_content}
+                    onChange={(e) => setMessageForm({ ...messageForm, html_content: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm bg-gray-900 text-green-400"
+                    rows={16}
+                    placeholder="<html>...</html>"
+                    style={{ tabSize: 2 }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Variables: {'{{first_name}}'}, {'{{coupon_code}}'}, {'{{talent_name}}'}, {'{{unsubscribe_url}}'}
+                  </p>
+                </div>
+              )}
+
               {/* Coupon Options */}
-              <div className="bg-yellow-50 rounded-xl p-4">
+              <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
                 <div className="flex items-center gap-3 mb-3">
                   <input
                     type="checkbox"
@@ -1075,20 +1406,20 @@ const EmailFlowManagement: React.FC = () => {
                     onChange={(e) => setMessageForm({ ...messageForm, include_coupon: e.target.checked })}
                     className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
                   />
-                  <label htmlFor="include_coupon" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="include_coupon" className="text-sm font-medium text-emerald-800">
                     Include coupon code in email
                   </label>
                 </div>
                 {messageForm.include_coupon && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-emerald-700 mb-1">
                       Specific Coupon Code (optional - leave blank to use user's coupon)
                     </label>
                     <input
                       type="text"
                       value={messageForm.coupon_code}
                       onChange={(e) => setMessageForm({ ...messageForm, coupon_code: e.target.value.toUpperCase() })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       placeholder="e.g., SAVE15"
                     />
                   </div>
@@ -1113,7 +1444,8 @@ const EmailFlowManagement: React.FC = () => {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-between bg-gray-50">
               <button
                 onClick={() => {
-                  setPreviewContent(messageForm.html_content);
+                  const content = editorMode === 'visual' ? buildHtmlFromVisual() : messageForm.html_content;
+                  setPreviewContent(content);
                   setShowPreviewModal(true);
                 }}
                 className="px-4 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-2"
@@ -1154,9 +1486,9 @@ const EmailFlowManagement: React.FC = () => {
                 <XCircleIcon className="h-6 w-6" />
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-4 bg-gray-100">
+            <div className="flex-1 overflow-auto p-4 bg-gray-800">
               <div 
-                className="bg-white rounded-lg shadow-sm mx-auto"
+                className="mx-auto"
                 style={{ maxWidth: '600px' }}
                 dangerouslySetInnerHTML={{ __html: previewContent }}
               />
@@ -1169,4 +1501,3 @@ const EmailFlowManagement: React.FC = () => {
 };
 
 export default EmailFlowManagement;
-
