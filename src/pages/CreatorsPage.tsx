@@ -176,7 +176,7 @@ export default function CreatorsPage() {
                       Best part? We already built it for you.
                     </p>
                     <p className="text-gray-300 mt-2">
-                      If you are a creator on ShoutOut, you have a <span className="text-cyan-400 font-bold">Shout.bio</span> pre-built and pre-integrated. No additional setup required.
+                      If you are a creator on ShoutOut, you have a <span className="text-cyan-400 font-bold">Shout.bio</span> setup and ready to monetize. No additional setup required.
                     </p>
                   </div>
                 </div>
