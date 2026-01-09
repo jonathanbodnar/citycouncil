@@ -123,6 +123,7 @@ const WelcomePage = lazy(() => import('./pages/WelcomePage'));
 const ShortLinkRedirectPage = lazy(() => import('./pages/ShortLinkRedirectPage'));
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const PayoutSetupPage = lazy(() => import('./pages/PayoutSetupPage'));
+const CreatorsPage = lazy(() => import('./pages/CreatorsPage'));
 
 // Redirect component for old /profile/ URLs
 const ProfileRedirect: React.FC = () => {
@@ -250,6 +251,7 @@ function App() {
               <Route index element={<HomePage />} />
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/creators" element={<CreatorsPage />} />
               <Route path="/:username" element={<TalentProfilePage />} />
               <Route path="/talent/:id" element={<TalentProfilePage />} />
               <Route path="/order/:talentId" element={
