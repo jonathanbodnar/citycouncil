@@ -1455,9 +1455,9 @@ const EmailFlowManagement: React.FC = () => {
               </div>
 
               {/* Right Side - Live Preview */}
-              <div className="w-1/2 flex flex-col bg-slate-950">
+              <div className="w-1/2 flex flex-col bg-slate-950 min-h-0">
                 {/* Browser Chrome */}
-                <div className="bg-gray-900/80 px-3 py-2 border-b border-white/10">
+                <div className="flex-shrink-0 bg-gray-900/80 px-3 py-2 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-red-500/60"></div>
@@ -1470,11 +1470,11 @@ const EmailFlowManagement: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Email Preview */}
+                {/* Email Preview - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: '#0f172a' }}>
-                  <div className="max-w-lg mx-auto space-y-6">
+                  <div className="max-w-md mx-auto pb-8">
                     {/* Logo */}
-                    <div className="text-center">
+                    <div className="text-center mb-6">
                       <img 
                         src="https://shoutout.us/shoutout-logo-white.png" 
                         alt="ShoutOut" 
@@ -1487,7 +1487,7 @@ const EmailFlowManagement: React.FC = () => {
 
                     {/* Main Card */}
                     <div 
-                      className="rounded-2xl p-8"
+                      className="rounded-2xl p-8 mb-6"
                       style={{ 
                         background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
                         border: '1px solid rgba(255,255,255,0.1)'
@@ -1544,11 +1544,11 @@ const EmailFlowManagement: React.FC = () => {
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-white/10"></div>
+                    <div className="border-t border-white/10 my-6"></div>
 
                     {/* ShoutOut Promo Card */}
                     <div 
-                      className="rounded-2xl p-6 cursor-pointer hover:opacity-95 transition-opacity"
+                      className="rounded-2xl p-6 mb-6"
                       style={{ 
                         background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
                       }}
@@ -1562,52 +1562,50 @@ const EmailFlowManagement: React.FC = () => {
                       
                       {/* Talent Images */}
                       <div className="flex items-center gap-2">
-                        {featuredTalent.slice(0, 4).map((talent) => (
-                          <div key={talent.id} className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
-                            <img 
-                              src={talent.temp_avatar_url} 
-                              alt={talent.temp_full_name}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = 'https://via.placeholder.com/48';
-                              }}
-                            />
-                          </div>
-                        ))}
-                        {featuredTalent.length === 0 && (
+                        {featuredTalent.length > 0 ? (
+                          featuredTalent.slice(0, 4).map((talent) => (
+                            <div key={talent.id} className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
+                              <img 
+                                src={talent.temp_avatar_url} 
+                                alt={talent.temp_full_name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))
+                        ) : (
                           <>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
                           </>
                         )}
-                        <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center flex-shrink-0">
                           <span className="text-white text-xs font-semibold">+50</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="text-center space-y-3 pt-4 border-t border-white/10">
+                    <div className="text-center pt-6 border-t border-white/10">
                       {/* Logo */}
                       <img 
                         src="https://shoutout.us/shoutout-logo-white.png" 
                         alt="ShoutOut" 
-                        className="h-6 mx-auto opacity-50"
+                        className="h-6 mx-auto opacity-50 mb-4"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                         }}
                       />
                       {/* Subscription source */}
-                      <p className="text-gray-500 text-xs">
+                      <p className="text-gray-500 text-xs mb-2">
                         You subscribed through ShoutOut.
                       </p>
                       {/* Links */}
-                      <p className="text-xs">
-                        <span className="text-purple-400 hover:underline cursor-pointer">Unsubscribe</span>
+                      <p className="text-xs mb-3">
+                        <span className="text-purple-400">Unsubscribe</span>
                         <span className="text-gray-600 mx-2">•</span>
-                        <span className="text-gray-500 hover:underline cursor-pointer">Privacy Policy</span>
+                        <span className="text-gray-500">Privacy Policy</span>
                       </p>
                       {/* Address */}
                       <p className="text-gray-600 text-[10px]">
