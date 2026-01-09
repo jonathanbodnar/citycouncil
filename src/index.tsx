@@ -8,6 +8,35 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { supabase } from './services/supabase';
 
+// Global error handler to catch ALL errors including those before React renders
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('🔴 GLOBAL ERROR:', { message, source, lineno, colno, error });
+  // Store in localStorage so we can retrieve it
+  try {
+    localStorage.setItem('lastGlobalError', JSON.stringify({
+      message: String(message),
+      source,
+      lineno,
+      colno,
+      stack: error?.stack,
+      time: new Date().toISOString()
+    }));
+  } catch (e) {}
+  return false;
+};
+
+// Catch unhandled promise rejections
+window.onunhandledrejection = function(event) {
+  console.error('🔴 UNHANDLED PROMISE REJECTION:', event.reason);
+  try {
+    localStorage.setItem('lastUnhandledRejection', JSON.stringify({
+      reason: String(event.reason),
+      stack: event.reason?.stack,
+      time: new Date().toISOString()
+    }));
+  } catch (e) {}
+};
+
 // Handle magic link authentication from URL hash BEFORE app renders
 // Supabase's detectSessionInUrl should handle this automatically, but we log for debugging
 if (window.location.hash && window.location.hash.includes('access_token')) {
