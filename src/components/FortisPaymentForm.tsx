@@ -159,10 +159,6 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           colorBackground: backgroundColor,
           colorButtonSelectedBackground: buttonColor,
           colorButtonSelectedText: '#ffffff',
-          colorPrimary: buttonColor, // Try this for Pay Now button
-          colorButton: buttonColor, // Try this for Pay Now button
-          // Fortis Commerce.js v1.0.0 - fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
-          fontFamily: 'Montserrat',
           borderRadius: '8px',
         },
       });
@@ -191,18 +187,25 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           )}
 
           {/* Commerce.js iframe container - handles everything */}
-          <div 
-            id="payment"
-            ref={iframeContainerRef}
-            style={{
-              background: backgroundColor,
-              padding: '30px',
-              borderRadius: '12px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-              minHeight: '400px',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          />
+          {/* Wrapper with overflow hidden to clip the negative margin content */}
+          <div style={{ 
+            overflow: 'hidden', 
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          }}>
+            <div 
+              id="payment"
+              ref={iframeContainerRef}
+              style={{
+                background: backgroundColor,
+                padding: '30px',
+                paddingTop: '30px',
+                marginTop: '-100px', // Hide "Payment Info" header and payment type buttons
+                minHeight: '500px', // Increased to account for negative margin
+              }}
+            />
+          </div>
           
           {isLoading && (
             <div className="flex items-center justify-center py-4">
