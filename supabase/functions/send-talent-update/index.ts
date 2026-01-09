@@ -361,22 +361,24 @@ function getThemeColors(bioSettings: BioSettings | null): {
   bgColor: string; 
   cardBg: string; 
   accentColor: string;
+  accentColor2: string; // Secondary color for gradients
   textColor: string;
   mutedText: string;
+  lightAccent: string; // Lighter version of accent for text on accent bg
 } {
   const themeColor = bioSettings?.theme_color || '#1a1a2e';
   
-  // Define theme presets
-  const themes: Record<string, { bgColor: string; cardBg: string; accentColor: string; textColor: string; mutedText: string }> = {
-    '#1a1a2e': { bgColor: '#1a1a2e', cardBg: '#252542', accentColor: '#6366f1', textColor: '#ffffff', mutedText: '#888888' },
-    '#0f172a': { bgColor: '#0f172a', cardBg: '#1e293b', accentColor: '#3b82f6', textColor: '#ffffff', mutedText: '#94a3b8' },
-    '#18181b': { bgColor: '#18181b', cardBg: '#27272a', accentColor: '#a855f7', textColor: '#ffffff', mutedText: '#a1a1aa' },
-    '#1c1917': { bgColor: '#1c1917', cardBg: '#292524', accentColor: '#f97316', textColor: '#ffffff', mutedText: '#a8a29e' },
-    '#052e16': { bgColor: '#052e16', cardBg: '#14532d', accentColor: '#22c55e', textColor: '#ffffff', mutedText: '#86efac' },
-    '#172554': { bgColor: '#172554', cardBg: '#1e3a8a', accentColor: '#60a5fa', textColor: '#ffffff', mutedText: '#93c5fd' },
-    '#4c0519': { bgColor: '#4c0519', cardBg: '#881337', accentColor: '#fb7185', textColor: '#ffffff', mutedText: '#fda4af' },
-    '#ffffff': { bgColor: '#f8fafc', cardBg: '#ffffff', accentColor: '#6366f1', textColor: '#1e293b', mutedText: '#64748b' },
-    '#fef3c7': { bgColor: '#fef3c7', cardBg: '#ffffff', accentColor: '#f59e0b', textColor: '#1e293b', mutedText: '#92400e' },
+  // Define theme presets with gradient-friendly secondary colors
+  const themes: Record<string, { bgColor: string; cardBg: string; accentColor: string; accentColor2: string; textColor: string; mutedText: string; lightAccent: string }> = {
+    '#1a1a2e': { bgColor: '#1a1a2e', cardBg: '#252542', accentColor: '#6366f1', accentColor2: '#8b5cf6', textColor: '#ffffff', mutedText: '#888888', lightAccent: '#c7d2fe' },
+    '#0f172a': { bgColor: '#0f172a', cardBg: '#1e293b', accentColor: '#3b82f6', accentColor2: '#6366f1', textColor: '#ffffff', mutedText: '#94a3b8', lightAccent: '#bfdbfe' },
+    '#18181b': { bgColor: '#18181b', cardBg: '#27272a', accentColor: '#a855f7', accentColor2: '#ec4899', textColor: '#ffffff', mutedText: '#a1a1aa', lightAccent: '#e9d5ff' },
+    '#1c1917': { bgColor: '#1c1917', cardBg: '#292524', accentColor: '#f97316', accentColor2: '#eab308', textColor: '#ffffff', mutedText: '#a8a29e', lightAccent: '#fed7aa' },
+    '#052e16': { bgColor: '#052e16', cardBg: '#14532d', accentColor: '#22c55e', accentColor2: '#10b981', textColor: '#ffffff', mutedText: '#86efac', lightAccent: '#bbf7d0' },
+    '#172554': { bgColor: '#172554', cardBg: '#1e3a8a', accentColor: '#60a5fa', accentColor2: '#818cf8', textColor: '#ffffff', mutedText: '#93c5fd', lightAccent: '#dbeafe' },
+    '#4c0519': { bgColor: '#4c0519', cardBg: '#881337', accentColor: '#fb7185', accentColor2: '#f472b6', textColor: '#ffffff', mutedText: '#fda4af', lightAccent: '#fecdd3' },
+    '#ffffff': { bgColor: '#f8fafc', cardBg: '#ffffff', accentColor: '#6366f1', accentColor2: '#8b5cf6', textColor: '#1e293b', mutedText: '#64748b', lightAccent: '#c7d2fe' },
+    '#fef3c7': { bgColor: '#fef3c7', cardBg: '#ffffff', accentColor: '#f59e0b', accentColor2: '#f97316', textColor: '#1e293b', mutedText: '#92400e', lightAccent: '#fde68a' },
   };
   
   return themes[themeColor] || themes['#1a1a2e'];
@@ -415,7 +417,7 @@ function buildEmailHtml(
   let moreWaysHtml = '';
   if (hasMoreWays) {
     const cards: string[] = [];
-    
+
     // Event card
     if (hasEvent) {
       const event = bioEvents[0];
@@ -427,8 +429,8 @@ function buildEmailHtml(
                 <td style="padding: 16px;">
                   <table role="presentation" cellspacing="0" cellpadding="0">
                     <tr>
-                      <td style="vertical-align: top; padding-right: 12px;">
-                        <div style="font-size: 24px;">📅</div>
+                      <td style="vertical-align: top; padding-right: 10px; font-size: 20px;">
+                        📅
                       </td>
                       <td style="vertical-align: top;">
                         <div style="color: ${theme.textColor}; font-size: 14px; font-weight: 600;">${event.title}</div>
@@ -454,10 +456,10 @@ function buildEmailHtml(
                 <td style="padding: 16px;">
                   <table role="presentation" cellspacing="0" cellpadding="0">
                     <tr>
-                      <td style="vertical-align: top; padding-right: 12px;">
-                        <div style="font-size: 24px;">📸</div>
+                      <td style="vertical-align: middle; padding-right: 10px; font-size: 20px;">
+                        📸
                       </td>
-                      <td style="vertical-align: top;">
+                      <td style="vertical-align: middle;">
                         <div style="color: ${theme.textColor}; font-size: 14px; font-weight: 600;">Collaborate with me</div>
                       </td>
                     </tr>
@@ -517,28 +519,20 @@ function buildEmailHtml(
   }
 
   // Build ShoutOut card - using table layout for email compatibility
+  // Uses theme colors for gradient
   const shoutoutCardHtml = `
     <tr>
       <td style="padding-top: 16px;">
         <a href="https://shoutout.us/${talent.username || ''}" target="_blank" style="text-decoration: none; display: block;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, ${theme.accentColor} 0%, #8b5cf6 100%); border-radius: 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, ${theme.accentColor} 0%, ${theme.accentColor2} 100%); border-radius: 16px; overflow: hidden;">
             <tr>
               ${profileImage ? `
               <td width="120" style="vertical-align: middle;">
-                <div style="position: relative; width: 120px; height: 120px;">
-                  <img src="${profileImage}" alt="" width="120" height="120" style="width: 120px; height: 120px; object-fit: cover; display: block; border-radius: 16px 0 0 16px;">
-                  <table role="presentation" cellspacing="0" cellpadding="0" style="position: absolute; top: 50%; left: 50%; margin-left: -20px; margin-top: -20px;">
-                    <tr>
-                      <td style="width: 40px; height: 40px; background: rgba(255,255,255,0.95); border-radius: 50%; text-align: center; vertical-align: middle;">
-                        <span style="font-size: 16px; color: ${theme.accentColor};">▶</span>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
+                <img src="${profileImage}" alt="" width="120" height="120" style="width: 120px; height: 120px; object-fit: cover; display: block;">
               </td>
               ` : ''}
               <td style="padding: 20px; vertical-align: middle;">
-                <div style="color: #c7d2fe; font-size: 15px; font-weight: 600;">Get a Personalized Video Shoutout</div>
+                <div style="color: ${theme.lightAccent}; font-size: 15px; font-weight: 600;">Get a Personalized Video Shoutout</div>
                 <div style="color: #ffffff; font-size: 14px; margin-top: 6px;">From ${talentName}</div>
               </td>
             </tr>
@@ -548,8 +542,8 @@ function buildEmailHtml(
     </tr>
   `;
   
-  // White ShoutOut logo SVG (inline for email compatibility)
-  const shoutoutLogoSvg = `<img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" height="24" style="height: 24px; vertical-align: middle;">`;
+  // ShoutOut logo as inline base64 SVG (white version for dark backgrounds)
+  const shoutoutLogoHtml = `<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgNDAiPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Ik0xNS4yIDI4LjhjLTIuNCAwLTQuNS0uNC02LjItMS4yLTEuNy0uOC0zLTEuOS0zLjktMy4zLS45LTEuNC0xLjQtMy0xLjQtNC44aDYuMWMuMSAxLjIuNSAyLjEgMS4zIDIuOC44LjcgMS45IDEgMy4zIDEgMSAwIDEuOC0uMiAyLjQtLjYuNi0uNC45LS45LjktMS42IDAtLjYtLjItMS4xLS43LTEuNC0uNS0uNC0xLjEtLjctMS44LS45LS44LS4zLTEuOC0uNS0zLS44LTEuNy0uNC0zLjEtLjktNC4zLTEuNC0xLjItLjUtMi4yLTEuMy0zLTIuMy0uOC0xLTEuMi0yLjQtMS4yLTQuMSAwLTIuNC45LTQuMyAyLjctNS43IDEuOC0xLjQgNC4yLTIuMSA3LjEtMi4xIDMgMCA1LjQuNyA3LjIgMi4xIDEuOCAxLjQgMi44IDMuMyAyLjkgNS44aC02LjJjLS4xLTEtLjUtMS44LTEuMi0yLjQtLjctLjYtMS43LS45LTIuOS0uOS0uOSAwLTEuNy4yLTIuMi42LS41LjQtLjguOS0uOCAxLjYgMCAuNS4yLjkuNSAxLjIuNC4zLjkuNiAxLjUuOC42LjIgMS41LjUgMi43LjggMS44LjQgMy4zLjkgNC42IDEuNSAxLjMuNSAyLjMgMS4zIDMuMiAyLjQuOCAxIDEuMyAyLjQgMS4zIDQuMSAwIDEuNi0uNCAzLTEuMyA0LjMtLjggMS4zLTIgMi4zLTMuNiAzLTEuNS43LTMuNCAxLTUuNSAxek00MC44IDEyLjh2Mi45Yy42LTEgMS40LTEuOCAyLjQtMi40IDEtLjYgMi4xLS45IDMuNC0uOSAxLjggMCAzLjIuNSA0LjMgMS42IDEuMSAxLjEgMS42IDIuNyAxLjYgNC45djkuOGgtNS40di05YzAtMS4yLS4zLTIuMS0uOC0yLjctLjUtLjYtMS4zLS45LTIuMi0uOS0xIDAtMS44LjMtMi40IDEtLjYuNy0uOSAxLjYtLjkgMi44djguOGgtNS40VjEyLjhoNS40ek02Mi4zIDI5LjJjLTEuNiAwLTMtLjMtNC4zLTEtMS4zLS43LTIuMy0xLjYtMy0yLjgtLjctMS4yLTEuMS0yLjYtMS4xLTQuMiAwLTEuNi40LTMgMS4xLTQuMi43LTEuMiAxLjctMi4yIDMtMi44IDEuMy0uNyAyLjctMSA0LjMtMSAxLjYgMCAzIC4zIDQuMyAxIDEuMy43IDIuMyAxLjYgMyAyLjguNyAxLjIgMS4xIDIuNiAxLjEgNC4yIDAgMS42LS40IDMtMS4xIDQuMi0uNyAxLjItMS44IDIuMi0zLjEgMi44LTEuMi43LTIuNiAxLTQuMiAxem0wLTQuM2MxIDAgMS44LS40IDIuNC0xLjEuNi0uNy45LTEuNy45LTNzLS4zLTIuMy0uOS0zYy0uNi0uNy0xLjQtMS4xLTIuNC0xLjEtMSAwLTEuOC40LTIuNCAxLjEtLjYuNy0uOSAxLjctLjkgM3MuMyAyLjMuOSAzYy42LjcgMS40IDEuMSAyLjQgMS4xek04Ny4zIDEyLjh2MTUuOWgtNS40di0yLjVjLS41LjktMS4yIDEuNi0yLjEgMi4xLS45LjUtMiAuOC0zLjIuOC0xLjggMC0zLjItLjUtNC4zLTEuNi0xLjEtMS4xLTEuNi0yLjctMS42LTQuOXYtOS44aDUuNHY5YzAgMS4yLjMgMi4xLjggMi43LjUuNiAxLjMuOSAyLjIuOSAxIDAgMS44LS4zIDIuNC0xIC42LS43LjktMS42LjktMi44di04LjhoNC45ek05Ny44IDE3djcuM2MwIC41LjEuOS40IDEuMS4zLjIuNy4zIDEuMy4zaDEuOXYzLjFoLTIuNmMtMy42IDAtNS40LTEuNy01LjQtNS4yVjE3aC0yLjF2LTQuMmgyLjFWOC42aDUuNHY0LjJoMy42VjE3aC0zLjZ6TTEwMy4yIDIxLjFjMC0xLjYuMy0zIDEtNC4yLjctMS4yIDEuNi0yLjEgMi44LTIuOCAxLjItLjcgMi42LTEgNC4xLTEgMi4xIDAgMy45LjYgNS4yIDEuNyAxLjQgMS4xIDIuMiAyLjcgMi41IDQuN2gtNS41Yy0uMy0xLjQtMS4xLTIuMS0yLjQtMi4xLS45IDAtMS42LjQtMi4xIDEuMS0uNS43LS44IDEuOC0uOCAzLjIgMCAxLjQuMyAyLjQuOCAzLjIuNS43IDEuMiAxLjEgMi4xIDEuMSAxLjMgMCAyLjEtLjcgMi40LTIuMWg1LjVjLS4zIDItMS4xIDMuNS0yLjUgNC43LTEuNCAxLjEtMy4xIDEuNy01LjIgMS43LTEuNSAwLTIuOS0uMy00LjEtMS0xLjItLjctMi4xLTEuNi0yLjgtMi44LS43LTEuMy0xLTIuOC0xLTQuNHpNMTI4LjEgMjkuMmMtMS42IDAtMy0uMy00LjMtMS0xLjMtLjctMi4zLTEuNi0zLTIuOC0uNy0xLjItMS4xLTIuNi0xLjEtNC4yIDAtMS42LjQtMyAxLjEtNC4yLjctMS4yIDEuNy0yLjIgMy0yLjggMS4zLS43IDIuNy0xIDQuMy0xIDEuNiAwIDMgLjMgNC4zIDEgMS4zLjcgMi4zIDEuNiAzIDIuOC43IDEuMiAxLjEgMi42IDEuMSA0LjIgMCAxLjYtLjQgMy0xLjEgNC4yLS43IDEuMi0xLjggMi4yLTMuMSAyLjgtMS4yLjctMi42IDEtNC4yIDF6bTAtNC4zYzEgMCAxLjgtLjQgMi40LTEuMS42LS43LjktMS43LjktM3MtLjMtMi4zLS45LTNjLS42LS43LTEuNC0xLjEtMi40LTEuMS0xIDAtMS44LjQtMi40IDEuMS0uNi43LS45IDEuNy0uOSAzcy4zIDIuMy45IDNjLjYuNyAxLjQgMS4xIDIuNCAxLjF6TTE1My4xIDEyLjh2MTUuOWgtNS40di0yLjVjLS41LjktMS4yIDEuNi0yLjEgMi4xLS45LjUtMiAuOC0zLjIuOC0xLjggMC0zLjItLjUtNC4zLTEuNi0xLjEtMS4xLTEuNi0yLjctMS42LTQuOXYtOS44aDUuNHY5YzAgMS4yLjMgMi4xLjggMi43LjUuNiAxLjMuOSAyLjIuOSAxIDAgMS44LS4zIDIuNC0xIC42LS43LjktMS42LjktMi44di04LjhoNC45ek0xNjMuNiAxN3Y3LjNjMCAuNS4xLjkuNCAxLjEuMy4yLjcuMyAxLjMuM2gxLjl2My4xaC0yLjZjLTMuNiAwLTUuNC0xLjctNS40LTUuMlYxN2gtMi4xdi00LjJoMi4xVjguNmg1LjR2NC4yaDMuNlYxN2gtMy42eiIvPjwvc3ZnPg==" alt="ShoutOut" height="24" style="height: 24px; vertical-align: middle;">`;
 
   return `
 <!DOCTYPE html>
@@ -627,7 +621,7 @@ function buildEmailHtml(
                 <div style="margin-top: 8px;">
                   <a href="https://shoutout.us/creators" style="text-decoration: none; opacity: 0.6;">
                     <span style="color: ${theme.mutedText}; font-size: 11px; margin-right: 8px; vertical-align: middle;">Powered by</span>
-                    ${shoutoutLogoSvg}
+                    ${shoutoutLogoHtml}
                   </a>
                 </div>
               </div>

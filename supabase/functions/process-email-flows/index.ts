@@ -188,7 +188,7 @@ serve(async (req) => {
               to: [{ email: userStatus.email }],
             }],
             from: {
-              email: "hello@shoutout.us",
+              email: "noreply@shoutout.us",
               name: "ShoutOut",
             },
             subject: subject,

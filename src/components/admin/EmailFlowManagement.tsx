@@ -613,6 +613,67 @@ const EmailFlowManagement: React.FC = () => {
     }
   };
 
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+
+  const sendTestEmail = async () => {
+    try {
+      setSendingTestEmail(true);
+      
+      const finalHtml = editorMode === 'visual' ? buildHtmlFromVisual() : messageForm.html_content;
+
+      if (!messageForm.subject.trim()) {
+        toast.error('Subject is required');
+        return;
+      }
+
+      if (!finalHtml.trim()) {
+        toast.error('Email content is required');
+        return;
+      }
+
+      // Replace template variables with test values
+      const testHtml = finalHtml
+        .replace(/\{\{first_name\}\}/g, 'Test')
+        .replace(/\{\{full_name\}\}/g, 'Test User')
+        .replace(/\{\{coupon_code\}\}/g, 'TESTCODE')
+        .replace(/\{\{talent_name\}\}/g, 'Sample Talent')
+        .replace(/\{\{unsubscribe_url\}\}/g, 'https://shoutout.us/unsubscribe?email=test')
+        .replace(/\{\{email\}\}/g, 'jb@apollo.inc');
+
+      const testSubject = messageForm.subject
+        .replace(/\{\{first_name\}\}/g, 'Test')
+        .replace(/\{\{talent_name\}\}/g, 'Sample Talent')
+        .replace(/\{\{coupon_code\}\}/g, 'TESTCODE');
+
+      // Call an edge function to send the test email
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-test-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          to_email: 'jb@apollo.inc',
+          subject: `[TEST] ${testSubject}`,
+          html_content: testHtml,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to send test email');
+      }
+
+      toast.success('Test email sent to jb@apollo.inc');
+    } catch (error: any) {
+      console.error('Error sending test email:', error);
+      toast.error(error.message || 'Failed to send test email');
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
+
   const deleteMessage = async (messageId: string) => {
     if (!window.confirm('Are you sure you want to delete this email?')) return;
 
@@ -1622,19 +1683,29 @@ const EmailFlowManagement: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-white/10 flex justify-end gap-3 bg-slate-900">
+            <div className="px-6 py-4 border-t border-white/10 flex justify-between bg-slate-900">
               <button
-                onClick={() => setShowMessageModal(false)}
-                className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                onClick={sendTestEmail}
+                disabled={sendingTestEmail}
+                className="px-4 py-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
               >
-                Cancel
+                <EnvelopeIcon className="h-4 w-4" />
+                {sendingTestEmail ? 'Sending...' : 'Send Test to jb@apollo.inc'}
               </button>
-              <button
-                onClick={saveMessage}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-colors font-medium"
-              >
-                {editingMessage ? 'Save Changes' : 'Add Email'}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveMessage}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-colors font-medium"
+                >
+                  {editingMessage ? 'Save Changes' : 'Add Email'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
