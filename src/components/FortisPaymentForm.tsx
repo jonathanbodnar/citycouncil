@@ -15,6 +15,7 @@ interface FortisPaymentFormProps {
   // Optional styling props to match page theme
   backgroundColor?: string;
   buttonColor?: string;
+  buttonText?: string;
 }
 
 const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
@@ -23,10 +24,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   onPaymentError,
   backgroundColor = '#0f172a', // Default dark slate
   buttonColor = '#3b82f6', // Default blue
+  buttonText,
 }) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
   const [orderReference, setOrderReference] = useState<string | null>(null);
@@ -129,17 +132,21 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       elements.eventBus.on('payment_success', handleSuccess);
       // Add extra fallbacks in case library emits different event names
       elements.eventBus.on('success', handleSuccess as any);
+      elements.eventBus.on('done', handleSuccess as any); // Key event for custom submit
       elements.eventBus.on('transaction_success', handleSuccess as any);
       elements.eventBus.on('transaction.completed', handleSuccess as any);
       elements.eventBus.on('payment_error', (e: any) => {
         setError(e?.message || 'Payment failed');
+        setIsProcessing(false);
         onPaymentError(e?.message || 'Payment failed');
       });
       elements.eventBus.on('error', (e: any) => {
         setError(e?.message || 'Payment error');
+        setIsProcessing(false);
       });
 
       // Create iframe in our container (pass selector string to avoid null ref timing)
+      // Using showSubmitButton: false so we can use our own custom styled button
       console.log('Creating Commerce iframe with appearance:', { backgroundColor, buttonColor });
       elements.create({
         container: '#payment',
@@ -150,7 +157,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         defaultCountry: 'US',
         floatingLabels: true,
         showReceipt: false,
-        showSubmitButton: true,
+        showSubmitButton: false, // Hide Fortis's button, we'll use our own
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: true,
@@ -173,6 +180,28 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
     }
   };
 
+  // Custom submit handler - triggers Fortis elements.submit()
+  const handleCustomSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!commerceInstance) {
+      setError('Payment form not ready. Please wait or refresh the page.');
+      return;
+    }
+    
+    setIsProcessing(true);
+    setError(null);
+    
+    try {
+      // This triggers Fortis to validate and process the payment
+      // The 'done' or 'payment_success' event will fire on completion
+      commerceInstance.submit();
+    } catch (err: any) {
+      console.error('Submit error:', err);
+      setError(err?.message || 'Failed to submit payment');
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="rounded-2xl px-4 py-5 md:p-6 max-w-3xl mx-auto">
@@ -202,7 +231,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
                 padding: '30px',
                 paddingTop: '30px',
                 marginTop: '-135px', // Hide "Payment Info" header and payment type buttons
-                minHeight: '535px', // Increased to account for negative margin
+                minHeight: '400px', // Reduced since we removed Fortis button
               }}
             />
           </div>
@@ -212,6 +241,29 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               <span className="ml-2 text-sm text-gray-600">Loading payment form...</span>
             </div>
+          )}
+
+          {/* Custom Submit Button */}
+          {!isLoading && (
+            <button
+              type="button"
+              onClick={handleCustomSubmit}
+              disabled={isProcessing || !commerceInstance}
+              style={{
+                backgroundColor: buttonColor,
+                color: '#ffffff',
+              }}
+              className="w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  Processing...
+                </>
+              ) : (
+                buttonText || `Pay $${amount.toFixed(2)}`
+              )}
+            </button>
           )}
         </div>
       )}

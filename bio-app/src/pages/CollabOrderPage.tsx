@@ -112,8 +112,9 @@ const CollabOrderPage: React.FC = () => {
   
   // Payment
   const iframeContainerRef = useRef<HTMLDivElement>(null);
-  const [, setCommerceInstance] = useState<any>(null);
+  const [commerceInstance, setCommerceInstance] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPaymentReady, setIsPaymentReady] = useState(false);
   const successHandledRef = useRef(false);
   
   // Login mode
@@ -458,7 +459,10 @@ const CollabOrderPage: React.FC = () => {
       };
 
       console.log('Attaching Commerce JS handlers');
-      elements.eventBus.on('ready', () => console.log('Commerce iframe ready'));
+      elements.eventBus.on('ready', () => {
+        console.log('Commerce iframe ready');
+        setIsPaymentReady(true);
+      });
       elements.eventBus.on('payment_success', handlePaymentSuccess);
       elements.eventBus.on('success', handlePaymentSuccess);
       elements.eventBus.on('done', handlePaymentSuccess);
@@ -492,7 +496,7 @@ const CollabOrderPage: React.FC = () => {
         defaultCountry: 'US',
         floatingLabels: true,
         showReceipt: false,
-        showSubmitButton: true,
+        showSubmitButton: false, // Hide Fortis's button, we'll use our own custom styled button
         showValidationAnimation: true,
         hideAgreementCheckbox: false,
         hideTotal: true,
@@ -500,7 +504,6 @@ const CollabOrderPage: React.FC = () => {
           colorBackground: themeBgColor,
           colorButtonSelectedBackground: themeButtonColor,
           colorButtonSelectedText: '#ffffff',
-          fontFamily: 'Montserrat',
           borderRadius: '8px',
         },
       });
@@ -891,19 +894,14 @@ const CollabOrderPage: React.FC = () => {
                 </div>
 
                 {/* Payment Form Container - clip top 100px to hide tabs */}
-                <div className="overflow-hidden">
+                <div className="overflow-hidden rounded-xl border border-white/10">
                   <div 
                     id="fortis-payment-container" 
                     ref={iframeContainerRef}
-                    className="min-h-[400px]"
+                    className="min-h-[350px]"
                     style={{ marginTop: '-100px' }}
                   >
-                    {isProcessing ? (
-                      <div className="flex flex-col items-center justify-center h-64" style={{ marginTop: '100px' }}>
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 mb-4" style={{ borderColor: buttonColor }}></div>
-                        <p className="text-gray-400">Processing payment...</p>
-                      </div>
-                    ) : (
+                    {!isPaymentReady && !isProcessing && (
                       <div className="flex items-center justify-center h-64" style={{ marginTop: '100px' }}>
                         <div className="animate-pulse text-gray-400">Loading payment form...</div>
                       </div>
@@ -911,7 +909,38 @@ const CollabOrderPage: React.FC = () => {
                   </div>
                 </div>
 
-                <p className="text-center text-gray-500 text-xs mt-2">
+                {/* Custom Submit Button */}
+                {isPaymentReady && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!commerceInstance) {
+                        toast.error('Payment form not ready');
+                        return;
+                      }
+                      setIsProcessing(true);
+                      commerceInstance.submit();
+                    }}
+                    disabled={isProcessing || !commerceInstance}
+                    className="w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+                    style={{
+                      backgroundColor: buttonColor,
+                      color: '#ffffff',
+                      borderRadius: getButtonRadius(),
+                    }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay $${price.toFixed(2)}`
+                    )}
+                  </button>
+                )}
+
+                <p className="text-center text-gray-500 text-xs mt-4">
                   Secure payment powered by{' '}
                   <a 
                     href="https://lunarpay.com" 
