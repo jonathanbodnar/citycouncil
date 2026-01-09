@@ -893,20 +893,21 @@ const CollabOrderPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Loading indicator - shown before Fortis is ready */}
+                {!isPaymentReady && !isProcessing && (
+                  <div className="flex items-center justify-center h-64 rounded-xl border border-white/10" style={{ backgroundColor: bioSettings?.gradient_start || '#0f172a' }}>
+                    <div className="animate-pulse text-gray-400">Loading payment form...</div>
+                  </div>
+                )}
+
                 {/* Payment Form Container - clip top 100px to hide tabs */}
-                <div className="overflow-hidden rounded-xl border border-white/10">
+                <div className="overflow-hidden rounded-xl border border-white/10" style={{ display: isPaymentReady ? 'block' : 'none' }}>
                   <div 
                     id="fortis-payment-container" 
                     ref={iframeContainerRef}
                     className="min-h-[350px]"
                     style={{ marginTop: '-100px' }}
-                  >
-                    {!isPaymentReady && !isProcessing && (
-                      <div className="flex items-center justify-center h-64" style={{ marginTop: '100px' }}>
-                        <div className="animate-pulse text-gray-400">Loading payment form...</div>
-                      </div>
-                    )}
-                  </div>
+                  />
                 </div>
 
                 {/* Custom Submit Button */}
