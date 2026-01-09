@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -36,6 +36,7 @@ const UsersManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'talent' | 'user' | 'admin'>('all');
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -181,6 +182,59 @@ const UsersManagement: React.FC = () => {
     }
   };
 
+  const handleDeleteUser = async (user: User) => {
+    // Confirm deletion
+    const confirmed = window.confirm(
+      `Are you sure you want to delete user "${user.full_name || user.email}"?\n\nThis will:\n- Delete their account from authentication\n- Remove their profile data\n\nThis action cannot be undone!`
+    );
+    
+    if (!confirmed) return;
+
+    setDeletingUserId(user.id);
+    
+    try {
+      // First delete from public.users table
+      const { error: publicError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', user.id);
+
+      if (publicError) {
+        console.error('Error deleting from public.users:', publicError);
+        // Continue anyway - might have cascade delete or user might not exist in public table
+      }
+
+      // Then delete from auth.users using edge function or direct API call
+      // We need to call the Supabase Admin API to delete auth users
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/auth/v1/admin/users/${user.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY || '',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_SERVICE_KEY || ''}`,
+          },
+        }
+      );
+
+      if (!response.ok && response.status !== 404) {
+        // 404 is okay - user might not exist in auth
+        const errorText = await response.text();
+        console.error('Error deleting auth user:', errorText);
+        // Don't throw - we already deleted from public.users
+      }
+
+      // Remove from local state
+      setUsers(users.filter(u => u.id !== user.id));
+      toast.success(`User "${user.full_name || user.email}" deleted successfully`);
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error(error.message || 'Failed to delete user');
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -300,6 +354,18 @@ const UsersManagement: React.FC = () => {
                   )}
                 </div>
               )}
+              
+              {/* Delete Button */}
+              <div className="pt-2 border-t border-gray-200 mt-2">
+                <button
+                  onClick={() => handleDeleteUser(user)}
+                  disabled={deletingUserId === user.id || user.user_type === 'admin'}
+                  className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  {deletingUserId === user.id ? 'Deleting...' : 'Delete User'}
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -330,6 +396,9 @@ const UsersManagement: React.FC = () => {
               </th>
               <th className="hidden xl:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Last Login
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Actions
               </th>
             </tr>
           </thead>
@@ -452,6 +521,19 @@ const UsersManagement: React.FC = () => {
                   {/* Last Login Column */}
                   <td className="hidden xl:table-cell px-4 py-3 text-sm text-gray-500">
                     {formatDate(user.last_login)}
+                  </td>
+
+                  {/* Actions Column */}
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleDeleteUser(user)}
+                      disabled={deletingUserId === user.id || user.user_type === 'admin'}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={user.user_type === 'admin' ? 'Cannot delete admin users' : 'Delete user'}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      {deletingUserId === user.id ? 'Deleting...' : 'Delete'}
+                    </button>
                   </td>
                 </tr>
               ))
