@@ -586,8 +586,8 @@ function buildEmailHtml(
     </tr>
   `;
   
-  // ShoutOut logo - use the white logo from shoutout.us
-  const shoutoutLogoUrl = "https://shoutout.us/logowhite.png";
+  // ShoutOut logo - use the white logo from Supabase storage
+  const shoutoutLogoUrl = "https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png";
   const shoutoutLogoHtml = `<img src="${shoutoutLogoUrl}" alt="ShoutOut" height="24" style="height: 24px; vertical-align: middle;">`;
 
   return `

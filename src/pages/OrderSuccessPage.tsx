@@ -20,8 +20,8 @@ const OrderSuccessPage: React.FC = () => {
 
   // Form state for order details
   const [recipientName, setRecipientName] = useState('');
-  const [requestDetails, setRequestDetails] = useState('');
-  const [specialInstructions, setSpecialInstructions] = useState('');
+  const [mention1, setMention1] = useState('');
+  const [mention2, setMention2] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [detailsSubmitted, setDetailsSubmitted] = useState(false);
 
@@ -52,19 +52,23 @@ const OrderSuccessPage: React.FC = () => {
       toast.error('Please enter who this video is for');
       return;
     }
-    if (!requestDetails.trim() || requestDetails.trim().length < 25) {
-      toast.error('Please provide more details about your request (at least 25 characters)');
+    if (!mention1.trim()) {
+      toast.error('Please add at least one thing to mention');
       return;
     }
 
     setSubmitting(true);
     try {
+      // Combine mentions into request_details for storage
+      const mentions = [mention1.trim(), mention2.trim()].filter(Boolean);
+      const requestDetails = mentions.join('\n');
+
       const { error } = await supabase
         .from('orders')
         .update({
           recipient_name: recipientName.trim(),
-          request_details: requestDetails.trim(),
-          special_instructions: specialInstructions.trim() || null,
+          request_details: requestDetails,
+          special_instructions: null,
           details_submitted: true
         })
         .eq('id', orderId);
@@ -156,35 +160,40 @@ const OrderSuccessPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* Request Details */}
+                  {/* Things to Mention */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Your Message Request <span className="text-red-400">*</span>
+                      What would you like {talentName || 'them'} to mention? <span className="text-red-400">*</span>
                     </label>
-                    <textarea
-                      value={requestDetails}
-                      onChange={(e) => setRequestDetails(e.target.value)}
-                      rows={4}
-                      placeholder="Tell them what you'd like included in your ShoutOut. Be specific about names, details, and the tone you want!"
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      {requestDetails.length}/1000 characters (min 25)
+                    <p className="text-xs text-gray-400 mb-2">
+                      Add 1-2 things you'd like included in your ShoutOut
                     </p>
-                  </div>
-
-                  {/* Special Instructions */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Special Instructions (Optional)
-                    </label>
-                    <textarea
-                      value={specialInstructions}
-                      onChange={(e) => setSpecialInstructions(e.target.value)}
-                      rows={2}
-                      placeholder="Any specific requests about delivery, style, or content?"
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">1.</span>
+                        <input
+                          type="text"
+                          value={mention1}
+                          onChange={(e) => setMention1(e.target.value.slice(0, 160))}
+                          placeholder="e.g., Wish them a happy birthday"
+                          className="w-full pl-8 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          maxLength={160}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{mention1.length}/160</span>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">2.</span>
+                        <input
+                          type="text"
+                          value={mention2}
+                          onChange={(e) => setMention2(e.target.value.slice(0, 160))}
+                          placeholder="e.g., They're a huge fan of your podcast (optional)"
+                          className="w-full pl-8 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          maxLength={160}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{mention2.length}/160</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

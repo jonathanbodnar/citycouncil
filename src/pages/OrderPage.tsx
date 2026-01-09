@@ -918,6 +918,8 @@ const OrderPage: React.FC = () => {
                 onPaymentSuccess={handlePaymentSuccess}
                 onPaymentError={handlePaymentError}
                 loading={submitting}
+                backgroundColor="#0f172a"
+                buttonColor="#3b82f6"
               />
             )}
 

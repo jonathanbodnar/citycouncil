@@ -942,10 +942,22 @@ const TalentDashboard: React.FC = () => {
                           {order.recipient_name && (
                             <div className="mb-3 pb-3 border-b border-white/10">
                               <span className="text-blue-300 font-medium">Who's it for:</span>
-                              <span className="text-white ml-2">{order.recipient_name}</span>
+                              <span className="text-white ml-2 font-semibold">{order.recipient_name}</span>
                             </div>
                           )}
-                          <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
+                          {order.request_details && (
+                            <div className="mb-3">
+                              <span className="text-blue-300 font-medium block mb-2">Things to mention:</span>
+                              <ul className="space-y-2">
+                                {order.request_details.split('\n').filter(Boolean).map((mention, idx) => (
+                                  <li key={idx} className="flex items-start gap-2 text-gray-300">
+                                    <span className="text-purple-400 font-semibold">{idx + 1}.</span>
+                                    <span>{mention}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                           <div className="mt-3 pt-3 border-t border-white/10">
                             <p className="text-sm text-yellow-300 italic">
                               💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.
@@ -1154,10 +1166,22 @@ const TalentDashboard: React.FC = () => {
                       {order.recipient_name && (
                         <div className="mb-3 pb-3 border-b border-white/10">
                           <span className="text-blue-300 font-medium">Who's it for:</span>
-                          <span className="text-white ml-2">{order.recipient_name}</span>
+                          <span className="text-white ml-2 font-semibold">{order.recipient_name}</span>
                         </div>
                       )}
-                      <p className="text-gray-300 mb-3 whitespace-pre-wrap">{order.request_details}</p>
+                      {order.request_details && (
+                        <div className="mb-3">
+                          <span className="text-blue-300 font-medium block mb-2">Things to mention:</span>
+                          <ul className="space-y-2">
+                            {order.request_details.split('\n').filter(Boolean).map((mention, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-gray-300">
+                                <span className="text-purple-400 font-semibold">{idx + 1}.</span>
+                                <span>{mention}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <p className="text-sm text-yellow-300 italic">
                           💡 Always mention <strong>{order.recipient_name || "the person's name"}</strong> in your ShoutOut.

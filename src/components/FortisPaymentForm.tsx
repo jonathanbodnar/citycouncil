@@ -12,12 +12,17 @@ interface FortisPaymentFormProps {
   onPaymentSuccess: (paymentResult: any) => void;
   onPaymentError: (error: string) => void;
   loading?: boolean;
+  // Optional styling props to match page theme
+  backgroundColor?: string;
+  buttonColor?: string;
 }
 
 const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   amount,
   onPaymentSuccess,
   onPaymentError,
+  backgroundColor = '#0f172a', // Default dark slate
+  buttonColor = '#3b82f6', // Default blue
 }) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const [commerceInstance, setCommerceInstance] = useState<any>(null);
@@ -135,7 +140,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       });
 
       // Create iframe in our container (pass selector string to avoid null ref timing)
-      console.log('Creating Commerce iframe');
+      console.log('Creating Commerce iframe with appearance:', { backgroundColor, buttonColor });
       elements.create({
         container: '#payment',
         theme: 'dark',
@@ -151,8 +156,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
         hideTotal: true,
         digitalWallets: ['ApplePay', 'GooglePay'],
         appearance: {
-          colorBackground: 'transparent',
-          colorButtonSelectedBackground: '#3b82f6',
+          colorBackground: backgroundColor,
+          colorButtonSelectedBackground: buttonColor,
           colorButtonSelectedText: '#ffffff',
           // Fortis Commerce.js v1.0.0 - fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
           fontFamily: 'Montserrat',
@@ -188,11 +193,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             id="payment"
             ref={iframeContainerRef}
             style={{
-              background: '#11161f',
+              background: backgroundColor,
               padding: '30px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              minHeight: '400px'
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              minHeight: '400px',
+              border: '1px solid rgba(255,255,255,0.1)',
             }}
           />
           
