@@ -117,7 +117,6 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 const CommunityGuidelinesPage = lazy(() => import('./pages/CommunityGuidelinesPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
-const CreatorsPage = lazy(() => import('./pages/CreatorsPage'));
 const EmailTestPage = lazy(() => import('./pages/EmailTestPage'));
 const InstagramCallbackPage = lazy(() => import('./pages/InstagramCallbackPage'));
 const WelcomePage = lazy(() => import('./pages/WelcomePage'));
@@ -251,7 +250,6 @@ function App() {
               <Route index element={<HomePage />} />
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/creators" element={<CreatorsPage />} />
               <Route path="/:username" element={<TalentProfilePage />} />
               <Route path="/talent/:id" element={<TalentProfilePage />} />
               <Route path="/order/:talentId" element={
