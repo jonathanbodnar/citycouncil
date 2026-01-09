@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { 
   ShieldCheckIcon, 
-  LockClosedIcon,
   GlobeAltIcon,
   MegaphoneIcon,
   ShoppingBagIcon,
@@ -10,9 +8,6 @@ import {
   UserGroupIcon,
   VideoCameraIcon,
   SparklesIcon,
-  BoltIcon,
-  EnvelopeIcon,
-  ChartBarIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import SEOHelmet from '../components/SEOHelmet';
@@ -190,8 +185,8 @@ export default function CreatorsPage() {
 
             {/* Creator bio carousel */}
             <div className="relative mb-12">
-              <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent z-10 pointer-events-none" />
-              <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent z-10 pointer-events-none" />
+              <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[#111827] from-20% via-[#111827]/60 via-50% to-transparent z-10 pointer-events-none rounded-r-[100px]" />
+              <div className="absolute inset-y-0 right-0 w-48 bg-gradient-to-l from-[#111827] from-20% via-[#111827]/60 via-50% to-transparent z-10 pointer-events-none rounded-l-[100px]" />
               
               <div className="overflow-hidden py-8">
                 <div 
@@ -224,16 +219,6 @@ export default function CreatorsPage() {
               </div>
             </div>
 
-            {/* CTA Button */}
-            <div className="text-center">
-              <Link
-                to="/onboard"
-                className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white text-lg font-bold rounded-2xl hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 transition-all duration-300 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-400/50 hover:scale-105"
-              >
-                Start for free
-                <BoltIcon className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-              </Link>
-            </div>
           </div>
         </section>
 
@@ -392,21 +377,6 @@ export default function CreatorsPage() {
               Your Shout.bio is waiting. Start building your owned audience today—completely free.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/onboard"
-                className="group inline-flex items-center justify-center gap-3 px-12 py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white text-xl font-bold rounded-2xl hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 transition-all duration-300 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-400/50 hover:scale-105"
-              >
-                Become a Creator
-                <SparklesIcon className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-              </Link>
-              <Link
-                to="/"
-                className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-white/5 text-white text-xl font-semibold rounded-2xl border border-white/20 hover:bg-white/10 transition-all duration-300"
-              >
-                Browse Creators
-              </Link>
-            </div>
           </div>
         </section>
       </div>
