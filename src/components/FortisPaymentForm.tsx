@@ -201,8 +201,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
                 background: backgroundColor,
                 padding: '30px',
                 paddingTop: '30px',
-                marginTop: '-100px', // Hide "Payment Info" header and payment type buttons
-                minHeight: '500px', // Increased to account for negative margin
+                marginTop: '-135px', // Hide "Payment Info" header and payment type buttons
+                minHeight: '535px', // Increased to account for negative margin
               }}
             />
           </div>
