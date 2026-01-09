@@ -423,12 +423,15 @@ const EmailFlowManagement: React.FC = () => {
                 </tr>
               </table>` : '';
 
-    // Build talent images for promo card
-    const talentImagesHtml = featuredTalent.slice(0, 4).map((t, i) => `
-      <td style="width: 60px; padding: 0 2px;">
-        <img src="${t.temp_avatar_url}" alt="${t.temp_full_name}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2);">
+    // Build talent images for promo card (8 images to fill the row)
+    const talentImagesHtml = featuredTalent.slice(0, 8).map((t, i) => `
+      <td style="padding: 0 3px;">
+        <img src="${t.temp_avatar_url}" alt="${t.temp_full_name}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3);">
       </td>
     `).join('');
+    
+    // Logo URL from Supabase storage
+    const logoUrl = "https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png";
 
     return `<!DOCTYPE html>
 <html>
@@ -446,7 +449,7 @@ const EmailFlowManagement: React.FC = () => {
           <tr>
             <td align="center" style="padding-bottom: 30px;">
               <a href="https://shoutout.us" style="text-decoration: none;">
-                <img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" width="150" style="display: block;">
+                <img src="${logoUrl}" alt="ShoutOut" width="150" style="display: block;">
               </a>
             </td>
           </tr>
@@ -517,7 +520,7 @@ const EmailFlowManagement: React.FC = () => {
               <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
                 <!-- Logo -->
                 <a href="https://shoutout.us" style="text-decoration: none; display: inline-block; margin-bottom: 16px;">
-                  <img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" width="100" style="display: block; opacity: 0.6;">
+                  <img src="${logoUrl}" alt="ShoutOut" width="100" style="display: block; opacity: 0.6;">
                 </a>
                 <!-- Subscription source -->
                 <p style="color: #64748b; font-size: 12px; margin: 0 0 8px 0;">
@@ -1537,12 +1540,9 @@ const EmailFlowManagement: React.FC = () => {
                     {/* Logo */}
                     <div className="text-center mb-6">
                       <img 
-                        src="https://shoutout.us/shoutout-logo-white.png" 
+                        src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" 
                         alt="ShoutOut" 
-                        className="h-10 mx-auto opacity-90"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
+                        className="h-10 mx-auto"
                       />
                     </div>
 
@@ -1625,11 +1625,11 @@ const EmailFlowManagement: React.FC = () => {
                         From top free-speech personalities — starting at $47
                       </p>
                       
-                      {/* Talent Images */}
-                      <div className="flex items-center gap-2">
+                      {/* Talent Images - 8 images to fill card */}
+                      <div className="flex items-center gap-1 flex-wrap">
                         {featuredTalent.length > 0 ? (
-                          featuredTalent.slice(0, 4).map((talent) => (
-                            <div key={talent.id} className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
+                          featuredTalent.slice(0, 8).map((talent) => (
+                            <div key={talent.id} className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
                               <img 
                                 src={talent.temp_avatar_url} 
                                 alt={talent.temp_full_name}
@@ -1639,14 +1639,13 @@ const EmailFlowManagement: React.FC = () => {
                           ))
                         ) : (
                           <>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
-                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
+                            {[...Array(8)].map((_, i) => (
+                              <div key={i} className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex-shrink-0"></div>
+                            ))}
                           </>
                         )}
-                        <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center flex-shrink-0">
-                          <span className="text-white text-xs font-semibold">+50</span>
+                        <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-[10px] font-semibold">+{Math.max(0, 50 - featuredTalent.length)}</span>
                         </div>
                       </div>
                     </a>
@@ -1655,12 +1654,9 @@ const EmailFlowManagement: React.FC = () => {
                     <div className="text-center pt-6 border-t border-white/10">
                       {/* Logo */}
                       <img 
-                        src="https://shoutout.us/shoutout-logo-white.png" 
+                        src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" 
                         alt="ShoutOut" 
                         className="h-6 mx-auto opacity-50 mb-4"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
                       />
                       {/* Subscription source */}
                       <p className="text-gray-500 text-xs mb-2">
