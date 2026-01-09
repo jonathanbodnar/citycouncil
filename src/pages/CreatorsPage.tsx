@@ -301,40 +301,24 @@ export default function CreatorsPage() {
                 </div>
               </div>
 
-              {/* Right: Visual examples */}
-              <div className="space-y-6">
-                {/* Stay Connected - How fans subscribe */}
-                <div className="group">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <span className="text-emerald-400 font-bold text-sm">1</span>
-                    </div>
-                    <p className="text-white font-semibold">Fans subscribe on your bio</p>
-                  </div>
-                  <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl group-hover:border-emerald-500/30 transition-all duration-300">
-                    <img 
-                      src="/creatorbios/stayconnected.png" 
-                      alt="Stay connected - How fans subscribe"
-                      className="w-full h-auto"
-                    />
-                  </div>
+              {/* Right: Visual examples - overlapping layout */}
+              <div className="relative h-[400px] sm:h-[500px]">
+                {/* Send Update - Background/larger image */}
+                <div className="absolute top-0 right-0 w-[85%] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                  <img 
+                    src="/creatorbios/sendupdate.png" 
+                    alt="Send update - How creators reach their audience"
+                    className="w-full h-auto"
+                  />
                 </div>
 
-                {/* Send Update - How creators communicate */}
-                <div className="group">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                      <span className="text-purple-400 font-bold text-sm">2</span>
-                    </div>
-                    <p className="text-white font-semibold">Send updates from your dashboard</p>
-                  </div>
-                  <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl group-hover:border-purple-500/30 transition-all duration-300">
-                    <img 
-                      src="/creatorbios/sendupdate.png" 
-                      alt="Send update - How creators reach their audience"
-                      className="w-full h-auto"
-                    />
-                  </div>
+                {/* Stay Connected - Floating overlay */}
+                <div className="absolute bottom-0 left-0 w-[50%] rounded-2xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
+                  <img 
+                    src="/creatorbios/stayconnected.png" 
+                    alt="Stay connected - How fans subscribe"
+                    className="w-full h-auto"
+                  />
                 </div>
               </div>
             </div>
