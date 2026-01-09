@@ -893,15 +893,22 @@ const CollabOrderPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Loading indicator - shown before Fortis is ready */}
-                {!isPaymentReady && !isProcessing && (
-                  <div className="flex items-center justify-center h-64 rounded-xl border border-white/10" style={{ backgroundColor: bioSettings?.gradient_start || '#0f172a' }}>
+                {/* Payment Form Container - clip top 100px to hide tabs */}
+                {/* Loading overlay positioned absolutely over the form */}
+                <div className="relative overflow-hidden rounded-xl border border-white/10">
+                  {/* Loading indicator overlay */}
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-300"
+                    style={{ 
+                      backgroundColor: bioSettings?.gradient_start || '#0f172a',
+                      opacity: isPaymentReady ? 0 : 1,
+                      pointerEvents: isPaymentReady ? 'none' : 'auto',
+                    }}
+                  >
                     <div className="animate-pulse text-gray-400">Loading payment form...</div>
                   </div>
-                )}
-
-                {/* Payment Form Container - clip top 100px to hide tabs */}
-                <div className="overflow-hidden rounded-xl border border-white/10" style={{ display: isPaymentReady ? 'block' : 'none' }}>
+                  
+                  {/* Fortis iframe container - always rendered, no React children */}
                   <div 
                     id="fortis-payment-container" 
                     ref={iframeContainerRef}
