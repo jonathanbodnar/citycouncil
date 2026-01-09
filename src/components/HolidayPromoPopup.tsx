@@ -536,6 +536,29 @@ const HolidayPromoPopup: React.FC = () => {
         console.error('Error sending SMS:', smsError);
       }
 
+      // Enroll user in SMS flow system for 72-hour follow-up
+      try {
+        const now = new Date();
+        const seventyTwoHoursLater = new Date(now.getTime() + (72 * 60 * 60 * 1000));
+        
+        // Enroll in 72-hour follow-up flow (giveaway_followup)
+        await supabase.from('user_sms_flow_status').upsert({
+          phone: formattedPhone,
+          flow_id: '22222222-2222-2222-2222-222222222222', // giveaway_followup flow ID
+          current_message_order: 0,
+          next_message_scheduled_at: seventyTwoHoursLater.toISOString(),
+          flow_started_at: now.toISOString(),
+          coupon_code: prizeInfo.code,
+          coupon_used: false,
+          is_paused: false,
+        }, { onConflict: 'phone,flow_id' });
+
+        console.log('User enrolled in 72-hour follow-up flow');
+      } catch (flowError) {
+        console.error('Error enrolling in SMS flow:', flowError);
+        // Don't fail the main flow if this fails
+      }
+
       // Set prize expiry (30 minutes)
       const prizeExpiry = Date.now() + (30 * 60 * 1000);
       safeSetItem(WINNER_EXPIRY_KEY, prizeExpiry.toString());
