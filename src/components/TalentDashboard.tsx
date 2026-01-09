@@ -1461,7 +1461,7 @@ const TalentDashboard: React.FC = () => {
       )}
 
       {/* Analytics Tab */}
-      {activeTab === 'analytics' && (
+      {activeTab === 'analytics' && talentProfile && (
         <div className="space-y-6">
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1484,7 +1484,7 @@ const TalentDashboard: React.FC = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">{talentProfile.fulfilled_orders}</p>
+                  <p className="text-2xl font-bold text-gray-900">{talentProfile.fulfilled_orders || 0}</p>
                 </div>
               </div>
             </div>
@@ -1496,7 +1496,7 @@ const TalentDashboard: React.FC = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Rating</p>
-                  <p className="text-2xl font-bold text-gray-900">{talentProfile.average_rating.toFixed(1)}</p>
+                  <p className="text-2xl font-bold text-gray-900">{(talentProfile.average_rating || 0).toFixed(1)}</p>
                 </div>
               </div>
             </div>
@@ -1531,7 +1531,7 @@ const TalentDashboard: React.FC = () => {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 mb-2">
-                  {talentProfile.average_rating.toFixed(1)}
+                  {(talentProfile.average_rating || 0).toFixed(1)}
                 </div>
                 <div className="text-sm text-gray-600">Average Rating</div>
               </div>
