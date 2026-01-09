@@ -159,6 +159,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           colorBackground: backgroundColor,
           colorButtonSelectedBackground: buttonColor,
           colorButtonSelectedText: '#ffffff',
+          colorPrimary: buttonColor, // Try this for Pay Now button
+          colorButton: buttonColor, // Try this for Pay Now button
           // Fortis Commerce.js v1.0.0 - fontFamily MUST be: Roboto, Montserrat, OpenSans, Raleway, SourceCode, or SourceSans
           fontFamily: 'Montserrat',
           borderRadius: '8px',
