@@ -22,6 +22,12 @@ interface BioSettings {
   talent_id: string;
   theme_color?: string;
   background_style?: string;
+  // Actual fields used in the database
+  gradient_start?: string;
+  gradient_end?: string;
+  accent_color?: string;
+  background_color?: string;
+  text_color?: string;
 }
 
 interface BioLink {
@@ -356,7 +362,7 @@ Deno.serve(async (req) => {
   }
 });
 
-// Get theme colors based on bio settings
+// Get theme colors based on bio settings - uses actual gradient_start, accent_color from DB
 function getThemeColors(bioSettings: BioSettings | null): { 
   bgColor: string; 
   cardBg: string; 
@@ -366,22 +372,49 @@ function getThemeColors(bioSettings: BioSettings | null): {
   mutedText: string;
   lightAccent: string; // Lighter version of accent for text on accent bg
 } {
-  const themeColor = bioSettings?.theme_color || '#1a1a2e';
+  // Use actual values from bio_settings if available
+  const gradientStart = bioSettings?.gradient_start || '#1a1a2e';
+  const gradientEnd = bioSettings?.gradient_end || '#0a0a0a';
+  const accentColor = bioSettings?.accent_color || '#6366f1';
+  const textColor = bioSettings?.text_color || '#ffffff';
   
-  // Define theme presets with gradient-friendly secondary colors
-  const themes: Record<string, { bgColor: string; cardBg: string; accentColor: string; accentColor2: string; textColor: string; mutedText: string; lightAccent: string }> = {
-    '#1a1a2e': { bgColor: '#1a1a2e', cardBg: '#252542', accentColor: '#6366f1', accentColor2: '#8b5cf6', textColor: '#ffffff', mutedText: '#888888', lightAccent: '#c7d2fe' },
-    '#0f172a': { bgColor: '#0f172a', cardBg: '#1e293b', accentColor: '#3b82f6', accentColor2: '#6366f1', textColor: '#ffffff', mutedText: '#94a3b8', lightAccent: '#bfdbfe' },
-    '#18181b': { bgColor: '#18181b', cardBg: '#27272a', accentColor: '#a855f7', accentColor2: '#ec4899', textColor: '#ffffff', mutedText: '#a1a1aa', lightAccent: '#e9d5ff' },
-    '#1c1917': { bgColor: '#1c1917', cardBg: '#292524', accentColor: '#f97316', accentColor2: '#eab308', textColor: '#ffffff', mutedText: '#a8a29e', lightAccent: '#fed7aa' },
-    '#052e16': { bgColor: '#052e16', cardBg: '#14532d', accentColor: '#22c55e', accentColor2: '#10b981', textColor: '#ffffff', mutedText: '#86efac', lightAccent: '#bbf7d0' },
-    '#172554': { bgColor: '#172554', cardBg: '#1e3a8a', accentColor: '#60a5fa', accentColor2: '#818cf8', textColor: '#ffffff', mutedText: '#93c5fd', lightAccent: '#dbeafe' },
-    '#4c0519': { bgColor: '#4c0519', cardBg: '#881337', accentColor: '#fb7185', accentColor2: '#f472b6', textColor: '#ffffff', mutedText: '#fda4af', lightAccent: '#fecdd3' },
-    '#ffffff': { bgColor: '#f8fafc', cardBg: '#ffffff', accentColor: '#6366f1', accentColor2: '#8b5cf6', textColor: '#1e293b', mutedText: '#64748b', lightAccent: '#c7d2fe' },
-    '#fef3c7': { bgColor: '#fef3c7', cardBg: '#ffffff', accentColor: '#f59e0b', accentColor2: '#f97316', textColor: '#1e293b', mutedText: '#92400e', lightAccent: '#fde68a' },
+  // Generate a lighter card background from gradient start
+  // and a secondary accent color for gradients
+  const lightenColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
   };
   
-  return themes[themeColor] || themes['#1a1a2e'];
+  // Generate second accent color by shifting hue slightly
+  const shiftHue = (hex: string): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const R = (num >> 16) & 0xFF;
+    const G = (num >> 8) & 0xFF;
+    const B = num & 0xFF;
+    // Shift towards purple/pink
+    const newR = Math.min(255, R + 30);
+    const newG = Math.max(0, G - 20);
+    const newB = Math.min(255, B + 40);
+    return '#' + (0x1000000 + newR * 0x10000 + newG * 0x100 + newB).toString(16).slice(1);
+  };
+  
+  // Determine if it's a light or dark theme
+  const isLightTheme = gradientStart === '#ffffff' || gradientStart === '#fef3c7' || 
+    parseInt(gradientStart.replace('#', ''), 16) > 0xaaaaaa;
+  
+  return {
+    bgColor: gradientStart,
+    cardBg: isLightTheme ? '#ffffff' : lightenColor(gradientStart, 10),
+    accentColor: accentColor,
+    accentColor2: shiftHue(accentColor),
+    textColor: isLightTheme ? '#1e293b' : textColor,
+    mutedText: isLightTheme ? '#64748b' : lightenColor(gradientStart, 40),
+    lightAccent: lightenColor(accentColor, 30),
+  };
 }
 
 // Build the email HTML template

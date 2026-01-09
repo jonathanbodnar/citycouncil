@@ -181,9 +181,9 @@ const EmailFlowManagement: React.FC = () => {
         .limit(20);
 
       if (error) throw error;
-      // Shuffle and take 4 random talent
+      // Shuffle and take 8 random talent for the promo card
       const shuffled = (data || []).sort(() => Math.random() - 0.5);
-      setFeaturedTalent(shuffled.slice(0, 4));
+      setFeaturedTalent(shuffled.slice(0, 8));
     } catch (error) {
       console.error('Error fetching featured talent:', error);
     }
@@ -430,8 +430,8 @@ const EmailFlowManagement: React.FC = () => {
       </td>
     `).join('');
     
-    // Logo URL from Supabase storage
-    const logoUrl = "https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png";
+    // White logo URL from public folder
+    const logoUrl = "https://shoutout.us/logowhite.png";
 
     return `<!DOCTYPE html>
 <html>
@@ -1540,7 +1540,7 @@ const EmailFlowManagement: React.FC = () => {
                     {/* Logo */}
                     <div className="text-center mb-6">
                       <img 
-                        src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" 
+                        src="https://shoutout.us/logowhite.png" 
                         alt="ShoutOut" 
                         className="h-10 mx-auto"
                       />
@@ -1654,7 +1654,7 @@ const EmailFlowManagement: React.FC = () => {
                     <div className="text-center pt-6 border-t border-white/10">
                       {/* Logo */}
                       <img 
-                        src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" 
+                        src="https://shoutout.us/logowhite.png" 
                         alt="ShoutOut" 
                         className="h-6 mx-auto opacity-50 mb-4"
                       />
