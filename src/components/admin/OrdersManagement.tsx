@@ -477,26 +477,19 @@ const OrdersManagement: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Message */}
+                    {/* Things to Mention */}
                     {order.request_details && (
                       <div className="pt-3">
-                        <div className="text-xs font-semibold text-gray-700 mb-2">Request Message:</div>
+                        <div className="text-xs font-semibold text-gray-700 mb-2">Things to Mention:</div>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-700 whitespace-pre-wrap">
-                            {order.request_details}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Special Instructions */}
-                    {order.special_instructions && (
-                      <div className="pt-2">
-                        <div className="text-xs font-semibold text-gray-700 mb-2">Special Instructions:</div>
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-xs text-blue-700 whitespace-pre-wrap">
-                            {order.special_instructions}
-                          </p>
+                          <ul className="space-y-1">
+                            {order.request_details.split('\n').filter(Boolean).map((mention, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-xs text-gray-700">
+                                <span className="text-blue-600 font-semibold">{idx + 1}.</span>
+                                <span>{mention}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
                     )}
@@ -709,22 +702,19 @@ const OrdersManagement: React.FC = () => {
                                 </div>
                               )}
 
-                              {/* Message */}
+                              {/* Things to Mention */}
                               {order.request_details && (
                                 <div>
-                                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Request Message:</h4>
+                                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Things to Mention:</h4>
                                   <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{order.request_details}</p>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Special Instructions */}
-                              {order.special_instructions && (
-                                <div>
-                                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Special Instructions:</h4>
-                                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                    <p className="text-sm text-blue-700 whitespace-pre-wrap">{order.special_instructions}</p>
+                                    <ul className="space-y-2">
+                                      {order.request_details.split('\n').filter(Boolean).map((mention, idx) => (
+                                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                                          <span className="text-blue-600 font-semibold">{idx + 1}.</span>
+                                          <span>{mention}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
                                   </div>
                                 </div>
                               )}

@@ -216,7 +216,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       {/* Security Info */}
       <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10">
         <p className="text-xs text-slate-300 text-center">
-          🔒 Payments are processed securely in the embedded Fortis form.
+          🔒 Secure payment powered by <a href="https://lunarpay.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">LunarPay</a>
         </p>
       </div>
     </div>

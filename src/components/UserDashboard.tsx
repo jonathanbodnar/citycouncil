@@ -50,7 +50,8 @@ const UserDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithTalent[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
-  const [editedRequestDetails, setEditedRequestDetails] = useState('');
+  const [editedMention1, setEditedMention1] = useState('');
+  const [editedMention2, setEditedMention2] = useState('');
   const [activeTab, setActiveTab] = useState<'orders' | 'reviews' | 'profile'>('orders');
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareOrderData, setShareOrderData] = useState<OrderWithTalent | null>(null);
@@ -63,8 +64,8 @@ const UserDashboard: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsOrderId, setDetailsOrderId] = useState<string | null>(null);
   const [detailsRecipientName, setDetailsRecipientName] = useState('');
-  const [detailsRequestDetails, setDetailsRequestDetails] = useState('');
-  const [detailsSpecialInstructions, setDetailsSpecialInstructions] = useState('');
+  const [detailsMention1, setDetailsMention1] = useState('');
+  const [detailsMention2, setDetailsMention2] = useState('');
   const [submittingDetails, setSubmittingDetails] = useState(false);
 
   // Handle tab from URL parameter
@@ -265,8 +266,10 @@ const UserDashboard: React.FC = () => {
   const openDetailsModal = (order: OrderWithTalent) => {
     setDetailsOrderId(order.id);
     setDetailsRecipientName(order.recipient_name || '');
-    setDetailsRequestDetails(order.request_details || '');
-    setDetailsSpecialInstructions((order as any).special_instructions || '');
+    // Parse existing request_details into mentions
+    const mentions = (order.request_details || '').split('\n').filter(Boolean);
+    setDetailsMention1(mentions[0] || '');
+    setDetailsMention2(mentions[1] || '');
     setShowDetailsModal(true);
   };
 
@@ -276,19 +279,23 @@ const UserDashboard: React.FC = () => {
       toast.error('Please enter who this video is for');
       return;
     }
-    if (!detailsRequestDetails.trim() || detailsRequestDetails.trim().length < 25) {
-      toast.error('Please provide more details about your request (at least 25 characters)');
+    if (!detailsMention1.trim()) {
+      toast.error('Please add at least one thing to mention');
       return;
     }
 
     setSubmittingDetails(true);
     try {
+      // Combine mentions into request_details
+      const mentions = [detailsMention1.trim(), detailsMention2.trim()].filter(Boolean);
+      const requestDetails = mentions.join('\n');
+
       const { error } = await supabase
         .from('orders')
         .update({
           recipient_name: detailsRecipientName.trim(),
-          request_details: detailsRequestDetails.trim(),
-          special_instructions: detailsSpecialInstructions.trim() || null,
+          request_details: requestDetails,
+          special_instructions: null,
           details_submitted: true
         })
         .eq('id', detailsOrderId);
@@ -395,26 +402,34 @@ const UserDashboard: React.FC = () => {
   // Start editing request details
   const startEditingRequest = (order: OrderWithTalent) => {
     setEditingOrderId(order.id);
-    setEditedRequestDetails(order.request_details);
+    // Parse existing request_details into mentions
+    const mentions = (order.request_details || '').split('\n').filter(Boolean);
+    setEditedMention1(mentions[0] || '');
+    setEditedMention2(mentions[1] || '');
   };
 
   // Cancel editing
   const cancelEditingRequest = () => {
     setEditingOrderId(null);
-    setEditedRequestDetails('');
+    setEditedMention1('');
+    setEditedMention2('');
   };
 
   // Save edited request details
   const saveRequestDetails = async (orderId: string) => {
-    if (!editedRequestDetails.trim()) {
-      toast.error('Request details cannot be empty');
+    if (!editedMention1.trim()) {
+      toast.error('Please add at least one thing to mention');
       return;
     }
 
     try {
+      // Combine mentions into request_details
+      const mentions = [editedMention1.trim(), editedMention2.trim()].filter(Boolean);
+      const requestDetails = mentions.join('\n');
+
       const { error } = await supabase
         .from('orders')
-        .update({ request_details: editedRequestDetails })
+        .update({ request_details: requestDetails })
         .eq('id', orderId);
 
       if (error) throw error;
@@ -422,13 +437,14 @@ const UserDashboard: React.FC = () => {
       // Update local state
       setOrders(orders.map(order => 
         order.id === orderId 
-          ? { ...order, request_details: editedRequestDetails }
+          ? { ...order, request_details: requestDetails }
           : order
       ));
 
       toast.success('Request details updated!');
       setEditingOrderId(null);
-      setEditedRequestDetails('');
+      setEditedMention1('');
+      setEditedMention2('');
     } catch (error: any) {
       console.error('Error updating request details:', error);
       toast.error(error.message || 'Failed to update request details');
@@ -570,14 +586,36 @@ const UserDashboard: React.FC = () => {
                         </div>
                         
                         {editingOrderId === order.id ? (
-                          <div className="space-y-2">
-                            <textarea
-                              value={editedRequestDetails}
-                              onChange={(e) => setEditedRequestDetails(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              rows={4}
-                              placeholder="Describe your request..."
-                            />
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-600 mb-1">Things to mention:</label>
+                              <div className="space-y-2">
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">1.</span>
+                                  <input
+                                    type="text"
+                                    value={editedMention1}
+                                    onChange={(e) => setEditedMention1(e.target.value.slice(0, 160))}
+                                    className="w-full pl-8 pr-16 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="e.g., Wish them a happy birthday"
+                                    maxLength={160}
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">{editedMention1.length}/160</span>
+                                </div>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">2.</span>
+                                  <input
+                                    type="text"
+                                    value={editedMention2}
+                                    onChange={(e) => setEditedMention2(e.target.value.slice(0, 160))}
+                                    className="w-full pl-8 pr-16 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="e.g., They're a huge fan (optional)"
+                                    maxLength={160}
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">{editedMention2.length}/160</span>
+                                </div>
+                              </div>
+                            </div>
                             <div className="flex gap-2">
                               <button
                                 onClick={() => saveRequestDetails(order.id)}
@@ -600,9 +638,19 @@ const UserDashboard: React.FC = () => {
                                 <span className="font-medium">For:</span> {order.recipient_name}
                               </p>
                             )}
-                            <p className="text-gray-700 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">
-                              {order.request_details}
-                            </p>
+                            {order.request_details && (
+                              <div className="bg-gray-50 p-3 rounded-md">
+                                <p className="text-sm text-gray-500 mb-2 font-medium">Things to mention:</p>
+                                <ul className="space-y-1">
+                                  {order.request_details.split('\n').filter(Boolean).map((mention, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-gray-700">
+                                      <span className="text-blue-600 font-medium">{idx + 1}.</span>
+                                      <span>{mention}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </>
                         )}
                       </>
@@ -1067,35 +1115,40 @@ const UserDashboard: React.FC = () => {
                   />
                 </div>
 
-                {/* Request Details */}
+                {/* Things to Mention */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Your Message Request <span className="text-red-400">*</span>
+                    What would you like them to mention? <span className="text-red-400">*</span>
                   </label>
-                  <textarea
-                    value={detailsRequestDetails}
-                    onChange={(e) => setDetailsRequestDetails(e.target.value)}
-                    rows={4}
-                    placeholder="Tell them what you'd like included in your ShoutOut. Be specific about names, details, and the tone you want!"
-                    className="w-full px-3 py-2 bg-slate-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {detailsRequestDetails.length}/1000 characters (min 25)
+                  <p className="text-xs text-gray-500 mb-2">
+                    Add 1-2 things you'd like included in your ShoutOut
                   </p>
-                </div>
-
-                {/* Special Instructions */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Special Instructions (Optional)
-                  </label>
-                  <textarea
-                    value={detailsSpecialInstructions}
-                    onChange={(e) => setDetailsSpecialInstructions(e.target.value)}
-                    rows={2}
-                    placeholder="Any specific requests about delivery, style, or content?"
-                    className="w-full px-3 py-2 bg-slate-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  />
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">1.</span>
+                      <input
+                        type="text"
+                        value={detailsMention1}
+                        onChange={(e) => setDetailsMention1(e.target.value.slice(0, 160))}
+                        placeholder="e.g., Wish them a happy birthday"
+                        className="w-full pl-8 pr-16 py-2 bg-slate-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        maxLength={160}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{detailsMention1.length}/160</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">2.</span>
+                      <input
+                        type="text"
+                        value={detailsMention2}
+                        onChange={(e) => setDetailsMention2(e.target.value.slice(0, 160))}
+                        placeholder="e.g., They're a huge fan of your podcast (optional)"
+                        className="w-full pl-8 pr-16 py-2 bg-slate-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        maxLength={160}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{detailsMention2.length}/160</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
