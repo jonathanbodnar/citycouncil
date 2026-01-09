@@ -183,40 +183,39 @@ export default function CreatorsPage() {
               </div>
             </div>
 
-            {/* Creator bio carousel */}
-            <div className="relative mb-8">
-              
-              <div className="overflow-hidden py-8">
-                <div 
-                  ref={carouselRef}
-                  className="flex gap-8"
-                  style={{ width: 'max-content' }}
-                >
-                  {/* Triple the images for seamless loop */}
-                  {[...creatorBios, ...creatorBios, ...creatorBios, ...creatorBios].map((creator, index) => (
-                    <div
-                      key={index}
-                      className="w-[260px] sm:w-[300px] flex-shrink-0 group cursor-pointer"
-                    >
-                      <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10 transform transition-all duration-500 group-hover:scale-[1.03] group-hover:-translate-y-2 group-hover:shadow-emerald-500/20">
-                        <img
-                          src={creator.image}
-                          alt={`${creator.name}'s Shout.bio`}
-                          className="w-full h-auto"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                          <p className="font-bold text-xl">{creator.name}</p>
-                          <p className="text-emerald-400 font-mono text-sm">shout.bio/{creator.handle}</p>
-                        </div>
+          </div>
+
+          {/* Creator bio carousel - Full width */}
+          <div className="relative mb-8 w-screen left-1/2 -translate-x-1/2">
+            <div className="overflow-hidden py-4">
+              <div 
+                ref={carouselRef}
+                className="flex gap-6"
+                style={{ width: 'max-content' }}
+              >
+                {/* Triple the images for seamless loop */}
+                {[...creatorBios, ...creatorBios, ...creatorBios, ...creatorBios].map((creator, index) => (
+                  <div
+                    key={index}
+                    className="w-[260px] sm:w-[300px] flex-shrink-0 group cursor-pointer"
+                  >
+                    <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10 transform transition-all duration-500 group-hover:scale-[1.03] group-hover:-translate-y-2 group-hover:shadow-emerald-500/20">
+                      <img
+                        src={creator.image}
+                        alt={`${creator.name}'s Shout.bio`}
+                        className="w-full h-auto"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                        <p className="font-bold text-xl">{creator.name}</p>
+                        <p className="text-emerald-400 font-mono text-sm">shout.bio/{creator.handle}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
-
           </div>
         </section>
 
