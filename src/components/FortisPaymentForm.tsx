@@ -204,7 +204,7 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
   };
 
   return (
-    <div className="rounded-2xl px-4 py-5 md:p-6 max-w-3xl mx-auto">
+    <div className="rounded-2xl">
       {/* Fortis Commerce.js Payment Form */}
       {paymentMethod === 'card' && (
         <div className="space-y-4">
