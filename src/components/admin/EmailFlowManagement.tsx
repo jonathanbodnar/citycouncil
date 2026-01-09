@@ -646,11 +646,11 @@ const EmailFlowManagement: React.FC = () => {
         .replace(/\{\{coupon_code\}\}/g, 'TESTCODE');
 
       // Call an edge function to send the test email
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-test-email`, {
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-test-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           to_email: 'jb@apollo.inc',
