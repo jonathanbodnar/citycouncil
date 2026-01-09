@@ -96,8 +96,26 @@ const TRIGGER_TYPE_LABELS: Record<string, { label: string; color: string; icon: 
   manual: { label: 'Manual', color: 'bg-gray-100 text-gray-800', icon: '✋' },
 };
 
+// Subscription source labels for footer
+const SUBSCRIPTION_SOURCE_LABELS: Record<string, string> = {
+  bio_page: 'You subscribed through a talent\'s link in bio.',
+  giveaway: 'You entered a ShoutOut giveaway.',
+  direct_signup: 'You signed up on ShoutOut.',
+  order_complete: 'You ordered a personalized video on ShoutOut.',
+  talent_signup: 'You signed up as a talent on ShoutOut.',
+  manual: 'You subscribed to ShoutOut updates.',
+};
+
+interface TalentPreview {
+  id: string;
+  temp_full_name: string;
+  temp_avatar_url: string;
+  slug: string;
+}
+
 const EmailFlowManagement: React.FC = () => {
   const [flows, setFlows] = useState<EmailFlow[]>([]);
+  const [featuredTalent, setFeaturedTalent] = useState<TalentPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedFlowId, setExpandedFlowId] = useState<string | null>(null);
   const [editingMessage, setEditingMessage] = useState<EmailFlowMessage | null>(null);
@@ -150,7 +168,26 @@ const EmailFlowManagement: React.FC = () => {
   useEffect(() => {
     fetchFlows();
     fetchStats();
+    fetchFeaturedTalent();
   }, []);
+
+  const fetchFeaturedTalent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('talent_profiles')
+        .select('id, temp_full_name, temp_avatar_url, slug')
+        .eq('is_active', true)
+        .not('temp_avatar_url', 'is', null)
+        .limit(20);
+
+      if (error) throw error;
+      // Shuffle and take 4 random talent
+      const shuffled = (data || []).sort(() => Math.random() - 0.5);
+      setFeaturedTalent(shuffled.slice(0, 4));
+    } catch (error) {
+      console.error('Error fetching featured talent:', error);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'queue') {
@@ -386,6 +423,13 @@ const EmailFlowManagement: React.FC = () => {
                 </tr>
               </table>` : '';
 
+    // Build talent images for promo card
+    const talentImagesHtml = featuredTalent.slice(0, 4).map((t, i) => `
+      <td style="width: 60px; padding: 0 2px;">
+        <img src="${t.temp_avatar_url}" alt="${t.temp_full_name}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2);">
+      </td>
+    `).join('');
+
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -401,7 +445,9 @@ const EmailFlowManagement: React.FC = () => {
           <!-- Logo -->
           <tr>
             <td align="center" style="padding-bottom: 30px;">
-              <img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" width="150" style="display: block;">
+              <a href="https://shoutout.us" style="text-decoration: none;">
+                <img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" width="150" style="display: block;">
+              </a>
             </td>
           </tr>
           <!-- Main Content Card -->
@@ -421,15 +467,73 @@ const EmailFlowManagement: React.FC = () => {
               </p>
             </td>
           </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 24px 0;">
+              <div style="border-top: 1px solid rgba(255,255,255,0.1);"></div>
+            </td>
+          </tr>
+
+          <!-- ShoutOut Promo Card -->
+          <tr>
+            <td>
+              <a href="https://shoutout.us?utm=email_flow&coupon={{coupon_code}}" target="_blank" style="text-decoration: none; display: block;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px; overflow: hidden;">
+                  <tr>
+                    <td style="padding: 24px;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td style="vertical-align: middle;">
+                            <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 8px;">Get a Personalized Video ShoutOut</div>
+                            <div style="color: #c4b5fd; font-size: 14px;">From top free-speech personalities</div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding-top: 16px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0">
+                              <tr>
+                                ${talentImagesHtml}
+                                <td style="padding-left: 8px;">
+                                  <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
+                                    <span style="color: #ffffff; font-size: 14px; font-weight: 600;">+${Math.max(0, 50 - featuredTalent.length)}</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding: 30px 20px;">
-              <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;">
-                ShoutOut - Personalized Videos from Your Favorite Personalities
-              </p>
-              <p style="margin: 0; font-size: 12px; color: #475569;">
-                <a href="{{unsubscribe_url}}" style="color: #7c3aed; text-decoration: underline;">Unsubscribe</a>
-              </p>
+            <td style="padding-top: 32px; text-align: center;">
+              <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+                <!-- Logo -->
+                <a href="https://shoutout.us" style="text-decoration: none; display: inline-block; margin-bottom: 16px;">
+                  <img src="https://shoutout.us/shoutout-logo-white.png" alt="ShoutOut" width="100" style="display: block; opacity: 0.6;">
+                </a>
+                <!-- Subscription source -->
+                <p style="color: #64748b; font-size: 12px; margin: 0 0 8px 0;">
+                  {{subscription_source}}
+                </p>
+                <!-- Links -->
+                <p style="color: #64748b; font-size: 12px; margin: 0 0 16px 0;">
+                  <a href="{{unsubscribe_url}}" style="color: #7c3aed; text-decoration: underline;">Unsubscribe</a>
+                  <span style="color: #475569;">&nbsp;•&nbsp;</span>
+                  <a href="https://shoutout.us/privacy" style="color: #64748b; text-decoration: underline;">Privacy Policy</a>
+                </p>
+                <!-- Address -->
+                <p style="color: #475569; font-size: 11px; margin: 0;">
+                  ShoutOut, LLC • 1201 N Riverfront Blvd Ste 100, Dallas, TX 75207
+                </p>
+              </div>
             </td>
           </tr>
         </table>
@@ -1422,15 +1526,14 @@ const EmailFlowManagement: React.FC = () => {
                       {/* Button */}
                       {visualContent.showButton && visualContent.buttonText && (
                         <div className="mb-6">
-                          <a
-                            href={visualContent.buttonUrl || '#'}
-                            className="inline-block px-8 py-4 rounded-xl font-bold text-white text-base"
+                          <span
+                            className="inline-block px-8 py-4 rounded-xl font-bold text-white text-base cursor-pointer"
                             style={{ 
                               background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
                             }}
                           >
                             {visualContent.buttonText}
-                          </a>
+                          </span>
                         </div>
                       )}
 
@@ -1440,13 +1543,75 @@ const EmailFlowManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="text-center space-y-2">
-                      <p className="text-gray-500 text-xs">
-                        ShoutOut - Personalized Videos from Your Favorite Personalities
+                    {/* Divider */}
+                    <div className="border-t border-white/10"></div>
+
+                    {/* ShoutOut Promo Card */}
+                    <div 
+                      className="rounded-2xl p-6 cursor-pointer hover:opacity-95 transition-opacity"
+                      style={{ 
+                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                      }}
+                    >
+                      <h3 className="text-white font-bold text-lg mb-1">
+                        Get a Personalized Video ShoutOut
+                      </h3>
+                      <p className="text-purple-200 text-sm mb-4">
+                        From top free-speech personalities
                       </p>
+                      
+                      {/* Talent Images */}
+                      <div className="flex items-center gap-2">
+                        {featuredTalent.slice(0, 4).map((talent) => (
+                          <div key={talent.id} className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+                            <img 
+                              src={talent.temp_avatar_url} 
+                              alt={talent.temp_full_name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = 'https://via.placeholder.com/48';
+                              }}
+                            />
+                          </div>
+                        ))}
+                        {featuredTalent.length === 0 && (
+                          <>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
+                            <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20"></div>
+                          </>
+                        )}
+                        <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/20 flex items-center justify-center">
+                          <span className="text-white text-xs font-semibold">+50</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center space-y-3 pt-4 border-t border-white/10">
+                      {/* Logo */}
+                      <img 
+                        src="https://shoutout.us/shoutout-logo-white.png" 
+                        alt="ShoutOut" 
+                        className="h-6 mx-auto opacity-50"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      {/* Subscription source */}
+                      <p className="text-gray-500 text-xs">
+                        You subscribed through ShoutOut.
+                      </p>
+                      {/* Links */}
                       <p className="text-xs">
                         <span className="text-purple-400 hover:underline cursor-pointer">Unsubscribe</span>
+                        <span className="text-gray-600 mx-2">•</span>
+                        <span className="text-gray-500 hover:underline cursor-pointer">Privacy Policy</span>
+                      </p>
+                      {/* Address */}
+                      <p className="text-gray-600 text-[10px]">
+                        ShoutOut, LLC • 1201 N Riverfront Blvd Ste 100, Dallas, TX 75207
                       </p>
                     </div>
                   </div>

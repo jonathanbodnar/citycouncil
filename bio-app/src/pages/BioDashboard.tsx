@@ -2898,8 +2898,18 @@ const BioDashboard: React.FC = () => {
             if (platform === 'rumble') {
               updateData.rumble_handle = handle;
               if (rumbleType) updateData.rumble_type = rumbleType;
+              // Clear rumble cache when handle changes
+              await supabase
+                .from('rumble_cache')
+                .delete()
+                .eq('talent_id', talentProfile?.id);
             } else {
               updateData.youtube_handle = handle;
+              // Clear YouTube cache when handle changes so fresh data is fetched
+              await supabase
+                .from('youtube_cache')
+                .delete()
+                .eq('talent_id', talentProfile?.id);
             }
             
             console.log('Updating talent_profiles with:', updateData);
@@ -2944,8 +2954,18 @@ const BioDashboard: React.FC = () => {
             if (platform === 'rumble') {
               updateData.rumble_handle = handle;
               if (rumbleType) updateData.rumble_type = rumbleType;
+              // Clear rumble cache when handle changes
+              await supabase
+                .from('rumble_cache')
+                .delete()
+                .eq('talent_id', talentProfile?.id);
             } else {
               updateData.youtube_handle = handle;
+              // Clear YouTube cache when handle changes so fresh data is fetched
+              await supabase
+                .from('youtube_cache')
+                .delete()
+                .eq('talent_id', talentProfile?.id);
             }
             
             await supabase
