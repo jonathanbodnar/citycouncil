@@ -184,9 +184,7 @@ export default function CreatorsPage() {
             </div>
 
             {/* Creator bio carousel */}
-            <div className="relative mb-12">
-              <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[#111827] from-20% via-[#111827]/60 via-50% to-transparent z-10 pointer-events-none rounded-r-[100px]" />
-              <div className="absolute inset-y-0 right-0 w-48 bg-gradient-to-l from-[#111827] from-20% via-[#111827]/60 via-50% to-transparent z-10 pointer-events-none rounded-l-[100px]" />
+            <div className="relative mb-8">
               
               <div className="overflow-hidden py-8">
                 <div 
