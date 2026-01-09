@@ -1,6 +1,6 @@
 // send-talent-update edge function
-// Sends email updates from talent to their followers via Mailgun
-// Uses dynamic sender addresses like firstname@shout.bio
+// Sends email updates from talent to their followers via SendGrid
+// Uses dynamic sender addresses like firstname@shouts.bio
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
@@ -70,12 +70,11 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get Mailgun credentials
-    const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
-    const MAILGUN_DOMAIN = 'shout.bio'; // Use shout.bio for talent emails
+    // Get SendGrid API key
+    const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY');
 
-    if (!MAILGUN_API_KEY) {
-      return new Response(JSON.stringify({ success: false, error: 'Email service not configured' }), {
+    if (!SENDGRID_API_KEY) {
+      return new Response(JSON.stringify({ success: false, error: 'Email service not configured (SENDGRID_API_KEY missing)' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
@@ -147,9 +146,9 @@ Deno.serve(async (req) => {
       .replace(/[^a-z0-9]/g, '.')
       .replace(/\.+/g, '.')
       .replace(/^\.|\.$/, '');
-    const fromEmail = `${senderName} <${senderHandle}@shout.bio>`;
+    const fromEmail = `${senderHandle}@shouts.bio`;
 
-    // Build the email HTML
+    // Build the email HTML template (with placeholder for unsubscribe URL)
     const emailHtml = buildEmailHtml(draft, talent, '{{unsubscribe_url}}');
 
     // Send emails in batches
@@ -168,62 +167,83 @@ Deno.serve(async (req) => {
         const personalizedHtml = emailHtml.replace('{{unsubscribe_url}}', unsubscribeUrl);
 
         try {
-          const formData = new FormData();
-          formData.append('from', fromEmail);
-          formData.append('to', user.email);
-          formData.append('subject', draft.subject || 'Update from ' + senderName);
-          formData.append('html', personalizedHtml);
-          // Add List-Unsubscribe header for email clients
-          formData.append('h:List-Unsubscribe', `<${unsubscribeUrl}>`);
-          formData.append('h:List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+          // SendGrid API v3 request
+          const sendGridPayload = {
+            personalizations: [
+              {
+                to: [{ email: user.email, name: user.full_name || undefined }],
+              }
+            ],
+            from: {
+              email: fromEmail,
+              name: senderName,
+            },
+            reply_to: {
+              email: fromEmail,
+              name: senderName,
+            },
+            subject: draft.subject || `Update from ${senderName}`,
+            content: [
+              {
+                type: 'text/html',
+                value: personalizedHtml,
+              }
+            ],
+            headers: {
+              'List-Unsubscribe': `<${unsubscribeUrl}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
+            tracking_settings: {
+              click_tracking: { enable: true },
+              open_tracking: { enable: true },
+            },
+          };
 
-          const mailgunUrl = `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`;
-          const auth = btoa(`api:${MAILGUN_API_KEY}`);
-
-          const response = await fetch(mailgunUrl, {
+          const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
-            headers: { 'Authorization': `Basic ${auth}` },
-            body: formData,
+            headers: {
+              'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(sendGridPayload),
           });
 
-          if (response.ok) {
-            const result = await response.json().catch(() => ({}));
+          // SendGrid returns 202 for successful queued emails
+          if (response.ok || response.status === 202) {
+            const messageId = response.headers.get('X-Message-Id') || '';
             sentCount++;
             emailSends.push({
-              draft_id: draft.id,
+              email_draft_id: draft.id,
               talent_id: talent.id,
-              recipient_user_id: user.id,
+              user_id: user.id,
               recipient_email: user.email,
-              recipient_name: user.full_name,
-              sendgrid_message_id: result.id, // Mailgun message ID
+              mailgun_message_id: messageId, // Using same field name for compatibility
               status: 'sent',
-              sent_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
             });
           } else {
             const errorText = await response.text().catch(() => 'Unknown error');
-            console.error(`Failed to send to ${user.email}:`, errorText);
+            console.error(`Failed to send to ${user.email}:`, response.status, errorText);
             failedCount++;
             emailSends.push({
-              draft_id: draft.id,
+              email_draft_id: draft.id,
               talent_id: talent.id,
-              recipient_user_id: user.id,
+              user_id: user.id,
               recipient_email: user.email,
-              recipient_name: user.full_name,
               status: 'failed',
-              bounce_reason: errorText,
+              created_at: new Date().toISOString(),
             });
           }
         } catch (error: any) {
           console.error(`Error sending to ${user.email}:`, error);
           failedCount++;
           emailSends.push({
-            draft_id: draft.id,
+            email_draft_id: draft.id,
             talent_id: talent.id,
-            recipient_user_id: user.id,
+            user_id: user.id,
             recipient_email: user.email,
-            recipient_name: user.full_name,
             status: 'failed',
-            bounce_reason: error.message,
+            created_at: new Date().toISOString(),
           });
         }
       });
@@ -243,7 +263,6 @@ Deno.serve(async (req) => {
         status: 'sent',
         sent_at: new Date().toISOString(),
         recipients_count: followers.length,
-        delivered_count: sentCount,
       })
       .eq('id', draft_id);
 
@@ -348,4 +367,3 @@ function buildEmailHtml(draft: EmailDraft, talent: TalentProfile, unsubscribeUrl
 </html>
   `.trim();
 }
-
