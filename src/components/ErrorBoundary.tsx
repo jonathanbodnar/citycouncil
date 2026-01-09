@@ -38,10 +38,10 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught an error:', error, errorInfo);
-    }
+    // Always log error to console for debugging
+    console.error('🚨 Error Boundary caught an error:', error);
+    console.error('🚨 Error stack:', error.stack);
+    console.error('🚨 Component stack:', errorInfo.componentStack);
 
     // Handle ChunkLoadError by forcing a hard refresh
     // This happens when a new deployment invalidates cached JS chunks
