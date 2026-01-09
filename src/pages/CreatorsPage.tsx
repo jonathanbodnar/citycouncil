@@ -240,19 +240,19 @@ export default function CreatorsPage() {
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
                       ~2.6%
                     </div>
-                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">of followers see your posts</p>
+                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">of followers see your posts on social media.</p>
                   </div>
                   <div className="glass rounded-xl p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
                       ~6%
                     </div>
-                    <p className="text-emerald-300 text-xs sm:text-sm leading-tight">of views become reachable fans</p>
+                    <p className="text-emerald-300 text-xs sm:text-sm leading-tight">of views become reachable fans with Shout.bio</p>
                   </div>
                   <div className="glass rounded-xl p-4 border border-purple-500/30 text-center bg-gradient-to-br from-purple-500/5 to-transparent">
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
                       100%
                     </div>
-                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">owned audience you control</p>
+                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">reach all your fans through Shout.bio</p>
                   </div>
                 </div>
                 
