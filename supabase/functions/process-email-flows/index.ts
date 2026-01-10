@@ -163,6 +163,7 @@ serve(async (req) => {
 
         // Replace variables
         const unsubscribeUrl = `https://shoutout.us/unsubscribe?email=${encodeURIComponent(userStatus.email)}`;
+        const reviewLink = `https://shoutout.us/review?email=${encodeURIComponent(userStatus.email)}`;
         
         htmlContent = htmlContent
           .replace(/\{\{first_name\}\}/g, firstName)
@@ -170,6 +171,7 @@ serve(async (req) => {
           .replace(/\{\{coupon_code\}\}/g, couponCode)
           .replace(/\{\{talent_name\}\}/g, talentName)
           .replace(/\{\{unsubscribe_url\}\}/g, unsubscribeUrl)
+          .replace(/\{\{review_link\}\}/g, reviewLink)
           .replace(/\{\{email\}\}/g, userStatus.email);
 
         subject = subject

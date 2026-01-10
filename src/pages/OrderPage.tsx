@@ -561,27 +561,87 @@ const OrderPage: React.FC = () => {
         }
       }
 
-      // Remove user from SMS follow-up flows since they converted
-      // Mark the 72-hour follow-up as completed so they don't get reminder texts
-      if (user.phone) {
-        try {
-          // Mark coupon as used and complete the 72-hour follow-up flow
+      // Transition user from pre-purchase flows to post-purchase flows
+      // This removes them from giveaway/follow-up flows and adds them to customer flows
+      try {
+        const now = new Date().toISOString();
+        
+        // SMS Flow Transition
+        if (user.phone) {
+          // Complete all pre-purchase SMS flows (giveaway welcome, 72-hour follow-up, ongoing)
+          const prePurchaseSmsFlows = [
+            '11111111-1111-1111-1111-111111111111', // giveaway_welcome
+            '22222222-2222-2222-2222-222222222222', // giveaway_followup (72-hour)
+            '33333333-3333-3333-3333-333333333333', // giveaway_ongoing (bi-weekly)
+          ];
+          
           await supabase
             .from('user_sms_flow_status')
             .update({
               coupon_used: true,
-              flow_completed_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              flow_completed_at: now,
+              updated_at: now
             })
             .eq('phone', user.phone)
-            .eq('flow_id', '22222222-2222-2222-2222-222222222222') // 72-hour follow-up flow
+            .in('flow_id', prePurchaseSmsFlows)
             .is('flow_completed_at', null);
           
-          logger.log('✅ User removed from 72-hour SMS follow-up flow');
-        } catch (smsFlowError) {
-          logger.error('Error updating SMS flow status:', smsFlowError);
-          // Don't fail the order if SMS flow update fails
+          // Enroll in post-purchase SMS flow
+          const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+          await supabase
+            .from('user_sms_flow_status')
+            .upsert({
+              phone: user.phone,
+              user_id: user.id,
+              flow_id: '44444444-4444-4444-4444-444444444444', // post_purchase
+              current_message_order: 0,
+              next_message_scheduled_at: threeDaysFromNow,
+              flow_started_at: now,
+              is_paused: false,
+            }, { onConflict: 'phone,flow_id' });
+          
+          logger.log('✅ User transitioned to post-purchase SMS flow');
         }
+        
+        // Email Flow Transition
+        if (user.email) {
+          // Complete all pre-purchase email flows
+          const prePurchaseEmailFlows = [
+            'aaaa1111-1111-1111-1111-111111111111', // bio_page_welcome
+            'aaaa2222-2222-2222-2222-222222222222', // giveaway_welcome
+            'aaaa3333-3333-3333-3333-333333333333', // direct_signup_welcome
+          ];
+          
+          await supabase
+            .from('user_email_flow_status')
+            .update({
+              coupon_used: true,
+              flow_completed_at: now,
+              updated_at: now
+            })
+            .eq('email', user.email.toLowerCase())
+            .in('flow_id', prePurchaseEmailFlows)
+            .is('flow_completed_at', null);
+          
+          // Enroll in post-purchase email flow
+          const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+          await supabase
+            .from('user_email_flow_status')
+            .upsert({
+              email: user.email.toLowerCase(),
+              user_id: user.id,
+              flow_id: 'bbbb4444-4444-4444-4444-444444444444', // post_purchase
+              current_message_order: 0,
+              next_email_scheduled_at: threeDaysFromNow,
+              flow_started_at: now,
+              is_paused: false,
+            }, { onConflict: 'email,flow_id' });
+          
+          logger.log('✅ User transitioned to post-purchase email flow');
+        }
+      } catch (flowError) {
+        logger.error('Error transitioning user flows:', flowError);
+        // Don't fail the order if flow transition fails
       }
 
       // Send notifications and emails asynchronously (don't block redirect)

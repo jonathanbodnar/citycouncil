@@ -105,6 +105,10 @@ serve(async (req) => {
         if (userStatus.metadata?.talent_name) {
           messageText = messageText.replace("{talent_name}", userStatus.metadata.talent_name);
         }
+        
+        // Replace review link placeholder
+        const reviewLink = `https://shoutout.us/review?phone=${encodeURIComponent(userStatus.phone)}`;
+        messageText = messageText.replace(/\{\{review_link\}\}/g, reviewLink);
 
         // Add coupon code if needed
         if (nextMessage.include_coupon && userStatus.coupon_code) {
