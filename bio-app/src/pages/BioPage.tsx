@@ -2294,9 +2294,9 @@ const BioPage: React.FC = () => {
                       />
                       {/* Play button overlay if they have a promo video */}
                       {talentProfile?.promo_video_url && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white/70 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z"/>
                             </svg>
                           </div>
