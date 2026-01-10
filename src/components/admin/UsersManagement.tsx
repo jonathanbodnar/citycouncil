@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, UsersIcon, UserPlusIcon, StarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 const USERS_PER_PAGE = 25;
+
+interface UserStats {
+  totalUsers: number;
+  totalTalent: number;
+  totalAdmins: number;
+  newUsersToday: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  usersWithPhone: number;
+  giveawayUsers: number;
+}
 
 interface User {
   id: string;
@@ -41,15 +52,69 @@ const UsersManagement: React.FC = () => {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState<UserStats>({
+    totalUsers: 0,
+    totalTalent: 0,
+    totalAdmins: 0,
+    newUsersToday: 0,
+    newUsersThisWeek: 0,
+    newUsersThisMonth: 0,
+    usersWithPhone: 0,
+    giveawayUsers: 0,
+  });
 
   useEffect(() => {
     fetchUsers();
+    fetchStats();
   }, [currentPage]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterType]);
+
+  const fetchStats = async () => {
+    try {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      // Fetch all stats in parallel
+      const [
+        { count: totalUsers },
+        { count: totalTalent },
+        { count: totalAdmins },
+        { count: newUsersToday },
+        { count: newUsersThisWeek },
+        { count: newUsersThisMonth },
+        { count: usersWithPhone },
+        { count: giveawayUsers },
+      ] = await Promise.all([
+        supabase.from('users').select('*', { count: 'exact', head: true }),
+        supabase.from('users').select('*', { count: 'exact', head: true }).eq('user_type', 'talent'),
+        supabase.from('users').select('*', { count: 'exact', head: true }).eq('user_type', 'admin'),
+        supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', todayStart),
+        supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', weekStart),
+        supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
+        supabase.from('users').select('*', { count: 'exact', head: true }).not('phone', 'is', null),
+        supabase.from('users').select('*', { count: 'exact', head: true }).eq('did_holiday_popup', true),
+      ]);
+
+      setStats({
+        totalUsers: totalUsers || 0,
+        totalTalent: totalTalent || 0,
+        totalAdmins: totalAdmins || 0,
+        newUsersToday: newUsersToday || 0,
+        newUsersThisWeek: newUsersThisWeek || 0,
+        newUsersThisMonth: newUsersThisMonth || 0,
+        usersWithPhone: usersWithPhone || 0,
+        giveawayUsers: giveawayUsers || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -328,6 +393,81 @@ const UsersManagement: React.FC = () => {
           <ArrowDownTrayIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           Export to CSV
         </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        {/* Total Users */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <UsersIcon className="h-4 w-4 text-blue-600" />
+            <span className="text-xs text-gray-500">Total</span>
+          </div>
+          <p className="text-xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
+        </div>
+
+        {/* Talent */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <StarIcon className="h-4 w-4 text-purple-600" />
+            <span className="text-xs text-gray-500">Talent</span>
+          </div>
+          <p className="text-xl font-bold text-purple-600">{stats.totalTalent.toLocaleString()}</p>
+        </div>
+
+        {/* Admins */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldCheckIcon className="h-4 w-4 text-red-600" />
+            <span className="text-xs text-gray-500">Admins</span>
+          </div>
+          <p className="text-xl font-bold text-red-600">{stats.totalAdmins.toLocaleString()}</p>
+        </div>
+
+        {/* New Today */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <UserPlusIcon className="h-4 w-4 text-green-600" />
+            <span className="text-xs text-gray-500">Today</span>
+          </div>
+          <p className="text-xl font-bold text-green-600">+{stats.newUsersToday.toLocaleString()}</p>
+        </div>
+
+        {/* New This Week */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <UserPlusIcon className="h-4 w-4 text-emerald-600" />
+            <span className="text-xs text-gray-500">This Week</span>
+          </div>
+          <p className="text-xl font-bold text-emerald-600">+{stats.newUsersThisWeek.toLocaleString()}</p>
+        </div>
+
+        {/* New This Month */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <UserPlusIcon className="h-4 w-4 text-teal-600" />
+            <span className="text-xs text-gray-500">This Month</span>
+          </div>
+          <p className="text-xl font-bold text-teal-600">+{stats.newUsersThisMonth.toLocaleString()}</p>
+        </div>
+
+        {/* With Phone */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <PhoneIcon className="h-4 w-4 text-indigo-600" />
+            <span className="text-xs text-gray-500">With Phone</span>
+          </div>
+          <p className="text-xl font-bold text-indigo-600">{stats.usersWithPhone.toLocaleString()}</p>
+        </div>
+
+        {/* Giveaway Users */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm">🎁</span>
+            <span className="text-xs text-gray-500">Giveaway</span>
+          </div>
+          <p className="text-xl font-bold text-amber-600">{stats.giveawayUsers.toLocaleString()}</p>
+        </div>
       </div>
 
       {/* Filters */}

@@ -2282,39 +2282,28 @@ const BioPage: React.FC = () => {
               className="block mt-4"
             >
               <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-stretch">
-                  {/* Promo Video Thumbnail */}
-                  <div className="w-20 h-20 flex-shrink-0 relative bg-black/20">
-                    {talentProfile?.promo_video_url ? (
-                      <video 
-                        src={talentProfile.promo_video_url}
-                        className="w-20 h-20 object-cover"
-                        muted
-                        playsInline
-                        preload="metadata"
-                      />
-                    ) : profileImage ? (
+                <div className="flex">
+                  {/* Profile Image - flush to left, top, bottom */}
+                  {profileImage && (
+                    <div className="w-24 flex-shrink-0 relative">
                       <img 
                         src={profileImage} 
-                        alt="" 
-                        className="w-20 h-20 object-cover"
+                        alt={displayName}
+                        className="absolute inset-0 w-full h-full object-cover"
                         loading="eager"
                       />
-                    ) : (
-                      <div className="w-20 h-20 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-500">
-                        <GiftIcon className="h-8 w-8 text-white" />
-                      </div>
-                    )}
-                    {talentProfile?.promo_video_url && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
-                          </svg>
+                      {/* Play button overlay if they have a promo video */}
+                      {talentProfile?.promo_video_url && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="flex-1 p-4">
                     <div className="flex items-center gap-2 mb-1">
