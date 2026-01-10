@@ -30,6 +30,20 @@ const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: nu
   'TAKE25': { type: 'fixed', value: 25, label: '$25 OFF' },
 };
 
+// Helper to get display name (first name, or last name if first name starts with "The")
+const getDisplayFirstName = (fullName: string): string => {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(' ');
+  if (parts.length === 0) return fullName;
+  
+  const firstName = parts[0];
+  // If first name starts with "The", use last name instead
+  if (firstName.toLowerCase() === 'the' && parts.length > 1) {
+    return parts[parts.length - 1];
+  }
+  return firstName;
+};
+
 interface TalentWithDetails extends TalentProfile {
   users: {
     id: string;
@@ -397,8 +411,9 @@ const TalentProfilePage: React.FC = () => {
   useEffect(() => {
     if (talent) {
       const talentName = talent.temp_full_name || talent.users.full_name;
+      const talentFirstName = getDisplayFirstName(talentName);
       const profileUrl = window.location.href;
-      const description = talent.bio || `Get a personalized video ShoutOut from ${talentName}. Order custom video messages from your favorite personalities!`;
+      const description = talent.bio || `Get a personalized video ShoutOut from ${talentFirstName}. Order custom video messages from your favorite personalities!`;
       const imageUrl = talent.temp_avatar_url || talent.users.avatar_url || 'https://shoutout.us/logo512.png';
 
       // Update basic meta tags
@@ -1058,7 +1073,7 @@ const TalentProfilePage: React.FC = () => {
       <div className="glass-strong rounded-3xl shadow-modern-lg border border-white/30 p-4 md:p-5 lg:w-1/2">
         {/* Section Header */}
         <h2 className="text-base font-semibold text-white text-center mb-4">
-          Get a personalized video ShoutOut from {talent.temp_full_name || talent.users.full_name}
+          Get a personalized video ShoutOut from {getDisplayFirstName(talent.temp_full_name || talent.users.full_name)}
         </h2>
         
         {/* Stats - Simple inline text */}
