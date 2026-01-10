@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+
+const USERS_PER_PAGE = 25;
 
 interface User {
   id: string;
@@ -37,24 +39,45 @@ const UsersManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'talent' | 'user' | 'admin'>('all');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       
-      // Fetch users
+      // Calculate pagination range
+      const from = (currentPage - 1) * USERS_PER_PAGE;
+      const to = from + USERS_PER_PAGE - 1;
+      
+      // First get total count
+      const { count, error: countError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) throw countError;
+      setTotalCount(count || 0);
+      
+      // Fetch users with pagination
       const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (usersError) throw usersError;
 
-      // Fetch talent followers to get subscription info
+      // Fetch talent followers to get subscription info for these users only
+      const userIds = (usersData || []).map(u => u.id);
       const { data: followersData } = await supabase
         .from('talent_followers')
         .select(`
@@ -65,7 +88,8 @@ const UsersManagement: React.FC = () => {
               full_name
             )
           )
-        `);
+        `)
+        .in('user_id', userIds);
 
       // Create a map of user_id -> talent names they follow
       const userSubscriptions: Record<string, string[]> = {};
@@ -117,6 +141,58 @@ const UsersManagement: React.FC = () => {
 
     return true;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(totalCount / USERS_PER_PAGE);
+  const startIndex = (currentPage - 1) * USERS_PER_PAGE + 1;
+  const endIndex = Math.min(currentPage * USERS_PER_PAGE, totalCount);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+      
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
@@ -193,39 +269,28 @@ const UsersManagement: React.FC = () => {
     setDeletingUserId(user.id);
     
     try {
-      // First delete from public.users table
-      const { error: publicError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', user.id);
-
-      if (publicError) {
-        console.error('Error deleting from public.users:', publicError);
-        // Continue anyway - might have cascade delete or user might not exist in public table
-      }
-
-      // Then delete from auth.users using edge function or direct API call
-      // We need to call the Supabase Admin API to delete auth users
+      // Call the delete-user edge function
       const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/auth/v1/admin/users/${user.id}`,
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/delete-user`,
         {
-          method: 'DELETE',
+          method: 'POST',
           headers: {
-            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY || '',
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_SERVICE_KEY || ''}`,
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
           },
+          body: JSON.stringify({ user_id: user.id }),
         }
       );
 
-      if (!response.ok && response.status !== 404) {
-        // 404 is okay - user might not exist in auth
-        const errorText = await response.text();
-        console.error('Error deleting auth user:', errorText);
-        // Don't throw - we already deleted from public.users
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
       }
 
       // Remove from local state
       setUsers(users.filter(u => u.id !== user.id));
+      setTotalCount(prev => prev - 1);
       toast.success(`User "${user.full_name || user.email}" deleted successfully`);
     } catch (error: any) {
       console.error('Error deleting user:', error);
@@ -296,6 +361,13 @@ const UsersManagement: React.FC = () => {
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
+        {/* Mobile pagination info */}
+        {totalPages > 1 && (
+          <div className="text-center text-sm text-gray-600 py-2">
+            Page {currentPage} of {totalPages} ({totalCount} users)
+          </div>
+        )}
+        
         {filteredUsers.length === 0 ? (
           <div className="glass rounded-xl p-6 text-center text-gray-500">
             No users found
@@ -405,7 +477,7 @@ const UsersManagement: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                   No users found
                 </td>
               </tr>
@@ -541,6 +613,84 @@ const UsersManagement: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="glass rounded-2xl p-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Results info */}
+            <p className="text-sm text-gray-600">
+              Showing <span className="font-medium">{startIndex}</span> to <span className="font-medium">{endIndex}</span> of{' '}
+              <span className="font-medium">{totalCount}</span> users
+            </p>
+
+            {/* Page controls */}
+            <div className="flex items-center gap-1">
+              {/* Previous button */}
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
+              </button>
+
+              {/* Page numbers */}
+              <div className="hidden sm:flex items-center gap-1">
+                {getPageNumbers().map((page, idx) => (
+                  typeof page === 'number' ? (
+                    <button
+                      key={idx}
+                      onClick={() => goToPage(page)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === page
+                          ? 'bg-primary-600 text-white'
+                          : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ) : (
+                    <span key={idx} className="px-2 text-gray-400">...</span>
+                  )
+                ))}
+              </div>
+
+              {/* Mobile page indicator */}
+              <span className="sm:hidden px-3 py-1 text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              {/* Next button */}
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRightIcon className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Jump to page (desktop only) */}
+            <div className="hidden lg:flex items-center gap-2">
+              <span className="text-sm text-gray-600">Go to:</span>
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={currentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (page >= 1 && page <= totalPages) {
+                    goToPage(page);
+                  }
+                }}
+                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

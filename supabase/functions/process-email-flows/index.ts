@@ -54,6 +54,9 @@ serve(async (req) => {
 
     console.log("📧 Processing email flows...");
 
+    // First, process any pending prize assignments (for email-only giveaway entries)
+    await processPendingPrizeAssignments(supabase);
+
     // Get all users who are due for their next email
     const now = new Date().toISOString();
     const { data: dueUsers, error: dueError } = await supabase
@@ -199,7 +202,7 @@ serve(async (req) => {
               },
             ],
             tracking_settings: {
-              click_tracking: { enable: true },
+              click_tracking: { enable: false },
               open_tracking: { enable: true },
             },
           }),
@@ -314,4 +317,164 @@ serve(async (req) => {
     );
   }
 });
+
+// Prize types and their info
+const PRIZES: Record<string, { code: string; textMessage: string }> = {
+  FREE_SHOUTOUT: { code: 'WINNER100', textMessage: 'a FREE personalized ShoutOut (up to $100 value) from top conservatives' },
+  '15_OFF': { code: 'SAVE15', textMessage: '15% off a personalized ShoutOut from top conservatives' },
+  '10_OFF': { code: 'SAVE10', textMessage: '10% off a personalized ShoutOut from top conservatives' },
+  '25_DOLLARS': { code: 'TAKE25', textMessage: '$25 off a personalized ShoutOut from top conservatives' }
+};
+
+type Prize = 'FREE_SHOUTOUT' | '15_OFF' | '10_OFF' | '25_DOLLARS';
+
+// Determine random prize
+async function determinePrize(supabase: any): Promise<Prize> {
+  const now = new Date();
+  const cstOffset = -6 * 60;
+  const cstTime = new Date(now.getTime() + (cstOffset - now.getTimezoneOffset()) * 60000);
+  const todayCST = cstTime.toISOString().split('T')[0];
+  
+  const cstDayStartUTC = new Date(`${todayCST}T00:00:00-06:00`).toISOString();
+  const cstDayEndUTC = new Date(`${todayCST}T23:59:59-06:00`).toISOString();
+  
+  const { data: todayWinners } = await supabase
+    .from('beta_signups')
+    .select('id')
+    .eq('source', 'holiday_popup')
+    .eq('prize_won', 'FREE_SHOUTOUT')
+    .gte('subscribed_at', cstDayStartUTC)
+    .lte('subscribed_at', cstDayEndUTC)
+    .limit(1);
+
+  const canWinFreeShoutout = !todayWinners || todayWinners.length === 0;
+  const rand = Math.random() * 100;
+  
+  if (canWinFreeShoutout && rand < 25) {
+    return 'FREE_SHOUTOUT';
+  } else if (rand < 50) {
+    return '15_OFF';
+  } else if (rand < 75) {
+    return '10_OFF';
+  } else {
+    return '25_DOLLARS';
+  }
+}
+
+// Process pending prize assignments for email-only giveaway entries
+async function processPendingPrizeAssignments(supabase: any) {
+  const now = new Date().toISOString();
+  
+  // Get pending assignments that are due (scheduled_for has passed)
+  const { data: pendingAssignments, error } = await supabase
+    .from('pending_prize_assignments')
+    .select('*')
+    .eq('status', 'pending')
+    .lte('scheduled_for', now)
+    .limit(20);
+
+  if (error) {
+    console.log('Note: pending_prize_assignments table may not exist yet:', error.message);
+    return;
+  }
+
+  if (!pendingAssignments || pendingAssignments.length === 0) {
+    return;
+  }
+
+  console.log(`🎁 Processing ${pendingAssignments.length} pending prize assignments`);
+
+  for (const assignment of pendingAssignments) {
+    try {
+      // Check if user has added phone in the meantime
+      const { data: user } = await supabase
+        .from('users')
+        .select('id, phone')
+        .eq('email', assignment.email)
+        .single();
+
+      if (user?.phone) {
+        // User added phone - skip (they'll get prize through normal flow)
+        console.log(`⏭️ Skipping ${assignment.email} - phone was added`);
+        await supabase
+          .from('pending_prize_assignments')
+          .update({ 
+            status: 'skipped', 
+            skip_reason: 'Phone added by user',
+            processed_at: now 
+          })
+          .eq('id', assignment.id);
+        continue;
+      }
+
+      // Check if user already has a coupon in their email flow
+      const { data: existingFlow } = await supabase
+        .from('user_email_flow_status')
+        .select('coupon_code')
+        .eq('email', assignment.email)
+        .eq('flow_id', 'aaaa2222-2222-2222-2222-222222222222')
+        .single();
+
+      if (existingFlow?.coupon_code) {
+        console.log(`⏭️ Skipping ${assignment.email} - already has coupon`);
+        await supabase
+          .from('pending_prize_assignments')
+          .update({ 
+            status: 'skipped', 
+            skip_reason: 'Already has coupon',
+            processed_at: now 
+          })
+          .eq('id', assignment.id);
+        continue;
+      }
+
+      // Assign a random prize
+      const prize = await determinePrize(supabase);
+      const prizeInfo = PRIZES[prize];
+      console.log(`🎉 Assigning prize to ${assignment.email}: ${prize} (${prizeInfo.code})`);
+
+      // Update the email flow status with the coupon code
+      const { error: updateError } = await supabase
+        .from('user_email_flow_status')
+        .update({ 
+          coupon_code: prizeInfo.code,
+          metadata: { prize_type: prize, assigned_at: now }
+        })
+        .eq('email', assignment.email)
+        .eq('flow_id', 'aaaa2222-2222-2222-2222-222222222222');
+
+      if (updateError) {
+        // Try to insert if update failed
+        await supabase
+          .from('user_email_flow_status')
+          .insert({
+            email: assignment.email,
+            user_id: assignment.user_id || user?.id,
+            flow_id: 'aaaa2222-2222-2222-2222-222222222222',
+            current_message_order: 0,
+            next_email_scheduled_at: new Date(Date.now() + 60000).toISOString(),
+            coupon_code: prizeInfo.code,
+            source_url: assignment.utm_source || null,
+            metadata: { prize_type: prize, assigned_at: now }
+          });
+      }
+
+      // Mark assignment as processed
+      await supabase
+        .from('pending_prize_assignments')
+        .update({ 
+          status: 'processed', 
+          prize_assigned: prize,
+          coupon_code: prizeInfo.code,
+          processed_at: now 
+        })
+        .eq('id', assignment.id);
+
+      console.log(`✅ Prize assigned to ${assignment.email}: ${prizeInfo.code}`);
+
+    } catch (err: any) {
+      console.error(`Error processing assignment for ${assignment.email}:`, err);
+    }
+  }
+}
 

@@ -164,6 +164,28 @@ serve(async (req) => {
     // Enroll user in appropriate email flow based on source
     await enrollInEmailFlow(supabase, normalizedEmail, newUser.id, source, talent_slug, utm_source);
 
+    // For email-only giveaway entries, schedule delayed prize assignment (60 seconds)
+    // This gives them time to add their phone, but if they don't, they still get a prize via email
+    if ((source === 'holiday_popup' || source === 'giveaway') && normalizedEmail && !formattedPhone) {
+      console.log('Scheduling delayed prize assignment for email-only giveaway entry');
+      
+      // Use pg_net to schedule a delayed call (60 seconds)
+      // First, store a pending assignment record
+      const { error: pendingError } = await supabase
+        .from('pending_prize_assignments')
+        .insert({
+          email: normalizedEmail,
+          user_id: newUser.id,
+          utm_source: utm_source || null,
+          scheduled_for: new Date(Date.now() + 60000).toISOString(), // 60 seconds from now
+          status: 'pending'
+        });
+      
+      if (pendingError) {
+        console.log('Pending prize assignment note:', pendingError.message);
+      }
+    }
+
     // Also save to beta_signups for giveaway tracking and analytics
     // Note: beta_signups only has phone_number, not email column
     if (formattedPhone) {

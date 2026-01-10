@@ -2284,11 +2284,11 @@ const BioPage: React.FC = () => {
               <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex items-stretch">
                   {/* Promo Video Thumbnail */}
-                  <div className="w-20 flex-shrink-0 relative bg-black/20">
+                  <div className="w-20 h-20 flex-shrink-0 relative bg-black/20">
                     {talentProfile?.promo_video_url ? (
                       <video 
                         src={talentProfile.promo_video_url}
-                        className="w-full h-full object-cover"
+                        className="w-20 h-20 object-cover"
                         muted
                         playsInline
                         preload="metadata"
@@ -2297,10 +2297,11 @@ const BioPage: React.FC = () => {
                       <img 
                         src={profileImage} 
                         alt="" 
-                        className="w-full h-full object-cover"
+                        className="w-20 h-20 object-cover"
+                        loading="eager"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-500">
+                      <div className="w-20 h-20 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-500">
                         <GiftIcon className="h-8 w-8 text-white" />
                       </div>
                     )}

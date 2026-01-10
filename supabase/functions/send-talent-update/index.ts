@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
               'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
             },
             tracking_settings: {
-              click_tracking: { enable: true },
+              click_tracking: { enable: false },
               open_tracking: { enable: true },
             },
           };
