@@ -593,7 +593,7 @@ const OrderPage: React.FC = () => {
             .upsert({
               phone: user.phone,
               user_id: user.id,
-              flow_id: '44444444-4444-4444-4444-444444444444', // post_purchase
+              flow_id: '55555555-5555-5555-5555-555555555555', // post_purchase
               current_message_order: 0,
               next_message_scheduled_at: threeDaysFromNow,
               flow_started_at: now,
@@ -624,15 +624,15 @@ const OrderPage: React.FC = () => {
             .is('flow_completed_at', null);
           
           // Enroll in post-purchase email flow
-          const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+          const threeDaysFromNowEmail = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
           await supabase
             .from('user_email_flow_status')
             .upsert({
               email: user.email.toLowerCase(),
               user_id: user.id,
-              flow_id: 'bbbb4444-4444-4444-4444-444444444444', // post_purchase
+              flow_id: 'bbbb5555-5555-5555-5555-555555555555', // post_purchase
               current_message_order: 0,
-              next_email_scheduled_at: threeDaysFromNow,
+              next_email_scheduled_at: threeDaysFromNowEmail,
               flow_started_at: now,
               is_paused: false,
             }, { onConflict: 'email,flow_id' });

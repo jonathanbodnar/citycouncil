@@ -1,84 +1,83 @@
 -- Create Post-Purchase SMS Flow
-INSERT INTO sms_flows (id, name, display_name, description, trigger_type, is_active, created_at)
+-- Note: Using a new UUID since 44444444-... is already used for new_talent_announcement
+INSERT INTO sms_flows (id, name, description, trigger_type, is_active, created_at)
 VALUES (
-  '44444444-4444-4444-4444-444444444444',
+  '55555555-5555-5555-5555-555555555555',
   'post_purchase',
-  'Post-Purchase Follow-up',
   'SMS flow for customers who have placed an order',
   'order_complete',
   true,
   NOW()
-) ON CONFLICT (id) DO UPDATE SET
-  display_name = EXCLUDED.display_name,
+) ON CONFLICT (name) DO UPDATE SET
   description = EXCLUDED.description,
   is_active = true;
 
 -- Post-Purchase SMS Messages (spaced out over time)
 -- Message 1: 3 days after order - Thank you / review request
-INSERT INTO sms_flow_messages (id, flow_id, sequence_order, message_text, delay_hours, is_active)
+INSERT INTO sms_flow_messages (flow_id, sequence_order, message_text, delay_hours, delay_days, is_active)
 VALUES (
-  'pp-sms-001',
-  '44444444-4444-4444-4444-444444444444',
+  '55555555-5555-5555-5555-555555555555',
   1,
   'Thanks for your ShoutOut order! 🎉 We hope you loved it. Got a minute to leave a quick review? It helps others discover amazing talent! {{review_link}}',
-  72, -- 3 days
+  0,
+  3, -- 3 days
   true
-) ON CONFLICT (id) DO UPDATE SET message_text = EXCLUDED.message_text, delay_hours = EXCLUDED.delay_hours;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET message_text = EXCLUDED.message_text, delay_days = EXCLUDED.delay_days;
 
 -- Message 2: 14 days after - Gift suggestion
-INSERT INTO sms_flow_messages (id, flow_id, sequence_order, message_text, delay_hours, is_active)
+INSERT INTO sms_flow_messages (flow_id, sequence_order, message_text, delay_hours, delay_days, is_active)
 VALUES (
-  'pp-sms-002',
-  '44444444-4444-4444-4444-444444444444',
+  '55555555-5555-5555-5555-555555555555',
   2,
   'Know someone who would love a personalized ShoutOut? 🎁 It makes the perfect gift for any occasion! Browse our talent: https://shoutout.us?utm=postpurchase',
-  336, -- 14 days
+  0,
+  14, -- 14 days
   true
-) ON CONFLICT (id) DO UPDATE SET message_text = EXCLUDED.message_text, delay_hours = EXCLUDED.delay_hours;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET message_text = EXCLUDED.message_text, delay_days = EXCLUDED.delay_days;
 
 -- Message 3: 30 days - New talent announcement
-INSERT INTO sms_flow_messages (id, flow_id, sequence_order, message_text, delay_hours, is_active)
+INSERT INTO sms_flow_messages (flow_id, sequence_order, message_text, delay_hours, delay_days, is_active)
 VALUES (
-  'pp-sms-003',
-  '44444444-4444-4444-4444-444444444444',
+  '55555555-5555-5555-5555-555555555555',
   3,
   'We''ve added new talent to ShoutOut! 🌟 Check out who''s new and get your next personalized video: https://shoutout.us?utm=postpurchase',
-  720, -- 30 days
+  0,
+  30, -- 30 days
   true
-) ON CONFLICT (id) DO UPDATE SET message_text = EXCLUDED.message_text, delay_hours = EXCLUDED.delay_hours;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET message_text = EXCLUDED.message_text, delay_days = EXCLUDED.delay_days;
 
 -- Message 4: 60 days - Come back offer
-INSERT INTO sms_flow_messages (id, flow_id, sequence_order, message_text, delay_hours, is_active)
+INSERT INTO sms_flow_messages (flow_id, sequence_order, message_text, delay_hours, delay_days, is_active)
 VALUES (
-  'pp-sms-004',
-  '44444444-4444-4444-4444-444444444444',
+  '55555555-5555-5555-5555-555555555555',
   4,
   'Miss us? 😊 Here''s 10% off your next ShoutOut! Use code COMEBACK10 at checkout: https://shoutout.us?utm=postpurchase&coupon=COMEBACK10',
-  1440, -- 60 days
+  0,
+  60, -- 60 days
   true
-) ON CONFLICT (id) DO UPDATE SET message_text = EXCLUDED.message_text, delay_hours = EXCLUDED.delay_hours;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET message_text = EXCLUDED.message_text, delay_days = EXCLUDED.delay_days;
 
 -- Create Post-Purchase Email Flow
+-- Use bbbb5555 since aaaa4444 already exists for order_followup
 INSERT INTO email_flows (id, name, display_name, description, trigger_type, is_active, created_at)
 VALUES (
-  'bbbb4444-4444-4444-4444-444444444444',
+  'bbbb5555-5555-5555-5555-555555555555',
   'post_purchase',
-  'Post-Purchase Email Flow',
+  '🛒 Post-Purchase Follow-up',
   'Email flow for customers who have placed an order',
   'order_complete',
   true,
   NOW()
-) ON CONFLICT (id) DO UPDATE SET
+) ON CONFLICT (name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   description = EXCLUDED.description,
   is_active = true;
 
 -- Post-Purchase Email Messages
 -- Email 1: 3 days after - Review request
-INSERT INTO email_flow_messages (id, flow_id, sequence_order, subject, html_content, delay_days, include_coupon, is_active)
+INSERT INTO email_flow_messages (flow_id, sequence_order, subject, html_content, delay_days, include_coupon, is_active)
 VALUES (
-  'pp-email-001',
-  'bbbb4444-4444-4444-4444-444444444444',
+  'bbbb5555-5555-5555-5555-555555555555',
   1,
   'How was your ShoutOut experience? ⭐',
   '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -94,13 +93,12 @@ VALUES (
   3,
   false,
   true
-) ON CONFLICT (id) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days;
 
 -- Email 2: 14 days - Gift suggestion
-INSERT INTO email_flow_messages (id, flow_id, sequence_order, subject, html_content, delay_days, include_coupon, is_active)
+INSERT INTO email_flow_messages (flow_id, sequence_order, subject, html_content, delay_days, include_coupon, is_active)
 VALUES (
-  'pp-email-002',
-  'bbbb4444-4444-4444-4444-444444444444',
+  'bbbb5555-5555-5555-5555-555555555555',
   2,
   'The perfect gift is just a click away 🎁',
   '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -122,13 +120,12 @@ VALUES (
   14,
   false,
   true
-) ON CONFLICT (id) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days;
 
 -- Email 3: 30 days - New talent
-INSERT INTO email_flow_messages (id, flow_id, sequence_order, subject, html_content, delay_days, include_coupon, is_active)
+INSERT INTO email_flow_messages (flow_id, sequence_order, subject, html_content, delay_days, include_coupon, is_active)
 VALUES (
-  'pp-email-003',
-  'bbbb4444-4444-4444-4444-444444444444',
+  'bbbb5555-5555-5555-5555-555555555555',
   3,
   'New faces on ShoutOut! 🌟',
   '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -143,13 +140,12 @@ VALUES (
   30,
   false,
   true
-) ON CONFLICT (id) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days;
 
 -- Email 4: 60 days - Come back with discount
-INSERT INTO email_flow_messages (id, flow_id, sequence_order, subject, html_content, delay_days, include_coupon, coupon_code, is_active)
+INSERT INTO email_flow_messages (flow_id, sequence_order, subject, html_content, delay_days, include_coupon, coupon_code, is_active)
 VALUES (
-  'pp-email-004',
-  'bbbb4444-4444-4444-4444-444444444444',
+  'bbbb5555-5555-5555-5555-555555555555',
   4,
   'We miss you! Here''s 10% off 💜',
   '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -170,7 +166,7 @@ VALUES (
   true,
   'COMEBACK10',
   true
-) ON CONFLICT (id) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days, coupon_code = EXCLUDED.coupon_code;
+) ON CONFLICT (flow_id, sequence_order) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, delay_days = EXCLUDED.delay_days, coupon_code = EXCLUDED.coupon_code;
 
 -- Create the COMEBACK10 coupon if it doesn't exist
 INSERT INTO coupons (code, discount_type, discount_value, description, is_active, max_uses)
