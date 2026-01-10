@@ -230,8 +230,8 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
                 background: backgroundColor,
                 padding: '30px',
                 paddingTop: '30px',
-                marginTop: '-190px', // Hide "Payment Info" header and payment type buttons (ACH, GPay)
-                minHeight: '450px', // Adjusted for increased negative margin
+                marginTop: '-230px', // Hide "Payment Info" header and all payment type buttons
+                minHeight: '480px', // Adjusted for increased negative margin
               }}
             />
           </div>
