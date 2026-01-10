@@ -226,14 +226,25 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
             <div 
               id="payment"
               ref={iframeContainerRef}
+              className="fortis-payment-container"
               style={{
                 background: backgroundColor,
                 padding: '30px',
                 paddingTop: '30px',
-                marginTop: '-230px', // Hide "Payment Info" header and all payment type buttons
-                minHeight: '480px', // Adjusted for increased negative margin
               }}
             />
+            <style>{`
+              .fortis-payment-container {
+                margin-top: -135px;
+                min-height: 400px;
+              }
+              @media (max-width: 768px) {
+                .fortis-payment-container {
+                  margin-top: -230px;
+                  min-height: 480px;
+                }
+              }
+            `}</style>
           </div>
           
           {isLoading && (
