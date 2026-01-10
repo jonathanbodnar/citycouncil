@@ -561,6 +561,29 @@ const OrderPage: React.FC = () => {
         }
       }
 
+      // Remove user from SMS follow-up flows since they converted
+      // Mark the 72-hour follow-up as completed so they don't get reminder texts
+      if (user.phone) {
+        try {
+          // Mark coupon as used and complete the 72-hour follow-up flow
+          await supabase
+            .from('user_sms_flow_status')
+            .update({
+              coupon_used: true,
+              flow_completed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('phone', user.phone)
+            .eq('flow_id', '22222222-2222-2222-2222-222222222222') // 72-hour follow-up flow
+            .is('flow_completed_at', null);
+          
+          logger.log('✅ User removed from 72-hour SMS follow-up flow');
+        } catch (smsFlowError) {
+          logger.error('Error updating SMS flow status:', smsFlowError);
+          // Don't fail the order if SMS flow update fails
+        }
+      }
+
       // Send notifications and emails asynchronously (don't block redirect)
       // Fire and forget - these will complete in the background
       Promise.all([
