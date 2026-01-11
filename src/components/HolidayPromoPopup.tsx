@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
+import { usePhoneVerification } from '../hooks/usePhoneVerification';
 import toast from 'react-hot-toast';
 
 const POPUP_SUBMITTED_KEY = 'holiday_promo_submitted';
@@ -121,6 +122,7 @@ const getUtmSource = (): string | null => {
 
 const HolidayPromoPopup: React.FC = () => {
   const { user } = useAuth();
+  const { verifyPhone, verifying } = usePhoneVerification();
   const [isVisible, setIsVisible] = useState(false);
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -426,9 +428,27 @@ const HolidayPromoPopup: React.FC = () => {
     
     setLoading(true);
     const formattedPhone = `+1${cleanDigits}`;
+    
+    // Verify phone number with Twilio Lookup API
+    const verificationResult = await verifyPhone(formattedPhone);
+    
+    if (!verificationResult.valid) {
+      setLoading(false);
+      toast.error('This phone number is invalid. Please check and try again.');
+      return;
+    }
+    
+    if (!verificationResult.canReceiveSMS) {
+      setLoading(false);
+      toast.error(`This ${verificationResult.lineType} number cannot receive SMS. Please enter a mobile number.`);
+      return;
+    }
+    
+    // Use the verified E.164 format from Twilio
+    const verifiedPhone = verificationResult.phone || formattedPhone;
     const normalizedEmail = email.toLowerCase().trim();
     
-    await revealPrize(normalizedEmail, formattedPhone);
+    await revealPrize(normalizedEmail, verifiedPhone);
   };
 
   // Reveal prize - called after we have both email and phone
@@ -761,14 +781,14 @@ const HolidayPromoPopup: React.FC = () => {
 
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || verifying}
                     className="w-full py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       background: 'linear-gradient(to right, #facc15, #f59e0b)',
                       color: '#1f2937'
                     }}
                   >
-                    {loading ? 'Checking...' : 'See what I won 🎁'}
+                    {verifying ? 'Verifying phone...' : loading ? 'Checking...' : 'See what I won 🎁'}
                   </button>
                   
                   <p className="text-white/40 text-xs text-center mt-3">
