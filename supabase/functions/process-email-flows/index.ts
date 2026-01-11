@@ -226,46 +226,20 @@ serve(async (req) => {
             error_message: errorText,
           });
 
-          // Check how many recent failures for this email
-          const { data: recentFailures } = await supabase
-            .from("email_send_log")
-            .select("id")
-            .eq("email", userStatus.email)
-            .eq("status", "failed")
-            .gte("sent_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-            .limit(5);
-
-          const failureCount = recentFailures?.length || 0;
-
-          if (failureCount >= 5) {
-            // Too many failures - pause the flow
-            console.log(`⏸️ Pausing flow for ${userStatus.email} due to repeated failures`);
-            await supabase
-              .from("user_email_flow_status")
-              .update({
-                is_paused: true,
-                metadata: {
-                  ...userStatus.metadata,
-                  pause_reason: "Too many send failures",
-                  paused_at: now
-                },
-                updated_at: now,
-              })
-              .eq("id", userStatus.id);
-          } else {
-            // Exponential backoff: 1hr, 2hr, 4hr, 8hr
-            const backoffHours = Math.pow(2, failureCount - 1);
-            const retryAt = new Date(Date.now() + backoffHours * 60 * 60 * 1000);
-            
-            console.log(`🔄 Scheduling retry for ${userStatus.email} in ${backoffHours}h (failure #${failureCount})`);
-            await supabase
-              .from("user_email_flow_status")
-              .update({
-                next_email_scheduled_at: retryAt.toISOString(),
-                updated_at: now,
-              })
-              .eq("id", userStatus.id);
-          }
+          // Pause the flow immediately - no point retrying invalid emails
+          console.log(`⏸️ Pausing flow for ${userStatus.email} due to send failure`);
+          await supabase
+            .from("user_email_flow_status")
+            .update({
+              is_paused: true,
+              metadata: {
+                ...userStatus.metadata,
+                pause_reason: `Send failed: ${errorText.substring(0, 200)}`,
+                paused_at: now
+              },
+              updated_at: now,
+            })
+            .eq("id", userStatus.id);
 
           continue;
         }
