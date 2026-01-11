@@ -434,20 +434,20 @@ const HolidayPromoPopup: React.FC = () => {
     
     if (!verificationResult.valid) {
       setLoading(false);
-      toast.error('This phone number is invalid. Please check and try again.');
+      toast.error('Please enter a valid cellphone number.');
       return;
     }
     
     // Check if line type is unknown
     if (verificationResult.lineType === 'unknown') {
       setLoading(false);
-      toast.error('This unknown number cannot receive SMS. Please enter a mobile number.');
+      toast.error('Please enter a valid cellphone number.');
       return;
     }
     
     if (!verificationResult.canReceiveSMS) {
       setLoading(false);
-      toast.error(`This ${verificationResult.lineType} number cannot receive SMS. Please enter a mobile number.`);
+      toast.error('Please enter a valid cellphone number.');
       return;
     }
     
