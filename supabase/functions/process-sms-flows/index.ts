@@ -262,7 +262,7 @@ async function processNewGiveawayEntries(supabase: any) {
 
   const { data: newEntries, error } = await supabase
     .from("beta_signups")
-    .select("phone_number, email, prize_won")
+    .select("phone_number, prize_won")
     .gte("created_at", yesterday.toISOString())
     .not("phone_number", "is", null);
 
