@@ -100,8 +100,18 @@ serve(async (req) => {
 
     if (!twilioResponse.ok) {
       const errorData = await twilioResponse.json();
-      console.error('Twilio API error:', errorData);
-      throw new Error(`Twilio error: ${errorData.message || twilioResponse.statusText}`);
+      console.error('Twilio API error:', JSON.stringify(errorData, null, 2));
+      
+      // Common Twilio error codes:
+      // 21211 - Invalid 'To' Phone Number
+      // 21608 - The number is unverified (trial account limitation)
+      // 21614 - 'To' number is not a valid mobile number
+      // 21408 - Permission to send an SMS has not been enabled for the region
+      // 30007 - Message Filtered (carrier blocked)
+      // 30008 - Unknown error from carrier
+      
+      const errorMsg = `${errorData.message || twilioResponse.statusText} (Code: ${errorData.code || 'unknown'})`;
+      throw new Error(errorMsg);
     }
 
     const twilioData = await twilioResponse.json();
