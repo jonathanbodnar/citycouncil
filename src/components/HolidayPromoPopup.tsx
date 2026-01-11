@@ -438,6 +438,13 @@ const HolidayPromoPopup: React.FC = () => {
       return;
     }
     
+    // Check if line type is unknown
+    if (verificationResult.lineType === 'unknown') {
+      setLoading(false);
+      toast.error('This unknown number cannot receive SMS. Please enter a mobile number.');
+      return;
+    }
+    
     if (!verificationResult.canReceiveSMS) {
       setLoading(false);
       toast.error(`This ${verificationResult.lineType} number cannot receive SMS. Please enter a mobile number.`);
