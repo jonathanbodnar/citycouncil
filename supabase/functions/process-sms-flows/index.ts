@@ -321,14 +321,18 @@ async function processNewGiveawayEntries(supabase: any) {
     const followupTime = new Date();
     followupTime.setHours(followupTime.getHours() + 72);
 
-    await supabase.from("user_sms_flow_status").insert({
+    const { error: followupError } = await supabase.from("user_sms_flow_status").insert({
       phone: entry.phone_number,
       user_id: user?.id || null,
       flow_id: followupFlowId,
       current_message_order: 0,
       next_message_scheduled_at: followupTime.toISOString(),
       coupon_code: couponCode,
-    }).catch(() => {}); // Ignore duplicates
+    });
+    
+    if (followupError && !followupError.message?.includes("duplicate")) {
+      console.error("Error adding to followup flow:", followupError);
+    }
   }
 }
 
