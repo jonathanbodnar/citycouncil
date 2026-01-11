@@ -429,33 +429,45 @@ const HolidayPromoPopup: React.FC = () => {
     setLoading(true);
     const formattedPhone = `+1${cleanDigits}`;
     
-    // Verify phone number with Twilio Lookup API
-    const verificationResult = await verifyPhone(formattedPhone);
-    
-    if (!verificationResult.valid) {
-      setLoading(false);
-      toast.error('Please enter a valid cellphone number.');
-      return;
+    // Verify phone number with Twilio Lookup API (with timeout)
+    try {
+      const verificationPromise = verifyPhone(formattedPhone);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Verification timeout')), 5000)
+      );
+      
+      const verificationResult = await Promise.race([verificationPromise, timeoutPromise]) as any;
+      
+      if (!verificationResult.valid) {
+        setLoading(false);
+        toast.error('Please enter a valid cellphone number.');
+        return;
+      }
+      
+      // Check if line type is unknown
+      if (verificationResult.lineType === 'unknown') {
+        setLoading(false);
+        toast.error('Please enter a valid cellphone number.');
+        return;
+      }
+      
+      if (!verificationResult.canReceiveSMS) {
+        setLoading(false);
+        toast.error('Please enter a valid cellphone number.');
+        return;
+      }
+      
+      // Use the verified E.164 format from Twilio
+      const verifiedPhone = verificationResult.phone || formattedPhone;
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      await revealPrize(normalizedEmail, verifiedPhone);
+    } catch (verifyError: any) {
+      console.error('Phone verification error:', verifyError);
+      // If verification times out or fails, proceed anyway but log it
+      const normalizedEmail = email.toLowerCase().trim();
+      await revealPrize(normalizedEmail, formattedPhone);
     }
-    
-    // Check if line type is unknown
-    if (verificationResult.lineType === 'unknown') {
-      setLoading(false);
-      toast.error('Please enter a valid cellphone number.');
-      return;
-    }
-    
-    if (!verificationResult.canReceiveSMS) {
-      setLoading(false);
-      toast.error('Please enter a valid cellphone number.');
-      return;
-    }
-    
-    // Use the verified E.164 format from Twilio
-    const verifiedPhone = verificationResult.phone || formattedPhone;
-    const normalizedEmail = email.toLowerCase().trim();
-    
-    await revealPrize(normalizedEmail, verifiedPhone);
   };
 
   // Reveal prize - called after we have both email and phone
@@ -496,21 +508,28 @@ const HolidayPromoPopup: React.FC = () => {
       // First check if they already have a prize from a previous giveaway entry
       const { data: existingEntries } = await supabase
         .from('beta_signups')
-        .select('id, prize_won, source, phone_number')
+        .select('id, prize_won, source, phone_number, subscribed_at, created_at')
         .eq('phone_number', formattedPhone);
 
       const existingEntry = existingEntries?.[0];
 
       if (existingEntry?.prize_won) {
-        // They already won a prize before - show them their existing prize
-        setWonPrize(existingEntry.prize_won as Prize);
-        const existingPrizeInfo = PRIZES[existingEntry.prize_won as Prize];
-        safeSetItem(WINNER_PRIZE_KEY, existingEntry.prize_won);
-        safeSetItem('auto_apply_coupon', existingPrizeInfo.code);
-        toast.success('Welcome back! Your prize is still active! 🎉');
-        setStep('winner');
-        safeSetItem(POPUP_SUBMITTED_KEY, 'true');
-        return;
+        // Check if existing prize is recent (within 24 hours)
+        const existingDate = new Date(existingEntry.subscribed_at || existingEntry.created_at);
+        const hoursSinceEntry = (Date.now() - existingDate.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursSinceEntry < 24) {
+          // Prize is recent - show them their existing prize
+          setWonPrize(existingEntry.prize_won as Prize);
+          const existingPrizeInfo = PRIZES[existingEntry.prize_won as Prize];
+          safeSetItem(WINNER_PRIZE_KEY, existingEntry.prize_won);
+          safeSetItem('auto_apply_coupon', existingPrizeInfo.code);
+          toast.success('Welcome back! Your prize is still active! 🎉');
+          setStep('winner');
+          safeSetItem(POPUP_SUBMITTED_KEY, 'true');
+          return;
+        }
+        // If prize is old (>24h), fall through to give new prize
       }
 
       // Use upsert to handle both insert and update cases
