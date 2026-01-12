@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
-import { usePhoneVerification } from '../hooks/usePhoneVerification';
 import toast from 'react-hot-toast';
 
 const POPUP_SUBMITTED_KEY = 'holiday_promo_submitted';
@@ -122,7 +121,6 @@ const getUtmSource = (): string | null => {
 
 const HolidayPromoPopup: React.FC = () => {
   const { user } = useAuth();
-  const { verifyPhone, verifying } = usePhoneVerification();
   const [isVisible, setIsVisible] = useState(false);
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -428,46 +426,9 @@ const HolidayPromoPopup: React.FC = () => {
     
     setLoading(true);
     const formattedPhone = `+1${cleanDigits}`;
+    const normalizedEmail = email.toLowerCase().trim();
     
-    // Verify phone number with Twilio Lookup API (with timeout)
-    try {
-      const verificationPromise = verifyPhone(formattedPhone);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Verification timeout')), 5000)
-      );
-      
-      const verificationResult = await Promise.race([verificationPromise, timeoutPromise]) as any;
-      
-      if (!verificationResult.valid) {
-        setLoading(false);
-        toast.error('Please enter a valid cellphone number.');
-        return;
-      }
-      
-      // Check if line type is unknown
-      if (verificationResult.lineType === 'unknown') {
-        setLoading(false);
-        toast.error('Please enter a valid cellphone number.');
-        return;
-      }
-      
-      if (!verificationResult.canReceiveSMS) {
-        setLoading(false);
-        toast.error('Please enter a valid cellphone number.');
-        return;
-      }
-      
-      // Use the verified E.164 format from Twilio
-      const verifiedPhone = verificationResult.phone || formattedPhone;
-      const normalizedEmail = email.toLowerCase().trim();
-      
-      await revealPrize(normalizedEmail, verifiedPhone);
-    } catch (verifyError: any) {
-      console.error('Phone verification error:', verifyError);
-      // If verification times out or fails, proceed anyway but log it
-      const normalizedEmail = email.toLowerCase().trim();
-      await revealPrize(normalizedEmail, formattedPhone);
-    }
+    await revealPrize(normalizedEmail, formattedPhone);
   };
 
   // Reveal prize - called after we have both email and phone
