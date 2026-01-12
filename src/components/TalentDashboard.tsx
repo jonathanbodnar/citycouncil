@@ -1723,7 +1723,7 @@ const TalentDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Personal Pricing ($)
+                  Pricing ($)
                 </label>
                 <input
                   type="number"
@@ -1732,20 +1732,9 @@ const TalentDashboard: React.FC = () => {
                   onChange={(e) => setTalentProfile({ ...talentProfile, pricing: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">For individual customers</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Corporate Pricing ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={talentProfile.corporate_pricing || talentProfile.pricing * 1.5}
-                  onChange={(e) => setTalentProfile({ ...talentProfile, corporate_pricing: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">For business customers</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  For personal orders. Set corporate pricing in <a href="/bio-dashboard" className="text-purple-600 hover:text-purple-700 font-medium">Bio Dashboard</a>
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1845,7 +1834,6 @@ const TalentDashboard: React.FC = () => {
                         full_name: talentProfile.full_name,
                         bio: talentProfile.bio,
                         pricing: talentProfile.pricing,
-                        corporate_pricing: talentProfile.corporate_pricing,
                         fulfillment_time_hours: talentProfile.fulfillment_time_hours,
                       })
                       .eq('id', talentProfile.id);
@@ -1936,10 +1924,10 @@ const TalentDashboard: React.FC = () => {
             <LinkIcon className="h-16 w-16 text-blue-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">ShoutOut Bio</h2>
             <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Create your personalized link-in-bio page at shouts.bio/{talentProfile?.username || 'yourname'}
+              Create your personalized link-in-bio page at bio.shoutout.us/{talentProfile?.username || 'yourname'}
             </p>
             <a
-              href={`https://shouts.bio/dashboard?token=${encodeURIComponent(user?.id || '')}`}
+              href={`https://bio.shoutout.us/dashboard?token=${encodeURIComponent(user?.id || '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
@@ -1948,7 +1936,7 @@ const TalentDashboard: React.FC = () => {
               Open Bio Dashboard
             </a>
             <p className="text-sm text-gray-500 mt-4">
-              Opens in a new tab at shouts.bio
+              Opens in a new tab at bio.shoutout.us
             </p>
           </div>
         </div>
