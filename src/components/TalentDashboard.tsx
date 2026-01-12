@@ -927,7 +927,7 @@ const TalentDashboard: React.FC = () => {
                             )}
                             {order.is_corporate_order && (order as any).service_type !== 'social_collab' && (
                               <span className="text-xs glass-strong text-blue-400 px-2 py-1 rounded-full border border-blue-500/30">
-                                🏢 Business
+                                Event
                               </span>
                             )}
                           </h4>
@@ -1114,7 +1114,7 @@ const TalentDashboard: React.FC = () => {
                     {order.is_corporate_order && (order as any).service_type !== 'social_collab' && (
                       <div className="glass-subtle border border-blue-200/30 rounded-xl p-4 glow-blue">
                         <h5 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
-                          🏢 Business Order Context
+                          🏢 Event Details
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                           {order.company_name && (
@@ -1805,12 +1805,15 @@ const TalentDashboard: React.FC = () => {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={talentProfile.corporate_pricing || ''}
                   onChange={(e) => {
                     const val = e.target.value;
+                    // If empty or 0, set to null to disable corporate pricing
+                    const parsed = val ? parseFloat(val) : 0;
                     setTalentProfile({ 
                       ...talentProfile, 
-                      corporate_pricing: val ? parseFloat(val) : undefined 
+                      corporate_pricing: (parsed > 0) ? parsed : undefined
                     });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -1916,7 +1919,7 @@ const TalentDashboard: React.FC = () => {
                         full_name: talentProfile.full_name,
                         bio: talentProfile.bio,
                         pricing: talentProfile.pricing,
-                        corporate_pricing: talentProfile.corporate_pricing,
+                        corporate_pricing: talentProfile.corporate_pricing || null,
                         fulfillment_time_hours: talentProfile.fulfillment_time_hours,
                       })
                       .eq('id', talentProfile.id);
