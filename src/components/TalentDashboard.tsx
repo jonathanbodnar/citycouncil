@@ -78,7 +78,11 @@ const TalentDashboard: React.FC = () => {
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
   const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
-  const [showCorporateBanner, setShowCorporateBanner] = useState(true);
+  const [showCorporateBanner, setShowCorporateBanner] = useState(() => {
+    // Check if banner was previously dismissed
+    const dismissed = localStorage.getItem('corporate_banner_dismissed');
+    return dismissed !== 'true';
+  });
   const [showCorporateModal, setShowCorporateModal] = useState(false);
   const [corporatePrice, setCorporatePrice] = useState('');
 
@@ -582,6 +586,11 @@ const TalentDashboard: React.FC = () => {
     }
   };
 
+  const dismissCorporateBanner = () => {
+    setShowCorporateBanner(false);
+    localStorage.setItem('corporate_banner_dismissed', 'true');
+  };
+
   const saveCorporatePricing = async () => {
     if (!talentProfile) return;
     const price = parseFloat(corporatePrice);
@@ -602,7 +611,8 @@ const TalentDashboard: React.FC = () => {
 
       setTalentProfile({ ...talentProfile, corporate_pricing: price });
       setShowCorporateModal(false);
-      setShowCorporateBanner(false); // Hide banner after setting price
+      // Hide banner after setting price and persist dismissal
+      dismissCorporateBanner();
       toast.success('Corporate pricing set successfully!');
       fetchTalentData(); // Refresh data
     } catch (error) {
@@ -837,7 +847,7 @@ const TalentDashboard: React.FC = () => {
                 Set Corporate Price
               </button>
               <button
-                onClick={() => setShowCorporateBanner(false)}
+                onClick={dismissCorporateBanner}
                 className="p-2 text-gray-400 hover:text-white transition-colors"
                 title="Dismiss"
               >
