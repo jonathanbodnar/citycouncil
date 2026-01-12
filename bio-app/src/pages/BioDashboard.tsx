@@ -3056,6 +3056,14 @@ const BioDashboard: React.FC = () => {
             if (social.platform === 'rumble') {
               updateData.rumble_handle = social.handle.replace(/^@/, '');
               updateData.rumble_type = social.rumble_type || 'c';
+              // Clear rumble cache when handle changes
+              if (talentProfile?.id) {
+                await supabase
+                  .from('rumble_cache')
+                  .delete()
+                  .eq('talent_id', talentProfile.id);
+                console.log('Cleared rumble cache for talent:', talentProfile.id);
+              }
               // Update local state so the card toggle shows immediately
               setTalentProfile(prev => prev ? { 
                 ...prev, 
@@ -3064,11 +3072,19 @@ const BioDashboard: React.FC = () => {
               } : prev);
             }
             
-            await supabase
+            console.log('Adding social link - updating talent_profiles with:', updateData, 'for talent ID:', talentProfile?.id);
+            const { error } = await supabase
               .from('talent_profiles')
               .update(updateData)
               .eq('id', talentProfile?.id);
-            toast.success('Social link added!');
+            
+            if (error) {
+              console.error('Failed to save social link:', error);
+              toast.error('Failed to save social link');
+            } else {
+              console.log('Social link saved successfully');
+              toast.success('Social link added!');
+            }
             setTimeout(refreshPreview, 500);
             setShowAddSocialModal(false);
           }}
