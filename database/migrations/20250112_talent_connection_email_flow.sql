@@ -34,6 +34,13 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px;">
           
+          <!-- ShoutOut Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <img src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png" alt="ShoutOut" height="40" style="height: 40px;">
+            </td>
+          </tr>
+          
           <!-- Header with Talent Photo (centered like talent updates) -->
           <tr>
             <td align="center" style="padding-bottom: 30px;">
