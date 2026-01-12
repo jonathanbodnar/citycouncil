@@ -137,11 +137,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
             <span className={`${compact ? 'text-[10px]' : 'text-xs sm:text-sm'} font-bold text-white`}>
               {talent.average_rating.toFixed(1)}
             </span>
-            {talent.total_reviews && talent.total_reviews > 0 && (
-              <span className={`${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} text-gray-300`}>
-                ({talent.total_reviews})
-              </span>
-            )}
           </div>
         ) : (
           <div className={`absolute ${compact ? 'bottom-1.5 left-1.5 px-1.5 py-0.5' : 'bottom-2 left-2 sm:bottom-3 sm:left-3 px-1.5 py-0.5'} glass-strong rounded-lg backdrop-blur-md bg-purple-500/30`}>
