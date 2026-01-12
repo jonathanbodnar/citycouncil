@@ -764,7 +764,8 @@ const OrderPage: React.FC = () => {
         order_id: order.id,
         amount: pricing.total.toString(),
         talent: talent.temp_full_name || talent.users.full_name,
-        delivery_hours: talent.fulfillment_time_hours.toString()
+        delivery_hours: talent.fulfillment_time_hours.toString(),
+        occasion: isCorporateOrder ? 'corporate' : (orderData.occasion || '')
       });
       navigate(`/order-success?${successParams.toString()}`);
 
