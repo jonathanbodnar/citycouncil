@@ -410,6 +410,7 @@ const BioDashboard: React.FC = () => {
         if (!directError && directProfile) {
           // Token is a talent_profile ID (admin access)
           console.log('Bio Dashboard: Found talent profile directly by ID');
+          console.log('Profile data - rumble_handle:', directProfile.rumble_handle, 'rumble_type:', directProfile.rumble_type);
           profile = directProfile;
           
           // Get user data if available
@@ -452,6 +453,7 @@ const BioDashboard: React.FC = () => {
           }
           
           profile = profileByUser;
+          console.log('Profile data - rumble_handle:', profileByUser.rumble_handle, 'rumble_type:', profileByUser.rumble_type);
         }
 
         if (userData) {
