@@ -26,25 +26,25 @@ const PRIZES: Record<Prize, PrizeInfo> = {
     label: 'Free ShoutOut',
     code: 'WINNER100',
     shortLabel: 'Free ShoutOut',
-    textMessage: 'a FREE personalized ShoutOut (up to $100 value) from top conservatives'
+    textMessage: 'a FREE personalized video ShoutOut (up to $100 value) from your favorite free-speech influencer'
   },
   '15_OFF': {
     label: '15% Off',
     code: 'SAVE15',
     shortLabel: '15% Off',
-    textMessage: '15% off a personalized ShoutOut from top conservatives'
+    textMessage: '15% off a personalized video ShoutOut from your favorite free-speech influencer'
   },
   '10_OFF': {
     label: '10% Off',
     code: 'SAVE10',
     shortLabel: '10% Off',
-    textMessage: '10% off a personalized ShoutOut from top conservatives'
+    textMessage: '10% off a personalized video ShoutOut from your favorite free-speech influencer'
   },
   '25_DOLLARS': {
     label: '$25 Off',
     code: 'TAKE25',
     shortLabel: '$25 Off',
-    textMessage: '$25 off a personalized ShoutOut from top conservatives'
+    textMessage: '$25 off a personalized video ShoutOut from your favorite free-speech influencer'
   }
 };
 
@@ -530,7 +530,7 @@ const HolidayPromoPopup: React.FC = () => {
 
       // Send winner SMS
       try {
-        const winnerMessage = `🎉 You just won ${prizeInfo.textMessage}! Expires in 30 min: https://shoutout.us?utm=winning&coupon=${prizeInfo.code}`;
+        const winnerMessage = `🎉 You just won ${prizeInfo.textMessage}! Exp in 24hrs: https://shoutout.us?utm=winning&coupon=${prizeInfo.code}`;
         
         await supabase.functions.invoke('send-sms', {
           body: {
@@ -593,8 +593,8 @@ const HolidayPromoPopup: React.FC = () => {
         // Don't fail the main flow if this fails
       }
 
-      // Set prize expiry (30 minutes)
-      const prizeExpiry = Date.now() + (30 * 60 * 1000);
+      // Set prize expiry (24 hours)
+      const prizeExpiry = Date.now() + (24 * 60 * 60 * 1000);
       safeSetItem(WINNER_EXPIRY_KEY, prizeExpiry.toString());
       safeSetItem(WINNER_PRIZE_KEY, prize);
       safeSetItem('auto_apply_coupon', prizeInfo.code);
