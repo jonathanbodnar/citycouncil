@@ -3034,16 +3034,34 @@ const BioDashboard: React.FC = () => {
         <AddSocialModal
           onClose={() => setShowAddSocialModal(false)}
           onAdd={async (social) => {
+            // First, insert into social_accounts table
+            const { data: insertedSocial, error: insertError } = await supabase
+              .from('social_accounts')
+              .insert({
+                talent_id: talentProfile?.id,
+                platform: social.platform,
+                handle: social.handle.startsWith('@') ? social.handle : `@${social.handle}`,
+              })
+              .select()
+              .single();
+            
+            if (insertError) {
+              console.error('Failed to insert social account:', insertError);
+              toast.error('Failed to add social link');
+              return;
+            }
+            
+            // Add to local state with the real DB ID
             const newSocial: SocialAccount = {
-              id: `social-${Date.now()}`,
+              id: insertedSocial.id,
               platform: social.platform as SocialAccount['platform'],
               handle: social.handle,
             };
             const updated = [...socialLinks, newSocial];
             setSocialLinks(updated);
             
-            // Build the update object
-            const updateData: Record<string, unknown> = { social_accounts: updated };
+            // Build the update object for talent_profiles
+            const updateData: Record<string, unknown> = {};
             
             // If adding YouTube, also set youtube_handle for the card feature
             if (social.platform === 'youtube') {
@@ -3072,19 +3090,23 @@ const BioDashboard: React.FC = () => {
               } : prev);
             }
             
-            console.log('Adding social link - updating talent_profiles with:', updateData, 'for talent ID:', talentProfile?.id);
-            const { error } = await supabase
-              .from('talent_profiles')
-              .update(updateData)
-              .eq('id', talentProfile?.id);
-            
-            if (error) {
-              console.error('Failed to save social link:', error);
-              toast.error('Failed to save social link');
-            } else {
-              console.log('Social link saved successfully');
-              toast.success('Social link added!');
+            // Update talent_profiles if we have any profile-level fields to update
+            if (Object.keys(updateData).length > 0) {
+              console.log('Updating talent_profiles with:', updateData, 'for talent ID:', talentProfile?.id);
+              const { error } = await supabase
+                .from('talent_profiles')
+                .update(updateData)
+                .eq('id', talentProfile?.id);
+              
+              if (error) {
+                console.error('Failed to update talent profile:', error);
+                toast.error('Failed to update profile');
+              } else {
+                console.log('Talent profile updated successfully');
+              }
             }
+            
+            toast.success('Social link added!');
             setTimeout(refreshPreview, 500);
             setShowAddSocialModal(false);
           }}
