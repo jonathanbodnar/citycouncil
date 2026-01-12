@@ -35,13 +35,17 @@ const TALENT_CATEGORIES = [
   { key: 'actor', label: 'Actors' },
   { key: 'influencer', label: 'Influencers' },
   { key: 'activist', label: 'Activists' },
-  { key: 'faith-leader', label: 'Faith Leaders' },
   { key: 'academic', label: 'Academics' },
   { key: 'military', label: 'Military/Veterans' },
-  { key: 'youth-leader', label: 'Youth Leaders' },
-  { key: 'patriotic-entertainer', label: 'Patriotic Entertainers' },
-  { key: 'other', label: 'Other' },
 ];
+
+// Categories to exclude
+const EXCLUDED_CATEGORIES = ['faith-leader', 'youth-leader', 'other'];
+
+// Map patriotic-entertainer to comedian
+const CATEGORY_MAPPING: Record<string, string> = {
+  'patriotic-entertainer': 'comedian',
+};
 
 const HomePage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -278,10 +282,14 @@ const HomePage: React.FC = () => {
     
     // Group talent by categories
     filteredTalent.forEach(t => {
-      const talentCategories = t.categories && t.categories.length > 0 ? t.categories : [t.category];
+      let talentCategories = t.categories && t.categories.length > 0 ? t.categories : [t.category];
+      
+      // Apply category mapping and filter excluded categories
+      talentCategories = talentCategories
+        .map(cat => CATEGORY_MAPPING[cat] || cat) // Map categories
+        .filter(cat => cat && !EXCLUDED_CATEGORIES.includes(cat)); // Exclude unwanted categories
       
       talentCategories.forEach(cat => {
-        if (!cat) return;
         const categoryLabel = TALENT_CATEGORIES.find(c => c.key === cat)?.label || cat;
         
         if (!categoryMap.has(categoryLabel)) {
@@ -296,13 +304,21 @@ const HomePage: React.FC = () => {
       });
     });
 
-    // Add "Coming Soon" category if we have any
+    // Add "Coming Soon" category if we have any (and more than 2)
     const comingSoon = filteredTalent.filter(t => t.is_coming_soon);
-    if (comingSoon.length > 0) {
+    if (comingSoon.length > 2) {
       categoryMap.set('Coming Soon', comingSoon);
     }
     
-    return categoryMap;
+    // Filter out categories with 2 or fewer people
+    const filteredMap = new Map<string, TalentWithUser[]>();
+    categoryMap.forEach((talents, category) => {
+      if (talents.length > 2) {
+        filteredMap.set(category, talents);
+      }
+    });
+    
+    return filteredMap;
   };
 
   const categoryStrips = getTalentsByCategory();
@@ -391,8 +407,10 @@ const HomePage: React.FC = () => {
         // Loading skeleton - show a few category placeholders
         <div className="space-y-8">
           {[...Array(3)].map((_, categoryIndex) => (
-            <div key={categoryIndex} className="space-y-4">
-              <div className="h-6 bg-white/10 rounded w-48 animate-pulse"></div>
+            <div key={categoryIndex} className="space-y-3">
+              <div className="inline-block">
+                <div className="h-8 w-32 bg-white/10 rounded-full animate-pulse"></div>
+              </div>
               <div className="flex gap-3 overflow-hidden">
                 {[...Array(6)].map((_, cardIndex) => (
                   <div key={cardIndex} className="flex-shrink-0" style={{ width: '180px' }}>
@@ -412,13 +430,17 @@ const HomePage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-8">
           {Array.from(categoryStrips.entries()).map(([category, talents]) => (
-            <div key={category} className="space-y-4">
-              {/* Category Header */}
-              <h2 className="text-2xl font-bold text-white">{category}</h2>
+            <div key={category} className="space-y-3">
+              {/* Category Header Badge */}
+              <div className="inline-block">
+                <span className="px-4 py-1.5 rounded-full text-sm font-bold glass-strong bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-white border border-white/20">
+                  {category}
+                </span>
+              </div>
               
-              {/* Horizontal Scrolling Strip */}
+              {/* Horizontal Scrolling Strip with Cycling */}
               <div className="relative group">
                 <div 
                   className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory scroll-smooth"
@@ -427,9 +449,20 @@ const HomePage: React.FC = () => {
                     msOverflowStyle: 'none',
                   }}
                 >
+                  {/* Render talents twice for infinite scroll effect */}
                   {talents.map(talentProfile => (
                     <div 
-                      key={talentProfile.id} 
+                      key={`first-${talentProfile.id}`} 
+                      className="flex-shrink-0 snap-start"
+                      style={{ width: '180px' }}
+                    >
+                      <TalentCard talent={talentProfile} compact />
+                    </div>
+                  ))}
+                  {/* Duplicate for cycling (only if more than 3 items) */}
+                  {talents.length > 3 && talents.map(talentProfile => (
+                    <div 
+                      key={`second-${talentProfile.id}`} 
                       className="flex-shrink-0 snap-start"
                       style={{ width: '180px' }}
                     >
