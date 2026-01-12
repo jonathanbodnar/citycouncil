@@ -863,10 +863,10 @@ const OrderPage: React.FC = () => {
               >
                 <option value="">Select an occasion</option>
                 <option value="pep-talk">💝 Surprise a loved one</option>
-                <option value="new-year">🎆 New Years ShoutOut</option>
                 <option value="birthday">🎂 Happy Birthday</option>
                 <option value="roast">🔥 Friendly roast</option>
                 <option value="advice">💡 Get advice</option>
+                <option value="corporate">🏢 Corporate Event</option>
                 <option value="other">✨ Other</option>
               </select>
             </div>
