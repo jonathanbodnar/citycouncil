@@ -88,6 +88,18 @@ const BioDashboard: React.FC = () => {
   const [showCorporateModal, setShowCorporateModal] = useState(false);
   const [corporatePrice, setCorporatePrice] = useState('');
 
+  // Debug: Log corporate pricing status
+  useEffect(() => {
+    if (talentProfile) {
+      console.log('🏢 Corporate Pricing Status:', {
+        hasCorporatePricing: talentProfile.corporate_pricing,
+        isNull: talentProfile.corporate_pricing == null,
+        showBanner: showCorporateBanner,
+        willShowBanner: showCorporateBanner && talentProfile.corporate_pricing == null
+      });
+    }
+  }, [talentProfile, showCorporateBanner]);
+
   // Fetch data
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
@@ -441,7 +453,7 @@ const BioDashboard: React.FC = () => {
       </div>
 
       {/* Corporate Pricing Banner */}
-      {showCorporateBanner && !talentProfile?.corporate_pricing && (
+      {showCorporateBanner && talentProfile?.corporate_pricing == null && (
         <div className="mb-6 glass border border-purple-500/30 rounded-2xl p-6 bg-gradient-to-r from-purple-500/10 to-blue-500/10">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
