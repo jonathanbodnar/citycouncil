@@ -62,7 +62,7 @@ interface TalentProfile {
   facebook_handle?: string;
   tiktok_handle?: string;
   rumble_handle?: string;
-  rumble_type?: 'user' | 'channel';
+  rumble_type?: 'c' | 'user'; // 'c' for channel, 'user' for user profile
   youtube_handle?: string;
   podcast_rss_url?: string;
   podcast_name?: string;
@@ -773,11 +773,11 @@ const BioPage: React.FC = () => {
   };
   
   // Background scrape - doesn't block UI, updates cache only on SUCCESS
-  const scrapeRumbleInBackground = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string, originalTimestamp: number, rumbleType?: 'user' | 'channel') => {
+  const scrapeRumbleInBackground = async (talentId: string, rumbleHandle: string, cleanHandle: string, defaultChannelUrl: string, originalTimestamp: number, rumbleType?: 'c' | 'user') => {
     try {
       // If rumble_type is set, only try that URL format; otherwise try both
       const urlFormats = rumbleType 
-        ? [`https://rumble.com/${rumbleType === 'channel' ? 'c' : 'user'}/${cleanHandle}`]
+        ? [`https://rumble.com/${rumbleType}/${cleanHandle}`]
         : [
             `https://rumble.com/user/${cleanHandle}`,
             `https://rumble.com/c/${cleanHandle}`,
@@ -1716,7 +1716,7 @@ const BioPage: React.FC = () => {
                 return (
                   <a
                     key="rumble"
-                    href={rumbleData?.url || `https://rumble.com/${talentProfile.rumble_type === 'channel' ? 'c' : 'user'}/${talentProfile.rumble_handle.replace(/^@/, '')}`}
+                    href={rumbleData?.url || `https://rumble.com/${talentProfile.rumble_type || 'c'}/${talentProfile.rumble_handle.replace(/^@/, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"

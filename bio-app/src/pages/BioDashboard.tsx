@@ -41,7 +41,7 @@ interface TalentProfile {
   facebook_handle?: string;
   tiktok_handle?: string;
   rumble_handle?: string;
-  rumble_type?: 'user' | 'channel'; // Whether it's a user profile or channel on Rumble
+  rumble_type?: 'c' | 'user'; // 'c' for channel, 'user' for user profile
   youtube_handle?: string;
   podcast_rss_url?: string;
   podcast_name?: string;
@@ -3055,12 +3055,12 @@ const BioDashboard: React.FC = () => {
             // If adding Rumble, also set rumble_handle and rumble_type for the card feature
             if (social.platform === 'rumble') {
               updateData.rumble_handle = social.handle.replace(/^@/, '');
-              updateData.rumble_type = social.rumble_type || 'channel';
+              updateData.rumble_type = social.rumble_type || 'c';
               // Update local state so the card toggle shows immediately
               setTalentProfile(prev => prev ? { 
                 ...prev, 
                 rumble_handle: social.handle.replace(/^@/, ''),
-                rumble_type: social.rumble_type || 'channel'
+                rumble_type: social.rumble_type || 'c'
               } : prev);
             }
             
@@ -4504,14 +4504,14 @@ const StreamChannelModal: React.FC<{
   platform: 'rumble' | 'youtube';
   socialLinks: SocialAccount[];
   currentHandle?: string;
-  currentRumbleType?: 'user' | 'channel';
+  currentRumbleType?: 'c' | 'user';
   onClose: () => void;
-  onSelect: (handle: string, rumbleType?: 'user' | 'channel') => void;
-  onAddNew: (handle: string, rumbleType?: 'user' | 'channel') => void;
+  onSelect: (handle: string, rumbleType?: 'c' | 'user') => void;
+  onAddNew: (handle: string, rumbleType?: 'c' | 'user') => void;
 }> = ({ platform, socialLinks, currentHandle, currentRumbleType, onClose, onSelect, onAddNew }) => {
   const [newHandle, setNewHandle] = useState('');
   const [showAddNew, setShowAddNew] = useState(false);
-  const [rumbleType, setRumbleType] = useState<'user' | 'channel'>(currentRumbleType || 'channel');
+  const [rumbleType, setRumbleType] = useState<'c' | 'user'>(currentRumbleType || 'c');
   
   // Filter social links for this platform
   const platformAccounts = socialLinks.filter(s => s.platform === platform);
@@ -4588,9 +4588,9 @@ const StreamChannelModal: React.FC<{
                 <p className="text-xs text-gray-500 mt-1">rumble.com/user/...</p>
               </button>
               <button
-                onClick={() => setRumbleType('channel')}
+                onClick={() => setRumbleType('c')}
                 className={`flex-1 p-3 rounded-xl border text-sm font-medium transition-colors ${
-                  rumbleType === 'channel'
+                  rumbleType === 'c'
                     ? 'bg-green-500/20 border-green-500/50 text-green-400'
                     : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                 }`}
@@ -5112,12 +5112,12 @@ const ImportModal: React.FC<{
 // Add Social Modal
 const AddSocialModal: React.FC<{
   onClose: () => void;
-  onAdd: (social: { platform: string; handle: string; rumble_type?: 'user' | 'channel' }) => void;
+  onAdd: (social: { platform: string; handle: string; rumble_type?: 'c' | 'user' }) => void;
   existingPlatforms: string[];
 }> = ({ onClose, onAdd, existingPlatforms }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [handle, setHandle] = useState('');
-  const [rumbleType, setRumbleType] = useState<'user' | 'channel'>('channel');
+  const [rumbleType, setRumbleType] = useState<'c' | 'user'>('c');
 
   const availablePlatforms = SOCIAL_PLATFORMS.filter(p => !existingPlatforms.includes(p.id));
 
@@ -5216,9 +5216,9 @@ const AddSocialModal: React.FC<{
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => setRumbleType('channel')}
+                    onClick={() => setRumbleType('c')}
                     className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
-                      rumbleType === 'channel'
+                      rumbleType === 'c'
                         ? 'bg-blue-500 text-white'
                         : 'bg-white/5 border border-white/20 text-gray-300 hover:bg-white/10'
                     }`}
