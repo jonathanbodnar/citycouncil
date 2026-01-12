@@ -3052,11 +3052,16 @@ const BioDashboard: React.FC = () => {
               setTalentProfile(prev => prev ? { ...prev, youtube_handle: social.handle.replace(/^@/, '') } : prev);
             }
             
-            // If adding Rumble, also set rumble_handle for the card feature
+            // If adding Rumble, also set rumble_handle and rumble_type for the card feature
             if (social.platform === 'rumble') {
               updateData.rumble_handle = social.handle.replace(/^@/, '');
+              updateData.rumble_type = social.rumble_type || 'channel';
               // Update local state so the card toggle shows immediately
-              setTalentProfile(prev => prev ? { ...prev, rumble_handle: social.handle.replace(/^@/, '') } : prev);
+              setTalentProfile(prev => prev ? { 
+                ...prev, 
+                rumble_handle: social.handle.replace(/^@/, ''),
+                rumble_type: social.rumble_type || 'channel'
+              } : prev);
             }
             
             await supabase
@@ -5107,18 +5112,23 @@ const ImportModal: React.FC<{
 // Add Social Modal
 const AddSocialModal: React.FC<{
   onClose: () => void;
-  onAdd: (social: { platform: string; handle: string }) => void;
+  onAdd: (social: { platform: string; handle: string; rumble_type?: 'user' | 'channel' }) => void;
   existingPlatforms: string[];
 }> = ({ onClose, onAdd, existingPlatforms }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [handle, setHandle] = useState('');
+  const [rumbleType, setRumbleType] = useState<'user' | 'channel'>('channel');
 
   const availablePlatforms = SOCIAL_PLATFORMS.filter(p => !existingPlatforms.includes(p.id));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedPlatform && handle) {
-      onAdd({ platform: selectedPlatform, handle: handle.replace(/^@/, '') });
+      onAdd({ 
+        platform: selectedPlatform, 
+        handle: handle.replace(/^@/, ''),
+        ...(selectedPlatform === 'rumble' && { rumble_type: rumbleType })
+      });
     }
   };
 
@@ -5198,6 +5208,39 @@ const AddSocialModal: React.FC<{
                 />
               </div>
             </div>
+
+            {/* Rumble Type Selector */}
+            {selectedPlatform === 'rumble' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Rumble Account Type</label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRumbleType('channel')}
+                    className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
+                      rumbleType === 'channel'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/5 border border-white/20 text-gray-300 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="text-sm">Channel</div>
+                    <div className="text-xs opacity-70">rumble.com/c/name</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRumbleType('user')}
+                    className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${
+                      rumbleType === 'user'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/5 border border-white/20 text-gray-300 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="text-sm">User</div>
+                    <div className="text-xs opacity-70">rumble.com/user/name</div>
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <button
