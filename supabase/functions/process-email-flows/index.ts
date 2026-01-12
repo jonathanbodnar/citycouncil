@@ -143,16 +143,32 @@ serve(async (req) => {
           }
         }
 
-        // Get talent name if from bio page
+        // Get talent info if from bio page
         let talentName = "";
+        let talentPhotoUrl = "";
+        let talentProfileLink = "https://shoutout.us";
+        let talentPhotoHtml = "";
+        
         if (userStatus.source_talent_slug) {
           const { data: talent } = await supabase
             .from("talent_profiles")
-            .select("temp_full_name")
+            .select("temp_full_name, temp_avatar_url, slug, username")
             .eq("slug", userStatus.source_talent_slug)
             .single();
-          if (talent?.temp_full_name) {
-            talentName = talent.temp_full_name;
+          if (talent) {
+            talentName = talent.temp_full_name || "";
+            talentPhotoUrl = talent.temp_avatar_url || "";
+            const talentSlug = talent.slug || talent.username || userStatus.source_talent_slug;
+            talentProfileLink = `https://shoutout.us/${talentSlug}`;
+            
+            // Generate talent photo HTML for email header
+            if (talentPhotoUrl) {
+              talentPhotoHtml = `<img src="${talentPhotoUrl}" alt="${talentName}" width="100" height="100" style="border-radius: 50%; border: 3px solid rgba(124, 58, 237, 0.5); object-fit: cover;">`;
+            } else {
+              // Fallback to initials avatar
+              const initials = talentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+              talentPhotoHtml = `<div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; color: white;">${initials}</div>`;
+            }
           }
         }
 
@@ -170,6 +186,10 @@ serve(async (req) => {
           .replace(/\{\{full_name\}\}/g, fullName)
           .replace(/\{\{coupon_code\}\}/g, couponCode)
           .replace(/\{\{talent_name\}\}/g, talentName)
+          .replace(/\{\{talent\}\}/g, talentName)
+          .replace(/\{\{talent_photo_html\}\}/g, talentPhotoHtml)
+          .replace(/\{\{talent_photo_url\}\}/g, talentPhotoUrl)
+          .replace(/\{\{talent_profile_link\}\}/g, talentProfileLink)
           .replace(/\{\{unsubscribe_url\}\}/g, unsubscribeUrl)
           .replace(/\{\{review_link\}\}/g, reviewLink)
           .replace(/\{\{email\}\}/g, userStatus.email);
@@ -177,6 +197,7 @@ serve(async (req) => {
         subject = subject
           .replace(/\{\{first_name\}\}/g, firstName)
           .replace(/\{\{talent_name\}\}/g, talentName)
+          .replace(/\{\{talent\}\}/g, talentName)
           .replace(/\{\{coupon_code\}\}/g, couponCode);
 
         // Send the email via SendGrid
