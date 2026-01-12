@@ -76,16 +76,49 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
             </td>
           </tr>
           
+          <!-- ShoutOut Card -->
+          <tr>
+            <td style="padding-top: 16px;">
+              <a href="{{talent_profile_link}}" target="_blank" style="text-decoration: none; display: block;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #1e3a5f 0%, #4c1d95 100%); background-color: #2d2a6e; border-radius: 16px; overflow: hidden;">
+                  <tr>
+                    <td width="120" style="vertical-align: middle; background-color: transparent;">
+                      <div style="width: 120px; height: 120px; overflow: hidden;">
+                        {{talent_photo_square}}
+                      </div>
+                    </td>
+                    <td style="padding: 20px; vertical-align: middle; background-color: transparent;">
+                      <div style="color: #93c5fd; font-size: 15px; font-weight: 600;">Get a Personalized Video Shoutout</div>
+                      <div style="color: #ffffff; font-size: 14px; margin-top: 6px;">From {{talent}}</div>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+          
           <!-- Footer -->
           <tr>
-            <td style="text-align: center;">
-              <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0 0 8px 0;">
-                You subscribed to {{talent}} through ShoutOut.
-              </p>
-              <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0;">
-                <a href="{{unsubscribe_url}}" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Unsubscribe</a> · 
-                <a href="https://shoutout.us" style="color: rgba(255,255,255,0.4); text-decoration: underline;">ShoutOut</a>
-              </p>
+            <td style="padding-top: 32px; text-align: center;">
+              <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+                <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0 0 8px 0;">
+                  You subscribed to {{talent}} through ShoutOut.
+                </p>
+                <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0 0 16px 0;">
+                  <a href="{{unsubscribe_url}}" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Unsubscribe</a>
+                  &nbsp;•&nbsp;
+                  <a href="https://shoutout.us/privacy" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Privacy Policy</a>
+                </p>
+                <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 0 0 16px 0; opacity: 0.7;">
+                  ShoutOut, LLC • 1201 N Riverfront Blvd Ste 100, Dallas, TX 75207
+                </p>
+                <div style="margin-top: 8px;">
+                  <a href="https://shoutout.us/creators" style="text-decoration: none; opacity: 0.6;">
+                    <span style="color: rgba(255,255,255,0.4); font-size: 11px; margin-right: 8px; vertical-align: middle;">Powered by</span>
+                    <img src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png" alt="ShoutOut" height="24" style="height: 24px; vertical-align: middle;">
+                  </a>
+                </div>
+              </div>
             </td>
           </tr>
           
@@ -162,16 +195,49 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
             </td>
           </tr>
           
+          <!-- ShoutOut Card -->
+          <tr>
+            <td style="padding-top: 16px;">
+              <a href="{{talent_profile_link}}" target="_blank" style="text-decoration: none; display: block;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #1e3a5f 0%, #4c1d95 100%); background-color: #2d2a6e; border-radius: 16px; overflow: hidden;">
+                  <tr>
+                    <td width="120" style="vertical-align: middle; background-color: transparent;">
+                      <div style="width: 120px; height: 120px; overflow: hidden;">
+                        {{talent_photo_square}}
+                      </div>
+                    </td>
+                    <td style="padding: 20px; vertical-align: middle; background-color: transparent;">
+                      <div style="color: #93c5fd; font-size: 15px; font-weight: 600;">Get a Personalized Video Shoutout</div>
+                      <div style="color: #ffffff; font-size: 14px; margin-top: 6px;">From {{talent}}</div>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+          
           <!-- Footer -->
           <tr>
-            <td style="text-align: center;">
-              <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0 0 8px 0;">
-                You subscribed to {{talent}} through ShoutOut.
-              </p>
-              <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0;">
-                <a href="{{unsubscribe_url}}" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Unsubscribe</a> · 
-                <a href="https://shoutout.us" style="color: rgba(255,255,255,0.4); text-decoration: underline;">ShoutOut</a>
-              </p>
+            <td style="padding-top: 32px; text-align: center;">
+              <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+                <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0 0 8px 0;">
+                  You subscribed to {{talent}} through ShoutOut.
+                </p>
+                <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 0 0 16px 0;">
+                  <a href="{{unsubscribe_url}}" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Unsubscribe</a>
+                  &nbsp;•&nbsp;
+                  <a href="https://shoutout.us/privacy" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Privacy Policy</a>
+                </p>
+                <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 0 0 16px 0; opacity: 0.7;">
+                  ShoutOut, LLC • 1201 N Riverfront Blvd Ste 100, Dallas, TX 75207
+                </p>
+                <div style="margin-top: 8px;">
+                  <a href="https://shoutout.us/creators" style="text-decoration: none; opacity: 0.6;">
+                    <span style="color: rgba(255,255,255,0.4); font-size: 11px; margin-right: 8px; vertical-align: middle;">Powered by</span>
+                    <img src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png" alt="ShoutOut" height="24" style="height: 24px; vertical-align: middle;">
+                  </a>
+                </div>
+              </div>
             </td>
           </tr>
           

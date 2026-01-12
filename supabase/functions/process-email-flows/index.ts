@@ -161,7 +161,7 @@ serve(async (req) => {
             const talentSlug = talent.slug || talent.username || userStatus.source_talent_slug;
             talentProfileLink = `https://shoutout.us/${talentSlug}`;
             
-            // Generate talent photo HTML for email header
+            // Generate talent photo HTML for email header (circular)
             if (talentPhotoUrl) {
               talentPhotoHtml = `<img src="${talentPhotoUrl}" alt="${talentName}" width="100" height="100" style="border-radius: 50%; border: 3px solid rgba(124, 58, 237, 0.5); object-fit: cover;">`;
             } else {
@@ -170,6 +170,16 @@ serve(async (req) => {
               talentPhotoHtml = `<div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; color: white;">${initials}</div>`;
             }
           }
+        }
+        
+        // Generate square talent photo for ShoutOut card (120x120)
+        let talentPhotoSquare = "";
+        if (userStatus.source_talent_slug && talentPhotoUrl) {
+          talentPhotoSquare = `<img src="${talentPhotoUrl}" alt="${talentName}" width="120" height="120" style="width: 120px; height: 120px; object-fit: cover; display: block;">`;
+        } else if (userStatus.source_talent_slug && talentName) {
+          // Fallback: show initials in square format
+          const initials = talentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+          talentPhotoSquare = `<div style="width: 120px; height: 120px; background: linear-gradient(135deg, #7c3aed, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; color: white;">${initials}</div>`;
         }
 
         // Build the email content with variable replacement
@@ -188,6 +198,7 @@ serve(async (req) => {
           .replace(/\{\{talent_name\}\}/g, talentName)
           .replace(/\{\{talent\}\}/g, talentName)
           .replace(/\{\{talent_photo_html\}\}/g, talentPhotoHtml)
+          .replace(/\{\{talent_photo_square\}\}/g, talentPhotoSquare)
           .replace(/\{\{talent_photo_url\}\}/g, talentPhotoUrl)
           .replace(/\{\{talent_profile_link\}\}/g, talentProfileLink)
           .replace(/\{\{unsubscribe_url\}\}/g, unsubscribeUrl)
