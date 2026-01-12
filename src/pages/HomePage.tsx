@@ -411,12 +411,21 @@ const HomePage: React.FC = () => {
               <div className="inline-block">
                 <div className="h-8 w-32 bg-white/10 rounded-full animate-pulse"></div>
               </div>
-              <div className="flex gap-3 overflow-hidden">
-                {[...Array(6)].map((_, cardIndex) => (
-                  <div key={cardIndex} className="flex-shrink-0" style={{ width: '180px' }}>
-                    <SkeletonCard />
-                  </div>
-                ))}
+              <div className="relative">
+                <div className="flex gap-3 overflow-hidden">
+                  {[...Array(6)].map((_, cardIndex) => (
+                    <div key={cardIndex} className="flex-shrink-0" style={{ width: '180px' }}>
+                      <SkeletonCard />
+                    </div>
+                  ))}
+                </div>
+                {/* Right Fade Gradient */}
+                <div 
+                  className="absolute top-0 right-0 bottom-0 w-24 pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(to right, transparent, rgb(15, 15, 26))'
+                  }}
+                ></div>
               </div>
             </div>
           ))}
@@ -470,6 +479,14 @@ const HomePage: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                
+                {/* Right Fade Gradient */}
+                <div 
+                  className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(to right, transparent, rgb(15, 15, 26))'
+                  }}
+                ></div>
               </div>
             </div>
           ))}
