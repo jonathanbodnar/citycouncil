@@ -264,24 +264,48 @@ const HomePage: React.FC = () => {
       t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.bio.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Category filtering logic
-    let matchesCategory = false;
+    return matchesSearch;
+  });
+
+  // Group talent by categories for Netflix-style strips
+  const getTalentsByCategory = () => {
+    const categoryMap = new Map<string, TalentWithUser[]>();
     
-    if (selectedCategory === 'all') {
-      // Show everything (active + coming soon)
-      matchesCategory = true;
-    } else if (selectedCategory === 'coming_soon') {
-      // Show only coming soon
-      matchesCategory = t.is_coming_soon === true;
-    } else {
-      // Show by specific category
-      matchesCategory = t.categories && t.categories.length > 0 
-        ? t.categories.includes(selectedCategory) 
-        : t.category === selectedCategory;
+    // Add "Featured" category for featured talent
+    if (featuredTalent.length > 0) {
+      categoryMap.set('Featured', featuredTalent);
     }
     
-    return matchesSearch && matchesCategory;
-  });
+    // Group talent by categories
+    filteredTalent.forEach(t => {
+      const talentCategories = t.categories && t.categories.length > 0 ? t.categories : [t.category];
+      
+      talentCategories.forEach(cat => {
+        if (!cat) return;
+        const categoryLabel = TALENT_CATEGORIES.find(c => c.key === cat)?.label || cat;
+        
+        if (!categoryMap.has(categoryLabel)) {
+          categoryMap.set(categoryLabel, []);
+        }
+        
+        // Only add if not already in this category (avoid duplicates)
+        const categoryTalent = categoryMap.get(categoryLabel)!;
+        if (!categoryTalent.find(existing => existing.id === t.id)) {
+          categoryTalent.push(t);
+        }
+      });
+    });
+
+    // Add "Coming Soon" category if we have any
+    const comingSoon = filteredTalent.filter(t => t.is_coming_soon);
+    if (comingSoon.length > 0) {
+      categoryMap.set('Coming Soon', comingSoon);
+    }
+    
+    return categoryMap;
+  };
+
+  const categoryStrips = getTalentsByCategory();
 
   // Skeleton card component for loading state
   const SkeletonCard = () => (
@@ -362,25 +386,60 @@ const HomePage: React.FC = () => {
         {/* Category bar temporarily hidden */}
       </div>
 
-      {/* Talent Grid - Show skeleton cards while loading */}
-      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
-        {loading ? (
-          // Show 10 skeleton cards while loading
-          [...Array(10)].map((_, i) => <SkeletonCard key={i} />)
-        ) : (
-          filteredTalent.map(talentProfile => (
-            <TalentCard key={talentProfile.id} talent={talentProfile} />
-          ))
-        )}
-      </div>
-
-      {!loading && filteredTalent.length === 0 && (
+      {/* Netflix-style Category Strips */}
+      {loading ? (
+        // Loading skeleton - show a few category placeholders
+        <div className="space-y-8">
+          {[...Array(3)].map((_, categoryIndex) => (
+            <div key={categoryIndex} className="space-y-4">
+              <div className="h-6 bg-white/10 rounded w-48 animate-pulse"></div>
+              <div className="flex gap-3 overflow-hidden">
+                {[...Array(6)].map((_, cardIndex) => (
+                  <div key={cardIndex} className="flex-shrink-0" style={{ width: '180px' }}>
+                    <SkeletonCard />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : categoryStrips.size === 0 ? (
         <div className="text-center py-12">
           <HeartIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No talent found</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Try adjusting your search or category filter.
+          <h3 className="mt-2 text-sm font-medium text-white">No talent found</h3>
+          <p className="mt-1 text-sm text-white/60">
+            Try adjusting your search.
           </p>
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {Array.from(categoryStrips.entries()).map(([category, talents]) => (
+            <div key={category} className="space-y-4">
+              {/* Category Header */}
+              <h2 className="text-2xl font-bold text-white">{category}</h2>
+              
+              {/* Horizontal Scrolling Strip */}
+              <div className="relative group">
+                <div 
+                  className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                  }}
+                >
+                  {talents.map(talentProfile => (
+                    <div 
+                      key={talentProfile.id} 
+                      className="flex-shrink-0 snap-start"
+                      style={{ width: '180px' }}
+                    >
+                      <TalentCard talent={talentProfile} compact />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
