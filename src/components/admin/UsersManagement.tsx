@@ -14,6 +14,7 @@ interface UserStats {
   newUsersThisMonth: number;
   usersWithPhone: number;
   giveawayUsers: number;
+  sourceBreakdown: { source: string; count: number }[];
 }
 
 interface User {
@@ -61,6 +62,7 @@ const UsersManagement: React.FC = () => {
     newUsersThisMonth: 0,
     usersWithPhone: 0,
     giveawayUsers: 0,
+    sourceBreakdown: [],
   });
 
   useEffect(() => {
@@ -101,6 +103,23 @@ const UsersManagement: React.FC = () => {
         supabase.from('users').select('*', { count: 'exact', head: true }).eq('did_holiday_popup', true),
       ]);
 
+      // Fetch source breakdown
+      const { data: sourceData } = await supabase
+        .from('users')
+        .select('promo_source');
+
+      // Count users by source
+      const sourceCounts: Record<string, number> = {};
+      (sourceData || []).forEach(user => {
+        const source = user.promo_source || 'direct';
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+      });
+
+      // Convert to array and sort by count
+      const sourceBreakdown = Object.entries(sourceCounts)
+        .map(([source, count]) => ({ source, count }))
+        .sort((a, b) => b.count - a.count);
+
       setStats({
         totalUsers: totalUsers || 0,
         totalTalent: totalTalent || 0,
@@ -110,6 +129,7 @@ const UsersManagement: React.FC = () => {
         newUsersThisMonth: newUsersThisMonth || 0,
         usersWithPhone: usersWithPhone || 0,
         giveawayUsers: giveawayUsers || 0,
+        sourceBreakdown,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -469,6 +489,29 @@ const UsersManagement: React.FC = () => {
           <p className="text-xl font-bold text-amber-600">{stats.giveawayUsers.toLocaleString()}</p>
         </div>
       </div>
+
+      {/* Source Statistics */}
+      {stats.sourceBreakdown.length > 0 && (
+        <div className="glass rounded-2xl p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <TagIcon className="h-5 w-5 text-purple-600" />
+            User Sources
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {stats.sourceBreakdown.map(({ source, count }) => (
+              <div key={source} className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-100">
+                <p className="text-xs text-gray-600 mb-1 truncate" title={source}>
+                  {source}
+                </p>
+                <p className="text-xl font-bold text-purple-700">{count.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {((count / stats.totalUsers) * 100).toFixed(1)}%
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="glass rounded-2xl p-4 sm:p-6 space-y-4">
