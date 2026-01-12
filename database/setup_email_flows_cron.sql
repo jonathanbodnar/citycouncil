@@ -5,10 +5,14 @@
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
 
--- Remove existing cron job if it exists
-SELECT cron.unschedule('process-email-flows') WHERE jobid IN (
-  SELECT jobid FROM cron.job WHERE jobname = 'process-email-flows'
-);
+-- Remove existing cron job if it exists (unschedule returns void, so we wrap in DO block)
+DO $$
+BEGIN
+  PERFORM cron.unschedule('process-email-flows');
+EXCEPTION
+  WHEN undefined_object THEN
+    NULL; -- Job doesn't exist, that's fine
+END $$;
 
 -- Create new cron job to run every 5 minutes
 SELECT cron.schedule(
