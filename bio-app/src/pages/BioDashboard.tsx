@@ -3108,10 +3108,13 @@ const BioDashboard: React.FC = () => {
             
             // Always update talent_profiles with the handle fields (this is critical for persistence)
             console.log('Updating talent_profiles with:', updateData, 'for talent ID:', talentProfile?.id);
-            const { error } = await supabase
+            const { data: updateResult, error } = await supabase
               .from('talent_profiles')
               .update(updateData)
-              .eq('id', talentProfile?.id);
+              .eq('id', talentProfile?.id)
+              .select();
+            
+            console.log('Update result:', updateResult, 'error:', error);
             
             if (error) {
               console.error('Failed to update talent profile:', error);
