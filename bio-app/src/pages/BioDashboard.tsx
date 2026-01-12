@@ -3093,6 +3093,15 @@ const BioDashboard: React.FC = () => {
                 rumble_handle: social.handle.replace(/^@/, ''),
                 rumble_type: social.rumble_type || 'c'
               } : prev);
+              
+              // Auto-enable the Rumble card
+              if (bioSettings) {
+                await supabase
+                  .from('bio_settings')
+                  .update({ show_rumble_card: true })
+                  .eq('talent_id', talentProfile?.id);
+                setBioSettings({ ...bioSettings, show_rumble_card: true });
+              }
             }
             
             // Always update talent_profiles with the handle fields (this is critical for persistence)
