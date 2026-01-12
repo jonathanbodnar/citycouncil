@@ -1815,12 +1815,20 @@ const TalentDashboard: React.FC = () => {
                   value={talentProfile.corporate_pricing || ''}
                   onChange={(e) => {
                     const val = e.target.value;
-                    // If empty or 0, set to null to disable corporate pricing
-                    const parsed = val ? parseFloat(val) : 0;
-                    setTalentProfile({ 
-                      ...talentProfile, 
-                      corporate_pricing: (parsed > 0) ? parsed : undefined
-                    });
+                    // If empty or 0, set to undefined (will become NULL in DB)
+                    // This ensures we NEVER send 0 to the database
+                    if (!val || val === '0' || parseFloat(val) <= 0) {
+                      setTalentProfile({ 
+                        ...talentProfile, 
+                        corporate_pricing: undefined
+                      });
+                    } else {
+                      const parsed = parseFloat(val);
+                      setTalentProfile({ 
+                        ...talentProfile, 
+                        corporate_pricing: parsed
+                      });
+                    }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Leave empty to disable"
@@ -1919,13 +1927,17 @@ const TalentDashboard: React.FC = () => {
                 onClick={async () => {
                   try {
                     // Update talent profile
+                    // Ensure corporate_pricing is either NULL or > 0 (never 0)
+                    const corporatePricing = talentProfile.corporate_pricing;
+                    const safeCorporatePricing = (corporatePricing && corporatePricing > 0) ? corporatePricing : null;
+                    
                     const { error: profileError } = await supabase
                       .from('talent_profiles')
                       .update({
                         full_name: talentProfile.full_name,
                         bio: talentProfile.bio,
                         pricing: talentProfile.pricing,
-                        corporate_pricing: talentProfile.corporate_pricing || null,
+                        corporate_pricing: safeCorporatePricing,
                         fulfillment_time_hours: talentProfile.fulfillment_time_hours,
                       })
                       .eq('id', talentProfile.id);
