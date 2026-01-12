@@ -981,7 +981,9 @@ const TalentDashboard: React.FC = () => {
                             </button>
                           </>
                         ) : null}
-                        {(order.status === 'pending' || order.status === 'in_progress') && (
+                        {/* Accept Order button - only show if NOT a corporate order awaiting approval */}
+                        {(order.status === 'pending' || order.status === 'in_progress') && 
+                         !(order.is_corporate_order && order.approval_status === 'pending') && (
                           <button
                             onClick={() => handleAcceptOrder(order.id)}
                             className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 shadow-modern transition-all duration-300"
