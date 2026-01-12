@@ -9,6 +9,10 @@ SELECT
   COUNT(CASE WHEN allow_corporate_pricing = TRUE THEN 1 END) as with_allow_flag
 FROM talent_profiles;
 
+-- First, drop the NOT NULL constraint if it exists (allows NULL values)
+ALTER TABLE talent_profiles 
+  ALTER COLUMN corporate_pricing DROP NOT NULL;
+
 -- Temporarily disable RLS to ensure UPDATE works
 ALTER TABLE talent_profiles DISABLE ROW LEVEL SECURITY;
 
@@ -17,8 +21,7 @@ UPDATE talent_profiles
 SET 
   corporate_pricing = NULL,
   allow_corporate_pricing = FALSE,
-  updated_at = NOW()
-WHERE corporate_pricing IS NOT NULL OR allow_corporate_pricing = TRUE;
+  updated_at = NOW();
 
 -- Re-enable RLS
 ALTER TABLE talent_profiles ENABLE ROW LEVEL SECURITY;
