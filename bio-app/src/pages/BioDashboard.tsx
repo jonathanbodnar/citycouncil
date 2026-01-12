@@ -3034,7 +3034,7 @@ const BioDashboard: React.FC = () => {
         <AddSocialModal
           onClose={() => setShowAddSocialModal(false)}
           onAdd={async (social) => {
-            // First, insert into social_accounts table
+            // Try to insert into social_accounts table first
             const { data: insertedSocial, error: insertError } = await supabase
               .from('social_accounts')
               .insert({
@@ -3045,22 +3045,27 @@ const BioDashboard: React.FC = () => {
               .select()
               .single();
             
+            let socialId: string;
+            
             if (insertError) {
-              console.error('Failed to insert social account:', insertError);
-              toast.error('Failed to add social link');
-              return;
+              console.warn('Could not insert into social_accounts (likely RLS), will use profile fields:', insertError);
+              // Use a temporary ID if insert fails (due to RLS)
+              socialId = `profile-${social.platform}`;
+            } else {
+              // Use the real DB ID if insert succeeded
+              socialId = insertedSocial.id;
             }
             
-            // Add to local state with the real DB ID
+            // Add to local state
             const newSocial: SocialAccount = {
-              id: insertedSocial.id,
+              id: socialId,
               platform: social.platform as SocialAccount['platform'],
               handle: social.handle,
             };
             const updated = [...socialLinks, newSocial];
             setSocialLinks(updated);
             
-            // Build the update object for talent_profiles
+            // Build the update object for talent_profiles (this is the important part)
             const updateData: Record<string, unknown> = {};
             
             // If adding YouTube, also set youtube_handle for the card feature
@@ -3090,23 +3095,21 @@ const BioDashboard: React.FC = () => {
               } : prev);
             }
             
-            // Update talent_profiles if we have any profile-level fields to update
-            if (Object.keys(updateData).length > 0) {
-              console.log('Updating talent_profiles with:', updateData, 'for talent ID:', talentProfile?.id);
-              const { error } = await supabase
-                .from('talent_profiles')
-                .update(updateData)
-                .eq('id', talentProfile?.id);
-              
-              if (error) {
-                console.error('Failed to update talent profile:', error);
-                toast.error('Failed to update profile');
-              } else {
-                console.log('Talent profile updated successfully');
-              }
+            // Always update talent_profiles with the handle fields (this is critical for persistence)
+            console.log('Updating talent_profiles with:', updateData, 'for talent ID:', talentProfile?.id);
+            const { error } = await supabase
+              .from('talent_profiles')
+              .update(updateData)
+              .eq('id', talentProfile?.id);
+            
+            if (error) {
+              console.error('Failed to update talent profile:', error);
+              toast.error('Failed to save social link');
+            } else {
+              console.log('Talent profile updated successfully');
+              toast.success('Social link added!');
             }
             
-            toast.success('Social link added!');
             setTimeout(refreshPreview, 500);
             setShowAddSocialModal(false);
           }}
