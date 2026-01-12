@@ -493,22 +493,29 @@ const UsersManagement: React.FC = () => {
       {/* Source Statistics */}
       {stats.sourceBreakdown.length > 0 && (
         <div className="glass rounded-2xl p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <TagIcon className="h-5 w-5 text-purple-600" />
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <TagIcon className="h-4 w-4 text-purple-600" />
             User Sources
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {stats.sourceBreakdown.map(({ source, count }) => (
-              <div key={source} className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-100">
-                <p className="text-xs text-gray-600 mb-1 truncate" title={source}>
-                  {source}
-                </p>
-                <p className="text-xl font-bold text-purple-700">{count.toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {((count / stats.totalUsers) * 100).toFixed(1)}%
-                </p>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 px-3 font-semibold text-gray-700">Source</th>
+                  <th className="text-right py-2 px-3 font-semibold text-gray-700">Users</th>
+                  <th className="text-right py-2 px-3 font-semibold text-gray-700">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.sourceBreakdown.map(({ source, count }, index) => (
+                  <tr key={source} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="py-2 px-3 text-gray-900 font-medium">{source}</td>
+                    <td className="py-2 px-3 text-right text-purple-700 font-semibold">{count.toLocaleString()}</td>
+                    <td className="py-2 px-3 text-right text-gray-600">{((count / stats.totalUsers) * 100).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
