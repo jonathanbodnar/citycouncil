@@ -26,7 +26,7 @@ const PRIZES: Record<Prize, PrizeInfo> = {
     label: 'Free ShoutOut',
     code: 'WINNER100',
     shortLabel: 'Free ShoutOut',
-    textMessage: 'a FREE personalized video ShoutOut (up to $100 value) from your favorite free-speech influencer'
+    textMessage: 'a FREE $100 personalized video ShoutOut from your favorite free-speech influencer'
   },
   '15_OFF': {
     label: '15% Off',
