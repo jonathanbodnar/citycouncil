@@ -816,6 +816,38 @@ const TalentDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Corporate Pricing Banner */}
+      {showCorporateBanner && talentProfile && talentProfile.corporate_pricing == null && (
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-purple-500/20">
+                <BanknotesIcon className="h-6 w-6 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Corporate event ShoutOut pricing is now live!</h3>
+                <p className="text-sm text-gray-300">Set a custom price for business/corporate event ShoutOuts</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowCorporateModal(true)}
+                className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg transition-colors"
+              >
+                Set Corporate Price
+              </button>
+              <button
+                onClick={() => setShowCorporateBanner(false)}
+                className="p-2 text-gray-400 hover:text-white transition-colors"
+                title="Dismiss"
+              >
+                <XCircleIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab Navigation - Hidden on Mobile */}
       <div className="mb-8 hidden md:block">
         <div className="border-b border-gray-200">
@@ -1495,37 +1527,6 @@ const TalentDashboard: React.FC = () => {
       {/* Analytics Tab */}
       {activeTab === 'analytics' && talentProfile && (
         <div className="space-y-6">
-          {/* Corporate Pricing Banner */}
-          {showCorporateBanner && talentProfile?.corporate_pricing == null && (
-            <div className="glass border border-purple-500/30 rounded-2xl p-6 bg-gradient-to-r from-purple-500/10 to-blue-500/10 relative">
-              <button
-                onClick={() => setShowCorporateBanner(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <XCircleIcon className="h-6 w-6" />
-              </button>
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-purple-100">
-                  <BanknotesIcon className="h-8 w-8 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">
-                    Corporate event ShoutOut pricing is now live, set your price now!
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Set a custom price for business/corporate event ShoutOuts
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowCorporateModal(true)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 shadow-modern transition-all duration-300"
-                >
-                  Set Corporate Price
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="glass rounded-2xl shadow-modern p-6">
