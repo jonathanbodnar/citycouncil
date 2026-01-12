@@ -710,9 +710,9 @@ const BioPage: React.FC = () => {
   };
 
   // Fetch Rumble channel data - show cache immediately, one visitor per 15 min triggers refresh
-  const fetchRumbleData = async (talentId: string, rumbleHandle: string, rumbleType?: 'user' | 'channel') => {
+  const fetchRumbleData = async (talentId: string, rumbleHandle: string, rumbleType?: 'c' | 'user') => {
     const cleanHandle = rumbleHandle.replace(/^@/, '');
-    const urlPrefix = rumbleType === 'channel' ? 'c' : 'user';
+    const urlPrefix = rumbleType || 'c'; // 'c' for channel (default), 'user' for user profile
     const defaultChannelUrl = `https://rumble.com/${urlPrefix}/${cleanHandle}`;
     
     try {
