@@ -318,7 +318,33 @@ const HomePage: React.FC = () => {
       }
     });
     
-    return filteredMap;
+    // Reorder categories to avoid consecutive duplicates
+    // Track IDs shown in previous category and move them to the end of current category
+    const reorderedMap = new Map<string, TalentWithUser[]>();
+    let previousCategoryIds = new Set<string>();
+    
+    Array.from(filteredMap.entries()).forEach(([category, talents]) => {
+      // Separate talents into two groups: appeared above (move to back) and new (keep at front)
+      const talentsInPrevious: TalentWithUser[] = [];
+      const talentsNotInPrevious: TalentWithUser[] = [];
+      
+      talents.forEach(t => {
+        if (previousCategoryIds.has(t.id)) {
+          talentsInPrevious.push(t);
+        } else {
+          talentsNotInPrevious.push(t);
+        }
+      });
+      
+      // Reorder: new talents first, then previously shown talents
+      const reorderedTalents = [...talentsNotInPrevious, ...talentsInPrevious];
+      reorderedMap.set(category, reorderedTalents);
+      
+      // Update previousCategoryIds for next iteration
+      previousCategoryIds = new Set(talents.map(t => t.id));
+    });
+    
+    return reorderedMap;
   };
 
   const categoryStrips = getTalentsByCategory();
