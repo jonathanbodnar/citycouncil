@@ -1805,7 +1805,13 @@ const TalentDashboard: React.FC = () => {
                   type="number"
                   step="0.01"
                   value={talentProfile.corporate_pricing || ''}
-                  onChange={(e) => setTalentProfile({ ...talentProfile, corporate_pricing: parseFloat(e.target.value) || null })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTalentProfile({ 
+                      ...talentProfile, 
+                      corporate_pricing: val ? parseFloat(val) : undefined 
+                    });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Leave empty to disable"
                 />
