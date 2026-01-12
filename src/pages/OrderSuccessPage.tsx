@@ -24,6 +24,16 @@ const OrderSuccessPage: React.FC = () => {
   const [mention2, setMention2] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [detailsSubmitted, setDetailsSubmitted] = useState(false);
+  
+  // Corporate event form state
+  const [eventName, setEventName] = useState('');
+  const [siteLink, setSiteLink] = useState('');
+  const [keyPoint1, setKeyPoint1] = useState('');
+  const [keyPoint2, setKeyPoint2] = useState('');
+  const [keyPoint3, setKeyPoint3] = useState('');
+  const [keyPoint4, setKeyPoint4] = useState('');
+  const [keyPoint5, setKeyPoint5] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
 
   // Get order details from URL params
   const orderId = searchParams.get('order_id');
@@ -31,6 +41,9 @@ const OrderSuccessPage: React.FC = () => {
   const talentName = searchParams.get('talent');
   const deliveryHours = searchParams.get('delivery_hours');
   const occasion = searchParams.get('occasion');
+  
+  // Check if this is a corporate order
+  const isCorporateOrder = occasion === 'corporate';
 
   // Calculate order amount for display and FB pixel
   const orderAmount = amount ? parseFloat(amount) : 0;
@@ -48,40 +61,92 @@ const OrderSuccessPage: React.FC = () => {
 
   // Submit order details
   const handleSubmitDetails = async () => {
-    if (!recipientName.trim()) {
-      toast.error('Please enter who this video is for');
-      return;
-    }
-    if (!mention1.trim()) {
-      toast.error('Please add at least one thing to mention');
-      return;
-    }
+    if (isCorporateOrder) {
+      // Validate corporate fields
+      if (!eventName.trim()) {
+        toast.error('Please enter the event name');
+        return;
+      }
+      if (!keyPoint1.trim()) {
+        toast.error('Please add at least one key point to mention');
+        return;
+      }
+      
+      setSubmitting(true);
+      try {
+        // Combine key points and notes into request_details
+        const keyPoints = [keyPoint1, keyPoint2, keyPoint3, keyPoint4, keyPoint5]
+          .map(kp => kp.trim())
+          .filter(Boolean)
+          .map((kp, i) => `${i + 1}. ${kp}`)
+          .join('\n');
+        
+        const requestDetails = [
+          `Event: ${eventName.trim()}`,
+          siteLink.trim() ? `Website: ${siteLink.trim()}` : '',
+          '',
+          'Key Points:',
+          keyPoints,
+          additionalNotes.trim() ? `\nAdditional Notes:\n${additionalNotes.trim()}` : ''
+        ].filter(Boolean).join('\n');
 
-    setSubmitting(true);
-    try {
-      // Combine mentions into request_details for storage
-      const mentions = [mention1.trim(), mention2.trim()].filter(Boolean);
-      const requestDetails = mentions.join('\n');
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            recipient_name: `Corporate Event: ${eventName.trim()}`,
+            request_details: requestDetails,
+            special_instructions: additionalNotes.trim() || null,
+            details_submitted: true
+          })
+          .eq('id', orderId);
 
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          recipient_name: recipientName.trim(),
-          request_details: requestDetails,
-          special_instructions: null,
-          details_submitted: true
-        })
-        .eq('id', orderId);
+        if (error) throw error;
 
-      if (error) throw error;
+        setDetailsSubmitted(true);
+        toast.success('Event details submitted! The talent will start working on your video.');
+      } catch (err) {
+        console.error('Error submitting details:', err);
+        toast.error('Failed to submit details. Please try again.');
+      } finally {
+        setSubmitting(false);
+      }
+    } else {
+      // Regular order validation
+      if (!recipientName.trim()) {
+        toast.error('Please enter who this video is for');
+        return;
+      }
+      if (!mention1.trim()) {
+        toast.error('Please add at least one thing to mention');
+        return;
+      }
 
-      setDetailsSubmitted(true);
-      toast.success('Order details submitted! The talent will start working on your video.');
-    } catch (err) {
-      console.error('Error submitting details:', err);
-      toast.error('Failed to submit details. Please try again.');
-    } finally {
-      setSubmitting(false);
+      setSubmitting(true);
+      try {
+        // Combine mentions into request_details for storage
+        const mentions = [mention1.trim(), mention2.trim()].filter(Boolean);
+        const requestDetails = mentions.join('\n');
+
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            recipient_name: recipientName.trim(),
+            request_details: requestDetails,
+            special_instructions: null,
+            details_submitted: true
+          })
+          .eq('id', orderId);
+
+        if (error) throw error;
+
+        setDetailsSubmitted(true);
+        toast.success('Order details submitted! The talent will start working on your video.');
+      } catch (err) {
+        console.error('Error submitting details:', err);
+        toast.error('Failed to submit details. Please try again.');
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -142,60 +207,141 @@ const OrderSuccessPage: React.FC = () => {
               {/* Details Form */}
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-white mb-3 text-center">
-                  Now tell {talentName || 'the talent'} what you want!
+                  {isCorporateOrder 
+                    ? `Now tell ${talentName || 'the talent'} about your event!`
+                    : `Now tell ${talentName || 'the talent'} what you want!`
+                  }
                 </h2>
                 
-                <div className="space-y-4">
-                  {/* Recipient Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Who is this video for? <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="Enter the recipient's name"
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                {isCorporateOrder ? (
+                  /* Corporate Event Form */
+                  <div className="space-y-4">
+                    {/* Event Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        What's the event? <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={eventName}
+                        onChange={(e) => setEventName(e.target.value)}
+                        placeholder="e.g., Annual Company Retreat, Product Launch"
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
 
-                  {/* Things to Mention */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      What would you like {talentName || 'them'} to mention? <span className="text-red-400">*</span>
-                    </label>
-                    <p className="text-xs text-gray-400 mb-2">
-                      Add 1-2 things you'd like included in your ShoutOut
-                    </p>
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">1.</span>
-                        <input
-                          type="text"
-                          value={mention1}
-                          onChange={(e) => setMention1(e.target.value.slice(0, 160))}
-                          placeholder="e.g., Wish them a happy birthday"
-                          className="w-full pl-8 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          maxLength={160}
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{mention1.length}/160</span>
+                    {/* Site Link */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Website or Event Link
+                      </label>
+                      <input
+                        type="url"
+                        value={siteLink}
+                        onChange={(e) => setSiteLink(e.target.value)}
+                        placeholder="https://example.com"
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* 5 Key Things to Say */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        5 Key Things to Mention <span className="text-red-400">* (at least 1)</span>
+                      </label>
+                      <p className="text-xs text-gray-400 mb-2">
+                        What should {talentName || 'they'} highlight in the video?
+                      </p>
+                      <div className="space-y-2">
+                        {[1, 2, 3, 4, 5].map((num) => {
+                          const value = num === 1 ? keyPoint1 : num === 2 ? keyPoint2 : num === 3 ? keyPoint3 : num === 4 ? keyPoint4 : keyPoint5;
+                          const setValue = num === 1 ? setKeyPoint1 : num === 2 ? setKeyPoint2 : num === 3 ? setKeyPoint3 : num === 4 ? setKeyPoint4 : setKeyPoint5;
+                          return (
+                            <div key={num} className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{num}.</span>
+                              <input
+                                type="text"
+                                value={value}
+                                onChange={(e) => setValue(e.target.value.slice(0, 160))}
+                                placeholder={num === 1 ? "e.g., Announce new product launch" : `Key point ${num}`}
+                                className="w-full pl-8 pr-16 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                maxLength={160}
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{value.length}/160</span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">2.</span>
-                        <input
-                          type="text"
-                          value={mention2}
-                          onChange={(e) => setMention2(e.target.value.slice(0, 160))}
-                          placeholder="e.g., They're a huge fan of your podcast (optional)"
-                          className="w-full pl-8 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          maxLength={160}
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{mention2.length}/160</span>
+                    </div>
+
+                    {/* Additional Notes */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Additional Information
+                      </label>
+                      <textarea
+                        value={additionalNotes}
+                        onChange={(e) => setAdditionalNotes(e.target.value)}
+                        placeholder="Any other details or context..."
+                        rows={3}
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* Regular Order Form */
+                  <div className="space-y-4">
+                    {/* Recipient Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Who is this video for? <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={recipientName}
+                        onChange={(e) => setRecipientName(e.target.value)}
+                        placeholder="Enter the recipient's name"
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* Things to Mention */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        What would you like {talentName || 'them'} to mention? <span className="text-red-400">*</span>
+                      </label>
+                      <p className="text-xs text-gray-400 mb-2">
+                        Add 1-2 things you'd like included in your ShoutOut
+                      </p>
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">1.</span>
+                          <input
+                            type="text"
+                            value={mention1}
+                            onChange={(e) => setMention1(e.target.value.slice(0, 160))}
+                            placeholder="e.g., Wish them a happy birthday"
+                            className="w-full pl-8 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            maxLength={160}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{mention1.length}/160</span>
+                        </div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">2.</span>
+                          <input
+                            type="text"
+                            value={mention2}
+                            onChange={(e) => setMention2(e.target.value.slice(0, 160))}
+                            placeholder="e.g., They're a huge fan of your podcast (optional)"
+                            className="w-full pl-8 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            maxLength={160}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{mention2.length}/160</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Submit Button */}
