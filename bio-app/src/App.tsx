@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import BioPage from './pages/BioPage';
@@ -8,14 +8,6 @@ import CollabOrderPage from './pages/CollabOrderPage';
 import UnsubscribePage from './pages/UnsubscribePage';
 
 function App() {
-  // Redirect non-www to www
-  useEffect(() => {
-    const hostname = window.location.hostname;
-    if (hostname === 'shouts.bio') {
-      window.location.href = window.location.href.replace('shouts.bio', 'www.shouts.bio');
-    }
-  }, []);
-
   return (
     <Router>
       <Toaster 
