@@ -1936,10 +1936,10 @@ const TalentDashboard: React.FC = () => {
             <LinkIcon className="h-16 w-16 text-blue-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">ShoutOut Bio</h2>
             <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Create your personalized link-in-bio page at bio.shoutout.us/{talentProfile?.username || 'yourname'}
+              Create your personalized link-in-bio page at shouts.bio/{talentProfile?.username || 'yourname'}
             </p>
             <a
-              href={`https://bio.shoutout.us/dashboard?token=${encodeURIComponent(user?.id || '')}`}
+              href={`https://shouts.bio/dashboard?token=${encodeURIComponent(user?.id || '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
@@ -1948,7 +1948,7 @@ const TalentDashboard: React.FC = () => {
               Open Bio Dashboard
             </a>
             <p className="text-sm text-gray-500 mt-4">
-              Opens in a new tab at bio.shoutout.us
+              Opens in a new tab at shouts.bio
             </p>
           </div>
         </div>
