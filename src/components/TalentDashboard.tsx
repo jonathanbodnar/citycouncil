@@ -78,6 +78,9 @@ const TalentDashboard: React.FC = () => {
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
   const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
+  const [showCorporateBanner, setShowCorporateBanner] = useState(true);
+  const [showCorporateModal, setShowCorporateModal] = useState(false);
+  const [corporatePrice, setCorporatePrice] = useState('');
 
   // Fetch Christmas mode setting
   useEffect(() => {
@@ -576,6 +579,35 @@ const TalentDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error approving order:', error);
       toast.error('Failed to approve order');
+    }
+  };
+
+  const saveCorporatePricing = async () => {
+    if (!talentProfile) return;
+    const price = parseFloat(corporatePrice);
+    if (isNaN(price) || price <= 0) {
+      toast.error('Please enter a valid corporate price greater than 0.');
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({
+          corporate_pricing: price,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', talentProfile.id);
+
+      if (error) throw error;
+
+      setTalentProfile({ ...talentProfile, corporate_pricing: price });
+      setShowCorporateModal(false);
+      setShowCorporateBanner(false); // Hide banner after setting price
+      toast.success('Corporate pricing set successfully!');
+      fetchTalentData(); // Refresh data
+    } catch (error) {
+      console.error('Error saving corporate pricing:', error);
+      toast.error('Failed to save corporate pricing.');
     }
   };
 
@@ -1463,6 +1495,37 @@ const TalentDashboard: React.FC = () => {
       {/* Analytics Tab */}
       {activeTab === 'analytics' && talentProfile && (
         <div className="space-y-6">
+          {/* Corporate Pricing Banner */}
+          {showCorporateBanner && talentProfile?.corporate_pricing == null && (
+            <div className="glass border border-purple-500/30 rounded-2xl p-6 bg-gradient-to-r from-purple-500/10 to-blue-500/10 relative">
+              <button
+                onClick={() => setShowCorporateBanner(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XCircleIcon className="h-6 w-6" />
+              </button>
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-purple-100">
+                  <BanknotesIcon className="h-8 w-8 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">
+                    Corporate event ShoutOut pricing is now live, set your price now!
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Set a custom price for business/corporate event ShoutOuts
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowCorporateModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 shadow-modern transition-all duration-300"
+                >
+                  Set Corporate Price
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="glass rounded-2xl shadow-modern p-6">
@@ -1723,7 +1786,7 @@ const TalentDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pricing ($)
+                  Personal Pricing ($)
                 </label>
                 <input
                   type="number"
@@ -1732,9 +1795,21 @@ const TalentDashboard: React.FC = () => {
                   onChange={(e) => setTalentProfile({ ...talentProfile, pricing: parseFloat(e.target.value) || 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  For personal orders. Set corporate pricing in <a href="/bio-dashboard" className="text-purple-600 hover:text-purple-700 font-medium">Bio Dashboard</a>
-                </p>
+                <p className="text-xs text-gray-500 mt-1">For individual customers</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Corporate Pricing ($)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={talentProfile.corporate_pricing || ''}
+                  onChange={(e) => setTalentProfile({ ...talentProfile, corporate_pricing: parseFloat(e.target.value) || null })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Leave empty to disable"
+                />
+                <p className="text-xs text-gray-500 mt-1">For business customers (optional)</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1834,6 +1909,7 @@ const TalentDashboard: React.FC = () => {
                         full_name: talentProfile.full_name,
                         bio: talentProfile.bio,
                         pricing: talentProfile.pricing,
+                        corporate_pricing: talentProfile.corporate_pricing,
                         fulfillment_time_hours: talentProfile.fulfillment_time_hours,
                       })
                       .eq('id', talentProfile.id);
@@ -1938,6 +2014,45 @@ const TalentDashboard: React.FC = () => {
             <p className="text-sm text-gray-500 mt-4">
               Opens in a new tab at bio.shoutout.us
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Corporate Pricing Modal */}
+      {showCorporateModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass border border-white/20 rounded-2xl p-8 max-w-md w-full">
+            <h3 className="text-2xl font-bold text-white mb-4">Set Corporate Pricing</h3>
+            <p className="text-gray-400 mb-6">
+              Set your custom price for business/corporate event ShoutOuts
+            </p>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Corporate Price ($)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={corporatePrice}
+                onChange={(e) => setCorporatePrice(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter price (e.g., 150)"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCorporateModal(false)}
+                className="flex-1 px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-all duration-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveCorporatePricing}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 shadow-modern transition-all duration-300"
+              >
+                Save Price
+              </button>
+            </div>
           </div>
         </div>
       )}
