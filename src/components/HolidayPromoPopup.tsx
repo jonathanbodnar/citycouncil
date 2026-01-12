@@ -768,14 +768,14 @@ const HolidayPromoPopup: React.FC = () => {
 
                   <button
                     type="submit"
-                    disabled={loading || verifying}
+                    disabled={loading}
                     className="w-full py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       background: 'linear-gradient(to right, #facc15, #f59e0b)',
                       color: '#1f2937'
                     }}
                   >
-                    {verifying ? 'Verifying phone...' : loading ? 'Checking...' : 'See what I won 🎁'}
+                    {loading ? 'Checking...' : 'See what I won 🎁'}
                   </button>
                   
                   <p className="text-white/40 text-xs text-center mt-3">
