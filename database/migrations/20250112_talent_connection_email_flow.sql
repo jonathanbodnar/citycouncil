@@ -113,19 +113,21 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
                     <td>
                       <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 4px;">Get a Personalized Video ShoutOut</div>
                       <div style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 16px;">From top free-speech personalities — starting at $47</div>
-                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                        <!-- Placeholder for talent avatars - will show as colored circles -->
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block; text-align: center; line-height: 36px;">
-                          <span style="color: #ffffff; font-size: 10px; font-weight: 600;">+42</span>
-                        </div>
-                      </div>
+                      <!-- Talent avatars table -->
+                      <table role="presentation" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); text-align: center; vertical-align: middle;">
+                            <span style="color: #ffffff; font-size: 10px; font-weight: 600;">+42</span>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>
@@ -268,19 +270,21 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
                     <td>
                       <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 4px;">Get a Personalized Video ShoutOut</div>
                       <div style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 16px;">From top free-speech personalities — starting at $47</div>
-                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                        <!-- Placeholder for talent avatars - will show as colored circles -->
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block; text-align: center; line-height: 36px;">
-                          <span style="color: #ffffff; font-size: 10px; font-weight: 600;">+42</span>
-                        </div>
-                      </div>
+                      <!-- Talent avatars table -->
+                      <table role="presentation" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding-right: 4px;"></td>
+                          <td width="40" height="40" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); text-align: center; vertical-align: middle;">
+                            <span style="color: #ffffff; font-size: 10px; font-weight: 600;">+42</span>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>
