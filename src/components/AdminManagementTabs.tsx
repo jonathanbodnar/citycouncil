@@ -89,8 +89,8 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         ] = await Promise.all([
           // Only fetch order fields we actually need for calculations
           supabase.from('orders').select('id, status, amount, is_corporate_order, approval_status, created_at, updated_at, approved_at, user_id, talent_id'),
-          // Just count users instead of fetching all data
-          supabase.from('users').select('*', { count: 'exact', head: true }).eq('user_type', 'user'),
+          // Count all users (all time, all types)
+          supabase.from('users').select('*', { count: 'exact', head: true }),
           // Fetch talent with only needed fields
           supabase.from('talent_profiles').select(`
             id, pricing, category, is_active, is_verified, is_participating_in_promotion, average_rating, total_orders, temp_full_name, temp_avatar_url,
