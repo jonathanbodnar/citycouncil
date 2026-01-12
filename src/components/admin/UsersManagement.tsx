@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, UsersIcon, UserPlusIcon, StarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, CalendarIcon, TagIcon, ArrowDownTrayIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, UsersIcon, UserPlusIcon, StarIcon, ShieldCheckIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 const USERS_PER_PAGE = 25;
@@ -53,6 +53,7 @@ const UsersManagement: React.FC = () => {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [sourcesExpanded, setSourcesExpanded] = useState(false);
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
     totalTalent: 0,
@@ -493,10 +494,28 @@ const UsersManagement: React.FC = () => {
       {/* Source Statistics */}
       {stats.sourceBreakdown.length > 0 && (
         <div className="glass rounded-2xl p-4 sm:p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <TagIcon className="h-4 w-4 text-purple-600" />
-            User Sources
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <TagIcon className="h-4 w-4 text-purple-600" />
+              User Sources
+            </h3>
+            {stats.sourceBreakdown.length > 5 && (
+              <button
+                onClick={() => setSourcesExpanded(!sourcesExpanded)}
+                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              >
+                {sourcesExpanded ? (
+                  <>
+                    Show Less <ChevronUpIcon className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Show All ({stats.sourceBreakdown.length}) <ChevronDownIcon className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -507,7 +526,7 @@ const UsersManagement: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {stats.sourceBreakdown.map(({ source, count }, index) => (
+                {(sourcesExpanded ? stats.sourceBreakdown : stats.sourceBreakdown.slice(0, 5)).map(({ source, count }, index) => (
                   <tr key={source} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
                     <td className="py-2 px-3 text-gray-900 font-medium">{source}</td>
                     <td className="py-2 px-3 text-right text-purple-700 font-semibold">{count.toLocaleString()}</td>
