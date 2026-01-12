@@ -1536,6 +1536,21 @@ const EmailFlowManagement: React.FC = () => {
 
                 {/* Email Preview - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: '#0f172a' }}>
+                  {editorMode === 'code' && messageForm.html_content ? (
+                    /* Render actual HTML in iframe when in code mode */
+                    <div className="max-w-lg mx-auto">
+                      <iframe
+                        srcDoc={messageForm.html_content}
+                        title="Email Preview"
+                        className="w-full rounded-lg border border-white/10"
+                        style={{ height: '600px', backgroundColor: 'white' }}
+                        sandbox="allow-same-origin"
+                      />
+                      <p className="text-center text-gray-500 text-xs mt-3">
+                        Actual HTML preview • Variables like {'{{talent}}'} will be replaced when sent
+                      </p>
+                    </div>
+                  ) : (
                   <div className="max-w-md mx-auto pb-8">
                     {/* Logo */}
                     <div className="text-center mb-6">
@@ -1674,6 +1689,7 @@ const EmailFlowManagement: React.FC = () => {
                       </p>
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
             </div>
