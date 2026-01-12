@@ -543,11 +543,24 @@ const HolidayPromoPopup: React.FC = () => {
         console.error('Error sending SMS:', smsError);
       }
 
-      // Enroll user in SMS flow system for 72-hour follow-up
+      // Enroll user in SMS flows
       try {
         const now = new Date();
+        const fiveSecondsLater = new Date(now.getTime() + (5 * 1000)); // 5 seconds delay
         const seventyTwoHoursLater = new Date(now.getTime() + (72 * 60 * 60 * 1000));
         
+        // Enroll in giveaway_welcome flow (immediate second message)
+        await supabase.from('user_sms_flow_status').upsert({
+          phone: formattedPhone,
+          flow_id: '11111111-1111-1111-1111-111111111111', // giveaway_welcome flow ID
+          current_message_order: 0,
+          next_message_scheduled_at: fiveSecondsLater.toISOString(),
+          flow_started_at: now.toISOString(),
+          coupon_code: prizeInfo.code,
+          coupon_used: false,
+          is_paused: false,
+        }, { onConflict: 'phone,flow_id' });
+
         // Enroll in 72-hour follow-up flow (giveaway_followup)
         await supabase.from('user_sms_flow_status').upsert({
           phone: formattedPhone,
@@ -560,9 +573,23 @@ const HolidayPromoPopup: React.FC = () => {
           is_paused: false,
         }, { onConflict: 'phone,flow_id' });
 
-        console.log('User enrolled in 72-hour follow-up flow');
+        console.log('User enrolled in SMS flows');
+        
+        // Trigger SMS flow processing immediately to send the welcome message
+        try {
+          await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/process-sms-flows`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+            },
+          });
+          console.log('SMS flow processing triggered');
+        } catch (triggerError) {
+          console.error('Error triggering SMS flow:', triggerError);
+        }
       } catch (flowError) {
-        console.error('Error enrolling in SMS flow:', flowError);
+        console.error('Error enrolling in SMS flows:', flowError);
         // Don't fail the main flow if this fails
       }
 
