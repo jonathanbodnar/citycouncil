@@ -104,6 +104,35 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
             </td>
           </tr>
           
+          <!-- General ShoutOut Promo Card -->
+          <tr>
+            <td style="padding-top: 16px;">
+              <a href="https://shoutout.us?utm=talent_connection" target="_blank" style="text-decoration: none; display: block;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #7c3aed 0%, #c026d3 50%, #f43f5e 100%); border-radius: 16px; padding: 24px;">
+                  <tr>
+                    <td>
+                      <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 4px;">Get a Personalized Video ShoutOut</div>
+                      <div style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 16px;">From top free-speech personalities — starting at $47</div>
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                        <!-- Placeholder for talent avatars - will show as colored circles -->
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block; text-align: center; line-height: 36px;">
+                          <span style="color: #ffffff; font-size: 10px; font-weight: 600;">+42</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+          
           <!-- Footer -->
           <tr>
             <td style="padding-top: 32px; text-align: center;">
@@ -158,6 +187,13 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px;">
+          
+          <!-- ShoutOut Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <img src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logowhite.png" alt="ShoutOut" height="40" style="height: 40px;">
+            </td>
+          </tr>
           
           <!-- Header with Talent Photo (centered like talent updates) -->
           <tr>
@@ -216,6 +252,35 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
                     <td style="padding: 20px; vertical-align: middle; background-color: transparent;">
                       <div style="color: #93c5fd; font-size: 15px; font-weight: 600;">Get a Personalized Video Shoutout</div>
                       <div style="color: #ffffff; font-size: 14px; margin-top: 6px;">From {{talent}}</div>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+          
+          <!-- General ShoutOut Promo Card -->
+          <tr>
+            <td style="padding-top: 16px;">
+              <a href="https://shoutout.us?utm=talent_connection_followup" target="_blank" style="text-decoration: none; display: block;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #7c3aed 0%, #c026d3 50%, #f43f5e 100%); border-radius: 16px; padding: 24px;">
+                  <tr>
+                    <td>
+                      <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 4px;">Get a Personalized Video ShoutOut</div>
+                      <div style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 16px;">From top free-speech personalities — starting at $47</div>
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                        <!-- Placeholder for talent avatars - will show as colored circles -->
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block;"></div>
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: inline-block; text-align: center; line-height: 36px;">
+                          <span style="color: #ffffff; font-size: 10px; font-weight: 600;">+42</span>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 </table>
