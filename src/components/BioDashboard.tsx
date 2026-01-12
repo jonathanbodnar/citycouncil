@@ -82,6 +82,11 @@ const BioDashboard: React.FC = () => {
   const [newLinkType, setNewLinkType] = useState<'basic' | 'grid' | 'newsletter' | 'sponsor'>('basic');
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
+  
+  // Corporate pricing banner state
+  const [showCorporateBanner, setShowCorporateBanner] = useState(true);
+  const [showCorporateModal, setShowCorporateModal] = useState(false);
+  const [corporatePrice, setCorporatePrice] = useState('');
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -335,6 +340,41 @@ const BioDashboard: React.FC = () => {
     }
   };
 
+  // Save corporate pricing
+  const saveCorporatePricing = async () => {
+    if (!talentProfile) return;
+    
+    const price = parseFloat(corporatePrice);
+    if (isNaN(price) || price <= 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({ 
+          corporate_pricing: price,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', talentProfile.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setTalentProfile({ ...talentProfile, corporate_pricing: price });
+      setShowCorporateModal(false);
+      setShowCorporateBanner(false);
+      toast.success('Corporate pricing set successfully!');
+    } catch (error) {
+      console.error('Error saving corporate pricing:', error);
+      toast.error('Failed to save corporate pricing');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -343,7 +383,7 @@ const BioDashboard: React.FC = () => {
     );
   }
 
-  const bioUrl = `shouts.bio/${talentProfile?.username || talentProfile?.id}`;
+  const bioUrl = `bio.shoutout.us/${talentProfile?.username || talentProfile?.id}`;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -399,6 +439,36 @@ const BioDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Corporate Pricing Banner */}
+      {showCorporateBanner && !talentProfile?.corporate_pricing && (
+        <div className="mb-6 glass border border-purple-500/30 rounded-2xl p-6 bg-gradient-to-r from-purple-500/10 to-blue-500/10">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">🏢</span>
+                <h3 className="text-lg font-bold text-white">Corporate Event ShoutOut Pricing is Now Live!</h3>
+              </div>
+              <p className="text-gray-300 text-sm mb-4">
+                Set your price for corporate events and unlock a new revenue stream. Corporate clients are looking for personalized video messages for their events!
+              </p>
+              <button
+                onClick={() => setShowCorporateModal(true)}
+                className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg"
+              >
+                Set Corporate Price
+              </button>
+            </div>
+            <button
+              onClick={() => setShowCorporateBanner(false)}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+              title="Dismiss banner"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Settings Panel */}
@@ -645,6 +715,68 @@ const BioDashboard: React.FC = () => {
           onSave={updateLink}
           icons={icons}
         />
+      )}
+      
+      {/* Corporate Pricing Modal */}
+      {showCorporateModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass border border-white/20 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Set Corporate Event Pricing</h2>
+              <button
+                onClick={() => setShowCorporateModal(false)}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-gray-300 text-sm mb-4">
+                  Set your price for corporate event ShoutOuts. This is typically higher than personal ShoutOuts due to the commercial nature and broader audience.
+                </p>
+                <p className="text-gray-400 text-xs mb-4">
+                  💡 Recommended: 1.5-3x your regular price (${talentProfile?.pricing ? Math.round(talentProfile.pricing * 1.5) : 0} - ${talentProfile?.pricing ? Math.round(talentProfile.pricing * 3) : 0})
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Corporate Event Price (USD) *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                  <input
+                    type="number"
+                    value={corporatePrice}
+                    onChange={(e) => setCorporatePrice(e.target.value)}
+                    placeholder="Enter price"
+                    min="1"
+                    step="1"
+                    className="w-full pl-8 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCorporateModal(false)}
+                  className="flex-1 px-4 py-2 glass border border-white/20 rounded-xl text-white hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveCorporatePricing}
+                  disabled={saving || !corporatePrice}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? 'Saving...' : 'Save Price'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
