@@ -1012,8 +1012,10 @@ const TalentDashboard: React.FC = () => {
                           {order.request_details && (
                             <div className="mb-3">
                               <span className="text-blue-300 font-medium block mb-2">Things to mention:</span>
-                              {/* Handle both old-style (plain text) and new-style (newline-separated) request details */}
-                              {order.request_details.includes('\n') ? (
+                              {/* For corporate orders, preserve formatting. For regular orders, number each line */}
+                              {order.is_corporate_order ? (
+                                <div className="text-gray-300 whitespace-pre-wrap">{order.request_details}</div>
+                              ) : order.request_details.includes('\n') ? (
                                 <ul className="space-y-2">
                                   {order.request_details.split('\n').filter(Boolean).map((mention, idx) => (
                                     <li key={idx} className="flex items-start gap-2 text-gray-300">
@@ -1241,8 +1243,10 @@ const TalentDashboard: React.FC = () => {
                       {order.request_details && (
                         <div className="mb-3">
                           <span className="text-blue-300 font-medium block mb-2">Things to mention:</span>
-                          {/* Handle both old-style (plain text) and new-style (newline-separated) request details */}
-                          {order.request_details.includes('\n') ? (
+                          {/* For corporate orders, preserve formatting. For regular orders, number each line */}
+                          {order.is_corporate_order ? (
+                            <div className="text-gray-300 whitespace-pre-wrap">{order.request_details}</div>
+                          ) : order.request_details.includes('\n') ? (
                             <ul className="space-y-2">
                               {order.request_details.split('\n').filter(Boolean).map((mention, idx) => (
                                 <li key={idx} className="flex items-start gap-2 text-gray-300">
