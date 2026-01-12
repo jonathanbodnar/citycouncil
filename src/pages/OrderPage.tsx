@@ -760,6 +760,7 @@ const OrderPage: React.FC = () => {
       }
       
       // Navigate to success page with order details
+      const isCorporateOrder = isForBusiness || watchedOccasion === 'corporate';
       const successParams = new URLSearchParams({
         order_id: order.id,
         amount: pricing.total.toString(),
