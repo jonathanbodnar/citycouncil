@@ -221,8 +221,9 @@ const OrderPage: React.FC = () => {
   const calculatePricing = () => {
     if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, discount: 0, processingFee: 0, total: 0, creditsApplied: 0, amountDue: 0 };
 
-    // Use corporate pricing if it's a business order, otherwise use regular pricing
-    const basePrice = isForBusiness 
+    // Use corporate pricing if it's a business order OR corporate occasion, otherwise use regular pricing
+    const isCorporateOrder = isForBusiness || watchedOccasion === 'corporate';
+    const basePrice = isCorporateOrder 
       ? (talent.corporate_pricing || talent.pricing * 1.5) 
       : talent.pricing;
       
@@ -390,7 +391,8 @@ const OrderPage: React.FC = () => {
       // For corporate orders, don't set deadline until approved
       // For personal orders, set deadline immediately
       let fulfillmentDeadline: Date;
-      if (orderData.isForBusiness) {
+      const isCorporate = orderData.isForBusiness || getValues('occasion') === 'corporate' || watchedOccasion === 'corporate';
+      if (isCorporate) {
         // Corporate orders: deadline will be set when approved
         fulfillmentDeadline = new Date();
         fulfillmentDeadline.setFullYear(2099); // Far future placeholder
@@ -440,14 +442,14 @@ const OrderPage: React.FC = () => {
               ? null 
               : (paymentResult.id || paymentResult.transaction_id || null),
             payment_transaction_payload: paymentResult?.payload ?? null,
-            is_corporate: getValues('isForBusiness') || orderData.isForBusiness,
-            is_corporate_order: getValues('isForBusiness') || orderData.isForBusiness,
+            is_corporate: getValues('isForBusiness') || orderData.isForBusiness || getValues('occasion') === 'corporate' || watchedOccasion === 'corporate',
+            is_corporate_order: getValues('isForBusiness') || orderData.isForBusiness || getValues('occasion') === 'corporate' || watchedOccasion === 'corporate',
             company_name: getValues('businessName') || orderData.businessName,
             event_description: getValues('eventDescription') || orderData.eventDescription,
             event_audience: getValues('eventAudience') || orderData.eventAudience,
             video_setting_request: getValues('videoSettingRequest') || orderData.videoSettingRequest,
-            approval_status: (getValues('isForBusiness') || orderData.isForBusiness) ? 'pending' : 'approved',
-            approved_at: (getValues('isForBusiness') || orderData.isForBusiness) ? null : new Date().toISOString(),
+            approval_status: (getValues('isForBusiness') || orderData.isForBusiness || getValues('occasion') === 'corporate' || watchedOccasion === 'corporate') ? 'pending' : 'approved',
+            approved_at: (getValues('isForBusiness') || orderData.isForBusiness || getValues('occasion') === 'corporate' || watchedOccasion === 'corporate') ? null : new Date().toISOString(),
             status: 'pending',
             allow_promotional_use: getValues('allowPromotionalUse') ?? orderData.allowPromotionalUse ?? true,
             promo_source: getPromoSource(talent),
@@ -1106,7 +1108,14 @@ const OrderPage: React.FC = () => {
             {/* Pricing Breakdown */}
             <div className="space-y-3 border-t border-gray-200 pt-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">ShoutOut Price</span>
+                <span className="text-gray-600">
+                  ShoutOut Price
+                  {(isForBusiness || watchedOccasion === 'corporate') && (
+                    <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                      Corporate
+                    </span>
+                  )}
+                </span>
                 <span className="font-medium">${pricing.subtotal.toFixed(2)}</span>
               </div>
               {pricing.charityAmount > 0 && (
