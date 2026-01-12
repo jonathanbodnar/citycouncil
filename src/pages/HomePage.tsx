@@ -282,12 +282,12 @@ const HomePage: React.FC = () => {
     
     // Group talent by categories
     filteredTalent.forEach(t => {
-      let talentCategories = t.categories && t.categories.length > 0 ? t.categories : [t.category];
+      const rawCategories = t.categories && t.categories.length > 0 ? t.categories : [t.category];
       
       // Apply category mapping and filter excluded categories
-      talentCategories = talentCategories
+      const talentCategories = rawCategories
         .map(cat => CATEGORY_MAPPING[cat] || cat) // Map categories
-        .filter(cat => cat && !EXCLUDED_CATEGORIES.includes(cat)); // Exclude unwanted categories
+        .filter(cat => cat && !EXCLUDED_CATEGORIES.includes(cat)) as TalentCategory[]; // Exclude unwanted categories
       
       talentCategories.forEach(cat => {
         const categoryLabel = TALENT_CATEGORIES.find(c => c.key === cat)?.label || cat;
