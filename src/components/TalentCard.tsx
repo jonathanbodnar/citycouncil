@@ -129,18 +129,48 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
             <HeartIcon className={`${compact ? 'h-3 w-3' : 'h-3 w-3 sm:h-4 sm:w-4'} text-red-600`} />
           </div>
         ) : null}
+
+        {/* Rating Badge - Over image, bottom left */}
+        {talent.average_rating && talent.average_rating > 0 ? (
+          <div className={`absolute ${compact ? 'bottom-1.5 left-1.5 px-1.5 py-0.5' : 'bottom-2 left-2 sm:bottom-3 sm:left-3 px-2 py-1'} glass-strong rounded-lg flex items-center gap-1 backdrop-blur-md bg-black/40`}>
+            <StarIcon className={`${compact ? 'h-2.5 w-2.5' : 'h-3 w-3 sm:h-3.5 sm:w-3.5'} text-yellow-400`} />
+            <span className={`${compact ? 'text-[10px]' : 'text-xs sm:text-sm'} font-bold text-white`}>
+              {talent.average_rating.toFixed(1)}
+            </span>
+            {talent.total_reviews && talent.total_reviews > 0 && (
+              <span className={`${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} text-gray-300`}>
+                ({talent.total_reviews})
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className={`absolute ${compact ? 'bottom-1.5 left-1.5 px-1.5 py-0.5' : 'bottom-2 left-2 sm:bottom-3 sm:left-3 px-1.5 py-0.5'} glass-strong rounded-lg backdrop-blur-md bg-purple-500/30`}>
+            <span className={`${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} font-medium text-purple-200`}>
+              New
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div className={`${compact ? 'p-2.5' : 'p-3 sm:p-6'} flex flex-col flex-grow`}>
-        <h3 className={`${compact ? 'text-xs' : 'text-sm sm:text-lg'} font-bold text-white ${compact ? 'mb-1.5' : 'mb-2 sm:mb-3'} group-hover:text-blue-400 transition-colors duration-200 flex items-center gap-1`}>
+        <h3 className={`${compact ? 'text-xs' : 'text-sm sm:text-lg'} font-bold text-white ${compact ? 'mb-1' : 'mb-2 sm:mb-3'} group-hover:text-blue-400 transition-colors duration-200 flex items-center gap-1`}>
           <span className="truncate">{talent.temp_full_name || talent.users.full_name}</span>
           {talent.is_verified && (
             <CheckBadgeIcon className={`${compact ? 'h-3 w-3' : 'h-3.5 w-3.5 sm:h-5 sm:w-5'} text-blue-500 flex-shrink-0`} title="Verified Talent" />
           )}
         </h3>
         
-        {/* Rating - Hidden on mobile and in compact mode */}
+        {/* One-line Bio - Always show, even in compact mode */}
+        {talent.bio && (
+          <p 
+            className={`${compact ? 'text-[9px] mb-1.5' : 'text-xs sm:text-sm mb-2'} text-gray-400 truncate`}
+          >
+            {talent.bio}
+          </p>
+        )}
+        
+        {/* Rating - Hidden on mobile and in compact mode (now shown over image) */}
         {!compact && (
           <div className="hidden sm:flex items-center mb-2">
             {talent.average_rating && talent.average_rating > 0 ? (
@@ -169,7 +199,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
           </div>
         )}
 
-        {/* Bio Preview - Hidden on mobile and in compact mode */}
+        {/* Bio Preview - Only show on desktop, non-compact (2 lines) */}
         {!compact && (
           <p 
             className="hidden sm:block text-sm text-gray-300 mb-3 overflow-hidden"
