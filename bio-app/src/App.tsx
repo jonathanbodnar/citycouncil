@@ -8,13 +8,6 @@ import CollabOrderPage from './pages/CollabOrderPage';
 import UnsubscribePage from './pages/UnsubscribePage';
 
 function App() {
-  // Redirect from non-www to www for shouts.bio
-  React.useEffect(() => {
-    if (window.location.hostname === 'shouts.bio') {
-      window.location.href = window.location.href.replace('shouts.bio', 'www.shouts.bio');
-    }
-  }, []);
-
   return (
     <Router>
       <Toaster 

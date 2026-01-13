@@ -1210,7 +1210,7 @@ const BioDashboard: React.FC = () => {
     );
   }
 
-  const bioUrl = `www.shouts.bio/${talentProfile?.username || talentProfile?.id}`;
+  const bioUrl = `shouts.bio/${talentProfile?.username || talentProfile?.id}`;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
