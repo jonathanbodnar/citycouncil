@@ -84,12 +84,12 @@ INSERT INTO email_flow_messages (flow_id, sequence_order, subject, preview_text,
                 </table>
               </div>
               
-              <!-- What's Next -->
+              <!-- What is Next -->
               <div style="background: rgba(59,130,246,0.1); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid rgba(59,130,246,0.3);">
-                <h3 style="color: #60a5fa; font-size: 14px; font-weight: 600; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px;">What''s Next?</h3>
+                <h3 style="color: #60a5fa; font-size: 14px; font-weight: 600; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px;">What is Next?</h3>
                 <ol style="color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
                   <li style="margin-bottom: 8px;"><strong style="color: #ffffff;">{{talent_name}}</strong> will create your personalized video</li>
-                  <li style="margin-bottom: 8px;">You''ll receive an email as soon as it''s ready</li>
+                  <li style="margin-bottom: 8px;">You will receive an email as soon as it is ready</li>
                   <li>Download and share your ShoutOut video!</li>
                 </ol>
               </div>
