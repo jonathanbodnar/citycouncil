@@ -907,7 +907,7 @@ const BioDashboard: React.FC = () => {
 
   // Copy bio URL
   const copyBioUrl = () => {
-    const url = `https://bio.shoutout.us/${talentProfile?.username || talentProfile?.id}`;
+    const url = `https://shouts.bio/${talentProfile?.username || talentProfile?.id}`;
     navigator.clipboard.writeText(url);
     toast.success('Bio URL copied!');
   };
@@ -1210,7 +1210,7 @@ const BioDashboard: React.FC = () => {
     );
   }
 
-  const bioUrl = `bio.shoutout.us/${talentProfile?.username || talentProfile?.id}`;
+  const bioUrl = `www.shouts.bio/${talentProfile?.username || talentProfile?.id}`;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
