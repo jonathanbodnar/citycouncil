@@ -231,6 +231,8 @@ function App() {
             <Route path="/melody" element={<PromoRedirect utm="melonielive" destination="/meloniemac" coupon="SAVE15" />} />
             <Route path="/melanie" element={<PromoRedirect utm="melonielive" destination="/meloniemac" coupon="SAVE15" />} />
             <Route path="/meloni" element={<PromoRedirect utm="melonielive" destination="/meloniemac" coupon="SAVE15" />} />
+            {/* Chris variations -> chrissalcedo profile with 15% off */}
+            <Route path="/chris" element={<PromoRedirect utm="chrislive" destination="/chrissalcedo" coupon="SAVE15" />} />
             <Route path="/s/:code" element={<ShortLinkRedirectPage />} />
             <Route path="/fulfill/:token" element={<OrderFulfillmentPage />} />
             
