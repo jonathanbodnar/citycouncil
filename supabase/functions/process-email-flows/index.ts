@@ -143,6 +143,43 @@ serve(async (req) => {
           }
         }
 
+        // Get order info if this is a post-purchase flow
+        let orderId = "";
+        let orderTalentName = "";
+        let recipientName = "";
+        let occasion = "";
+        let deliveryHours = "";
+        let amount = "";
+        
+        if (userStatus.flow_id === 'bbbb5555-5555-5555-5555-555555555555') {
+          // Post-purchase flow - fetch the user's most recent order
+          const { data: order } = await supabase
+            .from("orders")
+            .select(`
+              id,
+              recipient_name,
+              occasion,
+              total_price,
+              talent_profiles!inner(
+                temp_full_name,
+                fulfillment_time_hours
+              )
+            `)
+            .eq("user_id", userStatus.user_id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+          
+          if (order) {
+            orderId = order.id.split('-')[0]; // Show shortened order ID
+            orderTalentName = order.talent_profiles?.temp_full_name || "";
+            recipientName = order.recipient_name || "";
+            occasion = order.occasion || "Special Occasion";
+            deliveryHours = order.talent_profiles?.fulfillment_time_hours?.toString() || "48";
+            amount = order.total_price?.toFixed(2) || "0.00";
+          }
+        }
+
         // Get talent info if from bio page
         let talentName = "";
         let talentPhotoUrl = "";
@@ -195,21 +232,27 @@ serve(async (req) => {
           .replace(/\{\{first_name\}\}/g, firstName)
           .replace(/\{\{full_name\}\}/g, fullName)
           .replace(/\{\{coupon_code\}\}/g, couponCode)
-          .replace(/\{\{talent_name\}\}/g, talentName)
-          .replace(/\{\{talent\}\}/g, talentName)
+          .replace(/\{\{talent_name\}\}/g, orderTalentName || talentName)
+          .replace(/\{\{talent\}\}/g, orderTalentName || talentName)
           .replace(/\{\{talent_photo_html\}\}/g, talentPhotoHtml)
           .replace(/\{\{talent_photo_square\}\}/g, talentPhotoSquare)
           .replace(/\{\{talent_photo_url\}\}/g, talentPhotoUrl)
           .replace(/\{\{talent_profile_link\}\}/g, talentProfileLink)
           .replace(/\{\{unsubscribe_url\}\}/g, unsubscribeUrl)
           .replace(/\{\{review_link\}\}/g, reviewLink)
-          .replace(/\{\{email\}\}/g, userStatus.email);
+          .replace(/\{\{email\}\}/g, userStatus.email)
+          .replace(/\{\{order_id\}\}/g, orderId)
+          .replace(/\{\{recipient_name\}\}/g, recipientName)
+          .replace(/\{\{occasion\}\}/g, occasion)
+          .replace(/\{\{delivery_hours\}\}/g, deliveryHours)
+          .replace(/\{\{amount\}\}/g, amount);
 
         subject = subject
           .replace(/\{\{first_name\}\}/g, firstName)
-          .replace(/\{\{talent_name\}\}/g, talentName)
-          .replace(/\{\{talent\}\}/g, talentName)
-          .replace(/\{\{coupon_code\}\}/g, couponCode);
+          .replace(/\{\{talent_name\}\}/g, orderTalentName || talentName)
+          .replace(/\{\{talent\}\}/g, orderTalentName || talentName)
+          .replace(/\{\{coupon_code\}\}/g, couponCode)
+          .replace(/\{\{order_id\}\}/g, orderId);
 
         // Send the email via SendGrid
         console.log(`📤 Sending email to ${userStatus.email}: "${subject}"`);

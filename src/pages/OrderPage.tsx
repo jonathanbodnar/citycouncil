@@ -625,8 +625,8 @@ const OrderPage: React.FC = () => {
             .in('flow_id', prePurchaseEmailFlows)
             .is('flow_completed_at', null);
           
-          // Enroll in post-purchase email flow
-          const threeDaysFromNowEmail = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+          // Enroll in post-purchase email flow (receipt sent immediately)
+          const nowEmail = new Date(Date.now() + 30000).toISOString(); // 30 seconds from now
           await supabase
             .from('user_email_flow_status')
             .upsert({
@@ -634,7 +634,7 @@ const OrderPage: React.FC = () => {
               user_id: user.id,
               flow_id: 'bbbb5555-5555-5555-5555-555555555555', // post_purchase
               current_message_order: 0,
-              next_email_scheduled_at: threeDaysFromNowEmail,
+              next_email_scheduled_at: nowEmail, // Receipt sent immediately
               flow_started_at: now,
               is_paused: false,
             }, { onConflict: 'email,flow_id' });
