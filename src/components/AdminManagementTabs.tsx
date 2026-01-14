@@ -356,28 +356,10 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                 color="text-orange-600"
               />
               <StatsCard
-                title="Verified Talent"
-                value={stats.verified_talent.toLocaleString()}
-                icon={UsersIcon}
-                color="text-indigo-600"
-              />
-              <StatsCard
-                title="Promotion Program"
-                value={stats.promotion_participants.toLocaleString()}
-                icon={StarIcon}
-                color="text-purple-600"
-              />
-              <StatsCard
                 title="Total Bio Views"
                 value={stats.total_bio_views.toLocaleString()}
                 icon={EyeIcon}
                 color="text-cyan-600"
-              />
-              <StatsCard
-                title="Amount Refunded"
-                value={`$${stats.amount_refunded.toLocaleString()}`}
-                icon={CurrencyDollarIcon}
-                color="text-red-600"
               />
               <StatsCard
                 title="Avg Delivery Time"
@@ -385,20 +367,6 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                 icon={ClockIcon}
                 color="text-teal-600"
               />
-              <StatsCard
-                title="🎁 Giveaway Signups"
-                value={stats.holiday_promo_signups.toLocaleString()}
-                icon={GiftIcon}
-                color="text-red-600"
-              />
-              {stats.pending_approval_orders > 0 && (
-                <StatsCard
-                  title="Pending Approval"
-                  value={stats.pending_approval_orders.toLocaleString()}
-                  icon={ClockIcon}
-                  color="text-orange-600"
-                />
-              )}
             </div>
           )}
 
