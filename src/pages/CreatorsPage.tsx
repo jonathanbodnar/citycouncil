@@ -187,7 +187,11 @@ export default function CreatorsPage() {
 
           {/* Creator bio carousel - Full width */}
           <div className="relative mb-8 w-screen left-1/2 -translate-x-1/2">
-            <div className="overflow-hidden py-4">
+            {/* Soft edge fades */}
+            <div className="absolute inset-y-0 left-0 w-24 sm:w-40 bg-gradient-to-r from-[#111827] to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-24 sm:w-40 bg-gradient-to-l from-[#111827] to-transparent z-10 pointer-events-none" />
+            
+            <div className="overflow-hidden py-8 px-4">
               <div 
                 ref={carouselRef}
                 className="flex gap-6"
@@ -199,7 +203,7 @@ export default function CreatorsPage() {
                     key={index}
                     className="w-[260px] sm:w-[300px] flex-shrink-0 group cursor-pointer"
                   >
-                    <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10 transform transition-all duration-500 group-hover:scale-[1.03] group-hover:-translate-y-2 group-hover:shadow-emerald-500/20">
+                    <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-black/40 border border-white/10 transform transition-all duration-500 group-hover:scale-[1.03] group-hover:-translate-y-2 group-hover:shadow-emerald-500/20">
                       <img
                         src={creator.image}
                         alt={`${creator.name}'s bio link`}
