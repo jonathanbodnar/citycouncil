@@ -10,7 +10,8 @@ import {
   VideoCameraIcon,
   HashtagIcon,
   TagIcon,
-  GiftIcon
+  GiftIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { HelpMessage, AdminStats } from '../types';
@@ -85,7 +86,8 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
           { count: totalUsers },
           { data: talent },
           { data: payouts },
-          { count: holidayPromoCount }
+          { count: holidayPromoCount },
+          { count: totalBioViews }
         ] = await Promise.all([
           // Only fetch order fields we actually need for calculations
           supabase.from('orders').select('id, status, amount, is_corporate_order, approval_status, created_at, updated_at, approved_at, user_id, talent_id'),
@@ -98,7 +100,9 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
           `),
           // Only fetch payout fields we need
           supabase.from('payouts').select('admin_fee_amount, is_refunded'),
-          supabase.from('beta_signups').select('*', { count: 'exact', head: true }).eq('source', 'holiday_popup')
+          supabase.from('beta_signups').select('*', { count: 'exact', head: true }).eq('source', 'holiday_popup'),
+          // Count total bio page views
+          supabase.from('bio_page_views').select('*', { count: 'exact', head: true })
         ]);
 
         // Calculate comprehensive stats
@@ -184,7 +188,8 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
           avg_orders_per_talent: avgOrdersPerTalent,
           avg_orders_per_user: avgOrdersPerUser,
           avg_delivery_time_hours: avgDeliveryTimeHours,
-          holiday_promo_signups: holidayPromoCount || 0
+          holiday_promo_signups: holidayPromoCount || 0,
+          total_bio_views: totalBioViews || 0
         });
 
         // Fetch recent orders
@@ -361,6 +366,12 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
                 value={stats.promotion_participants.toLocaleString()}
                 icon={StarIcon}
                 color="text-purple-600"
+              />
+              <StatsCard
+                title="Total Bio Views"
+                value={stats.total_bio_views.toLocaleString()}
+                icon={EyeIcon}
+                color="text-cyan-600"
               />
               <StatsCard
                 title="Amount Refunded"

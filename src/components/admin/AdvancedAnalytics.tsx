@@ -96,7 +96,8 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
     totalSMSRumble: 0,
     totalSMSSocial: 0,
     totalFBSpend: 0,
-    totalRumbleSpend: 0
+    totalRumbleSpend: 0,
+    totalBioViews: 0
   });
 
   useEffect(() => {
@@ -116,8 +117,8 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
         const dayBefore = new Date(startYear, startMonth - 1, startDay - 1);
         const dayBeforeStr = `${dayBefore.getFullYear()}-${String(dayBefore.getMonth() + 1).padStart(2, '0')}-${String(dayBefore.getDate()).padStart(2, '0')}`;
 
-        // Fetch follower data, SMS data, and ad spend in parallel
-        const [followerResult, baselineFollowerResult, smsResult, fbSpendResult, rumbleSpendResult] = await Promise.all([
+        // Fetch follower data, SMS data, ad spend, and bio views in parallel
+        const [followerResult, baselineFollowerResult, smsResult, fbSpendResult, rumbleSpendResult, bioViewsResult] = await Promise.all([
           // Follower counts within date range (for the end date)
           supabase
             .from('follower_counts')
@@ -155,7 +156,14 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
             .select('spend')
             .eq('platform', 'rumble')
             .gte('date', startDate)
-            .lte('date', endDate)
+            .lte('date', endDate),
+          
+          // Bio page views within date range
+          supabase
+            .from('bio_page_views')
+            .select('id', { count: 'exact', head: true })
+            .gte('viewed_at', startTimestamp)
+            .lte('viewed_at', endTimestamp)
         ]);
 
         // Calculate followers gained (end date count - baseline count)
@@ -203,6 +211,9 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
         // Cost per SMS Social - FB spend on follower campaigns / DM-sourced signups
         const costPerSMSSocial = totalSMSSocial > 0 ? totalFBSpend / totalSMSSocial : 0;
 
+        // Get total bio views
+        const totalBioViews = bioViewsResult.count || 0;
+
         setData({ 
           costPerFollower, 
           costPerSMS,
@@ -212,7 +223,8 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
           totalSMSRumble,
           totalSMSSocial,
           totalFBSpend,
-          totalRumbleSpend
+          totalRumbleSpend,
+          totalBioViews
         });
       } catch (error) {
         console.error('Error fetching lifetime data:', error);
@@ -244,7 +256,7 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Cost Per Follower */}
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-2">
@@ -284,6 +296,23 @@ const LifetimeStatsCards: React.FC<LifetimeStatsCardsProps> = ({ startDate, endD
         </p>
         <p className="text-gray-500 text-sm">
           {dateRangeLabel} • {data.totalSMSSocial.toLocaleString()} SMS (DMs) • ${data.totalFBSpend.toFixed(0)} FB spend
+        </p>
+      </div>
+
+      {/* Total Bio Views */}
+      <div className="glass rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <svg className="h-5 w-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <h3 className="text-lg font-semibold text-white">Total Bio Views</h3>
+        </div>
+        <p className="text-4xl font-bold text-white mb-1">
+          {data.totalBioViews.toLocaleString()}
+        </p>
+        <p className="text-gray-500 text-sm">
+          {dateRangeLabel} • All talent bio pages
         </p>
       </div>
     </div>

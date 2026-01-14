@@ -217,6 +217,7 @@ export interface AdminStats {
   avg_orders_per_user: number;
   avg_delivery_time_hours: number;
   holiday_promo_signups: number;
+  total_bio_views: number;
 }
 
 export interface HelpMessage {
