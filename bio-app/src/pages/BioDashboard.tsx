@@ -315,6 +315,7 @@ const BioDashboard: React.FC = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [activeTab, setActiveTab] = useState<'links' | 'social' | 'style' | 'settings'>('links');
   const [previewKey, setPreviewKey] = useState(0);
+  const [viewStats, setViewStats] = useState<{ total_views: number; unique_views: number; views_last_24h: number } | null>(null);
 
   // Auto-refresh preview
   const refreshPreview = useCallback(() => {
@@ -475,6 +476,33 @@ const BioDashboard: React.FC = () => {
         };
 
         setTalentProfile(profileWithUser);
+        
+        // Load page view stats
+        const { data: stats } = await supabase
+          .from('bio_page_view_stats')
+          .select('*')
+          .eq('talent_id', profile.id)
+          .single();
+        
+        if (stats) {
+          setViewStats(stats);
+        }
+        
+        // Set up auto-refresh for view stats (every 30 seconds)
+        const statsInterval = setInterval(async () => {
+          const { data: freshStats } = await supabase
+            .from('bio_page_view_stats')
+            .select('*')
+            .eq('talent_id', profile.id)
+            .single();
+          
+          if (freshStats) {
+            setViewStats(freshStats);
+          }
+        }, 30000); // 30 seconds
+        
+        // Cleanup interval on unmount
+        return () => clearInterval(statsInterval);
         
         // Load social accounts from the social_accounts table (not JSONB field)
         const { data: socialData } = await supabase
@@ -1266,27 +1294,23 @@ const BioDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={togglePublish}
-                disabled={saving}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                  bioSettings?.is_published
-                    ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
-                }`}
-              >
-                {bioSettings?.is_published ? (
-                  <>
-                    <CheckIcon className="h-4 w-4" />
-                    Published
-                  </>
-                ) : (
-                  <>
-                    <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                    Publish
-                  </>
-                )}
-              </button>
+              {/* Page View Stats */}
+              <div className="flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-xl">
+                <EyeIcon className="h-5 w-5 text-blue-400" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-400">Views</span>
+                  <span className="text-lg font-bold text-white">
+                    {viewStats?.total_views?.toLocaleString() || '0'}
+                  </span>
+                </div>
+                <div className="h-8 w-px bg-white/10" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-400">Last 24h</span>
+                  <span className="text-sm font-semibold text-blue-400">
+                    {viewStats?.views_last_24h?.toLocaleString() || '0'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
