@@ -1297,20 +1297,20 @@ const BioDashboard: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               {/* Page View Stats */}
-              <div className="flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-xl">
-                <EyeIcon className="h-5 w-5 text-blue-400" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">Views</span>
-                  <span className="text-lg font-bold text-white">
+              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
+                <EyeIcon className="h-4 w-4 text-blue-400" />
+                <div className="flex flex-col items-center">
+                  <span className="text-lg font-bold text-white leading-none">
                     {viewStats?.total_views?.toLocaleString() || '0'}
                   </span>
+                  <span className="text-[10px] text-gray-400 leading-none mt-0.5">total</span>
                 </div>
                 <div className="h-8 w-px bg-white/10" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">Last 24h</span>
-                  <span className="text-sm font-semibold text-blue-400">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-semibold text-blue-400 leading-none">
                     {viewStats?.views_last_24h?.toLocaleString() || '0'}
                   </span>
+                  <span className="text-[10px] text-gray-400 leading-none mt-0.5">24hr</span>
                 </div>
               </div>
             </div>
