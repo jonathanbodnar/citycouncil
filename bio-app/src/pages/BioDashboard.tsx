@@ -32,6 +32,7 @@ interface TalentProfile {
   user_id: string;
   username?: string;
   full_name?: string;
+  temp_full_name?: string; // Name stored before onboarding completion
   temp_avatar_url?: string;
   bio?: string;
   social_accounts?: SocialAccount[];
@@ -467,9 +468,10 @@ const BioDashboard: React.FC = () => {
         }
 
         // Merge user data into profile for fallback name
+        // Priority: full_name > temp_full_name (pre-onboarding) > users.full_name > empty
         const profileWithUser = {
           ...profile,
-          full_name: profile.full_name || userData?.full_name || '',
+          full_name: profile.full_name || profile.temp_full_name || userData?.full_name || '',
         };
 
         setTalentProfile(profileWithUser);
