@@ -7,6 +7,7 @@ interface TalentProfile {
   id: string;
   username?: string;
   full_name?: string;
+  temp_full_name?: string; // Name stored before onboarding completion
 }
 
 const PrivacyPolicy: React.FC = () => {
@@ -72,7 +73,7 @@ const PrivacyPolicy: React.FC = () => {
   }
 
   const userName = (talentProfile as any)?.users?.full_name;
-  const displayName = talentProfile?.full_name || userName || 'Creator';
+  const displayName = talentProfile?.full_name || talentProfile?.temp_full_name || userName || 'Creator';
   const currentDate = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 

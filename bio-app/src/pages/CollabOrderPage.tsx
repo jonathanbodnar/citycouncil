@@ -8,6 +8,7 @@ interface TalentProfile {
   user_id: string;
   username?: string;
   full_name?: string;
+  temp_full_name?: string; // Name stored before onboarding completion
   temp_avatar_url?: string;
   admin_fee_percentage?: number;
   fortis_vendor_id?: string;
@@ -534,7 +535,7 @@ const CollabOrderPage: React.FC = () => {
   // Always use pink for collab buttons - don't use bio button color as it might be white/light
   const buttonColor = '#ec4899'; // Pink for collab
   const userName = (talent as any)?.users?.full_name;
-  const displayName = bioSettings?.display_name || talent?.full_name || userName || 'Creator';
+  const displayName = bioSettings?.display_name || talent?.full_name || talent?.temp_full_name || userName || 'Creator';
   const profileImage = bioSettings?.profile_image_url || talent?.temp_avatar_url;
 
   // Button style helper

@@ -51,6 +51,7 @@ interface TalentProfile {
   user_id: string;
   username?: string;
   full_name?: string;
+  temp_full_name?: string; // Name stored before onboarding completion
   temp_avatar_url?: string;
   bio?: string;
   social_accounts?: SocialAccount[];
@@ -1508,9 +1509,9 @@ const BioPage: React.FC = () => {
   }
 
   const gradientDirection = bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg';
-  // Get name from talent profile, then user, then bio settings, then fallback
+  // Get name from talent profile, then temp_full_name (pre-onboarding), then user, then bio settings, then fallback
   const userName = (talentProfile as any)?.users?.full_name;
-  const displayName = talentProfile?.full_name || userName || bioSettings?.display_name || 'Creator';
+  const displayName = talentProfile?.full_name || talentProfile?.temp_full_name || userName || bioSettings?.display_name || 'Creator';
   const profileImage = talentProfile?.temp_avatar_url || bioSettings?.profile_image_url;
 
   return (
@@ -2437,7 +2438,7 @@ const CollabModal: React.FC<{
   onClose: () => void;
 }> = ({ service, talentProfile, socialAccounts, onClose }) => {
   const userName = (talentProfile as any)?.users?.full_name;
-  const displayName = talentProfile?.full_name || userName || 'Creator';
+  const displayName = talentProfile?.full_name || talentProfile?.temp_full_name || userName || 'Creator';
   
   // Filter to only show platforms included in this service
   const servicePlatforms = service.platforms || ['instagram'];
