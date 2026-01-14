@@ -235,7 +235,7 @@ export default function CreatorsPage() {
                 </h2>
 
                 {/* Stats row */}
-                <div className="grid grid-cols-3 gap-3 mb-8">
+                <div className="grid grid-cols-2 gap-3 mb-8">
                   <div className="glass rounded-xl p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
                       ~2.6%
@@ -247,12 +247,6 @@ export default function CreatorsPage() {
                       ~6%
                     </div>
                     <p className="text-emerald-300 text-xs sm:text-sm leading-tight">of views become reachable fans with our bio link</p>
-                  </div>
-                  <div className="glass rounded-xl p-4 border border-purple-500/30 text-center bg-gradient-to-br from-purple-500/5 to-transparent">
-                    <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
-                      100%
-                    </div>
-                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">reach all your fans through our bio link</p>
                   </div>
                 </div>
                 
@@ -294,7 +288,7 @@ export default function CreatorsPage() {
                       <MegaphoneIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-amber-300 font-bold text-lg">Plus we build your fan list FOR you!</p>
+                      <p className="text-amber-300 font-bold text-lg">We build your fan list FOR you!</p>
                       <p className="text-amber-200/70">Driving users on ShoutOut to subscribe to your list.</p>
                     </div>
                   </div>
