@@ -458,26 +458,30 @@ const BioPage: React.FC = () => {
 
         setTalentProfile(profile);
 
-        // Track page view
-        try {
-          const urlParams = new URLSearchParams(window.location.search);
-          await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/track-bio-view`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({
-              talent_id: profile.id,
-              referrer: document.referrer || null,
-              utm_source: urlParams.get('utm_source'),
-              utm_medium: urlParams.get('utm_medium'),
-              utm_campaign: urlParams.get('utm_campaign'),
-            }),
-          });
-        } catch (error) {
-          // Silently fail - don't block page load
-          console.error('Failed to track view:', error);
+        // Track page view (skip if preview mode)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPreview = urlParams.get('preview') === 'true';
+        
+        if (!isPreview) {
+          try {
+            await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/track-bio-view`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({
+                talent_id: profile.id,
+                referrer: document.referrer || null,
+                utm_source: urlParams.get('utm_source'),
+                utm_medium: urlParams.get('utm_medium'),
+                utm_campaign: urlParams.get('utm_campaign'),
+              }),
+            });
+          } catch (error) {
+            // Silently fail - don't block page load
+            console.error('Failed to track view:', error);
+          }
         }
 
         // Get bio settings - auto-create if they don't exist
