@@ -488,24 +488,6 @@ const BioDashboard: React.FC = () => {
           setViewStats(stats);
         }
         
-        // Set up auto-refresh for view stats (every 30 seconds)
-        const statsInterval = setInterval(async () => {
-          if (!profile?.id) return;
-          
-          const { data: freshStats } = await supabase
-            .from('bio_page_view_stats')
-            .select('*')
-            .eq('talent_id', profile.id)
-            .single();
-          
-          if (freshStats) {
-            setViewStats(freshStats);
-          }
-        }, 30000); // 30 seconds
-        
-        // Cleanup interval on unmount
-        return () => clearInterval(statsInterval);
-        
         // Load social accounts from the social_accounts table (not JSONB field)
         const { data: socialData } = await supabase
           .from('social_accounts')
@@ -763,7 +745,25 @@ const BioDashboard: React.FC = () => {
     };
 
     authenticateUser();
-  }, [searchParams]);
+
+    // Set up auto-refresh for view stats (every 30 seconds)
+    const statsInterval = setInterval(async () => {
+      if (!talentProfile?.id) return;
+      
+      const { data: freshStats } = await supabase
+        .from('bio_page_view_stats')
+        .select('*')
+        .eq('talent_id', talentProfile.id)
+        .single();
+      
+      if (freshStats) {
+        setViewStats(freshStats);
+      }
+    }, 30000); // 30 seconds
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(statsInterval);
+  }, [searchParams, talentProfile?.id]);
 
   // Save settings
   const saveSettings = useCallback(async (updates: Partial<BioSettings>) => {
