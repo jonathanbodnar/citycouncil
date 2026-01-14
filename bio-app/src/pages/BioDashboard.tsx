@@ -3063,26 +3063,55 @@ const BioDashboard: React.FC = () => {
         <AddSocialModal
           onClose={() => setShowAddSocialModal(false)}
           onAdd={async (social) => {
-            // Try to insert into social_accounts table first
-            const { data: insertedSocial, error: insertError } = await supabase
+            const cleanHandle = social.handle.replace(/^@/, '');
+            const handleWithAt = cleanHandle.startsWith('@') ? cleanHandle : `@${cleanHandle}`;
+            
+            // Check if this platform already exists in social_accounts (from admin)
+            const { data: existingSocial } = await supabase
               .from('social_accounts')
-              .insert({
-                talent_id: talentProfile?.id,
-                platform: social.platform,
-                handle: social.handle.startsWith('@') ? social.handle : `@${social.handle}`,
-              })
-              .select()
-              .single();
+              .select('id')
+              .eq('talent_id', talentProfile?.id)
+              .eq('platform', social.platform)
+              .maybeSingle();
             
             let socialId: string;
             
-            if (insertError) {
-              console.warn('Could not insert into social_accounts (likely RLS), will use profile fields:', insertError);
-              // Use a temporary ID if insert fails (due to RLS)
-              socialId = `profile-${social.platform}`;
+            if (existingSocial) {
+              // Platform already exists - update it instead of inserting
+              console.log('Platform already exists in social_accounts, updating:', existingSocial.id);
+              const { error: updateError } = await supabase
+                .from('social_accounts')
+                .update({ handle: handleWithAt })
+                .eq('id', existingSocial.id);
+              
+              if (updateError) {
+                console.error('Failed to update existing social_accounts:', updateError);
+                socialId = `profile-${social.platform}`;
+              } else {
+                socialId = existingSocial.id;
+                console.log('Updated existing social_accounts entry');
+              }
             } else {
-              // Use the real DB ID if insert succeeded
-              socialId = insertedSocial.id;
+              // Try to insert into social_accounts table
+              const { data: insertedSocial, error: insertError } = await supabase
+                .from('social_accounts')
+                .insert({
+                  talent_id: talentProfile?.id,
+                  platform: social.platform,
+                  handle: handleWithAt,
+                })
+                .select()
+                .single();
+              
+              if (insertError) {
+                console.warn('Could not insert into social_accounts (likely RLS), will use profile fields:', insertError);
+                // Use a temporary ID if insert fails (due to RLS)
+                socialId = `profile-${social.platform}`;
+              } else {
+                // Use the real DB ID if insert succeeded
+                socialId = insertedSocial.id;
+                console.log('Inserted new social_accounts entry:', socialId);
+              }
             }
             
             // Add to local state
@@ -3097,6 +3126,7 @@ const BioDashboard: React.FC = () => {
             // Build the update object for talent_profiles (this is the important part)
             const updateData: Record<string, unknown> = {};
             const cleanHandle = social.handle.replace(/^@/, '');
+            const handleWithAt = cleanHandle.startsWith('@') ? cleanHandle : `@${cleanHandle}`;
             
             // Map ALL platforms to their corresponding talent_profiles fields
             switch (social.platform) {
@@ -3153,6 +3183,32 @@ const BioDashboard: React.FC = () => {
                   setBioSettings({ ...bioSettings, show_rumble_card: true });
                 }
                 break;
+            }
+            
+            // CRITICAL: Check if this platform already exists in social_accounts table
+            // If it does, we need to update that row, otherwise the old handle will show on refresh
+            const { data: existingSocial } = await supabase
+              .from('social_accounts')
+              .select('id')
+              .eq('talent_id', talentProfile?.id)
+              .eq('platform', social.platform)
+              .maybeSingle();
+            
+            if (existingSocial) {
+              // Update the existing social_accounts entry
+              console.log('Updating existing social_accounts entry:', existingSocial.id, 'with handle:', handleWithAt);
+              const { error: updateSocialError } = await supabase
+                .from('social_accounts')
+                .update({ handle: handleWithAt })
+                .eq('id', existingSocial.id);
+              
+              if (updateSocialError) {
+                console.error('Failed to update social_accounts:', updateSocialError);
+              } else {
+                console.log('Successfully updated social_accounts entry');
+              }
+            } else {
+              console.log('No existing social_accounts entry found for platform:', social.platform);
             }
             
             // Always update talent_profiles with the handle fields (this is critical for persistence)
