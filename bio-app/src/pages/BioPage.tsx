@@ -461,11 +461,11 @@ const BioPage: React.FC = () => {
         // Track page view
         try {
           const urlParams = new URLSearchParams(window.location.search);
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-bio-view`, {
+          await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/track-bio-view`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
             },
             body: JSON.stringify({
               talent_id: profile.id,
