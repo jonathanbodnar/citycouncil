@@ -422,10 +422,15 @@ const BioPage: React.FC = () => {
       }
 
       try {
-        // Try to find by username first, then by ID
+        // Try to find by username first, then by ID, including user data for fallback name
         let { data: profile, error: profileError } = await supabase
           .from('talent_profiles')
-          .select('*')
+          .select(`
+            *,
+            users!talent_profiles_user_id_fkey (
+              full_name
+            )
+          `)
           .eq('username', username)
           .single();
 
@@ -433,7 +438,12 @@ const BioPage: React.FC = () => {
           // Try by ID
           const { data: profileById, error: idError } = await supabase
             .from('talent_profiles')
-            .select('*')
+            .select(`
+              *,
+              users!talent_profiles_user_id_fkey (
+                full_name
+              )
+            `)
             .eq('id', username)
             .single();
 
