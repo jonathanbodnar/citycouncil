@@ -68,7 +68,8 @@ const TalentManagement: React.FC = () => {
     tiktok_handle: '',
     rumble_handle: '',
     rumble_type: 'c' as 'c' | 'user', // 'c' for channel, 'user' for user
-    youtube_handle: ''
+    youtube_handle: '',
+    snapchat_handle: ''
   });
   
   // Charity donation toggle for admin creation
@@ -283,6 +284,9 @@ const TalentManagement: React.FC = () => {
       if (newTalent.tiktok_handle) {
         insertData.tiktok_handle = newTalent.tiktok_handle.replace('@', '');
       }
+      if (newTalent.snapchat_handle) {
+        insertData.snapchat_handle = newTalent.snapchat_handle.replace('@', '');
+      }
 
       // Create talent profile using RPC function to bypass RLS issues
       const { data: rpcResult, error: rpcError } = await supabase
@@ -331,7 +335,8 @@ const TalentManagement: React.FC = () => {
         rumble_type: 'c' as 'c' | 'user',
         facebook_handle: '',
         tiktok_handle: '',
-        youtube_handle: ''
+        youtube_handle: '',
+        snapchat_handle: ''
       });
       fetchTalents();
 

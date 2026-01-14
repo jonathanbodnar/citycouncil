@@ -12,11 +12,11 @@ import {
 } from '@heroicons/react/24/outline';
 import SEOHelmet from '../components/SEOHelmet';
 
-// Creator bio preview images
+// Creator bio URLs for live embeds
 const creatorBios = [
-  { name: 'JP Sears', image: '/creatorbios/JP.png', handle: 'jpsears' },
-  { name: 'Lydia Shaffer', image: '/creatorbios/Lydia.png', handle: 'lydiashaffer' },
-  { name: 'Melonie Mac', image: '/creatorbios/Melonie.png', handle: 'meloniemac' },
+  { name: 'JP Sears', handle: 'jpsears', url: 'https://bio.shoutout.us/jpsears' },
+  { name: 'Lydia Shaffer', handle: 'lydiashaffer', url: 'https://bio.shoutout.us/lydiashaffer' },
+  { name: 'Melonie Mac', handle: 'meloniemac', url: 'https://bio.shoutout.us/meloniemac' },
 ];
 
 export default function CreatorsPage() {
@@ -197,21 +197,28 @@ export default function CreatorsPage() {
                 className="flex gap-6"
                 style={{ width: 'max-content' }}
               >
-                {/* Triple the images for seamless loop */}
+                {/* Live bio embeds for seamless loop */}
                 {[...creatorBios, ...creatorBios, ...creatorBios, ...creatorBios].map((creator, index) => (
                   <div
                     key={index}
-                    className="w-[260px] sm:w-[300px] flex-shrink-0 group cursor-pointer"
+                    className="w-[280px] sm:w-[320px] flex-shrink-0 group"
                   >
-                    <div className="relative rounded-[2rem] overflow-hidden border border-white/10 transform transition-all duration-500 group-hover:scale-[1.03] group-hover:-translate-y-2" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
-                      <img
-                        src={creator.image}
-                        alt={`${creator.name}'s bio link`}
-                        className="w-full h-auto"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <div className="relative rounded-[2rem] overflow-hidden border border-white/10 transform transition-all duration-500 group-hover:scale-[1.02] group-hover:-translate-y-2 bg-[#1a1a2e]" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                      {/* Live iframe embed */}
+                      <div className="relative w-full h-[500px] sm:h-[580px]">
+                        <iframe
+                          src={creator.url}
+                          title={`${creator.name}'s bio`}
+                          className="w-full h-full border-0 rounded-[2rem]"
+                          loading="lazy"
+                          scrolling="no"
+                        />
+                        {/* Click-blocking overlay */}
+                        <div className="absolute inset-0 cursor-default" />
+                      </div>
+                      {/* Hover info overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[2rem]" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none">
                         <p className="font-bold text-xl">{creator.name}</p>
                         <p className="text-emerald-400 font-mono text-sm">shoutout.me/{creator.handle}</p>
                       </div>

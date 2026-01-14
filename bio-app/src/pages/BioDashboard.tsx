@@ -506,6 +506,7 @@ const BioDashboard: React.FC = () => {
           { platform: 'tiktok', field: 'tiktok_handle' },
           { platform: 'youtube', field: 'youtube_handle' },
           { platform: 'rumble', field: 'rumble_handle' },
+          { platform: 'snapchat', field: 'snapchat_handle' },
         ];
         
         for (const mapping of handleMappings) {
@@ -3215,6 +3216,10 @@ const BioDashboard: React.FC = () => {
                     .eq('talent_id', talentProfile?.id);
                   setBioSettings({ ...bioSettings, show_rumble_card: true });
                 }
+                break;
+              case 'snapchat':
+                updateData.snapchat_handle = cleanHandle;
+                setTalentProfile(prev => prev ? { ...prev, snapchat_handle: cleanHandle } : prev);
                 break;
             }
             
