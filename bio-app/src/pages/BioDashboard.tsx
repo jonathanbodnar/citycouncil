@@ -3186,20 +3186,20 @@ const BioDashboard: React.FC = () => {
             
             // CRITICAL: Check if this platform already exists in social_accounts table
             // If it does, we need to update that row, otherwise the old handle will show on refresh
-            const { data: existingSocial } = await supabase
+            const { data: existingSocialInDb } = await supabase
               .from('social_accounts')
               .select('id')
               .eq('talent_id', talentProfile?.id)
               .eq('platform', social.platform)
               .maybeSingle();
             
-            if (existingSocial) {
+            if (existingSocialInDb) {
               // Update the existing social_accounts entry
-              console.log('Updating existing social_accounts entry:', existingSocial.id, 'with handle:', handleWithAt);
+              console.log('Updating existing social_accounts entry:', existingSocialInDb.id, 'with handle:', handleWithAt);
               const { error: updateSocialError } = await supabase
                 .from('social_accounts')
                 .update({ handle: handleWithAt })
-                .eq('id', existingSocial.id);
+                .eq('id', existingSocialInDb.id);
               
               if (updateSocialError) {
                 console.error('Failed to update social_accounts:', updateSocialError);
