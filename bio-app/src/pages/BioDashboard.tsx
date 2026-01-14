@@ -466,7 +466,13 @@ const BioDashboard: React.FC = () => {
           return;
         }
 
-        setTalentProfile(profile);
+        // Merge user data into profile for fallback name
+        const profileWithUser = {
+          ...profile,
+          full_name: profile.full_name || userData?.full_name || '',
+        };
+
+        setTalentProfile(profileWithUser);
         
         // Load social accounts from the social_accounts table (not JSONB field)
         const { data: socialData } = await supabase
