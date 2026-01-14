@@ -3125,8 +3125,7 @@ const BioDashboard: React.FC = () => {
             
             // Build the update object for talent_profiles (this is the important part)
             const updateData: Record<string, unknown> = {};
-            const cleanHandle = social.handle.replace(/^@/, '');
-            const handleWithAt = cleanHandle.startsWith('@') ? cleanHandle : `@${cleanHandle}`;
+            // Note: cleanHandle and handleWithAt are already declared above
             
             // Map ALL platforms to their corresponding talent_profiles fields
             switch (social.platform) {
