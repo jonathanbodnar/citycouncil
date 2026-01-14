@@ -176,7 +176,7 @@ export default function CreatorsPage() {
                       Best part? We already built it for you.
                     </p>
                     <p className="text-gray-300 mt-2">
-                      If you are a creator on ShoutOut, you have a <span className="text-cyan-400 font-bold">Shout.bio</span> setup and ready to monetize. No additional setup required.
+                      If you are a creator on ShoutOut, you have <span className="text-cyan-400 font-bold">our bio link</span> setup and ready to monetize. No additional setup required.
                     </p>
                   </div>
                 </div>
@@ -202,7 +202,7 @@ export default function CreatorsPage() {
                     <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10 transform transition-all duration-500 group-hover:scale-[1.03] group-hover:-translate-y-2 group-hover:shadow-emerald-500/20">
                       <img
                         src={creator.image}
-                        alt={`${creator.name}'s Shout.bio`}
+                        alt={`${creator.name}'s bio link`}
                         className="w-full h-auto"
                         loading="lazy"
                       />
@@ -246,13 +246,13 @@ export default function CreatorsPage() {
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
                       ~6%
                     </div>
-                    <p className="text-emerald-300 text-xs sm:text-sm leading-tight">of views become reachable fans with Shout.bio</p>
+                    <p className="text-emerald-300 text-xs sm:text-sm leading-tight">of views become reachable fans with our bio link</p>
                   </div>
                   <div className="glass rounded-xl p-4 border border-purple-500/30 text-center bg-gradient-to-br from-purple-500/5 to-transparent">
                     <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
                       100%
                     </div>
-                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">reach all your fans through Shout.bio</p>
+                    <p className="text-gray-400 text-xs sm:text-sm leading-tight">reach all your fans through our bio link</p>
                   </div>
                 </div>
                 
@@ -267,7 +267,7 @@ export default function CreatorsPage() {
                   <div className="flex items-start gap-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
                     <div className="flex-shrink-0 w-3 h-3 rounded-full bg-emerald-500 mt-2" />
                     <p className="text-gray-300">
-                      <span className="text-emerald-400 font-bold">Shout.bio</span> turns followers into an owned audience—fast.
+                      <span className="text-emerald-400 font-bold">Our bio link</span> turns followers into an owned audience—fast.
                     </p>
                   </div>
                   
@@ -304,7 +304,7 @@ export default function CreatorsPage() {
               {/* Right: Visual examples - overlapping layout */}
               <div className="relative h-[400px] sm:h-[500px]">
                 {/* Send Update - Background/larger image */}
-                <div className="absolute top-0 right-0 w-[85%] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <div className="absolute bottom-0 right-0 w-[85%] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                   <img 
                     src="/creatorbios/sendupdate.png" 
                     alt="Send update - How creators reach their audience"
@@ -312,8 +312,8 @@ export default function CreatorsPage() {
                   />
                 </div>
 
-                {/* Stay Connected - Floating overlay */}
-                <div className="absolute bottom-0 left-0 w-[50%] rounded-2xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
+                {/* Stay Connected - Floating overlay top-left */}
+                <div className="absolute top-0 left-0 w-[55%] rounded-2xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
                   <img 
                     src="/creatorbios/stayconnected.png" 
                     alt="Stay connected - How fans subscribe"
@@ -392,7 +392,7 @@ export default function CreatorsPage() {
             </h2>
             
             <p className="text-xl sm:text-2xl text-gray-300 max-w-2xl mx-auto">
-              Your Shout.bio is waiting. Start building your owned audience today—completely free.
+              Your bio link is waiting. Start building your owned audience today—completely free.
             </p>
 
           </div>
