@@ -136,7 +136,8 @@ Deno.serve(async (req) => {
       .from('talent_profiles')
       .select(`
         id, 
-        full_name, 
+        full_name,
+        temp_full_name,
         username, 
         temp_avatar_url,
         users!talent_profiles_user_id_fkey (
@@ -215,9 +216,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate sender email from talent name - check both talent profile and user table
+    // Generate sender email from talent name - check talent profile, temp (pre-onboarding), and user table
     const userName = (talent as any)?.users?.full_name;
-    const senderName = talent.full_name || userName || 'Creator';
+    const senderName = talent.full_name || (talent as any).temp_full_name || userName || 'Creator';
     const senderHandle = (talent.username || talent.full_name || 'creator')
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '.')
@@ -436,9 +437,9 @@ function buildEmailHtml(
   bioEvents: BioEvent[],
   services: ServiceOffering[]
 ): string {
-  // Get name from talent profile or user table fallback
+  // Get name from talent profile, temp_full_name (pre-onboarding), or user table fallback
   const userName = (talent as any)?.users?.full_name;
-  const talentName = talent.full_name || userName || 'Creator';
+  const talentName = talent.full_name || (talent as any).temp_full_name || userName || 'Creator';
   const firstName = talentName.split(' ')[0];
   const profileImage = talent.temp_avatar_url || '';
   const bioUrl = `https://bio.shoutout.us/${talent.username || talent.id}`;
