@@ -135,17 +135,27 @@ const CollabOrderPage: React.FC = () => {
     }
 
     try {
-      // Get talent profile
+      // Get talent profile with user data for fallback name
       let { data: profile } = await supabase
         .from('talent_profiles')
-        .select('*')
+        .select(`
+          *,
+          users!talent_profiles_user_id_fkey (
+            full_name
+          )
+        `)
         .eq('username', username)
         .single();
 
       if (!profile) {
         const { data: profileById } = await supabase
           .from('talent_profiles')
-          .select('*')
+          .select(`
+            *,
+            users!talent_profiles_user_id_fkey (
+              full_name
+            )
+          `)
           .eq('id', username)
           .single();
         profile = profileById;
@@ -523,7 +533,8 @@ const CollabOrderPage: React.FC = () => {
   const gradientEnd = bioSettings?.gradient_end || '#1a1a2e';
   // Always use pink for collab buttons - don't use bio button color as it might be white/light
   const buttonColor = '#ec4899'; // Pink for collab
-  const displayName = bioSettings?.display_name || talent?.full_name || 'Creator';
+  const userName = (talent as any)?.users?.full_name;
+  const displayName = bioSettings?.display_name || talent?.full_name || userName || 'Creator';
   const profileImage = bioSettings?.profile_image_url || talent?.temp_avatar_url;
 
   // Button style helper

@@ -1498,7 +1498,9 @@ const BioPage: React.FC = () => {
   }
 
   const gradientDirection = bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg';
-  const displayName = talentProfile?.full_name || bioSettings?.display_name || 'Creator';
+  // Get name from talent profile, then user, then bio settings, then fallback
+  const userName = (talentProfile as any)?.users?.full_name;
+  const displayName = talentProfile?.full_name || userName || bioSettings?.display_name || 'Creator';
   const profileImage = talentProfile?.temp_avatar_url || bioSettings?.profile_image_url;
 
   return (
@@ -2424,7 +2426,8 @@ const CollabModal: React.FC<{
   socialAccounts: SocialAccount[];
   onClose: () => void;
 }> = ({ service, talentProfile, socialAccounts, onClose }) => {
-  const displayName = talentProfile?.full_name || 'Creator';
+  const userName = (talentProfile as any)?.users?.full_name;
+  const displayName = talentProfile?.full_name || userName || 'Creator';
   
   // Filter to only show platforms included in this service
   const servicePlatforms = service.platforms || ['instagram'];

@@ -22,17 +22,31 @@ const PrivacyPolicy: React.FC = () => {
       }
 
       try {
-        // Try to find by username first, then by ID
+        // Try to find by username first, then by ID, including user data for fallback name
         let { data: profile } = await supabase
           .from('talent_profiles')
-          .select('id, username, full_name')
+          .select(`
+            id, 
+            username, 
+            full_name,
+            users!talent_profiles_user_id_fkey (
+              full_name
+            )
+          `)
           .eq('username', username)
           .single();
 
         if (!profile) {
           const { data: profileById } = await supabase
             .from('talent_profiles')
-            .select('id, username, full_name')
+            .select(`
+              id, 
+              username, 
+              full_name,
+              users!talent_profiles_user_id_fkey (
+                full_name
+              )
+            `)
             .eq('id', username)
             .single();
           profile = profileById;
@@ -57,7 +71,8 @@ const PrivacyPolicy: React.FC = () => {
     );
   }
 
-  const displayName = talentProfile?.full_name || 'Creator';
+  const userName = (talentProfile as any)?.users?.full_name;
+  const displayName = talentProfile?.full_name || userName || 'Creator';
   const currentDate = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
