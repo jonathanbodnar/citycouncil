@@ -734,7 +734,7 @@ const TalentProfilePage: React.FC = () => {
       {/* Hero Banner */}
       <div className="rounded-2xl px-4 sm:px-6 py-3 mb-6 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 border border-white/10 bg-white/5">
         <p className="text-white/80 text-sm sm:text-base font-medium text-center">
-          Connect with your favorite conservative voices through personalized video ShoutOuts.
+          Connect with your favorite free-speech influencers through personalized video ShoutOuts.
         </p>
         <div className="flex items-center gap-1">
           <div className="flex">

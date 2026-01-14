@@ -306,4 +306,3 @@ async function enrollInEmailFlow(
     console.error('Error in enrollInEmailFlow:', err);
   }
 }
-
