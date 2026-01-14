@@ -490,6 +490,8 @@ const BioDashboard: React.FC = () => {
         
         // Set up auto-refresh for view stats (every 30 seconds)
         const statsInterval = setInterval(async () => {
+          if (!profile?.id) return;
+          
           const { data: freshStats } = await supabase
             .from('bio_page_view_stats')
             .select('*')
