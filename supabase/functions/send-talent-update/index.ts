@@ -1,6 +1,6 @@
 // send-talent-update edge function
 // Sends email updates from talent to their followers via SendGrid
-// Uses dynamic sender addresses like firstname@shouts.bio
+// Uses dynamic sender addresses like firstname@bio.shoutout.us
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
       .replace(/[^a-z0-9]/g, '.')
       .replace(/\.+/g, '.')
       .replace(/^\.|\.$/, '');
-    const fromEmail = `${senderHandle}@shouts.bio`;
+    const fromEmail = `${senderHandle}@bio.shoutout.us`;
 
     // Build the email HTML template (with placeholder for unsubscribe URL)
     const emailHtml = buildEmailHtml(
@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
       // Send each email individually (for personalized unsubscribe links)
       const sendPromises = batch.map(async (follower: any) => {
         const user = follower.users;
-        const unsubscribeUrl = `https://shouts.bio/unsubscribe/${follower.unsubscribe_token}`;
+        const unsubscribeUrl = `https://bio.shoutout.us/unsubscribe/${follower.unsubscribe_token}`;
         const personalizedHtml = emailHtml.replace('{{unsubscribe_url}}', unsubscribeUrl);
 
         try {
@@ -430,7 +430,7 @@ function buildEmailHtml(
   const talentName = talent.full_name || 'Creator';
   const firstName = talentName.split(' ')[0];
   const profileImage = talent.temp_avatar_url || '';
-  const bioUrl = `https://shouts.bio/${talent.username || talent.id}`;
+  const bioUrl = `https://bio.shoutout.us/${talent.username || talent.id}`;
   const theme = getThemeColors(bioSettings);
   
   // Check what content is available

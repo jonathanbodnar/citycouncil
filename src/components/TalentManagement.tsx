@@ -1787,7 +1787,7 @@ const TalentManagement: React.FC = () => {
                     <button
                       onClick={() => {
                         // Open bio dashboard with talent's ID as token for auto-login
-                        const bioUrl = `https://shouts.bio/dashboard?token=${talent.id}`;
+                        const bioUrl = `https://bio.shoutout.us/dashboard?token=${talent.id}`;
                         window.open(bioUrl, '_blank');
                       }}
                       className="p-2 rounded-lg transition-colors text-blue-600 hover:bg-blue-50"

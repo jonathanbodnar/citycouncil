@@ -1210,7 +1210,7 @@ const BioDashboard: React.FC = () => {
     );
   }
 
-  const bioUrl = `shouts.bio/${talentProfile?.username || talentProfile?.id}`;
+  const bioUrl = `bio.shoutout.us/${talentProfile?.username || talentProfile?.id}`;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -1625,25 +1625,52 @@ const BioDashboard: React.FC = () => {
                                 const updated = socialLinks.filter(s => s.id !== social.id);
                                 setSocialLinks(updated);
                                 
-                                // Build the update object
-                                const updateData: Record<string, unknown> = { social_accounts: updated };
+                                // Build the update object - clear the corresponding handle field
+                                const updateData: Record<string, unknown> = {};
                                 
-                                // If removing YouTube, also clear youtube_handle
-                                if (social.platform === 'youtube') {
-                                  updateData.youtube_handle = null;
-                                  setTalentProfile(prev => prev ? { ...prev, youtube_handle: undefined } : prev);
+                                // Map platform to its handle field in talent_profiles
+                                switch (social.platform) {
+                                  case 'twitter':
+                                    updateData.twitter_handle = null;
+                                    setTalentProfile(prev => prev ? { ...prev, twitter_handle: undefined } : prev);
+                                    break;
+                                  case 'instagram':
+                                    updateData.instagram_handle = null;
+                                    setTalentProfile(prev => prev ? { ...prev, instagram_handle: undefined } : prev);
+                                    break;
+                                  case 'facebook':
+                                    updateData.facebook_handle = null;
+                                    setTalentProfile(prev => prev ? { ...prev, facebook_handle: undefined } : prev);
+                                    break;
+                                  case 'tiktok':
+                                    updateData.tiktok_handle = null;
+                                    setTalentProfile(prev => prev ? { ...prev, tiktok_handle: undefined } : prev);
+                                    break;
+                                  case 'youtube':
+                                    updateData.youtube_handle = null;
+                                    setTalentProfile(prev => prev ? { ...prev, youtube_handle: undefined } : prev);
+                                    break;
+                                  case 'rumble':
+                                    updateData.rumble_handle = null;
+                                    updateData.rumble_type = null;
+                                    setTalentProfile(prev => prev ? { ...prev, rumble_handle: undefined, rumble_type: undefined } : prev);
+                                    break;
                                 }
                                 
-                                // If removing Rumble, also clear rumble_handle
-                                if (social.platform === 'rumble') {
-                                  updateData.rumble_handle = null;
-                                  setTalentProfile(prev => prev ? { ...prev, rumble_handle: undefined } : prev);
+                                // Also delete from social_accounts table if it has a real ID
+                                if (!social.id.startsWith('profile-')) {
+                                  await supabase
+                                    .from('social_accounts')
+                                    .delete()
+                                    .eq('id', social.id);
                                 }
                                 
+                                // Update talent_profiles to clear the handle
                                 await supabase
                                   .from('talent_profiles')
                                   .update(updateData)
                                   .eq('id', talentProfile?.id);
+                                  
                                 toast.success('Social link removed');
                                 setTimeout(refreshPreview, 500);
                               }}
@@ -3069,41 +3096,63 @@ const BioDashboard: React.FC = () => {
             
             // Build the update object for talent_profiles (this is the important part)
             const updateData: Record<string, unknown> = {};
+            const cleanHandle = social.handle.replace(/^@/, '');
             
-            // If adding YouTube, also set youtube_handle for the card feature
-            if (social.platform === 'youtube') {
-              updateData.youtube_handle = social.handle.replace(/^@/, '');
-              // Update local state so the card toggle shows immediately
-              setTalentProfile(prev => prev ? { ...prev, youtube_handle: social.handle.replace(/^@/, '') } : prev);
-            }
-            
-            // If adding Rumble, also set rumble_handle and rumble_type for the card feature
-            if (social.platform === 'rumble') {
-              updateData.rumble_handle = social.handle.replace(/^@/, '');
-              updateData.rumble_type = social.rumble_type || 'c';
-              // Clear rumble cache when handle changes
-              if (talentProfile?.id) {
-                await supabase
-                  .from('rumble_cache')
-                  .delete()
-                  .eq('talent_id', talentProfile.id);
-                console.log('Cleared rumble cache for talent:', talentProfile.id);
-              }
-              // Update local state so the card toggle shows immediately
-              setTalentProfile(prev => prev ? { 
-                ...prev, 
-                rumble_handle: social.handle.replace(/^@/, ''),
-                rumble_type: social.rumble_type || 'c'
-              } : prev);
-              
-              // Auto-enable the Rumble card
-              if (bioSettings) {
-                await supabase
-                  .from('bio_settings')
-                  .update({ show_rumble_card: true })
-                  .eq('talent_id', talentProfile?.id);
-                setBioSettings({ ...bioSettings, show_rumble_card: true });
-              }
+            // Map ALL platforms to their corresponding talent_profiles fields
+            switch (social.platform) {
+              case 'twitter':
+                updateData.twitter_handle = cleanHandle;
+                setTalentProfile(prev => prev ? { ...prev, twitter_handle: cleanHandle } : prev);
+                break;
+              case 'instagram':
+                updateData.instagram_handle = cleanHandle;
+                setTalentProfile(prev => prev ? { ...prev, instagram_handle: cleanHandle } : prev);
+                break;
+              case 'facebook':
+                updateData.facebook_handle = cleanHandle;
+                setTalentProfile(prev => prev ? { ...prev, facebook_handle: cleanHandle } : prev);
+                break;
+              case 'tiktok':
+                updateData.tiktok_handle = cleanHandle;
+                setTalentProfile(prev => prev ? { ...prev, tiktok_handle: cleanHandle } : prev);
+                break;
+              case 'youtube':
+                updateData.youtube_handle = cleanHandle;
+                setTalentProfile(prev => prev ? { ...prev, youtube_handle: cleanHandle } : prev);
+                // Clear YouTube cache
+                if (talentProfile?.id) {
+                  await supabase
+                    .from('youtube_cache')
+                    .delete()
+                    .eq('talent_id', talentProfile.id);
+                  console.log('Cleared youtube cache for talent:', talentProfile.id);
+                }
+                break;
+              case 'rumble':
+                updateData.rumble_handle = cleanHandle;
+                updateData.rumble_type = social.rumble_type || 'c';
+                setTalentProfile(prev => prev ? { 
+                  ...prev, 
+                  rumble_handle: cleanHandle,
+                  rumble_type: social.rumble_type || 'c'
+                } : prev);
+                // Clear rumble cache
+                if (talentProfile?.id) {
+                  await supabase
+                    .from('rumble_cache')
+                    .delete()
+                    .eq('talent_id', talentProfile.id);
+                  console.log('Cleared rumble cache for talent:', talentProfile.id);
+                }
+                // Auto-enable the Rumble card
+                if (bioSettings) {
+                  await supabase
+                    .from('bio_settings')
+                    .update({ show_rumble_card: true })
+                    .eq('talent_id', talentProfile?.id);
+                  setBioSettings({ ...bioSettings, show_rumble_card: true });
+                }
+                break;
             }
             
             // Always update talent_profiles with the handle fields (this is critical for persistence)
