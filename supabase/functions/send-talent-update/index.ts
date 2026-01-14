@@ -131,10 +131,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch talent profile
+    // Fetch talent profile including user data for fallback name
     const { data: talent, error: talentError } = await supabase
       .from('talent_profiles')
-      .select('id, full_name, username, temp_avatar_url')
+      .select(`
+        id, 
+        full_name, 
+        username, 
+        temp_avatar_url,
+        users!talent_profiles_user_id_fkey (
+          full_name
+        )
+      `)
       .eq('id', talent_id)
       .single();
 
@@ -207,8 +215,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate sender email from talent name
-    const senderName = talent.full_name || 'Creator';
+    // Generate sender email from talent name - check both talent profile and user table
+    const userName = (talent as any)?.users?.full_name;
+    const senderName = talent.full_name || userName || 'Creator';
     const senderHandle = (talent.username || talent.full_name || 'creator')
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '.')
@@ -427,7 +436,9 @@ function buildEmailHtml(
   bioEvents: BioEvent[],
   services: ServiceOffering[]
 ): string {
-  const talentName = talent.full_name || 'Creator';
+  // Get name from talent profile or user table fallback
+  const userName = (talent as any)?.users?.full_name;
+  const talentName = talent.full_name || userName || 'Creator';
   const firstName = talentName.split(' ')[0];
   const profileImage = talent.temp_avatar_url || '';
   const bioUrl = `https://bio.shoutout.us/${talent.username || talent.id}`;
