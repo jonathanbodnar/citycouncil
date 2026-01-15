@@ -259,8 +259,8 @@ export default function HomePageNew() {
         {/* Hero Header */}
         <div className="py-8 mb-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-              Personalized Video ShoutOuts<br />From Free-Speech Influencers
+            <h1 className="text-[1.75rem] font-normal text-white mb-4">
+              Personalized Video ShoutOuts From<br />Free-Speech Influencers
             </h1>
             
             {/* Rating */}

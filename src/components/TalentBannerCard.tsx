@@ -166,9 +166,31 @@ export default function TalentBannerCard({
 
       {/* BOTTOM LINE: Order Button + Price + Delivery (same line) */}
       {/* Layout changes based on video position */}
-      {videoOnRight ? (
-        // Video on RIGHT = Button on LEFT side
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+      {!videoOnRight ? (
+        // Video on LEFT = Button on FAR RIGHT (justify-end)
+        <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
+          <div className="flex items-center gap-2">
+            {hasDiscount ? (
+              <>
+                <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
+                <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+              </>
+            ) : (
+              <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+            )}
+          </div>
+          <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
+          <button
+            onClick={handleOrderClick}
+            className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+            style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+          >
+            Order Now {countdown && <>⏱️ {countdown}</>}
+          </button>
+        </div>
+      ) : (
+        // Video on RIGHT = Button on FAR LEFT (justify-start)
+        <div className="flex flex-wrap items-center justify-start gap-3 sm:gap-4">
           <button
             onClick={handleOrderClick}
             className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
@@ -187,30 +209,6 @@ export default function TalentBannerCard({
             )}
           </div>
           <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
-        </div>
-      ) : (
-        // Video on LEFT = Button on FAR RIGHT
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-2">
-              {hasDiscount ? (
-                <>
-                  <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
-                  <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
-                </>
-              ) : (
-                <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
-              )}
-            </div>
-            <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
-          </div>
-          <button
-            onClick={handleOrderClick}
-            className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap ml-auto"
-            style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
-          >
-            Order Now {countdown && <>⏱️ {countdown}</>}
-          </button>
         </div>
       )}
     </div>
