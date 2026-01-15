@@ -8,9 +8,10 @@ import SEOHelmet from '../components/SEOHelmet';
 import FOMONotification from '../components/FOMONotification';
 
 interface TalentWithDetails extends TalentProfile {
-  users?: { full_name: string; avatar_url?: string };
+  users?: { id: string; full_name: string; avatar_url?: string };
   recent_video_url?: string;
   recent_review?: { rating: number; comment: string };
+  top_categories?: string[];
   similar_talent?: TalentWithDetails[];
 }
 
@@ -325,13 +326,13 @@ export default function HomePageNew() {
                             msOverflowStyle: 'none',
                           }}
                         >
-                          {talent.similar_talent.map((similarTalent) => (
+                          {talent.similar_talent.filter(t => t.users).map((similarTalent) => (
                             <div 
                               key={similarTalent.id} 
                               className="flex-shrink-0"
                               style={{ width: '180px' }}
                             >
-                              <TalentCard talent={similarTalent} compact />
+                              <TalentCard talent={similarTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
                             </div>
                           ))}
                         </div>
