@@ -67,6 +67,9 @@ interface TalentProfile {
   youtube_handle?: string;
   podcast_rss_url?: string;
   podcast_name?: string;
+  users?: {
+    full_name?: string;
+  };
 }
 
 interface SocialAccount {
