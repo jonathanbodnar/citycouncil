@@ -1881,25 +1881,35 @@ const BioPage: React.FC = () => {
                 );
               }
               
-              // Podcast Card - show if talent has podcast RSS configured and we fetched data
-              if (cardType === 'podcast' && talentProfile?.podcast_rss_url && podcastData) {
-                console.log('Rendering podcast card:', { podcastData, show_podcast_card: bioSettings?.show_podcast_card });
+              // Podcast Card - show immediately if podcast RSS configured, load data async
+              if (cardType === 'podcast' && talentProfile?.podcast_rss_url) {
+                console.log('Rendering podcast card:', { podcastData, rss_url: talentProfile.podcast_rss_url });
+                
+                // Show card immediately with loading state if data isn't ready
+                const isLoading = !podcastData;
+                const displayData = podcastData || {
+                  title: 'Loading latest episode...',
+                  thumbnail: '',
+                  url: talentProfile.podcast_rss_url,
+                  podcastName: talentProfile.podcast_name || 'Podcast',
+                };
+                
                 return (
                   <a
                     key="podcast"
-                    href={podcastData.url}
+                    href={displayData.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"
                   >
-                    <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
-                      <div className="flex items-stretch">
-                        <div className="w-[80px] h-[80px] flex-shrink-0 relative bg-black/20">
-                          {podcastData.thumbnail ? (
-                            <img src={podcastData.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
+                      <div className="flex items-center gap-3 p-2">
+                        <div className="w-[50px] h-[50px] flex-shrink-0 relative bg-black/20 rounded-lg overflow-hidden">
+                          {displayData.thumbnail ? (
+                            <img src={displayData.thumbnail} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600">
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white/80">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 text-white/80 ${isLoading ? 'animate-pulse' : ''}`}>
                                 <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
                                 <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
                                 <circle cx="12" cy="12" r="2"/>
@@ -1907,28 +1917,16 @@ const BioPage: React.FC = () => {
                               </svg>
                             </div>
                           )}
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                            <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-white ml-0.5">
-                                <path d="M8 5v14l11-7z"/>
-                              </svg>
-                            </div>
-                          </div>
                         </div>
-                        <div className="flex-1 p-3 flex flex-col justify-center">
-                          <div className="flex items-center gap-2 mb-1">
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-purple-400">
-                              <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
-                              <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
-                              <circle cx="12" cy="12" r="2"/>
-                              <path d="M12 16l-1 6h2l-1-6z"/>
-                            </svg>
-                            <span className="text-purple-400 text-xs font-medium">{podcastData.podcastName || 'Podcast'}</span>
+                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-purple-400 flex-shrink-0">
+                            <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                            <circle cx="12" cy="12" r="2"/>
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-purple-400 text-[10px] font-medium uppercase">{displayData.podcastName}</p>
+                            <h3 className={`text-white font-medium text-xs line-clamp-1 ${isLoading ? 'animate-pulse' : ''}`}>{displayData.title}</h3>
                           </div>
-                          <h3 className="text-white font-medium text-sm line-clamp-2">{podcastData.title}</h3>
-                          {podcastData.duration && (
-                            <p className="text-gray-400 text-xs mt-0.5">{podcastData.duration}</p>
-                          )}
                         </div>
                       </div>
                     </div>
