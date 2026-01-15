@@ -256,10 +256,10 @@ export default function HomePageNew() {
       />
 
       <div className="min-h-screen">
-        {/* Hero Header - White Background */}
-        <div className="bg-white py-8 mb-8">
+        {/* Hero Header */}
+        <div className="py-8 mb-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
               Personalized Video ShoutOuts<br />From Free-Speech Influencers
             </h1>
             
@@ -272,7 +272,7 @@ export default function HomePageNew() {
                   </svg>
                 ))}
               </div>
-              <span className="text-xl font-medium text-gray-700">
+              <span className="text-xl font-medium text-white/80">
                 5.0 ({totalReviews.toLocaleString()} fans)
               </span>
             </div>

@@ -17,11 +17,11 @@ interface TalentBannerCardProps {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  'pep-talk': '💝 Surprise',
-  'birthday': '🎂 Birthday',
-  'roast': '🔥 Roast',
-  'advice': '💡 Advice',
-  'corporate': '🏢 Corporate',
+  'pep-talk': 'Surprise',
+  'birthday': 'Birthday',
+  'roast': 'Roast',
+  'advice': 'Advice',
+  'corporate': 'Corporate',
 };
 
 // Categories to hide
@@ -123,93 +123,93 @@ export default function TalentBannerCard({
     </div>
   );
 
-  // Content section - different layout based on video position
+  // Content section - matches wireframe exactly
   const ContentSection = () => (
     <div className="flex-1 h-full flex flex-col justify-center p-4 sm:p-6 lg:p-8">
-      {/* Top: Name + Categories */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+      {/* TOP LINE: Name + Categories (same line) */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white whitespace-nowrap">
           {talentName}
         </h2>
-        <div className="flex flex-wrap gap-1.5">
-          {filteredCategories.slice(0, 3).map((category) => (
-            <span
-              key={category}
-              className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
-            >
-              {CATEGORY_LABELS[category] || category}
-            </span>
-          ))}
-        </div>
+        {filteredCategories.slice(0, 3).map((category) => (
+          <span
+            key={category}
+            className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
+          >
+            {CATEGORY_LABELS[category] || category}
+          </span>
+        ))}
       </div>
 
-      {/* Middle: Review + Stars */}
+      {/* Review Text */}
       {talent.recent_review && (
-        <div className="mb-3 sm:mb-4">
-          <p className="text-white/70 text-xs sm:text-sm italic line-clamp-2 mb-1">
-            "{talent.recent_review.comment}"
-          </p>
-          <div className="flex items-center gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <svg 
-                key={i} 
-                className="w-4 h-4 sm:w-5 sm:h-5" 
-                viewBox="0 0 20 20" 
-                fill={i < (talent.recent_review?.rating || 5) ? "#facc15" : "#4B5563"}
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
+        <p className="text-white/70 text-sm sm:text-base italic line-clamp-2 mb-2">
+          "{talent.recent_review.comment}"
+        </p>
+      )}
+
+      {/* Stars */}
+      {talent.recent_review && (
+        <div className="flex items-center gap-0.5 mb-4">
+          {[...Array(5)].map((_, i) => (
+            <svg 
+              key={i} 
+              className="w-5 h-5 sm:w-6 sm:h-6" 
+              viewBox="0 0 20 20" 
+              fill={i < (talent.recent_review?.rating || 5) ? "#facc15" : "#4B5563"}
+            >
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          ))}
         </div>
       )}
 
-      {/* Bottom: Order Button + Price + Delivery */}
-      {/* Different layout based on video position */}
+      {/* BOTTOM LINE: Order Button + Price + Delivery (same line) */}
+      {/* Layout changes based on video position */}
       {videoOnRight ? (
-        // Video on right = content on left, button flows left
+        // Video on RIGHT = Button on LEFT side
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <button
             onClick={handleOrderClick}
-            className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
             style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
           >
-            Order Now {countdown && <span className="ml-1">⏱️ {countdown}</span>}
+            Order Now {countdown && <>⏱️ {countdown}</>}
           </button>
           <div className="flex items-center gap-2">
             {hasDiscount ? (
               <>
-                <span className="text-white/50 text-sm sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
-                <span className="text-yellow-300 text-lg sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+                <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
+                <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
               </>
             ) : (
-              <span className="text-white text-lg sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+              <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
             )}
           </div>
-          <span className="text-white/50 text-xs sm:text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
+          <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
         </div>
       ) : (
-        // Video on left = content on right, button goes far right
+        // Video on LEFT = Button on FAR RIGHT
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               {hasDiscount ? (
                 <>
-                  <span className="text-white/50 text-sm sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
-                  <span className="text-yellow-300 text-lg sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+                  <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
+                  <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
                 </>
               ) : (
-                <span className="text-white text-lg sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+                <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
               )}
             </div>
-            <span className="text-white/50 text-xs sm:text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
+            <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
           </div>
           <button
             onClick={handleOrderClick}
-            className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap ml-auto"
             style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
           >
-            Order Now {countdown && <span className="ml-1">⏱️ {countdown}</span>}
+            Order Now {countdown && <>⏱️ {countdown}</>}
           </button>
         </div>
       )}
