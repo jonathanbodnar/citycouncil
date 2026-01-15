@@ -162,6 +162,8 @@ const GRADIENT_PRESETS = [
   { name: 'Forest', start: '#14532d', end: '#0a0a0a', direction: 'to-b' },
   { name: 'Purple Haze', start: '#581c87', end: '#0a0a0a', direction: 'to-b' },
   { name: 'Rose', start: '#881337', end: '#1c1917', direction: 'to-b' },
+  { name: 'Crimson', start: '#991b1b', end: '#0a0a0a', direction: 'to-b' },
+  { name: 'Royal Blue', start: '#1e3a8a', end: '#0a0a0a', direction: 'to-b' },
   { name: 'Slate', start: '#334155', end: '#0f172a', direction: 'to-b' },
   { name: 'Warm', start: '#78350f', end: '#1c1917', direction: 'to-br' },
 ];
