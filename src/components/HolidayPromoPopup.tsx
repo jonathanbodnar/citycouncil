@@ -127,7 +127,7 @@ const HolidayPromoPopup: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
-  const [timeLeft, setTimeLeft] = useState({ minutes: 30, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 30, seconds: 0 });
   const [giveawayTimeLeft, setGiveawayTimeLeft] = useState({ minutes: 15, seconds: 0 });
   const [giveawayEndTime, setGiveawayEndTime] = useState<number | null>(null);
 
@@ -249,14 +249,15 @@ const HolidayPromoPopup: React.FC = () => {
       const diff = expiry - now;
 
       if (diff <= 0) {
-        setTimeLeft({ minutes: 0, seconds: 0 });
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
         return;
       }
 
-      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      setTimeLeft({ minutes, seconds });
+      setTimeLeft({ hours, minutes, seconds });
     };
 
     updateCountdown();
@@ -694,6 +695,10 @@ const HolidayPromoPopup: React.FC = () => {
               <div className="mb-6">
                 <p className="text-white/70 text-sm mb-2">Expires in...</p>
                 <div className="flex justify-center gap-3">
+                  <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-2">
+                    <span className="text-2xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    <p className="text-xs text-white/70">Hours</p>
+                  </div>
                   <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-2">
                     <span className="text-2xl font-bold text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
                     <p className="text-xs text-white/70">Minutes</p>
