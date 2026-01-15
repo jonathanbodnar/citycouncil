@@ -167,11 +167,12 @@ interface BioSettings {
 interface BioLink {
   id: string;
   talent_id: string;
-  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor';
+  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video';
   title?: string;
   url?: string;
   icon_url?: string;
   image_url?: string;
+  video_url?: string;
   grid_size?: 'small' | 'medium' | 'large';
   display_order: number;
   is_active: boolean;
@@ -1911,6 +1912,43 @@ const BioPage: React.FC = () => {
             });
           })()}
 
+
+          {/* Featured Video Card */}
+          {links.filter(l => l.link_type === 'video').map((link) => {
+            if (!link.video_url) return null;
+            
+            return (
+              <div key={link.id} className="rounded-2xl overflow-hidden border border-white/20">
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  onClick={(e) => {
+                    const video = e.currentTarget;
+                    if (video.muted) {
+                      video.muted = false;
+                      toast.success('Audio enabled');
+                    } else {
+                      video.muted = true;
+                      toast.success('Audio muted');
+                    }
+                  }}
+                  className="w-full cursor-pointer"
+                  style={{ maxHeight: '400px', objectFit: 'cover' }}
+                >
+                  <source src={link.video_url} type="video/mp4" />
+                  <source src={link.video_url} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+                {link.title && (
+                  <div className="p-3 bg-black/40 backdrop-blur-sm">
+                    <p className="text-white font-medium text-center">{link.title}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {/* Regular Links */}
           {links.filter(l => l.link_type === 'basic').map((link) => {

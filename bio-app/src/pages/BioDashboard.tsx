@@ -20,7 +20,8 @@ import {
   ArrowsUpDownIcon,
   SwatchIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { uploadImageToWasabi } from '../services/wasabiUpload';
@@ -94,11 +95,12 @@ interface BioSettings {
 interface BioLink {
   id?: string;
   talent_id: string;
-  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor';
+  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video';
   title?: string;
   url?: string;
   icon_url?: string;
   image_url?: string;
+  video_url?: string;
   grid_size?: 'small' | 'medium' | 'large';
   display_order: number;
   is_active: boolean;
@@ -3505,10 +3507,11 @@ const AddLinkModal: React.FC<{
   onAddMultiple?: (links: Omit<BioLink, 'id' | 'display_order'>[]) => void;
   talentId: string;
 }> = ({ onClose, onAdd, onAddMultiple, talentId }) => {
-  const [linkType, setLinkType] = useState<'basic' | 'grid' | 'sponsor'>('basic');
+  const [linkType, setLinkType] = useState<'basic' | 'grid' | 'sponsor' | 'video'>('basic');
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [gridColumns, setGridColumns] = useState(2);
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -3604,7 +3607,8 @@ const AddLinkModal: React.FC<{
         talent_id: talentId,
         link_type: linkType,
         title,
-        url: ensureHttps(url),
+        url: linkType === 'video' ? undefined : ensureHttps(url),
+        video_url: linkType === 'video' ? videoUrl : undefined,
         thumbnail_url: thumbnailUrl || undefined,
         grid_columns: gridColumns,
         is_active: true,
@@ -3623,6 +3627,7 @@ const AddLinkModal: React.FC<{
   const linkTypes = [
     { type: 'basic' as const, label: 'Basic Link', icon: LinkIcon, color: 'blue', desc: 'Simple link with title' },
     { type: 'grid' as const, label: 'Grid Card', icon: Squares2X2Icon, color: 'purple', desc: 'Image card with link' },
+    { type: 'video' as const, label: 'Featured Video', icon: VideoCameraIcon, color: 'red', desc: 'Autoplay video card' },
     { type: 'sponsor' as const, label: 'Become a Sponsor', icon: GiftIcon, color: 'yellow', desc: 'Sponsorship CTA' },
   ];
 
@@ -3674,25 +3679,40 @@ const AddLinkModal: React.FC<{
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="My Website"
+                  placeholder={linkType === 'video' ? 'Featured Video' : 'My Website'}
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
-                <input
-                  type="text"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  onBlur={handleUrlBlur}
-                  placeholder="example.com"
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
-              </div>
+              {linkType === 'video' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Video URL *</label>
+                  <input
+                    type="url"
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    placeholder="https://example.com/video.mp4"
+                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Direct link to .mp4, .webm, or .mov file</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
+                  <input
+                    type="text"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    onBlur={handleUrlBlur}
+                    placeholder="example.com"
+                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
+                </div>
+              )}
 
               {/* Image Upload for basic links */}
               {linkType === 'basic' && (
