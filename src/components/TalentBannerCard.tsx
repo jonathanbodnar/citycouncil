@@ -123,15 +123,83 @@ export default function TalentBannerCard({
     </div>
   );
 
-  // Content section - TWO DIFFERENT LAYOUTS based on video position
+  // Content section - TWO DIFFERENT LAYOUTS based on video position (matches screenshot exactly)
   const ContentSection = () => {
     if (!videoOnRight) {
-      // VIDEO ON LEFT - Wireframe shows: Categories top, review, stars, then Talent Name + Price on bottom left, Order button bottom right
+      // VIDEO ON LEFT (like Shawn card in screenshot): Name + Category top, review, stars, button + price bottom
       return (
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
-            {/* Categories */}
+            {/* Talent Name + Categories on same line */}
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white whitespace-nowrap">
+                {talentName}
+              </h2>
+              {filteredCategories.slice(0, 3).map((category) => (
+                <span
+                  key={category}
+                  className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
+                >
+                  {CATEGORY_LABELS[category] || category}
+                </span>
+              ))}
+            </div>
+
+            {/* Review Text */}
+            {talent.recent_review && (
+              <p className="text-white/70 text-sm sm:text-base italic line-clamp-2">
+                "{talent.recent_review.comment}"
+              </p>
+            )}
+
+            {/* Stars */}
+            {talent.recent_review && (
+              <div className="flex items-center gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <svg 
+                    key={i} 
+                    className="w-5 h-5 sm:w-6 sm:h-6" 
+                    viewBox="0 0 20 20" 
+                    fill={i < (talent.recent_review?.rating || 5) ? "#facc15" : "#4B5563"}
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* BOTTOM SECTION - Button on left, Price + Delivery next to it */}
+          <div className="flex items-end justify-start gap-3 sm:gap-4 w-full">
+            <button
+              onClick={handleOrderClick}
+              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+            >
+              Order Now {countdown && <>⏱️ {countdown}</>}
+            </button>
+            <div className="flex items-center gap-2">
+              {hasDiscount ? (
+                <>
+                  <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
+                  <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+                </>
+              ) : (
+                <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+              )}
+              <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      // VIDEO ON RIGHT (like Hayley card in screenshot): Categories top, review, stars, then Name + Price on bottom left, Order button bottom right
+      return (
+        <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
+          {/* TOP SECTION */}
+          <div className="flex flex-col items-start gap-3">
+            {/* Categories (no name) */}
             <div className="flex flex-wrap gap-2">
               {filteredCategories.slice(0, 3).map((category) => (
                 <span
@@ -197,82 +265,22 @@ export default function TalentBannerCard({
           </div>
         </div>
       );
-    } else {
-      // VIDEO ON RIGHT - Wireframe shows: Talent Name + Categories top, review, stars, Order button bottom left
-      return (
-        <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
-          {/* TOP SECTION */}
-          <div className="flex flex-col items-start gap-3">
-            {/* Talent Name + Categories on same line */}
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white whitespace-nowrap">
-                {talentName}
-              </h2>
-              {filteredCategories.slice(0, 3).map((category) => (
-                <span
-                  key={category}
-                  className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
-                >
-                  {CATEGORY_LABELS[category] || category}
-                </span>
-              ))}
-            </div>
-
-            {/* Review Text */}
-            {talent.recent_review && (
-              <p className="text-white/70 text-sm sm:text-base italic line-clamp-2">
-                "{talent.recent_review.comment}"
-              </p>
-            )}
-
-            {/* Stars */}
-            {talent.recent_review && (
-              <div className="flex items-center gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <svg 
-                    key={i} 
-                    className="w-5 h-5 sm:w-6 sm:h-6" 
-                    viewBox="0 0 20 20" 
-                    fill={i < (talent.recent_review?.rating || 5) ? "#facc15" : "#4B5563"}
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* BOTTOM SECTION - Order button on left, Price + Delivery next to it */}
-          <div className="flex items-end justify-start gap-3 sm:gap-4 w-full">
-            <button
-              onClick={handleOrderClick}
-              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
-              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
-            >
-              Order Now {countdown && <>⏱️ {countdown}</>}
-            </button>
-            <div className="flex items-center gap-2">
-              {hasDiscount ? (
-                <>
-                  <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
-                  <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
-                </>
-              ) : (
-                <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
-              )}
-              <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
-            </div>
-          </div>
-        </div>
-      );
     }
   };
 
   return (
-    <div className="gradient-border rounded-3xl shadow-modern-xl overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform duration-300">
-      <div className="relative h-64 sm:h-72 lg:h-80 rounded-3xl overflow-hidden bg-gray-900/95">
-        {/* Main Content Container */}
-        <div className={`h-full flex ${videoOnRight ? 'flex-row' : 'flex-row-reverse'}`}>
+    <div className="gradient-border rounded-3xl shadow-modern-xl">
+      <div className="md:flex rounded-3xl overflow-hidden relative h-64 sm:h-72 lg:h-80">
+        {/* Background Gradient - Matches Profile Page */}
+        <div 
+          className="hidden md:block absolute inset-0 rounded-3xl"
+          style={{
+            background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
+          }}
+        ></div>
+        
+        {/* Main Content Container - FIX: videoOnRight=true means video on RIGHT, so use flex-row-reverse */}
+        <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
           <ContentSection />
         </div>
