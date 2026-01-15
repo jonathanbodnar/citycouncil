@@ -4977,7 +4977,7 @@ const PodcastModal: React.FC<{
         </div>
 
         <p className="text-gray-400 text-sm mb-4">
-          Add your podcast RSS feed to display your latest episode on your bio page.
+          Add your podcast RSS feed URL (XML or RSS format) to display your latest episode on your bio page.
         </p>
 
         <div className="space-y-4">
@@ -4987,11 +4987,11 @@ const PodcastModal: React.FC<{
               type="url"
               value={rssUrl}
               onChange={(e) => setRssUrl(e.target.value)}
-              placeholder="https://feeds.example.com/podcast.rss"
+              placeholder="https://feed.podbean.com/yourshow/feed.xml"
               className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Find this in your podcast host (Spotify for Podcasters, Apple Podcasts Connect, etc.)
+              Supports .xml and .rss formats from Podbean, Spotify, Apple Podcasts, Libsyn, etc.
             </p>
           </div>
 
