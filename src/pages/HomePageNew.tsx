@@ -177,7 +177,7 @@ export default function HomePageNew() {
           .filter((other) => {
             if (other.id === talent.id) return false;
             // Check if they share any categories
-            const sharedCategories = talent.categories?.filter((cat) =>
+            const sharedCategories = talent.categories?.filter((cat: string) =>
               other.categories?.includes(cat)
             );
             return sharedCategories && sharedCategories.length > 0;
