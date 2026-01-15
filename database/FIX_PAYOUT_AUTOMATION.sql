@@ -116,7 +116,7 @@ WHERE jobname = 'auto-process-payouts';
 SELECT 
   '📊 PENDING BATCHES' as section,
   tp.username,
-  tp.display_name,
+  COALESCE(tp.temp_full_name, tp.username) as talent_name,
   pb.week_start_date,
   COUNT(p.id) as num_orders,
   pb.net_payout_amount,
@@ -131,7 +131,7 @@ FROM payout_batches pb
 JOIN talent_profiles tp ON tp.id = pb.talent_id
 LEFT JOIN payouts p ON p.batch_id = pb.id
 WHERE pb.status = 'pending'
-GROUP BY tp.username, tp.display_name, pb.id, pb.week_start_date, pb.net_payout_amount, 
+GROUP BY tp.username, tp.temp_full_name, pb.id, pb.week_start_date, pb.net_payout_amount, 
          pb.status, tp.moov_account_id, tp.bank_account_linked, tp.payout_onboarding_completed
 ORDER BY pb.created_at;
 

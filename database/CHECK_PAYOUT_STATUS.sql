@@ -63,7 +63,7 @@ LIMIT 10;
 SELECT 
   '👤 TALENT PAYOUT READINESS' as section,
   tp.username,
-  tp.display_name,
+  COALESCE(tp.temp_full_name, tp.username) as talent_name,
   CASE 
     WHEN tp.moov_account_id IS NOT NULL THEN '✅ Has Moov Account'
     ELSE '❌ No Moov Account'
@@ -81,7 +81,7 @@ SELECT
 FROM talent_profiles tp
 LEFT JOIN payout_batches pb ON pb.talent_id = tp.id AND pb.status = 'pending'
 WHERE tp.moov_account_id IS NOT NULL
-GROUP BY tp.id, tp.username, tp.display_name, tp.moov_account_id, tp.bank_account_linked, tp.payout_onboarding_completed
+GROUP BY tp.id, tp.username, tp.temp_full_name, tp.moov_account_id, tp.bank_account_linked, tp.payout_onboarding_completed
 ORDER BY pending_batches DESC;
 
 -- 6. Summary with action items
