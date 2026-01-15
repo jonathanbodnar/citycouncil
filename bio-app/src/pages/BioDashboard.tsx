@@ -3622,7 +3622,7 @@ const AddLinkModal: React.FC<{
       onAdd({
         talent_id: talentId,
         link_type: linkType,
-        title,
+        title: linkType === 'video' ? 'Featured Video' : title,
         url: linkType === 'video' ? undefined : ensureHttps(url),
         video_url: linkType === 'video' ? videoUrl : undefined,
         thumbnail_url: thumbnailUrl || undefined,
@@ -3689,18 +3689,6 @@ const AddLinkModal: React.FC<{
           {/* Basic Link Fields */}
           {linkType !== 'grid' && (
             <>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder={linkType === 'video' ? 'Featured Video' : 'My Website'}
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                  required
-                />
-              </div>
-
               {linkType === 'video' ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Video URL *</label>
@@ -3715,6 +3703,20 @@ const AddLinkModal: React.FC<{
                   <p className="text-xs text-gray-500 mt-1">Direct link to .mp4, .webm, or .mov file</p>
                 </div>
               ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="My Website"
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
                   <input
@@ -3728,6 +3730,7 @@ const AddLinkModal: React.FC<{
                   />
                   <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
                 </div>
+                </>
               )}
 
               {/* Image Upload for basic links */}

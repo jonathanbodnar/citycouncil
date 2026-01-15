@@ -1942,11 +1942,6 @@ const BioPage: React.FC = () => {
                   <source src={link.video_url} type="video/webm" />
                   Your browser does not support the video tag.
                 </video>
-                {link.title && (
-                  <div className="p-3 bg-black/40 backdrop-blur-sm">
-                    <p className="text-white font-medium text-center">{link.title}</p>
-                  </div>
-                )}
               </div>
             );
           })}
