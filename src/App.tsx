@@ -97,7 +97,7 @@ const PageLoader = () => (
 );
 
 // Lazy load all pages for code splitting
-const HomePage = lazy(() => import('./pages/HomePage'));
+const HomePage = lazy(() => import('./pages/HomePageNew'));
 const DemoPage = lazy(() => import('./pages/DemoPage'));
 const TalentOnboardingPage = lazy(() => import('./pages/TalentOnboardingPage'));
 const PublicTalentOnboardingPage = lazy(() => import('./pages/PublicTalentOnboardingPage'));
