@@ -925,7 +925,7 @@ const CollabOrderPage: React.FC = () => {
                     id="fortis-payment-container" 
                     ref={iframeContainerRef}
                     className="min-h-[400px]"
-                    style={{ marginTop: '-190px' }}
+                    style={{ marginTop: '-220px' }}
                   />
                 </div>
 
