@@ -2111,24 +2111,45 @@ const TalentManagement: React.FC = () => {
               </div>
               
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Featured ShoutOut Types
                 </label>
-                <input
-                  type="text"
-                  value={(editingTalent.featured_shoutout_types || []).join(', ')}
-                  onChange={(e) => {
-                    const types = e.target.value.split(',').map(t => t.trim()).filter(t => t);
-                    setEditingTalent({
-                      ...editingTalent, 
-                      featured_shoutout_types: types.length > 0 ? types : null
-                    });
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="birthday, advice, roast (comma-separated)"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Leave blank to auto-show from their orders. Enter comma-separated types to override (e.g., "birthday, advice, roast")
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { value: 'pep-talk', label: '💝 Surprise a Loved One' },
+                    { value: 'birthday', label: '🎂 Birthday Wishes' },
+                    { value: 'roast', label: '🔥 Friendly Roast' },
+                    { value: 'advice', label: '💡 Get Advice' },
+                    { value: 'corporate', label: '🏢 Corporate Event' },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className="flex items-center space-x-2 p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(editingTalent.featured_shoutout_types || []).includes(option.value)}
+                        onChange={(e) => {
+                          const currentTypes = editingTalent.featured_shoutout_types || [];
+                          let newTypes;
+                          if (e.target.checked) {
+                            newTypes = [...currentTypes, option.value];
+                          } else {
+                            newTypes = currentTypes.filter(t => t !== option.value);
+                          }
+                          setEditingTalent({
+                            ...editingTalent,
+                            featured_shoutout_types: newTypes.length > 0 ? newTypes : null
+                          });
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Leave all unchecked to auto-show from their orders. Select specific types to display on homepage banners.
                 </p>
               </div>
               
