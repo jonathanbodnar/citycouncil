@@ -45,7 +45,6 @@ BEGIN
       AND tp.moov_account_id IS NOT NULL
       AND tp.bank_account_linked = true
       AND tp.payout_onboarding_completed = true
-    ORDER BY pb.created_at
   LOOP
     -- Invoke the edge function for each talent
     v_url := 'https://utafetamgwukkbrlezev.supabase.co/functions/v1/moov-process-pending-batches';
