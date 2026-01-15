@@ -3717,19 +3717,18 @@ const AddLinkModal: React.FC<{
                   </div>
 
                   <div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
-                  <input
-                    type="text"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onBlur={handleUrlBlur}
-                    placeholder="example.com"
-                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
-                </div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
+                    <input
+                      type="text"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      onBlur={handleUrlBlur}
+                      placeholder="example.com"
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
+                  </div>
                 </>
               )}
 
