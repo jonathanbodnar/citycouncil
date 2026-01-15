@@ -262,8 +262,10 @@ interface PodcastEpisodeData {
   description?: string;
   thumbnail?: string;
   url: string;
+  audioUrl?: string;
   pubDate?: string;
   duration?: string;
+  views?: string;
   podcastName: string;
   feedUrl: string;
 }
@@ -1274,13 +1276,29 @@ const BioPage: React.FC = () => {
       const durationEl = item.querySelector('duration');
       const duration = durationEl?.textContent || '';
 
+      // Format listen count from enclosure length (bytes) - rough estimate
+      let views = null;
+      const enclosureLength = enclosure?.getAttribute('length');
+      if (enclosureLength) {
+        const bytes = parseInt(enclosureLength);
+        // Rough estimate: assume avg 50MB file = 1000 downloads
+        const estimatedListens = Math.floor(bytes / 50000);
+        if (estimatedListens > 0) {
+          views = estimatedListens >= 1000 
+            ? `${(estimatedListens / 1000).toFixed(1)}K` 
+            : `${estimatedListens}`;
+        }
+      }
+
       const podcastDataObj = {
         title,
         description: description.replace(/<[^>]*>/g, '').substring(0, 200), // Strip HTML and truncate
         thumbnail,
         url: episodeUrl || rssUrl,
+        audioUrl: audioUrl || episodeUrl, // Direct audio link for player
         pubDate,
         duration,
+        views: views || undefined,
         podcastName: feedTitle,
         feedUrl: rssUrl,
       };
@@ -1892,46 +1910,99 @@ const BioPage: React.FC = () => {
                   thumbnail: '',
                   url: talentProfile.podcast_rss_url,
                   podcastName: talentProfile.podcast_name || 'Podcast',
+                  audioUrl: '',
+                  views: null,
                 };
                 
-                return (
-                  <a
-                    key="podcast"
-                    href={displayData.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
-                    <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
-                      <div className="flex items-center gap-3 p-2">
-                        <div className="w-[50px] h-[50px] flex-shrink-0 relative bg-black/20 rounded-lg overflow-hidden">
+                const PodcastPlayer = () => {
+                  const [isPlaying, setIsPlaying] = React.useState(false);
+                  const audioRef = React.useRef<HTMLAudioElement>(null);
+
+                  const togglePlay = (e: React.MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (audioRef.current) {
+                      if (isPlaying) {
+                        audioRef.current.pause();
+                        setIsPlaying(false);
+                      } else {
+                        audioRef.current.play();
+                        setIsPlaying(true);
+                      }
+                    }
+                  };
+
+                  const audioUrl = displayData.audioUrl || displayData.url;
+                  
+                  return (
+                    <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300">
+                      <div className="flex items-center">
+                        {/* Thumbnail with play button - flush to edge */}
+                        <div className="w-[50px] h-[50px] flex-shrink-0 relative bg-black/20 cursor-pointer" onClick={togglePlay}>
                           {displayData.thumbnail ? (
                             <img src={displayData.thumbnail} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600">
                               <svg viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 text-white/80 ${isLoading ? 'animate-pulse' : ''}`}>
                                 <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
-                                <path d="M12 6c-3.3 0-6 2.7-6 6 0 2.5 1.5 4.6 3.7 5.5l.3-1.9c-1.4-.7-2.4-2.1-2.4-3.6 0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-1 2.9-2.4 3.6l.3 1.9c2.2-.9 3.7-3 3.7-5.5.2-3.3-2.5-6-5.2-6z"/>
                                 <circle cx="12" cy="12" r="2"/>
-                                <path d="M12 16l-1 6h2l-1-6z"/>
                               </svg>
                             </div>
                           )}
-                        </div>
-                        <div className="flex-1 min-w-0 flex items-center gap-2">
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-purple-400 flex-shrink-0">
-                            <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
-                            <circle cx="12" cy="12" r="2"/>
-                          </svg>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-purple-400 text-[10px] font-medium uppercase">{displayData.podcastName}</p>
-                            <h3 className={`text-white font-medium text-xs line-clamp-1 ${isLoading ? 'animate-pulse' : ''}`}>{displayData.title}</h3>
+                          {/* Play/Pause button overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors">
+                            {isPlaying ? (
+                              <div className="flex items-center gap-0.5">
+                                <div className="w-1 bg-white rounded-full animate-pulse" style={{ height: '12px', animationDelay: '0ms' }}></div>
+                                <div className="w-1 bg-white rounded-full animate-pulse" style={{ height: '8px', animationDelay: '150ms' }}></div>
+                                <div className="w-1 bg-white rounded-full animate-pulse" style={{ height: '14px', animationDelay: '300ms' }}></div>
+                              </div>
+                            ) : (
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white drop-shadow-lg">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            )}
                           </div>
                         </div>
+                        
+                        {/* Content - with padding */}
+                        <div className="flex-1 min-w-0 py-2 px-3">
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-purple-400 flex-shrink-0">
+                                <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+                                <circle cx="12" cy="12" r="2"/>
+                              </svg>
+                              <p className="text-purple-400 text-[10px] font-medium uppercase tracking-wide truncate">{displayData.podcastName}</p>
+                            </div>
+                            {displayData.views && (
+                              <span className="text-gray-400 text-[10px] whitespace-nowrap flex-shrink-0">{displayData.views}</span>
+                            )}
+                          </div>
+                          <h3 className={`text-white font-medium text-xs line-clamp-1 ${isLoading ? 'animate-pulse' : ''}`}>
+                            {displayData.title}
+                          </h3>
+                        </div>
                       </div>
+                      
+                      {/* Hidden audio element */}
+                      {audioUrl && !isLoading && (
+                        <audio
+                          ref={audioRef}
+                          src={audioUrl}
+                          onEnded={() => setIsPlaying(false)}
+                          onError={() => {
+                            setIsPlaying(false);
+                            console.error('Audio playback error');
+                          }}
+                        />
+                      )}
                     </div>
-                  </a>
-                );
+                  );
+                };
+                
+                return <PodcastPlayer key="podcast" />;
               }
               
               return null;
