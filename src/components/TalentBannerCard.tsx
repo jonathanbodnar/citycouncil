@@ -126,16 +126,18 @@ export default function TalentBannerCard({
   // Content section - TWO DIFFERENT LAYOUTS per wireframe
   const ContentSection = () => {
     if (!videoOnRight) {
-      // VIDEO ON LEFT = Button on FAR RIGHT per wireframe 1
+      // VIDEO ON LEFT = Button on FAR RIGHT
       return (
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
-            {/* Talent Name + Categories on same line */}
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white whitespace-nowrap">
-                {talentName}
-              </h2>
+            {/* Talent Name */}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+              {talentName}
+            </h2>
+            
+            {/* Categories */}
+            <div className="flex flex-wrap gap-2">
               {filteredCategories.slice(0, 3).map((category) => (
                 <span
                   key={category}
@@ -171,36 +173,43 @@ export default function TalentBannerCard({
           </div>
 
           {/* BOTTOM SECTION - VIDEO ON LEFT = BUTTON FAR RIGHT */}
-          <div className="flex items-end justify-between w-full gap-4">
-            {/* Left: Price + Delivery */}
-            <div className="flex items-center gap-2">
-              {hasDiscount ? (
-                <>
-                  <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
-                  <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
-                </>
-              ) : (
-                <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
-              )}
-              <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
+          <div className="flex items-end justify-end w-full">
+            <div className="flex items-center gap-3">
+              {/* Price + Delivery next to button */}
+              <div className="flex items-center gap-2">
+                {hasDiscount ? (
+                  <>
+                    <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
+                    <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+                  </>
+                ) : (
+                  <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+                )}
+                <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
+              </div>
+              {/* Order button */}
+              <button
+                onClick={handleOrderClick}
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+                style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+              >
+                Order Now {countdown && <>⏱️ {countdown}</>}
+              </button>
             </div>
-            {/* Right: Order button */}
-            <button
-              onClick={handleOrderClick}
-              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
-              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
-            >
-              Order Now {countdown && <>⏱️ {countdown}</>}
-            </button>
           </div>
         </div>
       );
     } else {
-      // VIDEO ON RIGHT = Button on FAR LEFT per wireframe 2
+      // VIDEO ON RIGHT = Button on FAR LEFT
       return (
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
+            {/* Talent Name */}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+              {talentName}
+            </h2>
+            
             {/* Categories */}
             <div className="flex flex-wrap gap-2">
               {filteredCategories.slice(0, 3).map((category) => (
@@ -238,20 +247,17 @@ export default function TalentBannerCard({
           </div>
 
           {/* BOTTOM SECTION - VIDEO ON RIGHT = BUTTON FAR LEFT */}
-          <div className="flex items-end justify-between w-full gap-4">
-            {/* Left: Order button */}
-            <button
-              onClick={handleOrderClick}
-              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
-              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
-            >
-              Order Now {countdown && <>⏱️ {countdown}</>}
-            </button>
-            {/* Right: Talent Name + Price */}
-            <div className="flex flex-col items-end gap-1">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-right">
-                {talentName}
-              </h2>
+          <div className="flex items-end justify-start w-full">
+            <div className="flex items-center gap-3">
+              {/* Order button */}
+              <button
+                onClick={handleOrderClick}
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+                style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+              >
+                Order Now {countdown && <>⏱️ {countdown}</>}
+              </button>
+              {/* Price + Delivery next to button */}
               <div className="flex items-center gap-2">
                 {hasDiscount ? (
                   <>

@@ -125,7 +125,7 @@ interface NewsletterConfig {
 interface ServiceOffering {
   id?: string;
   talent_id: string;
-  service_type: 'instagram_collab' | 'tiktok_collab' | 'youtube_collab';
+  service_type: 'instagram_collab' | 'tiktok_collab' | 'youtube_collab' | 'sponsorship';
   pricing: number; // in cents
   title: string;
   description?: string;
@@ -5479,16 +5479,22 @@ const AddServiceModal: React.FC<{
   onClose: () => void;
   onSave: (service: Partial<ServiceOffering> & { service_type: string }) => void;
 }> = ({ service, socialLinks, onUpdateFollowerCount, onClose, onSave }) => {
-  const [serviceType] = useState<'instagram_collab'>('instagram_collab');
-  const [title, setTitle] = useState(service?.title || 'Collaborate with me');
-  const [pricing, setPricing] = useState(service ? (service.pricing / 100).toString() : '250');
+  const [serviceType, setServiceType] = useState<'instagram_collab' | 'sponsorship'>(service?.service_type as any || 'instagram_collab');
+  const [title, setTitle] = useState(service?.title || (serviceType === 'sponsorship' ? 'Discuss Sponsorship' : 'Collaborate with me'));
+  const [pricing, setPricing] = useState(service ? (service.pricing / 100).toString() : (serviceType === 'sponsorship' ? '0' : '250'));
   const [totalFollowers, setTotalFollowers] = useState(service?.total_followers?.toString() || '');
   const [benefits, setBenefits] = useState<string[]>(
-    service?.benefits || [
-      'Personalized video mention',
-      'Story share to followers',
-      'Permanent post on feed'
-    ]
+    service?.benefits || (serviceType === 'sponsorship' 
+      ? [
+          'Direct communication channel',
+          'Custom sponsorship packages',
+          'Audience insights & analytics'
+        ]
+      : [
+          'Personalized video mention',
+          'Story share to followers',
+          'Permanent post on feed'
+        ])
   );
   const [newBenefit, setNewBenefit] = useState('');
   const [description, setDescription] = useState(service?.description || '');
@@ -5550,20 +5556,61 @@ const AddServiceModal: React.FC<{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Service Type (for now just Instagram Collab) */}
-          <div className="p-4 bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-white">Instagram Collab</h3>
-                <p className="text-sm text-gray-400">Sponsored content collaboration</p>
+          {/* Service Type Selector */}
+          {!service && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">Service Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setServiceType('instagram_collab');
+                    setTitle('Collaborate with me');
+                    setPricing('250');
+                    setBenefits(['Personalized video mention', 'Story share to followers', 'Permanent post on feed']);
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    serviceType === 'instagram_collab'
+                      ? 'bg-pink-500/20 border-pink-500'
+                      : 'bg-white/5 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className={`w-6 h-6 ${serviceType === 'instagram_collab' ? 'text-pink-400' : 'text-gray-400'}`}>
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    <span className={`text-sm font-medium ${serviceType === 'instagram_collab' ? 'text-white' : 'text-gray-400'}`}>
+                      Social Collab
+                    </span>
+                  </div>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setServiceType('sponsorship');
+                    setTitle('Discuss Sponsorship');
+                    setPricing('0');
+                    setBenefits(['Direct communication channel', 'Custom sponsorship packages', 'Audience insights & analytics']);
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    serviceType === 'sponsorship'
+                      ? 'bg-green-500/20 border-green-500'
+                      : 'bg-white/5 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`w-6 h-6 ${serviceType === 'sponsorship' ? 'text-green-400' : 'text-gray-400'}`}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span className={`text-sm font-medium ${serviceType === 'sponsorship' ? 'text-white' : 'text-gray-400'}`}>
+                      Sponsorship
+                    </span>
+                  </div>
+                </button>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Title */}
           <div>
@@ -5578,46 +5625,51 @@ const AddServiceModal: React.FC<{
             />
           </div>
 
-          {/* Pricing */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Price</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+          {/* Pricing - only for collabs */}
+          {serviceType !== 'sponsorship' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Price</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                <input
+                  type="number"
+                  value={pricing}
+                  onChange={(e) => setPricing(e.target.value)}
+                  min="1"
+                  step="1"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl pl-8 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Total Followers - only for collabs */}
+          {serviceType !== 'sponsorship' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Total Followers</label>
+              <p className="text-xs text-gray-500 mb-2">Your combined follower count across all platforms</p>
               <input
                 type="number"
-                value={pricing}
-                onChange={(e) => setPricing(e.target.value)}
-                min="1"
-                step="1"
-                className="w-full bg-white/5 border border-white/20 rounded-xl pl-8 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
-                required
+                value={totalFollowers}
+                onChange={(e) => setTotalFollowers(e.target.value)}
+                placeholder="e.g. 500000"
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
               />
+              {parseInt(totalFollowers) > 0 && (
+                <p className="text-xs text-pink-400 mt-1">
+                  {parseInt(totalFollowers) >= 1000000 
+                    ? `${(parseInt(totalFollowers) / 1000000).toFixed(1)}M followers`
+                    : parseInt(totalFollowers) >= 1000
+                      ? `${(parseInt(totalFollowers) / 1000).toFixed(1)}K followers`
+                      : `${totalFollowers} followers`}
+                </p>
+              )}
             </div>
-          </div>
+          )}
 
-          {/* Total Followers */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Total Followers</label>
-            <p className="text-xs text-gray-500 mb-2">Your combined follower count across all platforms</p>
-            <input
-              type="number"
-              value={totalFollowers}
-              onChange={(e) => setTotalFollowers(e.target.value)}
-              placeholder="e.g. 500000"
-              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
-            />
-            {parseInt(totalFollowers) > 0 && (
-              <p className="text-xs text-pink-400 mt-1">
-                {parseInt(totalFollowers) >= 1000000 
-                  ? `${(parseInt(totalFollowers) / 1000000).toFixed(1)}M followers`
-                  : parseInt(totalFollowers) >= 1000
-                    ? `${(parseInt(totalFollowers) / 1000).toFixed(1)}K followers`
-                    : `${totalFollowers} followers`}
-              </p>
-            )}
-          </div>
-
-          {/* Platforms */}
+          {/* Platforms - only for collabs */}
+          {serviceType !== 'sponsorship' && (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Platforms Included</label>
             <p className="text-xs text-gray-500 mb-3">Select which social platforms this collab covers.</p>
@@ -5663,6 +5715,7 @@ const AddServiceModal: React.FC<{
               })}
             </div>
           </div>
+          )}
 
           {/* Benefits */}
           <div>

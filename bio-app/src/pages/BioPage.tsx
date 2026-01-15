@@ -383,6 +383,7 @@ const BioPage: React.FC = () => {
   const [podcastData, setPodcastData] = useState<PodcastEpisodeData | null>(null);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [showCollabModal, setShowCollabModal] = useState<ServiceOffering | null>(null);
+  const [showSponsorModal, setShowSponsorModal] = useState<ServiceOffering | null>(null);
   const [bioEvents, setBioEvents] = useState<BioEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -2183,7 +2184,13 @@ const BioPage: React.FC = () => {
             return (
               <button
                 key={service.id}
-                onClick={() => setShowCollabModal(service)}
+                onClick={() => {
+                  if (service.service_type === 'sponsorship') {
+                    setShowSponsorModal(service);
+                  } else {
+                    setShowCollabModal(service);
+                  }
+                }}
                 className="w-full text-left mt-4"
               >
                 <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-pink-500/30 hover:border-pink-500/50 transition-all duration-300 hover:scale-[1.02]">
@@ -2452,6 +2459,15 @@ const BioPage: React.FC = () => {
           onClose={() => setShowCollabModal(null)}
         />
       )}
+
+      {/* Sponsor Inquiry Modal */}
+      {showSponsorModal && talentProfile && (
+        <SponsorInquiryModal
+          service={showSponsorModal}
+          talentProfile={talentProfile}
+          onClose={() => setShowSponsorModal(null)}
+        />
+      )}
     </div>
   );
 };
@@ -2632,6 +2648,188 @@ const CollabModal: React.FC<{
             You won't be charged until {displayName} accepts your request
           </p>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Sponsor Inquiry Modal
+const SponsorInquiryModal: React.FC<{
+  service: ServiceOffering;
+  talentProfile: TalentProfile;
+  onClose: () => void;
+}> = ({ service, talentProfile, onClose }) => {
+  const [formData, setFormData] = useState({
+    companyName: '',
+    contactName: '',
+    email: '',
+    phone: '',
+    budget: '',
+    message: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      // Send sponsor inquiry to edge function
+      const { error } = await supabase.functions.invoke('send-sponsor-inquiry', {
+        body: {
+          talent_id: talentProfile.id,
+          talent_name: talentProfile.full_name || talentProfile.temp_full_name || talentProfile.users?.full_name || 'Talent',
+          talent_username: talentProfile.username,
+          service_title: service.title,
+          company_name: formData.companyName,
+          contact_name: formData.contactName,
+          email: formData.email,
+          phone: formData.phone,
+          budget: formData.budget,
+          message: formData.message,
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Inquiry sent! The talent will be in touch soon.');
+      onClose();
+    } catch (error: any) {
+      console.error('Error sending inquiry:', error);
+      toast.error('Failed to send inquiry. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const displayName = talentProfile.full_name || talentProfile.temp_full_name || talentProfile.users?.full_name || 'Creator';
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-[#0a0a0a] border border-white/20 rounded-2xl w-full max-w-lg my-8">
+        {/* Header */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-bold text-white">Sponsorship Inquiry</h2>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-gray-400 text-sm">
+            Send {displayName} details about your sponsorship opportunity
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Company Name *</label>
+              <input
+                type="text"
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Your Name *</label>
+              <input
+                type="text"
+                value={formData.contactName}
+                onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Email *</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="(555) 123-4567"
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Budget Range</label>
+            <input
+              type="text"
+              value={formData.budget}
+              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+              placeholder="e.g., $5,000 - $10,000"
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Message *</label>
+            <textarea
+              value={formData.message}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              placeholder="Tell us about your sponsorship opportunity..."
+              rows={4}
+              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 resize-none"
+              required
+            />
+          </div>
+
+          {/* Benefits display */}
+          {service.benefits && service.benefits.length > 0 && (
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+              <h3 className="text-white font-semibold mb-2 text-sm">What you can expect:</h3>
+              <ul className="space-y-1">
+                {service.benefits.map((benefit, index) => (
+                  <li key={index} className="flex items-start gap-2 text-gray-400 text-sm">
+                    <svg className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50"
+            >
+              {submitting ? 'Sending...' : 'Send Inquiry'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
