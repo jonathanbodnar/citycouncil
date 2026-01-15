@@ -1197,8 +1197,6 @@ const BioPage: React.FC = () => {
 
       const parser = new DOMParser();
       const xml = parser.parseFromString(text, 'text/xml');
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(text, 'text/xml');
       
       // Check for parse errors
       const parseError = xml.querySelector('parsererror');
