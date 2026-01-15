@@ -220,7 +220,7 @@ export default function CreatorsPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[2rem]" />
                       <div className="absolute bottom-0 left-0 right-0 p-6 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none">
                         <p className="font-bold text-xl">{creator.name}</p>
-                        <p className="text-emerald-400 font-mono text-sm">shoutout.me/{creator.handle}</p>
+                        <p className="text-emerald-400 font-mono text-sm">shoutout.fans/{creator.handle}</p>
                       </div>
                     </div>
                   </div>
