@@ -34,7 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('🟢 AuthContext: Getting initial session...');
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('🟢 Initial session result:', { 
+        hasSession: !!session, 
+        hasUser: !!session?.user, 
+        email: session?.user?.email,
+        error 
+      });
       setSession(session);
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
@@ -48,7 +55,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, session?.user?.email);
+      console.log('🔵 Auth state change:', event, session?.user?.email);
+      console.log('🔵 Stack trace:', new Error().stack);
+      console.log('🔵 Session exists:', !!session);
+      console.log('🔵 User exists:', !!session?.user);
+      
       setSession(session);
       setSupabaseUser(session?.user ?? null);
       
@@ -56,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Don't await here - call fetchUserProfile without blocking
         fetchUserProfile(session.user.id);
       } else {
+        console.log('⚠️ No session - setting user to null');
         setUser(null);
         setLoading(false);
       }
@@ -277,28 +289,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('SignIn function called with:', email);
+      console.log('🟡 SignIn function called with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log('Auth signIn response:', { data, error });
+      console.log('🟡 Auth signIn response:', { 
+        hasData: !!data, 
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session,
+        email: data?.user?.email,
+        error 
+      });
 
       if (error) throw error;
 
       // Update last_login timestamp
       if (data.user) {
+        console.log('🟡 Updating last_login for:', data.user.email);
         await supabase
           .from('users')
           .update({ last_login: new Date().toISOString() })
           .eq('id', data.user.id);
       }
 
+      console.log('🟡 SignIn completed successfully');
       // The auth state change listener will handle profile fetching
       return data;
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('🔴 SignIn error:', error);
       throw error;
     }
   };
