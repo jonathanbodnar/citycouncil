@@ -1186,15 +1186,7 @@ const TalentProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Pricing Urgency Indicator - flush at bottom (hide if coupon applied) */}
-        {ordersRemaining <= 10 && !hasCoupon && (
-          <div className="mt-4 -mx-4 md:-mx-5 -mb-4 md:-mb-5 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-t border-orange-400/50 px-4 py-3 rounded-b-3xl">
-            <FireIcon className="h-5 w-5 text-orange-400" />
-            <span className="text-sm font-bold text-orange-100">
-              Only {ordersRemaining} left at this price!
-            </span>
-          </div>
-        )}
+        {/* Pricing Urgency Indicator - REMOVED per user request */}
       </div>
       
       </div>{/* End Hero + Order Card Container */}

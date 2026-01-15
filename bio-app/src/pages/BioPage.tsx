@@ -1854,8 +1854,9 @@ const BioPage: React.FC = () => {
                 );
               }
               
-              // Podcast Card - show if we have podcast data (unless explicitly disabled)
-              if (cardType === 'podcast' && podcastData && talentProfile?.podcast_rss_url && (!bioSettings || bioSettings.show_podcast_card !== false)) {
+              // Podcast Card - show if talent has podcast RSS configured and we fetched data
+              if (cardType === 'podcast' && talentProfile?.podcast_rss_url && podcastData) {
+                console.log('Rendering podcast card:', { podcastData, show_podcast_card: bioSettings?.show_podcast_card });
                 return (
                   <a
                     key="podcast"
