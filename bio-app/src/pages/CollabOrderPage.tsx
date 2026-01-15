@@ -29,7 +29,7 @@ interface BioSettings {
 interface ServiceOffering {
   id: string;
   talent_id: string;
-  service_type: string;
+  service_type: 'instagram_collab' | 'tiktok_collab' | 'youtube_collab' | 'sponsorship';
   pricing: number;
   title: string;
   description?: string;

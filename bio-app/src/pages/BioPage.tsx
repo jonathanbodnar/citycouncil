@@ -215,7 +215,7 @@ interface RumbleVideoData {
 interface ServiceOffering {
   id: string;
   talent_id: string;
-  service_type: 'instagram_collab' | 'tiktok_collab' | 'youtube_collab';
+  service_type: 'instagram_collab' | 'tiktok_collab' | 'youtube_collab' | 'sponsorship';
   pricing: number; // in cents
   title: string;
   description?: string;
