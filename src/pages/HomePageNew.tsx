@@ -115,61 +115,61 @@ export default function HomePageNew() {
         return;
       }
 
-      // Fetch recent video and review for each talent
-      const enrichedTalent = await Promise.all(
-        talentData.map(async (talent) => {
-          // Get most recent completed order with video
-          const { data: recentOrder } = await supabase
-            .from('orders')
-            .select('video_url')
-            .eq('talent_id', talent.id)
-            .eq('status', 'completed')
-            .not('video_url', 'is', null)
-            .order('completed_at', { ascending: false })
-            .limit(1)
-            .single();
+      // OPTIMIZE: Fetch ALL orders and reviews in 2 queries instead of N queries per talent
+      const talentIds = talentData.map(t => t.id);
 
-          // Get most recent review
-          const { data: recentReview } = await supabase
-            .from('reviews')
-            .select('rating, comment')
-            .eq('talent_id', talent.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+      // Batch fetch: Get most recent completed order with video for each talent
+      const { data: allOrders } = await supabase
+        .from('orders')
+        .select('talent_id, video_url, occasion, completed_at, status')
+        .in('talent_id', talentIds)
+        .eq('status', 'completed')
+        .not('video_url', 'is', null)
+        .order('completed_at', { ascending: false });
 
-          // Get top 3 order categories for this talent
-          const { data: orderCategories } = await supabase
-            .from('orders')
-            .select('occasion')
-            .eq('talent_id', talent.id)
-            .eq('status', 'completed')
-            .not('occasion', 'is', null);
+      // Batch fetch: Get most recent review for each talent
+      const { data: allReviews } = await supabase
+        .from('reviews')
+        .select('talent_id, rating, comment, created_at')
+        .in('talent_id', talentIds)
+        .order('created_at', { ascending: false });
 
-          // Count occurrences
-          const categoryCount: Record<string, number> = {};
-          orderCategories?.forEach((order) => {
-            if (order.occasion) {
-              categoryCount[order.occasion] = (categoryCount[order.occasion] || 0) + 1;
-            }
-          });
+      // Process data for each talent (now using cached batch data)
+      const enrichedTalent = talentData.map((talent) => {
+        // Get most recent video for this talent
+        const talentOrders = allOrders?.filter(o => o.talent_id === talent.id) || [];
+        const recentOrder = talentOrders[0]; // Already sorted by completed_at desc
 
-          // Get top 3 - Use featured_shoutout_types if set by admin, otherwise calculate from orders
-          const topCategories = talent.featured_shoutout_types && talent.featured_shoutout_types.length > 0
-            ? talent.featured_shoutout_types.slice(0, 3)
-            : Object.entries(categoryCount)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 3)
-                .map(([category]) => category);
+        // Get most recent review for this talent
+        const talentReviews = allReviews?.filter(r => r.talent_id === talent.id) || [];
+        const recentReview = talentReviews[0]; // Already sorted by created_at desc
 
-          return {
-            ...talent,
-            recent_video_url: recentOrder?.video_url,
-            recent_review: recentReview,
-            top_categories: topCategories,
-          };
-        })
-      );
+        // Calculate top 3 order categories
+        const categoryCount: Record<string, number> = {};
+        talentOrders.forEach((order) => {
+          if (order.occasion) {
+            categoryCount[order.occasion] = (categoryCount[order.occasion] || 0) + 1;
+          }
+        });
+
+        // Get top 3 - Use featured_shoutout_types if set by admin, otherwise calculate from orders
+        const topCategories = talent.featured_shoutout_types && talent.featured_shoutout_types.length > 0
+          ? talent.featured_shoutout_types.slice(0, 3)
+          : Object.entries(categoryCount)
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 3)
+              .map(([category]) => category);
+
+        return {
+          ...talent,
+          recent_video_url: recentOrder?.video_url,
+          recent_review: recentReview ? {
+            rating: recentReview.rating,
+            comment: recentReview.comment
+          } : undefined,
+          top_categories: topCategories,
+        };
+      });
 
       // Filter out talent without videos
       const talentWithVideos = enrichedTalent.filter(t => t.recent_video_url);
