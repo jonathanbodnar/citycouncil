@@ -2307,9 +2307,11 @@ const BioPage: React.FC = () => {
                         </>
                       )}
                     </div>
-                    <h3 className="text-white font-semibold text-sm">
-                      {service.title}
-                    </h3>
+                    {service.title && (
+                      <h3 className="text-white font-semibold text-sm">
+                        {service.title}
+                      </h3>
+                    )}
                   </div>
                 </div>
               </button>

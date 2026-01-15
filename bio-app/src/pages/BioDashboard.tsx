@@ -5682,10 +5682,10 @@ const AddServiceModal: React.FC<{
             </div>
           )}
 
-          {/* Title */}
+          {/* Title - Optional for all service types */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Card Title {serviceType === 'sponsorship' && <span className="text-gray-500 text-xs">(optional)</span>}
+              Card Title <span className="text-gray-500 text-xs">(optional)</span>
             </label>
             <input
               type="text"
@@ -5693,7 +5693,6 @@ const AddServiceModal: React.FC<{
               onChange={(e) => setTitle(e.target.value)}
               placeholder={serviceType === 'sponsorship' ? 'Discuss Sponsorship' : 'Collaborate with me'}
               className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
-              required={serviceType !== 'sponsorship'}
             />
           </div>
 
