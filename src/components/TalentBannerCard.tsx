@@ -276,23 +276,9 @@ export default function TalentBannerCard({
     }
   };
 
-  // Use bio page ShoutOut card styling
-  const accentColor = '#3b82f6'; // Blue accent color
-
+  // Use EXACT bio page ShoutOut card gradient styling
   return (
-    <div 
-      className="rounded-3xl backdrop-blur-xl border border-white/10 overflow-hidden relative shadow-modern-xl"
-      style={{ 
-        background: `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}10 50%, transparent 100%)`,
-        borderColor: `${accentColor}30`,
-      }}
-    >
-      {/* Decorative gradient blob */}
-      <div 
-        className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
-        style={{ backgroundColor: accentColor }}
-      />
-      
+    <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02] shadow-modern-xl">
       <div className="md:flex rounded-3xl overflow-hidden relative h-64 sm:h-72 lg:h-80">
         {/* Main Content Container */}
         <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
