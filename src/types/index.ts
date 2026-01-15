@@ -24,6 +24,7 @@ export interface TalentProfile {
   user_id: string;
   category: TalentCategory; // Keep for backwards compatibility
   categories?: TalentCategory[]; // New multi-category field
+  featured_shoutout_types?: string[] | null; // Admin-configured shoutout types for homepage banners
   bio: string;
   position?: string; // Optional title like "Congressman", "Judge", "Senator"
   allow_corporate_pricing?: boolean;

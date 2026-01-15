@@ -154,11 +154,13 @@ export default function HomePageNew() {
             }
           });
 
-          // Get top 3
-          const topCategories = Object.entries(categoryCount)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 3)
-            .map(([category]) => category);
+          // Get top 3 - Use featured_shoutout_types if set by admin, otherwise calculate from orders
+          const topCategories = talent.featured_shoutout_types && talent.featured_shoutout_types.length > 0
+            ? talent.featured_shoutout_types.slice(0, 3)
+            : Object.entries(categoryCount)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 3)
+                .map(([category]) => category);
 
           return {
             ...talent,

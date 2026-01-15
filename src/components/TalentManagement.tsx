@@ -30,6 +30,7 @@ interface TalentWithUser extends TalentProfile {
   };
   temp_phone?: string; // For editing phone number
   current_onboarding_step?: number; // Tracks which onboarding step the talent is on (1-5)
+  featured_shoutout_types?: string[] | null; // Admin-configured shoutout types
 }
 
 const TalentManagement: React.FC = () => {
@@ -2107,6 +2108,28 @@ const TalentManagement: React.FC = () => {
                   autoSave={false}
                   startEditing={false}
                 />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Featured ShoutOut Types
+                </label>
+                <input
+                  type="text"
+                  value={(editingTalent.featured_shoutout_types || []).join(', ')}
+                  onChange={(e) => {
+                    const types = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                    setEditingTalent({
+                      ...editingTalent, 
+                      featured_shoutout_types: types.length > 0 ? types : null
+                    });
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="birthday, advice, roast (comma-separated)"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave blank to auto-show from their orders. Enter comma-separated types to override (e.g., "birthday, advice, roast")
+                </p>
               </div>
               
               <div>

@@ -131,21 +131,21 @@ export default function TalentBannerCard({
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
-            {/* Talent Name */}
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-              {talentName}
-            </h2>
-            
-            {/* Categories */}
-            <div className="flex flex-wrap gap-2">
-              {filteredCategories.slice(0, 3).map((category) => (
-                <span
-                  key={category}
-                  className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
-                >
-                  {CATEGORY_LABELS[category] || category}
-                </span>
-              ))}
+            {/* Talent Name + Categories on same line (name left, categories right) */}
+            <div className="flex flex-wrap items-center gap-2 w-full">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+                {talentName}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {filteredCategories.slice(0, 3).map((category) => (
+                  <span
+                    key={category}
+                    className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
+                  >
+                    {CATEGORY_LABELS[category] || category}
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Review Text */}
@@ -205,21 +205,21 @@ export default function TalentBannerCard({
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
-            {/* Talent Name */}
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-              {talentName}
-            </h2>
-            
-            {/* Categories */}
-            <div className="flex flex-wrap gap-2">
-              {filteredCategories.slice(0, 3).map((category) => (
-                <span
-                  key={category}
-                  className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
-                >
-                  {CATEGORY_LABELS[category] || category}
-                </span>
-              ))}
+            {/* Talent Name + Categories on same line (name left, categories right) */}
+            <div className="flex flex-wrap items-center gap-2 w-full">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+                {talentName}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {filteredCategories.slice(0, 3).map((category) => (
+                  <span
+                    key={category}
+                    className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
+                  >
+                    {CATEGORY_LABELS[category] || category}
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Review Text */}
