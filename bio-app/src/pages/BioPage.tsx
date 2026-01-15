@@ -1160,17 +1160,43 @@ const BioPage: React.FC = () => {
 
   // Fetch podcast data from RSS feed
   const fetchPodcastData = async (rssUrl: string, podcastName: string) => {
+    console.log('Fetching podcast data for:', rssUrl);
+    
     try {
-      // Use a CORS proxy to fetch the RSS feed
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
-      const response = await fetch(proxyUrl);
+      let text = '';
       
-      if (!response.ok) {
-        console.error('Failed to fetch podcast RSS:', response.status);
+      // Try multiple CORS proxies in order
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,
+        rssUrl, // Try direct fetch last
+      ];
+      
+      for (const proxyUrl of proxies) {
+        try {
+          console.log('Trying proxy:', proxyUrl.substring(0, 50) + '...');
+          const response = await fetch(proxyUrl, {
+            signal: AbortSignal.timeout(10000), // 10 second timeout
+          });
+          
+          if (response.ok) {
+            text = await response.text();
+            console.log('Successfully fetched RSS, length:', text.length);
+            break;
+          }
+        } catch (fetchErr) {
+          console.warn('Fetch attempt failed:', fetchErr);
+          continue;
+        }
+      }
+      
+      if (!text) {
+        console.error('All fetch attempts failed for podcast RSS');
         return;
       }
 
-      const text = await response.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
       const parser = new DOMParser();
       const xml = parser.parseFromString(text, 'text/xml');
       
@@ -1250,7 +1276,7 @@ const BioPage: React.FC = () => {
       const durationEl = item.querySelector('duration');
       const duration = durationEl?.textContent || '';
 
-      setPodcastData({
+      const podcastDataObj = {
         title,
         description: description.replace(/<[^>]*>/g, '').substring(0, 200), // Strip HTML and truncate
         thumbnail,
@@ -1259,7 +1285,10 @@ const BioPage: React.FC = () => {
         duration,
         podcastName: feedTitle,
         feedUrl: rssUrl,
-      });
+      };
+      
+      console.log('Successfully parsed podcast data:', podcastDataObj);
+      setPodcastData(podcastDataObj);
     } catch (error) {
       console.error('Error fetching podcast data:', error);
     }
