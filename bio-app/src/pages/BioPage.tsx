@@ -1853,8 +1853,8 @@ const BioPage: React.FC = () => {
                 );
               }
               
-              // Podcast Card
-              if (cardType === 'podcast' && podcastData && bioSettings && bioSettings.show_podcast_card !== false) {
+              // Podcast Card - show if we have podcast data (unless explicitly disabled)
+              if (cardType === 'podcast' && podcastData && talentProfile?.podcast_rss_url && (!bioSettings || bioSettings.show_podcast_card !== false)) {
                 return (
                   <a
                     key="podcast"
