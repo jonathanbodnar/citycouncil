@@ -2193,34 +2193,51 @@ const BioPage: React.FC = () => {
                 }}
                 className="w-full text-left mt-4"
               >
-                <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-pink-500/30 hover:border-pink-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className={`rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-[1.02] ${
+                  service.service_type === 'sponsorship'
+                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30 hover:border-green-500/50'
+                    : 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-500/30 hover:border-pink-500/50'
+                }`}>
                   <div className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      {/* Show icons for all platforms in this service */}
-                      <div className="flex -space-x-1">
-                        {servicePlatforms.slice(0, 3).map((platformId) => {
-                          const platform = SOCIAL_PLATFORMS[platformId];
-                          if (!platform) return null;
-                          return (
-                            <div key={platformId} className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0 border-2 border-[#1a1a1a]">
-                              <span className="text-white [&>svg]:w-3.5 [&>svg]:h-3.5">{platform.icon}</span>
-                            </div>
-                          );
-                        })}
-                        {servicePlatforms.length > 3 && (
-                          <div className="w-7 h-7 rounded-lg bg-pink-500/50 flex items-center justify-center flex-shrink-0 border-2 border-[#1a1a1a]">
-                            <span className="text-white text-xs font-bold">+{servicePlatforms.length - 3}</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-pink-400 text-xs font-medium">{platformLabel}</span>
-                      {/* Show total followers inline with platform label - only if set */}
-                      {totalFollowers > 0 && (
+                      {service.service_type === 'sponsorship' ? (
                         <>
-                          <span className="text-gray-400 text-xs">•</span>
-                          <span className="text-pink-400 text-xs font-medium">
-                            {formatFollowers(totalFollowers)} followers
-                          </span>
+                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4 text-white">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <span className="text-green-400 text-xs font-medium">Sponsorship Opportunity</span>
+                        </>
+                      ) : (
+                        <>
+                          {/* Show icons for all platforms in this service */}
+                          <div className="flex -space-x-1">
+                            {servicePlatforms.slice(0, 3).map((platformId) => {
+                              const platform = SOCIAL_PLATFORMS[platformId];
+                              if (!platform) return null;
+                              return (
+                                <div key={platformId} className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0 border-2 border-[#1a1a1a]">
+                                  <span className="text-white [&>svg]:w-3.5 [&>svg]:h-3.5">{platform.icon}</span>
+                                </div>
+                              );
+                            })}
+                            {servicePlatforms.length > 3 && (
+                              <div className="w-7 h-7 rounded-lg bg-pink-500/50 flex items-center justify-center flex-shrink-0 border-2 border-[#1a1a1a]">
+                                <span className="text-white text-xs font-bold">+{servicePlatforms.length - 3}</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-pink-400 text-xs font-medium">{platformLabel}</span>
+                          {/* Show total followers inline with platform label - only if set */}
+                          {totalFollowers > 0 && (
+                            <>
+                              <span className="text-gray-400 text-xs">•</span>
+                              <span className="text-pink-400 text-xs font-medium">
+                                {formatFollowers(totalFollowers)} followers
+                              </span>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
