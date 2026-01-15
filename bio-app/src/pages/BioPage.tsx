@@ -1230,11 +1230,13 @@ const BioPage: React.FC = () => {
       // Get episode link - try different common formats
       let episodeUrl = item.querySelector('link')?.textContent || '';
       
-      // Try to get enclosure URL (direct audio link)
+      // Try to get enclosure URL (direct audio link) - this is the actual MP3 file
       const enclosure = item.querySelector('enclosure');
       const audioUrl = enclosure?.getAttribute('url') || '';
       
-      // Prefer episode page link over direct audio
+      console.log('Episode URLs:', { episodeUrl, audioUrl });
+      
+      // Use audio URL for episode URL if page link is missing
       if (!episodeUrl && audioUrl) {
         episodeUrl = audioUrl;
       }
@@ -1911,7 +1913,11 @@ const BioPage: React.FC = () => {
                   url: talentProfile.podcast_rss_url,
                   podcastName: talentProfile.podcast_name || 'Podcast',
                   audioUrl: '',
-                  views: null,
+                  views: undefined,
+                  pubDate: undefined,
+                  duration: undefined,
+                  description: undefined,
+                  feedUrl: talentProfile.podcast_rss_url,
                 };
                 
                 const PodcastPlayer = () => {
@@ -1927,13 +1933,23 @@ const BioPage: React.FC = () => {
                         audioRef.current.pause();
                         setIsPlaying(false);
                       } else {
-                        audioRef.current.play();
+                        console.log('Attempting to play audio:', audioRef.current.src);
+                        audioRef.current.play().catch(err => {
+                          console.error('Audio play error:', err);
+                          toast.error('Could not play audio');
+                          setIsPlaying(false);
+                        });
                         setIsPlaying(true);
                       }
                     }
                   };
 
-                  const audioUrl = displayData.audioUrl || displayData.url;
+                  // Use audioUrl from enclosure (direct MP3) if available
+                  const audioUrl = displayData.audioUrl && displayData.audioUrl.includes('.mp3') 
+                    ? displayData.audioUrl 
+                    : null;
+                  
+                  console.log('Podcast player audioUrl:', audioUrl);
                   
                   return (
                     <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300">
@@ -1991,10 +2007,24 @@ const BioPage: React.FC = () => {
                         <audio
                           ref={audioRef}
                           src={audioUrl}
-                          onEnded={() => setIsPlaying(false)}
-                          onError={() => {
+                          preload="metadata"
+                          onEnded={() => {
+                            console.log('Audio ended');
                             setIsPlaying(false);
-                            console.error('Audio playback error');
+                          }}
+                          onError={(e) => {
+                            console.error('Audio playback error:', e);
+                            setIsPlaying(false);
+                            toast.error('Audio file could not be loaded');
+                          }}
+                          onLoadedMetadata={() => {
+                            console.log('Audio metadata loaded, duration:', audioRef.current?.duration);
+                          }}
+                          onPause={() => {
+                            console.log('Audio paused');
+                          }}
+                          onPlay={() => {
+                            console.log('Audio playing');
                           }}
                         />
                       )}
