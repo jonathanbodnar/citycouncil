@@ -2038,7 +2038,7 @@ const TalentDashboard: React.FC = () => {
             <LinkIcon className="h-16 w-16 text-blue-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">ShoutOut Bio</h2>
             <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Create your personalized link-in-bio page at bio.shoutout.us/{talentProfile?.username || 'yourname'}
+              Create your personalized link-in-bio page at shoutout.fans/{talentProfile?.username || 'yourname'}
             </p>
             <a
               href={`https://bio.shoutout.us/dashboard?token=${encodeURIComponent(user?.id || '')}`}

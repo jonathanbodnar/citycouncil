@@ -14,9 +14,9 @@ import SEOHelmet from '../components/SEOHelmet';
 
 // Creator bio URLs for live embeds
 const creatorBios = [
-  { name: 'JP Sears', handle: 'jpsears', url: 'https://bio.shoutout.us/jpsears' },
-  { name: 'Lydia Shaffer', handle: 'lydiashaffer', url: 'https://bio.shoutout.us/lydiashaffer' },
-  { name: 'Melonie Mac', handle: 'meloniemac', url: 'https://bio.shoutout.us/meloniemac' },
+  { name: 'JP Sears', handle: 'jpsears', url: 'https://shoutout.fans/jpsears' },
+  { name: 'Lydia Shaffer', handle: 'lydiashaffer', url: 'https://shoutout.fans/lydiashaffer' },
+  { name: 'Melonie Mac', handle: 'meloniemac', url: 'https://shoutout.fans/meloniemac' },
 ];
 
 export default function CreatorsPage() {
