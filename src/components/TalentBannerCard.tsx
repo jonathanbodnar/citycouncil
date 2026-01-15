@@ -215,7 +215,12 @@ export default function TalentBannerCard({
   );
 
   return (
-    <div className="gradient-border rounded-3xl shadow-modern-xl overflow-hidden">
+    <div 
+      className="glass rounded-3xl shadow-modern transition-all duration-300 overflow-hidden hover:glass-strong hover:shadow-modern-lg hover:scale-[1.01] cursor-pointer"
+      style={{
+        boxShadow: '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
+      }}
+    >
       <div className="relative h-64 sm:h-72 lg:h-80 rounded-3xl overflow-hidden bg-gray-900/95">
         {/* Main Content Container */}
         <div className={`h-full flex ${videoOnRight ? 'flex-row' : 'flex-row-reverse'}`}>
