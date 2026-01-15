@@ -123,10 +123,10 @@ export default function TalentBannerCard({
     </div>
   );
 
-  // Content section - TWO DIFFERENT LAYOUTS based on video position (matches screenshot exactly)
+  // Content section - TWO DIFFERENT LAYOUTS per wireframe
   const ContentSection = () => {
     if (!videoOnRight) {
-      // VIDEO ON LEFT (like Shawn card in screenshot): Name + Category top, review, stars, button + price bottom
+      // VIDEO ON LEFT = Button on FAR RIGHT per wireframe 1
       return (
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
           {/* TOP SECTION */}
@@ -170,15 +170,9 @@ export default function TalentBannerCard({
             )}
           </div>
 
-          {/* BOTTOM SECTION - Button on left, Price + Delivery next to it */}
-          <div className="flex items-end justify-start gap-3 sm:gap-4 w-full">
-            <button
-              onClick={handleOrderClick}
-              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
-              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
-            >
-              Order Now {countdown && <>⏱️ {countdown}</>}
-            </button>
+          {/* BOTTOM SECTION - VIDEO ON LEFT = BUTTON FAR RIGHT */}
+          <div className="flex items-end justify-between w-full gap-4">
+            {/* Left: Price + Delivery */}
             <div className="flex items-center gap-2">
               {hasDiscount ? (
                 <>
@@ -190,16 +184,24 @@ export default function TalentBannerCard({
               )}
               <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
             </div>
+            {/* Right: Order button */}
+            <button
+              onClick={handleOrderClick}
+              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+            >
+              Order Now {countdown && <>⏱️ {countdown}</>}
+            </button>
           </div>
         </div>
       );
     } else {
-      // VIDEO ON RIGHT (like Hayley card in screenshot): Categories top, review, stars, then Name + Price on bottom left, Order button bottom right
+      // VIDEO ON RIGHT = Button on FAR LEFT per wireframe 2
       return (
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
-            {/* Categories (no name) */}
+            {/* Categories */}
             <div className="flex flex-wrap gap-2">
               {filteredCategories.slice(0, 3).map((category) => (
                 <span
@@ -235,11 +237,19 @@ export default function TalentBannerCard({
             )}
           </div>
 
-          {/* BOTTOM SECTION - Talent Name + Price on left, Order button on far right */}
+          {/* BOTTOM SECTION - VIDEO ON RIGHT = BUTTON FAR LEFT */}
           <div className="flex items-end justify-between w-full gap-4">
-            {/* Left: Talent Name + Price */}
-            <div className="flex flex-col items-start gap-1">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+            {/* Left: Order button */}
+            <button
+              onClick={handleOrderClick}
+              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+            >
+              Order Now {countdown && <>⏱️ {countdown}</>}
+            </button>
+            {/* Right: Talent Name + Price */}
+            <div className="flex flex-col items-end gap-1">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-right">
                 {talentName}
               </h2>
               <div className="flex items-center gap-2">
@@ -254,14 +264,6 @@ export default function TalentBannerCard({
                 <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
               </div>
             </div>
-            {/* Right: Order button */}
-            <button
-              onClick={handleOrderClick}
-              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
-              style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
-            >
-              Order Now {countdown && <>⏱️ {countdown}</>}
-            </button>
           </div>
         </div>
       );
