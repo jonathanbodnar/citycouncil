@@ -3060,6 +3060,15 @@ const BioDashboard: React.FC = () => {
               .update({ podcast_rss_url: rssUrl, podcast_name: podcastName })
               .eq('id', talentProfile?.id);
             
+            // Also enable the podcast card in bio_settings
+            if (bioSettings) {
+              await supabase
+                .from('bio_settings')
+                .update({ show_podcast_card: true })
+                .eq('talent_id', talentProfile?.id);
+              setBioSettings({ ...bioSettings, show_podcast_card: true });
+            }
+            
             setTalentProfile(prev => prev ? { 
               ...prev, 
               podcast_rss_url: rssUrl,
@@ -3074,6 +3083,15 @@ const BioDashboard: React.FC = () => {
               .from('talent_profiles')
               .update({ podcast_rss_url: null, podcast_name: null })
               .eq('id', talentProfile?.id);
+            
+            // Also disable the podcast card in bio_settings
+            if (bioSettings) {
+              await supabase
+                .from('bio_settings')
+                .update({ show_podcast_card: false })
+                .eq('talent_id', talentProfile?.id);
+              setBioSettings({ ...bioSettings, show_podcast_card: false });
+            }
             
             setTalentProfile(prev => prev ? { 
               ...prev, 
@@ -4927,27 +4945,39 @@ const PodcastModal: React.FC<{
       const response = await fetch(proxyUrl);
       
       if (!response.ok) {
-        throw new Error('Could not fetch RSS feed');
+        // If proxy fails, try direct fetch (might work for some feeds)
+        console.warn('Proxy failed, trying direct fetch');
+        const directResponse = await fetch(rssUrl);
+        if (!directResponse.ok) {
+          throw new Error('Could not fetch RSS feed');
+        }
       }
 
-      const text = await response.text();
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(text, 'text/xml');
-      
-      // Check if it's a valid RSS feed
-      const channel = xml.querySelector('channel');
-      if (!channel) {
-        throw new Error('Invalid RSS feed format');
+      // Try to parse if we got it, but don't fail if parsing doesn't work
+      let finalName = podcastName.trim() || 'My Podcast';
+      try {
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, 'text/xml');
+        
+        const channel = xml.querySelector('channel');
+        if (channel) {
+          const feedTitle = channel.querySelector('title')?.textContent || '';
+          if (feedTitle && !podcastName.trim()) {
+            finalName = feedTitle;
+          }
+        }
+      } catch (parseErr) {
+        console.warn('Could not parse feed for title, using provided name:', parseErr);
       }
 
-      // Get podcast name from feed if not provided
-      const feedTitle = channel.querySelector('title')?.textContent || '';
-      const finalName = podcastName.trim() || feedTitle || 'My Podcast';
-
+      // Save even if validation/parsing had issues - the bio page will validate on display
       onSave(rssUrl.trim(), finalName);
     } catch (err: any) {
       console.error('RSS validation error:', err);
-      setError('Could not validate RSS feed. Please check the URL and try again.');
+      // Be more lenient - allow saving even if validation fails
+      const finalName = podcastName.trim() || 'My Podcast';
+      onSave(rssUrl.trim(), finalName);
     } finally {
       setValidating(false);
     }
