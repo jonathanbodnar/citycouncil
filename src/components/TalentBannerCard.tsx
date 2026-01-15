@@ -276,18 +276,25 @@ export default function TalentBannerCard({
     }
   };
 
+  // Use bio page ShoutOut card styling
+  const accentColor = '#3b82f6'; // Blue accent color
+
   return (
-    <div className="gradient-border rounded-3xl shadow-modern-xl">
+    <div 
+      className="rounded-3xl backdrop-blur-xl border border-white/10 overflow-hidden relative shadow-modern-xl"
+      style={{ 
+        background: `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}10 50%, transparent 100%)`,
+        borderColor: `${accentColor}30`,
+      }}
+    >
+      {/* Decorative gradient blob */}
+      <div 
+        className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
+        style={{ backgroundColor: accentColor }}
+      />
+      
       <div className="md:flex rounded-3xl overflow-hidden relative h-64 sm:h-72 lg:h-80">
-        {/* Background Gradient - Matches Profile Page */}
-        <div 
-          className="hidden md:block absolute inset-0 rounded-3xl"
-          style={{
-            background: 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
-          }}
-        ></div>
-        
-        {/* Main Content Container - FIX: videoOnRight=true means video on RIGHT, so use flex-row-reverse */}
+        {/* Main Content Container */}
         <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
           <ContentSection />
