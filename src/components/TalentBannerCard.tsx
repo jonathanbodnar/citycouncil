@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
-import { ImageSizes } from '../utils/imageOptimization';
 
 interface TalentBannerCardProps {
   talent: TalentProfile & { 
@@ -25,6 +24,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   'corporate': '🏢 Corporate',
 };
 
+// Categories to hide
+const HIDDEN_CATEGORIES = ['other', 'Other'];
+
 export default function TalentBannerCard({ 
   talent, 
   videoOnRight, 
@@ -36,6 +38,9 @@ export default function TalentBannerCard({
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState<string>('');
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Filter out "Other" category
+  const filteredCategories = topCategories.filter(cat => !HIDDEN_CATEGORIES.includes(cat));
 
   // Countdown timer
   useEffect(() => {
@@ -67,10 +72,6 @@ export default function TalentBannerCard({
   const discountedPrice = discountAmount ? originalPrice * (1 - discountAmount / 100) : originalPrice;
   const hasDiscount = discountCode && discountAmount && expiryTime && expiryTime > Date.now();
 
-  // Get optimized image
-  const avatarUrl = talent.temp_avatar_url || talent.users?.avatar_url;
-  const optimizedImageUrl = avatarUrl ? ImageSizes.featured(avatarUrl) : undefined;
-
   const handleVideoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -81,159 +82,147 @@ export default function TalentBannerCard({
     navigate(`/order/${talent.id}`);
   };
 
+  // Video section component
+  const VideoSection = () => (
+    <div className="w-1/3 h-full flex-shrink-0 relative">
+      {talent.recent_video_url && !isPlaying ? (
+        <div 
+          className="relative w-full h-full cursor-pointer group"
+          onClick={handleVideoClick}
+        >
+          <video 
+            src={talent.recent_video_url}
+            className="w-full h-full object-cover"
+            preload="metadata"
+          />
+          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+              <PlayIcon className="w-7 h-7 sm:w-8 sm:h-8 text-gray-900 ml-1" />
+            </div>
+          </div>
+          {/* Recent ShoutOut Badge */}
+          <div className="absolute top-3 left-3 px-3 py-1 bg-purple-600/90 backdrop-blur-sm text-white text-xs font-bold rounded-full shadow-lg">
+            Recent ShoutOut
+          </div>
+        </div>
+      ) : talent.recent_video_url && isPlaying ? (
+        <div className="relative w-full h-full">
+          <video 
+            src={talent.recent_video_url}
+            className="w-full h-full object-cover"
+            controls
+            autoPlay
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : (
+        <div className="w-full h-full bg-white/5 flex items-center justify-center">
+          <span className="text-white/30 text-sm">No video yet</span>
+        </div>
+      )}
+    </div>
+  );
+
+  // Content section - different layout based on video position
+  const ContentSection = () => (
+    <div className="flex-1 h-full flex flex-col justify-center p-4 sm:p-6 lg:p-8">
+      {/* Top: Name + Categories */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+          {talentName}
+        </h2>
+        <div className="flex flex-wrap gap-1.5">
+          {filteredCategories.slice(0, 3).map((category) => (
+            <span
+              key={category}
+              className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
+            >
+              {CATEGORY_LABELS[category] || category}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Middle: Review + Stars */}
+      {talent.recent_review && (
+        <div className="mb-3 sm:mb-4">
+          <p className="text-white/70 text-xs sm:text-sm italic line-clamp-2 mb-1">
+            "{talent.recent_review.comment}"
+          </p>
+          <div className="flex items-center gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <svg 
+                key={i} 
+                className="w-4 h-4 sm:w-5 sm:h-5" 
+                viewBox="0 0 20 20" 
+                fill={i < (talent.recent_review?.rating || 5) ? "#facc15" : "#4B5563"}
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bottom: Order Button + Price + Delivery */}
+      {/* Different layout based on video position */}
+      {videoOnRight ? (
+        // Video on right = content on left, button flows left
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <button
+            onClick={handleOrderClick}
+            className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+            style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+          >
+            Order Now {countdown && <span className="ml-1">⏱️ {countdown}</span>}
+          </button>
+          <div className="flex items-center gap-2">
+            {hasDiscount ? (
+              <>
+                <span className="text-white/50 text-sm sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
+                <span className="text-yellow-300 text-lg sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+              </>
+            ) : (
+              <span className="text-white text-lg sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+            )}
+          </div>
+          <span className="text-white/50 text-xs sm:text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
+        </div>
+      ) : (
+        // Video on left = content on right, button goes far right
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2">
+              {hasDiscount ? (
+                <>
+                  <span className="text-white/50 text-sm sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
+                  <span className="text-yellow-300 text-lg sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+                </>
+              ) : (
+                <span className="text-white text-lg sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+              )}
+            </div>
+            <span className="text-white/50 text-xs sm:text-sm">⚡ {talent.fulfillment_time_hours || 72}h delivery</span>
+          </div>
+          <button
+            onClick={handleOrderClick}
+            className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
+            style={{ backgroundColor: '#3a86ff', color: '#ffffff' }}
+          >
+            Order Now {countdown && <span className="ml-1">⏱️ {countdown}</span>}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="gradient-border rounded-3xl shadow-modern-xl overflow-hidden">
-      <div 
-        className="relative h-64 sm:h-72 rounded-3xl overflow-hidden"
-        style={{
-          background: videoOnRight 
-            ? 'linear-gradient(135deg, #0b0123 0%, #905476 100%)'
-            : 'linear-gradient(135deg, #905476 0%, #0b0123 100%)'
-        }}
-      >
-        {/* Background Image with Gradient Fade */}
-        {optimizedImageUrl && (
-          <div 
-            className={`absolute top-0 ${videoOnRight ? 'left-0' : 'right-0'} w-1/3 h-full overflow-hidden`}
-          >
-            <img
-              src={optimizedImageUrl}
-              alt={talentName}
-              className="w-full h-full object-cover"
-              style={{
-                objectPosition: talent.featured_image_position || 'center center',
-                maskImage: videoOnRight 
-                  ? 'linear-gradient(to left, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)'
-                  : 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
-                WebkitMaskImage: videoOnRight 
-                  ? 'linear-gradient(to left, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)'
-                  : 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 100%)',
-              }}
-            />
-          </div>
-        )}
-
+      <div className="relative h-64 sm:h-72 lg:h-80 rounded-3xl overflow-hidden bg-gray-900/95">
         {/* Main Content Container */}
-        <div className={`relative h-full flex ${videoOnRight ? 'flex-row' : 'flex-row-reverse'}`}>
-          
-          {/* Video Section - 1/3 width */}
-          <div className={`w-1/3 h-full flex items-center justify-center p-3 sm:p-4`}>
-            {talent.recent_video_url && !isPlaying ? (
-              <div 
-                className="relative w-full aspect-square max-h-full rounded-2xl overflow-hidden cursor-pointer group shadow-2xl"
-                onClick={handleVideoClick}
-              >
-                <video 
-                  src={talent.recent_video_url}
-                  className="w-full h-full object-cover"
-                  preload="metadata"
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                    <PlayIcon className="w-6 h-6 sm:w-7 sm:h-7 text-gray-900 ml-1" />
-                  </div>
-                </div>
-                <div className="absolute top-2 left-2 px-2 py-1 bg-purple-600/80 backdrop-blur-sm text-white text-xs font-bold rounded-full">
-                  Recent ShoutOut
-                </div>
-              </div>
-            ) : talent.recent_video_url && isPlaying ? (
-              <div className="relative w-full aspect-square max-h-full rounded-2xl overflow-hidden shadow-2xl">
-                <video 
-                  src={talent.recent_video_url}
-                  className="w-full h-full object-cover"
-                  controls
-                  autoPlay
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-            ) : (
-              // No video - show placeholder
-              <div className="w-full aspect-square max-h-full rounded-2xl bg-white/10 flex items-center justify-center">
-                <span className="text-white/40 text-sm">No video yet</span>
-              </div>
-            )}
-          </div>
-
-          {/* Content Section - 2/3 width */}
-          <div className="flex-1 h-full flex flex-col justify-center p-4 sm:p-6">
-            {/* Top Row: Name + Categories */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                {talentName}
-              </h2>
-              {/* Order Categories */}
-              <div className="flex flex-wrap gap-1.5">
-                {topCategories.slice(0, 3).map((category) => (
-                  <span
-                    key={category}
-                    className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full glass text-white text-xs sm:text-sm font-medium border border-white/20"
-                  >
-                    {CATEGORY_LABELS[category] || category}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Review */}
-            {talent.recent_review && (
-              <div className="mb-3">
-                <p className="text-white/70 text-xs sm:text-sm italic line-clamp-2 mb-1">
-                  "{talent.recent_review.comment}"
-                </p>
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <svg 
-                      key={i} 
-                      className="w-4 h-4 sm:w-5 sm:h-5" 
-                      viewBox="0 0 20 20" 
-                      fill={i < (talent.recent_review?.rating || 5) ? "#facc15" : "#4B5563"}
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Bottom Row: Order Button + Price + Delivery */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-auto">
-              {/* Order Button */}
-              <button
-                onClick={handleOrderClick}
-                className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-modern-lg hover:scale-105 whitespace-nowrap"
-                style={{
-                  backgroundColor: '#3a86ff',
-                  color: '#ffffff'
-                }}
-              >
-                Order Now {countdown && <span className="ml-1">⏱️ {countdown}</span>}
-              </button>
-
-              {/* Pricing */}
-              <div className="flex items-center gap-2">
-                {hasDiscount ? (
-                  <>
-                    <span className="text-white/50 text-sm sm:text-lg line-through">
-                      ${originalPrice.toFixed(0)}
-                    </span>
-                    <span className="text-yellow-300 text-lg sm:text-2xl font-bold">
-                      ${discountedPrice.toFixed(0)}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-white text-lg sm:text-2xl font-bold">
-                    ${originalPrice.toFixed(0)}
-                  </span>
-                )}
-              </div>
-
-              {/* Delivery Time */}
-              <span className="text-white/50 text-xs sm:text-sm">
-                ⚡ {talent.fulfillment_time_hours || 72}h delivery
-              </span>
-            </div>
-          </div>
+        <div className={`h-full flex ${videoOnRight ? 'flex-row' : 'flex-row-reverse'}`}>
+          <VideoSection />
+          <ContentSection />
         </div>
       </div>
     </div>
