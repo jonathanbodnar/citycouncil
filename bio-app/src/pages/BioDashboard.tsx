@@ -1960,7 +1960,7 @@ const BioDashboard: React.FC = () => {
                   <iframe
                     id="bio-preview-iframe"
                     key={previewKey}
-                    src={`https://${bioUrl}?preview=true&t=${previewKey}`}
+                    src={`https://www.${bioUrl}?preview=true&t=${previewKey}`}
                     className="w-full h-full border-0"
                     title="Bio Preview"
                   />
