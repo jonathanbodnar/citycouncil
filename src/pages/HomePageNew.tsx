@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
@@ -6,6 +6,7 @@ import TalentCard from '../components/TalentCard';
 import TalentBannerCard from '../components/TalentBannerCard';
 import SEOHelmet from '../components/SEOHelmet';
 import FOMONotification from '../components/FOMONotification';
+import { useAuth } from '../context/AuthContext';
 
 interface TalentWithDetails extends TalentProfile {
   users?: { id: string; full_name: string; avatar_url?: string };
@@ -31,12 +32,14 @@ const OCCASIONS: OccasionType[] = [
 
 export default function HomePageNew() {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [talentList, setTalentList] = useState<TalentWithDetails[]>([]);
   const [filteredTalent, setFilteredTalent] = useState<TalentWithDetails[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithDetails[]>([]); // ALL featured talent
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalReviews, setTotalReviews] = useState(0);
+  const [dataFetched, setDataFetched] = useState(false);
   
   // Get discount info from localStorage
   const [discountCode, setDiscountCode] = useState<string | null>(null);
@@ -48,10 +51,19 @@ export default function HomePageNew() {
   const urlPath = window.location.pathname.replace('/', '');
   const liveLink = urlPath.endsWith('live') ? urlPath.replace('live', '') : null;
 
+  // Refetch data when auth state changes (login/logout)
   useEffect(() => {
-    fetchTalentData();
-    fetchReviewCount();
-    checkDiscount();
+    // Reset dataFetched to trigger refetch
+    setDataFetched(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!dataFetched) {
+      fetchTalentData();
+      fetchReviewCount();
+      checkDiscount();
+      setDataFetched(true);
+    }
     
     // Listen for coupon/giveaway events
     const handleCouponUpdate = () => checkDiscount();
@@ -64,7 +76,7 @@ export default function HomePageNew() {
       window.removeEventListener('storage', handleCouponUpdate);
       window.removeEventListener('giveawayCountdownUpdate', handleCouponUpdate);
     };
-  }, []);
+  }, [dataFetched]);
 
   useEffect(() => {
     applyOccasionFilter();
@@ -379,7 +391,7 @@ export default function HomePageNew() {
 
                   {/* After SECOND banner: Show "ShoutOut for every occasion" */}
                   {index === 1 && (
-                    <div className="my-6 md:my-10">
+                    <div className="mt-8 mb-6 md:mt-12 md:mb-10">
                       <h2 className="text-lg sm:text-xl font-bold text-white text-center mb-4 md:mb-6">
                         A ShoutOut for every occasion
                       </h2>
