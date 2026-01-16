@@ -176,14 +176,12 @@ export default function HomePageNew() {
         };
       });
 
-      // FILTER: Show talent with completed/delivered video AND reviews
-      const talentWithVideosAndReviews = enrichedTalent.filter(t => 
-        t.recent_video_url && t.recent_review
-      );
+      // BANNER CARDS: Show talent with reviews (that's it)
+      const talentForBanners = enrichedTalent.filter(t => t.recent_review);
 
       // Find similar talent for each (same categories)
-      const talentWithSimilar = talentWithVideosAndReviews.map((talent) => {
-        const similar = talentWithVideosAndReviews
+      const talentWithSimilar = talentForBanners.map((talent) => {
+        const similar = enrichedTalent // Use ALL active talent for carousels
           .filter((other) => {
             if (other.id === talent.id) return false;
             // Check if they share any categories
@@ -222,8 +220,7 @@ export default function HomePageNew() {
       setTalentList(sortedTalent);
       setFilteredTalent(sortedTalent);
       
-      // Set featured talent separately (ALL featured, even without videos/reviews)
-      // This is for the first carousel
+      // Set featured talent (ALL active featured talent for first carousel)
       const featured = enrichedTalent.filter(t => t.is_featured);
       setFeaturedTalent(featured);
     } catch (error) {
