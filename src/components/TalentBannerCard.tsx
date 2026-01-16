@@ -162,9 +162,9 @@ export default function TalentBannerCard({
     </div>
   );
 
-  // Categories component - positioned absolutely on desktop
-  const CategoriesSection = () => (
-    <div className="hidden md:flex flex-wrap gap-2 absolute top-4 right-4 z-20">
+  // Categories component - for desktop, inside content area
+  const DesktopCategories = () => (
+    <div className="hidden md:flex flex-wrap gap-2 justify-end">
       {filteredCategories.slice(0, 2).map((category) => (
         <span
           key={category}
@@ -179,16 +179,19 @@ export default function TalentBannerCard({
   // Content section - TWO DIFFERENT LAYOUTS per wireframe
   const ContentSection = () => {
     if (!videoOnRight) {
-      // VIDEO ON LEFT = Button on FAR RIGHT
+      // VIDEO ON LEFT = Button on FAR RIGHT, Categories top right
       return (
-        <div className="w-2/3 md:w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 md:pt-6 pb-3">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4 md:pt-5 pb-3">
           {/* TOP SECTION */}
-          <div className="flex flex-col items-start gap-1 sm:gap-2">
-            {/* Talent Name + Categories (mobile only shows categories inline) */}
+          <div className="flex flex-col gap-1 sm:gap-2">
+            {/* Desktop: Categories at top right */}
+            <DesktopCategories />
+            
+            {/* Talent Name + Mobile Categories */}
             <div className="flex flex-wrap items-center gap-2 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
-                  <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 sm:mb-1 tracking-wide">
+                  <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 tracking-wide">
                     {talent.display_title}
                   </span>
                 )}
@@ -211,7 +214,7 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-xs sm:text-base italic pt-1">
+              <p className="text-white/70 text-xs sm:text-base italic">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
@@ -286,16 +289,19 @@ export default function TalentBannerCard({
         </div>
       );
     } else {
-      // VIDEO ON RIGHT = Button on FAR LEFT
+      // VIDEO ON RIGHT = Button on FAR LEFT, Categories top right of content
       return (
-        <div className="w-2/3 md:w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 md:pt-6 pb-3">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4 md:pt-5 pb-3">
           {/* TOP SECTION */}
-          <div className="flex flex-col items-start gap-1 sm:gap-2">
-            {/* Talent Name + Categories (mobile only shows categories inline) */}
+          <div className="flex flex-col gap-1 sm:gap-2">
+            {/* Desktop: Categories at top right of content area */}
+            <DesktopCategories />
+            
+            {/* Talent Name + Mobile Categories */}
             <div className="flex flex-wrap items-center gap-2 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
-                  <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 sm:mb-1 tracking-wide">
+                  <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 tracking-wide">
                     {talent.display_title}
                   </span>
                 )}
@@ -318,7 +324,7 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-xs sm:text-base italic pt-1">
+              <p className="text-white/70 text-xs sm:text-base italic">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
@@ -397,11 +403,8 @@ export default function TalentBannerCard({
 
   // Exciting purple to light blue gradient
   return (
-    <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl relative">
-      {/* Desktop categories - positioned top right */}
-      <CategoriesSection />
-      
-      <div className="flex rounded-3xl overflow-hidden relative min-h-[240px] h-auto sm:h-[300px] md:h-[320px]">
+    <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
+      <div className="flex rounded-3xl overflow-hidden relative h-[280px] sm:h-[300px] md:h-[320px]">
         {/* Main Content Container - ALWAYS flex row */}
         <div className={`w-full h-full flex ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
