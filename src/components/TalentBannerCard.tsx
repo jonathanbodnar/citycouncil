@@ -132,8 +132,8 @@ export default function TalentBannerCard({
               <PlayIcon className="w-7 h-7 sm:w-8 sm:h-8 text-gray-900 ml-1" />
             </div>
           </div>
-          {/* Recent ShoutOut Badge */}
-          <div className="absolute top-3 left-3 px-3 py-1 bg-purple-600/90 backdrop-blur-sm text-white text-xs font-bold rounded-full shadow-lg">
+          {/* Recent ShoutOut Badge - smaller on mobile, more glass */}
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-600/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold rounded-full shadow-lg whitespace-nowrap">
             Recent ShoutOut
           </div>
         </div>
@@ -161,14 +161,14 @@ export default function TalentBannerCard({
     if (!videoOnRight) {
       // VIDEO ON LEFT = Button on FAR RIGHT
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4 md:pt-6">
-          {/* TOP SECTION */}
-          <div className="flex flex-col items-start gap-2">
-            {/* Talent Name + Categories on same line (name left, categories right) */}
-            <div className="flex flex-wrap items-center gap-4 w-full">
+        <div className="w-2/3 h-full flex flex-col justify-between p-2 sm:p-4 md:pt-6 pb-3">
+          {/* TOP SECTION - tighter spacing on mobile */}
+          <div className="flex flex-col items-start gap-1 sm:gap-2">
+            {/* Talent Name + Categories */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
-                  <span className="text-xs uppercase text-white/50 mb-1 tracking-wide">
+                  <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 sm:mb-1 tracking-wide">
                     {talent.display_title}
                   </span>
                 )}
@@ -176,11 +176,11 @@ export default function TalentBannerCard({
                   {talentName}
                 </h2>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {filteredCategories.slice(0, 3).map((category) => (
+              <div className="flex flex-wrap gap-1 sm:gap-2">
+                {filteredCategories.slice(0, 2).map((category) => (
                   <span
                     key={category}
-                    className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
+                    className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full glass-strong text-white text-[10px] sm:text-sm font-medium"
                   >
                     {CATEGORY_LABELS[category] || category}
                   </span>
@@ -188,20 +188,20 @@ export default function TalentBannerCard({
               </div>
             </div>
 
-            {/* Review Text */}
+            {/* Review Text - tighter */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic pt-2 pb-0">
+              <p className="text-white/70 text-xs sm:text-base italic pt-1">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 
-            {/* Stars */}
+            {/* Stars - no extra padding */}
             {talent.recent_review && (
-              <div className="flex items-center gap-0.5 pt-1">
+              <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <svg 
                     key={i} 
-                    className="w-5 h-5 sm:w-6 sm:h-6" 
+                    className="w-4 h-4 sm:w-6 sm:h-6" 
                     viewBox="0 0 20 20" 
                     fill={i < (talent.recent_review?.rating || 5) ? "#9333ea" : "#4B5563"}
                   >
@@ -268,14 +268,14 @@ export default function TalentBannerCard({
     } else {
       // VIDEO ON RIGHT = Button on FAR LEFT
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4 md:pt-6">
-          {/* TOP SECTION */}
-          <div className="flex flex-col items-start gap-2">
-            {/* Talent Name + Categories on same line (name left, categories right) */}
-            <div className="flex flex-wrap items-center gap-4 w-full">
+        <div className="w-2/3 h-full flex flex-col justify-between p-2 sm:p-4 md:pt-6 pb-3">
+          {/* TOP SECTION - tighter spacing on mobile */}
+          <div className="flex flex-col items-start gap-1 sm:gap-2">
+            {/* Talent Name + Categories */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
-                  <span className="text-xs uppercase text-white/50 mb-1 tracking-wide">
+                  <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 sm:mb-1 tracking-wide">
                     {talent.display_title}
                   </span>
                 )}
@@ -283,11 +283,11 @@ export default function TalentBannerCard({
                   {talentName}
                 </h2>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {filteredCategories.slice(0, 3).map((category) => (
+              <div className="flex flex-wrap gap-1 sm:gap-2">
+                {filteredCategories.slice(0, 2).map((category) => (
                   <span
                     key={category}
-                    className="px-3 py-1 rounded-full glass-strong text-white text-xs sm:text-sm font-medium"
+                    className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full glass-strong text-white text-[10px] sm:text-sm font-medium"
                   >
                     {CATEGORY_LABELS[category] || category}
                   </span>
@@ -295,20 +295,20 @@ export default function TalentBannerCard({
               </div>
             </div>
 
-            {/* Review Text */}
+            {/* Review Text - tighter */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic pt-2 pb-0">
+              <p className="text-white/70 text-xs sm:text-base italic pt-1">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 
-            {/* Stars */}
+            {/* Stars - no extra padding */}
             {talent.recent_review && (
-              <div className="flex items-center gap-0.5 pt-1">
+              <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <svg 
                     key={i} 
-                    className="w-5 h-5 sm:w-6 sm:h-6" 
+                    className="w-4 h-4 sm:w-6 sm:h-6" 
                     viewBox="0 0 20 20" 
                     fill={i < (talent.recent_review?.rating || 5) ? "#9333ea" : "#4B5563"}
                   >
@@ -378,7 +378,7 @@ export default function TalentBannerCard({
   // Exciting purple to light blue gradient
   return (
     <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
-      <div className="flex rounded-3xl overflow-hidden relative h-[280px] sm:h-[300px] md:h-[320px]">
+      <div className="flex rounded-3xl overflow-hidden relative h-[320px] sm:h-[300px] md:h-[320px]">
         {/* Main Content Container - ALWAYS flex row */}
         <div className={`w-full h-full flex ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
