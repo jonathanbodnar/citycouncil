@@ -390,6 +390,7 @@ const TalentManagement: React.FC = () => {
         category: editingTalent.category,
         categories: editingTalent.categories,
         featured_shoutout_types: editingTalent.featured_shoutout_types || null,
+        display_title: editingTalent.display_title || null,
         pricing: editingTalent.pricing || 100, // Default to $100 if pricing is null/undefined/0
         base_pricing: editingTalent.pricing || 100, // Also set base_pricing for pricing urgency system
         corporate_pricing: editingTalent.corporate_pricing,
