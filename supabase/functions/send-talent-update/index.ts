@@ -570,7 +570,7 @@ function buildEmailHtml(
   const shoutoutCardHtml = `
     <tr>
       <td style="padding-top: 16px;">
-        <a href="https://shoutout.us/${talent.username || ''}" target="_blank" style="text-decoration: none; display: block;">
+        <a href="https://shoutout.us/${talent.username || ''}?utm_source=email&utm_medium=talent_update&utm_campaign=shoutout_card" target="_blank" style="text-decoration: none; display: block;">
           <!--[if mso]>
           <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:100%;height:120px;">
             <v:fill type="gradient" color="#4c1d95" color2="#1e3a5f" angle="135"/>
