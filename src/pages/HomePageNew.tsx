@@ -316,40 +316,76 @@ export default function HomePageNew() {
                     expiryTime={expiryTime || undefined}
                   />
 
-                  {/* Similar Talent Carousel */}
-                  {talent.similar_talent && talent.similar_talent.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-white text-lg font-semibold px-2">
-                        Others like "{talent.temp_full_name || talent.users?.full_name || talent.username}"
-                      </h3>
-                      <div className="relative group">
-                        <div 
-                          className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
-                          style={{
-                            scrollbarWidth: 'none',
-                            msOverflowStyle: 'none',
-                          }}
-                        >
-                          {talent.similar_talent.filter(t => t.users).map((similarTalent) => (
-                            <div 
-                              key={similarTalent.id} 
-                              className="flex-shrink-0"
-                              style={{ width: '180px' }}
-                            >
-                              <TalentCard talent={similarTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
-                            </div>
-                          ))}
+                  {/* Carousel: First banner shows Featured Talent, others show Similar Talent */}
+                  {index === 0 ? (
+                    // FIRST carousel: Show all other talent (featured list, no title)
+                    filteredTalent.length > 1 && (
+                      <div className="space-y-2">
+                        <div className="relative group">
+                          <div 
+                            className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                            style={{
+                              scrollbarWidth: 'none',
+                              msOverflowStyle: 'none',
+                            }}
+                          >
+                            {filteredTalent.slice(1).filter(t => t.users).map((featuredTalent) => (
+                              <div 
+                                key={featuredTalent.id} 
+                                className="flex-shrink-0"
+                                style={{ width: '180px' }}
+                              >
+                                <TalentCard talent={featuredTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Right Fade Gradient */}
+                          <div 
+                            className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
+                            style={{
+                              background: 'linear-gradient(to right, transparent, rgb(15, 15, 26))'
+                            }}
+                          ></div>
                         </div>
-                        
-                        {/* Right Fade Gradient */}
-                        <div 
-                          className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
-                          style={{
-                            background: 'linear-gradient(to right, transparent, rgb(15, 15, 26))'
-                          }}
-                        ></div>
                       </div>
-                    </div>
+                    )
+                  ) : (
+                    // SUBSEQUENT carousels: Show similar talent with title
+                    talent.similar_talent && talent.similar_talent.length > 0 && (
+                      <div className="space-y-2">
+                        <h3 className="text-white text-lg font-semibold px-2">
+                          Others like "{talent.temp_full_name || talent.users?.full_name || talent.username}"
+                        </h3>
+                        <div className="relative group">
+                          <div 
+                            className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                            style={{
+                              scrollbarWidth: 'none',
+                              msOverflowStyle: 'none',
+                            }}
+                          >
+                            {talent.similar_talent.filter(t => t.users).map((similarTalent) => (
+                              <div 
+                                key={similarTalent.id} 
+                                className="flex-shrink-0"
+                                style={{ width: '180px' }}
+                              >
+                                <TalentCard talent={similarTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Right Fade Gradient */}
+                          <div 
+                            className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
+                            style={{
+                              background: 'linear-gradient(to right, transparent, rgb(15, 15, 26))'
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    )
                   )}
                 </div>
               ))}
