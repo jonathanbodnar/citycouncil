@@ -2005,6 +2005,25 @@ const TalentManagement: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Banner Card Title <span className="text-gray-500">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editingTalent.display_title || ''}
+                  onChange={(e) => setEditingTalent({
+                    ...editingTalent,
+                    display_title: e.target.value
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Custom title for homepage banner"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  If set, replaces their name on homepage banner cards
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number
                 </label>
                 <input

@@ -72,6 +72,18 @@ export default function TalentBannerCard({
   const discountedPrice = discountAmount ? originalPrice * (1 - discountAmount / 100) : originalPrice;
   const hasDiscount = discountCode && discountAmount && expiryTime && expiryTime > Date.now();
 
+  // Use display_title if set, otherwise use name
+  const displayName = talent.display_title || talentName || '';
+  
+  // Adaptive font size based on text length
+  const getAdaptiveFontSize = () => {
+    const length = displayName?.length || 0;
+    if (length <= 15) return 'text-2xl sm:text-3xl lg:text-4xl'; // Default size
+    if (length <= 25) return 'text-xl sm:text-2xl lg:text-3xl'; // Medium text
+    if (length <= 35) return 'text-lg sm:text-xl lg:text-2xl'; // Long text
+    return 'text-base sm:text-lg lg:text-xl'; // Very long text
+  };
+
   const handleVideoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -132,9 +144,9 @@ export default function TalentBannerCard({
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
             {/* Talent Name + Categories on same line (name left, categories right) */}
-            <div className="flex flex-wrap items-center gap-2 w-full">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-                {talentName}
+            <div className="flex flex-wrap items-center gap-4 w-full">
+              <h2 className={`${getAdaptiveFontSize()} font-bold text-white`}>
+                {displayName}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {filteredCategories.slice(0, 3).map((category) => (
@@ -206,9 +218,9 @@ export default function TalentBannerCard({
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
             {/* Talent Name + Categories on same line (name left, categories right) */}
-            <div className="flex flex-wrap items-center gap-2 w-full">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-                {talentName}
+            <div className="flex flex-wrap items-center gap-4 w-full">
+              <h2 className={`${getAdaptiveFontSize()} font-bold text-white`}>
+                {displayName}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {filteredCategories.slice(0, 3).map((category) => (
