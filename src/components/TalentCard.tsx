@@ -80,15 +80,13 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
 
   const cardContent = (
     <div 
-      className={`glass ${compact ? 'rounded-xl' : 'rounded-2xl sm:rounded-3xl'} shadow-modern transition-all duration-300 overflow-hidden group h-full flex flex-col ${
+      className={`${compact ? 'rounded-xl' : 'rounded-2xl sm:rounded-3xl'} transition-all duration-300 overflow-hidden group h-full flex flex-col ${
         isComingSoon 
-          ? 'opacity-90 cursor-default' 
-          : 'hover:glass-strong hover:shadow-modern-lg hover:scale-[1.02] cursor-pointer'
+          ? 'opacity-90 cursor-default bg-white/5 border border-white/10' 
+          : 'cursor-pointer bg-gradient-to-r from-purple-600/30 to-cyan-400/30 border border-cyan-400/60'
       }`}
       style={{
-        boxShadow: compact 
-          ? '0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(239, 68, 68, 0.05)'
-          : '0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(239, 68, 68, 0.1)'
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
       }}
     >
       {/* Avatar */}
@@ -133,7 +131,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
         {/* Rating Badge - Over image, bottom left */}
         {talent.average_rating && talent.average_rating > 0 ? (
           <div className={`absolute ${compact ? 'bottom-1.5 left-1.5 px-1.5 py-0.5' : 'bottom-2 left-2 sm:bottom-3 sm:left-3 px-2 py-1'} glass-strong rounded-lg flex items-center gap-1 backdrop-blur-md bg-black/40`}>
-            <StarIcon className={`${compact ? 'h-2.5 w-2.5' : 'h-3 w-3 sm:h-3.5 sm:w-3.5'} text-yellow-400`} />
+            <StarIcon className={`${compact ? 'h-2.5 w-2.5' : 'h-3 w-3 sm:h-3.5 sm:w-3.5'} text-purple-500`} />
             <span className={`${compact ? 'text-[10px]' : 'text-xs sm:text-sm'} font-bold text-white`}>
               {talent.average_rating.toFixed(1)}
             </span>
@@ -176,7 +174,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
                       key={i}
                       className={`h-4 w-4 ${
                         i < Math.floor(talent.average_rating || 0)
-                          ? 'text-yellow-400'
+                          ? 'text-purple-500'
                           : 'text-gray-300'
                       }`}
                     />
