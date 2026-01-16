@@ -101,7 +101,9 @@ app.use(helmet({
         "https://js.fortis.tech",
         "https://*.fortis.tech",
         "https://cdn.plaid.com",
-        "https://*.plaid.com"
+        "https://*.plaid.com",
+        "https://shoutout.fans", // Bio page embeds
+        "https://*.shoutout.fans" // Bio page embeds wildcard
       ],
       formAction: [
         "'self'",
