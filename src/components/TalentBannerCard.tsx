@@ -186,14 +186,14 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic py-3">
+              <p className="text-white/70 text-sm sm:text-base italic pt-3 pb-1">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 
             {/* Stars */}
             {talent.recent_review && (
-              <div className="flex items-center gap-0.5 pb-2">
+              <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <svg 
                     key={i} 
@@ -286,14 +286,14 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic py-3">
+              <p className="text-white/70 text-sm sm:text-base italic pt-3 pb-1">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 
             {/* Stars */}
             {talent.recent_review && (
-              <div className="flex items-center gap-0.5 pb-2">
+              <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <svg 
                     key={i} 
