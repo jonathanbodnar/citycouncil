@@ -157,15 +157,14 @@ export default function HomePageNew() {
         // Get 5-star reviews for this talent
         const talentReviews = allReviews?.filter(r => r.talent_id === talent.id) || [];
         
-        // Pick a random 5-star review
+        // Pick the most recent 5-star review
         const randomReview = talentReviews.length > 0 
-          ? talentReviews[Math.floor(Math.random() * talentReviews.length)]
+          ? talentReviews[0] // Most recent (already sorted)
           : null;
         
-        // Try to find video matching the review's order, or pick random video
-        let recentOrder = randomReview 
-          ? talentOrders.find(o => o.id === randomReview.order_id) || talentOrders[Math.floor(Math.random() * talentOrders.length)]
-          : talentOrders[Math.floor(Math.random() * talentOrders.length)] || null;
+        // Use the most recent video to prevent glitching on re-renders
+        // Always use talentOrders[0] since they're sorted by completed_at desc
+        const recentOrder = talentOrders.length > 0 ? talentOrders[0] : null;
 
         // Calculate top 3 order categories
         const categoryCount: Record<string, number> = {};
