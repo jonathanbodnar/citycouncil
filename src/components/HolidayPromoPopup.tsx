@@ -632,15 +632,23 @@ const HolidayPromoPopup: React.FC = () => {
   const handleClose = () => {
     setIsVisible(false);
     safeSetItem(POPUP_CLOSED_KEY, Date.now().toString());
+    // Dispatch events to update discount displays with a small delay to ensure localStorage is written
+    setTimeout(() => {
+      window.dispatchEvent(new Event('couponApplied'));
+      window.dispatchEvent(new Event('giveawayCountdownUpdate'));
+      window.dispatchEvent(new Event('storage'));
+    }, 100);
   };
 
   const handleFindShoutOut = () => {
     setIsVisible(false);
     // Don't reload page - just close popup. User is already on homepage.
-    // Dispatch events to update discount displays
-    window.dispatchEvent(new Event('couponApplied'));
-    window.dispatchEvent(new Event('giveawayCountdownUpdate'));
-    window.dispatchEvent(new Event('storage'));
+    // Dispatch events to update discount displays with a small delay to ensure localStorage is written
+    setTimeout(() => {
+      window.dispatchEvent(new Event('couponApplied'));
+      window.dispatchEvent(new Event('giveawayCountdownUpdate'));
+      window.dispatchEvent(new Event('storage'));
+    }, 100);
   };
 
   if (!isVisible) return null;
