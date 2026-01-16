@@ -226,7 +226,7 @@ export default function TalentBannerCard({
                     </span>
                   </>
                 ) : (
-                  <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+                  <span className="text-white text-sm font-bold">${originalPrice.toFixed(0)}</span>
                 )}
                 <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h Delivery</span>
               </div>
@@ -358,7 +358,7 @@ export default function TalentBannerCard({
                     </span>
                   </>
                 ) : (
-                  <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
+                  <span className="text-white text-sm font-bold">${originalPrice.toFixed(0)}</span>
                 )}
                 <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h Delivery</span>
               </div>
