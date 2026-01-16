@@ -161,7 +161,7 @@ export default function TalentBannerCard({
     if (!videoOnRight) {
       // VIDEO ON LEFT = Button on FAR RIGHT
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4 md:pt-6">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-2">
             {/* Talent Name + Categories on same line (name left, categories right) */}
@@ -268,7 +268,7 @@ export default function TalentBannerCard({
     } else {
       // VIDEO ON RIGHT = Button on FAR LEFT
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4 md:pt-6">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-2">
             {/* Talent Name + Categories on same line (name left, categories right) */}
