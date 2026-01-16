@@ -320,7 +320,7 @@ export default function HomePageNew() {
 
                   {/* Carousel: First banner shows Featured Talent, others show Similar Talent */}
                   {index === 0 ? (
-                    // FIRST carousel: Show all other talent (featured list, no title)
+                    // FIRST carousel: Show ONLY is_featured = true talent (excluding current)
                     <div className="space-y-2">
                       <div className="relative group">
                         <div 
@@ -330,7 +330,7 @@ export default function HomePageNew() {
                             msOverflowStyle: 'none',
                           }}
                         >
-                          {filteredTalent.slice(1).filter(t => t.users).map((featuredTalent) => (
+                          {filteredTalent.filter(t => t.is_featured && t.id !== talent.id && t.users).map((featuredTalent) => (
                             <div 
                               key={featuredTalent.id} 
                               className="flex-shrink-0"
