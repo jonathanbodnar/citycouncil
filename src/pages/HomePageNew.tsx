@@ -80,12 +80,13 @@ export default function HomePageNew() {
 
   const fetchReviewCount = async () => {
     try {
+      // Get total users count from analytics
       const { count } = await supabase
-        .from('reviews')
+        .from('users')
         .select('*', { count: 'exact', head: true });
-      setTotalReviews(count || 477); // Fallback to 477 if no reviews
+      setTotalReviews(count || 516); // Fallback to 516 if error
     } catch (error) {
-      setTotalReviews(477);
+      setTotalReviews(516);
     }
   };
 
@@ -122,29 +123,36 @@ export default function HomePageNew() {
       // Batch fetch: Get ANY order with video (no status filter)
       const { data: allOrders } = await supabase
         .from('orders')
-        .select('talent_id, video_url, occasion, completed_at, status')
+        .select('id, talent_id, video_url, occasion, completed_at, status')
         .in('talent_id', talentIds)
         .not('video_url', 'is', null) // Just needs a video
         .order('completed_at', { ascending: false });
 
-      // Batch fetch: Get most recent review for each talent
+      // Batch fetch: Get ONLY 5-star reviews for banner cards
       const { data: allReviews } = await supabase
         .from('reviews')
-        .select('talent_id, rating, comment, created_at')
+        .select('talent_id, rating, comment, created_at, order_id')
         .in('talent_id', talentIds)
+        .eq('rating', 5) // Only 5-star reviews!
         .order('created_at', { ascending: false });
 
       // Process data for each talent (now using cached batch data)
       const enrichedTalent = talentData.map((talent) => {
-        // Get recent videos for this talent
+        // Get videos for this talent
         const talentOrders = allOrders?.filter(o => o.talent_id === talent.id) || [];
-        // ALWAYS use the FIRST (most recent) video for consistency
-        // This prevents any glitching when state changes (coupon, etc.)
-        const recentOrder = talentOrders[0] || null;
-
-        // Get most recent review for this talent
+        
+        // Get 5-star reviews for this talent
         const talentReviews = allReviews?.filter(r => r.talent_id === talent.id) || [];
-        const recentReview = talentReviews[0]; // Already sorted by created_at desc
+        
+        // Pick a random 5-star review
+        const randomReview = talentReviews.length > 0 
+          ? talentReviews[Math.floor(Math.random() * talentReviews.length)]
+          : null;
+        
+        // Try to find video matching the review's order, or pick random video
+        let recentOrder = randomReview 
+          ? talentOrders.find(o => o.id === randomReview.order_id) || talentOrders[Math.floor(Math.random() * talentOrders.length)]
+          : talentOrders[Math.floor(Math.random() * talentOrders.length)] || null;
 
         // Calculate top 3 order categories
         const categoryCount: Record<string, number> = {};
@@ -165,9 +173,9 @@ export default function HomePageNew() {
         return {
           ...talent,
           recent_video_url: recentOrder?.video_url,
-          recent_review: recentReview ? {
-            rating: recentReview.rating,
-            comment: recentReview.comment
+          recent_review: randomReview ? {
+            rating: randomReview.rating,
+            comment: randomReview.comment
           } : undefined,
           top_categories: topCategories,
         };
@@ -242,17 +250,8 @@ export default function HomePageNew() {
   };
 
   const applyOccasionFilter = () => {
-    if (!selectedOccasion) {
-      setFilteredTalent(talentList);
-      return;
-    }
-
-    // Filter talent that have orders with this occasion
-    const filtered = talentList.filter((talent) =>
-      talent.top_categories?.includes(selectedOccasion)
-    );
-
-    setFilteredTalent(filtered);
+    // Don't filter - just show carousel under occasions section
+    setFilteredTalent(talentList);
   };
 
   const handleOccasionClick = (occasionKey: string) => {
@@ -260,10 +259,6 @@ export default function HomePageNew() {
       setSelectedOccasion(null); // Deselect if clicking same occasion
     } else {
       setSelectedOccasion(occasionKey);
-      // Scroll to filtered results
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 100);
     }
   };
 
@@ -319,10 +314,10 @@ export default function HomePageNew() {
               </button>
             </div>
           ) : (
-            <div className="space-y-12">
+            <div className="space-y-6">
               {/* Talent Banner Cards with Carousels/Occasions */}
               {filteredTalent.map((talent, index) => (
-                <div key={talent.id} className="space-y-4">
+                <div key={talent.id} className="space-y-3">
                   {/* Banner Card */}
                   <TalentBannerCard
                     talent={talent}
@@ -359,7 +354,7 @@ export default function HomePageNew() {
                         <div 
                           className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
                           style={{
-                            background: 'linear-gradient(to right, transparent, rgb(15, 15, 26))'
+                            background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)'
                           }}
                         ></div>
                       </div>
@@ -367,23 +362,47 @@ export default function HomePageNew() {
                   )}
 
                   {/* After SECOND banner: Show "ShoutOut for every occasion" */}
-                  {index === 1 && !selectedOccasion && (
-                    <div className="my-8">
-                      <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
+                  {index === 1 && (
+                    <div className="my-4">
+                      <h2 className="text-lg sm:text-xl font-bold text-white text-center mb-4">
                         A ShoutOut for every occasion
                       </h2>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                      <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                         {OCCASIONS.map((occasion) => (
                           <button
                             key={occasion.key}
                             onClick={() => handleOccasionClick(occasion.key)}
-                            className="glass rounded-2xl p-4 sm:p-6 hover:scale-105 transition-all text-center"
+                            className={`glass rounded-xl px-3 py-2 sm:px-4 sm:py-2 hover:scale-105 transition-all text-center ${
+                              selectedOccasion === occasion.key ? 'ring-2 ring-cyan-400' : ''
+                            }`}
                           >
-                            <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">{occasion.emoji}</div>
-                            <p className="text-white font-medium text-sm sm:text-base">{occasion.label}</p>
+                            <span className="text-xl sm:text-2xl mr-1 sm:mr-2">{occasion.emoji}</span>
+                            <span className="text-white font-medium text-xs sm:text-sm">{occasion.label}</span>
                           </button>
                         ))}
                       </div>
+                      
+                      {/* Carousel for selected occasion */}
+                      {selectedOccasion && (
+                        <div className="mt-4">
+                          <div className="relative group">
+                            <div 
+                              className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                            >
+                              {talentList.filter(t => t.top_categories?.includes(selectedOccasion) && t.users).map((t) => (
+                                <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                                  <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                                </div>
+                              ))}
+                            </div>
+                            <div 
+                              className="absolute top-0 right-0 bottom-4 w-16 pointer-events-none"
+                              style={{ background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)' }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -416,7 +435,7 @@ export default function HomePageNew() {
                         <div 
                           className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
                           style={{
-                            background: 'linear-gradient(to right, transparent, rgb(15, 15, 26))'
+                            background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)'
                           }}
                         ></div>
                       </div>

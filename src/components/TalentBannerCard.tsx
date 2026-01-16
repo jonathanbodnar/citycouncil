@@ -138,6 +138,10 @@ export default function TalentBannerCard({
           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-600/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold rounded-full shadow-lg whitespace-nowrap">
             Recent ShoutOut
           </div>
+          {/* Delivery Time Badge - bottom right */}
+          <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 px-2 py-0.5 bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-medium rounded-full whitespace-nowrap">
+            ⚡ {talent.fulfillment_time_hours || 72}h
+          </div>
         </div>
       ) : talent.recent_video_url && isPlaying ? (
         <div className="relative w-full h-full">
@@ -237,7 +241,6 @@ export default function TalentBannerCard({
                 ) : (
                   <span className="text-white text-sm font-bold">${originalPrice.toFixed(0)}</span>
                 )}
-                <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h Delivery</span>
               </div>
               {/* Order button */}
               <button
