@@ -89,10 +89,15 @@ export default function TalentBannerCard({
     return 'text-base sm:text-lg lg:text-xl'; // Very long text
   };
 
-  // Truncate review to 2 lines (~150 characters max) with ellipsis
-  const getTruncatedReview = (comment: string, maxLength: number = 150) => {
+  // Truncate review to 2 lines (~120 characters max) with ellipsis
+  const getTruncatedReview = (comment: string) => {
+    const maxLength = 120; // Aggressive limit for 2 lines
     if (comment.length <= maxLength) return comment;
-    return comment.substring(0, maxLength).trim() + '...';
+    // Find last space before maxLength to avoid cutting mid-word
+    const truncated = comment.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    const cutPoint = lastSpace > 100 ? lastSpace : maxLength;
+    return comment.substring(0, cutPoint).trim() + '...';
   };
 
   const handleVideoClick = (e: React.MouseEvent) => {
