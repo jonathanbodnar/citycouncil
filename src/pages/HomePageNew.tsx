@@ -121,12 +121,12 @@ export default function HomePageNew() {
       // OPTIMIZE: Fetch ALL orders and reviews in 2 queries instead of N queries per talent
       const talentIds = talentData.map(t => t.id);
 
-      // Batch fetch: Get ONLY DELIVERED orders with video (not pending/in_progress)
+      // Batch fetch: Get orders with video (completed or delivered)
       const { data: allOrders } = await supabase
         .from('orders')
         .select('talent_id, video_url, occasion, completed_at, status')
         .in('talent_id', talentIds)
-        .eq('status', 'delivered') // ONLY delivered videos!
+        .in('status', ['completed', 'delivered']) // Completed OR delivered
         .not('video_url', 'is', null)
         .order('completed_at', { ascending: false });
 
@@ -176,8 +176,7 @@ export default function HomePageNew() {
         };
       });
 
-      // FILTER: Only show talent with BOTH delivered video AND reviews
-      // Talent must have: recent_video_url AND recent_review
+      // FILTER: Show talent with completed/delivered video AND reviews
       const talentWithVideosAndReviews = enrichedTalent.filter(t => 
         t.recent_video_url && t.recent_review
       );
