@@ -333,7 +333,7 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <Logo size="md" theme="dark" />
+            <Logo size="sm" theme="dark" />
           </Link>
 
           {/* Desktop Navigation */}
