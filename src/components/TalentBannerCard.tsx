@@ -273,7 +273,7 @@ function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-xs sm:text-base italic mt-3 sm:mt-0">
+              <p className="text-white/70 text-sm sm:text-base italic mt-4 sm:mt-0">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
@@ -392,7 +392,7 @@ function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-xs sm:text-base italic mt-3 sm:mt-0">
+              <p className="text-white/70 text-sm sm:text-base italic mt-4 sm:mt-0">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
