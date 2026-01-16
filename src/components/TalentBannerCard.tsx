@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
+
+// Coupon configurations
+const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number }> = {
+  'WINNER100': { type: 'fixed', value: 100 },
+  'SANTA25': { type: 'percentage', value: 25 },
+  'SAVE15': { type: 'percentage', value: 15 },
+  'SAVE10': { type: 'percentage', value: 10 },
+  'TAKE25': { type: 'fixed', value: 25 },
+};
 
 interface TalentBannerCardProps {
   talent: TalentProfile & { 
@@ -11,9 +20,6 @@ interface TalentBannerCardProps {
   };
   videoOnRight: boolean;
   topCategories?: string[];
-  discountCode?: string;
-  discountAmount?: number;
-  expiryTime?: number;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -27,17 +33,58 @@ const CATEGORY_LABELS: Record<string, string> = {
 // Categories to hide
 const HIDDEN_CATEGORIES = ['other', 'Other'];
 
-export default function TalentBannerCard({ 
+function TalentBannerCard({ 
   talent, 
   videoOnRight, 
   topCategories = [],
-  discountCode,
-  discountAmount,
-  expiryTime
 }: TalentBannerCardProps) {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState<string>('');
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Local discount state - managed internally to prevent parent re-renders from affecting video
+  const [discountCode, setDiscountCode] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [expiryTime, setExpiryTime] = useState<number | null>(null);
+
+  // Check for discount from localStorage
+  const checkDiscount = useCallback(() => {
+    const code = localStorage.getItem('auto_apply_coupon');
+    const prizeExpiry = localStorage.getItem('giveaway_prize_expiry');
+
+    if (code && prizeExpiry) {
+      const expiry = parseInt(prizeExpiry, 10);
+      if (Date.now() < expiry) {
+        setDiscountCode(code);
+        setExpiryTime(expiry);
+        
+        // Determine discount amount based on code
+        const coupon = COUPON_DISCOUNTS[code.toUpperCase()];
+        if (coupon) {
+          setDiscountAmount(coupon.value);
+        } else if (code.includes('15')) setDiscountAmount(15);
+        else if (code.includes('10')) setDiscountAmount(10);
+        else if (code.includes('25')) setDiscountAmount(25);
+        else if (code.includes('20')) setDiscountAmount(20);
+        else if (code.includes('100')) setDiscountAmount(100);
+      }
+    }
+  }, []);
+
+  // Listen for discount events
+  useEffect(() => {
+    checkDiscount();
+    
+    window.addEventListener('couponApplied', checkDiscount);
+    window.addEventListener('storage', checkDiscount);
+    window.addEventListener('giveawayCountdownUpdate', checkDiscount);
+    
+    return () => {
+      window.removeEventListener('couponApplied', checkDiscount);
+      window.removeEventListener('storage', checkDiscount);
+      window.removeEventListener('giveawayCountdownUpdate', checkDiscount);
+    };
+  }, [checkDiscount]);
 
   // Filter out "Other" category
   const filteredCategories = topCategories.filter(cat => !HIDDEN_CATEGORIES.includes(cat));
@@ -414,3 +461,5 @@ export default function TalentBannerCard({
     </div>
   );
 }
+
+export default TalentBannerCard;

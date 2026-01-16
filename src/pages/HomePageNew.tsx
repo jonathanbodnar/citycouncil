@@ -336,9 +336,6 @@ export default function HomePageNew() {
                     talent={talent}
                     videoOnRight={index % 2 === 0}
                     topCategories={talent.top_categories || []}
-                    discountCode={discountCode || undefined}
-                    discountAmount={discountAmount || undefined}
-                    expiryTime={expiryTime || undefined}
                   />
 
                   {/* After FIRST banner: Show Featured Talent carousel */}
