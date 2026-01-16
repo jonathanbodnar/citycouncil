@@ -59,7 +59,12 @@ export default function TalentBannerCard({
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      setCountdown(`${hours}h ${minutes}m ${seconds}s`);
+      // Format as hh:mm:ss with leading zeros
+      const formattedHours = hours.toString().padStart(2, '0');
+      const formattedMinutes = minutes.toString().padStart(2, '0');
+      const formattedSeconds = seconds.toString().padStart(2, '0');
+
+      setCountdown(`${formattedHours}:${formattedMinutes}:${formattedSeconds}`);
     };
 
     updateCountdown();
@@ -199,7 +204,17 @@ export default function TalentBannerCard({
                 {hasDiscount ? (
                   <>
                     <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
-                    <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+                    <span 
+                      className="text-xl sm:text-2xl font-bold"
+                      style={{
+                        background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      ${discountedPrice.toFixed(0)}
+                    </span>
                   </>
                 ) : (
                   <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
@@ -216,7 +231,7 @@ export default function TalentBannerCard({
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
                 }}
               >
-                Order Now {countdown && <>⏱️ {countdown}</>}
+                Order Now {countdown && <span className="text-orange-500/80 ml-1">{countdown}</span>}
               </button>
             </div>
           </div>
@@ -282,14 +297,24 @@ export default function TalentBannerCard({
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
                 }}
               >
-                Order Now {countdown && <>⏱️ {countdown}</>}
+                Order Now {countdown && <span className="text-orange-500/80 ml-1">{countdown}</span>}
               </button>
               {/* Price + Delivery next to button */}
               <div className="flex items-center gap-2">
                 {hasDiscount ? (
                   <>
                     <span className="text-white/50 text-base sm:text-lg line-through">${originalPrice.toFixed(0)}</span>
-                    <span className="text-yellow-300 text-xl sm:text-2xl font-bold">${discountedPrice.toFixed(0)}</span>
+                    <span 
+                      className="text-xl sm:text-2xl font-bold"
+                      style={{
+                        background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      ${discountedPrice.toFixed(0)}
+                    </span>
                   </>
                 ) : (
                   <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
