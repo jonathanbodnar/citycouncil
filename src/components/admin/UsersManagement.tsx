@@ -69,7 +69,7 @@ const UsersManagement: React.FC = () => {
   useEffect(() => {
     fetchUsers();
     fetchStats();
-  }, [currentPage]);
+  }, [currentPage, searchTerm, filterType]); // Re-fetch when search or filter changes
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -145,18 +145,33 @@ const UsersManagement: React.FC = () => {
       const from = (currentPage - 1) * USERS_PER_PAGE;
       const to = from + USERS_PER_PAGE - 1;
       
-      // First get total count
-      const { count, error: countError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
+      // Build the query with filters
+      let countQuery = supabase.from('users').select('*', { count: 'exact', head: true });
+      let dataQuery = supabase.from('users').select('*');
+      
+      // Apply type filter
+      if (filterType !== 'all') {
+        countQuery = countQuery.eq('user_type', filterType);
+        dataQuery = dataQuery.eq('user_type', filterType);
+      }
+      
+      // Apply search filter - search across email, full_name, and phone
+      if (searchTerm.trim()) {
+        const search = searchTerm.trim().toLowerCase();
+        // Use OR filter for searching multiple columns
+        const searchFilter = `email.ilike.%${search}%,full_name.ilike.%${search}%,phone.ilike.%${search}%`;
+        countQuery = countQuery.or(searchFilter);
+        dataQuery = dataQuery.or(searchFilter);
+      }
+      
+      // Get total count with filters
+      const { count, error: countError } = await countQuery;
 
       if (countError) throw countError;
       setTotalCount(count || 0);
       
-      // Fetch users with pagination
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('*')
+      // Fetch users with pagination and filters
+      const { data: usersData, error: usersError } = await dataQuery
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -209,24 +224,8 @@ const UsersManagement: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    // Filter by type
-    if (filterType !== 'all' && user.user_type !== filterType) {
-      return false;
-    }
-
-    // Filter by search term
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      return (
-        user.email?.toLowerCase().includes(search) ||
-        user.full_name?.toLowerCase().includes(search) ||
-        user.phone?.includes(search)
-      );
-    }
-
-    return true;
-  });
+  // Users are now filtered at the database level, so just use users directly
+  const filteredUsers = users;
 
   // Pagination calculations
   const totalPages = Math.ceil(totalCount / USERS_PER_PAGE);
