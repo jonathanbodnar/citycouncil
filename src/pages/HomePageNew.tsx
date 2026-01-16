@@ -362,9 +362,13 @@ export default function HomePageNew() {
                     topCategories={talent.top_categories || []}
                   />
 
-                  {/* After FIRST banner: Show Featured Talent carousel */}
+                  {/* After FIRST banner: Show Featured Talent carousel (random, excluding above/below banners) */}
                   {index === 0 && (() => {
-                    const carouselItems = featuredTalent.filter(t => t.id !== talent.id && t.users);
+                    const nextBannerTalent = filteredTalent[index + 1];
+                    const excludeIds = [talent.id, nextBannerTalent?.id].filter(Boolean);
+                    const carouselItems = featuredTalent
+                      .filter(t => !excludeIds.includes(t.id) && t.users)
+                      .sort(() => Math.random() - 0.5); // Shuffle randomly
                     const hasOverflow = carouselItems.length > 5;
                     return (
                       <div className="space-y-2">
@@ -459,15 +463,23 @@ export default function HomePageNew() {
                     </div>
                   )}
 
-                  {/* For index > 1: Show similar talent carousel */}
-                  {index > 1 && talent.similar_talent && talent.similar_talent.length > 0 && (() => {
-                    const similarItems = talent.similar_talent.filter(t => t.users);
-                    const hasOverflow = similarItems.length > 5;
+                  {/* For index > 1: Show random active talent carousel (excluding above/below banners) */}
+                  {index > 1 && (() => {
+                    const prevBannerTalent = filteredTalent[index - 1];
+                    const nextBannerTalent = filteredTalent[index + 1];
+                    const excludeIds = [talent.id, prevBannerTalent?.id, nextBannerTalent?.id].filter(Boolean);
+                    
+                    // Get all active talent with users, exclude adjacent banners, shuffle randomly
+                    const carouselItems = talentList
+                      .filter(t => !excludeIds.includes(t.id) && t.users)
+                      .sort(() => Math.random() - 0.5)
+                      .slice(0, 12); // Limit to 12 items per carousel
+                    
+                    if (carouselItems.length === 0) return null;
+                    
+                    const hasOverflow = carouselItems.length > 5;
                     return (
                       <div className="space-y-2">
-                        <h3 className="text-white text-lg font-semibold px-2">
-                          Others like "{talent.temp_full_name || talent.users?.full_name || talent.username}"
-                        </h3>
                         <div className="relative group">
                           <div 
                             className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
@@ -476,13 +488,13 @@ export default function HomePageNew() {
                               msOverflowStyle: 'none',
                             }}
                           >
-                            {similarItems.map((similarTalent) => (
+                            {carouselItems.map((randomTalent) => (
                               <div 
-                                key={similarTalent.id} 
+                                key={randomTalent.id} 
                                 className="flex-shrink-0"
                                 style={{ width: '140px' }}
                               >
-                                <TalentCard talent={similarTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                                <TalentCard talent={randomTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
                               </div>
                             ))}
                           </div>
