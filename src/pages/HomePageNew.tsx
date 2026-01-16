@@ -157,9 +157,10 @@ export default function HomePageNew() {
         // Get 5-star reviews for this talent
         const talentReviews = allReviews?.filter(r => r.talent_id === talent.id) || [];
         
-        // Pick the most recent 5-star review
-        const randomReview = talentReviews.length > 0 
-          ? talentReviews[0] // Most recent (already sorted)
+        // Pick the most recent 5-star review with at least 45 characters
+        const validReviews = talentReviews.filter(r => r.comment && r.comment.length >= 45);
+        const randomReview = validReviews.length > 0 
+          ? validReviews[0] // Most recent valid review (already sorted)
           : null;
         
         // Use the most recent video to prevent glitching on re-renders
