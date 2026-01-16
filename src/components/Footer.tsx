@@ -12,7 +12,9 @@ const Footer: React.FC = () => {
             {/* Logo and Description */}
             <div className="md:col-span-2">
               <div className="mb-4">
-                <Logo size="md" className="filter brightness-0 invert" />
+                <Link to="/creators">
+                  <Logo size="md" className="filter brightness-0 invert" />
+                </Link>
               </div>
               <p className="text-gray-400 mb-4 max-w-md">
                 Get personalized video messages from your favorite conservative personalities. 
