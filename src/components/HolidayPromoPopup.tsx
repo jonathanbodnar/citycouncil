@@ -637,7 +637,10 @@ const HolidayPromoPopup: React.FC = () => {
   const handleFindShoutOut = () => {
     setIsVisible(false);
     // Don't reload page - just close popup. User is already on homepage.
-    // Full reload breaks video preview
+    // Dispatch events to update discount displays
+    window.dispatchEvent(new Event('couponApplied'));
+    window.dispatchEvent(new Event('giveawayCountdownUpdate'));
+    window.dispatchEvent(new Event('storage'));
   };
 
   if (!isVisible) return null;

@@ -52,6 +52,18 @@ export default function HomePageNew() {
     fetchTalentData();
     fetchReviewCount();
     checkDiscount();
+    
+    // Listen for coupon/giveaway events
+    const handleCouponUpdate = () => checkDiscount();
+    window.addEventListener('couponApplied', handleCouponUpdate);
+    window.addEventListener('storage', handleCouponUpdate);
+    window.addEventListener('giveawayCountdownUpdate', handleCouponUpdate);
+    
+    return () => {
+      window.removeEventListener('couponApplied', handleCouponUpdate);
+      window.removeEventListener('storage', handleCouponUpdate);
+      window.removeEventListener('giveawayCountdownUpdate', handleCouponUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -74,6 +86,7 @@ export default function HomePageNew() {
         else if (code.includes('10')) setDiscountAmount(10);
         else if (code.includes('25')) setDiscountAmount(25);
         else if (code.includes('20')) setDiscountAmount(20);
+        else if (code.includes('100')) setDiscountAmount(100); // Free shoutout
       }
     }
   };
@@ -363,8 +376,8 @@ export default function HomePageNew() {
 
                   {/* After SECOND banner: Show "ShoutOut for every occasion" */}
                   {index === 1 && (
-                    <div className="my-4">
-                      <h2 className="text-lg sm:text-xl font-bold text-white text-center mb-4">
+                    <div className="my-6 md:my-10">
+                      <h2 className="text-lg sm:text-xl font-bold text-white text-center mb-4 md:mb-6">
                         A ShoutOut for every occasion
                       </h2>
                       <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
