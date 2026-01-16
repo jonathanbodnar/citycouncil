@@ -236,7 +236,19 @@ export default function TalentBannerCard({
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
                 }}
               >
-                Order Now {countdown && <span className="text-orange-500/80 ml-1">{countdown}</span>}
+                Order Now {countdown && (
+                  <span 
+                    className="ml-1"
+                    style={{
+                      background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}
+                  >
+                    {countdown}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -306,7 +318,19 @@ export default function TalentBannerCard({
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
                 }}
               >
-                Order Now {countdown && <span className="text-orange-500/80 ml-1">{countdown}</span>}
+                Order Now {countdown && (
+                  <span 
+                    className="ml-1"
+                    style={{
+                      background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}
+                  >
+                    {countdown}
+                  </span>
+                )}
               </button>
               {/* Price + Delivery next to button */}
               <div className="flex items-center gap-2">
