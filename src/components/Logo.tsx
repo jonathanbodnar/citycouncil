@@ -8,7 +8,7 @@ interface LogoProps {
 }
 
 // Hardcoded logo URL for maximum performance - no DB fetch needed
-const LOGO_URL = "https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png";
+const LOGO_URL = "/shoutoutwhite.png";
 
 const Logo: React.FC<LogoProps> = ({ 
   size = 'md', 
@@ -29,7 +29,7 @@ const Logo: React.FC<LogoProps> = ({
       <img
         src={LOGO_URL}
         alt="ShoutOut Logo"
-        className={`${sizeClasses.height} ${sizeClasses.width} object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
+        className={`${sizeClasses.height} ${sizeClasses.width} object-contain`}
         fetchPriority="high"
         loading="eager"
         decoding="sync"
