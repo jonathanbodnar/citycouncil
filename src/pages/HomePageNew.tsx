@@ -92,7 +92,7 @@ export default function HomePageNew() {
     try {
       setLoading(true);
 
-      // Fetch talent with at least one completed order (video delivered)
+      // Fetch talent with at least one completed order AND reviews
       const { data: talentData, error: talentError } = await supabase
         .from('talent_profiles')
         .select(`
@@ -105,7 +105,9 @@ export default function HomePageNew() {
         `)
         .eq('is_active', true)
         .gt('total_orders', 0)
-        .order('total_orders', { ascending: false });
+        .gt('average_rating', 0) // Only talent with reviews
+        .order('display_order', { ascending: true, nullsFirst: false }) // Use admin position order
+        .order('total_orders', { ascending: false }); // Fallback to total_orders for nulls
 
       if (talentError) throw talentError;
 
