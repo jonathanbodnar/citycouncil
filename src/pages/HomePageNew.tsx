@@ -451,27 +451,37 @@ export default function HomePageNew() {
                         ))}
                       </div>
                       
-                      {/* Carousel for selected occasion - random 4 from ALL active talent */}
+                      {/* Carousel for selected occasion - always show 4, fill with random if needed */}
                       {selectedOccasion && (() => {
                         // Include talent with this occasion in top_categories OR featured_shoutout_types
-                        // Use allActiveTalent (ALL active talent) not just those with reviews
                         const matchingTalent = allActiveTalent.filter(t => 
                           t.users && (
                             t.top_categories?.includes(selectedOccasion) ||
                             t.featured_shoutout_types?.includes(selectedOccasion)
                           )
                         );
-                        // Randomly select 4 talent
-                        const shuffled = [...matchingTalent].sort(() => Math.random() - 0.5);
-                        const randomFour = shuffled.slice(0, 4);
-                        return randomFour.length > 0 ? (
+                        // Randomly shuffle matching talent
+                        const shuffledMatching = [...matchingTalent].sort(() => Math.random() - 0.5);
+                        
+                        // If we have less than 4, fill in with random active talent
+                        let occasionTalentList = shuffledMatching.slice(0, 4);
+                        if (occasionTalentList.length < 4) {
+                          const usedIds = new Set(occasionTalentList.map(t => t.id));
+                          const fillerTalent = allActiveTalent
+                            .filter(t => t.users && !usedIds.has(t.id))
+                            .sort(() => Math.random() - 0.5)
+                            .slice(0, 4 - occasionTalentList.length);
+                          occasionTalentList = [...occasionTalentList, ...fillerTalent];
+                        }
+                        
+                        return occasionTalentList.length > 0 ? (
                           <div className="mt-4">
                             <div className="relative group">
                               <div 
                                 className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
                                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                               >
-                                {randomFour.map((t) => (
+                                {occasionTalentList.map((t) => (
                                   <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
                                     <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
                                   </div>
