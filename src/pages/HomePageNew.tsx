@@ -135,15 +135,12 @@ export default function HomePageNew() {
         .order('created_at', { ascending: false });
 
       // Process data for each talent (now using cached batch data)
-      const enrichedTalent = talentData.map((talent, index) => {
-        // Get multiple recent videos for this talent
+      const enrichedTalent = talentData.map((talent) => {
+        // Get recent videos for this talent
         const talentOrders = allOrders?.filter(o => o.talent_id === talent.id) || [];
-        // Pick a video deterministically (using index) to avoid re-render glitches
-        // This ensures the same video shows on every render/state change
-        const recentVideos = talentOrders.slice(0, 5);
-        const recentOrder = recentVideos.length > 0 
-          ? recentVideos[index % recentVideos.length] // Use index instead of random
-          : null;
+        // ALWAYS use the FIRST (most recent) video for consistency
+        // This prevents any glitching when state changes (coupon, etc.)
+        const recentOrder = talentOrders[0] || null;
 
         // Get most recent review for this talent
         const talentReviews = allReviews?.filter(r => r.talent_id === talent.id) || [];
