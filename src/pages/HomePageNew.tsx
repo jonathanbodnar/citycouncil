@@ -120,13 +120,12 @@ export default function HomePageNew() {
       // OPTIMIZE: Fetch ALL orders and reviews in 2 queries instead of N queries per talent
       const talentIds = talentData.map(t => t.id);
 
-      // Batch fetch: Get most recent completed order with video for each talent
+      // Batch fetch: Get ANY order with video (not just completed)
       const { data: allOrders } = await supabase
         .from('orders')
         .select('talent_id, video_url, occasion, completed_at, status')
         .in('talent_id', talentIds)
-        .eq('status', 'completed')
-        .not('video_url', 'is', null)
+        .not('video_url', 'is', null) // Has a video uploaded
         .order('completed_at', { ascending: false });
 
       // Batch fetch: Get most recent review for each talent
