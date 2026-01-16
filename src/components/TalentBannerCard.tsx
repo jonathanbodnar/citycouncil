@@ -181,14 +181,14 @@ export default function TalentBannerCard({
     if (!videoOnRight) {
       // VIDEO ON LEFT = Button on FAR RIGHT, Categories top right
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-4 sm:p-4 md:pt-5 pb-3">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 md:pt-5 pb-3">
           {/* TOP SECTION */}
           <div className="flex flex-col gap-1 sm:gap-2">
             {/* Desktop: Categories at top right */}
             <DesktopCategories />
             
             {/* Talent Name + Mobile Categories */}
-            <div className="flex flex-wrap items-center gap-2 w-full mt-1 sm:mt-0">
+            <div className="flex flex-wrap items-center gap-2 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
                   <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 tracking-wide">
@@ -214,7 +214,7 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-xs sm:text-base italic mt-1 sm:mt-0">
+              <p className="text-white/70 text-xs sm:text-base italic mt-2 sm:mt-0">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
@@ -291,14 +291,14 @@ export default function TalentBannerCard({
     } else {
       // VIDEO ON RIGHT = Button on FAR LEFT, Categories top right of content
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-4 sm:p-4 md:pt-5 pb-3">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 md:pt-5 pb-3">
           {/* TOP SECTION */}
           <div className="flex flex-col gap-1 sm:gap-2">
             {/* Desktop: Categories at top right of content area */}
             <DesktopCategories />
             
             {/* Talent Name + Mobile Categories */}
-            <div className="flex flex-wrap items-center gap-2 w-full mt-1 sm:mt-0">
+            <div className="flex flex-wrap items-center gap-2 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
                   <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 tracking-wide">
@@ -324,7 +324,7 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-xs sm:text-base italic mt-1 sm:mt-0">
+              <p className="text-white/70 text-xs sm:text-base italic mt-2 sm:mt-0">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
