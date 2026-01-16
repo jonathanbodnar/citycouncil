@@ -636,7 +636,8 @@ const HolidayPromoPopup: React.FC = () => {
 
   const handleFindShoutOut = () => {
     setIsVisible(false);
-    window.location.href = '/';
+    // Don't reload page - just close popup. User is already on homepage.
+    // Full reload breaks video preview
   };
 
   if (!isVisible) return null;

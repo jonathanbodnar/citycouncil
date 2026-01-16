@@ -371,7 +371,6 @@ export default function TalentBannerCard({
                 ) : (
                   <span className="text-white text-sm font-bold">${originalPrice.toFixed(0)}</span>
                 )}
-                <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h Delivery</span>
               </div>
             </div>
           </div>
@@ -383,7 +382,7 @@ export default function TalentBannerCard({
   // Exciting purple to light blue gradient
   return (
     <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
-      <div className="flex rounded-3xl overflow-hidden relative h-[320px] sm:h-[300px] md:h-[320px]">
+      <div className="flex rounded-3xl overflow-hidden relative h-[280px] sm:h-[300px] md:h-[320px]">
         {/* Main Content Container - ALWAYS flex row */}
         <div className={`w-full h-full flex ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
