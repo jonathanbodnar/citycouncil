@@ -367,7 +367,7 @@ export default function TalentBannerCard({
   // Exciting purple to light blue gradient
   return (
     <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
-      <div className="md:flex rounded-3xl overflow-hidden relative" style={{ height: '320px' }}>
+      <div className="md:flex rounded-3xl overflow-hidden relative min-h-[280px] md:h-[320px]">
         {/* Main Content Container */}
         <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
