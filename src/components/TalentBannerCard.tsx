@@ -109,6 +109,7 @@ export default function TalentBannerCard({
         >
           {/* Background preview video (autoplay, muted, loop) */}
           <video 
+            key={`preview-${talent.id}-${talent.recent_video_url}`}
             src={talent.recent_video_url}
             className="w-full h-full object-cover"
             autoPlay
@@ -219,7 +220,7 @@ export default function TalentBannerCard({
                 ) : (
                   <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
                 )}
-                <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
+                <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h Delivery</span>
               </div>
               {/* Order button */}
               <button
@@ -319,7 +320,7 @@ export default function TalentBannerCard({
                 ) : (
                   <span className="text-white text-xl sm:text-2xl font-bold">${originalPrice.toFixed(0)}</span>
                 )}
-                <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h</span>
+                <span className="text-white/60 text-sm">⚡ {talent.fulfillment_time_hours || 72}h Delivery</span>
               </div>
             </div>
           </div>
@@ -331,7 +332,7 @@ export default function TalentBannerCard({
   // Exciting purple to light blue gradient
   return (
     <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
-      <div className="md:flex rounded-3xl overflow-hidden relative h-64 sm:h-72 lg:h-80">
+      <div className="md:flex rounded-3xl overflow-hidden relative h-80 sm:h-96 lg:h-[28rem]">
         {/* Main Content Container */}
         <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
