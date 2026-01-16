@@ -2504,7 +2504,7 @@ const BioPage: React.FC = () => {
           {/* ShoutOut Card - Always at the bottom (cannot be removed) */}
           {bioSettings && (
             <a
-              href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}?utm_source=bio&utm_medium=shoutout_card`}
+              href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}?utm=fans`}
               target="_blank"
               rel="noopener noreferrer"
               className="block mt-4"
