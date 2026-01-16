@@ -121,13 +121,12 @@ export default function HomePageNew() {
       // OPTIMIZE: Fetch ALL orders and reviews in 2 queries instead of N queries per talent
       const talentIds = talentData.map(t => t.id);
 
-      // Batch fetch: Get orders with video (completed or delivered)
+      // Batch fetch: Get ANY order with video (no status filter)
       const { data: allOrders } = await supabase
         .from('orders')
         .select('talent_id, video_url, occasion, completed_at, status')
         .in('talent_id', talentIds)
-        .in('status', ['completed', 'delivered']) // Completed OR delivered
-        .not('video_url', 'is', null)
+        .not('video_url', 'is', null) // Just needs a video
         .order('completed_at', { ascending: false });
 
       // Batch fetch: Get most recent review for each talent
@@ -220,9 +219,22 @@ export default function HomePageNew() {
       setTalentList(sortedTalent);
       setFilteredTalent(sortedTalent);
       
-      // Set featured talent (ALL active featured talent for first carousel)
-      const featured = enrichedTalent.filter(t => t.is_featured);
-      setFeaturedTalent(featured);
+      // Fetch ALL featured talent separately (even without orders)
+      const { data: allFeatured } = await supabase
+        .from('talent_profiles')
+        .select(`
+          *,
+          users!talent_profiles_user_id_fkey (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('is_active', true)
+        .eq('is_featured', true)
+        .order('display_order', { ascending: true });
+      
+      setFeaturedTalent(allFeatured || []);
     } catch (error) {
       console.error('Error fetching talent:', error);
       setTalentList([]);
