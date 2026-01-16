@@ -86,14 +86,14 @@ export default function TalentBannerCard({
     return 'text-base sm:text-lg lg:text-xl'; // Very long text
   };
 
-  // Truncate review to 2 lines (~120 characters max) with ellipsis
+  // Truncate review to 2 lines (VERY aggressive for mobile)
   const getTruncatedReview = (comment: string) => {
-    const maxLength = 120; // Aggressive limit for 2 lines
+    const maxLength = 90; // Very short for mobile - fits 2 lines max
     if (comment.length <= maxLength) return comment;
     // Find last space before maxLength to avoid cutting mid-word
     const truncated = comment.substring(0, maxLength);
     const lastSpace = truncated.lastIndexOf(' ');
-    const cutPoint = lastSpace > 100 ? lastSpace : maxLength;
+    const cutPoint = lastSpace > 70 ? lastSpace : maxLength;
     return comment.substring(0, cutPoint).trim() + '...';
   };
 
@@ -161,7 +161,7 @@ export default function TalentBannerCard({
     if (!videoOnRight) {
       // VIDEO ON LEFT = Button on FAR RIGHT
       return (
-        <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
+        <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-5 lg:p-6">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
             {/* Talent Name + Categories on same line (name left, categories right) */}
@@ -190,14 +190,14 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic pt-3 pb-1">
+              <p className="text-white/70 text-sm sm:text-base italic pt-2 pb-0">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 
             {/* Stars */}
             {talent.recent_review && (
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-0.5 pt-1">
                 {[...Array(5)].map((_, i) => (
                   <svg 
                     key={i} 
@@ -268,7 +268,7 @@ export default function TalentBannerCard({
     } else {
       // VIDEO ON RIGHT = Button on FAR LEFT
       return (
-        <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
+        <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-5 lg:p-6">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-3">
             {/* Talent Name + Categories on same line (name left, categories right) */}
@@ -297,14 +297,14 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic pt-3 pb-1">
+              <p className="text-white/70 text-sm sm:text-base italic pt-2 pb-0">
                 "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 
             {/* Stars */}
             {talent.recent_review && (
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-0.5 pt-1">
                 {[...Array(5)].map((_, i) => (
                   <svg 
                     key={i} 
