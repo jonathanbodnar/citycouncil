@@ -286,7 +286,7 @@ export default function HomePageNew() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-6 pb-12">
           {loading ? (
             <div className="space-y-8">
               {[...Array(3)].map((_, i) => (
