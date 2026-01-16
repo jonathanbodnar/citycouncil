@@ -722,6 +722,8 @@ const AdvancedAnalytics: React.FC = () => {
       'rgiveaway': 'Rumble',
       'sms': 'SMS',
       'email': 'Email',
+      'fans': 'Bio Page (Fans)',
+      'fanemail': 'Fan Email',
       'giveaway': 'Giveaway',
       'direct': 'Direct',
     };

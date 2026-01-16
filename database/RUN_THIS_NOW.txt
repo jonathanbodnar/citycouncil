@@ -1,0 +1,15 @@
+========================================================================
+COPY EVERYTHING BELOW THIS LINE AND PASTE INTO SUPABASE SQL EDITOR
+========================================================================
+
+Go to: https://supabase.com/dashboard/project/utafetamgwukkbrlezev/sql/new
+
+Then click RUN (bottom right corner)
+
+This will:
+✅ Fix the payout function with your service role key
+✅ Enable automatic hourly payouts  
+✅ Process all 7 ready payouts immediately
+✅ Show you the results
+
+========================================================================
