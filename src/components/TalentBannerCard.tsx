@@ -179,9 +179,9 @@ export default function TalentBannerCard({
               <div className="flex items-center gap-0.5">
                 <svg width="0" height="0">
                   <defs>
-                    <linearGradient id="star-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: '#1e3a8a', stopOpacity: 1 }} />
-                      <stop offset="100%" style={{ stopColor: '#7c3aed', stopOpacity: 1 }} />
+                    <linearGradient id="star-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 1 }} />
+                      <stop offset="100%" style={{ stopColor: '#a855f7', stopOpacity: 1 }} />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -217,17 +217,12 @@ export default function TalentBannerCard({
               {/* Order button */}
               <button
                 onClick={handleOrderClick}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 whitespace-nowrap"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 whitespace-nowrap backdrop-blur-xl"
                 style={{ 
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '2px solid transparent',
-                  backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%)',
-                  backgroundOrigin: 'border-box',
-                  backgroundClip: 'padding-box, border-box',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '2px solid #3a86ff',
                   color: '#ffffff',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
                 }}
               >
                 Order Now {countdown && <>⏱️ {countdown}</>}
@@ -271,9 +266,9 @@ export default function TalentBannerCard({
               <div className="flex items-center gap-0.5">
                 <svg width="0" height="0">
                   <defs>
-                    <linearGradient id="star-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: '#1e3a8a', stopOpacity: 1 }} />
-                      <stop offset="100%" style={{ stopColor: '#7c3aed', stopOpacity: 1 }} />
+                    <linearGradient id="star-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 1 }} />
+                      <stop offset="100%" style={{ stopColor: '#a855f7', stopOpacity: 1 }} />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -297,17 +292,12 @@ export default function TalentBannerCard({
               {/* Order button */}
               <button
                 onClick={handleOrderClick}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 whitespace-nowrap"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 whitespace-nowrap backdrop-blur-xl"
                 style={{ 
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '2px solid transparent',
-                  backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%)',
-                  backgroundOrigin: 'border-box',
-                  backgroundClip: 'padding-box, border-box',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '2px solid #3a86ff',
                   color: '#ffffff',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
                 }}
               >
                 Order Now {countdown && <>⏱️ {countdown}</>}
