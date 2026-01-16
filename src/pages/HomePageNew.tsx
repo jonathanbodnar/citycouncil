@@ -93,7 +93,7 @@ export default function HomePageNew() {
     try {
       setLoading(true);
 
-      // Fetch talent with at least one completed order
+      // Fetch ALL active talent - reviews filter will determine banner cards
       const { data: talentData, error: talentError } = await supabase
         .from('talent_profiles')
         .select(`
@@ -105,10 +105,8 @@ export default function HomePageNew() {
           )
         `)
         .eq('is_active', true)
-        .gt('total_orders', 0)
-        // Removed average_rating filter - show ALL talent even without reviews
-        .order('display_order', { ascending: true, nullsFirst: false }) // Use admin position order
-        .order('total_orders', { ascending: false }); // Fallback to total_orders for nulls
+        .order('display_order', { ascending: true, nullsFirst: false })
+        .order('total_orders', { ascending: false });
 
       if (talentError) throw talentError;
 
@@ -280,7 +278,7 @@ export default function HomePageNew() {
 
       <div className="min-h-screen">
         {/* Hero Header */}
-        <div className="py-4 mb-6">
+        <div className="pt-6 sm:pt-8 pb-4 mb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-lg sm:text-xl font-normal text-white mb-2">
               Personalized Video ShoutOuts From<br />Free-Speech Influencers
@@ -322,7 +320,7 @@ export default function HomePageNew() {
             </div>
           ) : (
             <div className="space-y-12">
-              {/* Talent Banner Cards with Similar Talent Carousels */}
+              {/* Talent Banner Cards with Carousels/Occasions */}
               {filteredTalent.map((talent, index) => (
                 <div key={talent.id} className="space-y-4">
                   {/* Banner Card */}
@@ -335,9 +333,8 @@ export default function HomePageNew() {
                     expiryTime={expiryTime || undefined}
                   />
 
-                  {/* Carousel: First banner shows Featured Talent, others show Similar Talent */}
-                  {index === 0 ? (
-                    // FIRST carousel: Show ALL featured talent (from separate state, excludes current)
+                  {/* After FIRST banner: Show Featured Talent carousel */}
+                  {index === 0 && (
                     <div className="space-y-2">
                       <div className="relative group">
                         <div 
@@ -367,8 +364,31 @@ export default function HomePageNew() {
                         ></div>
                       </div>
                     </div>
-                  ) : talent.similar_talent && talent.similar_talent.length > 0 ? (
-                    // SUBSEQUENT carousels: Show similar talent with title
+                  )}
+
+                  {/* After SECOND banner: Show "ShoutOut for every occasion" */}
+                  {index === 1 && !selectedOccasion && (
+                    <div className="my-8">
+                      <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
+                        A ShoutOut for every occasion
+                      </h2>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {OCCASIONS.map((occasion) => (
+                          <button
+                            key={occasion.key}
+                            onClick={() => handleOccasionClick(occasion.key)}
+                            className="glass rounded-2xl p-4 sm:p-6 hover:scale-105 transition-all text-center"
+                          >
+                            <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">{occasion.emoji}</div>
+                            <p className="text-white font-medium text-sm sm:text-base">{occasion.label}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* For index > 1: Show similar talent carousel */}
+                  {index > 1 && talent.similar_talent && talent.similar_talent.length > 0 && (
                     <div className="space-y-2">
                       <h3 className="text-white text-lg font-semibold px-2">
                         Others like "{talent.temp_full_name || talent.users?.full_name || talent.username}"
@@ -401,30 +421,9 @@ export default function HomePageNew() {
                         ></div>
                       </div>
                     </div>
-                  ) : null}
+                  )}
                 </div>
               ))}
-
-              {/* "A ShoutOut for every occasion" Section - Show after first talent */}
-              {!selectedOccasion && filteredTalent.length > 0 && (
-                <div className="my-16">
-                  <h2 className="text-3xl font-bold text-white text-center mb-8">
-                    A ShoutOut for every occasion
-                  </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {OCCASIONS.map((occasion) => (
-                      <button
-                        key={occasion.key}
-                        onClick={() => handleOccasionClick(occasion.key)}
-                        className="glass rounded-2xl p-6 hover:scale-105 transition-all text-center"
-                      >
-                        <div className="text-5xl mb-3">{occasion.emoji}</div>
-                        <p className="text-white font-medium">{occasion.label}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>

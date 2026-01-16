@@ -86,14 +86,16 @@ export default function TalentBannerCard({
     return 'text-sm sm:text-base lg:text-lg'; // Very long text
   };
 
-  // Truncate review to 2 lines (VERY aggressive for mobile)
+  // Truncate review - more on desktop, less on mobile (CSS handles visual clamp)
   const getTruncatedReview = (comment: string) => {
-    const maxLength = 90; // Very short for mobile - fits 2 lines max
+    // Use window width to determine max length
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const maxLength = isMobile ? 90 : 160; // More characters on desktop
     if (comment.length <= maxLength) return comment;
     // Find last space before maxLength to avoid cutting mid-word
     const truncated = comment.substring(0, maxLength);
     const lastSpace = truncated.lastIndexOf(' ');
-    const cutPoint = lastSpace > 70 ? lastSpace : maxLength;
+    const cutPoint = lastSpace > (maxLength - 30) ? lastSpace : maxLength;
     return comment.substring(0, cutPoint).trim() + '...';
   };
 
@@ -161,9 +163,9 @@ export default function TalentBannerCard({
     if (!videoOnRight) {
       // VIDEO ON LEFT = Button on FAR RIGHT
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-2 sm:p-4 md:pt-6 pb-3">
-          {/* TOP SECTION - tighter spacing on mobile */}
-          <div className="flex flex-col items-start gap-1 sm:gap-2">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-4 sm:p-4 md:pt-6 pb-3">
+          {/* TOP SECTION - spread out on mobile */}
+          <div className="flex flex-col items-start gap-2 sm:gap-2">
             {/* Talent Name + Categories */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full">
               <div className="flex flex-col">
@@ -268,9 +270,9 @@ export default function TalentBannerCard({
     } else {
       // VIDEO ON RIGHT = Button on FAR LEFT
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-2 sm:p-4 md:pt-6 pb-3">
-          {/* TOP SECTION - tighter spacing on mobile */}
-          <div className="flex flex-col items-start gap-1 sm:gap-2">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-4 sm:p-4 md:pt-6 pb-3">
+          {/* TOP SECTION - spread out on mobile */}
+          <div className="flex flex-col items-start gap-2 sm:gap-2">
             {/* Talent Name + Categories */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full">
               <div className="flex flex-col">
