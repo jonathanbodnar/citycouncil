@@ -42,46 +42,47 @@ function TalentBannerCard({
   const [countdown, setCountdown] = useState<string>('');
   const [isPlaying, setIsPlaying] = useState(false);
   
-  // Local discount state - managed internally to prevent parent re-renders from affecting video
-  const [discountCode, setDiscountCode] = useState<string | null>(null);
-  const [discountAmount, setDiscountAmount] = useState<number>(0);
-  const [expiryTime, setExpiryTime] = useState<number | null>(null);
-
-  // Check for discount from localStorage
-  const checkDiscount = useCallback(() => {
+  // Initialize discount state immediately from localStorage (no re-render)
+  const getInitialDiscount = () => {
     const code = localStorage.getItem('auto_apply_coupon');
     const prizeExpiry = localStorage.getItem('giveaway_prize_expiry');
-
     if (code && prizeExpiry) {
       const expiry = parseInt(prizeExpiry, 10);
       if (Date.now() < expiry) {
-        setDiscountCode(code);
-        setExpiryTime(expiry);
-        
-        // Determine discount amount based on code
         const coupon = COUPON_DISCOUNTS[code.toUpperCase()];
-        if (coupon) {
-          setDiscountAmount(coupon.value);
-        } else if (code.includes('15')) setDiscountAmount(15);
-        else if (code.includes('10')) setDiscountAmount(10);
-        else if (code.includes('25')) setDiscountAmount(25);
-        else if (code.includes('20')) setDiscountAmount(20);
-        else if (code.includes('100')) setDiscountAmount(100);
+        let amount = 0;
+        if (coupon) amount = coupon.value;
+        else if (code.includes('15')) amount = 15;
+        else if (code.includes('10')) amount = 10;
+        else if (code.includes('25')) amount = 25;
+        else if (code.includes('20')) amount = 20;
+        else if (code.includes('100')) amount = 100;
+        return { code, amount, expiry };
       }
     }
+    return { code: null, amount: 0, expiry: null };
+  };
+  
+  const initial = getInitialDiscount();
+  const [discountCode, setDiscountCode] = useState<string | null>(initial.code);
+  const [discountAmount, setDiscountAmount] = useState<number>(initial.amount);
+  const [expiryTime, setExpiryTime] = useState<number | null>(initial.expiry);
+
+  // Check for discount from localStorage
+  const checkDiscount = useCallback(() => {
+    const result = getInitialDiscount();
+    setDiscountCode(result.code);
+    setDiscountAmount(result.amount);
+    setExpiryTime(result.expiry);
   }, []);
 
-  // Listen for discount events
+  // Listen for discount events (only after giveaway popup)
   useEffect(() => {
-    checkDiscount();
-    
     window.addEventListener('couponApplied', checkDiscount);
-    window.addEventListener('storage', checkDiscount);
     window.addEventListener('giveawayCountdownUpdate', checkDiscount);
     
     return () => {
       window.removeEventListener('couponApplied', checkDiscount);
-      window.removeEventListener('storage', checkDiscount);
       window.removeEventListener('giveawayCountdownUpdate', checkDiscount);
     };
   }, [checkDiscount]);
@@ -166,14 +167,14 @@ function TalentBannerCard({
         >
           {/* Background preview video (autoplay, muted, loop) */}
           <video 
-            key={`preview-${talent.id}-${talent.recent_video_url}`}
+            key={`preview-${talent.id}`}
             src={talent.recent_video_url}
             className="w-full h-full object-cover"
             autoPlay
             muted
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
           />
           {/* Dark overlay with play button */}
           <div className="absolute inset-0 bg-black/30 transition-colors flex items-center justify-center">
