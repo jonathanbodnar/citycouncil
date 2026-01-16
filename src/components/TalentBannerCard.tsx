@@ -113,8 +113,8 @@ export default function TalentBannerCard({
             preload="auto"
           />
           {/* Dark overlay with play button */}
-          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+          <div className="absolute inset-0 bg-black/30 transition-colors flex items-center justify-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/90 rounded-full flex items-center justify-center scale-110 transition-transform shadow-lg">
               <PlayIcon className="w-7 h-7 sm:w-8 sm:h-8 text-gray-900 ml-1" />
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function TalentBannerCard({
               {/* Order button */}
               <button
                 onClick={handleOrderClick}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 whitespace-nowrap"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 whitespace-nowrap"
                 style={{ 
                   background: 'rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(10px)',
@@ -297,7 +297,7 @@ export default function TalentBannerCard({
               {/* Order button */}
               <button
                 onClick={handleOrderClick}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 whitespace-nowrap"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 whitespace-nowrap"
                 style={{ 
                   background: 'rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(10px)',
@@ -333,7 +333,7 @@ export default function TalentBannerCard({
 
   // Exciting purple to light blue gradient
   return (
-    <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-purple-500/40 hover:border-cyan-400/60 transition-all duration-300 hover:scale-[1.02] shadow-modern-xl">
+    <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
       <div className="md:flex rounded-3xl overflow-hidden relative h-64 sm:h-72 lg:h-80">
         {/* Main Content Container */}
         <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
