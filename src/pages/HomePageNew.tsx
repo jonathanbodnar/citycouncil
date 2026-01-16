@@ -175,8 +175,8 @@ export default function HomePageNew() {
         };
       });
 
-      // Filter out talent without videos
-      const talentWithVideos = enrichedTalent.filter(t => t.recent_video_url);
+      // Don't filter out talent without videos - show everyone!
+      const talentWithVideos = enrichedTalent;
 
       // Find similar talent for each (same categories)
       const talentWithSimilar = talentWithVideos.map((talent) => {
