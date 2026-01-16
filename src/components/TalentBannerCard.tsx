@@ -177,12 +177,12 @@ export default function TalentBannerCard({
             {talent.recent_review && (
               <p className="text-white/70 text-sm sm:text-base italic py-3" style={{ 
                 display: '-webkit-box',
-                WebkitLineClamp: 2,
+                WebkitLineClamp: '2',
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                maxHeight: '3em',
-                lineHeight: '1.5em'
+                maxHeight: '2.8em',
+                lineHeight: '1.4em'
               }}>
                 "{talent.recent_review.comment}"
               </p>
@@ -285,12 +285,12 @@ export default function TalentBannerCard({
             {talent.recent_review && (
               <p className="text-white/70 text-sm sm:text-base italic py-3" style={{ 
                 display: '-webkit-box',
-                WebkitLineClamp: 2,
+                WebkitLineClamp: '2',
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                maxHeight: '3em',
-                lineHeight: '1.5em'
+                maxHeight: '2.8em',
+                lineHeight: '1.4em'
               }}>
                 "{talent.recent_review.comment}"
               </p>

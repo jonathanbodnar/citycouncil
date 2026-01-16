@@ -38,7 +38,7 @@ const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<TalentSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [prizeCountdown, setPrizeCountdown] = useState<{ prize: string; code: string; minutes: number; seconds: number } | null>(null);
+  const [prizeCountdown, setPrizeCountdown] = useState<{ prize: string; code: string; hours: number; minutes: number; seconds: number } | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
@@ -53,11 +53,13 @@ const Header: React.FC = () => {
       if (activePrize) {
         const diff = activePrize.expiresAt - Date.now();
         if (diff > 0) {
-          const minutes = Math.floor(diff / (1000 * 60));
+          const hours = Math.floor(diff / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((diff % (1000 * 60)) / 1000);
           setPrizeCountdown({
             prize: activePrize.prize,
             code: activePrize.code,
+            hours,
             minutes,
             seconds
           });
@@ -366,11 +368,13 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             {/* Prize Countdown Banner */}
             {prizeCountdown && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-medium animate-pulse">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium animate-pulse" style={{
+                background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)'
+              }}>
                 <GiftIcon className="h-4 w-4" />
                 <span>{prizeCountdown.prize}</span>
                 <span className="font-mono font-bold">
-                  {String(prizeCountdown.minutes).padStart(2, '0')}:{String(prizeCountdown.seconds).padStart(2, '0')}
+                  {String(prizeCountdown.hours).padStart(2, '0')}:{String(prizeCountdown.minutes).padStart(2, '0')}:{String(prizeCountdown.seconds).padStart(2, '0')}
                 </span>
               </div>
             )}
