@@ -163,7 +163,7 @@ export default function TalentBannerCard({
       return (
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-4 lg:p-5">
           {/* TOP SECTION */}
-          <div className="flex flex-col items-start gap-3">
+          <div className="flex flex-col items-start gap-2">
             {/* Talent Name + Categories on same line (name left, categories right) */}
             <div className="flex flex-wrap items-center gap-4 w-full">
               <div className="flex flex-col">
@@ -270,7 +270,7 @@ export default function TalentBannerCard({
       return (
         <div className="flex-1 h-full flex flex-col justify-between p-4 sm:p-4 lg:p-5">
           {/* TOP SECTION */}
-          <div className="flex flex-col items-start gap-3">
+          <div className="flex flex-col items-start gap-2">
             {/* Talent Name + Categories on same line (name left, categories right) */}
             <div className="flex flex-wrap items-center gap-4 w-full">
               <div className="flex flex-col">
