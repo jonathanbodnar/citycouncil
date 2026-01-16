@@ -404,7 +404,7 @@ export default function HomePageNew() {
                 ))}
               </div>
               <span className="text-base sm:text-lg font-medium text-white/80">
-                5.0 ({totalReviews.toLocaleString()} fans)
+                ({totalReviews.toLocaleString()} fans)
               </span>
             </div>
           </div>
