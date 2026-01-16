@@ -1,7 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
+
+// Memoized video preview component - NEVER re-renders once mounted
+const VideoPreview = memo(({ 
+  videoUrl, 
+  talentId 
+}: { 
+  videoUrl: string; 
+  talentId: string;
+}) => (
+  <video 
+    src={videoUrl}
+    className="w-full h-full object-cover"
+    autoPlay
+    muted
+    loop
+    playsInline
+    preload="metadata"
+  />
+), (prevProps, nextProps) => {
+  // Only re-render if video URL actually changes
+  return prevProps.videoUrl === nextProps.videoUrl && prevProps.talentId === nextProps.talentId;
+});
 
 // Coupon configurations
 const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number }> = {
@@ -157,25 +179,19 @@ function TalentBannerCard({
     navigate(`/order/${talent.id}`);
   };
 
-  // Video section component
-  const VideoSection = () => (
+  // Memoize the video URL so it doesn't change on re-renders
+  const stableVideoUrl = useMemo(() => talent.recent_video_url, [talent.id]);
+  
+  // Video section - uses memoized VideoPreview component
+  const videoSection = (
     <div className="w-1/3 h-full flex-shrink-0 relative">
-      {talent.recent_video_url && !isPlaying ? (
+      {stableVideoUrl && !isPlaying ? (
         <div 
           className="relative w-full h-full cursor-pointer group"
           onClick={handleVideoClick}
         >
-          {/* Background preview video (autoplay, muted, loop) */}
-          <video 
-            key={`preview-${talent.id}`}
-            src={talent.recent_video_url}
-            className="w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
+          {/* Background preview video (autoplay, muted, loop) - MEMOIZED */}
+          <VideoPreview videoUrl={stableVideoUrl} talentId={talent.id} />
           {/* Dark overlay with play button */}
           <div className="absolute inset-0 bg-black/30 transition-colors flex items-center justify-center">
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/90 rounded-full flex items-center justify-center scale-110 transition-transform shadow-lg">
@@ -191,11 +207,11 @@ function TalentBannerCard({
             ⚡ {talent.fulfillment_time_hours || 72}h
           </div>
         </div>
-      ) : talent.recent_video_url && isPlaying ? (
+      ) : stableVideoUrl && isPlaying ? (
         <div className="relative w-full h-full">
           {/* Full video with sound and controls */}
           <video 
-            src={talent.recent_video_url}
+            src={stableVideoUrl}
             className="w-full h-full object-cover"
             controls
             autoPlay
@@ -210,33 +226,28 @@ function TalentBannerCard({
     </div>
   );
 
-  // Categories component - for desktop, inside content area
-  const DesktopCategories = () => (
-    <div className="hidden md:flex flex-wrap gap-2 justify-end">
-      {filteredCategories.slice(0, 2).map((category) => (
-        <span
-          key={category}
-          className="px-3 py-1 rounded-full glass-strong text-white text-sm font-medium"
-        >
-          {CATEGORY_LABELS[category] || category}
-        </span>
-      ))}
-    </div>
-  );
-
   // Content section - TWO DIFFERENT LAYOUTS per wireframe
   const ContentSection = () => {
     if (!videoOnRight) {
       // VIDEO ON LEFT = Button on FAR RIGHT, Categories top right
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 sm:pt-4 pb-3">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 sm:pt-3 pb-3 relative">
+          {/* Desktop: Categories ABSOLUTE top right */}
+          <div className="hidden md:flex flex-wrap gap-2 absolute top-3 right-4 z-10">
+            {filteredCategories.slice(0, 2).map((category) => (
+              <span
+                key={category}
+                className="px-3 py-1 rounded-full glass-strong text-white text-sm font-medium"
+              >
+                {CATEGORY_LABELS[category] || category}
+              </span>
+            ))}
+          </div>
+          
           {/* TOP SECTION */}
           <div className="flex flex-col gap-1 sm:gap-2">
-            {/* Desktop: Categories at top right */}
-            <DesktopCategories />
-            
-            {/* Talent Name + Mobile Categories - no extra margin on desktop */}
-            <div className="flex flex-wrap items-center gap-2 w-full md:-mt-1">
+            {/* Talent Name + Mobile Categories */}
+            <div className="flex flex-wrap items-center gap-2 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
                   <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 tracking-wide">
@@ -339,14 +350,23 @@ function TalentBannerCard({
     } else {
       // VIDEO ON RIGHT = Button on FAR LEFT, Categories top right of content
       return (
-        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 sm:pt-4 pb-3">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 pt-3 sm:p-4 sm:pt-3 pb-3 relative">
+          {/* Desktop: Categories ABSOLUTE top right */}
+          <div className="hidden md:flex flex-wrap gap-2 absolute top-3 right-4 z-10">
+            {filteredCategories.slice(0, 2).map((category) => (
+              <span
+                key={category}
+                className="px-3 py-1 rounded-full glass-strong text-white text-sm font-medium"
+              >
+                {CATEGORY_LABELS[category] || category}
+              </span>
+            ))}
+          </div>
+          
           {/* TOP SECTION */}
           <div className="flex flex-col gap-1 sm:gap-2">
-            {/* Desktop: Categories at top right of content area */}
-            <DesktopCategories />
-            
-            {/* Talent Name + Mobile Categories - no extra margin on desktop */}
-            <div className="flex flex-wrap items-center gap-2 w-full md:-mt-1">
+            {/* Talent Name + Mobile Categories */}
+            <div className="flex flex-wrap items-center gap-2 w-full">
               <div className="flex flex-col">
                 {talent.display_title && (
                   <span className="text-[10px] sm:text-xs uppercase text-white/50 mb-0.5 tracking-wide">
@@ -455,7 +475,7 @@ function TalentBannerCard({
       <div className="flex rounded-3xl overflow-hidden relative h-[280px] sm:h-[300px] md:h-[320px]">
         {/* Main Content Container - ALWAYS flex row */}
         <div className={`w-full h-full flex ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
-          <VideoSection />
+          {videoSection}
           <ContentSection />
         </div>
       </div>
