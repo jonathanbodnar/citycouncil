@@ -68,23 +68,21 @@ WHERE tp.username = 'meloniemac';
 
 -- Check if Moov account exists (should be 0, if table exists)
 DO $$
+DECLARE
+  v_count INTEGER := 0;
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'moov_accounts') THEN
-    PERFORM NULL;  -- Table exists, we can query it
-    RAISE NOTICE 'Checking moov_accounts table...';
+    -- Table exists, count records
+    SELECT COUNT(*) INTO v_count
+    FROM moov_accounts ma
+    JOIN talent_profiles tp ON ma.talent_id = tp.id
+    WHERE tp.username = 'meloniemac';
+    
+    RAISE NOTICE 'moov_accounts table: % records found for Melonie Mac', v_count;
   ELSE
     RAISE NOTICE 'moov_accounts table does not exist - skipping check';
   END IF;
 END $$;
-
--- Only run this if moov_accounts exists
-SELECT 
-  'moov_accounts' as table_name,
-  COUNT(*) as count
-FROM moov_accounts ma
-JOIN talent_profiles tp ON ma.talent_id = tp.id
-WHERE tp.username = 'meloniemac'
-AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'moov_accounts');
 
 SELECT '✅ Melonie Mac payout setup reset complete!' as result;
 SELECT 'She can now start the payout onboarding process from step one.' as next_steps;

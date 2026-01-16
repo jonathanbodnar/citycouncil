@@ -238,6 +238,12 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
                 margin-top: -135px;
                 min-height: 400px;
               }
+              @media (min-width: 1024px) {
+                .fortis-payment-container {
+                  margin-top: -220px;
+                  min-height: 450px;
+                }
+              }
               @media (max-width: 680px) and (min-width: 516px) {
                 .fortis-payment-container {
                   margin-top: -135px;
