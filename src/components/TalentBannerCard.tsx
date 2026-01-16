@@ -89,6 +89,12 @@ export default function TalentBannerCard({
     return 'text-base sm:text-lg lg:text-xl'; // Very long text
   };
 
+  // Truncate review to 2 lines (~150 characters max) with ellipsis
+  const getTruncatedReview = (comment: string, maxLength: number = 150) => {
+    if (comment.length <= maxLength) return comment;
+    return comment.substring(0, maxLength).trim() + '...';
+  };
+
   const handleVideoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -175,15 +181,8 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic py-3" style={{ 
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical' as any,
-                overflow: 'hidden',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word'
-              }}>
-                "{talent.recent_review.comment}"
+              <p className="text-white/70 text-sm sm:text-base italic py-3">
+                "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 
@@ -282,15 +281,8 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && talent.recent_review.comment && (
-              <p className="text-white/70 text-sm sm:text-base italic py-3" style={{ 
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical' as any,
-                overflow: 'hidden',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word'
-              }}>
-                "{talent.recent_review.comment}"
+              <p className="text-white/70 text-sm sm:text-base italic py-3">
+                "{getTruncatedReview(talent.recent_review.comment)}"
               </p>
             )}
 

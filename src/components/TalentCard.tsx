@@ -80,12 +80,14 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
 
   const cardContent = (
     <div 
-      className={`${compact ? 'rounded-xl' : 'rounded-2xl sm:rounded-3xl'} transition-all duration-300 overflow-hidden group h-full flex flex-col ${
+      className={`${compact ? 'rounded-xl' : 'rounded-2xl sm:rounded-3xl'} transition-all duration-300 overflow-hidden group h-full flex flex-col shadow-modern-xl ${
         isComingSoon 
           ? 'opacity-90 cursor-default bg-white/5 border border-white/10' 
-          : 'cursor-pointer bg-gradient-to-r from-purple-600/30 to-cyan-400/30 border border-cyan-400/60'
+          : 'cursor-pointer'
       }`}
       style={{
+        background: isComingSoon ? undefined : 'linear-gradient(90deg, rgba(147, 51, 234, 0.3) 0%, rgba(34, 211, 238, 0.3) 100%)',
+        border: isComingSoon ? undefined : '1px solid rgba(34, 211, 238, 0.6)',
         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
       }}
     >
