@@ -324,6 +324,59 @@ export default function HomePageNew() {
     }
   };
 
+  // Pre-compute all carousels to prevent duplicates in first 3 positions
+  const precomputedCarousels = useMemo(() => {
+    if (!filteredTalent.length || !allActiveTalent.length) return {};
+    
+    const usedInFirst3 = new Set<string>(); // Track talent used in positions 0-2
+    const carousels: Record<number, TalentWithDetails[]> = {};
+    
+    // First carousel (index 0) - Featured talent
+    const featured0 = filteredTalent[0];
+    const featured1 = filteredTalent[1];
+    if (featured0) {
+      const excludeIds = [featured0.id, featured1?.id].filter(Boolean);
+      const filtered = featuredTalent.filter(t => !excludeIds.includes(t.id) && t.users);
+      const shuffled = seededShuffle(filtered, `featured-${featured0.id}`);
+      carousels[0] = shuffled;
+      // Mark first 3 as used
+      shuffled.slice(0, 3).forEach(t => usedInFirst3.add(t.id));
+    }
+    
+    // Subsequent carousels (index > 1)
+    filteredTalent.forEach((talent, index) => {
+      if (index <= 1) return;
+      
+      const prevBanner = filteredTalent[index - 1];
+      const nextBanner = filteredTalent[index + 1];
+      const excludeIds = new Set([talent.id, prevBanner?.id, nextBanner?.id].filter(Boolean));
+      
+      // Filter: exclude adjacent banners AND talent already used in first 3 positions
+      const available = allActiveTalent.filter(t => 
+        t.users && !excludeIds.has(t.id) && !usedInFirst3.has(t.id)
+      );
+      
+      // If not enough talent without duplicates, allow some duplicates but shuffle differently
+      let pool = available;
+      if (pool.length < 12) {
+        // Add back some talent but still exclude adjacent banners
+        const withDuplicates = allActiveTalent.filter(t => t.users && !excludeIds.has(t.id));
+        pool = withDuplicates;
+      }
+      
+      const shuffled = seededShuffle(pool, `carousel-${index}-${talent.id}`);
+      const rotateBy = (index * 4) % Math.max(shuffled.length, 1);
+      const rotated = [...shuffled.slice(rotateBy), ...shuffled.slice(0, rotateBy)];
+      const items = rotated.slice(0, 12);
+      
+      carousels[index] = items;
+      // Mark first 3 as used
+      items.slice(0, 3).forEach(t => usedInFirst3.add(t.id));
+    });
+    
+    return carousels;
+  }, [filteredTalent, featuredTalent, allActiveTalent]);
+
   return (
     <>
       <SEOHelmet 
@@ -387,13 +440,9 @@ export default function HomePageNew() {
                     topCategories={talent.top_categories || []}
                   />
 
-                  {/* After FIRST banner: Show Featured Talent carousel (seeded shuffle, excluding above/below banners) */}
-                  {index === 0 && (() => {
-                    const nextBannerTalent = filteredTalent[index + 1];
-                    const excludeIds = [talent.id, nextBannerTalent?.id].filter(Boolean);
-                    const filtered = featuredTalent.filter(t => !excludeIds.includes(t.id) && t.users);
-                    // Use seeded shuffle with talent.id as seed for stable ordering
-                    const carouselItems = seededShuffle(filtered, `featured-${talent.id}`);
+                  {/* After FIRST banner: Show Featured Talent carousel (precomputed, no duplicates in first 3) */}
+                  {index === 0 && precomputedCarousels[0] && (() => {
+                    const carouselItems = precomputedCarousels[0];
                     const hasOverflow = carouselItems.length > 5;
                     return (
                       <div className="space-y-2">
@@ -494,20 +543,9 @@ export default function HomePageNew() {
                     </div>
                   )}
 
-                  {/* For index > 1: Show random active talent carousel (excluding above/below banners) */}
-                  {index > 1 && (() => {
-                    const prevBannerTalent = filteredTalent[index - 1];
-                    const nextBannerTalent = filteredTalent[index + 1];
-                    const excludeIds = [talent.id, prevBannerTalent?.id, nextBannerTalent?.id].filter(Boolean);
-                    
-                    // Get ALL active talent with users, exclude adjacent banners
-                    const filtered = allActiveTalent.filter(t => !excludeIds.includes(t.id) && t.users);
-                    // Use seeded shuffle with unique seed per carousel (index + talent.id) for stable, unique ordering
-                    const shuffled = seededShuffle(filtered, `carousel-${index}-${talent.id}`);
-                    // Rotate the array based on index to ensure different talent appear first in each carousel
-                    const rotateBy = (index * 3) % shuffled.length;
-                    const rotated = [...shuffled.slice(rotateBy), ...shuffled.slice(0, rotateBy)];
-                    const carouselItems = rotated.slice(0, 12); // Limit to 12 items per carousel
+                  {/* For index > 1: Show precomputed carousel (no duplicates in first 3 positions) */}
+                  {index > 1 && precomputedCarousels[index] && (() => {
+                    const carouselItems = precomputedCarousels[index];
                     
                     if (carouselItems.length === 0) return null;
                     
