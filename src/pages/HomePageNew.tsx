@@ -33,6 +33,7 @@ export default function HomePageNew() {
   const [searchParams] = useSearchParams();
   const [talentList, setTalentList] = useState<TalentWithDetails[]>([]);
   const [filteredTalent, setFilteredTalent] = useState<TalentWithDetails[]>([]);
+  const [featuredTalent, setFeaturedTalent] = useState<TalentWithDetails[]>([]); // ALL featured talent
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -120,12 +121,13 @@ export default function HomePageNew() {
       // OPTIMIZE: Fetch ALL orders and reviews in 2 queries instead of N queries per talent
       const talentIds = talentData.map(t => t.id);
 
-      // Batch fetch: Get ANY order with video (not just completed)
+      // Batch fetch: Get ONLY DELIVERED orders with video (not pending/in_progress)
       const { data: allOrders } = await supabase
         .from('orders')
         .select('talent_id, video_url, occasion, completed_at, status')
         .in('talent_id', talentIds)
-        .not('video_url', 'is', null) // Has a video uploaded
+        .eq('status', 'delivered') // ONLY delivered videos!
+        .not('video_url', 'is', null)
         .order('completed_at', { ascending: false });
 
       // Batch fetch: Get most recent review for each talent
@@ -174,12 +176,15 @@ export default function HomePageNew() {
         };
       });
 
-      // Don't filter out talent without videos - show everyone!
-      const talentWithVideos = enrichedTalent;
+      // FILTER: Only show talent with BOTH delivered video AND reviews
+      // Talent must have: recent_video_url AND recent_review
+      const talentWithVideosAndReviews = enrichedTalent.filter(t => 
+        t.recent_video_url && t.recent_review
+      );
 
       // Find similar talent for each (same categories)
-      const talentWithSimilar = talentWithVideos.map((talent) => {
-        const similar = talentWithVideos
+      const talentWithSimilar = talentWithVideosAndReviews.map((talent) => {
+        const similar = talentWithVideosAndReviews
           .filter((other) => {
             if (other.id === talent.id) return false;
             // Check if they share any categories
@@ -217,6 +222,11 @@ export default function HomePageNew() {
 
       setTalentList(sortedTalent);
       setFilteredTalent(sortedTalent);
+      
+      // Set featured talent separately (ALL featured, even without videos/reviews)
+      // This is for the first carousel
+      const featured = enrichedTalent.filter(t => t.is_featured);
+      setFeaturedTalent(featured);
     } catch (error) {
       console.error('Error fetching talent:', error);
       setTalentList([]);
@@ -319,7 +329,7 @@ export default function HomePageNew() {
 
                   {/* Carousel: First banner shows Featured Talent, others show Similar Talent */}
                   {index === 0 ? (
-                    // FIRST carousel: Show ONLY is_featured = true talent (excluding current)
+                    // FIRST carousel: Show ALL featured talent (from separate state, excludes current)
                     <div className="space-y-2">
                       <div className="relative group">
                         <div 
@@ -329,13 +339,13 @@ export default function HomePageNew() {
                             msOverflowStyle: 'none',
                           }}
                         >
-                          {filteredTalent.filter(t => t.is_featured && t.id !== talent.id && t.users).map((featuredTalent) => (
+                          {featuredTalent.filter(t => t.id !== talent.id && t.users).map((ft) => (
                             <div 
-                              key={featuredTalent.id} 
+                              key={ft.id} 
                               className="flex-shrink-0"
                               style={{ width: '180px' }}
                             >
-                              <TalentCard talent={featuredTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                              <TalentCard talent={ft as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
                             </div>
                           ))}
                         </div>

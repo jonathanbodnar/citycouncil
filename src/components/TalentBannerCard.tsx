@@ -161,7 +161,7 @@ export default function TalentBannerCard({
     if (!videoOnRight) {
       // VIDEO ON LEFT = Button on FAR RIGHT
       return (
-        <div className="flex-1 h-full flex flex-col justify-between p-4 pr-4">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-2">
             {/* Talent Name + Categories on same line (name left, categories right) */}
@@ -268,7 +268,7 @@ export default function TalentBannerCard({
     } else {
       // VIDEO ON RIGHT = Button on FAR LEFT
       return (
-        <div className="flex-1 h-full flex flex-col justify-between p-4 pr-4">
+        <div className="w-2/3 h-full flex flex-col justify-between p-3 sm:p-4">
           {/* TOP SECTION */}
           <div className="flex flex-col items-start gap-2">
             {/* Talent Name + Categories on same line (name left, categories right) */}
@@ -378,9 +378,9 @@ export default function TalentBannerCard({
   // Exciting purple to light blue gradient
   return (
     <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
-      <div className="md:flex rounded-3xl overflow-hidden relative min-h-[280px] md:h-[320px]">
-        {/* Main Content Container */}
-        <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className="flex rounded-3xl overflow-hidden relative h-[280px] sm:h-[300px] md:h-[320px]">
+        {/* Main Content Container - ALWAYS flex row */}
+        <div className={`w-full h-full flex ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
           <ContentSection />
         </div>
