@@ -146,20 +146,32 @@ export default function HomePageNew() {
       const talentIds = talentData.map(t => t.id);
 
       // Batch fetch: Get ANY order with video (no status filter)
-      const { data: allOrders } = await supabase
+      // Note: Use public/anon access for orders to avoid RLS restrictions
+      const { data: allOrders, error: ordersError } = await supabase
         .from('orders')
         .select('id, talent_id, video_url, occasion, completed_at, status')
         .in('talent_id', talentIds)
         .not('video_url', 'is', null) // Just needs a video
         .order('completed_at', { ascending: false });
 
+      if (ordersError) {
+        console.error('Error fetching orders for videos:', ordersError);
+      }
+
       // Batch fetch: Get ONLY 5-star reviews for banner cards
-      const { data: allReviews } = await supabase
+      const { data: allReviews, error: reviewsError } = await supabase
         .from('reviews')
         .select('talent_id, rating, comment, created_at, order_id')
         .in('talent_id', talentIds)
         .eq('rating', 5) // Only 5-star reviews!
         .order('created_at', { ascending: false });
+
+      if (reviewsError) {
+        console.error('Error fetching reviews:', reviewsError);
+      }
+
+      // Debug: Log what we got
+      console.log('HomePageNew: Fetched', allOrders?.length || 0, 'orders with videos,', allReviews?.length || 0, 'reviews');
 
       // Process data for each talent (now using cached batch data)
       const enrichedTalent = talentData.map((talent) => {
