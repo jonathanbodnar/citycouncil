@@ -77,13 +77,13 @@ export default function TalentBannerCard({
   const discountedPrice = discountAmount ? originalPrice * (1 - discountAmount / 100) : originalPrice;
   const hasDiscount = discountCode && discountAmount && expiryTime && expiryTime > Date.now();
 
-  // Adaptive font size based on name length
+  // Adaptive font size based on name length - SMALLER overall
   const getAdaptiveFontSize = () => {
     const length = talentName?.length || 0;
-    if (length <= 15) return 'text-2xl sm:text-3xl lg:text-4xl'; // Default size
-    if (length <= 25) return 'text-xl sm:text-2xl lg:text-3xl'; // Medium text
-    if (length <= 35) return 'text-lg sm:text-xl lg:text-2xl'; // Long text
-    return 'text-base sm:text-lg lg:text-xl'; // Very long text
+    if (length <= 15) return 'text-xl sm:text-2xl lg:text-3xl'; // Default size
+    if (length <= 25) return 'text-lg sm:text-xl lg:text-2xl'; // Medium text
+    if (length <= 35) return 'text-base sm:text-lg lg:text-xl'; // Long text
+    return 'text-sm sm:text-base lg:text-lg'; // Very long text
   };
 
   // Truncate review to 2 lines (VERY aggressive for mobile)

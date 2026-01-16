@@ -351,7 +351,7 @@ export default function HomePageNew() {
                             <div 
                               key={ft.id} 
                               className="flex-shrink-0"
-                              style={{ width: '180px' }}
+                              style={{ width: '140px' }}
                             >
                               <TalentCard talent={ft as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
                             </div>
@@ -385,7 +385,7 @@ export default function HomePageNew() {
                             <div 
                               key={similarTalent.id} 
                               className="flex-shrink-0"
-                              style={{ width: '180px' }}
+                              style={{ width: '140px' }}
                             >
                               <TalentCard talent={similarTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
                             </div>
