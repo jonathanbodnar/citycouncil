@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
@@ -7,6 +7,26 @@ import TalentBannerCard from '../components/TalentBannerCard';
 import SEOHelmet from '../components/SEOHelmet';
 import FOMONotification from '../components/FOMONotification';
 import { useAuth } from '../context/AuthContext';
+
+// Seeded random shuffle to ensure stable ordering per carousel
+// Uses a simple hash of the seed string to generate pseudo-random ordering
+const seededShuffle = <T,>(arr: T[], seed: string): T[] => {
+  const shuffled = [...arr];
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  // Fisher-Yates shuffle with seeded random
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    hash = ((hash << 5) - hash) + i;
+    hash |= 0;
+    const j = Math.abs(hash) % (i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 interface TalentWithDetails extends TalentProfile {
   users?: { id: string; full_name: string; avatar_url?: string };
@@ -35,8 +55,10 @@ export default function HomePageNew() {
   const { user } = useAuth();
   const [talentList, setTalentList] = useState<TalentWithDetails[]>([]);
   const [filteredTalent, setFilteredTalent] = useState<TalentWithDetails[]>([]);
+  const [allActiveTalent, setAllActiveTalent] = useState<TalentWithDetails[]>([]); // ALL active talent for carousels
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithDetails[]>([]); // ALL featured talent
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
+  const [occasionTalent, setOccasionTalent] = useState<TalentWithDetails[]>([]); // Random 4 talent for selected occasion
   const [loading, setLoading] = useState(true);
   const [totalReviews, setTotalReviews] = useState(0);
   const [dataFetched, setDataFetched] = useState(false);
@@ -218,6 +240,9 @@ export default function HomePageNew() {
         };
       });
 
+      // Store ALL active talent for carousels (before filtering)
+      setAllActiveTalent(enrichedTalent);
+
       // BANNER CARDS: Show talent with reviews (that's it)
       const talentForBanners = enrichedTalent.filter(t => t.recent_review);
 
@@ -362,13 +387,13 @@ export default function HomePageNew() {
                     topCategories={talent.top_categories || []}
                   />
 
-                  {/* After FIRST banner: Show Featured Talent carousel (random, excluding above/below banners) */}
+                  {/* After FIRST banner: Show Featured Talent carousel (seeded shuffle, excluding above/below banners) */}
                   {index === 0 && (() => {
                     const nextBannerTalent = filteredTalent[index + 1];
                     const excludeIds = [talent.id, nextBannerTalent?.id].filter(Boolean);
-                    const carouselItems = featuredTalent
-                      .filter(t => !excludeIds.includes(t.id) && t.users)
-                      .sort(() => Math.random() - 0.5); // Shuffle randomly
+                    const filtered = featuredTalent.filter(t => !excludeIds.includes(t.id) && t.users);
+                    // Use seeded shuffle with talent.id as seed for stable ordering
+                    const carouselItems = seededShuffle(filtered, `featured-${talent.id}`);
                     const hasOverflow = carouselItems.length > 5;
                     return (
                       <div className="space-y-2">
@@ -426,39 +451,35 @@ export default function HomePageNew() {
                         ))}
                       </div>
                       
-                      {/* Carousel for selected occasion */}
+                      {/* Carousel for selected occasion - random 4 from ALL active talent */}
                       {selectedOccasion && (() => {
                         // Include talent with this occasion in top_categories OR featured_shoutout_types
-                        const occasionTalent = talentList.filter(t => 
+                        // Use allActiveTalent (ALL active talent) not just those with reviews
+                        const matchingTalent = allActiveTalent.filter(t => 
                           t.users && (
                             t.top_categories?.includes(selectedOccasion) ||
                             t.featured_shoutout_types?.includes(selectedOccasion)
                           )
                         );
-                        const hasOverflow = occasionTalent.length > 5;
-                        return (
+                        // Randomly select 4 talent
+                        const shuffled = [...matchingTalent].sort(() => Math.random() - 0.5);
+                        const randomFour = shuffled.slice(0, 4);
+                        return randomFour.length > 0 ? (
                           <div className="mt-4">
                             <div className="relative group">
                               <div 
                                 className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
                                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                               >
-                                {occasionTalent.map((t) => (
+                                {randomFour.map((t) => (
                                   <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
                                     <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
                                   </div>
                                 ))}
                               </div>
-                              {/* Right Fade Gradient - only show if overflow */}
-                              {hasOverflow && (
-                                <div 
-                                  className="absolute top-0 right-0 bottom-4 w-16 pointer-events-none"
-                                  style={{ background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)' }}
-                                />
-                              )}
                             </div>
                           </div>
-                        );
+                        ) : null;
                       })()}
                     </div>
                   )}
@@ -469,11 +490,14 @@ export default function HomePageNew() {
                     const nextBannerTalent = filteredTalent[index + 1];
                     const excludeIds = [talent.id, prevBannerTalent?.id, nextBannerTalent?.id].filter(Boolean);
                     
-                    // Get all active talent with users, exclude adjacent banners, shuffle randomly
-                    const carouselItems = talentList
-                      .filter(t => !excludeIds.includes(t.id) && t.users)
-                      .sort(() => Math.random() - 0.5)
-                      .slice(0, 12); // Limit to 12 items per carousel
+                    // Get ALL active talent with users, exclude adjacent banners
+                    const filtered = allActiveTalent.filter(t => !excludeIds.includes(t.id) && t.users);
+                    // Use seeded shuffle with unique seed per carousel (index + talent.id) for stable, unique ordering
+                    const shuffled = seededShuffle(filtered, `carousel-${index}-${talent.id}`);
+                    // Rotate the array based on index to ensure different talent appear first in each carousel
+                    const rotateBy = (index * 3) % shuffled.length;
+                    const rotated = [...shuffled.slice(rotateBy), ...shuffled.slice(0, rotateBy)];
+                    const carouselItems = rotated.slice(0, 12); // Limit to 12 items per carousel
                     
                     if (carouselItems.length === 0) return null;
                     

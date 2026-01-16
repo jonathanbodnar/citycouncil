@@ -86,8 +86,9 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
           : 'cursor-pointer'
       }`}
       style={{
-        background: isComingSoon ? undefined : 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(99, 102, 241, 0.25) 50%, rgba(139, 92, 246, 0.25) 100%)',
-        border: isComingSoon ? undefined : '1px solid rgba(99, 102, 241, 0.5)',
+        // Solid dark blue/purple background (not gradient)
+        background: isComingSoon ? undefined : 'rgb(30, 27, 75)',
+        border: isComingSoon ? undefined : '1px solid rgba(99, 102, 241, 0.4)',
         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
       }}
     >
