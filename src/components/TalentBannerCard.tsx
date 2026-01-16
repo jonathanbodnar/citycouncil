@@ -17,11 +17,11 @@ interface TalentBannerCardProps {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  'pep-talk': 'Surprise',
-  'birthday': 'Birthday',
-  'roast': 'Roast',
-  'advice': 'Advice',
-  'corporate': 'Corporate',
+  'pep-talk': '💝 Surprise a Loved One',
+  'birthday': '🎂 Birthday Wishes',
+  'roast': '🔥 Friendly Roast',
+  'advice': '💡 Get Advice',
+  'corporate': '🏢 Corporate Event',
 };
 
 // Categories to hide
