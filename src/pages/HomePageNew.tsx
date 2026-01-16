@@ -339,37 +339,43 @@ export default function HomePageNew() {
                   />
 
                   {/* After FIRST banner: Show Featured Talent carousel */}
-                  {index === 0 && (
-                    <div className="space-y-2">
-                      <div className="relative group">
-                        <div 
-                          className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
-                          style={{
-                            scrollbarWidth: 'none',
-                            msOverflowStyle: 'none',
-                          }}
-                        >
-                          {featuredTalent.filter(t => t.id !== talent.id && t.users).map((ft) => (
+                  {index === 0 && (() => {
+                    const carouselItems = featuredTalent.filter(t => t.id !== talent.id && t.users);
+                    const hasOverflow = carouselItems.length > 5;
+                    return (
+                      <div className="space-y-2">
+                        <div className="relative group">
+                          <div 
+                            className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                            style={{
+                              scrollbarWidth: 'none',
+                              msOverflowStyle: 'none',
+                            }}
+                          >
+                            {carouselItems.map((ft) => (
+                              <div 
+                                key={ft.id} 
+                                className="flex-shrink-0"
+                                style={{ width: '140px' }}
+                              >
+                                <TalentCard talent={ft as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Right Fade Gradient - only show if overflow */}
+                          {hasOverflow && (
                             <div 
-                              key={ft.id} 
-                              className="flex-shrink-0"
-                              style={{ width: '140px' }}
-                            >
-                              <TalentCard talent={ft as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
-                            </div>
-                          ))}
+                              className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
+                              style={{
+                                background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)'
+                              }}
+                            />
+                          )}
                         </div>
-                        
-                        {/* Right Fade Gradient */}
-                        <div 
-                          className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
-                          style={{
-                            background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)'
-                          }}
-                        ></div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* After SECOND banner: Show "ShoutOut for every occasion" */}
                   {index === 1 && (
@@ -393,64 +399,83 @@ export default function HomePageNew() {
                       </div>
                       
                       {/* Carousel for selected occasion */}
-                      {selectedOccasion && (
-                        <div className="mt-4">
-                          <div className="relative group">
-                            <div 
-                              className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
-                              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                            >
-                              {talentList.filter(t => t.top_categories?.includes(selectedOccasion) && t.users).map((t) => (
-                                <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
-                                  <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
-                                </div>
-                              ))}
+                      {selectedOccasion && (() => {
+                        // Include talent with this occasion in top_categories OR featured_shoutout_types
+                        const occasionTalent = talentList.filter(t => 
+                          t.users && (
+                            t.top_categories?.includes(selectedOccasion) ||
+                            t.featured_shoutout_types?.includes(selectedOccasion)
+                          )
+                        );
+                        const hasOverflow = occasionTalent.length > 5;
+                        return (
+                          <div className="mt-4">
+                            <div className="relative group">
+                              <div 
+                                className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                              >
+                                {occasionTalent.map((t) => (
+                                  <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                                    <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Right Fade Gradient - only show if overflow */}
+                              {hasOverflow && (
+                                <div 
+                                  className="absolute top-0 right-0 bottom-4 w-16 pointer-events-none"
+                                  style={{ background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)' }}
+                                />
+                              )}
                             </div>
-                            <div 
-                              className="absolute top-0 right-0 bottom-4 w-16 pointer-events-none"
-                              style={{ background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)' }}
-                            />
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   )}
 
                   {/* For index > 1: Show similar talent carousel */}
-                  {index > 1 && talent.similar_talent && talent.similar_talent.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-white text-lg font-semibold px-2">
-                        Others like "{talent.temp_full_name || talent.users?.full_name || talent.username}"
-                      </h3>
-                      <div className="relative group">
-                        <div 
-                          className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
-                          style={{
-                            scrollbarWidth: 'none',
-                            msOverflowStyle: 'none',
-                          }}
-                        >
-                          {talent.similar_talent.filter(t => t.users).map((similarTalent) => (
+                  {index > 1 && talent.similar_talent && talent.similar_talent.length > 0 && (() => {
+                    const similarItems = talent.similar_talent.filter(t => t.users);
+                    const hasOverflow = similarItems.length > 5;
+                    return (
+                      <div className="space-y-2">
+                        <h3 className="text-white text-lg font-semibold px-2">
+                          Others like "{talent.temp_full_name || talent.users?.full_name || talent.username}"
+                        </h3>
+                        <div className="relative group">
+                          <div 
+                            className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                            style={{
+                              scrollbarWidth: 'none',
+                              msOverflowStyle: 'none',
+                            }}
+                          >
+                            {similarItems.map((similarTalent) => (
+                              <div 
+                                key={similarTalent.id} 
+                                className="flex-shrink-0"
+                                style={{ width: '140px' }}
+                              >
+                                <TalentCard talent={similarTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Right Fade Gradient - only show if overflow */}
+                          {hasOverflow && (
                             <div 
-                              key={similarTalent.id} 
-                              className="flex-shrink-0"
-                              style={{ width: '140px' }}
-                            >
-                              <TalentCard talent={similarTalent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
-                            </div>
-                          ))}
+                              className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
+                              style={{
+                                background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)'
+                              }}
+                            />
+                          )}
                         </div>
-                        
-                        {/* Right Fade Gradient */}
-                        <div 
-                          className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
-                          style={{
-                            background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)'
-                          }}
-                        ></div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               ))}
             </div>
