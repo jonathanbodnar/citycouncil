@@ -136,9 +136,13 @@ export default function HomePageNew() {
 
       // Process data for each talent (now using cached batch data)
       const enrichedTalent = talentData.map((talent) => {
-        // Get most recent video for this talent
+        // Get multiple recent videos for this talent
         const talentOrders = allOrders?.filter(o => o.talent_id === talent.id) || [];
-        const recentOrder = talentOrders[0]; // Already sorted by completed_at desc
+        // Pick a random video from the 5 most recent (for variety)
+        const recentVideos = talentOrders.slice(0, 5);
+        const recentOrder = recentVideos.length > 0 
+          ? recentVideos[Math.floor(Math.random() * recentVideos.length)]
+          : null;
 
         // Get most recent review for this talent
         const talentReviews = allReviews?.filter(r => r.talent_id === talent.id) || [];

@@ -102,11 +102,17 @@ export default function TalentBannerCard({
           className="relative w-full h-full cursor-pointer group"
           onClick={handleVideoClick}
         >
+          {/* Background preview video (autoplay, muted, loop) */}
           <video 
             src={talent.recent_video_url}
             className="w-full h-full object-cover"
-            preload="metadata"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
           />
+          {/* Dark overlay with play button */}
           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
               <PlayIcon className="w-7 h-7 sm:w-8 sm:h-8 text-gray-900 ml-1" />
@@ -119,6 +125,7 @@ export default function TalentBannerCard({
         </div>
       ) : talent.recent_video_url && isPlaying ? (
         <div className="relative w-full h-full">
+          {/* Full video with sound and controls */}
           <video 
             src={talent.recent_video_url}
             className="w-full h-full object-cover"
