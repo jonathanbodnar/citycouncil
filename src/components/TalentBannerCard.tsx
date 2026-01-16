@@ -175,7 +175,11 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && (
-              <p className="text-white/70 text-sm sm:text-base italic line-clamp-2 py-3">
+              <p className="text-white/70 text-sm sm:text-base italic py-3 overflow-hidden" style={{ 
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 "{talent.recent_review.comment}"
               </p>
             )}
@@ -263,7 +267,11 @@ export default function TalentBannerCard({
 
             {/* Review Text */}
             {talent.recent_review && (
-              <p className="text-white/70 text-sm sm:text-base italic line-clamp-2 py-3">
+              <p className="text-white/70 text-sm sm:text-base italic py-3 overflow-hidden" style={{ 
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 "{talent.recent_review.comment}"
               </p>
             )}
@@ -332,7 +340,7 @@ export default function TalentBannerCard({
   // Exciting purple to light blue gradient
   return (
     <div className="bg-gradient-to-r from-purple-600/30 to-cyan-400/30 rounded-3xl overflow-hidden border border-cyan-400/60 transition-all duration-300 shadow-modern-xl">
-      <div className="md:flex rounded-3xl overflow-hidden relative h-80 sm:h-96 lg:h-[28rem]">
+      <div className="md:flex rounded-3xl overflow-hidden relative" style={{ height: '320px' }}>
         {/* Main Content Container */}
         <div className={`h-full flex relative z-10 ${videoOnRight ? 'flex-row-reverse' : 'flex-row'}`}>
           <VideoSection />
