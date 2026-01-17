@@ -1343,6 +1343,23 @@ const BioPage: React.FC = () => {
           throw followError;
         }
 
+        // Enroll user in talent_connection email flow via capture-lead
+        if (currentUser.email) {
+          try {
+            await supabase.functions.invoke('capture-lead', {
+              body: {
+                email: currentUser.email,
+                phone: currentUser.phone || null,
+                source: 'bio_page',
+                talent_slug: talentProfile.username || talentProfile.id,
+              }
+            });
+            console.log('User enrolled in talent_connection email flow');
+          } catch (flowError) {
+            console.error('Email flow enrollment error:', flowError);
+          }
+        }
+
         // Also send to newsletter integration if configured
         if (newsletterConfig) {
           try {
@@ -1462,6 +1479,21 @@ const BioPage: React.FC = () => {
 
       if (followError && !followError.message.includes('duplicate')) {
         throw followError;
+      }
+
+      // Enroll user in talent_connection email flow via capture-lead
+      try {
+        await supabase.functions.invoke('capture-lead', {
+          body: {
+            email: newsletterEmail.toLowerCase(),
+            phone: newsletterPhone || null,
+            source: 'bio_page',
+            talent_slug: talentProfile.username || talentProfile.id,
+          }
+        });
+        console.log('User enrolled in talent_connection email flow');
+      } catch (flowError) {
+        console.error('Email flow enrollment error:', flowError);
       }
 
       // Send to newsletter integration if configured

@@ -228,6 +228,23 @@ const TalentProfilePage: React.FC = () => {
           throw followError;
         }
 
+        // Enroll user in talent_connection email flow via capture-lead
+        if (user.email) {
+          try {
+            await supabase.functions.invoke('capture-lead', {
+              body: {
+                email: user.email,
+                phone: user.phone || null,
+                source: 'bio_page',
+                talent_slug: talent.username || talent.id,
+              }
+            });
+            console.log('User enrolled in talent_connection email flow');
+          } catch (flowError) {
+            console.error('Email flow enrollment error:', flowError);
+          }
+        }
+
         setIsFollowing(true);
         toast.success(`You're now subscribed to ${talent.temp_full_name || talent.users.full_name}!`);
       } catch (error) {
@@ -326,6 +343,21 @@ const TalentProfilePage: React.FC = () => {
 
       if (followError && !followError.message.includes('duplicate')) {
         throw followError;
+      }
+
+      // Enroll user in talent_connection email flow via capture-lead
+      try {
+        await supabase.functions.invoke('capture-lead', {
+          body: {
+            email: subscribeEmail.toLowerCase(),
+            phone: subscribePhone || null,
+            source: 'bio_page',
+            talent_slug: talent.username || talent.id,
+          }
+        });
+        console.log('User enrolled in talent_connection email flow');
+      } catch (flowError) {
+        console.error('Email flow enrollment error:', flowError);
       }
 
       setIsFollowing(true);
