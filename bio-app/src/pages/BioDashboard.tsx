@@ -1272,7 +1272,11 @@ const BioDashboard: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <SparklesIcon className="h-8 w-8 text-blue-400" />
+              <img 
+                src="/whiteicon.png" 
+                alt="ShoutOut" 
+                className="h-8 w-auto"
+              />
               {/* Main View Tabs */}
               <div className="flex bg-white/5 rounded-xl p-1">
                 <button
