@@ -1608,7 +1608,7 @@ const BioPage: React.FC = () => {
           className="absolute top-4 left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
         >
           <img
-            src="/shoutoutwhite.png"
+            src={`${process.env.PUBLIC_URL}/shoutoutwhite.png`}
             alt="ShoutOut"
             className="h-7 w-auto"
           />
@@ -2628,7 +2628,7 @@ const BioPage: React.FC = () => {
           >
             <span className="text-white/40 text-sm">Powered by</span>
             <img
-              src="/shoutoutwhite.png"
+              src={`${process.env.PUBLIC_URL}/shoutoutwhite.png`}
               alt="ShoutOut"
               className="h-5 w-auto"
             />
