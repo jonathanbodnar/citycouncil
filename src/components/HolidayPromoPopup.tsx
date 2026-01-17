@@ -751,7 +751,15 @@ const HolidayPromoPopup: React.FC = () => {
           ) : (
             /* Entry Flow */
             <>
-              <h2 className="text-base sm:text-lg font-semibold text-white mb-4">
+              {/* Logo Icon */}
+              <img 
+                src="/whiteicon.png" 
+                alt="ShoutOut" 
+                className="mx-auto mb-4"
+                style={{ height: '90px' }}
+              />
+              
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">
                 {talentName 
                   ? `Win a free personalized video ShoutOut from ${talentName}!`
                   : 'Win a free personalized video ShoutOut from your favorite free-speech personality.'
