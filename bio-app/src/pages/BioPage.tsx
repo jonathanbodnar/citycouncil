@@ -1610,7 +1610,7 @@ const BioPage: React.FC = () => {
           <img
             src={`${process.env.PUBLIC_URL}/shoutoutwhite.png`}
             alt="ShoutOut"
-            className="h-7 w-auto"
+            className="h-5 w-auto"
           />
         </a>
         {/* Profile Header */}
