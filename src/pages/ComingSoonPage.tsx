@@ -167,8 +167,8 @@ const ComingSoonPage: React.FC = () => {
           {/* Hero Section */}
           <div className="mb-12">
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Get personalized video messages from your favorite conservative voices, 
-              politicians, and media personalities.
+              Get personalized video messages from your favorite free-speech voices, 
+              influencers, and media personalities.
             </p>
           </div>
 
@@ -358,7 +358,7 @@ const ComingSoonPage: React.FC = () => {
                 Support Causes
               </h3>
               <p className="text-gray-300 text-sm">
-                Every purchase supports conservative causes and charities
+                Every purchase supports free-speech causes and charities
               </p>
             </div>
           </div>

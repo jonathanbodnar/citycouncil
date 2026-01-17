@@ -754,7 +754,7 @@ const HolidayPromoPopup: React.FC = () => {
               <h2 className="text-base sm:text-lg font-semibold text-white mb-4">
                 {talentName 
                   ? `Win a free personalized video ShoutOut from ${talentName}!`
-                  : 'Win a free personalized video ShoutOut from your favorite conservative personality.'
+                  : 'Win a free personalized video ShoutOut from your favorite free-speech personality.'
                 }
               </h2>
 

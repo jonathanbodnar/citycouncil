@@ -11,7 +11,7 @@ const CommunityGuidelinesPage: React.FC = () => {
           </p>
 
           <p className="text-gray-700 mb-8">
-            ShoutOut is a platform that connects fans with their favorite conservative personalities 
+            ShoutOut is a platform that connects fans with their favorite free-speech personalities 
             through personalized video messages. These guidelines help ensure a positive, respectful, 
             and safe experience for everyone in our community—customers, talent, and staff alike.
           </p>

@@ -21,7 +21,7 @@ const TermsOfServicePage: React.FC = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Service Description</h2>
             <p className="text-gray-700 mb-4">
-              ShoutOut is a platform that connects customers with conservative talent to create 
+              ShoutOut is a platform that connects customers with free-speech talent to create 
               personalized video messages. We procure videos from talent and provide:
             </p>
             <ul className="list-disc list-inside text-gray-700 space-y-2">

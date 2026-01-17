@@ -2,7 +2,7 @@
   "name": "shout-out",
   "version": "0.1.1",
   "private": true,
-  "description": "Conservative talent video platform - get personalized shoutouts from your favorite personalities",
+  "description": "Free-speech talent video platform - get personalized shoutouts from your favorite personalities",
   "author": "ShoutOut Team",
   "homepage": "https://shoutout.app",
   "dependencies": {

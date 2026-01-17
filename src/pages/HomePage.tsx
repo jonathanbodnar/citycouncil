@@ -364,9 +364,9 @@ const HomePage: React.FC = () => {
   return (
     <>
       <SEOHelmet 
-        title="ShoutOut - Conservative & Faith-Based Video Shoutouts | Personalized Messages from Patriots"
-        description="Book personalized video messages from conservative voices, political commentators, faith leaders, and patriotic influencers. The #1 platform for authentic conservative video shoutouts. Support free speech and American values."
-        keywords="conservative video message, faith-based video shoutout, patriotic celebrity message, political commentator video, Christian influencer personalized video, conservative alternative to cameo, faith leaders video message, patriot voices, MAGA influencer shoutout, conservative booking platform"
+        title="ShoutOut - Free-Speech & Faith-Based Video Shoutouts | Personalized Messages from Patriots"
+        description="Book personalized video messages from free-speech voices, political commentators, faith leaders, and patriotic influencers. The #1 platform for authentic free-speech video shoutouts. Support free speech and American values."
+        keywords="free-speech video message, faith-based video shoutout, patriotic celebrity message, political commentator video, Christian influencer personalized video, free-speech alternative to cameo, faith leaders video message, patriot voices, MAGA influencer shoutout, free-speech booking platform"
         url="https://shoutout.us"
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white">

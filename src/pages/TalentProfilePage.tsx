@@ -475,9 +475,9 @@ const TalentProfilePage: React.FC = () => {
           `${talentName} shoutout`,
           `${talentName} cameo`,
           `${talentName} personalized video`,
-          'conservative gifts',
-          'conservative shoutouts',
-          'conservative video messages',
+          'free-speech gifts',
+          'free-speech shoutouts',
+          'free-speech video messages',
           'cameo christmas',
           'christmas video message',
           'custom video message',
@@ -486,7 +486,7 @@ const TalentProfilePage: React.FC = () => {
           'get a custom video',
           'order video message',
           'personalized video greeting',
-          'conservative christmas gifts',
+          'free-speech christmas gifts',
           'republican gifts',
           'patriotic gifts'
         ];
@@ -496,7 +496,7 @@ const TalentProfilePage: React.FC = () => {
         if (category.includes('political') || category.includes('commentator')) {
           baseKeywords.push(
             'political commentator video',
-            'conservative political figure',
+            'free-speech political figure',
             'republican personality',
             'political video message'
           );
@@ -506,14 +506,14 @@ const TalentProfilePage: React.FC = () => {
             'christian video message',
             'faith leader video',
             'religious greeting',
-            'christian conservative gift'
+            'christian free-speech gift'
           );
         }
         if (category.includes('patriot')) {
           baseKeywords.push(
             'patriotic video message',
             'american patriot video',
-            'conservative patriot gift'
+            'free-speech patriot gift'
           );
         }
 

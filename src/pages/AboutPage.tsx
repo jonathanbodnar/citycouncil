@@ -12,12 +12,12 @@ import {
 export default function AboutPage() {
   useEffect(() => {
     // Update page title and meta description
-    document.title = 'About ShoutOut - Conservative & Faith-Based Video Messages';
+    document.title = 'About ShoutOut - Free-Speech & Faith-Based Video Messages';
     
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 
-        'ShoutOut connects you with conservative voices, faith leaders, patriots, and influencers for personalized video messages. Celebrate special moments with meaningful shoutouts from your favorite personalities.'
+        'ShoutOut connects you with free-speech voices, faith leaders, patriots, and influencers for personalized video messages. Celebrate special moments with meaningful shoutouts from your favorite personalities.'
       );
     }
 
@@ -28,7 +28,7 @@ export default function AboutPage() {
       "name": "ShoutOut",
       "url": "https://shoutout.us",
       "logo": "https://shoutout.us/logo.png",
-      "description": "Platform connecting fans with conservative voices, faith leaders, and patriots for personalized video messages",
+      "description": "Platform connecting fans with free-speech voices, faith leaders, and patriots for personalized video messages",
       "sameAs": [
         "https://twitter.com/shoutoutus",
         "https://facebook.com/shoutoutus"
@@ -50,7 +50,7 @@ export default function AboutPage() {
     {
       icon: VideoCameraIcon,
       title: 'Personalized Video Messages',
-      description: 'Get custom video shoutouts from your favorite conservative voices, faith leaders, and patriots for birthdays, encouragement, or just because.'
+      description: 'Get custom video shoutouts from your favorite free-speech voices, faith leaders, and patriots for birthdays, encouragement, or just because.'
     },
     {
       icon: UserGroupIcon,
@@ -116,7 +116,7 @@ export default function AboutPage() {
               of receiving a personalized message from someone who inspires them.
             </p>
             <p className="text-gray-300 text-lg leading-relaxed mb-6">
-              Our platform empowers <strong className="text-white">conservative voices, faith leaders, patriots, athletes, 
+              Our platform empowers <strong className="text-white">free-speech voices, faith leaders, patriots, athletes, 
               and entertainers</strong> to connect directly with their supporters through meaningful, personalized video messages. 
               Whether it's a birthday surprise, words of encouragement, or a special celebration, ShoutOut makes it possible.
             </p>
@@ -189,7 +189,7 @@ export default function AboutPage() {
                 Choose Your Talent
               </h3>
               <p className="text-gray-400">
-                Browse our network of conservative voices, faith leaders, patriots, and influencers. Find the perfect person for your occasion.
+                Browse our network of free-speech voices, faith leaders, patriots, and influencers. Find the perfect person for your occasion.
               </p>
             </div>
             <div className="text-center">
@@ -229,7 +229,7 @@ export default function AboutPage() {
               🇺🇸 Patriotism & Freedom
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              We celebrate American values, constitutional principles, and the freedom to express conservative viewpoints 
+              We celebrate American values, constitutional principles, and the freedom to express free-speech viewpoints 
               in a marketplace that often silences them. ShoutOut is a platform where these voices thrive.
             </p>
           </div>

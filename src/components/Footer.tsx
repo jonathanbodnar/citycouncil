@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
                 </Link>
               </div>
               <p className="text-gray-400 mb-4 max-w-md">
-                Get personalized video messages from your favorite conservative personalities. 
+                Get personalized video messages from your favorite free-speech personalities. 
                 100% money-back guarantee and secure payments.
               </p>
               <div className="flex space-x-4">
