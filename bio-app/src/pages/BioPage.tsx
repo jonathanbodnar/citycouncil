@@ -1602,13 +1602,13 @@ const BioPage: React.FC = () => {
       <div className="max-w-lg mx-auto px-4 py-8 min-h-screen flex flex-col relative">
         {/* ShoutOut Logo - Top Left Corner (within content container) */}
         <a 
-          href="https://shoutout.us/creators" 
+          href="https://shoutout.us" 
           target="_blank" 
           rel="noopener noreferrer"
           className="absolute top-4 left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
         >
           <img
-            src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png"
+            src="/shoutoutwhite.png"
             alt="ShoutOut"
             className="h-7 w-auto brightness-0 invert"
           />
@@ -2624,10 +2624,14 @@ const BioPage: React.FC = () => {
             href="https://shoutout.us/creators"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-white/40 hover:text-white/60 text-sm transition-colors"
+            className="inline-flex items-center gap-2 opacity-40 hover:opacity-60 transition-opacity"
           >
-            <span>Powered by</span>
-            <span className="font-semibold">ShoutOut</span>
+            <span className="text-white/40 text-sm">Powered by</span>
+            <img
+              src="/shoutoutwhite.png"
+              alt="ShoutOut"
+              className="h-5 w-auto brightness-0 invert"
+            />
           </a>
         </div>
       </div>
