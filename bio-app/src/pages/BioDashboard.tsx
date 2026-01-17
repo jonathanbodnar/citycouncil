@@ -2912,7 +2912,7 @@ const BioDashboard: React.FC = () => {
                       <a href="https://shoutout.us/creators" className="inline-flex items-center gap-2 opacity-50 hover:opacity-70 transition-opacity">
                         <span className="text-gray-400 text-[10px]">Powered by</span>
                         <img 
-                          src="https://utafetamgwukkbrlezev.supabase.co/storage/v1/object/public/platform-assets/logos/logo-1760990980777.png" 
+                          src="/whiteicon.png" 
                           alt="ShoutOut" 
                           className="h-6 w-auto brightness-0 invert"
                         />
