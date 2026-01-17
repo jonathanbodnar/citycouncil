@@ -1610,7 +1610,7 @@ const BioPage: React.FC = () => {
           <img
             src="/shoutoutwhite.png"
             alt="ShoutOut"
-            className="h-7 w-auto brightness-0 invert"
+            className="h-7 w-auto"
           />
         </a>
         {/* Profile Header */}
@@ -2630,7 +2630,7 @@ const BioPage: React.FC = () => {
             <img
               src="/shoutoutwhite.png"
               alt="ShoutOut"
-              className="h-5 w-auto brightness-0 invert"
+              className="h-5 w-auto"
             />
           </a>
         </div>
