@@ -1,26 +1,60 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
 
-// Memoized video preview component - NEVER re-renders once mounted
+// Lazy loading video preview - only loads when in viewport (mobile performance)
 const VideoPreview = memo(({ 
   videoUrl, 
   talentId 
 }: { 
   videoUrl: string; 
   talentId: string;
-}) => (
-  <video 
-    src={videoUrl}
-    className="w-full h-full object-cover"
-    autoPlay
-    muted
-    loop
-    playsInline
-    preload="metadata"
-  />
-), (prevProps, nextProps) => {
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Once in view, stay loaded (don't unload when scrolling away)
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { 
+        rootMargin: '100px', // Start loading 100px before entering viewport
+        threshold: 0.1 
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full h-full">
+      {isInView ? (
+        <video 
+          src={videoUrl}
+          className="w-full h-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+      ) : (
+        // Placeholder while not in view
+        <div className="w-full h-full bg-gray-800 animate-pulse" />
+      )}
+    </div>
+  );
+}, (prevProps, nextProps) => {
   // Only re-render if video URL actually changes
   return prevProps.videoUrl === nextProps.videoUrl && prevProps.talentId === nextProps.talentId;
 });

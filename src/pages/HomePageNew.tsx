@@ -467,7 +467,7 @@ export default function HomePageNew() {
 
                   {/* After SECOND banner: Show "ShoutOut for every occasion" */}
                   {index === 1 && (
-                    <div className="mt-8 mb-6 md:mt-12 md:mb-10">
+                    <div className="mt-12 mb-6 md:mt-16 md:mb-10">
                       <h2 className="text-lg sm:text-xl font-bold text-white text-center mb-4 md:mb-6">
                         A ShoutOut for every occasion
                       </h2>
