@@ -1,4 +1,4 @@
-# ShoutOut.us - Conservative & Faith-Based Video Shoutout Platform
+# ShoutOut.us - Free-Speech & Faith-Based Video Shoutout Platform
 # Robots.txt - Optimized for SEO
 
 User-agent: *

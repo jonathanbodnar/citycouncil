@@ -10,9 +10,9 @@ interface SEOHelmetProps {
 }
 
 export default function SEOHelmet({
-  title = 'ShoutOut - Conservative & Faith-Based Video Shoutouts | Personalized Messages',
-  description = 'Book personalized video messages from conservative voices, political commentators, faith leaders, and patriotic influencers. Authentic shoutouts for birthdays, events, and brand endorsements. The conservative alternative to Cameo.',
-  keywords = 'conservative video message, faith-based influencer shoutout, patriotic celebrity video, political commentator message, Christian creator personalized video, personalized video gift, conservative influencer booking, video shoutout platform, faith leaders video message, patriot voices shoutout',
+  title = 'ShoutOut - Free-Speech & Faith-Based Video Shoutouts | Personalized Messages',
+  description = 'Book personalized video messages from free-speech voices, political commentators, faith leaders, and patriotic influencers. Authentic shoutouts for birthdays, events, and brand endorsements. The free-speech alternative to Cameo.',
+  keywords = 'free-speech video message, faith-based influencer shoutout, patriotic celebrity video, political commentator message, Christian creator personalized video, personalized video gift, free-speech influencer booking, video shoutout platform, faith leaders video message, patriot voices shoutout',
   image = 'https://shoutout.us/og-image.jpg',
   url = 'https://shoutout.us',
   type = 'website'
