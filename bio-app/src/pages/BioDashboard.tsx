@@ -2089,36 +2089,28 @@ const BioDashboard: React.FC = () => {
                 </div>
               </div>
               
-              {/* Iframe Embed */}
+              {/* Iframe Embed - Always show preview */}
               <div className="relative w-full" style={{ height: '680px' }}>
-                {bioSettings?.is_published ? (
-                  <iframe
-                    id="bio-preview-iframe"
-                    key={previewKey}
-                    src={`https://www.${bioUrl}?preview=true&t=${previewKey}`}
-                    className="w-full h-full border-0"
-                    title="Bio Preview"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center"
-                    style={{
-                      background: `linear-gradient(${bioSettings?.gradient_direction === 'to-b' ? '180deg' : '135deg'}, ${bioSettings?.gradient_start || '#0a0a0a'}, ${bioSettings?.gradient_end || '#1a1a2e'})`
-                    }}
-                  >
-                    <EyeIcon className="h-12 w-12 text-gray-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">Preview Not Available</h3>
-                    <p className="text-gray-400 text-sm mb-4">
-                      Publish your bio page to see the live preview here.
-                    </p>
+                {/* Unpublished banner */}
+                {!bioSettings?.is_published && (
+                  <div className="absolute top-0 left-0 right-0 z-10 bg-yellow-500/90 text-black text-xs font-medium text-center py-1.5 px-2 flex items-center justify-center gap-2">
+                    <span>⚠️ Not published yet</span>
                     <button
                       onClick={togglePublish}
                       disabled={saving}
-                      className="px-6 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+                      className="px-2 py-0.5 bg-black/20 hover:bg-black/30 rounded text-[10px] font-semibold transition-colors"
                     >
                       Publish Now
                     </button>
                   </div>
                 )}
+                <iframe
+                  id="bio-preview-iframe"
+                  key={previewKey}
+                  src={`https://www.${bioUrl}?preview=true&t=${previewKey}`}
+                  className="w-full h-full border-0"
+                  title="Bio Preview"
+                />
               </div>
             </div>
           </div>

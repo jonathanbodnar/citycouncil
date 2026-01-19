@@ -544,8 +544,11 @@ const BioPage: React.FC = () => {
           }
         }
 
-        // If still no settings or not published, show not found
-        if (!settings || !settings.is_published) {
+        // If still no settings or not published, show not found (unless preview mode)
+        const previewParams = new URLSearchParams(window.location.search);
+        const isPreviewMode = previewParams.get('preview') === 'true';
+        
+        if (!settings || (!settings.is_published && !isPreviewMode)) {
           setNotFound(true);
           setLoading(false);
           return;
