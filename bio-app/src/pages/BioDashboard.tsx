@@ -105,6 +105,7 @@ interface BioLink {
   video_url?: string;
   company_name?: string;
   discount_amount?: string;
+  discount_code?: string;
   grid_size?: 'small' | 'medium' | 'large';
   display_order: number;
   is_active: boolean;
@@ -3538,6 +3539,7 @@ const AddLinkModal: React.FC<{
   const [videoUrl, setVideoUrl] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [discountAmount, setDiscountAmount] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
   const [gridColumns, setGridColumns] = useState(2);
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -3637,6 +3639,7 @@ const AddLinkModal: React.FC<{
         video_url: linkType === 'video' ? videoUrl : undefined,
         company_name: linkType === 'affiliate' ? companyName : undefined,
         discount_amount: linkType === 'affiliate' ? discountAmount : undefined,
+        discount_code: linkType === 'affiliate' ? discountCode : undefined,
         thumbnail_url: thumbnailUrl || undefined,
         grid_columns: gridColumns,
         is_active: true,
@@ -3770,17 +3773,29 @@ const AddLinkModal: React.FC<{
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Discount Code/Amount <span className="text-gray-500 text-xs">(optional)</span></label>
-                    <input
-                      type="text"
-                      value={discountAmount}
-                      onChange={(e) => setDiscountAmount(e.target.value)}
-                      placeholder="e.g., 20% OFF or SAVE20"
-                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Will appear as a badge on the brand logo</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Discount <span className="text-gray-500 text-xs">(optional)</span></label>
+                      <input
+                        type="text"
+                        value={discountAmount}
+                        onChange={(e) => setDiscountAmount(e.target.value)}
+                        placeholder="20% OFF"
+                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Code <span className="text-gray-500 text-xs">(optional)</span></label>
+                      <input
+                        type="text"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        placeholder="SAVE20"
+                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                      />
+                    </div>
                   </div>
+                  <p className="text-xs text-gray-500 -mt-2">Badge appears on brand logo (top right)</p>
                 </>
               ) : (
                 <>
