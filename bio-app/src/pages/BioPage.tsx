@@ -2496,7 +2496,7 @@ const BioPage: React.FC = () => {
             const servicePlatforms = service.platforms || ['instagram'];
             const platformLabel = servicePlatforms.length === 1 
               ? `${servicePlatforms[0].charAt(0).toUpperCase() + servicePlatforms[0].slice(1)} Collab`
-              : `Social Collab`;
+              : `Collaborate with me`;
             
             // Use total_followers from the service directly
             const totalFollowers = service.total_followers || 0;
@@ -2889,7 +2889,7 @@ const CollabModal: React.FC<{
   // Platform label
   const platformLabel = servicePlatforms.length === 1 
     ? `${servicePlatforms[0].charAt(0).toUpperCase() + servicePlatforms[0].slice(1)} Collab`
-    : `Social Collab`;
+    : `Collaborate with me`;
 
   const handleStartRequest = () => {
     // Navigate to the collab order page
