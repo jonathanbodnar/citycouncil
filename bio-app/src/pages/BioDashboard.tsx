@@ -1398,71 +1398,176 @@ const BioDashboard: React.FC = () => {
                       <p className="text-gray-500 mb-4">Add your first link or import from another platform</p>
                     </div>
                   ) : (
-                    links.map((link, index) => (
-                      <div
-                        key={link.id}
-                        className={`bg-white/5 border rounded-xl p-4 transition-all border-white/10 hover:border-white/20 ${!link.is_active ? 'opacity-50' : ''}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* Reorder buttons */}
-                          <div className="flex flex-col gap-1">
-                            <button
-                              onClick={() => moveLink(index, 'up')}
-                              disabled={index === 0}
-                              className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                              <ArrowsUpDownIcon className="h-4 w-4 rotate-180" />
-                            </button>
-                            <button
-                              onClick={() => moveLink(index, 'down')}
-                              disabled={index === links.length - 1}
-                              className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                              <ArrowsUpDownIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-
-                          {/* Thumbnail */}
-                          {link.thumbnail_url ? (
-                            <img src={link.thumbnail_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                          ) : (
-                            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                              link.link_type === 'basic' ? 'bg-blue-500/20' :
-                              link.link_type === 'grid' ? 'bg-purple-500/20' :
-                              'bg-yellow-500/20'
-                            }`}>
-                              {link.link_type === 'basic' && <LinkIcon className="h-5 w-5 text-blue-400" />}
-                              {link.link_type === 'grid' && <Squares2X2Icon className="h-5 w-5 text-purple-400" />}
-                              {link.link_type === 'sponsor' && <GiftIcon className="h-5 w-5 text-yellow-400" />}
+                    <>
+                      {/* Regular Links (basic, grid, video, sponsor) */}
+                      {links.filter(l => !['affiliate', 'donate'].includes(l.link_type)).map((link, index) => (
+                        <div
+                          key={link.id}
+                          className={`bg-white/5 border rounded-xl p-4 transition-all border-white/10 hover:border-white/20 ${!link.is_active ? 'opacity-50' : ''}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Reorder buttons */}
+                            <div className="flex flex-col gap-1">
+                              <button
+                                onClick={() => moveLink(index, 'up')}
+                                disabled={index === 0}
+                                className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <ArrowsUpDownIcon className="h-4 w-4 rotate-180" />
+                              </button>
+                              <button
+                                onClick={() => moveLink(index, 'down')}
+                                disabled={index === links.filter(l => !['affiliate', 'donate'].includes(l.link_type)).length - 1}
+                                className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <ArrowsUpDownIcon className="h-4 w-4" />
+                              </button>
                             </div>
-                          )}
 
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-white truncate">
-                              {link.title || `${link.link_type.charAt(0).toUpperCase() + link.link_type.slice(1)} Link`}
-                            </h3>
-                            {link.url && (
-                              <p className="text-sm text-gray-400 truncate">{link.url}</p>
+                            {/* Thumbnail */}
+                            {link.thumbnail_url ? (
+                              <img src={link.thumbnail_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                            ) : (
+                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                link.link_type === 'basic' ? 'bg-blue-500/20' :
+                                link.link_type === 'grid' ? 'bg-purple-500/20' :
+                                link.link_type === 'video' ? 'bg-red-500/20' :
+                                'bg-yellow-500/20'
+                              }`}>
+                                {link.link_type === 'basic' && <LinkIcon className="h-5 w-5 text-blue-400" />}
+                                {link.link_type === 'grid' && <Squares2X2Icon className="h-5 w-5 text-purple-400" />}
+                                {link.link_type === 'video' && <VideoCameraIcon className="h-5 w-5 text-red-400" />}
+                                {link.link_type === 'sponsor' && <GiftIcon className="h-5 w-5 text-yellow-400" />}
+                              </div>
                             )}
-                          </div>
 
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => setEditingLink(link)}
-                              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                            >
-                              <PencilIcon className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={() => deleteLink(link.id!)}
-                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            >
-                              <TrashIcon className="h-5 w-5" />
-                            </button>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-white truncate">
+                                {link.title || `${link.link_type.charAt(0).toUpperCase() + link.link_type.slice(1)} Link`}
+                              </h3>
+                              {link.url && (
+                                <p className="text-sm text-gray-400 truncate">{link.url}</p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setEditingLink(link)}
+                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => deleteLink(link.id!)}
+                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+
+                      {/* Affiliate Links Section - Smaller, separated */}
+                      {links.filter(l => l.link_type === 'affiliate').length > 0 && (
+                        <div className="mt-6 pt-6 border-t border-white/10">
+                          <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center gap-2">
+                            <TagIcon className="h-4 w-4" />
+                            Affiliate Links
+                          </h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {links.filter(l => l.link_type === 'affiliate').map((link) => (
+                              <div
+                                key={link.id}
+                                className={`bg-green-500/10 border border-green-500/30 rounded-lg p-2 transition-all hover:border-green-500/50 ${!link.is_active ? 'opacity-50' : ''}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {link.thumbnail_url ? (
+                                    <img src={link.thumbnail_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                                      <TagIcon className="h-4 w-4 text-green-400" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-white truncate">{link.company_name || link.title || 'Affiliate'}</p>
+                                    {link.discount_amount && (
+                                      <p className="text-[10px] text-green-400">{link.discount_amount}</p>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-0.5">
+                                    <button
+                                      onClick={() => setEditingLink(link)}
+                                      className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                                    >
+                                      <PencilIcon className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => deleteLink(link.id!)}
+                                      className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                                    >
+                                      <TrashIcon className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Donate/Support Links Section - Badge style */}
+                      {links.filter(l => l.link_type === 'donate').length > 0 && (
+                        <div className="mt-6 pt-6 border-t border-white/10">
+                          <h4 className="text-sm font-medium text-yellow-400 mb-3 flex items-center gap-2">
+                            <CurrencyDollarIcon className="h-4 w-4" />
+                            Support Links
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {links.filter(l => l.link_type === 'donate').map((link) => {
+                              // Detect platform from URL
+                              const getPlatformName = (url: string) => {
+                                const lower = url?.toLowerCase() || '';
+                                if (lower.includes('venmo.com')) return 'Venmo';
+                                if (lower.includes('paypal')) return 'PayPal';
+                                if (lower.includes('cash.app')) return 'Cash App';
+                                if (lower.includes('ko-fi.com')) return 'Ko-fi';
+                                if (lower.includes('buymeacoffee.com')) return 'Buy Me a Coffee';
+                                if (lower.includes('patreon.com')) return 'Patreon';
+                                return null;
+                              };
+                              const platform = getPlatformName(link.url || '');
+                              
+                              return (
+                                <div
+                                  key={link.id}
+                                  className={`bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 transition-all hover:border-yellow-500/50 ${!link.is_active ? 'opacity-50' : ''}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <CurrencyDollarIcon className="h-4 w-4 text-yellow-400 flex-shrink-0" />
+                                    <span className="text-xs font-medium text-white">{platform || link.title || 'Support'}</span>
+                                    <div className="flex items-center gap-0.5 ml-1">
+                                      <button
+                                        onClick={() => setEditingLink(link)}
+                                        className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                                      >
+                                        <PencilIcon className="h-3.5 w-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={() => deleteLink(link.id!)}
+                                        className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                                      >
+                                        <TrashIcon className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -4237,12 +4342,16 @@ const EditLinkModal: React.FC<{
 }> = ({ link, onClose, onSave }) => {
   const [title, setTitle] = useState(link.title || '');
   const [url, setUrl] = useState(link.url || '');
-  const [thumbnailUrl, setThumbnailUrl] = useState(link.thumbnail_url || '');
+  const [thumbnailUrl, setThumbnailUrl] = useState(link.thumbnail_url || link.image_url || '');
   const [gridColumns, setGridColumns] = useState(link.grid_columns || 2);
   const [isActive, setIsActive] = useState(link.is_active);
   const [isFeatured, setIsFeatured] = useState(link.is_featured || false);
   const [linkFormat, setLinkFormat] = useState<'thin' | 'tall' | 'square'>(link.link_format as 'thin' | 'tall' | 'square' || 'thin');
   const [uploading, setUploading] = useState(false);
+  // Affiliate-specific fields
+  const [companyName, setCompanyName] = useState(link.company_name || '');
+  const [discountAmount, setDiscountAmount] = useState(link.discount_amount || '');
+  const [discountCode, setDiscountCode] = useState(link.discount_code || '');
 
   // Auto-add https:// when URL loses focus
   const handleUrlBlur = () => {
@@ -4283,10 +4392,15 @@ const EditLinkModal: React.FC<{
       title,
       url: finalUrl,
       thumbnail_url: thumbnailUrl || undefined,
+      image_url: link.link_type === 'affiliate' ? thumbnailUrl || undefined : undefined,
       grid_columns: gridColumns,
       is_active: isActive,
       is_featured: isFeatured,
       link_format: linkFormat,
+      // Affiliate fields
+      company_name: link.link_type === 'affiliate' ? companyName : undefined,
+      discount_amount: link.link_type === 'affiliate' ? discountAmount : undefined,
+      discount_code: link.link_type === 'affiliate' ? discountCode : undefined,
     });
   };
 
@@ -4304,71 +4418,183 @@ const EditLinkModal: React.FC<{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="My Website"
-              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onBlur={handleUrlBlur}
-              placeholder="example.com"
-              className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Image (optional)</label>
-            
-            {thumbnailUrl ? (
-              <div className="flex items-center gap-4">
-                <img 
-                  src={thumbnailUrl} 
-                  alt="Preview" 
-                  className="w-20 h-20 rounded-lg object-cover"
+          {/* Affiliate Link Fields */}
+          {link.link_type === 'affiliate' ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Company Name *</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Brand Name"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                  required
                 />
-                <button
-                  type="button"
-                  onClick={() => setThumbnailUrl('')}
-                  className="text-sm text-red-400 hover:text-red-300"
-                >
-                  Remove
-                </button>
               </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  {uploading ? (
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                  ) : (
-                    <>
-                      <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-400">Click to upload image</p>
-                      <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                    </>
-                  )}
-                </div>
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Affiliate URL *</label>
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onBlur={handleUrlBlur}
+                  placeholder="youraffiliatelink.com"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                  required
                 />
-              </label>
-            )}
-          </div>
+                <p className="text-xs text-gray-500 mt-1">Your affiliate/referral link</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Brand Logo/Image *</label>
+                {thumbnailUrl ? (
+                  <div className="flex items-center gap-4">
+                    <img src={thumbnailUrl} alt="Preview" className="w-20 h-20 rounded-lg object-cover" />
+                    <button type="button" onClick={() => setThumbnailUrl('')} className="text-sm text-red-400 hover:text-red-300">
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
+                    <div className="flex flex-col items-center justify-center">
+                      {uploading ? (
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                      ) : (
+                        <>
+                          <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-400">Upload brand logo</p>
+                          <p className="text-xs text-gray-500 mt-1">Square image recommended</p>
+                        </>
+                      )}
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                  </label>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Discount <span className="text-gray-500 text-xs">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={discountAmount}
+                    onChange={(e) => setDiscountAmount(e.target.value)}
+                    placeholder="20% OFF"
+                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Code <span className="text-gray-500 text-xs">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                    placeholder="SAVE20"
+                    className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 -mt-2">Badge appears on brand logo (top right)</p>
+            </>
+          ) : link.link_type === 'donate' ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Support Link URL *</label>
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onBlur={handleUrlBlur}
+                  placeholder="venmo.com/your-handle"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Venmo, PayPal, Cash App, etc.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Custom Title <span className="text-gray-500 text-xs">(optional)</span></label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Support Me"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">Platform name used if left blank</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="My Website"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onBlur={handleUrlBlur}
+                  placeholder="example.com"
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">https:// will be added automatically</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Image (optional)</label>
+                
+                {thumbnailUrl ? (
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={thumbnailUrl} 
+                      alt="Preview" 
+                      className="w-20 h-20 rounded-lg object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setThumbnailUrl('')}
+                      className="text-sm text-red-400 hover:text-red-300"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      {uploading ? (
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                      ) : (
+                        <>
+                          <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-400">Click to upload image</p>
+                          <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                        </>
+                      )}
+                    </div>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                  </label>
+                )}
+              </div>
+            </>
+          )}
 
           {link.link_type === 'grid' && (
             <div>
