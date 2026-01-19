@@ -167,7 +167,7 @@ interface BioSettings {
 interface BioLink {
   id: string;
   talent_id: string;
-  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video' | 'affiliate';
+  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video' | 'affiliate' | 'donate';
   title?: string;
   url?: string;
   icon_url?: string;
@@ -2454,18 +2454,17 @@ const BioPage: React.FC = () => {
               className="block mt-4"
             >
               <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
-                <div className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-white/20">
-                      {profileImage ? (
-                        <img src={profileImage} alt={displayName} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
-                          {displayName[0]}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
+                <div className="flex items-center">
+                  <div className="w-14 h-14 flex-shrink-0">
+                    {profileImage ? (
+                      <img src={profileImage} alt={displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
+                        {displayName[0]}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 p-4">
                       {randomReview ? (
                         <h3 className="text-white font-semibold text-sm mb-1">
                           Get a personalized video from {displayName}
@@ -2510,6 +2509,53 @@ const BioPage: React.FC = () => {
               </div>
             </a>
           )}
+
+          {/* Donate/Support Badge - Under newsletter if exists */}
+          {(() => {
+            const donateLinks = links.filter(l => l.link_type === 'donate' && l.is_active);
+            if (donateLinks.length === 0) return null;
+            
+            // Platform logo detection
+            const getPlatformLogo = (url: string): { name: string; icon: string } | null => {
+              const lowerUrl = url.toLowerCase();
+              if (lowerUrl.includes('venmo.com')) return { name: 'Venmo', icon: 'V' };
+              if (lowerUrl.includes('paypal.me') || lowerUrl.includes('paypal.com')) return { name: 'PayPal', icon: 'P' };
+              if (lowerUrl.includes('cash.app')) return { name: 'Cash App', icon: '$' };
+              if (lowerUrl.includes('buymeacoffee.com')) return { name: 'Buy Me a Coffee', icon: '☕' };
+              if (lowerUrl.includes('ko-fi.com')) return { name: 'Ko-fi', icon: '☕' };
+              if (lowerUrl.includes('patreon.com')) return { name: 'Patreon', icon: 'P' };
+              return null;
+            };
+            
+            return (
+              <div className="flex justify-center gap-2 mt-4 flex-wrap">
+                {donateLinks.map((link) => {
+                  const platform = getPlatformLogo(link.url || '');
+                  const displayTitle = link.title || 'Show Support';
+                  
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleLinkClick(link)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-all hover:scale-105"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                      }}
+                    >
+                      {platform && (
+                        <span className="text-lg">{platform.icon}</span>
+                      )}
+                      <span className="text-white text-sm font-medium">{displayTitle}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Next Upcoming Event - Only show one */}
           {(() => {
