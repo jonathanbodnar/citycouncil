@@ -59,14 +59,16 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
   const checkCoupon = useCallback(() => {
     const coupon = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
     const details = getCouponFromStorage();
+    console.log('🎟️ TalentCard checkCoupon:', { coupon, details, talentName: talent.temp_full_name || talent.users?.full_name });
     if (coupon && details) {
       setActiveCoupon(coupon.toUpperCase());
       setCouponDetails(details);
+      console.log('🎟️ TalentCard: Coupon applied!', coupon.toUpperCase(), details);
     } else {
       setActiveCoupon(null);
       setCouponDetails(null);
     }
-  }, []);
+  }, [talent.temp_full_name, talent.users?.full_name]);
 
   useEffect(() => {
     checkCoupon();

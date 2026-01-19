@@ -83,6 +83,7 @@ const HomePage: React.FC = () => {
       
       if (couponParam) {
         const couponCode = couponParam.toUpperCase();
+        console.log('🎟️ HomePage: Setting coupon from URL:', couponCode);
         localStorage.setItem('auto_apply_coupon', couponCode);
         
         // Fetch coupon details from database to get discount info
@@ -111,7 +112,14 @@ const HomePage: React.FC = () => {
         }
         
         // Dispatch event to update TalentCards immediately
+        console.log('🎟️ HomePage: Dispatching couponApplied event');
         window.dispatchEvent(new Event('couponApplied'));
+        
+        // Also dispatch after a small delay to ensure TalentCards are mounted
+        setTimeout(() => {
+          console.log('🎟️ HomePage: Dispatching delayed couponApplied event');
+          window.dispatchEvent(new Event('couponApplied'));
+        }, 500);
       }
     };
     
