@@ -1909,6 +1909,63 @@ const BioPage: React.FC = () => {
               )}
             </div>
           )}
+          
+          {/* Donate/Support Badges - Centered under newsletter */}
+          {(() => {
+            const donateLinks = links.filter(l => l.link_type === 'donate' && l.is_active);
+            if (donateLinks.length === 0) return null;
+            
+            const getPlatformIcon = (url: string) => {
+              const lower = url.toLowerCase();
+              
+              if (lower.includes('venmo.com')) {
+                return <svg viewBox="0 0 24 24" fill="#3D95CE" className="w-5 h-5"><path d="M19.542 2h-4.243l.003 12.686c0 1.974-1.463 2.775-2.768 2.775-1.488 0-2.494-.99-2.494-2.776 0-4.182 6.508-4.428 6.508-12.686h-4.243c0 5.467-10.305 5.467-10.305 12.686 0 4.428 3.304 6.316 6.798 6.316 3.678 0 6.744-2.31 6.744-6.316V2z"/></svg>;
+              }
+              if (lower.includes('paypal')) {
+                return <svg viewBox="0 0 24 24" fill="#00457C" className="w-5 h-5"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .756-.653h7.064c2.948 0 4.981.616 5.856 2.353.732 1.457.465 3.323-.756 5.263-.929 1.479-2.371 2.567-4.053 3.061-.994.293-2.116.439-3.333.439H9.39a.77.77 0 0 0-.755.653l-.953 6.165c-.05.335-.323.583-.658.583z"/></svg>;
+              }
+              if (lower.includes('cash.app')) {
+                return <svg viewBox="0 0 24 24" fill="#00D54B" className="w-5 h-5"><path d="M15.34 12.17L12.62 13.8l-1.45-2.38 2.73-1.63 1.44 2.38zM23.59 3.475a5.1 5.1 0 0 0-3.05-3.05c-1.87-.5-9.4-.5-9.4-.5s-7.52 0-9.4.5a5.1 5.1 0 0 0-3.05 3.05c-.5 1.87-.5 5.78-.5 5.78s0 3.91.5 5.78a5.1 5.1 0 0 0 3.05 3.05c1.87.5 9.4.5 9.4.5s7.52 0 9.4-.5a5.1 5.1 0 0 0 3.05-3.05c.5-1.87.5-5.78.5-5.78s0-3.91-.5-5.78z"/></svg>;
+              }
+              if (lower.includes('ko-fi.com')) {
+                return <svg viewBox="0 0 24 24" fill="#FF5E5B" className="w-5 h-5"><path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.798-.679.798s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916zm-11.062 3.511c-1.246 1.453-4.011 3.976-4.011 3.976s-.121.119-.31.023c-.076-.057-.108-.09-.108-.09-.443-.441-3.368-3.049-4.034-3.954-.709-.965-1.041-2.7-.091-3.71.951-1.01 3.005-1.086 4.363.407 0 0 1.565-1.782 3.468-.963 1.904.82 1.832 3.011.761 4.377z"/></svg>;
+              }
+              if (lower.includes('buymeacoffee.com')) {
+                return <svg viewBox="0 0 24 24" fill="#FFDD00" className="w-5 h-5"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.888.501-.99.977-.99.977.154.267.415.456.692.58 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.65-.118.896-.119 1.07.542 1.07.542l.319 1.484h-.003c-.037.006-.075.01-.112.015a36.704 36.704 0 01-4.743.295 37.059 37.059 0 01-4.699-.304c-.393-.065-.768-.032-1.123.161-.675.701-.267 1-.267 1 .613 1.365 1.37 1.502 1.37 1.502a39.69 39.69 0 0011.343.376l-.071.697-1.018 9.907c-.122.637-.553 1.028-1.182 1.171-2.618.6-5.292.6-7.91 0-.628-.143-1.06-.534-1.182-1.171l-1.022-9.94.528-.536c.973-.076 1.951-.13 2.93-.156 2.177-.06 4.35.142 6.528.472.99.977.99.977.99.977z"/></svg>;
+              }
+              if (lower.includes('patreon.com')) {
+                return <svg viewBox="0 0 24 24" fill="#FF424D" className="w-5 h-5"><path d="M15.386.524c-4.764 0-8.64 3.876-8.64 8.64 0 4.75 3.876 8.613 8.64 8.613 4.75 0 8.614-3.864 8.614-8.613C24 4.4 20.136.524 15.386.524M.003 23.537h4.22V.524H.003"/></svg>;
+              }
+              
+              return <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>;
+            };
+            
+            return (
+              <div className="flex justify-center gap-2 mb-6 flex-wrap">
+                {donateLinks.map((link) => {
+                  const displayTitle = link.title || 'Show Support';
+                  
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleLinkClick(link)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl backdrop-blur-sm transition-all hover:scale-105 border"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                      }}
+                    >
+                      {getPlatformIcon(link.url || '')}
+                      <span className="text-white text-sm font-medium">{displayTitle}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Links */}
@@ -2534,53 +2591,6 @@ const BioPage: React.FC = () => {
               </div>
             </a>
           )}
-
-          {/* Donate/Support Badge - Under newsletter if exists */}
-          {(() => {
-            const donateLinks = links.filter(l => l.link_type === 'donate' && l.is_active);
-            if (donateLinks.length === 0) return null;
-            
-            // Platform logo detection
-            const getPlatformLogo = (url: string): { name: string; icon: string } | null => {
-              const lowerUrl = url.toLowerCase();
-              if (lowerUrl.includes('venmo.com')) return { name: 'Venmo', icon: 'V' };
-              if (lowerUrl.includes('paypal.me') || lowerUrl.includes('paypal.com')) return { name: 'PayPal', icon: 'P' };
-              if (lowerUrl.includes('cash.app')) return { name: 'Cash App', icon: '$' };
-              if (lowerUrl.includes('buymeacoffee.com')) return { name: 'Buy Me a Coffee', icon: '☕' };
-              if (lowerUrl.includes('ko-fi.com')) return { name: 'Ko-fi', icon: '☕' };
-              if (lowerUrl.includes('patreon.com')) return { name: 'Patreon', icon: 'P' };
-              return null;
-            };
-            
-            return (
-              <div className="flex justify-center gap-2 mt-4 flex-wrap">
-                {donateLinks.map((link) => {
-                  const platform = getPlatformLogo(link.url || '');
-                  const displayTitle = link.title || 'Show Support';
-                  
-                  return (
-                    <a
-                      key={link.id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => handleLinkClick(link)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-all hover:scale-105"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                      }}
-                    >
-                      {platform && (
-                        <span className="text-lg">{platform.icon}</span>
-                      )}
-                      <span className="text-white text-sm font-medium">{displayTitle}</span>
-                    </a>
-                  );
-                })}
-              </div>
-            );
-          })()}
 
           {/* Next Upcoming Event - Only show one */}
           {(() => {
