@@ -52,8 +52,16 @@ interface TalentCardProps {
 const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
   const isComingSoon = talent.is_coming_soon === true;
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
-  const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
-  const [couponDetails, setCouponDetails] = useState<{ type: 'percentage' | 'fixed'; value: number; label: string } | null>(null);
+  
+  // Initialize coupon state from localStorage immediately
+  const getInitialCoupon = () => {
+    const coupon = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
+    const details = getCouponFromStorage();
+    return { coupon: coupon?.toUpperCase() || null, details };
+  };
+  const initial = getInitialCoupon();
+  const [activeCoupon, setActiveCoupon] = useState<string | null>(initial.coupon);
+  const [couponDetails, setCouponDetails] = useState<{ type: 'percentage' | 'fixed'; value: number; label: string } | null>(initial.details);
 
   // Check for coupon from localStorage (supports both hardcoded and database coupons)
   const checkCoupon = useCallback(() => {
@@ -77,11 +85,27 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
     window.addEventListener('storage', checkCoupon);
     window.addEventListener('couponApplied', checkCoupon);
     
+    // Also poll for coupon for first 3 seconds (handles race conditions)
+    const pollInterval = setInterval(() => {
+      const coupon = localStorage.getItem('auto_apply_coupon');
+      if (coupon && !activeCoupon) {
+        console.log('🎟️ TalentCard: Polling found coupon!', coupon);
+        checkCoupon();
+      }
+    }, 200);
+    
+    // Stop polling after 3 seconds
+    const pollTimeout = setTimeout(() => {
+      clearInterval(pollInterval);
+    }, 3000);
+    
     return () => {
       window.removeEventListener('storage', checkCoupon);
       window.removeEventListener('couponApplied', checkCoupon);
+      clearInterval(pollInterval);
+      clearTimeout(pollTimeout);
     };
-  }, [checkCoupon]);
+  }, [checkCoupon, activeCoupon]);
 
   // Calculate discounted price
   const originalPrice = talent.pricing || 0;
