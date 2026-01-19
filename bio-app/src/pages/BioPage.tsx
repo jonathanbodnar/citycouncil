@@ -167,12 +167,15 @@ interface BioSettings {
 interface BioLink {
   id: string;
   talent_id: string;
-  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video';
+  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video' | 'affiliate';
   title?: string;
   url?: string;
   icon_url?: string;
   image_url?: string;
   video_url?: string;
+  company_name?: string;
+  discount_amount?: string;
+  discount_code?: string;
   grid_size?: 'small' | 'medium' | 'large';
   display_order: number;
   is_active: boolean;
