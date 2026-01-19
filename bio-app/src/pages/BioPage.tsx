@@ -1299,6 +1299,46 @@ const BioPage: React.FC = () => {
         }
       }
 
+      // Extract platform links from RSS feed
+      const listenLinks: { spotify?: string; apple?: string; youtube?: string; google?: string } = {};
+      
+      // Look for links in channel (podcast-level links)
+      const allLinks = Array.from(channel.querySelectorAll('link'));
+      allLinks.forEach(link => {
+        const href = link.getAttribute('href') || link.textContent || '';
+        const lowerHref = href.toLowerCase();
+        
+        if (lowerHref.includes('spotify.com')) {
+          listenLinks.spotify = href;
+        } else if (lowerHref.includes('apple.com/podcast') || lowerHref.includes('podcasts.apple.com')) {
+          listenLinks.apple = href;
+        } else if (lowerHref.includes('youtube.com') || lowerHref.includes('youtu.be')) {
+          listenLinks.youtube = href;
+        } else if (lowerHref.includes('podcasts.google.com')) {
+          listenLinks.google = href;
+        }
+      });
+      
+      // Also check atom:link elements with rel attribute
+      const atomLinks = Array.from(channel.querySelectorAll('atom\\:link, [rel]'));
+      atomLinks.forEach(link => {
+        const href = link.getAttribute('href') || '';
+        const rel = link.getAttribute('rel') || '';
+        const lowerHref = href.toLowerCase();
+        
+        if (lowerHref.includes('spotify.com') && !listenLinks.spotify) {
+          listenLinks.spotify = href;
+        } else if ((lowerHref.includes('apple.com/podcast') || lowerHref.includes('podcasts.apple.com')) && !listenLinks.apple) {
+          listenLinks.apple = href;
+        } else if ((lowerHref.includes('youtube.com') || lowerHref.includes('youtu.be')) && !listenLinks.youtube) {
+          listenLinks.youtube = href;
+        } else if (lowerHref.includes('podcasts.google.com') && !listenLinks.google) {
+          listenLinks.google = href;
+        }
+      });
+      
+      console.log('Extracted listen links:', listenLinks);
+
       const podcastDataObj = {
         title,
         description: description.replace(/<[^>]*>/g, '').substring(0, 200), // Strip HTML and truncate
@@ -1310,6 +1350,7 @@ const BioPage: React.FC = () => {
         views: views || undefined,
         podcastName: feedTitle,
         feedUrl: rssUrl,
+        listenLinks: Object.keys(listenLinks).length > 0 ? listenLinks : undefined,
       };
       
       console.log('Successfully parsed podcast data:', podcastDataObj);
