@@ -1170,7 +1170,13 @@ const BioPage: React.FC = () => {
 
   // Fetch podcast data from RSS feed
   const fetchPodcastData = async (rssUrl: string, podcastName: string) => {
+    if (fetchingPodcast) {
+      console.log('Podcast fetch already in progress, skipping');
+      return;
+    }
+    
     console.log('Fetching podcast data for:', rssUrl);
+    setFetchingPodcast(true);
     
     try {
       let text = '';
