@@ -1724,7 +1724,7 @@ const BioPage: React.FC = () => {
           href="https://shoutout.us" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="absolute top-4 left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
+          className="absolute top-5 left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
         >
           <img
             src={`${process.env.PUBLIC_URL}/shoutoutwhite.png`}
@@ -1765,9 +1765,8 @@ const BioPage: React.FC = () => {
           };
           
           return (
-            <div className="absolute top-4 right-4 z-10 flex gap-2">
+            <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-45 hover:opacity-100 transition-opacity">
               {donateLinks.map((link) => {
-                const displayTitle = link.title || 'Support';
                 
                 return (
                   <a
