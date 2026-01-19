@@ -2631,9 +2631,9 @@ const BioPage: React.FC = () => {
                           
                           {/* Discount Badge - Top Right */}
                           {(link.discount_amount || link.discount_code) && (
-                            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-lg">
-                              {link.discount_amount && <div>{link.discount_amount}</div>}
-                              {link.discount_code && <div className="text-[10px]">{link.discount_code}</div>}
+                            <div className="absolute top-1.5 right-1.5 bg-red-500/70 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-lg">
+                              {link.discount_amount && <div className="leading-tight">{link.discount_amount}</div>}
+                              {link.discount_code && <div className="text-[8px] leading-tight">{link.discount_code}</div>}
                             </div>
                           )}
                         </div>
