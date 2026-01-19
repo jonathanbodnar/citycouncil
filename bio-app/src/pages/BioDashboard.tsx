@@ -21,7 +21,8 @@ import {
   SwatchIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  VideoCameraIcon
+  VideoCameraIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { uploadImageToWasabi } from '../services/wasabiUpload';
