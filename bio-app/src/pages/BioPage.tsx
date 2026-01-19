@@ -2630,12 +2630,12 @@ const BioPage: React.FC = () => {
                               </div>
                             )}
                           </div>
-                          <span className="text-pink-400 text-xs font-medium">{platformLabel}</span>
+                          <span className="text-pink-400 text-sm font-medium">{platformLabel}</span>
                           {/* Show total followers inline with platform label - only if set */}
                           {totalFollowers > 0 && (
                             <>
-                              <span className="text-gray-400 text-xs">•</span>
-                              <span className="text-pink-400 text-xs font-medium">
+                              <span className="text-gray-400 text-sm">•</span>
+                              <span className="text-pink-400 text-sm font-medium">
                                 {formatFollowers(totalFollowers)} followers
                               </span>
                             </>
