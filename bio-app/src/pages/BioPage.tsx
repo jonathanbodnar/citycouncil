@@ -1805,7 +1805,7 @@ const BioPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-white mb-2">Bio Not Found</h1>
         <p className="text-gray-400 mb-6 text-center">This bio page doesn't exist or isn't published yet.</p>
         <a
-          href="https://shoutout.us"
+          href="https://shoutout.us?utm=fans"
           className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
         >
           Create Your Own Bio
@@ -1830,7 +1830,7 @@ const BioPage: React.FC = () => {
       <div className="max-w-lg mx-auto px-4 py-8 min-h-screen flex flex-col relative">
         {/* ShoutOut Logo - Top Left Corner */}
         <a 
-          href="https://shoutout.us" 
+          href="https://shoutout.us?utm=fans" 
           target="_blank" 
           rel="noopener noreferrer"
           className="absolute top-[18px] left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
@@ -2935,7 +2935,7 @@ const BioPage: React.FC = () => {
             </p>
           )}
           <a 
-            href="https://shoutout.us/creators"
+            href="https://shoutout.us/creators?utm=fans"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 opacity-40 hover:opacity-60 transition-opacity"
