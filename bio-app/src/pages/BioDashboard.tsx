@@ -3536,8 +3536,8 @@ const AddLinkModal: React.FC<{
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [discountAmount, setDiscountAmount] = useState('');
+  // const [companyName, setCompanyName] = useState('');
+  // const [discountAmount, setDiscountAmount] = useState('');
   const [gridColumns, setGridColumns] = useState(2);
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);

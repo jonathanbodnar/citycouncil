@@ -1323,7 +1323,6 @@ const BioPage: React.FC = () => {
       const atomLinks = Array.from(channel.querySelectorAll('atom\\:link, [rel]'));
       atomLinks.forEach(link => {
         const href = link.getAttribute('href') || '';
-        const rel = link.getAttribute('rel') || '';
         const lowerHref = href.toLowerCase();
         
         if (lowerHref.includes('spotify.com') && !listenLinks.spotify) {
@@ -3056,7 +3055,6 @@ const PodcastModal: React.FC<{
   const gradientDirection = bioSettings.gradient_direction === 'to-b' ? '180deg' : '135deg';
   const gradientStart = bioSettings.gradient_start || '#0a0a0a';
   const gradientEnd = bioSettings.gradient_end || '#1a1a2e';
-  const buttonColor = bioSettings.button_color || '#3b82f6';
 
   // Listen platforms - extracted from RSS or default common ones
   const listenPlatforms = [
