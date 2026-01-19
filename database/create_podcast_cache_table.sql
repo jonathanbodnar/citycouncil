@@ -1,10 +1,10 @@
 -- Create podcast_cache table for performance optimization
 -- Similar to rumble_cache and youtube_cache
+-- Caches podcast data globally by RSS URL (same podcast = same data)
 
 CREATE TABLE IF NOT EXISTS podcast_cache (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  talent_id UUID NOT NULL REFERENCES talent_profiles(id) ON DELETE CASCADE,
-  podcast_rss_url TEXT NOT NULL,
+  podcast_rss_url TEXT NOT NULL UNIQUE, -- Unique per RSS feed (global cache)
   podcast_name TEXT,
   latest_episode_title TEXT,
   latest_episode_description TEXT,
@@ -15,12 +15,11 @@ CREATE TABLE IF NOT EXISTS podcast_cache (
   latest_episode_pub_date TEXT,
   listen_links JSONB, -- { spotify: "...", apple: "...", youtube: "...", google: "..." }
   last_checked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(talent_id, podcast_rss_url)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create index for fast lookups
-CREATE INDEX IF NOT EXISTS idx_podcast_cache_talent_id ON podcast_cache(talent_id);
+CREATE INDEX IF NOT EXISTS idx_podcast_cache_rss_url ON podcast_cache(podcast_rss_url);
 CREATE INDEX IF NOT EXISTS idx_podcast_cache_last_checked ON podcast_cache(last_checked_at);
 
 -- Enable RLS
@@ -31,17 +30,16 @@ CREATE POLICY "Anyone can read podcast cache" ON podcast_cache
   FOR SELECT
   USING (true);
 
--- Allow authenticated users to insert/update their own cache
-CREATE POLICY "Users can manage own podcast cache" ON podcast_cache
+-- Allow anyone to insert/update cache (anonymous users viewing bio pages trigger refresh)
+CREATE POLICY "Anyone can manage podcast cache" ON podcast_cache
   FOR ALL
-  USING (talent_id IN (SELECT id FROM talent_profiles WHERE user_id = auth.uid()))
-  WITH CHECK (talent_id IN (SELECT id FROM talent_profiles WHERE user_id = auth.uid()));
+  USING (true)
+  WITH CHECK (true);
 
 -- Grant access
-GRANT SELECT ON podcast_cache TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON podcast_cache TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON podcast_cache TO anon, authenticated;
 
 -- Add comments
-COMMENT ON TABLE podcast_cache IS 'Cache for podcast RSS feed data to improve bio page load times';
+COMMENT ON TABLE podcast_cache IS 'Cache for podcast RSS feed data - 12 hour TTL';
 COMMENT ON COLUMN podcast_cache.listen_links IS 'Platform links from PodcastIndex API and RSS feed';
 COMMENT ON COLUMN podcast_cache.last_checked_at IS 'Timestamp of last refresh - refresh if > 12 hours old';

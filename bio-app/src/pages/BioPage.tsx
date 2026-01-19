@@ -1172,7 +1172,7 @@ const BioPage: React.FC = () => {
     }
   };
 
-  // Fetch podcast data from RSS feed
+  // Fetch podcast data - with 12-hour caching
   const fetchPodcastData = async (rssUrl: string, podcastName: string) => {
     if (fetchingPodcast || podcastFetchedRef.current) {
       console.log('Podcast fetch already in progress or completed, skipping');
@@ -1184,6 +1184,42 @@ const BioPage: React.FC = () => {
     podcastFetchedRef.current = true;
     
     try {
+      // Step 1: Check cache first (12-hour TTL)
+      const { data: cachedData } = await supabase
+        .from('podcast_cache')
+        .select('*')
+        .eq('podcast_rss_url', rssUrl)
+        .single();
+      
+      const TWELVE_HOURS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+      const cacheIsValid = cachedData?.last_checked_at && 
+        (Date.now() - new Date(cachedData.last_checked_at).getTime()) < TWELVE_HOURS;
+      
+      if (cacheIsValid && cachedData) {
+        console.log('Using cached podcast data (< 12 hours old)');
+        
+        const cachedPodcastData = {
+          title: cachedData.latest_episode_title || 'Latest Episode',
+          description: cachedData.latest_episode_description || '',
+          thumbnail: cachedData.latest_episode_thumbnail || '',
+          url: cachedData.latest_episode_url || rssUrl,
+          audioUrl: cachedData.latest_episode_audio_url || '',
+          pubDate: cachedData.latest_episode_pub_date || '',
+          duration: cachedData.latest_episode_duration || '',
+          views: undefined,
+          podcastName: cachedData.podcast_name || podcastName,
+          feedUrl: rssUrl,
+          listenLinks: cachedData.listen_links || undefined,
+        };
+        
+        setPodcastData(cachedPodcastData);
+        setFetchingPodcast(false);
+        return;
+      }
+      
+      console.log('Cache miss or stale, fetching fresh podcast data...');
+      
+      // Step 2: Fetch fresh data from RSS
       let text = '';
       
       // Try multiple CORS proxies in order
@@ -1312,7 +1348,7 @@ const BioPage: React.FC = () => {
       }
 
       // Extract platform links from RSS feed
-      const listenLinks: { spotify?: string; apple?: string; youtube?: string; google?: string } = {};
+      const listenLinks: { spotify?: string; apple?: string; youtube?: string; google?: string; [key: string]: string | undefined } = {};
       
       // Look for links in channel (podcast-level links)
       const allLinks = Array.from(channel.querySelectorAll('link'));
@@ -1368,6 +1404,7 @@ const BioPage: React.FC = () => {
       setPodcastData(podcastDataObj);
       
       // Enhance with PodcastIndex API platform links (runs in background)
+      let enhancedLinks = { ...listenLinks };
       try {
         const { data: platformData, error: platformError } = await supabase.functions.invoke('get-podcast-platforms', {
           body: { feedUrl: rssUrl }
@@ -1376,7 +1413,7 @@ const BioPage: React.FC = () => {
         if (!platformError && platformData?.platforms) {
           console.log('PodcastIndex platform links:', platformData.platforms);
           // Merge with existing links (PodcastIndex takes priority)
-          const enhancedLinks = {
+          enhancedLinks = {
             ...listenLinks,
             ...platformData.platforms,
           };
@@ -1391,6 +1428,39 @@ const BioPage: React.FC = () => {
         }
       } catch (platformError) {
         console.warn('PodcastIndex API call failed (non-blocking):', platformError);
+      }
+      
+      // Step 3: Update cache with fresh data (upsert)
+      try {
+        const cacheData = {
+          podcast_rss_url: rssUrl,
+          podcast_name: feedTitle,
+          latest_episode_title: title,
+          latest_episode_description: description.replace(/<[^>]*>/g, '').substring(0, 500),
+          latest_episode_thumbnail: thumbnail,
+          latest_episode_url: episodeUrl || rssUrl,
+          latest_episode_audio_url: audioUrl,
+          latest_episode_duration: duration,
+          latest_episode_pub_date: pubDate,
+          listen_links: Object.keys(enhancedLinks).length > 0 ? enhancedLinks : null,
+          last_checked_at: new Date().toISOString(),
+        };
+        
+        // Use upsert to insert or update based on podcast_rss_url
+        const { error: cacheError } = await supabase
+          .from('podcast_cache')
+          .upsert(cacheData, { 
+            onConflict: 'podcast_rss_url',
+            ignoreDuplicates: false 
+          });
+        
+        if (cacheError) {
+          console.warn('Failed to update podcast cache:', cacheError);
+        } else {
+          console.log('Podcast cache updated successfully');
+        }
+      } catch (cacheErr) {
+        console.warn('Error updating podcast cache (non-blocking):', cacheErr);
       }
     } catch (error) {
       console.error('Error fetching podcast data:', error);
