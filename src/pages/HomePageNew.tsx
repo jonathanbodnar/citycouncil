@@ -73,6 +73,65 @@ export default function HomePageNew() {
   const urlPath = window.location.pathname.replace('/', '');
   const liveLink = urlPath.endsWith('live') ? urlPath.replace('live', '') : null;
 
+  // Capture coupon from URL and store in localStorage
+  useEffect(() => {
+    const captureUrlCoupon = async () => {
+      // Parse URL directly for reliability
+      const urlParams = new URLSearchParams(window.location.search);
+      let couponParam = urlParams.get('coupon') || searchParams.get('coupon');
+      
+      // Handle malformed URLs
+      if (!couponParam) {
+        const couponMatch = window.location.href.match(/[?&]coupon=([^&?#]+)/i);
+        if (couponMatch) couponParam = couponMatch[1];
+      }
+      
+      console.log('🎟️ HomePageNew: URL coupon check', { 
+        urlSearch: window.location.search,
+        couponParam,
+        existingCoupon: localStorage.getItem('auto_apply_coupon')
+      });
+      
+      if (couponParam) {
+        const couponCode = couponParam.toUpperCase();
+        console.log('🎟️ HomePageNew: Setting coupon from URL:', couponCode);
+        localStorage.setItem('auto_apply_coupon', couponCode);
+        
+        // Fetch coupon details from database
+        try {
+          const { data: coupon } = await supabase
+            .from('coupons')
+            .select('code, discount_type, discount_value')
+            .eq('code', couponCode)
+            .eq('is_active', true)
+            .single();
+          
+          if (coupon) {
+            const couponDetails = {
+              code: coupon.code,
+              type: coupon.discount_type,
+              value: coupon.discount_value,
+              label: coupon.discount_type === 'percentage' 
+                ? `${coupon.discount_value}% OFF` 
+                : `$${coupon.discount_value} OFF`
+            };
+            localStorage.setItem('coupon_details', JSON.stringify(couponDetails));
+            console.log('🎟️ HomePageNew: Coupon details fetched:', couponDetails);
+          }
+        } catch (error) {
+          console.log('🎟️ HomePageNew: Could not fetch coupon (may be hardcoded):', error);
+        }
+        
+        // Dispatch events to update cards
+        window.dispatchEvent(new Event('couponApplied'));
+        setTimeout(() => window.dispatchEvent(new Event('couponApplied')), 500);
+        setTimeout(() => window.dispatchEvent(new Event('couponApplied')), 1500);
+      }
+    };
+    
+    captureUrlCoupon();
+  }, [searchParams]);
+
   // Refetch data when auth state changes (login/logout)
   useEffect(() => {
     // Reset dataFetched to trigger refetch
@@ -106,22 +165,44 @@ export default function HomePageNew() {
 
   const checkDiscount = () => {
     const code = localStorage.getItem('auto_apply_coupon');
-    const prizeBrand = localStorage.getItem('giveaway_prize');
     const prizeExpiry = localStorage.getItem('giveaway_prize_expiry');
+    const couponDetailsStr = localStorage.getItem('coupon_details');
 
-    if (code && prizeExpiry) {
-      const expiry = parseInt(prizeExpiry, 10);
-      if (Date.now() < expiry) {
-        setDiscountCode(code);
+    console.log('🎟️ HomePageNew checkDiscount:', { code, prizeExpiry, couponDetailsStr });
+
+    if (code) {
+      // If there's an expiry, check it; otherwise coupon is valid for session
+      if (prizeExpiry) {
+        const expiry = parseInt(prizeExpiry, 10);
+        if (Date.now() >= expiry) {
+          console.log('🎟️ Coupon expired');
+          return; // Coupon expired
+        }
         setExpiryTime(expiry);
-        
-        // Determine discount amount based on code
-        if (code.includes('15')) setDiscountAmount(15);
-        else if (code.includes('10')) setDiscountAmount(10);
-        else if (code.includes('25')) setDiscountAmount(25);
-        else if (code.includes('20')) setDiscountAmount(20);
-        else if (code.includes('100')) setDiscountAmount(100); // Free shoutout
       }
+      
+      setDiscountCode(code);
+      
+      // First try to get amount from coupon_details (database coupons)
+      if (couponDetailsStr) {
+        try {
+          const details = JSON.parse(couponDetailsStr);
+          if (details.code === code.toUpperCase()) {
+            setDiscountAmount(details.value);
+            console.log('🎟️ Using coupon details from localStorage:', details);
+            return;
+          }
+        } catch (e) {
+          console.warn('Error parsing coupon details:', e);
+        }
+      }
+      
+      // Fallback: Determine discount amount based on code name
+      if (code.includes('100')) setDiscountAmount(100);
+      else if (code.includes('25')) setDiscountAmount(25);
+      else if (code.includes('20')) setDiscountAmount(20);
+      else if (code.includes('15')) setDiscountAmount(15);
+      else if (code.includes('10')) setDiscountAmount(10);
     }
   };
 
