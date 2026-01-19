@@ -22,7 +22,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   VideoCameraIcon,
-  TagIcon
+  TagIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { uploadImageToWasabi } from '../services/wasabiUpload';
@@ -97,7 +98,7 @@ interface BioSettings {
 interface BioLink {
   id?: string;
   talent_id: string;
-  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video' | 'affiliate';
+  link_type: 'basic' | 'grid' | 'newsletter' | 'sponsor' | 'video' | 'affiliate' | 'donate';
   title?: string;
   url?: string;
   icon_url?: string;
@@ -3532,7 +3533,7 @@ const AddLinkModal: React.FC<{
   onAddMultiple?: (links: Omit<BioLink, 'id' | 'display_order'>[]) => void;
   talentId: string;
 }> = ({ onClose, onAdd, onAddMultiple, talentId }) => {
-  const [linkType, setLinkType] = useState<'basic' | 'grid' | 'sponsor' | 'video' | 'affiliate'>('basic');
+  const [linkType, setLinkType] = useState<'basic' | 'grid' | 'sponsor' | 'video' | 'affiliate' | 'donate'>('basic');
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
@@ -3660,6 +3661,7 @@ const AddLinkModal: React.FC<{
     { type: 'grid' as const, label: 'Grid Card', icon: Squares2X2Icon, color: 'purple', desc: 'Image card with link' },
     { type: 'video' as const, label: 'Featured Video', icon: VideoCameraIcon, color: 'red', desc: 'Autoplay video card' },
     { type: 'affiliate' as const, label: 'Affiliate Link', icon: TagIcon, color: 'green', desc: 'Brand partnership with discount' },
+    { type: 'donate' as const, label: 'Donate/Support', icon: CurrencyDollarIcon, color: 'yellow', desc: 'Payment link badge' },
   ];
 
   return (
