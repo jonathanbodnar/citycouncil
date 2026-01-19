@@ -1366,6 +1366,32 @@ const BioPage: React.FC = () => {
       
       console.log('Successfully parsed podcast data:', podcastDataObj);
       setPodcastData(podcastDataObj);
+      
+      // Enhance with PodcastIndex API platform links (runs in background)
+      try {
+        const { data: platformData, error: platformError } = await supabase.functions.invoke('get-podcast-platforms', {
+          body: { feedUrl: rssUrl }
+        });
+        
+        if (!platformError && platformData?.platforms) {
+          console.log('PodcastIndex platform links:', platformData.platforms);
+          // Merge with existing links (PodcastIndex takes priority)
+          const enhancedLinks = {
+            ...listenLinks,
+            ...platformData.platforms,
+          };
+          
+          if (Object.keys(enhancedLinks).length > 0) {
+            setPodcastData(prev => prev ? {
+              ...prev,
+              listenLinks: enhancedLinks
+            } : prev);
+            console.log('Enhanced with platform links:', enhancedLinks);
+          }
+        }
+      } catch (platformError) {
+        console.warn('PodcastIndex API call failed (non-blocking):', platformError);
+      }
     } catch (error) {
       console.error('Error fetching podcast data:', error);
     } finally {
