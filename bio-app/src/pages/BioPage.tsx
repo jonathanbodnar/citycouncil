@@ -398,6 +398,7 @@ const BioPage: React.FC = () => {
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoData | null>(null);
   const [podcastData, setPodcastData] = useState<PodcastEpisodeData | null>(null);
   const [fetchingPodcast, setFetchingPodcast] = useState(false);
+  const podcastFetchedRef = React.useRef(false);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [showCollabModal, setShowCollabModal] = useState<ServiceOffering | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState<ServiceOffering | null>(null);
@@ -1174,13 +1175,14 @@ const BioPage: React.FC = () => {
 
   // Fetch podcast data from RSS feed
   const fetchPodcastData = async (rssUrl: string, podcastName: string) => {
-    if (fetchingPodcast) {
-      console.log('Podcast fetch already in progress, skipping');
+    if (fetchingPodcast || podcastFetchedRef.current) {
+      console.log('Podcast fetch already in progress or completed, skipping');
       return;
     }
     
     console.log('Fetching podcast data for:', rssUrl);
     setFetchingPodcast(true);
+    podcastFetchedRef.current = true;
     
     try {
       let text = '';
