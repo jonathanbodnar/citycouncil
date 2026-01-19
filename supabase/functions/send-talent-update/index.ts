@@ -1,6 +1,6 @@
 // send-talent-update edge function
 // Sends email updates from talent to their followers via SendGrid
-// Uses dynamic sender addresses like firstname@bio.shoutout.us
+// Uses dynamic sender addresses like firstname@shoutout.fans
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
       .replace(/[^a-z0-9]/g, '.')
       .replace(/\.+/g, '.')
       .replace(/^\.|\.$/, '');
-    const fromEmail = `${senderHandle}@bio.shoutout.us`;
+    const fromEmail = `${senderHandle}@shoutout.fans`;
 
     // Build the email HTML template (with placeholder for unsubscribe URL)
     const emailHtml = buildEmailHtml(
