@@ -3660,7 +3660,6 @@ const AddLinkModal: React.FC<{
     { type: 'grid' as const, label: 'Grid Card', icon: Squares2X2Icon, color: 'purple', desc: 'Image card with link' },
     { type: 'video' as const, label: 'Featured Video', icon: VideoCameraIcon, color: 'red', desc: 'Autoplay video card' },
     { type: 'affiliate' as const, label: 'Affiliate Link', icon: TagIcon, color: 'green', desc: 'Brand partnership with discount' },
-    { type: 'sponsor' as const, label: 'Become a Sponsor', icon: GiftIcon, color: 'yellow', desc: 'Sponsorship CTA' },
   ];
 
   return (
