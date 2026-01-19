@@ -422,16 +422,52 @@ const BioPage: React.FC = () => {
   }, []);
 
   // Update page title with talent name
+  // Update page title and meta tags for social sharing
   useEffect(() => {
-    if (talentProfile?.full_name) {
-      document.title = talentProfile.full_name;
-    } else if (bioSettings?.display_name) {
-      document.title = bioSettings.display_name;
+    const name = talentProfile?.full_name || talentProfile?.temp_full_name || bioSettings?.display_name || 'Creator';
+    const description = bioSettings?.one_liner || `${name}'s link in bio`;
+    const imageUrl = talentProfile?.temp_avatar_url || bioSettings?.profile_image_url || '';
+    const pageUrl = `https://shoutout.fans/${talentProfile?.username || talentProfile?.id || ''}`;
+    
+    // Set page title
+    document.title = name;
+    
+    // Helper to update or create meta tag
+    const setMetaTag = (property: string, content: string, isName = false) => {
+      const attr = isName ? 'name' : 'property';
+      let meta = document.querySelector(`meta[${attr}="${property}"]`) as HTMLMetaElement;
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attr, property);
+        document.head.appendChild(meta);
+      }
+      meta.content = content;
+    };
+    
+    // Open Graph tags (Facebook, iMessage, etc.)
+    setMetaTag('og:title', name);
+    setMetaTag('og:description', description);
+    setMetaTag('og:type', 'profile');
+    setMetaTag('og:url', pageUrl);
+    if (imageUrl) {
+      setMetaTag('og:image', imageUrl);
     }
+    
+    // Twitter Card tags
+    setMetaTag('twitter:card', 'summary', true);
+    setMetaTag('twitter:title', name, true);
+    setMetaTag('twitter:description', description, true);
+    if (imageUrl) {
+      setMetaTag('twitter:image', imageUrl, true);
+    }
+    
+    // Standard description meta
+    setMetaTag('description', description, true);
+    
     return () => {
       document.title = 'ShoutOut Bio';
     };
-  }, [talentProfile?.full_name, bioSettings?.display_name]);
+  }, [talentProfile?.full_name, talentProfile?.temp_full_name, talentProfile?.username, talentProfile?.id, talentProfile?.temp_avatar_url, bioSettings?.display_name, bioSettings?.one_liner, bioSettings?.profile_image_url]);
 
   useEffect(() => {
     const fetchBioData = async () => {
