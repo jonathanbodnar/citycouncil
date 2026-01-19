@@ -149,6 +149,7 @@ interface BioSettings {
   show_youtube_card?: boolean;
   show_podcast_card?: boolean;
   show_newsletter?: boolean;
+  affiliate_section_title?: string;
   is_published: boolean;
   background_type: string;
   gradient_start: string;
