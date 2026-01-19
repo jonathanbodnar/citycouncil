@@ -2529,7 +2529,6 @@ const BioPage: React.FC = () => {
                           )}
                         </div>
                       )}
-                    </div>
                   </div>
                 </div>
               </div>
