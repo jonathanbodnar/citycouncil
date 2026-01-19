@@ -1741,26 +1741,28 @@ const BioPage: React.FC = () => {
           const getPlatformIcon = (url: string) => {
             const lower = url.toLowerCase();
             
+            // Use simple colored circles with text for better compatibility
             if (lower.includes('venmo.com')) {
-              return <svg viewBox="0 0 24 24" fill="#3D95CE" className="w-4 h-4"><path d="M19.542 2h-4.243l.003 12.686c0 1.974-1.463 2.775-2.768 2.775-1.488 0-2.494-.99-2.494-2.776 0-4.182 6.508-4.428 6.508-12.686h-4.243c0 5.467-10.305 5.467-10.305 12.686 0 4.428 3.304 6.316 6.798 6.316 3.678 0 6.744-2.31 6.744-6.316V2z"/></svg>;
+              return <div className="w-5 h-5 rounded-full bg-[#3D95CE] flex items-center justify-center text-white text-xs font-bold">V</div>;
             }
             if (lower.includes('paypal')) {
-              return <svg viewBox="0 0 24 24" fill="#00457C" className="w-4 h-4"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .756-.653h7.064c2.948 0 4.981.616 5.856 2.353.732 1.457.465 3.323-.756 5.263-.929 1.479-2.371 2.567-4.053 3.061-.994.293-2.116.439-3.333.439H9.39a.77.77 0 0 0-.755.653l-.953 6.165c-.05.335-.323.583-.658.583z"/></svg>;
+              return <div className="w-5 h-5 rounded-full bg-[#00457C] flex items-center justify-center text-white text-xs font-bold">P</div>;
             }
             if (lower.includes('cash.app')) {
-              return <svg viewBox="0 0 24 24" fill="#00D54B" className="w-4 h-4"><path d="M15.34 12.17L12.62 13.8l-1.45-2.38 2.73-1.63z"/></svg>;
+              return <div className="w-5 h-5 rounded-full bg-[#00D54B] flex items-center justify-center text-white text-xs font-bold">$</div>;
             }
             if (lower.includes('ko-fi.com')) {
-              return <svg viewBox="0 0 24 24" fill="#FF5E5B" className="w-4 h-4"><path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916z"/></svg>;
+              return <div className="w-5 h-5 rounded-full bg-[#FF5E5B] flex items-center justify-center text-white text-xs">☕</div>;
             }
             if (lower.includes('buymeacoffee.com')) {
-              return <svg viewBox="0 0 24 24" fill="#FFDD00" className="w-4 h-4"><path d="M20.216 6.415c-.119-.598-.388-1.163-1.001-1.379-.626-.194-2.05-.36-3.077-.416-3.7.062-7.88.684-2.75.5 1.37 1.502 1.37 1.502a39.69 39.69 0 0011.343.376z"/></svg>;
+              return <div className="w-5 h-5 rounded-full bg-[#FFDD00] flex items-center justify-center text-black text-xs">☕</div>;
             }
             if (lower.includes('patreon.com')) {
-              return <svg viewBox="0 0 24 24" fill="#FF424D" className="w-4 h-4"><path d="M15.386.524c-4.764 0-8.64 3.876-8.64 8.64 0 4.75 3.876 8.613 8.64 8.613 4.75 0 8.614-3.864 8.614-8.613C24 4.4 20.136.524 15.386.524M.003 23.537h4.22V.524H.003"/></svg>;
+              return <div className="w-5 h-5 rounded-full bg-[#FF424D] flex items-center justify-center text-white text-xs font-bold">P</div>;
             }
             
-            return <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>;
+            // Default: dollar sign
+            return <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">$</div>;
           };
           
           return (
