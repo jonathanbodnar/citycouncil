@@ -1741,28 +1741,27 @@ const BioPage: React.FC = () => {
           const getPlatformIcon = (url: string) => {
             const lower = url.toLowerCase();
             
-            // Use simple colored circles with text for better compatibility
+            // Use platform name text with brand colors - simple and reliable
             if (lower.includes('venmo.com')) {
-              return <div className="w-5 h-5 rounded-full bg-[#3D95CE] flex items-center justify-center text-white text-xs font-bold">V</div>;
+              return <span className="text-[#3D95CE] font-bold text-sm">Venmo</span>;
             }
             if (lower.includes('paypal')) {
-              return <div className="w-5 h-5 rounded-full bg-[#00457C] flex items-center justify-center text-white text-xs font-bold">P</div>;
+              return <span className="text-[#00457C] font-bold text-sm">PayPal</span>;
             }
             if (lower.includes('cash.app')) {
-              return <div className="w-5 h-5 rounded-full bg-[#00D54B] flex items-center justify-center text-white text-xs font-bold">$</div>;
+              return <span className="text-[#00D54B] font-bold text-sm">Cash App</span>;
             }
             if (lower.includes('ko-fi.com')) {
-              return <div className="w-5 h-5 rounded-full bg-[#FF5E5B] flex items-center justify-center text-white text-xs">☕</div>;
+              return <span className="text-[#FF5E5B] font-bold text-sm">Ko-fi</span>;
             }
             if (lower.includes('buymeacoffee.com')) {
-              return <div className="w-5 h-5 rounded-full bg-[#FFDD00] flex items-center justify-center text-black text-xs">☕</div>;
+              return <span className="text-[#FFDD00] font-bold text-sm">Buy Me a Coffee</span>;
             }
             if (lower.includes('patreon.com')) {
-              return <div className="w-5 h-5 rounded-full bg-[#FF424D] flex items-center justify-center text-white text-xs font-bold">P</div>;
+              return <span className="text-[#FF424D] font-bold text-sm">Patreon</span>;
             }
             
-            // Default: dollar sign
-            return <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">$</div>;
+            return null;
           };
           
           return (
@@ -1777,14 +1776,13 @@ const BioPage: React.FC = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => handleLinkClick(link)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-all hover:scale-105 border shadow-lg"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-md transition-all hover:scale-105 border shadow-lg"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      borderColor: 'rgba(255, 255, 255, 0.3)',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
                     }}
                   >
                     {getPlatformIcon(link.url || '')}
-                    <span className="text-white text-xs font-medium">{displayTitle}</span>
                   </a>
                 );
               })}
