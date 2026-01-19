@@ -3536,8 +3536,8 @@ const AddLinkModal: React.FC<{
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
-  // const [companyName, setCompanyName] = useState('');
-  // const [discountAmount, setDiscountAmount] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [discountAmount, setDiscountAmount] = useState('');
   const [gridColumns, setGridColumns] = useState(2);
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -3632,9 +3632,11 @@ const AddLinkModal: React.FC<{
       onAdd({
         talent_id: talentId,
         link_type: linkType,
-        title: linkType === 'video' ? 'Featured Video' : title,
+        title: linkType === 'video' ? 'Featured Video' : (linkType === 'affiliate' ? companyName : title),
         url: linkType === 'video' ? undefined : ensureHttps(url),
         video_url: linkType === 'video' ? videoUrl : undefined,
+        company_name: linkType === 'affiliate' ? companyName : undefined,
+        discount_amount: linkType === 'affiliate' ? discountAmount : undefined,
         thumbnail_url: thumbnailUrl || undefined,
         grid_columns: gridColumns,
         is_active: true,
@@ -3713,6 +3715,73 @@ const AddLinkModal: React.FC<{
                   />
                   <p className="text-xs text-gray-500 mt-1">Direct link to .mp4, .webm, or .mov file</p>
                 </div>
+              ) : linkType === 'affiliate' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Company Name *</label>
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="Brand Name"
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Affiliate URL *</label>
+                    <input
+                      type="text"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      onBlur={handleUrlBlur}
+                      placeholder="youraffiliatelink.com"
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Your affiliate/referral link</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Brand Logo/Image *</label>
+                    {thumbnailUrl ? (
+                      <div className="flex items-center gap-4">
+                        <img src={thumbnailUrl} alt="Preview" className="w-20 h-20 rounded-lg object-cover" />
+                        <button type="button" onClick={() => setThumbnailUrl('')} className="text-sm text-red-400 hover:text-red-300">
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors">
+                        <div className="flex flex-col items-center justify-center">
+                          {uploading ? (
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                          ) : (
+                            <>
+                              <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2" />
+                              <p className="text-sm text-gray-400">Upload brand logo</p>
+                              <p className="text-xs text-gray-500 mt-1">Square image recommended</p>
+                            </>
+                          )}
+                        </div>
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e)} disabled={uploading} />
+                      </label>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Discount Code/Amount <span className="text-gray-500 text-xs">(optional)</span></label>
+                    <input
+                      type="text"
+                      value={discountAmount}
+                      onChange={(e) => setDiscountAmount(e.target.value)}
+                      placeholder="e.g., 20% OFF or SAVE20"
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Will appear as a badge on the brand logo</p>
+                  </div>
+                </>
               ) : (
                 <>
                   <div>
