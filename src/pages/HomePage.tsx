@@ -48,7 +48,6 @@ const CATEGORY_MAPPING: Record<string, string> = {
 };
 
 const HomePage: React.FC = () => {
-  console.log('🏠 HomePage rendering, URL:', window.location.href);
   const [searchParams] = useSearchParams();
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);

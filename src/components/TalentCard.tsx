@@ -67,16 +67,14 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
   const checkCoupon = useCallback(() => {
     const coupon = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
     const details = getCouponFromStorage();
-    console.log('🎟️ TalentCard checkCoupon:', { coupon, details, talentName: talent.temp_full_name || talent.users?.full_name });
     if (coupon && details) {
       setActiveCoupon(coupon.toUpperCase());
       setCouponDetails(details);
-      console.log('🎟️ TalentCard: Coupon applied!', coupon.toUpperCase(), details);
     } else {
       setActiveCoupon(null);
       setCouponDetails(null);
     }
-  }, [talent.temp_full_name, talent.users?.full_name]);
+  }, []);
 
   useEffect(() => {
     checkCoupon();
@@ -89,7 +87,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
     const pollInterval = setInterval(() => {
       const coupon = localStorage.getItem('auto_apply_coupon');
       if (coupon && !activeCoupon) {
-        console.log('🎟️ TalentCard: Polling found coupon!', coupon);
         checkCoupon();
       }
     }, 200);
@@ -283,11 +280,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
               >
                 ${discountedPrice}
               </span>
-              {couponDetails && (
-                <span className={`${compact ? 'text-[8px] px-1 py-0.5' : 'text-[10px] px-1.5 py-0.5'} bg-green-500/20 text-green-400 rounded-full font-medium`}>
-                  {couponDetails.label}
-                </span>
-              )}
             </>
           ) : (
             <span className={`${compact ? 'text-sm' : 'text-base sm:text-lg'} font-bold text-white`}>

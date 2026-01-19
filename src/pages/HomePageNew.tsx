@@ -62,11 +62,37 @@ export default function HomePageNew() {
   const [loading, setLoading] = useState(true);
   const [totalReviews, setTotalReviews] = useState(0);
   const [dataFetched, setDataFetched] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
   
   // Get discount info from localStorage
   const [discountCode, setDiscountCode] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState<number | null>(null);
   const [expiryTime, setExpiryTime] = useState<number | null>(null);
+
+  // Listen for header search events
+  useEffect(() => {
+    const handleHeaderSearch = (event: CustomEvent) => {
+      setSearchQuery(event.detail || '');
+    };
+    window.addEventListener('headerSearch', handleHeaderSearch as EventListener);
+    return () => window.removeEventListener('headerSearch', handleHeaderSearch as EventListener);
+  }, []);
+
+  // Apply search filter when searchQuery changes
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const filtered = talentList.filter(talent => {
+        const name = (talent.temp_full_name || talent.users?.full_name || '').toLowerCase();
+        const bio = (talent.bio || '').toLowerCase();
+        const categories = (talent.categories || []).join(' ').toLowerCase();
+        return name.includes(query) || bio.includes(query) || categories.includes(query);
+      });
+      setFilteredTalent(filtered);
+    } else {
+      setFilteredTalent(talentList);
+    }
+  }, [searchQuery, talentList]);
 
   // Check for UTM or live link
   const utmParam = searchParams.get('utm');
@@ -86,15 +112,8 @@ export default function HomePageNew() {
         if (couponMatch) couponParam = couponMatch[1];
       }
       
-      console.log('🎟️ HomePageNew: URL coupon check', { 
-        urlSearch: window.location.search,
-        couponParam,
-        existingCoupon: localStorage.getItem('auto_apply_coupon')
-      });
-      
       if (couponParam) {
         const couponCode = couponParam.toUpperCase();
-        console.log('🎟️ HomePageNew: Setting coupon from URL:', couponCode);
         localStorage.setItem('auto_apply_coupon', couponCode);
         
         // Fetch coupon details from database
@@ -116,10 +135,9 @@ export default function HomePageNew() {
                 : `$${coupon.discount_value} OFF`
             };
             localStorage.setItem('coupon_details', JSON.stringify(couponDetails));
-            console.log('🎟️ HomePageNew: Coupon details fetched:', couponDetails);
           }
         } catch (error) {
-          console.log('🎟️ HomePageNew: Could not fetch coupon (may be hardcoded):', error);
+          // Coupon may be hardcoded, continue
         }
         
         // Dispatch events to update cards
@@ -168,14 +186,11 @@ export default function HomePageNew() {
     const prizeExpiry = localStorage.getItem('giveaway_prize_expiry');
     const couponDetailsStr = localStorage.getItem('coupon_details');
 
-    console.log('🎟️ HomePageNew checkDiscount:', { code, prizeExpiry, couponDetailsStr });
-
     if (code) {
       // If there's an expiry, check it; otherwise coupon is valid for session
       if (prizeExpiry) {
         const expiry = parseInt(prizeExpiry, 10);
         if (Date.now() >= expiry) {
-          console.log('🎟️ Coupon expired');
           return; // Coupon expired
         }
         setExpiryTime(expiry);
@@ -189,11 +204,10 @@ export default function HomePageNew() {
           const details = JSON.parse(couponDetailsStr);
           if (details.code === code.toUpperCase()) {
             setDiscountAmount(details.value);
-            console.log('🎟️ Using coupon details from localStorage:', details);
             return;
           }
         } catch (e) {
-          console.warn('Error parsing coupon details:', e);
+          // Continue to fallback
         }
       }
       
