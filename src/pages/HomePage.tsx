@@ -48,6 +48,7 @@ const CATEGORY_MAPPING: Record<string, string> = {
 };
 
 const HomePage: React.FC = () => {
+  console.log('🏠 HomePage rendering, URL:', window.location.href);
   const [searchParams] = useSearchParams();
   const [talent, setTalent] = useState<TalentWithUser[]>([]);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithUser[]>([]);
@@ -67,10 +68,17 @@ const HomePage: React.FC = () => {
   }, []);
 
   // Capture coupon from URL (e.g., shoutout.us/?coupon=SANTA25)
-  // Also handles malformed URLs like ?utm=sms?coupon=SANTA25 (double question mark)
+  // Uses window.location directly for reliability (React Router searchParams can be stale)
   useEffect(() => {
     const fetchAndApplyCoupon = async () => {
-      let couponParam = searchParams.get('coupon');
+      // Parse URL directly - more reliable than searchParams
+      const urlParams = new URLSearchParams(window.location.search);
+      let couponParam = urlParams.get('coupon');
+      
+      // Also try React Router searchParams as backup
+      if (!couponParam) {
+        couponParam = searchParams.get('coupon');
+      }
       
       // Handle malformed URLs with double question marks (e.g., ?utm=sms?coupon=SANTA25)
       if (!couponParam) {
@@ -80,6 +88,12 @@ const HomePage: React.FC = () => {
           couponParam = couponMatch[1];
         }
       }
+      
+      console.log('🎟️ HomePage: URL coupon check', { 
+        urlSearch: window.location.search,
+        couponParam,
+        existingCoupon: localStorage.getItem('auto_apply_coupon')
+      });
       
       if (couponParam) {
         const couponCode = couponParam.toUpperCase();
@@ -97,15 +111,18 @@ const HomePage: React.FC = () => {
           
           if (coupon) {
             // Store coupon details for use in TalentCard/TalentBannerCard
-            localStorage.setItem('coupon_details', JSON.stringify({
+            const couponDetails = {
               code: coupon.code,
               type: coupon.discount_type,
               value: coupon.discount_value,
               label: coupon.discount_type === 'percentage' 
                 ? `${coupon.discount_value}% OFF` 
                 : `$${coupon.discount_value} OFF`
-            }));
-            console.log('🎟️ Coupon details fetched from database:', coupon);
+            };
+            localStorage.setItem('coupon_details', JSON.stringify(couponDetails));
+            console.log('🎟️ Coupon details fetched from database:', coupon, couponDetails);
+          } else {
+            console.log('🎟️ No coupon found in database for:', couponCode);
           }
         } catch (error) {
           console.log('🎟️ Could not fetch coupon details (may be hardcoded):', error);
@@ -115,11 +132,16 @@ const HomePage: React.FC = () => {
         console.log('🎟️ HomePage: Dispatching couponApplied event');
         window.dispatchEvent(new Event('couponApplied'));
         
-        // Also dispatch after a small delay to ensure TalentCards are mounted
+        // Also dispatch after delays to ensure TalentCards are mounted
         setTimeout(() => {
-          console.log('🎟️ HomePage: Dispatching delayed couponApplied event');
+          console.log('🎟️ HomePage: Dispatching 500ms delayed couponApplied event');
           window.dispatchEvent(new Event('couponApplied'));
         }, 500);
+        
+        setTimeout(() => {
+          console.log('🎟️ HomePage: Dispatching 1500ms delayed couponApplied event');
+          window.dispatchEvent(new Event('couponApplied'));
+        }, 1500);
       }
     };
     
