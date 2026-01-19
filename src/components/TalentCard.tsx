@@ -239,6 +239,37 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
           </p>
         )}
 
+        {/* Price Display */}
+        <div className={`flex items-center ${compact ? 'gap-1 mb-1' : 'gap-2 mb-2'}`}>
+          {hasCoupon ? (
+            <>
+              <span className={`${compact ? 'text-[10px]' : 'text-xs sm:text-sm'} text-gray-500 line-through`}>
+                ${originalPrice}
+              </span>
+              <span 
+                className={`${compact ? 'text-sm' : 'text-base sm:text-lg'} font-bold`}
+                style={{
+                  background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                ${discountedPrice}
+              </span>
+              {couponDetails && (
+                <span className={`${compact ? 'text-[8px] px-1 py-0.5' : 'text-[10px] px-1.5 py-0.5'} bg-green-500/20 text-green-400 rounded-full font-medium`}>
+                  {couponDetails.label}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className={`${compact ? 'text-sm' : 'text-base sm:text-lg'} font-bold text-white`}>
+              ${originalPrice}
+            </span>
+          )}
+        </div>
+
         {/* Delivery time and Charity - Push to bottom */}
         <div className={`flex items-center justify-between mt-auto ${compact ? 'text-[9px]' : ''}`}>
           <span 
