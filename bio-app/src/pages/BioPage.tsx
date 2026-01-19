@@ -393,6 +393,7 @@ const BioPage: React.FC = () => {
   const [rumbleData, setRumbleData] = useState<RumbleVideoData | null>(null);
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoData | null>(null);
   const [podcastData, setPodcastData] = useState<PodcastEpisodeData | null>(null);
+  const [fetchingPodcast, setFetchingPodcast] = useState(false);
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [showCollabModal, setShowCollabModal] = useState<ServiceOffering | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState<ServiceOffering | null>(null);
@@ -1356,6 +1357,8 @@ const BioPage: React.FC = () => {
       setPodcastData(podcastDataObj);
     } catch (error) {
       console.error('Error fetching podcast data:', error);
+    } finally {
+      setFetchingPodcast(false);
     }
   };
 
