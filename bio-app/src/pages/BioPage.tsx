@@ -2517,6 +2517,60 @@ const BioPage: React.FC = () => {
             );
           })()}
 
+          {/* Affiliate Links Carousel */}
+          {(() => {
+            const affiliateLinks = links.filter(l => l.link_type === 'affiliate' && l.is_active);
+            if (affiliateLinks.length === 0) return null;
+            
+            const sectionTitle = bioSettings?.affiliate_section_title || 'Back the Brands That Support Me';
+            
+            return (
+              <div className="mt-6">
+                <h3 className="text-white font-semibold text-sm mb-3 text-center">{sectionTitle}</h3>
+                <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+                  {affiliateLinks.map((link) => (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleLinkClick(link)}
+                      className="flex-shrink-0 w-32 snap-center"
+                    >
+                      <div className="relative rounded-2xl overflow-hidden border-2 border-white/20 shadow-lg hover:border-white/40 hover:scale-105 transition-all duration-300">
+                        {/* Brand Image */}
+                        <div className="aspect-square bg-white/10">
+                          {link.thumbnail_url ? (
+                            <img src={link.thumbnail_url} alt={link.company_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/20 to-white/5">
+                              <span className="text-white/40 text-3xl font-bold">{link.company_name?.charAt(0)}</span>
+                            </div>
+                          )}
+                          
+                          {/* Discount Badge - Top Right */}
+                          {(link.discount_amount || link.discount_code) && (
+                            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-lg">
+                              {link.discount_amount && <div>{link.discount_amount}</div>}
+                              {link.discount_code && <div className="text-[10px]">{link.discount_code}</div>}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Company Name Banner - Bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm py-2 px-2">
+                          <p className="text-white text-[10px] font-semibold text-center uppercase tracking-wide truncate">
+                            {link.company_name}
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ShoutOut Card - Always at the bottom (cannot be removed) */}
           {bioSettings && (
             <a
