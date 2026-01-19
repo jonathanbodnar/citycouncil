@@ -268,6 +268,12 @@ interface PodcastEpisodeData {
   views?: string;
   podcastName: string;
   feedUrl: string;
+  listenLinks?: {
+    spotify?: string;
+    apple?: string;
+    youtube?: string;
+    google?: string;
+  };
 }
 
 // User type for current logged-in user
@@ -390,6 +396,7 @@ const BioPage: React.FC = () => {
   const [serviceOfferings, setServiceOfferings] = useState<ServiceOffering[]>([]);
   const [showCollabModal, setShowCollabModal] = useState<ServiceOffering | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState<ServiceOffering | null>(null);
+  const [showPodcastModal, setShowPodcastModal] = useState(false);
   const [bioEvents, setBioEvents] = useState<BioEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -1952,42 +1959,19 @@ const BioPage: React.FC = () => {
                   feedUrl: talentProfile.podcast_rss_url,
                 };
                 
-                const PodcastPlayer = () => {
-                  const [isPlaying, setIsPlaying] = React.useState(false);
-                  const audioRef = React.useRef<HTMLAudioElement>(null);
-
-                  const togglePlay = (e: React.MouseEvent) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    if (audioRef.current) {
-                      if (isPlaying) {
-                        audioRef.current.pause();
-                        setIsPlaying(false);
-                      } else {
-                        console.log('Attempting to play audio:', audioRef.current.src);
-                        audioRef.current.play().catch(err => {
-                          console.error('Audio play error:', err);
-                          toast.error('Could not play audio');
-                          setIsPlaying(false);
-                        });
-                        setIsPlaying(true);
-                      }
-                    }
-                  };
-
-                  // Use audioUrl from enclosure (direct MP3) if available
-                  const audioUrl = displayData.audioUrl && displayData.audioUrl.includes('.mp3') 
-                    ? displayData.audioUrl 
-                    : null;
-                  
-                  console.log('Podcast player audioUrl:', audioUrl);
-                  
+                const PodcastCard = () => {
                   return (
-                    <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300">
-                      <div className="flex items-center">
-                        {/* Thumbnail with play button - flush to edge */}
-                        <div className="w-[50px] h-[50px] flex-shrink-0 relative bg-black/20 cursor-pointer" onClick={togglePlay}>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowPodcastModal(true);
+                      }}
+                      className="w-full text-left"
+                    >
+                      <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl overflow-hidden border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300">
+                        <div className="flex items-center">
+                          {/* Thumbnail - flush to edge */}
+                          <div className="w-[50px] h-[50px] flex-shrink-0 relative bg-black/20">
                           {displayData.thumbnail ? (
                             <img src={displayData.thumbnail} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -2033,38 +2017,12 @@ const BioPage: React.FC = () => {
                           </h3>
                         </div>
                       </div>
-                      
-                      {/* Hidden audio element */}
-                      {audioUrl && !isLoading && (
-                        <audio
-                          ref={audioRef}
-                          src={audioUrl}
-                          preload="metadata"
-                          onEnded={() => {
-                            console.log('Audio ended');
-                            setIsPlaying(false);
-                          }}
-                          onError={(e) => {
-                            console.error('Audio playback error:', e);
-                            setIsPlaying(false);
-                            toast.error('Audio file could not be loaded');
-                          }}
-                          onLoadedMetadata={() => {
-                            console.log('Audio metadata loaded, duration:', audioRef.current?.duration);
-                          }}
-                          onPause={() => {
-                            console.log('Audio paused');
-                          }}
-                          onPlay={() => {
-                            console.log('Audio playing');
-                          }}
-                        />
-                      )}
                     </div>
+                    </button>
                   );
                 };
                 
-                return <PodcastPlayer key="podcast" />;
+                return <PodcastCard key="podcast" />;
               }
               
               return null;
@@ -2686,6 +2644,15 @@ const BioPage: React.FC = () => {
           onClose={() => setShowSponsorModal(null)}
         />
       )}
+
+      {/* Podcast Modal */}
+      {showPodcastModal && podcastData && bioSettings && (
+        <PodcastModal
+          podcast={podcastData}
+          bioSettings={bioSettings}
+          onClose={() => setShowPodcastModal(false)}
+        />
+      )}
     </div>
   );
 };
@@ -3048,6 +3015,116 @@ const SponsorInquiryModal: React.FC<{
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Podcast Modal Component
+const PodcastModal: React.FC<{
+  podcast: PodcastEpisodeData;
+  bioSettings: BioSettings;
+  onClose: () => void;
+}> = ({ podcast, bioSettings, onClose }) => {
+  const gradientDirection = bioSettings.gradient_direction === 'to-b' ? '180deg' : '135deg';
+  const gradientStart = bioSettings.gradient_start || '#0a0a0a';
+  const gradientEnd = bioSettings.gradient_end || '#1a1a2e';
+  const buttonColor = bioSettings.button_color || '#3b82f6';
+
+  // Listen platforms - extracted from RSS or default common ones
+  const listenPlatforms = [
+    { name: 'Spotify', url: podcast.listenLinks?.spotify, icon: 'M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z' },
+    { name: 'Apple Podcasts', url: podcast.listenLinks?.apple || podcast.url, icon: 'M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701' },
+    { name: 'YouTube Music', url: podcast.listenLinks?.youtube, icon: 'M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z' },
+    { name: 'Google Podcasts', url: podcast.listenLinks?.google, icon: 'M1.26 8.265v7.47h1.96v-7.47zm3.915 0v7.47h1.96v-7.47zm3.916-3.915v15.3h1.96v-15.3zm3.915 1.957v11.386h1.96V6.307zm3.916 1.958v7.47h1.96v-7.47zm3.915 0v7.47H24v-7.47z' },
+  ];
+
+  return (
+    <div 
+      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      style={{ background: 'rgba(0, 0, 0, 0.8)' }}
+    >
+      <div 
+        className="rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-white/20"
+        style={{
+          background: `linear-gradient(${gradientDirection}, ${gradientStart}, ${gradientEnd})`
+        }}
+      >
+        {/* Header with Thumbnail */}
+        <div className="relative">
+          {podcast.thumbnail && (
+            <div className="w-full h-48 overflow-hidden">
+              <img src={podcast.thumbnail} alt={podcast.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-purple-400">
+              <path d="M12 1c-6.1 0-11 4.9-11 11s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 20c-5 0-9-4-9-9s4-9 9-9 9 4 9 9-4 9-9 9z"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+            <p className="text-purple-400 text-sm font-medium uppercase tracking-wide">{podcast.podcastName}</p>
+          </div>
+
+          <h2 className="text-2xl font-bold text-white">{podcast.title}</h2>
+
+          {podcast.description && (
+            <p className="text-gray-300 text-sm leading-relaxed">{podcast.description}</p>
+          )}
+
+          {podcast.duration && (
+            <div className="flex items-center gap-2 text-gray-400 text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{podcast.duration}</span>
+            </div>
+          )}
+
+          {/* Listen On Buttons */}
+          <div className="space-y-3 pt-4">
+            <h3 className="text-white font-semibold text-sm">Listen on:</h3>
+            <div className="space-y-2">
+              {listenPlatforms.map((platform) => {
+                if (!platform.url) return null;
+                
+                return (
+                  <a
+                    key={platform.name}
+                    href={platform.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02]"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white flex-shrink-0">
+                      <path d={platform.icon} />
+                    </svg>
+                    <span className="text-white font-medium text-sm">{platform.name}</span>
+                    <svg className="w-4 h-4 text-white/60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
