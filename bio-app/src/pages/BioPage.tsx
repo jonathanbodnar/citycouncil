@@ -1724,7 +1724,7 @@ const BioPage: React.FC = () => {
           href="https://shoutout.us" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="absolute top-5 left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
+          className="absolute top-[18px] left-4 z-10 opacity-45 hover:opacity-100 transition-opacity"
         >
           <img
             src={`${process.env.PUBLIC_URL}/shoutoutwhite.png`}
