@@ -2446,6 +2446,72 @@ const BioPage: React.FC = () => {
             );
           })}
 
+          {/* ShoutOut Card - In services section */}
+          {bioSettings && (
+            <a
+              href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}?utm=fans`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-4"
+            >
+              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-white/20">
+                      {profileImage ? (
+                        <img src={profileImage} alt={displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
+                          {displayName[0]}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {randomReview ? (
+                        <h3 className="text-white font-semibold text-sm mb-1">
+                          Get a personalized video from {displayName}
+                        </h3>
+                      ) : (
+                        <>
+                          <h3 className="text-blue-400 font-semibold text-sm mb-0.5">
+                            Get a personalized video ShoutOut
+                          </h3>
+                          <p className="text-white text-sm font-medium">
+                            From {talentProfile?.full_name || displayName}
+                          </p>
+                        </>
+                      )}
+                      
+                      {randomReview && (
+                        <div className="mt-2 pt-2 border-t border-white/10">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              i < randomReview.rating ? (
+                                <StarSolidIcon key={i} className="h-3 w-3 text-yellow-400" />
+                              ) : (
+                                <StarIcon key={i} className="h-3 w-3 text-gray-600" />
+                              )
+                            ))}
+                          </div>
+                          {randomReview.comment && (
+                            <p className="text-gray-300 text-xs line-clamp-1">
+                              "{randomReview.comment.split('\n')[0]}"
+                            </p>
+                          )}
+                          {randomReview.users?.full_name && (
+                            <p className="text-gray-500 text-[10px] mt-0.5">
+                              — {randomReview.users.full_name}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          )}
+
           {/* Next Upcoming Event - Only show one */}
           {(() => {
             // Get the next upcoming event (soonest date, or first if no dates)
@@ -2585,88 +2651,6 @@ const BioPage: React.FC = () => {
               </div>
             );
           })()}
-
-          {/* ShoutOut Card - Always at the bottom (cannot be removed) */}
-          {bioSettings && (
-            <a
-              href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}?utm=fans`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block mt-4"
-            >
-              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex">
-                  {/* Profile Image - flush to left, top, bottom */}
-                  {profileImage && (
-                    <div className="w-24 flex-shrink-0 relative">
-                      <img 
-                        src={profileImage} 
-                        alt={displayName}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        loading="eager"
-                      />
-                      {/* Play button overlay if they have a promo video */}
-                      {talentProfile?.promo_video_url && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white/70 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 5v14l11-7z"/>
-                            </svg>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <div className="flex-1 p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <GiftIcon className="h-4 w-4 text-blue-400" />
-                      <span className="text-blue-400 text-xs font-medium">ShoutOut</span>
-                    </div>
-                    {randomReview ? (
-                      <h3 className="text-white font-semibold text-sm mb-1">
-                        Get a personalized video from {displayName}
-                      </h3>
-                    ) : (
-                      <>
-                        <h3 className="text-blue-400 font-semibold text-sm mb-0.5">
-                          Get a personalized video ShoutOut
-                        </h3>
-                        <p className="text-white text-sm font-medium">
-                          From {talentProfile?.full_name || displayName}
-                        </p>
-                      </>
-                    )}
-                    
-                    {/* Random Review - Show first line only */}
-                    {randomReview && (
-                      <div className="mt-2 pt-2 border-t border-white/10">
-                        <div className="flex items-center gap-1 mb-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            i < randomReview.rating ? (
-                              <StarSolidIcon key={i} className="h-3 w-3 text-yellow-400" />
-                            ) : (
-                              <StarIcon key={i} className="h-3 w-3 text-gray-600" />
-                            )
-                          ))}
-                        </div>
-                        {randomReview.comment && (
-                          <p className="text-gray-300 text-xs line-clamp-1">
-                            "{randomReview.comment.split('\n')[0]}"
-                          </p>
-                        )}
-                        {randomReview.users?.full_name && (
-                          <p className="text-gray-500 text-[10px] mt-0.5">
-                            — {randomReview.users.full_name}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </a>
-          )}
         </div>
 
         {/* Social Icons */}
