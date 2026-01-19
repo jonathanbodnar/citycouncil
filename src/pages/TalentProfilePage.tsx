@@ -21,13 +21,38 @@ import FOMONotification from '../components/FOMONotification';
 import toast from 'react-hot-toast';
 import { ImageSizes } from '../utils/imageOptimization';
 
-// Coupon configurations for instant giveaway prizes - defined outside component
+// Hardcoded coupon configurations (fallback if not in database)
 const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
   'WINNER100': { type: 'fixed', value: 100, label: 'FREE' },
   'SANTA25': { type: 'percentage', value: 25, label: '25% OFF' },
   'SAVE15': { type: 'percentage', value: 15, label: '15% OFF' },
   'SAVE10': { type: 'percentage', value: 10, label: '10% OFF' },
   'TAKE25': { type: 'fixed', value: 25, label: '$25 OFF' },
+};
+
+// Get coupon details from localStorage (supports database coupons)
+const getCouponDetailsFromStorage = (): { type: 'percentage' | 'fixed'; value: number; label: string } | null => {
+  const couponCode = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
+  if (!couponCode) return null;
+  
+  // First check hardcoded coupons
+  const hardcoded = COUPON_DISCOUNTS[couponCode.toUpperCase()];
+  if (hardcoded) return hardcoded;
+  
+  // Then check localStorage for database-fetched coupon details
+  try {
+    const details = localStorage.getItem('coupon_details');
+    if (details) {
+      const parsed = JSON.parse(details);
+      if (parsed.code === couponCode.toUpperCase()) {
+        return { type: parsed.type, value: parsed.value, label: parsed.label };
+      }
+    }
+  } catch (e) {
+    console.warn('Error parsing coupon details:', e);
+  }
+  
+  return null;
 };
 
 // Helper to get display name (first name, or last name if first name starts with "The")
@@ -126,16 +151,22 @@ const TalentProfilePage: React.FC = () => {
     }
   }, []);
 
-  // Check coupon from localStorage (check both keys for compatibility)
+  // Coupon details state (supports both hardcoded and database coupons)
+  const [couponDetails, setCouponDetails] = useState<{ type: 'percentage' | 'fixed'; value: number; label: string } | null>(null);
+
+  // Check coupon from localStorage (supports both hardcoded and database coupons)
   const checkCoupon = useCallback(() => {
     const coupon = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
-    console.log('🎟️ Checking coupon from localStorage:', coupon);
-    if (coupon && COUPON_DISCOUNTS[coupon.toUpperCase()]) {
+    const details = getCouponDetailsFromStorage();
+    console.log('🎟️ Checking coupon from localStorage:', coupon, 'details:', details);
+    if (coupon && details) {
       console.log('🎟️ Valid coupon found, setting activeCoupon:', coupon.toUpperCase());
       setActiveCoupon(coupon.toUpperCase());
+      setCouponDetails(details);
     } else {
       console.log('🎟️ No valid coupon found');
       setActiveCoupon(null);
+      setCouponDetails(null);
     }
   }, []);
 
@@ -145,10 +176,45 @@ const TalentProfilePage: React.FC = () => {
     const couponParam = searchParams.get('coupon');
     if (couponParam) {
       console.log('🎟️ Found coupon in URL:', couponParam);
-      localStorage.setItem('auto_apply_coupon', couponParam.toUpperCase());
-      // Set state immediately since we just stored it
-      if (COUPON_DISCOUNTS[couponParam.toUpperCase()]) {
-        setActiveCoupon(couponParam.toUpperCase());
+      const couponCode = couponParam.toUpperCase();
+      localStorage.setItem('auto_apply_coupon', couponCode);
+      
+      // Check if it's a hardcoded coupon first
+      if (COUPON_DISCOUNTS[couponCode]) {
+        setActiveCoupon(couponCode);
+        setCouponDetails(COUPON_DISCOUNTS[couponCode]);
+      } else {
+        // Fetch from database
+        const fetchCouponDetails = async () => {
+          try {
+            const { data: coupon } = await supabase
+              .from('coupons')
+              .select('code, discount_type, discount_value')
+              .eq('code', couponCode)
+              .eq('is_active', true)
+              .single();
+            
+            if (coupon) {
+              const details = {
+                type: coupon.discount_type as 'percentage' | 'fixed',
+                value: coupon.discount_value,
+                label: coupon.discount_type === 'percentage' 
+                  ? `${coupon.discount_value}% OFF` 
+                  : `$${coupon.discount_value} OFF`
+              };
+              localStorage.setItem('coupon_details', JSON.stringify({
+                code: couponCode,
+                ...details
+              }));
+              setActiveCoupon(couponCode);
+              setCouponDetails(details);
+              console.log('🎟️ Coupon details fetched from database:', coupon);
+            }
+          } catch (error) {
+            console.log('🎟️ Could not fetch coupon details:', error);
+          }
+        };
+        fetchCouponDetails();
       }
       window.dispatchEvent(new Event('couponApplied'));
     } else {
@@ -169,17 +235,16 @@ const TalentProfilePage: React.FC = () => {
   // Calculate discounted price based on active coupon
   const originalPrice = talent?.pricing || 0;
   const getDiscountedPrice = () => {
-    if (!activeCoupon || !COUPON_DISCOUNTS[activeCoupon]) return originalPrice;
-    const discount = COUPON_DISCOUNTS[activeCoupon];
-    if (discount.type === 'percentage') {
-      return Math.round(originalPrice * (1 - discount.value / 100));
+    if (!activeCoupon || !couponDetails) return originalPrice;
+    if (couponDetails.type === 'percentage') {
+      return Math.round(originalPrice * (1 - couponDetails.value / 100));
     } else {
-      return Math.max(0, originalPrice - discount.value);
+      return Math.max(0, originalPrice - couponDetails.value);
     }
   };
   const discountedPrice = getDiscountedPrice();
-  const discountLabel = activeCoupon ? COUPON_DISCOUNTS[activeCoupon]?.label : '';
-  const hasCoupon = !!activeCoupon;
+  const discountLabel = couponDetails?.label || '';
+  const hasCoupon = !!activeCoupon && !!couponDetails;
 
   // Check if user is already following this talent
   useEffect(() => {

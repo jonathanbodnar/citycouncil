@@ -59,13 +59,38 @@ const VideoPreview = memo(({
   return prevProps.videoUrl === nextProps.videoUrl && prevProps.talentId === nextProps.talentId;
 });
 
-// Coupon configurations
+// Hardcoded coupon configurations (fallback if not in database)
 const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number }> = {
   'WINNER100': { type: 'fixed', value: 100 },
   'SANTA25': { type: 'percentage', value: 25 },
   'SAVE15': { type: 'percentage', value: 15 },
   'SAVE10': { type: 'percentage', value: 10 },
   'TAKE25': { type: 'fixed', value: 25 },
+};
+
+// Get coupon details from localStorage (supports database coupons)
+const getCouponDetailsFromStorage = (): { code: string; type: 'percentage' | 'fixed'; value: number } | null => {
+  const code = localStorage.getItem('auto_apply_coupon');
+  if (!code) return null;
+  
+  // First check hardcoded coupons
+  const hardcoded = COUPON_DISCOUNTS[code.toUpperCase()];
+  if (hardcoded) return { code: code.toUpperCase(), ...hardcoded };
+  
+  // Then check localStorage for database-fetched coupon details
+  try {
+    const details = localStorage.getItem('coupon_details');
+    if (details) {
+      const parsed = JSON.parse(details);
+      if (parsed.code === code.toUpperCase()) {
+        return { code: parsed.code, type: parsed.type, value: parsed.value };
+      }
+    }
+  } catch (e) {
+    console.warn('Error parsing coupon details:', e);
+  }
+  
+  return null;
 };
 
 interface TalentBannerCardProps {
@@ -102,26 +127,46 @@ function TalentBannerCard({
   const getInitialDiscount = () => {
     const code = localStorage.getItem('auto_apply_coupon');
     const prizeExpiry = localStorage.getItem('giveaway_prize_expiry');
-    if (code && prizeExpiry) {
-      const expiry = parseInt(prizeExpiry, 10);
-      if (Date.now() < expiry) {
-        const coupon = COUPON_DISCOUNTS[code.toUpperCase()];
-        let amount = 0;
-        if (coupon) amount = coupon.value;
-        else if (code.includes('15')) amount = 15;
-        else if (code.includes('10')) amount = 10;
-        else if (code.includes('25')) amount = 25;
-        else if (code.includes('20')) amount = 20;
-        else if (code.includes('100')) amount = 100;
-        return { code, amount, expiry };
+    
+    // First try database/hardcoded coupon details (works for URL coupons without expiry)
+    const couponDetails = getCouponDetailsFromStorage();
+    if (couponDetails) {
+      // If there's an expiry, check it; otherwise coupon is valid indefinitely for this session
+      if (prizeExpiry) {
+        const expiry = parseInt(prizeExpiry, 10);
+        if (Date.now() < expiry) {
+          return { code: couponDetails.code, amount: couponDetails.value, expiry, type: couponDetails.type };
+        }
+      } else {
+        // No expiry means URL-based coupon, valid for session
+        return { code: couponDetails.code, amount: couponDetails.value, expiry: null, type: couponDetails.type };
       }
     }
-    return { code: null, amount: 0, expiry: null };
+    
+    // Fallback: try to infer amount from code name (for legacy coupons)
+    if (code) {
+      let amount = 0;
+      if (code.includes('15')) amount = 15;
+      else if (code.includes('10')) amount = 10;
+      else if (code.includes('25')) amount = 25;
+      else if (code.includes('20')) amount = 20;
+      else if (code.includes('100')) amount = 100;
+      
+      if (amount > 0) {
+        const expiry = prizeExpiry ? parseInt(prizeExpiry, 10) : null;
+        if (!expiry || Date.now() < expiry) {
+          return { code, amount, expiry, type: 'fixed' as const };
+        }
+      }
+    }
+    
+    return { code: null, amount: 0, expiry: null, type: null };
   };
   
   const initial = getInitialDiscount();
   const [discountCode, setDiscountCode] = useState<string | null>(initial.code);
   const [discountAmount, setDiscountAmount] = useState<number>(initial.amount);
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed' | null>(initial.type);
   const [expiryTime, setExpiryTime] = useState<number | null>(initial.expiry);
 
   // Check for discount from localStorage
@@ -129,6 +174,7 @@ function TalentBannerCard({
     const result = getInitialDiscount();
     setDiscountCode(result.code);
     setDiscountAmount(result.amount);
+    setDiscountType(result.type);
     setExpiryTime(result.expiry);
   }, []);
 
@@ -178,8 +224,17 @@ function TalentBannerCard({
 
   const talentName = talent.temp_full_name || talent.users?.full_name || talent.username;
   const originalPrice = talent.pricing || 0;
-  const discountedPrice = discountAmount ? originalPrice * (1 - discountAmount / 100) : originalPrice;
-  const hasDiscount = discountCode && discountAmount && expiryTime && expiryTime > Date.now();
+  // Calculate discounted price based on discount type
+  const discountedPrice = (() => {
+    if (!discountAmount || !discountType) return originalPrice;
+    if (discountType === 'percentage') {
+      return Math.round(originalPrice * (1 - discountAmount / 100));
+    } else {
+      return Math.max(0, originalPrice - discountAmount);
+    }
+  })();
+  // hasDiscount: true if we have a valid coupon (with or without expiry for URL-based coupons)
+  const hasDiscount = discountCode && discountAmount && (!expiryTime || expiryTime > Date.now());
 
   // Adaptive font size based on name length - SMALLER overall
   const getAdaptiveFontSize = () => {

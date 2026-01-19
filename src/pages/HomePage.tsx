@@ -69,22 +69,53 @@ const HomePage: React.FC = () => {
   // Capture coupon from URL (e.g., shoutout.us/?coupon=SANTA25)
   // Also handles malformed URLs like ?utm=sms?coupon=SANTA25 (double question mark)
   useEffect(() => {
-    let couponParam = searchParams.get('coupon');
-    
-    // Handle malformed URLs with double question marks (e.g., ?utm=sms?coupon=SANTA25)
-    if (!couponParam) {
-      const fullUrl = window.location.href;
-      const couponMatch = fullUrl.match(/[?&]coupon=([^&?#]+)/i);
-      if (couponMatch) {
-        couponParam = couponMatch[1];
+    const fetchAndApplyCoupon = async () => {
+      let couponParam = searchParams.get('coupon');
+      
+      // Handle malformed URLs with double question marks (e.g., ?utm=sms?coupon=SANTA25)
+      if (!couponParam) {
+        const fullUrl = window.location.href;
+        const couponMatch = fullUrl.match(/[?&]coupon=([^&?#]+)/i);
+        if (couponMatch) {
+          couponParam = couponMatch[1];
+        }
       }
-    }
+      
+      if (couponParam) {
+        const couponCode = couponParam.toUpperCase();
+        localStorage.setItem('auto_apply_coupon', couponCode);
+        
+        // Fetch coupon details from database to get discount info
+        try {
+          const { data: coupon } = await supabase
+            .from('coupons')
+            .select('code, discount_type, discount_value')
+            .eq('code', couponCode)
+            .eq('is_active', true)
+            .single();
+          
+          if (coupon) {
+            // Store coupon details for use in TalentCard/TalentBannerCard
+            localStorage.setItem('coupon_details', JSON.stringify({
+              code: coupon.code,
+              type: coupon.discount_type,
+              value: coupon.discount_value,
+              label: coupon.discount_type === 'percentage' 
+                ? `${coupon.discount_value}% OFF` 
+                : `$${coupon.discount_value} OFF`
+            }));
+            console.log('🎟️ Coupon details fetched from database:', coupon);
+          }
+        } catch (error) {
+          console.log('🎟️ Could not fetch coupon details (may be hardcoded):', error);
+        }
+        
+        // Dispatch event to update TalentCards immediately
+        window.dispatchEvent(new Event('couponApplied'));
+      }
+    };
     
-    if (couponParam) {
-      localStorage.setItem('auto_apply_coupon', couponParam.toUpperCase());
-      // Dispatch event to update TalentCards immediately
-      window.dispatchEvent(new Event('couponApplied'));
-    }
+    fetchAndApplyCoupon();
   }, [searchParams]);
 
   // Capture global UTM tracking (e.g., shoutout.us/?utm=rumble or Facebook's detailed params)

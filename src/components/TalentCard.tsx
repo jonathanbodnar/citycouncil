@@ -4,13 +4,38 @@ import { StarIcon, HeartIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { TalentProfile } from '../types';
 import { ImageSizes } from '../utils/imageOptimization';
 
-// Coupon configurations - must match TalentProfilePage
+// Hardcoded coupon configurations (fallback if not in database)
 const COUPON_DISCOUNTS: Record<string, { type: 'percentage' | 'fixed'; value: number; label: string }> = {
   'WINNER100': { type: 'fixed', value: 100, label: 'FREE' },
   'SANTA25': { type: 'percentage', value: 25, label: '25% OFF' },
   'SAVE15': { type: 'percentage', value: 15, label: '15% OFF' },
   'SAVE10': { type: 'percentage', value: 10, label: '10% OFF' },
   'TAKE25': { type: 'fixed', value: 25, label: '$25 OFF' },
+};
+
+// Get coupon details from localStorage (set by HomePage when coupon is in URL)
+const getCouponFromStorage = (): { type: 'percentage' | 'fixed'; value: number; label: string } | null => {
+  const couponCode = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
+  if (!couponCode) return null;
+  
+  // First check hardcoded coupons
+  const hardcoded = COUPON_DISCOUNTS[couponCode.toUpperCase()];
+  if (hardcoded) return hardcoded;
+  
+  // Then check localStorage for database-fetched coupon details
+  try {
+    const details = localStorage.getItem('coupon_details');
+    if (details) {
+      const parsed = JSON.parse(details);
+      if (parsed.code === couponCode.toUpperCase()) {
+        return { type: parsed.type, value: parsed.value, label: parsed.label };
+      }
+    }
+  } catch (e) {
+    console.warn('Error parsing coupon details:', e);
+  }
+  
+  return null;
 };
 
 interface TalentCardProps {
@@ -28,14 +53,18 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
   const isComingSoon = talent.is_coming_soon === true;
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
+  const [couponDetails, setCouponDetails] = useState<{ type: 'percentage' | 'fixed'; value: number; label: string } | null>(null);
 
-  // Check for coupon from localStorage
+  // Check for coupon from localStorage (supports both hardcoded and database coupons)
   const checkCoupon = useCallback(() => {
     const coupon = localStorage.getItem('auto_apply_coupon') || localStorage.getItem('auto_coupon');
-    if (coupon && COUPON_DISCOUNTS[coupon.toUpperCase()]) {
+    const details = getCouponFromStorage();
+    if (coupon && details) {
       setActiveCoupon(coupon.toUpperCase());
+      setCouponDetails(details);
     } else {
       setActiveCoupon(null);
+      setCouponDetails(null);
     }
   }, []);
 
@@ -55,16 +84,15 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
   // Calculate discounted price
   const originalPrice = talent.pricing || 0;
   const getDiscountedPrice = () => {
-    if (!activeCoupon || !COUPON_DISCOUNTS[activeCoupon]) return originalPrice;
-    const discount = COUPON_DISCOUNTS[activeCoupon];
-    if (discount.type === 'percentage') {
-      return Math.round(originalPrice * (1 - discount.value / 100));
+    if (!activeCoupon || !couponDetails) return originalPrice;
+    if (couponDetails.type === 'percentage') {
+      return Math.round(originalPrice * (1 - couponDetails.value / 100));
     } else {
-      return Math.max(0, originalPrice - discount.value);
+      return Math.max(0, originalPrice - couponDetails.value);
     }
   };
   const discountedPrice = getDiscountedPrice();
-  const hasCoupon = activeCoupon && discountedPrice !== originalPrice;
+  const hasCoupon = activeCoupon && couponDetails && discountedPrice !== originalPrice;
   
   const demandColors = {
     high: 'bg-red-500/20 text-red-400',
