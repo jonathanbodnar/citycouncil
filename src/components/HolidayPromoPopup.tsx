@@ -14,6 +14,16 @@ const CLOSE_COOLDOWN_MINUTES = 5;
 // Prize types and their probabilities
 type Prize = 'FREE_SHOUTOUT' | '15_OFF' | '10_OFF' | '25_DOLLARS';
 
+// Occasions for the CTA section
+const POPUP_OCCASIONS = [
+  { key: 'gift', label: 'Last Minute Gifts', emoji: '🎁' },
+  { key: 'roast', label: 'Friendly Roast', emoji: '🔥' },
+  { key: 'encouragement', label: 'Encouragement', emoji: '💪' },
+  { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
+  { key: 'announcement', label: 'Make an Announcement', emoji: '📣' },
+  { key: 'celebrate', label: 'Celebrate A Win', emoji: '🏆' },
+];
+
 interface PrizeInfo {
   label: string;
   code: string;
@@ -640,7 +650,7 @@ const HolidayPromoPopup: React.FC = () => {
     }, 100);
   };
 
-  const handleFindShoutOut = () => {
+  const handleFindShoutOut = (occasionKey?: string) => {
     setIsVisible(false);
     // Don't reload page - just close popup. User is already on homepage.
     // Dispatch events to update discount displays with a small delay to ensure localStorage is written
@@ -648,6 +658,11 @@ const HolidayPromoPopup: React.FC = () => {
       window.dispatchEvent(new Event('couponApplied'));
       window.dispatchEvent(new Event('giveawayCountdownUpdate'));
       window.dispatchEvent(new Event('storage'));
+      
+      // If an occasion was selected, dispatch event to homepage
+      if (occasionKey) {
+        window.dispatchEvent(new CustomEvent('occasionSelectedFromPopup', { detail: occasionKey }));
+      }
     }, 100);
   };
 
@@ -722,17 +737,28 @@ const HolidayPromoPopup: React.FC = () => {
                 </div>
               </div>
 
-              {/* CTA Button */}
-              <button
-                onClick={handleFindShoutOut}
-                className="w-full py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105"
-                style={{
-                  background: 'linear-gradient(to right, #facc15, #f59e0b)',
-                  color: '#1f2937'
-                }}
-              >
-                Find the Perfect ShoutOut 🎁
-              </button>
+              {/* CTA Section with Occasion Buttons */}
+              <div className="space-y-3">
+                <p className="text-white font-semibold text-lg">Find the perfect ShoutOut</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {POPUP_OCCASIONS.map((occasion) => (
+                    <button
+                      key={occasion.key}
+                      onClick={() => handleFindShoutOut(occasion.key)}
+                      className="py-3 px-3 rounded-xl font-medium text-sm transition-all transform hover:scale-105 bg-white/20 hover:bg-white/30 text-white border border-white/20"
+                    >
+                      <span className="mr-1">{occasion.emoji}</span>
+                      {occasion.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => handleFindShoutOut()}
+                  className="w-full py-3 rounded-xl font-medium text-sm transition-all text-white/70 hover:text-white underline"
+                >
+                  Browse all talent
+                </button>
+              </div>
             </div>
           ) : step === 'spinning' ? (
             /* Spinning State */

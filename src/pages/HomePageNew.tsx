@@ -43,12 +43,25 @@ interface OccasionType {
 }
 
 const OCCASIONS: OccasionType[] = [
-  { key: 'pep-talk', label: 'Surprise a Loved One', emoji: '💝' },
-  { key: 'birthday', label: 'Birthday Wishes', emoji: '🎂' },
+  { key: 'gift', label: 'Last Minute Gifts', emoji: '🎁' },
   { key: 'roast', label: 'Friendly Roast', emoji: '🔥' },
-  { key: 'advice', label: 'Get Advice', emoji: '💡' },
+  { key: 'encouragement', label: 'Encouragement', emoji: '💪' },
+  { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
+  { key: 'announcement', label: 'Make an Announcement', emoji: '📣' },
+  { key: 'celebrate', label: 'Celebrate A Win', emoji: '🏆' },
   { key: 'corporate', label: 'Corporate Event', emoji: '🏢' },
 ];
+
+// Occasion-specific phrases for when selected from popup
+const OCCASION_PHRASES: Record<string, string> = {
+  'gift': "You're not too late, gift a memory that lasts forever.",
+  'roast': "Your group chat will never recover.",
+  'encouragement': "Encouragement from people that have been there.",
+  'debate': "End the debate with a ShoutOut.",
+  'announcement': "Tell everyone in a way no one else can.",
+  'celebrate': "Celebrate in the most unique way possible.",
+  'corporate': "Make your event unforgettable.",
+};
 
 // Rotating taglines for the header
 const ROTATING_TAGLINES = [
@@ -60,6 +73,7 @@ const ROTATING_TAGLINES = [
   "Last-minute gift. Legendary outcome.",
   "Some moments deserve more.",
   "This roast comes with witnesses.",
+  "Let someone say it for you, just funnier.",
 ];
 
 export default function HomePageNew() {
@@ -70,6 +84,7 @@ export default function HomePageNew() {
   const [allActiveTalent, setAllActiveTalent] = useState<TalentWithDetails[]>([]); // ALL active talent for carousels
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithDetails[]>([]); // ALL featured talent
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
+  const [occasionFromPopup, setOccasionFromPopup] = useState<string | null>(null); // Tracks if occasion was selected from giveaway popup
   const [occasionTalent, setOccasionTalent] = useState<TalentWithDetails[]>([]); // Random 4 talent for selected occasion
   const [loading, setLoading] = useState(true);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -82,12 +97,25 @@ export default function HomePageNew() {
   const [discountAmount, setDiscountAmount] = useState<number | null>(null);
   const [expiryTime, setExpiryTime] = useState<number | null>(null);
 
-  // Rotate taglines every 4 seconds
+  // Rotate taglines every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTaglineIndex((prev) => (prev + 1) % ROTATING_TAGLINES.length);
-    }, 4000);
+    }, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Listen for occasion selection from giveaway popup
+  useEffect(() => {
+    const handlePopupOccasion = (event: CustomEvent) => {
+      const occasion = event.detail;
+      if (occasion && OCCASION_PHRASES[occasion]) {
+        setSelectedOccasion(occasion);
+        setOccasionFromPopup(occasion);
+      }
+    };
+    window.addEventListener('occasionSelectedFromPopup', handlePopupOccasion as EventListener);
+    return () => window.removeEventListener('occasionSelectedFromPopup', handlePopupOccasion as EventListener);
   }, []);
 
   // Listen for header search events
@@ -506,31 +534,42 @@ export default function HomePageNew() {
         {/* Hero Header with Rotating Tagline + Occasions */}
         <div className="pt-6 sm:pt-8 pb-4 mb-6">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            {/* Rotating Tagline */}
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6 min-h-[2.5em] flex items-center justify-center">
-              <span 
-                key={currentTaglineIndex}
-                className="animate-fade-in"
-              >
-                {ROTATING_TAGLINES[currentTaglineIndex]}
-              </span>
-            </h1>
-            
-            {/* Occasion Buttons in Header */}
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              {OCCASIONS.map((occasion) => (
-                <button
-                  key={occasion.key}
-                  onClick={() => handleOccasionClick(occasion.key)}
-                  className={`glass rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 hover:scale-105 transition-all text-center ${
-                    selectedOccasion === occasion.key ? 'ring-2 ring-cyan-400' : ''
-                  }`}
-                >
-                  <span className="text-sm sm:text-base mr-1">{occasion.emoji}</span>
-                  <span className="text-white font-medium text-xs sm:text-sm">{occasion.label}</span>
-                </button>
-              ))}
-            </div>
+            {/* Show occasion phrase if selected from popup, otherwise show rotating tagline */}
+            {occasionFromPopup && OCCASION_PHRASES[occasionFromPopup] ? (
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6 min-h-[2.5em] flex items-center justify-center">
+                <span className="animate-fade-in">
+                  {OCCASION_PHRASES[occasionFromPopup]}
+                </span>
+              </h1>
+            ) : (
+              <>
+                {/* Rotating Tagline */}
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6 min-h-[2.5em] flex items-center justify-center">
+                  <span 
+                    key={currentTaglineIndex}
+                    className="animate-fade-in"
+                  >
+                    {ROTATING_TAGLINES[currentTaglineIndex]}
+                  </span>
+                </h1>
+                
+                {/* Occasion Buttons in Header - hide when occasion selected from popup */}
+                <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                  {OCCASIONS.map((occasion) => (
+                    <button
+                      key={occasion.key}
+                      onClick={() => handleOccasionClick(occasion.key)}
+                      className={`glass rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 hover:scale-105 transition-all text-center ${
+                        selectedOccasion === occasion.key ? 'ring-2 ring-cyan-400' : ''
+                      }`}
+                    >
+                      <span className="text-sm sm:text-base mr-1">{occasion.emoji}</span>
+                      <span className="text-white font-medium text-xs sm:text-sm">{occasion.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             
             {/* Carousel for selected occasion */}
             {selectedOccasion && (() => {
