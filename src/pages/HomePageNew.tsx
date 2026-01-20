@@ -50,6 +50,18 @@ const OCCASIONS: OccasionType[] = [
   { key: 'corporate', label: 'Corporate Event', emoji: '🏢' },
 ];
 
+// Rotating taglines for the header
+const ROTATING_TAGLINES = [
+  "Your friend lost a bet. End him properly.",
+  "Say happy birthday better than a text.",
+  "Your group chat will never recover from this.",
+  "The gift they didn't know existed.",
+  "When words aren't enough, say it with a ShoutOut.",
+  "Last-minute gift. Legendary outcome.",
+  "Some moments deserve more.",
+  "This roast comes with witnesses.",
+];
+
 export default function HomePageNew() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -63,11 +75,20 @@ export default function HomePageNew() {
   const [totalReviews, setTotalReviews] = useState(0);
   const [dataFetched, setDataFetched] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
+  const [currentTaglineIndex, setCurrentTaglineIndex] = useState(0);
   
   // Get discount info from localStorage
   const [discountCode, setDiscountCode] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState<number | null>(null);
   const [expiryTime, setExpiryTime] = useState<number | null>(null);
+
+  // Rotate taglines every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTaglineIndex((prev) => (prev + 1) % ROTATING_TAGLINES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Listen for header search events
   useEffect(() => {
@@ -482,12 +503,72 @@ export default function HomePageNew() {
       />
 
       <div className="min-h-screen">
-        {/* Hero Header */}
+        {/* Hero Header with Rotating Tagline + Occasions */}
         <div className="pt-6 sm:pt-8 pb-4 mb-6">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-lg sm:text-xl font-normal text-white">
-              Personalized Video ShoutOuts From<br />Free-Speech Influencers
+            {/* Rotating Tagline */}
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6 min-h-[2.5em] flex items-center justify-center">
+              <span 
+                key={currentTaglineIndex}
+                className="animate-fade-in"
+              >
+                {ROTATING_TAGLINES[currentTaglineIndex]}
+              </span>
             </h1>
+            
+            {/* Occasion Buttons in Header */}
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+              {OCCASIONS.map((occasion) => (
+                <button
+                  key={occasion.key}
+                  onClick={() => handleOccasionClick(occasion.key)}
+                  className={`glass rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 hover:scale-105 transition-all text-center ${
+                    selectedOccasion === occasion.key ? 'ring-2 ring-cyan-400' : ''
+                  }`}
+                >
+                  <span className="text-sm sm:text-base mr-1">{occasion.emoji}</span>
+                  <span className="text-white font-medium text-xs sm:text-sm">{occasion.label}</span>
+                </button>
+              ))}
+            </div>
+            
+            {/* Carousel for selected occasion */}
+            {selectedOccasion && (() => {
+              const matchingTalent = allActiveTalent.filter(t => 
+                t.users && (
+                  t.top_categories?.includes(selectedOccasion) ||
+                  t.featured_shoutout_types?.includes(selectedOccasion)
+                )
+              );
+              const shuffledMatching = seededShuffle(matchingTalent, `header-occasion-${selectedOccasion}`);
+              
+              let occasionTalentList = shuffledMatching.slice(0, 4);
+              if (occasionTalentList.length < 4) {
+                const usedIds = new Set(occasionTalentList.map(t => t.id));
+                const fillerTalent = seededShuffle(
+                  allActiveTalent.filter(t => t.users && !usedIds.has(t.id)),
+                  `header-occasion-fill-${selectedOccasion}`
+                ).slice(0, 4 - occasionTalentList.length);
+                occasionTalentList = [...occasionTalentList, ...fillerTalent];
+              }
+              
+              return occasionTalentList.length > 0 ? (
+                <div className="mt-4">
+                  <div className="relative group">
+                    <div 
+                      className="flex gap-3 justify-center overflow-x-auto pb-4 scrollbar-hide"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                      {occasionTalentList.map((t) => (
+                        <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                          <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : null;
+            })()}
           </div>
         </div>
 
@@ -560,69 +641,6 @@ export default function HomePageNew() {
                     );
                   })()}
 
-                  {/* After SECOND banner: Show "ShoutOut for every occasion" */}
-                  {index === 1 && (
-                    <div className="mt-12 mb-6 md:mt-16 md:mb-10">
-                      <h2 className="text-lg sm:text-xl font-bold text-white text-center mb-4 md:mb-6">
-                        A ShoutOut for every occasion
-                      </h2>
-                      <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-                        {OCCASIONS.map((occasion) => (
-                          <button
-                            key={occasion.key}
-                            onClick={() => handleOccasionClick(occasion.key)}
-                            className={`glass rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 hover:scale-105 transition-all text-center ${
-                              selectedOccasion === occasion.key ? 'ring-2 ring-cyan-400' : ''
-                            }`}
-                          >
-                            <span className="text-sm sm:text-base mr-1">{occasion.emoji}</span>
-                            <span className="text-white font-medium text-xs sm:text-sm">{occasion.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                      
-                      {/* Carousel for selected occasion - always show 4, fill with random if needed */}
-                      {selectedOccasion && (() => {
-                        // Include talent with this occasion in top_categories OR featured_shoutout_types
-                        const matchingTalent = allActiveTalent.filter(t => 
-                          t.users && (
-                            t.top_categories?.includes(selectedOccasion) ||
-                            t.featured_shoutout_types?.includes(selectedOccasion)
-                          )
-                        );
-                        // Randomly shuffle matching talent
-                        const shuffledMatching = [...matchingTalent].sort(() => Math.random() - 0.5);
-                        
-                        // If we have less than 4, fill in with random active talent
-                        let occasionTalentList = shuffledMatching.slice(0, 4);
-                        if (occasionTalentList.length < 4) {
-                          const usedIds = new Set(occasionTalentList.map(t => t.id));
-                          const fillerTalent = allActiveTalent
-                            .filter(t => t.users && !usedIds.has(t.id))
-                            .sort(() => Math.random() - 0.5)
-                            .slice(0, 4 - occasionTalentList.length);
-                          occasionTalentList = [...occasionTalentList, ...fillerTalent];
-                        }
-                        
-                        return occasionTalentList.length > 0 ? (
-                          <div className="mt-4">
-                            <div className="relative group">
-                              <div 
-                                className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
-                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                              >
-                                {occasionTalentList.map((t) => (
-                                  <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
-                                    <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        ) : null;
-                      })()}
-                    </div>
-                  )}
 
                   {/* For index > 1: Show precomputed carousel (no duplicates in first 3 positions) */}
                   {index > 1 && precomputedCarousels[index] && (() => {
