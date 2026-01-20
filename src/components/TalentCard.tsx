@@ -262,31 +262,33 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
           </p>
         )}
 
-        {/* Price Display */}
-        <div className={`flex items-center ${compact ? 'gap-1 mb-1' : 'gap-2 mb-2'}`}>
-          {hasCoupon ? (
-            <>
-              <span className={`${compact ? 'text-[10px]' : 'text-xs sm:text-sm'} text-gray-500 line-through`}>
+        {/* Price Display - Only show on compact cards if there's a discount */}
+        {(hasCoupon || !compact) && (
+          <div className={`flex items-center ${compact ? 'gap-1 mb-1' : 'gap-2 mb-2'}`}>
+            {hasCoupon ? (
+              <>
+                <span className={`${compact ? 'text-[10px]' : 'text-xs sm:text-sm'} text-gray-500 line-through`}>
+                  ${originalPrice}
+                </span>
+                <span 
+                  className={`${compact ? 'text-sm' : 'text-base sm:text-lg'} font-bold`}
+                  style={{
+                    background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  ${discountedPrice}
+                </span>
+              </>
+            ) : (
+              <span className={`${compact ? 'text-sm' : 'text-base sm:text-lg'} font-bold text-white`}>
                 ${originalPrice}
               </span>
-              <span 
-                className={`${compact ? 'text-sm' : 'text-base sm:text-lg'} font-bold`}
-                style={{
-                  background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
-                ${discountedPrice}
-              </span>
-            </>
-          ) : (
-            <span className={`${compact ? 'text-sm' : 'text-base sm:text-lg'} font-bold text-white`}>
-              ${originalPrice}
-            </span>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Delivery time and Charity - Push to bottom */}
         <div className={`flex items-center justify-between mt-auto ${compact ? 'text-[9px]' : ''}`}>

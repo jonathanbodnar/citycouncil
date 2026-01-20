@@ -180,15 +180,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           })}
         </nav>
 
-        {/* Admin Badge */}
-        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
-          <div className="glass rounded-xl p-2 sm:p-3 border border-white/20">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
-              <span className="text-xs sm:text-sm font-medium text-white">Admin Mode</span>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main content */}
