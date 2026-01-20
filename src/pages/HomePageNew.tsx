@@ -571,8 +571,8 @@ export default function HomePageNew() {
               </>
             )}
             
-            {/* Carousel for selected occasion */}
-            {selectedOccasion && (() => {
+            {/* Carousel for selected occasion - only show if NOT selected from popup */}
+            {selectedOccasion && !occasionFromPopup && (() => {
               // For corporate events, only show talent with corporate pricing enabled
               const isCorporate = selectedOccasion === 'corporate';
               
