@@ -49,6 +49,7 @@ const UsersManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'talent' | 'user' | 'admin'>('all');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,15 +67,23 @@ const UsersManagement: React.FC = () => {
     sourceBreakdown: [],
   });
 
+  // Debounce search term - wait 400ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   useEffect(() => {
     fetchUsers();
     fetchStats();
-  }, [currentPage, searchTerm, filterType]); // Re-fetch when search or filter changes
+  }, [currentPage, debouncedSearchTerm, filterType]); // Re-fetch when debounced search or filter changes
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterType]);
+  }, [debouncedSearchTerm, filterType]);
 
   const fetchStats = async () => {
     try {
@@ -156,8 +165,8 @@ const UsersManagement: React.FC = () => {
       }
       
       // Apply search filter - search across email, full_name, and phone
-      if (searchTerm.trim()) {
-        const search = searchTerm.trim().toLowerCase();
+      if (debouncedSearchTerm.trim()) {
+        const search = debouncedSearchTerm.trim().toLowerCase();
         // Use OR filter for searching multiple columns
         const searchFilter = `email.ilike.%${search}%,full_name.ilike.%${search}%,phone.ilike.%${search}%`;
         countQuery = countQuery.or(searchFilter);
