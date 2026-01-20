@@ -121,6 +121,8 @@ serve(async (req) => {
         }
       }
 
+      await enrollInEmailFlow(supabase, normalizedEmail, existingUser.id, source, talent_slug, utm_source);
+
       return new Response(
         JSON.stringify({ success: true, existing: true, userId: existingUser.id }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }

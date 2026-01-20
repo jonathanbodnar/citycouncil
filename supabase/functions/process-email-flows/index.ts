@@ -185,13 +185,26 @@ serve(async (req) => {
         let talentPhotoUrl = "";
         let talentProfileLink = "https://shoutout.us";
         let talentPhotoHtml = "";
-        
+
         if (userStatus.source_talent_slug) {
-          const { data: talent } = await supabase
+          let talent = null;
+          const { data: talentByUsername } = await supabase
             .from("talent_profiles")
             .select("temp_full_name, temp_avatar_url, slug, username")
-            .eq("slug", userStatus.source_talent_slug)
+            .eq("username", userStatus.source_talent_slug)
             .single();
+
+          if (talentByUsername) {
+            talent = talentByUsername;
+          } else {
+            const { data: talentBySlug } = await supabase
+              .from("talent_profiles")
+              .select("temp_full_name, temp_avatar_url, slug, username")
+              .eq("slug", userStatus.source_talent_slug)
+              .single();
+            talent = talentBySlug;
+          }
+
           if (talent) {
             talentName = talent.temp_full_name || "";
             talentPhotoUrl = talent.temp_avatar_url || "";
