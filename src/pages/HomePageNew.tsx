@@ -573,19 +573,33 @@ export default function HomePageNew() {
             
             {/* Carousel for selected occasion */}
             {selectedOccasion && (() => {
-              const matchingTalent = allActiveTalent.filter(t => 
-                t.users && (
-                  t.top_categories?.includes(selectedOccasion) ||
-                  t.featured_shoutout_types?.includes(selectedOccasion)
-                )
-              );
+              // For corporate events, only show talent with corporate pricing enabled
+              const isCorporate = selectedOccasion === 'corporate';
+              
+              const matchingTalent = allActiveTalent.filter(t => {
+                if (!t.users) return false;
+                
+                // Corporate requires corporate_pricing to be set
+                if (isCorporate) {
+                  return t.corporate_pricing && t.corporate_pricing > 0;
+                }
+                
+                // Other occasions filter by categories
+                return t.top_categories?.includes(selectedOccasion) ||
+                  t.featured_shoutout_types?.includes(selectedOccasion);
+              });
               const shuffledMatching = seededShuffle(matchingTalent, `header-occasion-${selectedOccasion}`);
               
               let occasionTalentList = shuffledMatching.slice(0, 4);
               if (occasionTalentList.length < 4) {
                 const usedIds = new Set(occasionTalentList.map(t => t.id));
+                // For corporate, only fill with other corporate-enabled talent
                 const fillerTalent = seededShuffle(
-                  allActiveTalent.filter(t => t.users && !usedIds.has(t.id)),
+                  allActiveTalent.filter(t => {
+                    if (!t.users || usedIds.has(t.id)) return false;
+                    if (isCorporate) return t.corporate_pricing && t.corporate_pricing > 0;
+                    return true;
+                  }),
                   `header-occasion-fill-${selectedOccasion}`
                 ).slice(0, 4 - occasionTalentList.length);
                 occasionTalentList = [...occasionTalentList, ...fillerTalent];
