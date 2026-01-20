@@ -12,6 +12,8 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ArrowDownTrayIcon,
+  VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 
 interface Order {
@@ -34,6 +36,7 @@ interface Order {
   coupon_code?: string;
   original_amount?: number;
   discount_amount?: number;
+  video_url?: string;
   users: {
     id: string;
     email: string;
@@ -58,6 +61,7 @@ const OrdersManagement: React.FC = () => {
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [downloadingVideo, setDownloadingVideo] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -249,11 +253,46 @@ const OrdersManagement: React.FC = () => {
     setRefundReason('');
   };
 
+  const handleDownloadVideo = async (videoUrl: string, talentName: string, orderId: string) => {
+    setDownloadingVideo(orderId);
+    
+    try {
+      toast.loading('Downloading video...', { id: 'download' });
+      
+      const { downloadVideo } = await import('../../utils/mobileDownload');
+      const filename = `shoutout-${talentName.replace(/\s+/g, '-')}-${orderId.slice(0, 8)}.mp4`;
+      
+      await downloadVideo({
+        url: videoUrl,
+        filename,
+        onSuccess: () => {
+          toast.dismiss('download');
+          toast.success('Video downloaded!');
+        },
+        onError: (err) => {
+          logger.error('Download error:', err);
+          toast.dismiss('download');
+          toast.error('Failed to download video');
+        }
+      });
+    } catch (error: any) {
+      logger.error('Error downloading video:', error);
+      toast.dismiss('download');
+      toast.error('Failed to download video');
+    } finally {
+      setDownloadingVideo(null);
+    }
+  };
+
   const filteredOrders = orders.filter((order) => {
+    const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
-      order.users.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.users.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.talent_profiles.users.full_name.toLowerCase().includes(searchTerm.toLowerCase());
+      order.users.email.toLowerCase().includes(searchLower) ||
+      order.users.full_name.toLowerCase().includes(searchLower) ||
+      order.talent_profiles.users.full_name.toLowerCase().includes(searchLower) ||
+      (order.request_details && order.request_details.toLowerCase().includes(searchLower)) ||
+      (order.recipient_name && order.recipient_name.toLowerCase().includes(searchLower)) ||
+      (order.special_instructions && order.special_instructions.toLowerCase().includes(searchLower));
 
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
 
@@ -346,7 +385,7 @@ const OrdersManagement: React.FC = () => {
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by customer, email, or talent..."
+            placeholder="Search by customer, email, talent, or message details..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -496,6 +535,37 @@ const OrdersManagement: React.FC = () => {
 
                     {/* Actions */}
                     <div className="pt-2 space-y-2">
+                      {/* Download Video Button - Show if delivered */}
+                      {order.video_url && (order.status === 'completed' || order.status === 'delivered') && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadVideo(
+                                order.video_url!,
+                                order.talent_profiles?.users?.full_name || 'talent',
+                                order.id
+                              );
+                            }}
+                            disabled={downloadingVideo === order.id}
+                            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50"
+                          >
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            {downloadingVideo === order.id ? 'Downloading...' : 'Download Video'}
+                          </button>
+                          <a
+                            href={order.video_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-center gap-1 px-3 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
+                          >
+                            <VideoCameraIcon className="h-4 w-4" />
+                            Preview
+                          </a>
+                        </div>
+                      )}
+                      
                       {order.fulfillment_token && (
                         <button
                           onClick={async (e) => {
@@ -721,6 +791,37 @@ const OrdersManagement: React.FC = () => {
 
                               {/* Actions Section */}
                               <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                                {/* Download Video Button - Show if delivered */}
+                                {order.video_url && (order.status === 'completed' || order.status === 'delivered') && (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadVideo(
+                                          order.video_url!,
+                                          order.talent_profiles?.users?.full_name || 'talent',
+                                          order.id
+                                        );
+                                      }}
+                                      disabled={downloadingVideo === order.id}
+                                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                    >
+                                      <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                                      {downloadingVideo === order.id ? 'Downloading...' : 'Download Video'}
+                                    </button>
+                                    <a
+                                      href={order.video_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="inline-flex items-center px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors"
+                                    >
+                                      <VideoCameraIcon className="h-4 w-4 mr-2" />
+                                      Preview
+                                    </a>
+                                  </>
+                                )}
+                                
                                 {/* Copy Fulfillment Link */}
                                 {order.fulfillment_token && (
                                   <button
