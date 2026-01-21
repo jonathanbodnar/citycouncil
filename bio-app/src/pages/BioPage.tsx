@@ -731,7 +731,7 @@ const BioPage: React.FC = () => {
 
         // Fetch Podcast data if RSS feed is configured
         if (profile.podcast_rss_url) {
-          fetchPodcastData(profile.podcast_rss_url, profile.podcast_name || 'Podcast');
+          fetchPodcastData(profile.podcast_rss_url, profile.podcast_name || 'Podcast', profile.id);
         }
 
       } catch (error) {
@@ -1212,7 +1212,7 @@ const BioPage: React.FC = () => {
   };
 
   // Fetch podcast data - with 12-hour caching
-  const fetchPodcastData = async (rssUrl: string, podcastName: string) => {
+  const fetchPodcastData = async (rssUrl: string, podcastName: string, talentId: string) => {
     if (fetchingPodcast || podcastFetchedRef.current) {
       console.log('Podcast fetch already in progress or completed, skipping');
       return;
@@ -1472,6 +1472,7 @@ const BioPage: React.FC = () => {
       // Step 3: Update cache with fresh data (upsert)
       try {
         const cacheData = {
+          talent_id: talentId,
           podcast_rss_url: rssUrl,
           podcast_name: feedTitle,
           latest_episode_title: title,
@@ -1485,11 +1486,11 @@ const BioPage: React.FC = () => {
           last_checked_at: new Date().toISOString(),
         };
         
-        // Use upsert to insert or update based on podcast_rss_url
+        // Use upsert to insert or update based on talent_id + podcast_rss_url (unique constraint)
         const { error: cacheError } = await supabase
           .from('podcast_cache')
           .upsert(cacheData, { 
-            onConflict: 'podcast_rss_url',
+            onConflict: 'talent_id,podcast_rss_url',
             ignoreDuplicates: false 
           });
         
