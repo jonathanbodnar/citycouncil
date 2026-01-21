@@ -29,7 +29,7 @@ export const uploadImageToWasabi = async (
     console.log('Uploading to Supabase Storage:', { fileName, fileType: file.type, fileSize: file.size });
 
     // Upload to Supabase Storage (platform-assets bucket - same as CommsCenterManagement)
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('platform-assets')
       .upload(fileName, file, {
         contentType: file.type,
