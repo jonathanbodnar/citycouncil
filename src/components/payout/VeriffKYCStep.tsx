@@ -150,7 +150,7 @@ const VeriffKYCStep: React.FC<VeriffKYCStepProps> = ({ talentId, onComplete }) =
           <h3 className="text-red-600 font-semibold text-lg mb-2">Error</h3>
           <p className="text-red-700 mb-4">{error}</p>
           <button
-            onClick={createSession}
+            onClick={() => createSession()}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             Try Again
