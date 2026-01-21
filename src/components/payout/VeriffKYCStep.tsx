@@ -40,7 +40,7 @@ const VeriffKYCStep: React.FC<VeriffKYCStepProps> = ({ talentId, onComplete }) =
     }
   }, [])
 
-  const createSession = async () => {
+  const createSession = async (forceNew: boolean = false) => {
     try {
       setLoading(true)
       setError('')
@@ -48,7 +48,7 @@ const VeriffKYCStep: React.FC<VeriffKYCStepProps> = ({ talentId, onComplete }) =
       // Check if session already exists
       const { data: existingSession } = await supabase
         .from('veriff_sessions')
-        .select('session_id, session_url, verification_code, status')
+        .select('session_id, session_url, verification_code, status, created_at')
         .eq('talent_id', talentId)
         .maybeSingle()
 
@@ -58,13 +58,23 @@ const VeriffKYCStep: React.FC<VeriffKYCStepProps> = ({ talentId, onComplete }) =
         return
       }
 
-      if (existingSession && existingSession.status !== 'approved' && existingSession.session_url) {
-        // Reuse existing session
-        setSessionId(existingSession.session_id)
-        setSessionUrl(existingSession.session_url)
-        setVerificationCode(existingSession.verification_code || '')
-        setLoading(false)
-        return
+      // Check if existing session is still valid (less than 7 days old) and not forcing new
+      if (!forceNew && existingSession && existingSession.status !== 'approved' && existingSession.session_url) {
+        const createdAt = new Date(existingSession.created_at)
+        const now = new Date()
+        const daysSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        
+        // Veriff sessions expire after 7 days, but let's be safe and create new one after 5 days
+        if (daysSinceCreation < 5) {
+          // Reuse existing session
+          setSessionId(existingSession.session_id)
+          setSessionUrl(existingSession.session_url)
+          setVerificationCode(existingSession.verification_code || '')
+          setLoading(false)
+          return
+        }
+        // Session is old, fall through to create new one
+        console.log('Existing Veriff session expired, creating new one...')
       }
 
       // Create new session via edge function
@@ -205,6 +215,19 @@ const VeriffKYCStep: React.FC<VeriffKYCStepProps> = ({ talentId, onComplete }) =
         <div className="flex items-center justify-center gap-2 text-sm text-gray-400 mt-6">
           <div className="animate-pulse h-2 w-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full"></div>
           <span>Waiting for verification completion...</span>
+        </div>
+        
+        {/* Session expired? Start new one */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <p className="text-sm text-gray-500 text-center mb-3">
+            Session expired or having issues?
+          </p>
+          <button
+            onClick={() => createSession(true)}
+            className="text-sm text-blue-600 hover:text-blue-700 underline"
+          >
+            Start New Verification Session
+          </button>
         </div>
       </div>
     </div>
