@@ -57,7 +57,8 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     try {
       setLoadingVideos(true);
       // Get orders that are completed/delivered with videos
-      // Show all unless share_approved is explicitly FALSE
+      // The checkbox saves to `allow_promotional_use` column
+      // Show all unless allow_promotional_use is explicitly FALSE
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -65,7 +66,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
           created_at,
           video_url,
           request_details,
-          share_approved,
+          allow_promotional_use,
           users!orders_user_id_fkey (
             full_name
           )
@@ -78,7 +79,8 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       if (error) throw error;
 
       // Filter out only those explicitly marked as NOT shareable
-      const shareable = data?.filter((order: any) => order.share_approved !== false) || [];
+      // allow_promotional_use defaults to true, so show unless explicitly false
+      const shareable = data?.filter((order: any) => order.allow_promotional_use !== false) || [];
 
       const formatted = shareable.map((order: any) => ({
         id: order.id,
