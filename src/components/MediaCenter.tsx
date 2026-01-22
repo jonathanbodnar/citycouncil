@@ -56,6 +56,8 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   const fetchShareableVideos = async () => {
     try {
       setLoadingVideos(true);
+      // Get orders that are completed/delivered with videos
+      // Show all unless share_approved is explicitly FALSE
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -63,26 +65,30 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
           created_at,
           video_url,
           request_details,
+          share_approved,
           users!orders_user_id_fkey (
             full_name
           )
         `)
         .eq('talent_id', talentId)
         .in('status', ['completed', 'delivered'])
-        .eq('share_approved', true)
         .not('video_url', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const formatted = data?.map((order: any) => ({
+      // Filter out only those explicitly marked as NOT shareable
+      const shareable = data?.filter((order: any) => order.share_approved !== false) || [];
+
+      const formatted = shareable.map((order: any) => ({
         id: order.id,
         created_at: order.created_at,
         video_url: order.video_url,
         request_details: order.request_details,
         user_name: order.users?.full_name || 'Customer'
-      })) || [];
+      }));
 
+      logger.log('Shareable videos found:', formatted.length, 'out of', data?.length, 'total delivered');
       setShareableVideos(formatted);
     } catch (error) {
       logger.error('Error fetching shareable videos:', error);
