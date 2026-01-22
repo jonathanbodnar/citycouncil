@@ -545,16 +545,19 @@ const CollabOrderPage: React.FC = () => {
   };
 
   // Apply coupon code
-  const applyCoupon = () => {
+  const applyCoupon = async () => {
     if (!service || !couponInput.trim()) return;
     
     setCouponError(null);
+    setSubmitting(true);
     
-    // Check if service has a coupon configured and if input matches
-    if (service.coupon_code && service.coupon_code.toUpperCase() === couponInput.trim().toUpperCase()) {
+    const inputCode = couponInput.trim().toUpperCase();
+    const originalPrice = service.pricing / 100;
+    
+    // First check if service has a configured coupon that matches
+    if (service.coupon_code && service.coupon_code.toUpperCase() === inputCode) {
       const discountAmount = service.coupon_discount_amount || 0;
       const discountType = service.coupon_discount_type || 'percentage';
-      const originalPrice = service.pricing / 100;
       
       let finalPrice: number;
       if (discountType === 'percentage') {
@@ -567,12 +570,68 @@ const CollabOrderPage: React.FC = () => {
         code: service.coupon_code,
         discountAmount,
         discountType,
-        finalPrice: Math.round(finalPrice * 100) / 100, // Round to 2 decimal places
+        finalPrice: Math.round(finalPrice * 100) / 100,
       });
       toast.success(`Coupon applied! ${discountType === 'percentage' ? `${discountAmount}% off` : `$${discountAmount} off`}`);
-    } else {
+      setSubmitting(false);
+      return;
+    }
+    
+    // Look up global coupon in database
+    try {
+      const { data: coupon, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', inputCode)
+        .eq('is_active', true)
+        .single();
+      
+      if (error || !coupon) {
+        setCouponError('Invalid coupon code');
+        setAppliedCoupon(null);
+        setSubmitting(false);
+        return;
+      }
+      
+      // Check if coupon is expired
+      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+        setCouponError('This coupon has expired');
+        setAppliedCoupon(null);
+        setSubmitting(false);
+        return;
+      }
+      
+      // Check usage limits
+      if (coupon.max_uses && coupon.use_count >= coupon.max_uses) {
+        setCouponError('This coupon has reached its usage limit');
+        setAppliedCoupon(null);
+        setSubmitting(false);
+        return;
+      }
+      
+      const discountAmount = coupon.discount_amount || 0;
+      const discountType = coupon.discount_type || 'percentage';
+      
+      let finalPrice: number;
+      if (discountType === 'percentage') {
+        finalPrice = originalPrice * (1 - discountAmount / 100);
+      } else {
+        finalPrice = Math.max(0, originalPrice - discountAmount);
+      }
+      
+      setAppliedCoupon({
+        code: coupon.code,
+        discountAmount,
+        discountType,
+        finalPrice: Math.round(finalPrice * 100) / 100,
+      });
+      toast.success(`Coupon applied! ${discountType === 'percentage' ? `${discountAmount}% off` : `$${discountAmount} off`}`);
+    } catch (err) {
+      console.error('Error looking up coupon:', err);
       setCouponError('Invalid coupon code');
       setAppliedCoupon(null);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1329,27 +1388,65 @@ const CollabOrderPage: React.FC = () => {
               <div>
                 <h2 className="text-xl font-semibold text-white mb-4">Payment</h2>
                 
-                {/* Recurring Service Notice - only show if user chose recurring */}
-                {service.is_recurring && wantsRecurring && (
+                {/* Recurring Option - show if talent enabled it */}
+                {service?.is_recurring && (
                   <div 
-                    className="bg-blue-500/10 border border-blue-500/30 p-4 mb-4"
+                    className="border border-white/10 rounded-xl overflow-hidden mb-4"
                     style={{ borderRadius: getButtonRadius() }}
                   >
-                    <div className="flex items-center gap-2 text-blue-400 mb-1">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      <span className="font-semibold">Recurring Subscription</span>
+                    <div className="p-4 flex items-center justify-between bg-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-white">Subscribe & Save</h4>
+                          <p className="text-xs text-gray-400">Set up recurring billing</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={wantsRecurring}
+                          onChange={(e) => setWantsRecurring(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                      </label>
                     </div>
-                    <p className="text-sm text-gray-400">
-                      You'll be charged ${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}{' '}
-                      {selectedInterval === 'weekly' && 'every week'}
-                      {selectedInterval === 'biweekly' && 'every 2 weeks'}
-                      {selectedInterval === 'monthly' && 'every month'}
-                      {selectedInterval === 'quarterly' && 'every 3 months'}
-                      {selectedInterval === 'yearly' && 'every year'}
-                      . Cancel anytime.
-                    </p>
+                    
+                    {wantsRecurring && (
+                      <div className="p-4 border-t border-white/10 space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">How often would you like to be billed?</label>
+                          <select
+                            value={selectedInterval}
+                            onChange={(e) => setSelectedInterval(e.target.value as any)}
+                            className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+                          >
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Every 2 Weeks</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly (every 3 months)</option>
+                            <option value="yearly">Yearly</option>
+                          </select>
+                        </div>
+                        
+                        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                          <p className="text-blue-400 text-sm">
+                            💳 Your card will be charged <span className="font-bold">${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}</span>{' '}
+                            {selectedInterval === 'weekly' && 'every week'}
+                            {selectedInterval === 'biweekly' && 'every 2 weeks'}
+                            {selectedInterval === 'monthly' && 'every month'}
+                            {selectedInterval === 'quarterly' && 'every 3 months'}
+                            {selectedInterval === 'yearly' && 'every year'}
+                            . Cancel anytime.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 
@@ -1386,8 +1483,8 @@ const CollabOrderPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Coupon Code Input - only show if service has a coupon configured */}
-                {service.coupon_code && !appliedCoupon && (
+                {/* Coupon Code Input - always show if no coupon applied */}
+                {!appliedCoupon && (
                   <div className="mb-6">
                     <label className="block text-sm text-gray-400 mb-2">Have a coupon code?</label>
                     <div className="flex gap-2">
@@ -1442,27 +1539,23 @@ const CollabOrderPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Payment Form Container - clip top 100px to hide tabs */}
-                {/* Loading overlay positioned absolutely over the form */}
-                <div className="relative overflow-hidden rounded-xl border border-white/10">
+                {/* Payment Form Container */}
+                <div className="relative rounded-xl border border-white/10 overflow-hidden">
                   {/* Loading indicator overlay */}
-                  <div 
-                    className="absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-300"
-                    style={{ 
-                      backgroundColor: bioSettings?.gradient_start || '#0f172a',
-                      opacity: isPaymentReady ? 0 : 1,
-                      pointerEvents: isPaymentReady ? 'none' : 'auto',
-                    }}
-                  >
-                    <div className="animate-pulse text-gray-400">Loading payment form...</div>
-                  </div>
+                  {!isPaymentReady && (
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center z-10"
+                      style={{ backgroundColor: bioSettings?.gradient_start || '#0f172a' }}
+                    >
+                      <div className="animate-pulse text-gray-400">Loading payment form...</div>
+                    </div>
+                  )}
                   
-                  {/* Fortis iframe container - always rendered, no React children */}
+                  {/* Fortis iframe container */}
                   <div 
                     id="fortis-payment-container" 
                     ref={iframeContainerRef}
-                    className="min-h-[400px]"
-                    style={{ marginTop: '-220px' }}
+                    className="min-h-[350px]"
                   />
                 </div>
 
