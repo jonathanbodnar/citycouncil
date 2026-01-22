@@ -20,6 +20,7 @@ const creatorBios = [
   { name: 'Melonie Mac', handle: 'meloniemac', url: 'https://shoutout.fans/meloniemac' },
   { name: 'Nick Di Paolo', handle: 'nickdipaolo', url: 'https://shoutout.fans/nickdipaolo' },
   { name: 'Lydia Shaffer', handle: 'lydiashaffer', url: 'https://shoutout.fans/lydiashaffer' },
+  { name: 'Kristin Sokoloff', handle: 'kristinsokoloff', url: 'https://shoutout.fans/kristinsokoloff' },
 ];
 
 export default function CreatorsPage() {
