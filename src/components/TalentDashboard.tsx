@@ -2190,77 +2190,45 @@ const TalentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Own Your Audience Section */}
+          {/* Creator Bio Examples Carousel */}
           <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-              Own your{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400">
-                audience.
-              </span>
-            </h3>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6">
-              <div className="glass rounded-xl p-3 sm:p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
-                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
-                  ~2.6%
-                </div>
-                <p className="text-gray-400 text-xs leading-tight mt-1">of followers see your posts on social media</p>
-              </div>
-              <div className="glass rounded-xl p-3 sm:p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
-                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
-                  ~6%
-                </div>
-                <p className="text-emerald-300 text-xs leading-tight mt-1">of views become reachable fans with our bio link</p>
-              </div>
-            </div>
-
-            {/* Key Points */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 mt-1.5 animate-pulse" />
-                <p className="text-gray-300 text-sm">
-                  Social platforms only show your posts to <span className="text-white font-bold">~2.6% of your followers</span>. Your hard earned audience is being stolen.
-                </p>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5" />
-                <p className="text-gray-300 text-sm">
-                  <span className="text-emerald-400 font-bold">Our bio link</span> turns followers into an owned audience—fast.
-                </p>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-purple-500 mt-1.5" />
-                <p className="text-gray-300 text-sm">
-                  Creators using shout.bio convert <span className="text-white font-bold">~6% of profile views</span> into instantly reachable fans, all on auto pilot.
-                </p>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />
-                <p className="text-gray-300 text-sm">
-                  Send updates directly from your dashboard—without clunky tools like Mailchimp.
-                </p>
+            <h3 className="text-lg font-bold text-white mb-4">See It In Action</h3>
+            <div className="overflow-x-auto pb-2 -mx-2 px-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="flex gap-3" style={{ width: 'max-content' }}>
+                {[
+                  { name: 'Chris Ripa', handle: 'chrisripa' },
+                  { name: 'Greg On Fire', handle: 'gregonfire' },
+                  { name: 'Shawn Farash', handle: 'shawnfarash' },
+                  { name: 'Melonie Mac', handle: 'meloniemac' },
+                  { name: 'Nick Di Paolo', handle: 'nickdipaolo' },
+                  { name: 'Lydia Shaffer', handle: 'lydiashaffer' },
+                  { name: 'Kristin Sokoloff', handle: 'kristinsokoloff' },
+                ].map((creator, index) => (
+                  <a
+                    key={index}
+                    href={`https://shoutout.fans/${creator.handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 w-[140px] sm:w-[160px] group"
+                  >
+                    <div className="rounded-2xl overflow-hidden border border-white/10 bg-[#1a1a2e] transition-all duration-300 group-hover:scale-[1.02] group-hover:border-emerald-500/50">
+                      <iframe
+                        src={`https://shoutout.fans/${creator.handle}`}
+                        title={`${creator.name}'s bio`}
+                        className="w-full h-[220px] sm:h-[260px] border-0 rounded-2xl pointer-events-none"
+                        loading="lazy"
+                        scrolling="no"
+                      />
+                    </div>
+                    <p className="text-center text-xs text-gray-400 mt-2 group-hover:text-emerald-400 transition-colors">{creator.name}</p>
+                  </a>
+                ))}
               </div>
             </div>
-
-            {/* Special Badge */}
-            <div className="mt-4">
-              <div className="flex items-center gap-3 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                  <MegaphoneIcon className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-amber-300 font-bold text-sm sm:text-base">We build your fan list FOR you!</p>
-                  <p className="text-amber-200/70 text-xs sm:text-sm">Driving users on ShoutOut to subscribe to your list.</p>
-                </div>
-              </div>
-            </div>
+            <p className="text-center text-xs text-gray-500 mt-3">Scroll to see more • Click to view</p>
           </div>
 
-          {/* Services Section */}
+          {/* Services Section - MOVED ABOVE Own Your Audience */}
           <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
             <div className="text-center mb-4">
               <p className="text-cyan-400 font-semibold uppercase tracking-widest text-xs sm:text-sm mb-2">Services</p>
@@ -2298,10 +2266,64 @@ const TalentDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Preview Images */}
+          {/* Own Your Audience + How It Works Combined */}
           <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
-            <h3 className="text-lg font-bold text-white mb-4">How It Works</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
+              Own your{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400">
+                audience.
+              </span>
+            </h3>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6">
+              <div className="glass rounded-xl p-3 sm:p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
+                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
+                  ~2.6%
+                </div>
+                <p className="text-gray-400 text-xs leading-tight mt-1">of followers see your posts on social media</p>
+              </div>
+              <div className="glass rounded-xl p-3 sm:p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
+                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+                  ~6%
+                </div>
+                <p className="text-emerald-300 text-xs leading-tight mt-1">of views become reachable fans with our bio link</p>
+              </div>
+            </div>
+
+            {/* Key Points */}
+            <div className="space-y-3 mb-6">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 mt-1.5 animate-pulse" />
+                <p className="text-gray-300 text-sm">
+                  Social platforms only show your posts to <span className="text-white font-bold">~2.6% of your followers</span>. Your hard earned audience is being stolen.
+                </p>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5" />
+                <p className="text-gray-300 text-sm">
+                  <span className="text-emerald-400 font-bold">Our bio link</span> turns followers into an owned audience—fast.
+                </p>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-purple-500 mt-1.5" />
+                <p className="text-gray-300 text-sm">
+                  Creators using shout.bio convert <span className="text-white font-bold">~6% of profile views</span> into instantly reachable fans, all on auto pilot.
+                </p>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />
+                <p className="text-gray-300 text-sm">
+                  Send updates directly from your dashboard—without clunky tools like Mailchimp.
+                </p>
+              </div>
+            </div>
+
+            {/* How It Works - Images */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div className="rounded-xl overflow-hidden border border-emerald-500/30">
                 <img 
                   src="/creatorbios/stayconnected.png" 
@@ -2323,6 +2345,17 @@ const TalentDashboard: React.FC = () => {
                   <p className="text-purple-300 font-semibold text-sm">Send Updates</p>
                   <p className="text-gray-400 text-xs">Reach them directly from your dashboard</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Special Badge */}
+            <div className="flex items-center gap-3 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                <MegaphoneIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-amber-300 font-bold text-sm sm:text-base">We build your fan list FOR you!</p>
+                <p className="text-amber-200/70 text-xs sm:text-sm">Driving users on ShoutOut to subscribe to your list.</p>
               </div>
             </div>
           </div>
