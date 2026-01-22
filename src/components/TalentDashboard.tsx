@@ -159,7 +159,7 @@ const TalentDashboard: React.FC = () => {
 
     const animate = () => {
       position -= speed;
-      const cardWidth = 200 + 24; // card width + gap
+      const cardWidth = 160 + 16; // card width + gap
       if (Math.abs(position) >= cardWidth * bioCreatorBios.length) {
         position = 0;
       }
@@ -2332,7 +2332,7 @@ const TalentDashboard: React.FC = () => {
             <div className="overflow-x-clip overflow-y-visible py-2 pb-8">
               <div 
                 ref={bioCarouselRef}
-                className="flex gap-6"
+                className="flex gap-4"
                 style={{ width: 'max-content' }}
               >
                 {/* Duplicate array for seamless loop */}
@@ -2342,26 +2342,32 @@ const TalentDashboard: React.FC = () => {
                     href={`https://shoutout.fans/${creator.handle}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 w-[200px] group"
+                    className="flex-shrink-0 w-[160px] group"
                   >
-                    <div className="relative rounded-[1.5rem] overflow-hidden border border-white/10 transform transition-all duration-500 group-hover:scale-[1.02] group-hover:-translate-y-2 bg-[#1a1a2e]" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
-                      {/* Live iframe embed with proper mobile aspect ratio */}
-                      <div className="relative w-full h-[360px]">
+                    <div className="relative rounded-[1.25rem] overflow-hidden border border-white/10 transform transition-all duration-500 group-hover:scale-[1.02] group-hover:-translate-y-2 bg-[#1a1a2e]" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                      {/* Live iframe embed - scaled down to show full mobile view */}
+                      <div className="relative w-full h-[320px] overflow-hidden">
                         <iframe
                           src={`https://shoutout.fans/${creator.handle}`}
                           title={`${creator.name}'s bio`}
-                          className="w-full h-full border-0 rounded-[1.5rem]"
+                          className="border-0 rounded-[1.25rem] origin-top-left"
                           loading="lazy"
                           scrolling="no"
+                          style={{
+                            width: '375px',
+                            height: '750px',
+                            transform: 'scale(0.427)',
+                            transformOrigin: 'top left',
+                          }}
                         />
                         {/* Click-blocking overlay */}
                         <div className="absolute inset-0 cursor-default" />
                       </div>
                       {/* Hover info overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[1.5rem]" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none">
-                        <p className="font-bold text-base">{creator.name}</p>
-                        <p className="text-emerald-400 font-mono text-xs">shoutout.fans/{creator.handle}</p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[1.25rem]" />
+                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none">
+                        <p className="font-bold text-sm">{creator.name}</p>
+                        <p className="text-emerald-400 font-mono text-[10px]">shoutout.fans/{creator.handle}</p>
                       </div>
                     </div>
                   </a>
@@ -2371,50 +2377,46 @@ const TalentDashboard: React.FC = () => {
             <p className="text-center text-xs text-gray-500">Hover to pause • Click to view</p>
           </div>
 
-          {/* Services Section - MOVED ABOVE Own Your Audience */}
+          {/* Services Section - Compact one-line items */}
           <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
-            <div className="text-center mb-4">
-              <p className="text-cyan-400 font-semibold uppercase tracking-widest text-xs sm:text-sm mb-2">Services</p>
-              <h3 className="text-xl sm:text-2xl font-bold text-white">
+            <div className="mb-4">
+              <p className="text-cyan-400 font-semibold uppercase tracking-widest text-xs mb-1">Services</p>
+              <h3 className="text-lg sm:text-xl font-bold text-white">
                 Fuel your platform's{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
-                  growth
-                </span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">growth</span>
               </h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
               {[
                 { icon: ShoppingBagIcon, title: 'Sell merch', comingSoon: true },
                 { icon: TicketIcon, title: 'Sell tickets', comingSoon: true },
                 { icon: UserGroupIcon, title: 'Social collaborations', comingSoon: false },
                 { icon: VideoCameraIcon, title: 'ShoutOut orders', comingSoon: false },
               ].map((service, index) => (
-                <div key={index} className="glass rounded-xl p-3 sm:p-4 border border-white/10 flex flex-col items-center text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center mb-2">
-                    <service.icon className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
+                <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <service.icon className="w-4 h-4 text-cyan-400" />
                   </div>
-                  <h4 className="text-sm font-bold text-white">{service.title}</h4>
+                  <span className="text-sm font-medium text-white">{service.title}</span>
                   {service.comingSoon && (
-                    <span className="mt-1 text-[10px] sm:text-xs font-semibold text-amber-400 uppercase tracking-wider">Coming Soon</span>
+                    <span className="ml-auto text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Coming Soon</span>
                   )}
                 </div>
               ))}
             </div>
 
-            <p className="text-center text-sm sm:text-base text-gray-300 mt-4">
-              …all with{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 font-bold">zero effort</span>
-              {' '}and already integrated.
+            <p className="text-center text-xs sm:text-sm text-gray-400 mt-3">
+              …all with <span className="text-emerald-400 font-bold">zero effort</span> and already integrated.
             </p>
           </div>
 
           {/* Own Your Audience + How It Works Combined */}
-          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 overflow-hidden">
             <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
               {/* Left: Content */}
               <div>
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-4">
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
                   Own your{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400">
                     audience.
@@ -2422,68 +2424,68 @@ const TalentDashboard: React.FC = () => {
                 </h3>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6">
-                  <div className="glass rounded-xl p-3 sm:p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
-                    <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="glass rounded-lg p-2 sm:p-3 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
+                    <div className="text-lg sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
                       ~2.6%
                     </div>
-                    <p className="text-gray-400 text-xs leading-tight mt-1">of followers see your posts on social media</p>
+                    <p className="text-gray-400 text-[10px] sm:text-xs leading-tight">of followers see your posts</p>
                   </div>
-                  <div className="glass rounded-xl p-3 sm:p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
-                    <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+                  <div className="glass rounded-lg p-2 sm:p-3 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
+                    <div className="text-lg sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
                       ~6%
                     </div>
-                    <p className="text-emerald-300 text-xs leading-tight mt-1">of views become reachable fans with our bio link</p>
+                    <p className="text-emerald-300 text-[10px] sm:text-xs leading-tight">become fans with bio link</p>
                   </div>
                 </div>
 
-                {/* Key Points */}
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
-                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 mt-1.5 animate-pulse" />
-                    <p className="text-gray-300 text-sm">
-                      Social platforms only show your posts to <span className="text-white font-bold">~2.6% of your followers</span>. Your hard earned audience is being stolen.
+                {/* Key Points - Compact */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-start gap-2 p-2 rounded-lg bg-red-500/5 border border-red-500/20">
+                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-red-500 mt-1.5 animate-pulse" />
+                    <p className="text-gray-300 text-xs">
+                      Social platforms only show your posts to <span className="text-white font-bold">~2.6% of your followers</span>.
                     </p>
                   </div>
                   
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5" />
-                    <p className="text-gray-300 text-sm">
+                  <div className="flex items-start gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-500 mt-1.5" />
+                    <p className="text-gray-300 text-xs">
                       <span className="text-emerald-400 font-bold">Our bio link</span> turns followers into an owned audience—fast.
                     </p>
                   </div>
                   
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
-                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-purple-500 mt-1.5" />
-                    <p className="text-gray-300 text-sm">
-                      Creators using shout.bio convert <span className="text-white font-bold">~6% of profile views</span> into instantly reachable fans, all on auto pilot.
+                  <div className="flex items-start gap-2 p-2 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-purple-500 mt-1.5" />
+                    <p className="text-gray-300 text-xs">
+                      Convert <span className="text-white font-bold">~6% of profile views</span> into reachable fans on auto pilot.
                     </p>
                   </div>
                   
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
-                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />
-                    <p className="text-gray-300 text-sm">
-                      Send updates directly from your dashboard—without clunky tools like Mailchimp.
+                  <div className="flex items-start gap-2 p-2 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
+                    <p className="text-gray-300 text-xs">
+                      Send updates directly—without clunky tools like Mailchimp.
                     </p>
                   </div>
                 </div>
 
                 {/* Special Badge */}
-                <div className="flex items-center gap-3 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                    <MegaphoneIcon className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                    <MegaphoneIcon className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <p className="text-amber-300 font-bold text-sm sm:text-base">We build your fan list FOR you!</p>
-                    <p className="text-amber-200/70 text-xs sm:text-sm">Driving users on ShoutOut to subscribe to your list.</p>
+                    <p className="text-amber-300 font-bold text-xs sm:text-sm">We build your fan list FOR you!</p>
+                    <p className="text-amber-200/70 text-[10px] sm:text-xs">Driving users on ShoutOut to subscribe.</p>
                   </div>
                 </div>
               </div>
 
-              {/* Right: Overlapping Images - Desktop only, hidden on mobile */}
-              <div className="relative h-[300px] sm:h-[350px] lg:h-[400px] hidden lg:block">
+              {/* Right: Overlapping Images - Desktop only */}
+              <div className="relative min-h-[280px] hidden lg:block">
                 {/* Send Update - Background/larger image */}
-                <div className="absolute bottom-0 right-0 w-[85%] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <div className="absolute bottom-0 right-0 w-[80%] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
                   <img 
                     src="/creatorbios/sendupdate.png" 
                     alt="Send update - How creators reach their audience"
@@ -2492,7 +2494,7 @@ const TalentDashboard: React.FC = () => {
                 </div>
 
                 {/* Stay Connected - Floating overlay top-left */}
-                <div className="absolute top-0 left-0 w-[55%] rounded-2xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
+                <div className="absolute top-4 left-0 w-[50%] rounded-xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
                   <img 
                     src="/creatorbios/stayconnected.png" 
                     alt="Stay connected - How fans subscribe"
@@ -2500,28 +2502,28 @@ const TalentDashboard: React.FC = () => {
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Mobile: Grid layout for images */}
-              <div className="grid grid-cols-2 gap-4 lg:hidden">
-                <div className="rounded-xl overflow-hidden border border-emerald-500/30">
-                  <img 
-                    src="/creatorbios/stayconnected.png" 
-                    alt="Stay connected - How fans subscribe"
-                    className="w-full h-auto"
-                  />
-                  <div className="p-2 bg-emerald-500/10">
-                    <p className="text-emerald-300 font-semibold text-xs">Fans Subscribe</p>
-                  </div>
+            {/* Mobile: Side by side images below content */}
+            <div className="grid grid-cols-2 gap-3 mt-4 lg:hidden">
+              <div className="rounded-lg overflow-hidden border border-emerald-500/30">
+                <img 
+                  src="/creatorbios/stayconnected.png" 
+                  alt="Stay connected - How fans subscribe"
+                  className="w-full h-auto"
+                />
+                <div className="p-2 bg-emerald-500/10">
+                  <p className="text-emerald-300 font-semibold text-[10px]">Fans Subscribe</p>
                 </div>
-                <div className="rounded-xl overflow-hidden border border-purple-500/30">
-                  <img 
-                    src="/creatorbios/sendupdate.png" 
-                    alt="Send update - How creators reach their audience"
-                    className="w-full h-auto"
-                  />
-                  <div className="p-2 bg-purple-500/10">
-                    <p className="text-purple-300 font-semibold text-xs">Send Updates</p>
-                  </div>
+              </div>
+              <div className="rounded-lg overflow-hidden border border-purple-500/30">
+                <img 
+                  src="/creatorbios/sendupdate.png" 
+                  alt="Send update - How creators reach their audience"
+                  className="w-full h-auto"
+                />
+                <div className="p-2 bg-purple-500/10">
+                  <p className="text-purple-300 font-semibold text-[10px]">Send Updates</p>
                 </div>
               </div>
             </div>
