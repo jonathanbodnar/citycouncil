@@ -128,22 +128,22 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       
       toast.dismiss(toastId);
       
-      // Try native share with file (works on most mobile devices)
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Try native share - just attempt it directly
+      if (navigator.share) {
         try {
           await navigator.share({ files: [file] });
           toast.success('Shared!');
           return;
         } catch (shareError: any) {
-          // User cancelled or share failed - fall through to download
           if (shareError.name === 'AbortError') {
-            return; // User cancelled, do nothing
+            return; // User cancelled
           }
-          logger.log('Native share failed, falling back to download:', shareError.message);
+          // Share failed - continue to download fallback
+          logger.log('Share failed:', shareError.name, shareError.message);
         }
       }
       
-      // Fallback: trigger download if sharing not supported or failed
+      // Fallback: trigger download
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
@@ -153,7 +153,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       
-      toast.success('Downloaded! Share from your camera roll.', { duration: 4000 });
+      toast.success('Downloaded! Share from your Photos app.', { duration: 4000 });
     } catch (error) {
       toast.dismiss(toastId);
       logger.error('Download error:', error);
