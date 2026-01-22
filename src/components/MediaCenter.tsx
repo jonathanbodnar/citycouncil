@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   PhotoIcon, 
   VideoCameraIcon, 
@@ -6,13 +6,10 @@ import {
   CheckIcon,
   ArrowDownTrayIcon,
   ShareIcon,
-  ArrowPathIcon,
-  PencilIcon
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
-import { generatePromoGraphic, downloadPromoGraphic } from '../services/promoGraphicGenerator';
-import { uploadVideoToWasabi } from '../services/videoUpload';
-import { useAuth } from '../context/AuthContext';
+import { generatePromoGraphic } from '../services/promoGraphicGenerator';
 import toast from 'react-hot-toast';
 import { logger } from '../utils/logger';
 
@@ -21,7 +18,6 @@ interface MediaCenterProps {
   talentUsername?: string;
   talentFullName?: string;
   avatarUrl?: string;
-  promoVideoUrl?: string;
 }
 
 interface ShareableVideo {
@@ -36,134 +32,35 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   talentId,
   talentUsername,
   talentFullName,
-  avatarUrl,
-  promoVideoUrl
+  avatarUrl
 }) => {
-  const { user } = useAuth();
   const [generatingGraphic, setGeneratingGraphic] = useState(false);
-  const [downloadingVideo, setDownloadingVideo] = useState(false);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [shareableVideos, setShareableVideos] = useState<ShareableVideo[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
-  const [currentPromoVideoUrl, setCurrentPromoVideoUrl] = useState(promoVideoUrl);
-  const [uploadingNewVideo, setUploadingNewVideo] = useState(false);
-  const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Social media platform icons (SVG paths)
   const socialIcons = {
     Instagram: (
-      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
       </svg>
     ),
-    TikTok: (
-      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-      </svg>
-    ),
     Facebook: (
-      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
       </svg>
     ),
     Twitter: (
-      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
       </svg>
     )
   };
 
-  const socialHandles = [
-    { platform: 'Instagram', handle: '@shoutoutvoice', color: 'from-purple-600 to-pink-600', icon: socialIcons.Instagram },
-    { platform: 'TikTok', handle: '@shoutoutvoice', color: 'from-black to-gray-800', icon: socialIcons.TikTok },
-    { platform: 'Facebook', handle: '@shoutoutvoice', color: 'from-blue-600 to-blue-700', icon: socialIcons.Facebook },
-    { platform: 'X (Twitter)', handle: '@shoutoutvoices', color: 'from-gray-800 to-black', icon: socialIcons.Twitter }
-  ];
-
   useEffect(() => {
     fetchShareableVideos();
   }, [talentId]);
-
-  useEffect(() => {
-    setCurrentPromoVideoUrl(promoVideoUrl);
-  }, [promoVideoUrl]);
-
-  const handleUpdatePromoVideo = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type - check MIME type OR extension
-    const validExtensions = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.m4v'];
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    const isVideo = file.type.startsWith('video/') || validExtensions.includes(fileExtension);
-    
-    if (!isVideo) {
-      toast.error('Please select a video file (MP4, MOV, WEBM, etc.)');
-      return;
-    }
-
-    // Validate file size (max 1GB - same as onboarding)
-    const maxSize = 1000 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error('Video must be less than 1GB');
-      return;
-    }
-
-    if (!user?.id) {
-      toast.error('You must be logged in to update your promo video');
-      return;
-    }
-
-    setUploadingNewVideo(true);
-    logger.log('Starting promo video update:', { 
-      fileName: file.name, 
-      fileSize: file.size, 
-      fileType: file.type,
-      userId: user.id,
-      talentId 
-    });
-
-    try {
-      // Upload video to Wasabi
-      logger.log('Uploading to Wasabi...');
-      const uploadResult = await uploadVideoToWasabi(file, talentId);
-      logger.log('Wasabi upload result:', uploadResult);
-
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error || 'Failed to upload video');
-      }
-
-      // Update talent profile with new video URL
-      logger.log('Updating talent profile with new video URL:', uploadResult.videoUrl);
-      const { data, error } = await supabase
-        .from('talent_profiles')
-        .update({
-          promo_video_url: uploadResult.videoUrl,
-        })
-        .eq('user_id', user.id)
-        .select();
-
-      logger.log('Supabase update result:', { data, error });
-
-      if (error) {
-        logger.error('Supabase update error:', error);
-        throw error;
-      }
-
-      setCurrentPromoVideoUrl(uploadResult.videoUrl);
-      toast.success('Promo video updated successfully!');
-      
-      // Clear the file input
-      if (videoInputRef.current) {
-        videoInputRef.current.value = '';
-      }
-    } catch (error: any) {
-      logger.error('Error updating promo video:', error);
-      toast.error(error?.message || 'Failed to update promo video');
-    } finally {
-      setUploadingNewVideo(false);
-    }
-  };
 
   const fetchShareableVideos = async () => {
     try {
@@ -279,348 +176,240 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     }
   };
 
-  const handleDownloadPromoVideo = async () => {
-    if (!currentPromoVideoUrl) {
-      toast.error('No promo video available');
-      return;
-    }
-
-    if (!talentUsername) {
-      toast.error('Username not found.');
-      return;
-    }
-
-    setDownloadingVideo(true);
+  // Handle sharing video to stories (native share)
+  const handleShareToStories = async (videoUrl: string, orderId: string) => {
     try {
-      logger.log('Downloading promo video (already watermarked):', currentPromoVideoUrl);
-
-      const { downloadVideo } = await import('../utils/mobileDownload');
-      const filename = `${talentUsername}-promo-video.mp4`;
-
-      await downloadVideo({
-        url: currentPromoVideoUrl,
-        filename,
-        onSuccess: () => logger.log('Promo video download successful'),
-        onError: (error) => logger.error('Promo video download error:', error)
-      });
-
-      toast.success('Promo video downloaded!');
-    } catch (error) {
-      logger.error('Error downloading promo video:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to download promo video';
-      toast.error(errorMessage);
-    } finally {
-      setDownloadingVideo(false);
-    }
-  };
-
-  const handleDownloadShareableVideo = async (videoUrl: string, orderId: string) => {
-    try {
-      toast.loading('Adding watermark...', { id: 'watermark-shareable' });
-      
-      // Call watermark-video Edge Function
-      const { data, error } = await supabase.functions.invoke('watermark-video', {
-        body: { videoUrl }
-      });
-
-      if (error) throw error;
-
-      if (!data?.watermarkedUrl) {
-        throw new Error('No watermarked URL returned');
+      // Check if native sharing is supported
+      if (!navigator.share) {
+        toast.error('Sharing not supported on this device. Please download and share manually.');
+        return;
       }
 
-      toast.success('Watermark applied!', { id: 'watermark-shareable' });
+      toast.loading('Preparing video...', { id: 'share-video' });
+      
+      // Fetch the video as a blob
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `shoutout-${orderId.slice(0, 8)}.mp4`, { type: 'video/mp4' });
 
-      // Use mobile-friendly download utility
-      const { downloadVideo } = await import('../utils/mobileDownload');
-      const filename = `shoutout-${orderId.slice(0, 8)}.mp4`;
+      toast.dismiss('share-video');
 
-      await downloadVideo({
-        url: data.watermarkedUrl,
-        filename,
-        onSuccess: () => logger.log('Shareable video download successful'),
-        onError: (err) => logger.error('Shareable video download error:', err)
+      // Use native share
+      await navigator.share({
+        files: [file],
+        title: 'ShoutOut Video',
+        text: 'Check out this ShoutOut! 🎬'
       });
-    } catch (error) {
-      logger.error('Error downloading video:', error);
-      toast.dismiss('watermark-shareable');
-      toast.error('Failed to download video');
+
+      toast.success('Opening share sheet...');
+    } catch (error: any) {
+      toast.dismiss('share-video');
+      if (error.name !== 'AbortError') {
+        logger.error('Error sharing video:', error);
+        toast.error('Failed to share. Try downloading instead.');
+      }
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Media Center</h2>
-        <p className="text-gray-400">Download your promo materials and shareable content</p>
-      </div>
+  // Compact social handles for the tag section (just 3)
+  const tagSocialHandles = [
+    { platform: 'Instagram', handle: '@shoutoutvoice', icon: socialIcons.Instagram },
+    { platform: 'X', handle: '@shoutoutvoices', icon: socialIcons.Twitter },
+    { platform: 'Facebook', handle: '@shoutoutvoice', icon: socialIcons.Facebook },
+  ];
 
-      {/* Profile URL - Click to Copy (with utm=1 tracking) */}
+  return (
+    <div className="space-y-4">
+      {/* Profile Link Section - Styled like Link in Bio tab */}
       {talentUsername && (
-        <div className="glass p-4 rounded-xl">
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-400">
-              Your Profile URL
-            </label>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-300 text-xs font-medium">
-              💰 +10% earnings
-            </span>
+        <div className="glass rounded-2xl p-4 border border-white/20">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+              <ClipboardDocumentIcon className="h-5 w-5 text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-bold text-white">Your Profile Link</h3>
+              <p className="text-xs text-gray-400">Share this to earn +10% on every order</p>
+            </div>
           </div>
+          
           <button
             onClick={() => handleCopyToClipboard(`https://shoutout.us/${talentUsername}?utm=1`, 'Profile URL')}
-            className="w-full glass-hover p-3 rounded-lg flex items-center justify-between transition-all duration-300"
+            className="w-full p-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 hover:border-blue-400/50 transition-all flex items-center justify-between group"
           >
-            <span className="text-white font-mono text-sm">
-              shoutout.us/{talentUsername}?utm=1
-            </span>
+            <span className="text-white font-mono text-sm">shoutout.us/{talentUsername}?utm=1</span>
             {copiedItem === 'Profile URL' ? (
-              <CheckIcon className="h-5 w-5 text-green-400" />
+              <span className="flex items-center gap-1 text-emerald-400 text-sm">
+                <CheckIcon className="h-4 w-4" />
+                Copied!
+              </span>
             ) : (
-              <ClipboardDocumentIcon className="h-5 w-5 text-gray-400" />
+              <span className="flex items-center gap-1 text-blue-400 text-sm group-hover:text-blue-300">
+                <ClipboardDocumentIcon className="h-4 w-4" />
+                Copy
+              </span>
             )}
           </button>
-          <p className="text-xs text-gray-500 mt-2">
-            Use this link when promoting to earn an extra 10% on every order!
-          </p>
         </div>
       )}
 
-      {/* Promo Materials */}
-      <div className="glass p-6 rounded-xl">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <PhotoIcon className="h-5 w-5 text-blue-400" />
-          Promotional Materials
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Promo Graphic */}
-          <button
-            onClick={handleGenerateGraphic}
-            disabled={generatingGraphic || !avatarUrl}
-            className="glass-hover p-4 rounded-lg text-left transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
-                <PhotoIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-white">Promo Graphic</h4>
-                <p className="text-sm text-gray-400">1080x1350px Instagram post</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-300">
-                {generatingGraphic ? 'Generating...' : 'Download PNG'}
-              </span>
-              <ArrowDownTrayIcon className="h-5 w-5 text-gray-400" />
-            </div>
-          </button>
-
-          {/* Promo Video */}
-          {currentPromoVideoUrl ? (
-            <div className="glass-hover p-4 rounded-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-                  <VideoCameraIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white">Promo Video</h4>
-                  <p className="text-sm text-gray-400">With watermark</p>
-                </div>
-              </div>
-              
-              {/* Video Preview */}
-              <div className="mb-3">
-                <video 
-                  src={currentPromoVideoUrl} 
-                  className="w-full h-32 object-cover rounded-lg bg-black"
-                  muted
-                  preload="metadata"
-                />
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={handleDownloadPromoVideo}
-                  disabled={downloadingVideo || uploadingNewVideo}
-                  className="flex-1 glass-hover p-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {downloadingVideo ? (
-                    <>
-                      <ArrowPathIcon className="h-4 w-4 text-gray-300 animate-spin" />
-                      <span className="text-sm text-gray-300">Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDownTrayIcon className="h-4 w-4 text-gray-300" />
-                      <span className="text-sm text-gray-300">Download</span>
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => videoInputRef.current?.click()}
-                  disabled={uploadingNewVideo || downloadingVideo}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 p-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploadingNewVideo ? (
-                    <>
-                      <ArrowPathIcon className="h-4 w-4 text-white animate-spin" />
-                      <span className="text-sm text-white">Uploading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <PencilIcon className="h-4 w-4 text-white" />
-                      <span className="text-sm text-white">Update</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              
-              {/* Hidden file input */}
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/*,.mp4,.mov,.webm"
-                onChange={handleUpdatePromoVideo}
-                className="hidden"
-              />
-            </div>
-          ) : (
-            <div className="glass-hover p-4 rounded-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-                  <VideoCameraIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white">Promo Video</h4>
-                  <p className="text-sm text-gray-400">No video uploaded yet</p>
-                </div>
-              </div>
-              
-              <button
-                onClick={() => videoInputRef.current?.click()}
-                disabled={uploadingNewVideo}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 p-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {uploadingNewVideo ? (
-                  <>
-                    <ArrowPathIcon className="h-5 w-5 text-white animate-spin" />
-                    <span className="text-white font-medium">Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <VideoCameraIcon className="h-5 w-5 text-white" />
-                    <span className="text-white font-medium">Upload Promo Video</span>
-                  </>
-                )}
-              </button>
-              
-              {/* Hidden file input */}
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/*,.mp4,.mov,.webm"
-                onChange={handleUpdatePromoVideo}
-                className="hidden"
-              />
-            </div>
-          )}
+      {/* Most Effective Promotion Section */}
+      <div className="glass rounded-2xl p-4 border border-white/20">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center">
+            <ShareIcon className="h-5 w-5 text-pink-400" />
+          </div>
+          <h3 className="text-base font-bold text-white">Most Effective Promotion</h3>
         </div>
-      </div>
 
-      {/* Social Media Guidelines */}
-      <div className="glass p-6 rounded-xl">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <ShareIcon className="h-5 w-5 text-green-400" />
-          Social Media Guidelines
-        </h3>
-
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4">
-          <p className="text-blue-200 text-sm leading-relaxed">
-            <strong className="text-blue-100">Instagram:</strong> Please collaborate with @shoutoutvoice so we can share the post!
-            <br />
-            <strong className="text-blue-100 mt-2 block">Stories & Other Platforms:</strong> Please tag us @shoutoutvoice!
+        <div className="p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-orange-500/10 border border-pink-500/20 mb-4">
+          <p className="text-gray-200 text-sm leading-relaxed">
+            Post a funny story or previously delivered ShoutOut on Instagram (as a reel or just a story) and{' '}
+            <strong className="text-white">add your profile link on the story.</strong>
           </p>
         </div>
 
-        <div className="space-y-2">
-          {socialHandles.map((social) => (
+        {/* Case Studies */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-xs text-gray-300 leading-relaxed">
+              <span className="text-emerald-400 font-semibold">Melonie Mac</span> got 12 orders in just 24 hours by posting a quick reel and adding it to her stories with her profile link.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-xs text-gray-300 leading-relaxed">
+              <span className="text-emerald-400 font-semibold">Kaitlin Bennett</span> posted a single story on Instagram with her profile link and got 10 orders in the first 24 hours.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tag Us Section */}
+      <div className="glass rounded-2xl p-4 border border-white/20">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
+            <svg className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">Tag Us for Extra Reach!</h3>
+            <p className="text-xs text-gray-400">We will always promote your reels and posts!</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {tagSocialHandles.map((social) => (
             <button
               key={social.platform}
               onClick={() => handleCopyToClipboard(social.handle, social.platform)}
-              className="w-full glass-hover p-3 rounded-lg flex items-center justify-between transition-all duration-300"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/30 transition-all"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400">
-                  {social.icon}
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-400">{social.platform}</p>
-                  <p className="text-white font-semibold">{social.handle}</p>
-                </div>
-              </div>
+              <span className="text-gray-400">{social.icon}</span>
+              <span className="text-xs text-white font-medium">{social.handle}</span>
               {copiedItem === social.platform ? (
-                <CheckIcon className="h-5 w-5 text-green-400" />
+                <CheckIcon className="h-3 w-3 text-emerald-400" />
               ) : (
-                <ClipboardDocumentIcon className="h-5 w-5 text-gray-400" />
+                <ClipboardDocumentIcon className="h-3 w-3 text-gray-500" />
               )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Shareable Videos */}
-      <div className="glass p-6 rounded-xl">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <VideoCameraIcon className="h-5 w-5 text-purple-400" />
-          Shareable Videos
-        </h3>
+      {/* Shareable Videos Section */}
+      <div className="glass rounded-2xl p-4 border border-white/20">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+            <VideoCameraIcon className="h-5 w-5 text-purple-400" />
+          </div>
+          <h3 className="text-base font-bold text-white">Shareable Videos</h3>
+        </div>
+        
+        <p className="text-xs text-gray-400 mb-4 ml-[52px]">
+          Share out your previous ShoutOuts! (Don't forget to add your profile link to the story!)
+        </p>
         
         {loadingVideos ? (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
-            <p className="text-gray-400 text-sm">Loading videos...</p>
+          <div className="text-center py-6">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mb-2"></div>
+            <p className="text-gray-400 text-xs">Loading videos...</p>
           </div>
         ) : shareableVideos.length === 0 ? (
-          <div className="text-center py-8">
-            <VideoCameraIcon className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400">No shareable videos yet</p>
-            <p className="text-gray-500 text-sm mt-1">
+          <div className="text-center py-6">
+            <VideoCameraIcon className="h-10 w-10 text-gray-600 mx-auto mb-2" />
+            <p className="text-gray-400 text-sm">No shareable videos yet</p>
+            <p className="text-gray-500 text-xs mt-1">
               Completed orders with user approval will appear here
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {shareableVideos.map((video) => (
               <div
                 key={video.id}
-                className="glass-hover p-4 rounded-lg flex items-center justify-between"
+                className="rounded-xl overflow-hidden bg-black/30 border border-white/10"
               >
-                <div className="flex-1">
-                  <p className="text-white font-medium mb-1">
+                {/* Video Preview */}
+                <div className="relative aspect-[9/16] bg-black">
+                  <video 
+                    src={video.video_url}
+                    className="w-full h-full object-cover"
+                    controls
+                    preload="metadata"
+                    playsInline
+                  />
+                </div>
+                
+                {/* Info & Share Button */}
+                <div className="p-2">
+                  <p className="text-white text-xs font-medium truncate mb-1">
                     For {video.user_name}
                   </p>
-                  <p className="text-gray-400 text-sm line-clamp-1">
-                    {video.request_details}
-                  </p>
-                  <p className="text-gray-500 text-xs mt-1">
+                  <p className="text-gray-500 text-[10px] mb-2">
                     {new Date(video.created_at).toLocaleDateString()}
                   </p>
+                  <button
+                    onClick={() => handleShareToStories(video.video_url, video.id)}
+                    className="w-full py-1.5 px-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-1 transition-all"
+                  >
+                    <ShareIcon className="h-3 w-3" />
+                    Share to Stories
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleDownloadShareableVideo(video.video_url, video.id)}
-                  className="ml-4 p-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300"
-                  title="Download video with watermark"
-                >
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                </button>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Promotional Materials (moved to bottom, simplified) */}
+      <div className="glass rounded-2xl p-4 border border-white/20">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
+            <PhotoIcon className="h-5 w-5 text-blue-400" />
+          </div>
+          <h3 className="text-base font-bold text-white">Promo Materials</h3>
+        </div>
+        
+        <button
+          onClick={handleGenerateGraphic}
+          disabled={generatingGraphic || !avatarUrl}
+          className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+            <PhotoIcon className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-white font-medium text-sm">Promo Graphic</p>
+            <p className="text-gray-400 text-xs">1080x1350px Instagram post</p>
+          </div>
+          {generatingGraphic ? (
+            <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin" />
+          ) : (
+            <ArrowDownTrayIcon className="h-5 w-5 text-gray-400" />
+          )}
+        </button>
       </div>
     </div>
   );

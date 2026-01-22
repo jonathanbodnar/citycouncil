@@ -1836,7 +1836,6 @@ const TalentDashboard: React.FC = () => {
           talentUsername={talentProfile.username}
           talentFullName={talentProfile.full_name}
           avatarUrl={user?.avatar_url}
-          promoVideoUrl={talentProfile.promo_video_url}
         />
       )}
 
@@ -2337,20 +2336,17 @@ const TalentDashboard: React.FC = () => {
               >
                 {/* Duplicate array for seamless loop */}
                 {[...bioCreatorBios, ...bioCreatorBios, ...bioCreatorBios, ...bioCreatorBios].map((creator, index) => (
-                  <a
+                  <div
                     key={index}
-                    href={`https://shoutout.fans/${creator.handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0 w-[160px] group"
+                    className="flex-shrink-0 w-[160px]"
                   >
-                    <div className="relative rounded-[1.25rem] overflow-hidden border border-white/10 transform transition-all duration-500 group-hover:scale-[1.02] group-hover:-translate-y-2 bg-[#1a1a2e]" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                    <div className="relative rounded-[1.25rem] overflow-hidden border border-white/10 bg-[#1a1a2e]" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                       {/* Live iframe embed - scaled down to show full mobile view */}
                       <div className="relative w-full h-[320px] overflow-hidden">
                         <iframe
                           src={`https://shoutout.fans/${creator.handle}`}
                           title={`${creator.name}'s bio`}
-                          className="border-0 rounded-[1.25rem] origin-top-left"
+                          className="border-0 rounded-[1.25rem] origin-top-left pointer-events-none"
                           loading="lazy"
                           scrolling="no"
                           style={{
@@ -2363,18 +2359,15 @@ const TalentDashboard: React.FC = () => {
                         {/* Click-blocking overlay */}
                         <div className="absolute inset-0 cursor-default" />
                       </div>
-                      {/* Hover info overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[1.25rem]" />
-                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none">
-                        <p className="font-bold text-sm">{creator.name}</p>
-                        <p className="text-emerald-400 font-mono text-[10px]">shoutout.fans/{creator.handle}</p>
+                      {/* Name label at bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                        <p className="font-semibold text-xs text-white text-center">{creator.name}</p>
                       </div>
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             </div>
-            <p className="text-center text-xs text-gray-500">Hover to pause • Click to view</p>
           </div>
 
           {/* Services Section - Compact one-line items */}

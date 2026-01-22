@@ -91,7 +91,7 @@ const MobileNavigation: React.FC = () => {
     },
     // Conditionally add Link In Bio
     ...(hasBioAccess ? [{
-      name: 'Bio',
+      name: 'Link in Bio',
       href: '/dashboard?tab=bio',
       icon: LinkIcon,
       iconSolid: LinkIconSolid,
