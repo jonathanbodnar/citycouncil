@@ -114,59 +114,16 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     }
   };
 
-  // Handle native mobile sharing
-  const handleShareVideo = async (videoUrl: string, orderId: string) => {
-    // Check if native sharing is supported
-    if (!navigator.share) {
-      toast.error('Sharing not supported on this device');
-      return;
-    }
-
-    const toastId = toast.loading('Preparing video for sharing...');
-    
-    try {
-      // Fetch the video with a timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
-      const response = await fetch(videoUrl, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch video');
-      }
-      
-      const blob = await response.blob();
-      const file = new File([blob], `shoutout-${orderId.slice(0, 8)}.mp4`, { type: 'video/mp4' });
-
-      toast.dismiss(toastId);
-
-      // Check if file sharing is supported
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'ShoutOut Video',
-        });
-        toast.success('Shared successfully!');
-      } else {
-        // Fallback to URL sharing if file sharing not supported
-        await navigator.share({
-          title: 'ShoutOut Video',
-          text: 'Check out this ShoutOut! 🎬',
-          url: videoUrl,
-        });
-        toast.success('Share sheet opened!');
-      }
-    } catch (error: any) {
-      toast.dismiss(toastId);
-      
-      if (error.name === 'AbortError') {
-        toast.error('Download timed out. Please try again.');
-      } else if (error.name !== 'AbortError') {
-        logger.error('Error sharing video:', error);
-        toast.error('Failed to share video. Please try again.');
-      }
-    }
+  // Handle video download - saves to device for easy sharing
+  const handleDownloadVideo = (videoUrl: string, orderId: string) => {
+    // Open video in new tab - on mobile this allows saving to camera roll
+    // On iOS: long press > Save to Photos
+    // On Android: menu > Download
+    window.open(videoUrl, '_blank');
+    toast.success('Video opened! Save it to your camera roll, then share to Instagram Stories.', {
+      duration: 5000,
+      icon: '📱'
+    });
   };
 
   // Compact social handles for the tag section (just 3)
@@ -331,11 +288,11 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
                     {new Date(video.created_at).toLocaleDateString()}
                   </p>
                   <button
-                    onClick={() => handleShareVideo(video.video_url, video.id)}
+                    onClick={() => handleDownloadVideo(video.video_url, video.id)}
                     className="w-full py-1.5 px-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-1 transition-all"
                   >
                     <ShareIcon className="h-3 w-3" />
-                    Share to Stories
+                    Save & Share
                   </button>
                 </div>
               </div>
