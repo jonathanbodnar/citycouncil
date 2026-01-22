@@ -70,7 +70,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
           recipient_name
         `)
         .eq('talent_id', talentId)
-        .in('status', ['completed', 'delivered'])
+        .eq('status', 'completed')
         .not('video_url', 'is', null)
         .order('created_at', { ascending: false });
 

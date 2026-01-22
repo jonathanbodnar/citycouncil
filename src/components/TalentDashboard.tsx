@@ -152,14 +152,17 @@ const TalentDashboard: React.FC = () => {
   useEffect(() => {
     if (activeTab !== 'bio') return;
     
-    const carousel = bioCarouselRef.current;
-    if (!carousel) return;
-
     let animationId: number;
     let position = 0;
     const speed = 0.4;
 
     const animate = () => {
+      const carousel = bioCarouselRef.current;
+      if (!carousel) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+      
       position -= speed;
       const cardWidth = 160 + 16; // card width + gap
       if (Math.abs(position) >= cardWidth * bioCreatorBios.length) {
@@ -169,6 +172,7 @@ const TalentDashboard: React.FC = () => {
       animationId = requestAnimationFrame(animate);
     };
 
+    // Start animation immediately
     animationId = requestAnimationFrame(animate);
 
     return () => {
