@@ -2617,7 +2617,71 @@ const BioPage: React.FC = () => {
             </a>
           ))}
 
-          {/* Collab Service Cards */}
+          {/* ShoutOut Card - Before services section */}
+          {bioSettings && (
+            <a
+              href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}?utm=fans`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-4"
+            >
+              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-stretch">
+                  <div className="w-14 flex-shrink-0">
+                    {profileImage ? (
+                      <img src={profileImage} alt={displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
+                        {displayName[0]}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 p-4 flex flex-col justify-center">
+                      {randomReview ? (
+                        <h3 className="text-white font-semibold text-sm mb-1">
+                          Get a personalized video from {displayName}
+                        </h3>
+                      ) : (
+                        <>
+                          <h3 className="text-blue-400 font-semibold text-sm mb-0.5">
+                            Get a personalized video ShoutOut
+                          </h3>
+                          <p className="text-white text-sm font-medium">
+                            From {talentProfile?.full_name || displayName}
+                          </p>
+                        </>
+                      )}
+                      
+                      {randomReview && (
+                        <div className="mt-2 pt-2 border-t border-white/10">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              i < randomReview.rating ? (
+                                <StarSolidIcon key={i} className="h-3 w-3 text-yellow-400" />
+                              ) : (
+                                <StarIcon key={i} className="h-3 w-3 text-gray-600" />
+                              )
+                            ))}
+                          </div>
+                          {randomReview.comment && (
+                            <p className="text-gray-300 text-xs line-clamp-1">
+                              "{randomReview.comment.split('\n')[0]}"
+                            </p>
+                          )}
+                          {randomReview.users?.full_name && (
+                            <p className="text-gray-500 text-[10px] mt-0.5">
+                              — {randomReview.users.full_name}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                  </div>
+                </div>
+              </div>
+            </a>
+          )}
+
+          {/* Collab/Sponsorship Service Cards - After ShoutOut card */}
           {serviceOfferings.map((service) => {
             // Get platforms included in this service
             const servicePlatforms = service.platforms || ['instagram'];
@@ -2710,70 +2774,6 @@ const BioPage: React.FC = () => {
               </button>
             );
           })}
-
-          {/* ShoutOut Card - In services section */}
-          {bioSettings && (
-            <a
-              href={`https://shoutout.us/${talentProfile?.username || talentProfile?.id}?utm=fans`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block mt-4"
-            >
-              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl overflow-hidden border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-stretch">
-                  <div className="w-14 flex-shrink-0">
-                    {profileImage ? (
-                      <img src={profileImage} alt={displayName} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
-                        {displayName[0]}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 p-4 flex flex-col justify-center">
-                      {randomReview ? (
-                        <h3 className="text-white font-semibold text-sm mb-1">
-                          Get a personalized video from {displayName}
-                        </h3>
-                      ) : (
-                        <>
-                          <h3 className="text-blue-400 font-semibold text-sm mb-0.5">
-                            Get a personalized video ShoutOut
-                          </h3>
-                          <p className="text-white text-sm font-medium">
-                            From {talentProfile?.full_name || displayName}
-                          </p>
-                        </>
-                      )}
-                      
-                      {randomReview && (
-                        <div className="mt-2 pt-2 border-t border-white/10">
-                          <div className="flex items-center gap-1 mb-0.5">
-                            {[...Array(5)].map((_, i) => (
-                              i < randomReview.rating ? (
-                                <StarSolidIcon key={i} className="h-3 w-3 text-yellow-400" />
-                              ) : (
-                                <StarIcon key={i} className="h-3 w-3 text-gray-600" />
-                              )
-                            ))}
-                          </div>
-                          {randomReview.comment && (
-                            <p className="text-gray-300 text-xs line-clamp-1">
-                              "{randomReview.comment.split('\n')[0]}"
-                            </p>
-                          )}
-                          {randomReview.users?.full_name && (
-                            <p className="text-gray-500 text-[10px] mt-0.5">
-                              — {randomReview.users.full_name}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                  </div>
-                </div>
-              </div>
-            </a>
-          )}
 
           {/* Next Upcoming Event - Only show one */}
           {(() => {
