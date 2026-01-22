@@ -1537,159 +1537,142 @@ const TalentManagement: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col gap-2 mt-3 sm:mt-0">
+                    {/* Mobile: Onboarding link on its own row */}
                     {!talent.onboarding_completed && talent.onboarding_token && (
-                      <>
-                        <button
-                          onClick={() => copyOnboardingLink(talent.onboarding_token!)}
-                          className="flex items-center gap-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Copy onboarding link to clipboard"
-                        >
-                          <LinkIcon className="h-4 w-4" />
-                          Onboarding Link
-                        </button>
-                      </>
+                      <button
+                        onClick={() => copyOnboardingLink(talent.onboarding_token!)}
+                        className="flex items-center justify-center gap-1 px-3 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
+                        title="Copy onboarding link to clipboard"
+                      >
+                        <LinkIcon className="h-4 w-4" />
+                        Copy Onboarding Link
+                      </button>
                     )}
                     
-                    {/* Quick Toggle Buttons */}
-                    <button
-                      onClick={() => toggleTalentStatus(talent.id, 'is_active', !talent.is_active)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        talent.is_active 
-                          ? 'text-green-600 bg-green-50 hover:bg-green-100' 
-                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      title={talent.is_active ? 'Deactivate talent (hide from public)' : 'Activate talent (show on homepage)'}
-                    >
-                      {talent.is_active ? (
-                        <CheckCircleIcon className="h-4 w-4" />
-                      ) : (
-                        <XCircleIcon className="h-4 w-4" />
+                    {/* Quick Toggle Buttons - Grid layout for mobile */}
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        onClick={() => toggleTalentStatus(talent.id, 'is_active', !talent.is_active)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          talent.is_active 
+                            ? 'text-green-600 bg-green-50 hover:bg-green-100' 
+                            : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                        }`}
+                        title={talent.is_active ? 'Deactivate' : 'Activate'}
+                      >
+                        {talent.is_active ? (
+                          <CheckCircleIcon className="h-4 w-4" />
+                        ) : (
+                          <XCircleIcon className="h-4 w-4" />
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => toggleTalentStatus(talent.id, 'is_featured', !talent.is_featured)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          talent.is_featured 
+                            ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100' 
+                            : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                        }`}
+                        title={talent.is_featured ? 'Unfeatured' : 'Feature'}
+                      >
+                        <span className="text-sm">{talent.is_featured ? '⭐' : '☆'}</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => toggleTalentStatus(talent.id, 'allow_corporate_pricing', !talent.allow_corporate_pricing)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          talent.allow_corporate_pricing 
+                            ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                            : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                        }`}
+                        title={talent.allow_corporate_pricing ? 'Corp Off' : 'Corp On'}
+                      >
+                        <span className="text-sm">{talent.allow_corporate_pricing ? '🏢' : '👤'}</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => toggleTalentStatus(talent.id, 'is_verified', !talent.is_verified)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          talent.is_verified 
+                            ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                            : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                        }`}
+                        title={talent.is_verified ? 'Unverify' : 'Verify'}
+                      >
+                        <span className="text-sm">{talent.is_verified ? '✅' : '⬜'}</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => toggleTalentStatus(talent.id, 'is_coming_soon', !talent.is_coming_soon)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          talent.is_coming_soon 
+                            ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' 
+                            : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                        }`}
+                        title={talent.is_coming_soon ? 'Remove Coming Soon' : 'Coming Soon'}
+                      >
+                        <span className="text-sm">{talent.is_coming_soon ? '⏳' : '⬜'}</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => toggleTalentStatus(talent.id, 'bio_enabled', !talent.bio_enabled)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          talent.bio_enabled 
+                            ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' 
+                            : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                        }`}
+                        title={talent.bio_enabled ? 'Disable Bio' : 'Enable Bio'}
+                      >
+                        <span className="text-sm">{talent.bio_enabled ? '🔗' : '⬜'}</span>
+                      </button>
+                      
+                      {talent.is_participating_in_promotion && (
+                        <div className="p-2 bg-purple-50 rounded-lg" title="In Promo">
+                          <span className="text-sm">🎁</span>
+                        </div>
                       )}
-                    </button>
+                    </div>
                     
-                    <button
-                      onClick={() => toggleTalentStatus(talent.id, 'is_featured', !talent.is_featured)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        talent.is_featured 
-                          ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100' 
-                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      title={talent.is_featured ? 'Remove from featured carousel' : 'Add to featured carousel on homepage'}
-                    >
-                      <span className="text-lg">{talent.is_featured ? '⭐' : '☆'}</span>
-                    </button>
-                    
-                    {talent.is_featured && (
-                      <>
+                    {/* Dropdowns row */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {talent.is_featured && (
                         <select
                           value={talent.featured_order || ''}
                           onChange={(e) => {
                             const order = parseInt(e.target.value);
                             if (order) setFeaturedOrder(talent.id, order);
                           }}
-                          className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                          title="Featured position in carousel"
+                          className="px-2 py-1.5 text-xs border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          title="Featured position"
                         >
-                          <option value="">Order...</option>
+                          <option value="">⭐ Pos...</option>
                           {Array.from({ length: Math.max(10, talents.filter(t => t.is_featured).length + 1) }, (_, i) => i + 1).map(num => (
-                            <option key={num} value={num}>
-                              Position {num}
-                            </option>
+                            <option key={num} value={num}>#{num}</option>
                           ))}
                         </select>
-                        
-                        <select
-                          value={talent.featured_image_position || 'center center'}
-                          onChange={(e) => setImagePosition(talent.id, e.target.value)}
-                          className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                          title="Adjust face position in carousel image"
-                        >
-                          <option value="center center">Face Center</option>
-                          <option value="center 20%">Face Top</option>
-                          <option value="center 30%">Face Upper</option>
-                          <option value="center 40%">Face Mid-Upper</option>
-                          <option value="center 60%">Face Mid-Lower</option>
-                          <option value="center 70%">Face Lower</option>
-                          <option value="left center">Face Left</option>
-                          <option value="right center">Face Right</option>
-                        </select>
-                      </>
-                    )}
+                      )}
+                      
+                      <select
+                        value={talent.display_order === null || talent.display_order === undefined ? '' : talent.display_order}
+                        onChange={(e) => {
+                          const order = e.target.value === '' ? null : parseInt(e.target.value);
+                          setDisplayOrder(talent.id, order);
+                        }}
+                        className="px-2 py-1.5 text-xs border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        title="Display order"
+                      >
+                        <option value="">📋 Auto</option>
+                        {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
+                          <option key={num} value={num}>#{num}</option>
+                        ))}
+                      </select>
+                    </div>
                     
-                    <button
-                      onClick={() => toggleTalentStatus(talent.id, 'allow_corporate_pricing', !talent.allow_corporate_pricing)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        talent.allow_corporate_pricing 
-                          ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      title={talent.allow_corporate_pricing ? 'Disable business pricing option' : 'Enable business pricing option for orders'}
-                    >
-                      <span className="text-lg">{talent.allow_corporate_pricing ? '🏢' : '👤'}</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => toggleTalentStatus(talent.id, 'is_verified', !talent.is_verified)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        talent.is_verified 
-                          ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      title={talent.is_verified ? 'Remove verification badge' : 'Add verification badge'}
-                    >
-                      <span className="text-lg">{talent.is_verified ? '✅' : '⚪'}</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => toggleTalentStatus(talent.id, 'is_coming_soon', !talent.is_coming_soon)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        talent.is_coming_soon 
-                          ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' 
-                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      title={talent.is_coming_soon ? 'Remove Coming Soon status (make orderable)' : 'Mark as Coming Soon (shows on /home but not orderable)'}
-                    >
-                      <span className="text-lg">{talent.is_coming_soon ? '⏳' : '⚪'}</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => toggleTalentStatus(talent.id, 'bio_enabled', !talent.bio_enabled)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        talent.bio_enabled 
-                          ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' 
-                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      title={talent.bio_enabled ? 'Disable ShoutOut Bio access' : 'Enable ShoutOut Bio access for this talent'}
-                    >
-                      <span className="text-lg">{talent.bio_enabled ? '🔗' : '⚪'}</span>
-                    </button>
-                    
-                    {/* Display Order Control */}
-                    <select
-                      value={talent.display_order === null || talent.display_order === undefined ? '' : talent.display_order}
-                      onChange={(e) => {
-                        const order = e.target.value === '' ? null : parseInt(e.target.value);
-                        setDisplayOrder(talent.id, order);
-                      }}
-                      className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      title="Display order on /home page (lower = higher on page, blank = newest first)"
-                    >
-                      <option value="">Auto (newest)</option>
-                      {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
-                        <option key={num} value={num}>
-                          Position {num}
-                        </option>
-                      ))}
-                    </select>
-                    
-                    {talent.is_participating_in_promotion && (
-                      <div className="p-2 bg-purple-50 rounded-lg" title="Participating in promotion program">
-                        <span className="text-lg">🎁</span>
-                      </div>
-                    )}
-                    
-                    <button
+                    {/* Action buttons row */}
+                    <div className="flex gap-1.5">
+                      <button
                       onClick={() => {
                         // Initialize temp_phone - just store 10 digits
                         const phoneFromDB = talent.users?.phone;
@@ -1878,13 +1861,14 @@ const TalentManagement: React.FC = () => {
                       </button>
                     )}
                     
-                    <button
-                      onClick={() => deleteTalent(talent.id, talent.users?.full_name || talent.username || 'talent')}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Permanently delete talent profile"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                      <button
+                        onClick={() => deleteTalent(talent.id, talent.users?.full_name || talent.username || 'talent')}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
