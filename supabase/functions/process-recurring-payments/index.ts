@@ -152,7 +152,7 @@ async function processSubscription(
       .eq('id', talent_id)
       .single();
 
-    const adminFeePercent = talent?.admin_fee_percentage ?? 15;
+    const adminFeePercent = 15; // Fixed 15% admin fee for collabs
     const adminFee = Math.round(amount_cents * (adminFeePercent / 100));
     
     const fulfillmentDeadline = new Date();
