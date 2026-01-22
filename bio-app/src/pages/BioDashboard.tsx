@@ -5898,7 +5898,7 @@ const AddServiceModal: React.FC<{
   const [couponDiscountAmount, setCouponDiscountAmount] = useState(service?.coupon_discount_amount?.toString() || '');
   const [couponDiscountType, setCouponDiscountType] = useState<'percentage' | 'fixed'>(service?.coupon_discount_type || 'percentage');
   const [isRecurring, setIsRecurring] = useState(service?.is_recurring || false);
-  const [recurringInterval, setRecurringInterval] = useState<'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'>(service?.recurring_interval || 'monthly');
+  // Note: recurring_interval is chosen by the CUSTOMER at checkout, not stored on the service
 
   const togglePlatform = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -5928,7 +5928,7 @@ const AddServiceModal: React.FC<{
       coupon_discount_amount: couponDiscountAmount ? parseFloat(couponDiscountAmount) : null,
       coupon_discount_type: couponDiscountType,
       is_recurring: isRecurring,
-      recurring_interval: isRecurring ? recurringInterval : null,
+      // Note: recurring_interval is set by the CUSTOMER at checkout, not the talent
     });
   };
 
@@ -6257,8 +6257,8 @@ const AddServiceModal: React.FC<{
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   <div>
-                    <h4 className="font-medium text-white">Recurring Payment</h4>
-                    <p className="text-xs text-gray-400">Charge customers on a schedule</p>
+                    <h4 className="font-medium text-white">Allow Recurring Payment</h4>
+                    <p className="text-xs text-gray-400">Let customers choose to subscribe</p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -6273,31 +6273,11 @@ const AddServiceModal: React.FC<{
               </div>
               
               {isRecurring && (
-                <div className="p-4 border-t border-white/10 space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Billing Interval</label>
-                    <select
-                      value={recurringInterval}
-                      onChange={(e) => setRecurringInterval(e.target.value as any)}
-                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="weekly">Weekly</option>
-                      <option value="biweekly">Every 2 Weeks</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="quarterly">Quarterly (3 months)</option>
-                      <option value="yearly">Yearly</option>
-                    </select>
-                  </div>
-                  
+                <div className="p-4 border-t border-white/10">
                   <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
                     <p className="text-blue-400 text-sm">
-                      🔄 Customers will be charged <span className="font-bold">${pricing || '0'}</span>{' '}
-                      {recurringInterval === 'weekly' && 'every week'}
-                      {recurringInterval === 'biweekly' && 'every 2 weeks'}
-                      {recurringInterval === 'monthly' && 'every month'}
-                      {recurringInterval === 'quarterly' && 'every 3 months'}
-                      {recurringInterval === 'yearly' && 'every year'}
-                      {' '}until cancelled.
+                      🔄 Customers will choose their billing frequency (weekly, monthly, etc.) at checkout. 
+                      They can cancel anytime.
                     </p>
                   </div>
                 </div>

@@ -138,6 +138,10 @@ const CollabOrderPage: React.FC = () => {
     finalPrice: number;
   } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
+  
+  // Recurring subscription state (user chooses frequency)
+  const [wantsRecurring, setWantsRecurring] = useState(false);
+  const [selectedInterval, setSelectedInterval] = useState<'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'>('monthly');
 
   useEffect(() => {
     fetchData();
@@ -385,8 +389,10 @@ const CollabOrderPage: React.FC = () => {
     const finalPrice = appliedCoupon ? appliedCoupon.finalPrice : service.pricing / 100;
     
     setStep('payment');
-    // Use ticket intention for recurring services, transaction intention for one-time
-    setTimeout(() => initializeFortis(finalPrice, service.is_recurring || false), 100);
+    // Use ticket intention if user wants recurring, transaction intention for one-time
+    // Note: service.is_recurring just enables the option, wantsRecurring is the user's choice
+    const useRecurring = service.is_recurring && wantsRecurring;
+    setTimeout(() => initializeFortis(finalPrice, useRecurring), 100);
   };
 
   const initializeFortis = async (amount: number, isRecurring: boolean = false) => {
@@ -469,7 +475,9 @@ const CollabOrderPage: React.FC = () => {
         console.log('payment_success payload', payload);
         
         // For recurring (ticket) flow, we get a ticket_id, not a transaction
-        const isTicketFlow = intentionType === 'ticket' || isRecurring;
+        // User must have chosen recurring AND talent must have enabled it
+        const userChoseRecurring = service.is_recurring && wantsRecurring;
+        const isTicketFlow = intentionType === 'ticket' || userChoseRecurring;
         const ticketId = payload?.data?.id || payload?.id;
         const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
 
@@ -549,13 +557,13 @@ const CollabOrderPage: React.FC = () => {
 
           console.log('✅ Order created:', order.id);
 
-          // For recurring services, create the subscription
-          if (isRecurring && tokenId && service.recurring_interval) {
-            console.log('Creating subscription for recurring service');
+          // For recurring services, create the subscription (if user chose recurring)
+          if (userChoseRecurring && tokenId) {
+            console.log('Creating subscription for recurring service with interval:', selectedInterval);
             
-            // Calculate next billing date based on interval
+            // Calculate next billing date based on user's chosen interval
             const nextBillingDate = new Date();
-            switch (service.recurring_interval) {
+            switch (selectedInterval) {
               case 'weekly':
                 nextBillingDate.setDate(nextBillingDate.getDate() + 7);
                 break;
@@ -582,7 +590,7 @@ const CollabOrderPage: React.FC = () => {
                 fortis_token_id: tokenId,
                 status: 'active',
                 amount_cents: finalAmountCents,
-                recurring_interval: service.recurring_interval,
+                recurring_interval: selectedInterval, // User's chosen interval
                 next_billing_date: nextBillingDate.toISOString(),
                 last_billing_date: new Date().toISOString(),
                 successful_payments: 1,
@@ -602,7 +610,7 @@ const CollabOrderPage: React.FC = () => {
 
           setCreatedOrderId(order.id);
           setStep('success');
-          toast.success(isRecurring ? 'Subscription started successfully!' : 'Order placed successfully!');
+          toast.success(userChoseRecurring ? 'Subscription started successfully!' : 'Order placed successfully!');
           
         } catch (error) {
           console.error('Error creating order:', error);
@@ -1015,13 +1023,72 @@ const CollabOrderPage: React.FC = () => {
                   />
                 </div>
 
+                {/* Recurring Payment Option - shown if talent enabled it */}
+                {service?.is_recurring && (
+                  <div className="border border-white/10 rounded-xl overflow-hidden">
+                    <div className="p-4 flex items-center justify-between bg-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-white">Subscribe & Save</h4>
+                          <p className="text-xs text-gray-400">Set up recurring billing</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={wantsRecurring}
+                          onChange={(e) => setWantsRecurring(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                      </label>
+                    </div>
+                    
+                    {wantsRecurring && (
+                      <div className="p-4 border-t border-white/10 space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">How often would you like to be billed?</label>
+                          <select
+                            value={selectedInterval}
+                            onChange={(e) => setSelectedInterval(e.target.value as any)}
+                            className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+                          >
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Every 2 Weeks</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly (every 3 months)</option>
+                            <option value="yearly">Yearly</option>
+                          </select>
+                        </div>
+                        
+                        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                          <p className="text-blue-400 text-sm">
+                            💳 Your card will be charged <span className="font-bold">${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : ((service?.pricing || 0) / 100).toFixed(2)}</span>{' '}
+                            {selectedInterval === 'weekly' && 'every week'}
+                            {selectedInterval === 'biweekly' && 'every 2 weeks'}
+                            {selectedInterval === 'monthly' && 'every month'}
+                            {selectedInterval === 'quarterly' && 'every 3 months'}
+                            {selectedInterval === 'yearly' && 'every year'}
+                            . Cancel anytime.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={submitting}
                   className="w-full py-4 text-white font-semibold transition-all hover:opacity-90 disabled:opacity-50"
                   style={{ backgroundColor: buttonColor, borderRadius: getButtonRadius() }}
                 >
-                  Continue to Payment
+                  {wantsRecurring ? 'Continue to Subscribe' : 'Continue to Payment'}
                 </button>
               </form>
             )}
@@ -1031,8 +1098,8 @@ const CollabOrderPage: React.FC = () => {
               <div>
                 <h2 className="text-xl font-semibold text-white mb-4">Payment</h2>
                 
-                {/* Recurring Service Notice */}
-                {service.is_recurring && (
+                {/* Recurring Service Notice - only show if user chose recurring */}
+                {service.is_recurring && wantsRecurring && (
                   <div 
                     className="bg-blue-500/10 border border-blue-500/30 p-4 mb-4"
                     style={{ borderRadius: getButtonRadius() }}
@@ -1045,11 +1112,11 @@ const CollabOrderPage: React.FC = () => {
                     </div>
                     <p className="text-sm text-gray-400">
                       You'll be charged ${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}{' '}
-                      {service.recurring_interval === 'weekly' && 'every week'}
-                      {service.recurring_interval === 'biweekly' && 'every 2 weeks'}
-                      {service.recurring_interval === 'monthly' && 'every month'}
-                      {service.recurring_interval === 'quarterly' && 'every 3 months'}
-                      {service.recurring_interval === 'yearly' && 'every year'}
+                      {selectedInterval === 'weekly' && 'every week'}
+                      {selectedInterval === 'biweekly' && 'every 2 weeks'}
+                      {selectedInterval === 'monthly' && 'every month'}
+                      {selectedInterval === 'quarterly' && 'every 3 months'}
+                      {selectedInterval === 'yearly' && 'every year'}
                       . Cancel anytime.
                     </p>
                   </div>
@@ -1079,7 +1146,7 @@ const CollabOrderPage: React.FC = () => {
                   <div className="border-t border-white/10 pt-2 mt-2">
                     <div className="flex justify-between">
                       <span className="text-white font-semibold">
-                        {service.is_recurring ? 'Amount Due Today' : 'Total'}
+                        {service.is_recurring && wantsRecurring ? 'Amount Due Today' : 'Total'}
                       </span>
                       <span className="text-white font-semibold">
                         ${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}
@@ -1232,7 +1299,7 @@ const CollabOrderPage: React.FC = () => {
                   {displayName} has been notified and will start working on your collab soon.
                 </p>
 
-                {service.is_recurring && (
+                {service.is_recurring && wantsRecurring && (
                   <div 
                     className="bg-blue-500/10 border border-blue-500/30 p-4 mb-6 text-left"
                     style={{ borderRadius: getButtonRadius() }}
@@ -1245,11 +1312,11 @@ const CollabOrderPage: React.FC = () => {
                     </div>
                     <p className="text-sm text-gray-400">
                       You'll be charged ${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}{' '}
-                      {service.recurring_interval === 'weekly' && 'every week'}
-                      {service.recurring_interval === 'biweekly' && 'every 2 weeks'}
-                      {service.recurring_interval === 'monthly' && 'every month'}
-                      {service.recurring_interval === 'quarterly' && 'every 3 months'}
-                      {service.recurring_interval === 'yearly' && 'every year'}.
+                      {selectedInterval === 'weekly' && 'every week'}
+                      {selectedInterval === 'biweekly' && 'every 2 weeks'}
+                      {selectedInterval === 'monthly' && 'every month'}
+                      {selectedInterval === 'quarterly' && 'every 3 months'}
+                      {selectedInterval === 'yearly' && 'every year'}.
                       You can cancel anytime from your dashboard.
                     </p>
                   </div>
@@ -1264,7 +1331,7 @@ const CollabOrderPage: React.FC = () => {
                     <li>• {displayName} will review your request</li>
                     <li>• You'll receive an email when your content is ready</li>
                     <li>• Track your order status in your dashboard</li>
-                    {service.is_recurring && (
+                    {service.is_recurring && wantsRecurring && (
                       <li>• Manage your subscription from your dashboard</li>
                     )}
                   </ul>
