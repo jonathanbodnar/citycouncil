@@ -114,28 +114,58 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     }
   };
 
-  // Handle downloading video (simple direct download)
-  const handleDownloadVideo = async (videoUrl: string, orderId: string) => {
+  // Handle native mobile sharing
+  const handleShareVideo = async (videoUrl: string, orderId: string) => {
+    // Check if native sharing is supported
+    if (!navigator.share) {
+      toast.error('Sharing not supported on this device');
+      return;
+    }
+
+    const toastId = toast.loading('Preparing video for sharing...');
+    
     try {
-      toast.loading('Starting download...', { id: 'download-video' });
+      // Fetch the video with a timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
-      // Create a temporary link to trigger download
-      const link = document.createElement('a');
-      link.href = videoUrl;
-      link.download = `shoutout-${orderId.slice(0, 8)}.mp4`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const response = await fetch(videoUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
       
-      toast.dismiss('download-video');
-      toast.success('Download started! Save the video, then share to Instagram Stories.');
+      if (!response.ok) {
+        throw new Error('Failed to fetch video');
+      }
+      
+      const blob = await response.blob();
+      const file = new File([blob], `shoutout-${orderId.slice(0, 8)}.mp4`, { type: 'video/mp4' });
+
+      toast.dismiss(toastId);
+
+      // Check if file sharing is supported
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'ShoutOut Video',
+        });
+        toast.success('Shared successfully!');
+      } else {
+        // Fallback to URL sharing if file sharing not supported
+        await navigator.share({
+          title: 'ShoutOut Video',
+          text: 'Check out this ShoutOut! 🎬',
+          url: videoUrl,
+        });
+        toast.success('Share sheet opened!');
+      }
     } catch (error: any) {
-      toast.dismiss('download-video');
-      logger.error('Error downloading video:', error);
-      // Fallback: open in new tab
-      window.open(videoUrl, '_blank');
-      toast.success('Opening video - hold to save, then share to Stories!');
+      toast.dismiss(toastId);
+      
+      if (error.name === 'AbortError') {
+        toast.error('Download timed out. Please try again.');
+      } else if (error.name !== 'AbortError') {
+        logger.error('Error sharing video:', error);
+        toast.error('Failed to share video. Please try again.');
+      }
     }
   };
 
@@ -301,11 +331,11 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
                     {new Date(video.created_at).toLocaleDateString()}
                   </p>
                   <button
-                    onClick={() => handleDownloadVideo(video.video_url, video.id)}
+                    onClick={() => handleShareVideo(video.video_url, video.id)}
                     className="w-full py-1.5 px-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-1 transition-all"
                   >
                     <ShareIcon className="h-3 w-3" />
-                    Download & Share
+                    Share to Stories
                   </button>
                 </div>
               </div>
