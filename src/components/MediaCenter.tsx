@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   VideoCameraIcon, 
   ClipboardDocumentIcon,
@@ -8,6 +8,8 @@ import {
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
 import { logger } from '../utils/logger';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 interface MediaCenterProps {
   talentId: string;
@@ -29,6 +31,8 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [shareableVideos, setShareableVideos] = useState<ShareableVideo[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
 
   // Social media platform icons (SVG paths)
   const socialIcons = {
@@ -114,22 +118,101 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     }
   };
 
-  // Handle video download and share - like other video platforms
-  const handleDownloadVideo = async (videoUrl: string, orderId: string) => {
-    const toastId = toast.loading('Preparing video...');
+  // Load FFmpeg for compression
+  const loadFFmpeg = async () => {
+    if (ffmpegRef.current && ffmpegLoaded) return ffmpegRef.current;
+    
+    const ffmpeg = new FFmpeg();
+    ffmpegRef.current = ffmpeg;
+    
+    // Load FFmpeg core from CDN
+    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+    
+    setFfmpegLoaded(true);
+    return ffmpeg;
+  };
+
+  // Compress video to under 50MB for sharing
+  const compressVideo = async (blob: Blob, filename: string): Promise<File> => {
+    const MAX_SIZE = 45 * 1024 * 1024; // 45MB target (under 50MB limit)
+    
+    // If already small enough, no compression needed
+    if (blob.size <= MAX_SIZE) {
+      return new File([blob], filename, { type: 'video/mp4' });
+    }
+    
+    toast.loading('Compressing for sharing...', { id: 'compress' });
     
     try {
-      // Fetch the video as a blob
+      const ffmpeg = await loadFFmpeg();
+      
+      // Write input file
+      const inputData = new Uint8Array(await blob.arrayBuffer());
+      await ffmpeg.writeFile('input.mp4', inputData);
+      
+      // Calculate target bitrate based on file size ratio needed
+      // Rough estimate: reduce bitrate proportionally
+      const compressionRatio = MAX_SIZE / blob.size;
+      const targetBitrate = Math.floor(2000 * compressionRatio); // Start from ~2000kbps
+      
+      // Compress with FFmpeg - reduce bitrate and scale down if very large
+      await ffmpeg.exec([
+        '-i', 'input.mp4',
+        '-c:v', 'libx264',
+        '-preset', 'fast',
+        '-crf', '28', // Higher CRF = more compression
+        '-b:v', `${Math.max(targetBitrate, 500)}k`, // Min 500kbps
+        '-maxrate', `${Math.max(targetBitrate * 1.5, 750)}k`,
+        '-bufsize', `${Math.max(targetBitrate * 2, 1000)}k`,
+        '-vf', 'scale=720:-2', // Scale to 720p width max
+        '-c:a', 'aac',
+        '-b:a', '128k',
+        '-movflags', '+faststart',
+        'output.mp4'
+      ]);
+      
+      // Read compressed file
+      const outputData = await ffmpeg.readFile('output.mp4');
+      const compressedBlob = new Blob([outputData], { type: 'video/mp4' });
+      
+      // Clean up
+      await ffmpeg.deleteFile('input.mp4');
+      await ffmpeg.deleteFile('output.mp4');
+      
+      toast.dismiss('compress');
+      logger.log(`Compressed ${(blob.size / 1024 / 1024).toFixed(1)}MB → ${(compressedBlob.size / 1024 / 1024).toFixed(1)}MB`);
+      
+      return new File([compressedBlob], filename, { type: 'video/mp4' });
+    } catch (error) {
+      toast.dismiss('compress');
+      logger.error('Compression failed:', error);
+      // Return original if compression fails
+      return new File([blob], filename, { type: 'video/mp4' });
+    }
+  };
+
+  // Handle video download and share
+  const handleDownloadVideo = async (videoUrl: string, orderId: string) => {
+    const toastId = toast.loading('Downloading video...');
+    
+    try {
+      // Fetch the video
       const response = await fetch(videoUrl);
       if (!response.ok) throw new Error('Download failed');
       
       const blob = await response.blob();
-      const file = new File([blob], `shoutout-${orderId.slice(0, 8)}.mp4`, { type: 'video/mp4' });
+      const filename = `shoutout-${orderId.slice(0, 8)}.mp4`;
       
       toast.dismiss(toastId);
       
-      // Try native share - just attempt it directly
+      // Compress if needed and try native share
       if (navigator.share) {
+        const file = await compressVideo(blob, filename);
+        
         try {
           await navigator.share({ files: [file] });
           toast.success('Shared!');
@@ -138,16 +221,15 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
           if (shareError.name === 'AbortError') {
             return; // User cancelled
           }
-          // Share failed - continue to download fallback
-          logger.log('Share failed:', shareError.name, shareError.message);
+          logger.log('Share failed after compression:', shareError.message);
         }
       }
       
-      // Fallback: trigger download
+      // Fallback: trigger download (original quality)
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = file.name;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
