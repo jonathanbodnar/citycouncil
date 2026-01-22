@@ -202,12 +202,12 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="p-3 rounded-xl bg-white/5 border border-white/10">
             <p className="text-xs text-gray-300 leading-relaxed">
-              <span className="text-emerald-400 font-semibold">Melonie Mac</span> got 12 orders in just 24 hours by posting a quick reel and adding it to her stories with her profile link.
+              <span className="text-emerald-400 font-semibold">Melonie Mac</span> got <span className="text-yellow-400 font-bold">12 orders</span> in just <span className="text-emerald-400 font-bold">24 hours</span> by posting a quick reel and adding it to her stories with her profile link.
             </p>
           </div>
           <div className="p-3 rounded-xl bg-white/5 border border-white/10">
             <p className="text-xs text-gray-300 leading-relaxed">
-              <span className="text-emerald-400 font-semibold">Kaitlin Bennett</span> posted a single story on Instagram with her profile link and got 10 orders in the first 24 hours.
+              <span className="text-emerald-400 font-semibold">Kaitlin Bennett</span> posted a single story on Instagram with her profile link and got <span className="text-yellow-400 font-bold">10 orders</span> in the first <span className="text-emerald-400 font-bold">24 hours</span>.
             </p>
           </div>
         </div>
