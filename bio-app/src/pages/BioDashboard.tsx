@@ -150,6 +150,8 @@ interface ServiceOffering {
   coupon_discount_type?: 'percentage' | 'fixed';
   is_recurring?: boolean;
   recurring_interval?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | null;
+  // Sponsorship contact email
+  contact_email?: string | null;
 }
 
 interface BioEvent {
@@ -5999,11 +6001,7 @@ const AddServiceModal: React.FC<{
   const [totalFollowers, setTotalFollowers] = useState(service?.total_followers?.toString() || '');
   const [benefits, setBenefits] = useState<string[]>(
     service?.benefits || (serviceType === 'sponsorship' 
-      ? [
-          'Direct communication channel',
-          'Custom sponsorship packages',
-          'Audience insights & analytics'
-        ]
+      ? [] // No defaults for sponsorship - talent adds their own
       : [
           'Personalized video mention',
           'Story share to followers',
@@ -6023,6 +6021,9 @@ const AddServiceModal: React.FC<{
   const [couponDiscountType, setCouponDiscountType] = useState<'percentage' | 'fixed'>(service?.coupon_discount_type || 'percentage');
   const [isRecurring, setIsRecurring] = useState(service?.is_recurring || false);
   // Note: recurring_interval is chosen by the CUSTOMER at checkout, not stored on the service
+  
+  // Contact email for sponsorship inquiries
+  const [contactEmail, setContactEmail] = useState(service?.contact_email || '');
 
   const togglePlatform = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -6053,6 +6054,8 @@ const AddServiceModal: React.FC<{
       coupon_discount_type: couponDiscountType,
       is_recurring: isRecurring,
       // Note: recurring_interval is set by the CUSTOMER at checkout, not the talent
+      // Sponsorship contact email
+      contact_email: serviceType === 'sponsorship' ? (contactEmail || null) : null,
     });
   };
 
@@ -6118,7 +6121,7 @@ const AddServiceModal: React.FC<{
                     setServiceType('sponsorship');
                     setTitle('Discuss Sponsorship');
                     setPricing('0');
-                    setBenefits(['Direct communication channel', 'Custom sponsorship packages', 'Audience insights & analytics']);
+                    setBenefits([]); // No defaults for sponsorship
                   }}
                   className={`p-4 rounded-xl border-2 transition-all ${
                     serviceType === 'sponsorship'
@@ -6152,6 +6155,26 @@ const AddServiceModal: React.FC<{
               className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
             />
           </div>
+
+          {/* Contact Email - only for sponsorship */}
+          {serviceType === 'sponsorship' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Send Inquiries To
+                <span className="text-gray-500 font-normal ml-1">(optional)</span>
+              </label>
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="sponsorships@youremail.com"
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Sponsorship form submissions will be sent to this email address
+              </p>
+            </div>
+          )}
 
           {/* Pricing - only for collabs */}
           {serviceType !== 'sponsorship' && (
