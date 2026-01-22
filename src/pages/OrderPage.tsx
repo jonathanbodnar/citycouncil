@@ -100,6 +100,10 @@ const OrderPage: React.FC = () => {
   
   // Get occasion from URL params (passed from profile page order ideas)
   const occasionParam = searchParams.get('occasion');
+  const expressParam = searchParams.get('express') === 'true';
+  
+  // Express delivery state
+  const [isExpressDelivery, setIsExpressDelivery] = useState(expressParam);
   
   const {
     register,
@@ -221,11 +225,17 @@ const OrderPage: React.FC = () => {
   const calculatePricing = () => {
     if (!talent) return { subtotal: 0, adminFee: 0, charityAmount: 0, discount: 0, processingFee: 0, total: 0, creditsApplied: 0, amountDue: 0 };
 
-    // Use corporate pricing if it's a business order OR corporate occasion, otherwise use regular pricing
+    // Determine base price based on order type
     const isCorporateOrder = isForBusiness || watchedOccasion === 'corporate';
-    const basePrice = isCorporateOrder 
-      ? (talent.corporate_pricing || talent.pricing * 1.5) 
-      : talent.pricing;
+    let basePrice = talent.pricing;
+    
+    if (isCorporateOrder) {
+      // Corporate pricing
+      basePrice = talent.corporate_pricing || talent.pricing * 1.5;
+    } else if (isExpressDelivery && talent.express_delivery_enabled && talent.express_delivery_price) {
+      // Express 24hr delivery pricing
+      basePrice = talent.express_delivery_price;
+    }
       
     
     const subtotal = basePrice;
@@ -390,14 +400,19 @@ const OrderPage: React.FC = () => {
       
       // For corporate orders, don't set deadline until approved
       // For personal orders, set deadline immediately
+      // For express delivery, use 24 hour deadline
       let fulfillmentDeadline: Date;
       const isCorporate = orderData.isForBusiness || getValues('occasion') === 'corporate' || watchedOccasion === 'corporate';
       if (isCorporate) {
         // Corporate orders: deadline will be set when approved
         fulfillmentDeadline = new Date();
         fulfillmentDeadline.setFullYear(2099); // Far future placeholder
+      } else if (isExpressDelivery) {
+        // Express delivery: 24 hour deadline
+        fulfillmentDeadline = new Date();
+        fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + 24);
       } else {
-        // Personal orders: deadline starts immediately
+        // Personal orders: deadline starts immediately with talent's configured time
         fulfillmentDeadline = new Date();
         fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + talent.fulfillment_time_hours);
       }
@@ -453,7 +468,8 @@ const OrderPage: React.FC = () => {
             status: 'pending',
             allow_promotional_use: getValues('allowPromotionalUse') ?? orderData.allowPromotionalUse ?? true,
             promo_source: getPromoSource(talent),
-            did_holiday_popup: localStorage.getItem('holiday_popup_submitted') === 'true'
+            did_holiday_popup: localStorage.getItem('holiday_popup_submitted') === 'true',
+            is_express_delivery: isExpressDelivery
           },
         ])
         .select()
@@ -676,7 +692,8 @@ const OrderPage: React.FC = () => {
                 talent.user_id,
                 order.id,
                 user.full_name || user.email?.split('@')[0] || 'Customer',
-                pricing.total
+                pricing.total,
+                isExpressDelivery
               );
             } catch (e) {
               logger.error('Error notifying talent:', e);
@@ -765,8 +782,9 @@ const OrderPage: React.FC = () => {
         order_id: order.id,
         amount: pricing.total.toString(),
         talent: talent.temp_full_name || talent.users.full_name,
-        delivery_hours: talent.fulfillment_time_hours.toString(),
-        occasion: isCorporateOrder ? 'corporate' : (orderData.occasion || '')
+        delivery_hours: isExpressDelivery ? '24' : talent.fulfillment_time_hours.toString(),
+        occasion: isCorporateOrder ? 'corporate' : (orderData.occasion || ''),
+        ...(isExpressDelivery && { express: 'true' })
       });
       navigate(`/order-success?${successParams.toString()}`);
 
@@ -846,7 +864,7 @@ const OrderPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-blue-500">✓</span>
-                  <p className="text-sm text-gray-700">Get your video within {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h</p>
+                  <p className="text-sm text-gray-700">Get your video within {isExpressDelivery ? '24' : (talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48)}h{isExpressDelivery && ' ⚡'}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-blue-500">✓</span>
@@ -1068,7 +1086,7 @@ const OrderPage: React.FC = () => {
                 </h3>
                 <div className="flex items-center text-sm text-gray-600">
                   <ClockIcon className="h-4 w-4 mr-1" />
-                  Delivers in {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h
+                  Delivers in {isExpressDelivery ? '24' : (talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48)}h{isExpressDelivery && ' ⚡'}
                 </div>
               </div>
             </div>
@@ -1109,6 +1127,28 @@ const OrderPage: React.FC = () => {
               </div>
             )}
 
+            {/* Express Delivery Option */}
+            {talent.express_delivery_enabled && talent.express_delivery_price && !isForBusiness && watchedOccasion !== 'corporate' && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 rounded-xl">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isExpressDelivery}
+                    onChange={(e) => setIsExpressDelivery(e.target.checked)}
+                    className="w-4 h-4 text-amber-500 border-gray-300 rounded focus:ring-amber-500"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-amber-600">⚡ 24hr Express Delivery</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Get your ShoutOut in 24 hours for ${talent.express_delivery_price.toFixed(0)} (instead of {talent.fulfillment_time_hours}h)
+                    </p>
+                  </div>
+                </label>
+              </div>
+            )}
+
             {/* Pricing Breakdown */}
             <div className="space-y-3 border-t border-gray-200 pt-4">
               <div className="flex justify-between">
@@ -1117,6 +1157,11 @@ const OrderPage: React.FC = () => {
                   {(isForBusiness || watchedOccasion === 'corporate') && (
                     <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
                       Corporate
+                    </span>
+                  )}
+                  {isExpressDelivery && (
+                    <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
+                      ⚡ Express
                     </span>
                   )}
                 </span>
@@ -1261,7 +1306,7 @@ const OrderPage: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <ClockIcon className="h-5 w-5 text-orange-500 mr-2" />
-                Delivered within {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48} hours
+                Delivered within {isExpressDelivery ? '24' : (talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48)} hours{isExpressDelivery && ' ⚡'}
               </div>
             </div>
 

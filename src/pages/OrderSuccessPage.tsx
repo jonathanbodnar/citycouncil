@@ -41,6 +41,7 @@ const OrderSuccessPage: React.FC = () => {
   const talentName = searchParams.get('talent');
   const deliveryHours = searchParams.get('delivery_hours');
   const occasion = searchParams.get('occasion');
+  const isExpressDelivery = searchParams.get('express') === 'true';
   
   // Check if this is a corporate order
   const isCorporateOrder = occasion === 'corporate';
@@ -365,6 +366,11 @@ const OrderSuccessPage: React.FC = () => {
           ) : (
             <>
               {/* Success State */}
+              {isExpressDelivery && (
+                <div className="mb-4 inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/50 rounded-full px-4 py-2">
+                  <span className="text-amber-400 font-semibold">⚡ 24hr Express Delivery</span>
+                </div>
+              )}
               <p className="text-gray-300 mb-4 text-center">
                 {talentName || 'The talent'} has been notified and will create your personalized video within {getDeliveryTimeText()}.
               </p>

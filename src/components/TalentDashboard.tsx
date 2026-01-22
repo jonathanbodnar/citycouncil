@@ -85,6 +85,11 @@ const TalentDashboard: React.FC = () => {
   });
   const [showCorporateModal, setShowCorporateModal] = useState(false);
   const [corporatePrice, setCorporatePrice] = useState('');
+  const [showExpressBanner, setShowExpressBanner] = useState(() => {
+    const dismissed = localStorage.getItem('express_delivery_banner_dismissed');
+    return dismissed !== 'true';
+  });
+  const [enablingExpress, setEnablingExpress] = useState(false);
 
   // Fetch Christmas mode setting
   useEffect(() => {
@@ -591,6 +596,39 @@ const TalentDashboard: React.FC = () => {
     localStorage.setItem('corporate_banner_dismissed', 'true');
   };
 
+  const dismissExpressBanner = () => {
+    setShowExpressBanner(false);
+    localStorage.setItem('express_delivery_banner_dismissed', 'true');
+  };
+
+  const enableExpressDelivery = async () => {
+    if (!talentProfile) return;
+    setEnablingExpress(true);
+    try {
+      const expressPrice = Math.round(talentProfile.pricing * 1.2 * 100) / 100;
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({
+          express_delivery_enabled: true,
+          express_delivery_price: expressPrice,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', talentProfile.id);
+
+      if (error) throw error;
+
+      setTalentProfile({ ...talentProfile, express_delivery_enabled: true, express_delivery_price: expressPrice });
+      dismissExpressBanner();
+      toast.success(`24hr Express Delivery enabled at $${expressPrice}!`);
+      fetchTalentData();
+    } catch (error) {
+      console.error('Error enabling express delivery:', error);
+      toast.error('Failed to enable express delivery.');
+    } finally {
+      setEnablingExpress(false);
+    }
+  };
+
   const saveCorporatePricing = async () => {
     if (!talentProfile) return;
     const price = parseFloat(corporatePrice);
@@ -858,6 +896,39 @@ const TalentDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* 24hr Express Delivery Banner */}
+      {showExpressBanner && talentProfile && !talentProfile.express_delivery_enabled && (
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-amber-500/20">
+                <ClockIcon className="h-6 w-6 text-amber-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Make 20% more per video with 24hr Express Delivery!</h3>
+                <p className="text-sm text-gray-300">Drive demand by adding a rush delivery option at ${talentProfile?.pricing ? Math.round(talentProfile.pricing * 1.2) : '---'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={enableExpressDelivery}
+                disabled={enablingExpress}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {enablingExpress ? 'Enabling...' : 'Add 24hr Delivery'}
+              </button>
+              <button
+                onClick={dismissExpressBanner}
+                className="p-2 text-gray-400 hover:text-white transition-colors"
+                title="Dismiss"
+              >
+                <XCircleIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab Navigation - Hidden on Mobile */}
       <div className="mb-8 hidden md:block">
         <div className="border-b border-gray-200">
@@ -938,6 +1009,11 @@ const TalentDashboard: React.FC = () => {
                             {order.is_corporate_order && (order as any).service_type !== 'social_collab' && (
                               <span className="text-xs glass-strong text-blue-400 px-2 py-1 rounded-full border border-blue-500/30">
                                 Event
+                              </span>
+                            )}
+                            {order.is_express_delivery && (
+                              <span className="text-xs glass-strong text-amber-400 px-2 py-1 rounded-full border border-amber-500/30 font-semibold">
+                                ⚡ 24hr Delivery
                               </span>
                             )}
                           </h4>
@@ -1380,11 +1456,16 @@ const TalentDashboard: React.FC = () => {
                             </span>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-white flex items-center gap-2">
+                            <h4 className="font-semibold text-white flex items-center gap-2 flex-wrap">
                               {order.users.full_name}
                               {order.order_type === 'demo' && (
                                 <span className="text-xs glass-strong text-yellow-400 px-2 py-1 rounded-full border border-yellow-500/30 font-semibold">
                                   🎯 Demo Order
+                                </span>
+                              )}
+                              {order.is_express_delivery && (
+                                <span className="text-xs glass-strong text-amber-400 px-2 py-1 rounded-full border border-amber-500/30 font-semibold">
+                                  ⚡ 24hr Delivery
                                 </span>
                               )}
                             </h4>

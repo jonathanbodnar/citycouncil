@@ -38,13 +38,17 @@ export const notificationService = {
   },
 
   // Talent notifications
-  async notifyNewOrder(talentUserId: string, orderId: string, userName: string, amount: number): Promise<void> {
-    logger.log('📢 Creating new order notification for talent:', { talentUserId, orderId, userName, amount });
+  async notifyNewOrder(talentUserId: string, orderId: string, userName: string, amount: number, isExpressDelivery?: boolean): Promise<void> {
+    logger.log('📢 Creating new order notification for talent:', { talentUserId, orderId, userName, amount, isExpressDelivery });
+    
+    const expressNote = isExpressDelivery ? ' ⚡ 24hr Express Delivery - Please prioritize!' : '';
+    const title = isExpressDelivery ? '⚡ New Express Order!' : '🎬 New Order Received!';
+    
     const result = await this.createNotification(
       talentUserId,
       'order_placed',
-      '🎬 New Order Received!',
-      `${userName} ordered a ShoutOut for $${amount.toFixed(2)}`,
+      title,
+      `${userName} ordered a ShoutOut for $${amount.toFixed(2)}${expressNote}`,
       { order_id: orderId }
     );
     logger.log('📢 New order notification result:', result);
@@ -52,7 +56,9 @@ export const notificationService = {
     // Check if SMS is enabled for this notification type
     await this.sendSMSIfEnabled('talent_new_order', talentUserId, orderId, {
       user_name: userName,
-      amount: amount.toFixed(2)
+      amount: amount.toFixed(2),
+      is_express: isExpressDelivery ? 'true' : 'false',
+      express_note: isExpressDelivery ? ' ⚡ This is a 24hr Express order - please prioritize!' : ''
     });
   },
 
@@ -169,14 +175,30 @@ export const notificationService = {
     }
   },
 
-  async notifyOrderDeadlineApproaching(talentUserId: string, orderId: string, hoursLeft: number): Promise<void> {
+  async notifyOrderDeadlineApproaching(talentUserId: string, orderId: string, hoursLeft: number, isExpressDelivery?: boolean): Promise<void> {
+    const title = isExpressDelivery ? '⚡ Express Order Deadline!' : '⏰ Order Deadline Approaching';
+    const message = isExpressDelivery 
+      ? `⚡ EXPRESS ORDER: You have ${hoursLeft} hours left to complete this 24hr delivery order!`
+      : `You have ${hoursLeft} hours left to complete this order`;
+    
     await this.createNotification(
       talentUserId,
       'order_late',
-      '⏰ Order Deadline Approaching',
-      `You have ${hoursLeft} hours left to complete this order`,
+      title,
+      message,
       { order_id: orderId }
     );
+
+    // Send SMS for express delivery deadline
+    if (isExpressDelivery) {
+      await this.sendSMSIfEnabled('talent_express_deadline', talentUserId, orderId, {
+        hours: hoursLeft.toString()
+      });
+    } else {
+      await this.sendSMSIfEnabled('talent_deadline_approaching', talentUserId, orderId, {
+        hours: hoursLeft.toString()
+      });
+    }
   },
 
   async notifyPromotionClaimed(talentUserId: string): Promise<void> {

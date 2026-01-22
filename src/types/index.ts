@@ -35,6 +35,8 @@ export interface TalentProfile {
   promotion_claimed_at?: string;
   pricing: number;
   corporate_pricing?: number;
+  express_delivery_enabled?: boolean;
+  express_delivery_price?: number;
   fulfillment_time_hours: number;
   charity_percentage?: number;
   charity_name?: string;
@@ -120,6 +122,7 @@ export interface Order {
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'refunded' | 'denied';
   approval_status: 'pending' | 'approved' | 'rejected';
   is_corporate_order: boolean;
+  is_express_delivery?: boolean;
   order_type?: 'standard' | 'demo';
   event_description?: string;
   event_audience?: string;

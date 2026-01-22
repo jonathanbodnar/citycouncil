@@ -1266,13 +1266,23 @@ const TalentProfilePage: React.FC = () => {
                 🏢 Corporate Event - ${Math.round(talent.corporate_pricing)}
               </Link>
             ) : null}
-            <Link
-              to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
-              onClick={storePromoSourceOnClick}
-              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-            >
-              ✨ Other
-            </Link>
+            {talent.express_delivery_enabled && talent.express_delivery_price ? (
+              <Link
+                to={user ? `/order/${talent.id}?express=true` : `/signup?returnTo=/order/${talent.id}?express=true`}
+                onClick={storePromoSourceOnClick}
+                className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 hover:border-amber-500/60 transition-all text-center"
+              >
+                ⚡ Get it faster - ${Math.round(talent.express_delivery_price)}
+              </Link>
+            ) : (
+              <Link
+                to={user ? `/order/${talent.id}?occasion=other` : `/signup?returnTo=/order/${talent.id}?occasion=other`}
+                onClick={storePromoSourceOnClick}
+                className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+              >
+                ✨ Other
+              </Link>
+            )}
           </div>
         </div>
 
