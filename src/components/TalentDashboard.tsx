@@ -171,16 +171,8 @@ const TalentDashboard: React.FC = () => {
 
     animationId = requestAnimationFrame(animate);
 
-    const handleMouseEnter = () => cancelAnimationFrame(animationId);
-    const handleMouseLeave = () => { animationId = requestAnimationFrame(animate); };
-    
-    carousel.addEventListener('mouseenter', handleMouseEnter);
-    carousel.addEventListener('mouseleave', handleMouseLeave);
-
     return () => {
       cancelAnimationFrame(animationId);
-      carousel.removeEventListener('mouseenter', handleMouseEnter);
-      carousel.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [activeTab]);
 
@@ -2303,28 +2295,42 @@ const TalentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Value Badges */}
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            {[
-              { icon: ShieldCheckIcon, label: 'Security', color: 'emerald' },
-              { icon: SparklesIcon, label: 'Simplicity', color: 'cyan' },
-              { icon: GlobeAltIcon, label: 'Sovereignty', color: 'purple' },
-            ].map((badge, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full backdrop-blur-xl border transition-all duration-300
-                  ${badge.color === 'emerald' ? 'bg-emerald-500/10 border-emerald-500/30' : ''}
-                  ${badge.color === 'cyan' ? 'bg-cyan-500/10 border-cyan-500/30' : ''}
-                  ${badge.color === 'purple' ? 'bg-purple-500/10 border-purple-500/30' : ''}
-                `}
-              >
-                <badge.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                  badge.color === 'emerald' ? 'text-emerald-400' :
-                  badge.color === 'cyan' ? 'text-cyan-400' : 'text-purple-400'
-                }`} />
-                <span className="text-white font-medium text-sm">{badge.label}</span>
-              </div>
-            ))}
+          {/* Headline + Value Badges */}
+          <div className="text-center">
+            <h3 className="text-lg sm:text-xl font-bold text-white mb-3">
+              The only{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                free-speech
+              </span>
+              , commerce-ready bio link for your{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400">
+                uncancellable
+              </span>
+              {' '}audience.
+            </h3>
+            
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+              {[
+                { icon: ShieldCheckIcon, label: 'Security', color: 'emerald' },
+                { icon: SparklesIcon, label: 'Simplicity', color: 'cyan' },
+                { icon: GlobeAltIcon, label: 'Sovereignty', color: 'purple' },
+              ].map((badge, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full backdrop-blur-xl border transition-all duration-300
+                    ${badge.color === 'emerald' ? 'bg-emerald-500/10 border-emerald-500/30' : ''}
+                    ${badge.color === 'cyan' ? 'bg-cyan-500/10 border-cyan-500/30' : ''}
+                    ${badge.color === 'purple' ? 'bg-purple-500/10 border-purple-500/30' : ''}
+                  `}
+                >
+                  <badge.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                    badge.color === 'emerald' ? 'text-emerald-400' :
+                    badge.color === 'cyan' ? 'text-cyan-400' : 'text-purple-400'
+                  }`} />
+                  <span className="text-white font-medium text-sm">{badge.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Key Info Card */}
@@ -2393,7 +2399,7 @@ const TalentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Services Section - Compact one-line items */}
+          {/* Services Section - Grid on desktop */}
           <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
             <div className="mb-4">
               <p className="text-cyan-400 font-semibold uppercase tracking-widest text-xs mb-1">Services</p>
@@ -2403,7 +2409,7 @@ const TalentDashboard: React.FC = () => {
               </h3>
             </div>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
                 { icon: ShoppingBagIcon, title: 'Sell merch', comingSoon: true },
                 { icon: TicketIcon, title: 'Sell tickets', comingSoon: true },
@@ -2414,9 +2420,9 @@ const TalentDashboard: React.FC = () => {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
                     <service.icon className="w-4 h-4 text-cyan-400" />
                   </div>
-                  <span className="text-sm font-medium text-white">{service.title}</span>
+                  <span className="text-sm font-medium text-white flex-1">{service.title}</span>
                   {service.comingSoon && (
-                    <span className="ml-auto text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Coming Soon</span>
+                    <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Coming Soon</span>
                   )}
                 </div>
               ))}
@@ -2428,7 +2434,7 @@ const TalentDashboard: React.FC = () => {
           </div>
 
           {/* Own Your Audience + How It Works Combined */}
-          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 overflow-hidden">
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
             <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
               {/* Left: Content */}
               <div>
@@ -2499,23 +2505,26 @@ const TalentDashboard: React.FC = () => {
               </div>
 
               {/* Right: Overlapping Images - Desktop only */}
-              <div className="relative min-h-[280px] hidden lg:block">
-                {/* Send Update - Background/larger image */}
-                <div className="absolute bottom-0 right-0 w-[80%] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                  <img 
-                    src="/creatorbios/sendupdate.png" 
-                    alt="Send update - How creators reach their audience"
-                    className="w-full h-auto"
-                  />
-                </div>
+              <div className="relative min-h-[300px] hidden lg:flex items-center justify-center">
+                {/* Container for overlapping images */}
+                <div className="relative w-full h-full">
+                  {/* Send Update - Background/larger image */}
+                  <div className="absolute top-8 right-0 w-[75%] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
+                    <img 
+                      src="/creatorbios/sendupdate.png" 
+                      alt="Send update - How creators reach their audience"
+                      className="w-full h-auto"
+                    />
+                  </div>
 
-                {/* Stay Connected - Floating overlay top-left */}
-                <div className="absolute top-4 left-0 w-[50%] rounded-xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
-                  <img 
-                    src="/creatorbios/stayconnected.png" 
-                    alt="Stay connected - How fans subscribe"
-                    className="w-full h-auto"
-                  />
+                  {/* Stay Connected - Floating overlay top-left */}
+                  <div className="absolute top-0 left-0 w-[55%] rounded-xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
+                    <img 
+                      src="/creatorbios/stayconnected.png" 
+                      alt="Stay connected - How fans subscribe"
+                      className="w-full h-auto"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
