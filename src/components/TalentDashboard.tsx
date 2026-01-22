@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   ClockIcon, 
@@ -99,6 +99,9 @@ const TalentDashboard: React.FC = () => {
     return dismissed !== 'true';
   });
   const [enablingExpress, setEnablingExpress] = useState(false);
+  
+  // Bio carousel ref for auto-scrolling
+  const bioCarouselRef = useRef<HTMLDivElement>(null);
 
   // Fetch Christmas mode setting
   useEffect(() => {
@@ -131,6 +134,52 @@ const TalentDashboard: React.FC = () => {
       setActiveTab('analytics');
     }
   }, [tabParam, hasBioAccess]); // Watch the actual tab value
+
+  // Bio carousel auto-scroll animation
+  const bioCreatorBios = [
+    { name: 'Chris Ripa', handle: 'chrisripa' },
+    { name: 'Greg On Fire', handle: 'gregonfire' },
+    { name: 'Shawn Farash', handle: 'shawnfarash' },
+    { name: 'Melonie Mac', handle: 'meloniemac' },
+    { name: 'Nick Di Paolo', handle: 'nickdipaolo' },
+    { name: 'Lydia Shaffer', handle: 'lydiashaffer' },
+    { name: 'Kristin Sokoloff', handle: 'kristinsokoloff' },
+  ];
+
+  useEffect(() => {
+    if (activeTab !== 'bio') return;
+    
+    const carousel = bioCarouselRef.current;
+    if (!carousel) return;
+
+    let animationId: number;
+    let position = 0;
+    const speed = 0.4;
+
+    const animate = () => {
+      position -= speed;
+      const cardWidth = 200 + 24; // card width + gap
+      if (Math.abs(position) >= cardWidth * bioCreatorBios.length) {
+        position = 0;
+      }
+      carousel.style.transform = `translateX(${position}px)`;
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    const handleMouseEnter = () => cancelAnimationFrame(animationId);
+    const handleMouseLeave = () => { animationId = requestAnimationFrame(animate); };
+    
+    carousel.addEventListener('mouseenter', handleMouseEnter);
+    carousel.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      carousel.removeEventListener('mouseenter', handleMouseEnter);
+      carousel.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [activeTab]);
 
   // Handle order parameter from fulfillment link
   useEffect(() => {
@@ -2196,42 +2245,54 @@ const TalentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Creator Bio Examples Carousel */}
-          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
-            <h3 className="text-lg font-bold text-white mb-4">See It In Action</h3>
-            <div className="overflow-x-auto pb-2 -mx-2 px-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              <div className="flex gap-3" style={{ width: 'max-content' }}>
-                {[
-                  { name: 'Chris Ripa', handle: 'chrisripa' },
-                  { name: 'Greg On Fire', handle: 'gregonfire' },
-                  { name: 'Shawn Farash', handle: 'shawnfarash' },
-                  { name: 'Melonie Mac', handle: 'meloniemac' },
-                  { name: 'Nick Di Paolo', handle: 'nickdipaolo' },
-                  { name: 'Lydia Shaffer', handle: 'lydiashaffer' },
-                  { name: 'Kristin Sokoloff', handle: 'kristinsokoloff' },
-                ].map((creator, index) => (
+          {/* Creator Bio Examples Carousel - Full width, edge to edge */}
+          <div className="relative -mx-4 sm:-mx-6">
+            <h3 className="text-lg font-bold text-white mb-4 px-4 sm:px-6">See It In Action</h3>
+            
+            {/* Soft edge fades */}
+            <div className="absolute inset-y-0 left-0 w-16 sm:w-24 bg-gradient-to-r from-[#111827] to-transparent z-10 pointer-events-none" style={{ top: '40px' }} />
+            <div className="absolute inset-y-0 right-0 w-16 sm:w-24 bg-gradient-to-l from-[#111827] to-transparent z-10 pointer-events-none" style={{ top: '40px' }} />
+            
+            <div className="overflow-x-clip overflow-y-visible py-2 pb-8">
+              <div 
+                ref={bioCarouselRef}
+                className="flex gap-6"
+                style={{ width: 'max-content' }}
+              >
+                {/* Duplicate array for seamless loop */}
+                {[...bioCreatorBios, ...bioCreatorBios, ...bioCreatorBios, ...bioCreatorBios].map((creator, index) => (
                   <a
                     key={index}
                     href={`https://shoutout.fans/${creator.handle}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 w-[140px] sm:w-[160px] group"
+                    className="flex-shrink-0 w-[200px] group"
                   >
-                    <div className="rounded-2xl overflow-hidden border border-white/10 bg-[#1a1a2e] transition-all duration-300 group-hover:scale-[1.02] group-hover:border-emerald-500/50">
-                      <iframe
-                        src={`https://shoutout.fans/${creator.handle}`}
-                        title={`${creator.name}'s bio`}
-                        className="w-full h-[220px] sm:h-[260px] border-0 rounded-2xl pointer-events-none"
-                        loading="lazy"
-                        scrolling="no"
-                      />
+                    <div className="relative rounded-[1.5rem] overflow-hidden border border-white/10 transform transition-all duration-500 group-hover:scale-[1.02] group-hover:-translate-y-2 bg-[#1a1a2e]" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+                      {/* Live iframe embed with proper mobile aspect ratio */}
+                      <div className="relative w-full h-[360px]">
+                        <iframe
+                          src={`https://shoutout.fans/${creator.handle}`}
+                          title={`${creator.name}'s bio`}
+                          className="w-full h-full border-0 rounded-[1.5rem]"
+                          loading="lazy"
+                          scrolling="no"
+                        />
+                        {/* Click-blocking overlay */}
+                        <div className="absolute inset-0 cursor-default" />
+                      </div>
+                      {/* Hover info overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[1.5rem]" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none">
+                        <p className="font-bold text-base">{creator.name}</p>
+                        <p className="text-emerald-400 font-mono text-xs">shoutout.fans/{creator.handle}</p>
+                      </div>
                     </div>
-                    <p className="text-center text-xs text-gray-400 mt-2 group-hover:text-emerald-400 transition-colors">{creator.name}</p>
                   </a>
                 ))}
               </div>
             </div>
-            <p className="text-center text-xs text-gray-500 mt-3">Scroll to see more • Click to view</p>
+            <p className="text-center text-xs text-gray-500">Hover to pause • Click to view</p>
           </div>
 
           {/* Services Section - MOVED ABOVE Own Your Audience */}
@@ -2274,94 +2335,118 @@ const TalentDashboard: React.FC = () => {
 
           {/* Own Your Audience + How It Works Combined */}
           <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-              Own your{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400">
-                audience.
-              </span>
-            </h3>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6">
-              <div className="glass rounded-xl p-3 sm:p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
-                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
-                  ~2.6%
-                </div>
-                <p className="text-gray-400 text-xs leading-tight mt-1">of followers see your posts on social media</p>
-              </div>
-              <div className="glass rounded-xl p-3 sm:p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
-                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
-                  ~6%
-                </div>
-                <p className="text-emerald-300 text-xs leading-tight mt-1">of views become reachable fans with our bio link</p>
-              </div>
-            </div>
-
-            {/* Key Points */}
-            <div className="space-y-3 mb-6">
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 mt-1.5 animate-pulse" />
-                <p className="text-gray-300 text-sm">
-                  Social platforms only show your posts to <span className="text-white font-bold">~2.6% of your followers</span>. Your hard earned audience is being stolen.
-                </p>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5" />
-                <p className="text-gray-300 text-sm">
-                  <span className="text-emerald-400 font-bold">Our bio link</span> turns followers into an owned audience—fast.
-                </p>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-purple-500 mt-1.5" />
-                <p className="text-gray-300 text-sm">
-                  Creators using shout.bio convert <span className="text-white font-bold">~6% of profile views</span> into instantly reachable fans, all on auto pilot.
-                </p>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
-                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />
-                <p className="text-gray-300 text-sm">
-                  Send updates directly from your dashboard—without clunky tools like Mailchimp.
-                </p>
-              </div>
-            </div>
-
-            {/* How It Works - Images */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div className="rounded-xl overflow-hidden border border-emerald-500/30">
-                <img 
-                  src="/creatorbios/stayconnected.png" 
-                  alt="Stay connected - How fans subscribe"
-                  className="w-full h-auto"
-                />
-                <div className="p-3 bg-emerald-500/10">
-                  <p className="text-emerald-300 font-semibold text-sm">Fans Subscribe</p>
-                  <p className="text-gray-400 text-xs">Fans opt-in through your bio link</p>
-                </div>
-              </div>
-              <div className="rounded-xl overflow-hidden border border-purple-500/30">
-                <img 
-                  src="/creatorbios/sendupdate.png" 
-                  alt="Send update - How creators reach their audience"
-                  className="w-full h-auto"
-                />
-                <div className="p-3 bg-purple-500/10">
-                  <p className="text-purple-300 font-semibold text-sm">Send Updates</p>
-                  <p className="text-gray-400 text-xs">Reach them directly from your dashboard</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Special Badge */}
-            <div className="flex items-center gap-3 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                <MegaphoneIcon className="w-5 h-5 text-white" />
-              </div>
+            <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+              {/* Left: Content */}
               <div>
-                <p className="text-amber-300 font-bold text-sm sm:text-base">We build your fan list FOR you!</p>
-                <p className="text-amber-200/70 text-xs sm:text-sm">Driving users on ShoutOut to subscribe to your list.</p>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-4">
+                  Own your{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400">
+                    audience.
+                  </span>
+                </h3>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6">
+                  <div className="glass rounded-xl p-3 sm:p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
+                    <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
+                      ~2.6%
+                    </div>
+                    <p className="text-gray-400 text-xs leading-tight mt-1">of followers see your posts on social media</p>
+                  </div>
+                  <div className="glass rounded-xl p-3 sm:p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
+                    <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+                      ~6%
+                    </div>
+                    <p className="text-emerald-300 text-xs leading-tight mt-1">of views become reachable fans with our bio link</p>
+                  </div>
+                </div>
+
+                {/* Key Points */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
+                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 mt-1.5 animate-pulse" />
+                    <p className="text-gray-300 text-sm">
+                      Social platforms only show your posts to <span className="text-white font-bold">~2.6% of your followers</span>. Your hard earned audience is being stolen.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5" />
+                    <p className="text-gray-300 text-sm">
+                      <span className="text-emerald-400 font-bold">Our bio link</span> turns followers into an owned audience—fast.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-purple-500 mt-1.5" />
+                    <p className="text-gray-300 text-sm">
+                      Creators using shout.bio convert <span className="text-white font-bold">~6% of profile views</span> into instantly reachable fans, all on auto pilot.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                    <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />
+                    <p className="text-gray-300 text-sm">
+                      Send updates directly from your dashboard—without clunky tools like Mailchimp.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Special Badge */}
+                <div className="flex items-center gap-3 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                    <MegaphoneIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-amber-300 font-bold text-sm sm:text-base">We build your fan list FOR you!</p>
+                    <p className="text-amber-200/70 text-xs sm:text-sm">Driving users on ShoutOut to subscribe to your list.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Overlapping Images - Desktop only, hidden on mobile */}
+              <div className="relative h-[300px] sm:h-[350px] lg:h-[400px] hidden lg:block">
+                {/* Send Update - Background/larger image */}
+                <div className="absolute bottom-0 right-0 w-[85%] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                  <img 
+                    src="/creatorbios/sendupdate.png" 
+                    alt="Send update - How creators reach their audience"
+                    className="w-full h-auto"
+                  />
+                </div>
+
+                {/* Stay Connected - Floating overlay top-left */}
+                <div className="absolute top-0 left-0 w-[55%] rounded-2xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
+                  <img 
+                    src="/creatorbios/stayconnected.png" 
+                    alt="Stay connected - How fans subscribe"
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
+
+              {/* Mobile: Grid layout for images */}
+              <div className="grid grid-cols-2 gap-4 lg:hidden">
+                <div className="rounded-xl overflow-hidden border border-emerald-500/30">
+                  <img 
+                    src="/creatorbios/stayconnected.png" 
+                    alt="Stay connected - How fans subscribe"
+                    className="w-full h-auto"
+                  />
+                  <div className="p-2 bg-emerald-500/10">
+                    <p className="text-emerald-300 font-semibold text-xs">Fans Subscribe</p>
+                  </div>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-purple-500/30">
+                  <img 
+                    src="/creatorbios/sendupdate.png" 
+                    alt="Send update - How creators reach their audience"
+                    className="w-full h-auto"
+                  />
+                  <div className="p-2 bg-purple-500/10">
+                    <p className="text-purple-300 font-semibold text-xs">Send Updates</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
