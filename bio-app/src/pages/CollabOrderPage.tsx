@@ -107,7 +107,6 @@ const CollabOrderPage: React.FC = () => {
   
   // Registration/Login form - email → phone → OTP flow
   const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [authStep, setAuthStep] = useState<AuthStep>('email');
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
@@ -1102,7 +1101,7 @@ const CollabOrderPage: React.FC = () => {
                       {otpCode.map((digit, index) => (
                         <input
                           key={index}
-                          ref={(el) => (otpInputRefs.current[index] = el)}
+                          ref={(el) => { otpInputRefs.current[index] = el; }}
                           type="text"
                           inputMode="numeric"
                           maxLength={1}
