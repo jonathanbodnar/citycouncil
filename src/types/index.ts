@@ -42,6 +42,7 @@ export interface TalentProfile {
   charity_name?: string;
   is_featured: boolean;
   featured_order?: number | null; // Order position in featured carousel (1 = first, 2 = second, etc.)
+  bio_enabled?: boolean; // Whether this talent has access to ShoutOut Bio feature
   admin_fee_percentage?: number;
   first_orders_promo_active?: boolean; // 0% admin fee for first 10 orders
   social_accounts: SocialAccount[];

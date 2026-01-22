@@ -624,7 +624,7 @@ const TalentManagement: React.FC = () => {
     }
   };
 
-  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing' | 'is_verified' | 'is_coming_soon', value: boolean) => {
+  const toggleTalentStatus = async (talentId: string, field: 'is_active' | 'is_featured' | 'allow_corporate_pricing' | 'is_verified' | 'is_coming_soon' | 'bio_enabled', value: boolean) => {
     try {
       // If unfeaturing, remove the featured_order
       if (field === 'is_featured' && !value) {
@@ -655,6 +655,8 @@ const TalentManagement: React.FC = () => {
         ? (value ? 'corporate pricing enabled' : 'corporate pricing disabled')
         : field === 'is_coming_soon'
         ? (value ? 'marked as Coming Soon' : 'Coming Soon removed (now orderable)')
+        : field === 'bio_enabled'
+        ? (value ? 'ShoutOut Bio enabled' : 'ShoutOut Bio disabled')
         : (value ? 'verified' : 'unverified');
       
       toast.success(`Talent ${action} successfully`);
@@ -1649,6 +1651,18 @@ const TalentManagement: React.FC = () => {
                       title={talent.is_coming_soon ? 'Remove Coming Soon status (make orderable)' : 'Mark as Coming Soon (shows on /home but not orderable)'}
                     >
                       <span className="text-lg">{talent.is_coming_soon ? '⏳' : '⚪'}</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => toggleTalentStatus(talent.id, 'bio_enabled', !talent.bio_enabled)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        talent.bio_enabled 
+                          ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' 
+                          : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      title={talent.bio_enabled ? 'Disable ShoutOut Bio access' : 'Enable ShoutOut Bio access for this talent'}
+                    >
+                      <span className="text-lg">{talent.bio_enabled ? '🔗' : '⚪'}</span>
                     </button>
                     
                     {/* Display Order Control */}

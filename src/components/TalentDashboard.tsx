@@ -113,8 +113,10 @@ const TalentDashboard: React.FC = () => {
     fetchChristmasMode();
   }, []);
 
-  // Check if user has access to Bio feature (only on dev environment)
-  const hasBioAccess = IS_DEV_ENVIRONMENT && user?.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase());
+  // Check if user has access to Bio feature
+  // Access if: (dev environment AND email in allowed list) OR talent has bio_enabled
+  const hasBioAccess = (IS_DEV_ENVIRONMENT && user?.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase())) 
+    || talentProfile?.bio_enabled === true;
 
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
