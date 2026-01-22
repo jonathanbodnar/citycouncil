@@ -769,7 +769,7 @@ const CollabOrderPage: React.FC = () => {
             console.log('Ticket processed successfully:', { transactionId, tokenId });
           }
 
-          const adminFeePercent = talent.admin_fee_percentage ?? 15;
+          const adminFeePercent = 15; // Fixed 15% admin fee for collabs
           const adminFee = Math.round(finalAmountCents * (adminFeePercent / 100));
           
           const fulfillmentDeadline = new Date();
