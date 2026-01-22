@@ -18,6 +18,8 @@ const creatorBios = [
   { name: 'Greg On Fire', handle: 'gregonfire', url: 'https://shoutout.fans/gregonfire' },
   { name: 'Shawn Farash', handle: 'shawnfarash', url: 'https://shoutout.fans/shawnfarash' },
   { name: 'Melonie Mac', handle: 'meloniemac', url: 'https://shoutout.fans/meloniemac' },
+  { name: 'Nick Di Paolo', handle: 'nickdipaolo', url: 'https://shoutout.fans/nickdipaolo' },
+  { name: 'Lydia Shaffer', handle: 'lydiashaffer', url: 'https://shoutout.fans/lydiashaffer' },
 ];
 
 export default function CreatorsPage() {
