@@ -2344,12 +2344,12 @@ const TalentDashboard: React.FC = () => {
           </div>
 
           {/* Creator Bio Examples Carousel - Full width, edge to edge */}
-          <div className="relative -mx-4 sm:-mx-6">
+          <div className="relative -mx-4 sm:-mx-6 overflow-hidden">
             <h3 className="text-lg font-bold text-white mb-4 px-4 sm:px-6">See It In Action</h3>
             
-            {/* Soft edge fades */}
-            <div className="absolute inset-y-0 left-0 w-16 sm:w-24 bg-gradient-to-r from-[#111827] to-transparent z-10 pointer-events-none" style={{ top: '40px' }} />
-            <div className="absolute inset-y-0 right-0 w-16 sm:w-24 bg-gradient-to-l from-[#111827] to-transparent z-10 pointer-events-none" style={{ top: '40px' }} />
+            {/* Soft edge fades - contained within carousel area */}
+            <div className="absolute left-0 w-16 sm:w-24 bg-gradient-to-r from-[#111827] to-transparent z-10 pointer-events-none" style={{ top: '40px', bottom: '32px' }} />
+            <div className="absolute right-0 w-16 sm:w-24 bg-gradient-to-l from-[#111827] to-transparent z-10 pointer-events-none" style={{ top: '40px', bottom: '32px' }} />
             
             <div className="overflow-x-clip overflow-y-visible py-2 pb-8">
               <div 
