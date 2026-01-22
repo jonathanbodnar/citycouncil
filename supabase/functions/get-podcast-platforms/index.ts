@@ -1,94 +1,10 @@
 // Edge function to get podcast platform links
-// Uses PodcastIndex API for Apple Podcasts and Spotify search for Spotify links
+// Uses PodcastIndex API for Apple Podcasts and constructs search URLs for other platforms
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Helper to search Spotify's public podcast catalog
-async function searchSpotifyPodcast(podcastTitle: string): Promise<string | null> {
-  try {
-    // Use Spotify's public search page and extract show ID from the response
-    // This is a public endpoint that doesn't require authentication
-    const searchQuery = encodeURIComponent(podcastTitle);
-    const spotifySearchUrl = `https://api.spotify.com/v1/search?q=${searchQuery}&type=show&limit=5`;
-    
-    // We need a Spotify access token - get one using client credentials
-    const SPOTIFY_CLIENT_ID = Deno.env.get('SPOTIFY_CLIENT_ID');
-    const SPOTIFY_CLIENT_SECRET = Deno.env.get('SPOTIFY_CLIENT_SECRET');
-    
-    if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
-      // Get access token
-      const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`),
-        },
-        body: 'grant_type=client_credentials',
-      });
-      
-      if (tokenResponse.ok) {
-        const tokenData = await tokenResponse.json();
-        const accessToken = tokenData.access_token;
-        
-        // Search for podcast
-        const searchResponse = await fetch(spotifySearchUrl, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        });
-        
-        if (searchResponse.ok) {
-          const searchData = await searchResponse.json();
-          
-          if (searchData.shows?.items?.length > 0) {
-            // Find best match by comparing titles
-            const normalizedTitle = podcastTitle.toLowerCase().trim();
-            
-            for (const show of searchData.shows.items) {
-              const showTitle = show.name.toLowerCase().trim();
-              // Check for exact or close match
-              if (showTitle === normalizedTitle || 
-                  showTitle.includes(normalizedTitle) || 
-                  normalizedTitle.includes(showTitle)) {
-                console.log(`Spotify match found: "${show.name}" for "${podcastTitle}"`);
-                return show.external_urls?.spotify || `https://open.spotify.com/show/${show.id}`;
-              }
-            }
-            
-            // If no exact match, return first result if title is reasonably similar
-            const firstShow = searchData.shows.items[0];
-            const similarity = calculateSimilarity(podcastTitle, firstShow.name);
-            if (similarity > 0.5) {
-              console.log(`Spotify partial match: "${firstShow.name}" (${(similarity * 100).toFixed(0)}% similar)`);
-              return firstShow.external_urls?.spotify || `https://open.spotify.com/show/${firstShow.id}`;
-            }
-          }
-        }
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Spotify search error:', error);
-    return null;
-  }
-}
-
-// Simple string similarity function (Jaccard index on words)
-function calculateSimilarity(str1: string, str2: string): number {
-  const words1 = new Set(str1.toLowerCase().split(/\s+/).filter(w => w.length > 2));
-  const words2 = new Set(str2.toLowerCase().split(/\s+/).filter(w => w.length > 2));
-  
-  if (words1.size === 0 || words2.size === 0) return 0;
-  
-  const intersection = new Set([...words1].filter(x => words2.has(x)));
-  const union = new Set([...words1, ...words2]);
-  
-  return intersection.size / union.size;
-}
 
 // Helper to fetch podcast title from RSS feed directly
 async function getPodcastTitleFromRSS(feedUrl: string): Promise<string | null> {
@@ -198,26 +114,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Step 2: Search Spotify for the podcast using the title we got
-    if (podcastTitle && !platforms.spotify) {
-      console.log('Searching Spotify for:', podcastTitle);
-      const spotifyUrl = await searchSpotifyPodcast(podcastTitle);
-      if (spotifyUrl) {
-        platforms.spotify = spotifyUrl;
-        console.log('Found Spotify:', spotifyUrl);
-      }
-    }
-
-    // Step 3: Try to get YouTube Music / other platforms via direct search
-    // YouTube podcasts can be found via YouTube search with "podcast" keyword
+    // Step 2: Generate platform search/deep links using the podcast title
+    // Since Spotify isn't accepting new API apps, we use search URLs that take users directly to search results
     if (podcastTitle) {
-      // Add YouTube search link (not direct, but useful)
+      // Spotify search URL - takes user directly to podcast search results
+      platforms.spotify = `https://open.spotify.com/search/${encodeURIComponent(podcastTitle)}/podcasts`;
+      console.log('Added Spotify search:', platforms.spotify);
+      
+      // YouTube search link
       platforms.youtube = `https://www.youtube.com/results?search_query=${encodeURIComponent(podcastTitle + ' podcast')}`;
       
-      // Add Amazon Music podcast link
+      // Amazon Music podcast search
       platforms.amazon = `https://music.amazon.com/search/${encodeURIComponent(podcastTitle)}?filter=IsInPodcasts`;
       
-      // Add iHeartRadio search
+      // iHeartRadio search
       platforms.iheart = `https://www.iheart.com/search/podcasts/?q=${encodeURIComponent(podcastTitle)}`;
     }
 
