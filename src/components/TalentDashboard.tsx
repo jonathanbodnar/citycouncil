@@ -33,7 +33,6 @@ import SocialAccountsManager from './SocialAccountsManager';
 import CategorySelector from './CategorySelector';
 import CharitySelector from './CharitySelector';
 import IntegratedPayoutsDashboard from './IntegratedPayoutsDashboard';
-import MFASettings from './MFASettings';
 import PhoneNumberPrompt from './PhoneNumberPrompt';
 import MediaCenter from './MediaCenter';
 import { uploadVideoToWasabi } from '../services/videoUpload';
@@ -99,9 +98,11 @@ const TalentDashboard: React.FC = () => {
     return dismissed !== 'true';
   });
   const [enablingExpress, setEnablingExpress] = useState(false);
+  const [uploadingPromoVideo, setUploadingPromoVideo] = useState(false);
   
   // Bio carousel ref for auto-scrolling
   const bioCarouselRef = useRef<HTMLDivElement>(null);
+  const promoVideoInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch Christmas mode setting
   useEffect(() => {
@@ -689,6 +690,55 @@ const TalentDashboard: React.FC = () => {
     }
   };
 
+  const handleUpdatePromoVideo = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !talentProfile || !user?.id) return;
+
+    // Validate file type
+    const validExtensions = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.m4v'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    const isVideo = file.type.startsWith('video/') || validExtensions.includes(fileExtension);
+    
+    if (!isVideo) {
+      toast.error('Please select a video file (MP4, MOV, WEBM, etc.)');
+      return;
+    }
+
+    // Validate file size (max 1GB)
+    const maxSize = 1000 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('Video must be less than 1GB');
+      return;
+    }
+
+    setUploadingPromoVideo(true);
+    try {
+      const uploadResult = await uploadVideoToWasabi(file, talentProfile.id);
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload video');
+      }
+
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({ promo_video_url: uploadResult.videoUrl })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setTalentProfile({ ...talentProfile, promo_video_url: uploadResult.videoUrl });
+      toast.success('Promo video updated successfully!');
+      
+      if (promoVideoInputRef.current) {
+        promoVideoInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      console.error('Error updating promo video:', error);
+      toast.error(error?.message || 'Failed to update promo video');
+    } finally {
+      setUploadingPromoVideo(false);
+    }
+  };
+
   const saveCorporatePricing = async () => {
     if (!talentProfile) return;
     const price = parseFloat(corporatePrice);
@@ -807,40 +857,6 @@ const TalentDashboard: React.FC = () => {
         />
       )}
 
-      {/* Promo Link Banner - Always visible on all tabs */}
-      {talentProfile && (
-        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-blue-500/20">
-                <LinkIcon className="h-5 w-5 text-blue-400" />
-              </div>
-          <div>
-                <p className="text-sm text-white font-medium">
-                  Promote your ShoutOut profile using your special link:
-                </p>
-                <button
-                  onClick={() => {
-                    const promoUrl = `https://shoutout.us/${talentProfile.username || talentProfile.id}?utm=1`;
-                    navigator.clipboard.writeText(promoUrl);
-                    toast.success('Link copied to clipboard!');
-                  }}
-                  className="text-sm text-blue-300 hover:text-blue-200 hover:underline inline-flex items-center gap-1.5 mt-0.5 cursor-pointer"
-                >
-                  <span>📋</span>
-                  <span className="font-mono">shoutout.us/{talentProfile.username || talentProfile.id}?utm=1</span>
-                </button>
-              </div>
-            </div>
-            <div className="sm:ml-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-300 text-xs font-semibold">
-                💰 Earn an extra 10% for each order from your link
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Christmas Games Banner - Only show when Christmas mode is enabled */}
       {christmasModeEnabled && talentProfile && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-red-500/20 border border-green-500/30">
@@ -902,8 +918,8 @@ const TalentDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Payout Setup Reminder Banner */}
-      {talentProfile && !talentProfile.payout_onboarding_completed && (
+      {/* Payout Setup Reminder Banner - Only show on orders tab */}
+      {activeTab === 'orders' && talentProfile && !talentProfile.payout_onboarding_completed && (
         <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
@@ -996,7 +1012,7 @@ const TalentDashboard: React.FC = () => {
             {[
               { key: 'orders', label: 'Orders', count: orders.length },
               { key: 'analytics', label: 'Analytics', count: null },
-              { key: 'media', label: 'Media Center', count: null },
+              { key: 'media', label: 'Promote', count: null },
               { key: 'payouts', label: 'Payouts', count: null, icon: BanknotesIcon },
               { key: 'profile', label: 'Profile Settings', count: null },
               // Bio tab - only show for allowed users
@@ -1813,7 +1829,7 @@ const TalentDashboard: React.FC = () => {
         <IntegratedPayoutsDashboard />
       )}
 
-      {/* Media Center Tab */}
+      {/* Promote Tab (formerly Media Center) */}
       {activeTab === 'media' && talentProfile && (
         <MediaCenter
           talentId={talentProfile.id}
@@ -1877,6 +1893,72 @@ const TalentDashboard: React.FC = () => {
                   Recommended: 400x400px, JPG or PNG format, max 5MB
                 </p>
               </div>
+            </div>
+
+            {/* Promo Video Section */}
+            <div className="pt-6 border-b border-gray-200 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Promo Video</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                This video appears on your profile page. Upload a short intro video to showcase your personality.
+              </p>
+              
+              {talentProfile.promo_video_url ? (
+                <div className="space-y-3">
+                  <video 
+                    src={talentProfile.promo_video_url} 
+                    className="w-full max-w-md h-48 object-cover rounded-lg bg-black"
+                    muted
+                    preload="metadata"
+                    controls
+                  />
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => promoVideoInputRef.current?.click()}
+                      disabled={uploadingPromoVideo}
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {uploadingPromoVideo ? (
+                        <>
+                          <CloudArrowUpIcon className="h-5 w-5 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <CloudArrowUpIcon className="h-5 w-5" />
+                          Replace Video
+                        </>
+                      )}
+                    </button>
+                    <span className="text-xs text-gray-500">MP4, MOV, or WEBM • Max 1GB</span>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => promoVideoInputRef.current?.click()}
+                  disabled={uploadingPromoVideo}
+                  className="w-full max-w-md h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all flex flex-col items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {uploadingPromoVideo ? (
+                    <>
+                      <CloudArrowUpIcon className="h-8 w-8 text-blue-500 animate-spin" />
+                      <span className="text-sm text-blue-600">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CloudArrowUpIcon className="h-8 w-8 text-gray-400" />
+                      <span className="text-sm text-gray-600">Click to upload promo video</span>
+                      <span className="text-xs text-gray-500">MP4, MOV, or WEBM • Max 1GB</span>
+                    </>
+                  )}
+                </button>
+              )}
+              <input
+                ref={promoVideoInputRef}
+                type="file"
+                accept="video/*,.mp4,.mov,.webm"
+                onChange={handleUpdatePromoVideo}
+                className="hidden"
+              />
             </div>
 
             {/* Full Name Section */}
@@ -2070,13 +2152,7 @@ const TalentDashboard: React.FC = () => {
               />
             </div>
 
-            {/* Security Settings - MFA */}
             <div className="pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
-              <MFASettings />
-            </div>
-
-            <div className="pt-6">
               <button 
                 onClick={async () => {
                   try {

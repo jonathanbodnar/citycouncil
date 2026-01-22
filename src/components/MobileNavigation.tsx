@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   HomeIcon, 
@@ -8,7 +8,8 @@ import {
   BellIcon,
   BanknotesIcon,
   ChartBarIcon,
-  ShareIcon
+  ShareIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
 import { 
   HomeIcon as HomeIconSolid, 
@@ -18,13 +19,47 @@ import {
   BellIcon as BellIconSolid,
   BanknotesIcon as BanknotesIconSolid,
   ChartBarIcon as ChartBarIconSolid,
-  ShareIcon as ShareIconSolid
+  ShareIcon as ShareIconSolid,
+  LinkIcon as LinkIconSolid
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
+
+// Feature flag: Only show Bio tab for specific users on dev environment
+const BIO_FEATURE_ALLOWED_EMAILS = ['jb@apollo.inc'];
+const IS_DEV_ENVIRONMENT = window.location.hostname === 'dev.shoutout.us' || window.location.hostname === 'localhost';
 
 const MobileNavigation: React.FC = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const [hasBioAccess, setHasBioAccess] = useState(false);
+
+  // Check if user has bio access
+  useEffect(() => {
+    const checkBioAccess = async () => {
+      if (!user || user.user_type !== 'talent') {
+        setHasBioAccess(false);
+        return;
+      }
+      
+      // Check dev access first
+      if (IS_DEV_ENVIRONMENT && user.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
+        setHasBioAccess(true);
+        return;
+      }
+      
+      // Check talent profile bio_enabled
+      const { data } = await supabase
+        .from('talent_profiles')
+        .select('bio_enabled')
+        .eq('user_id', user.id)
+        .single();
+      
+      setHasBioAccess(data?.bio_enabled === true);
+    };
+    
+    checkBioAccess();
+  }, [user]);
 
   console.log('🔍 MobileNavigation rendering, user:', user?.email, 'loading:', loading);
 
@@ -33,15 +68,15 @@ const MobileNavigation: React.FC = () => {
     return null;
   }
 
-  // Navigation for logged-in users
-  const authenticatedNavigation: Array<{
+  // Build talent navigation dynamically based on bio access
+  const talentNavigation: Array<{
     name: string;
     href: string;
     icon: any;
     iconSolid: any;
     badge?: boolean;
-  }> = user?.user_type === 'talent' ? [
-    // Talent Navigation (no Home, has Stats)
+    customIcon?: string;
+  }> = [
     {
       name: 'Orders',
       href: '/dashboard?tab=orders',
@@ -49,24 +84,36 @@ const MobileNavigation: React.FC = () => {
       iconSolid: RectangleStackIconSolid,
     },
     {
-      name: 'Stats',
-      href: '/dashboard?tab=analytics',
-      icon: ChartBarIcon,
-      iconSolid: ChartBarIconSolid,
-    },
-    {
-      name: 'Share Profile',
+      name: 'Promote',
       href: '/dashboard?tab=media',
       icon: ShareIcon,
       iconSolid: ShareIconSolid,
     },
+    // Conditionally add Link In Bio
+    ...(hasBioAccess ? [{
+      name: 'Bio',
+      href: '/dashboard?tab=bio',
+      icon: LinkIcon,
+      iconSolid: LinkIconSolid,
+      customIcon: '/whiteicon.png',
+    }] : []),
     {
       name: 'Profile',
       href: '/dashboard?tab=profile',
       icon: UserCircleIcon,
       iconSolid: UserCircleIconSolid,
     },
-  ] : [
+  ];
+
+  // Navigation for logged-in users
+  const authenticatedNavigation: Array<{
+    name: string;
+    href: string;
+    icon: any;
+    iconSolid: any;
+    badge?: boolean;
+    customIcon?: string;
+  }> = user?.user_type === 'talent' ? talentNavigation : [
     // Regular User Navigation
     {
       name: 'Personalities',
@@ -102,6 +149,7 @@ const MobileNavigation: React.FC = () => {
     icon: any;
     iconSolid: any;
     badge?: boolean;
+    customIcon?: string;
   }> = [
     {
       name: 'Personalities',
@@ -119,6 +167,10 @@ const MobileNavigation: React.FC = () => {
 
   const navigation = user ? authenticatedNavigation : guestNavigation;
 
+  // Calculate grid columns based on navigation items
+  const gridCols = navigation.length <= 2 ? 'grid-cols-2' : 
+                   navigation.length === 3 ? 'grid-cols-3' : 'grid-cols-4';
+
   console.log('✅ Rendering mobile nav with', navigation.length, 'items', user ? '(authenticated)' : '(guest)');
 
   return (
@@ -132,7 +184,7 @@ const MobileNavigation: React.FC = () => {
         paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
     >
-      <div className={`grid py-2 ${user ? (user.user_type === 'talent' ? 'grid-cols-4' : 'grid-cols-4') : 'grid-cols-2'}`}>
+      <div className={`grid py-2 ${gridCols}`}>
         {navigation.map((item) => {
           // Better active detection for routes with query params
           const isActive = location.pathname === item.href || 
@@ -149,7 +201,16 @@ const MobileNavigation: React.FC = () => {
                 color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)'
               }}
             >
-              <Icon className="h-6 w-6" style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }} />
+              {item.customIcon ? (
+                <img 
+                  src={item.customIcon} 
+                  alt="" 
+                  className="h-6 w-6" 
+                  style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }} 
+                />
+              ) : (
+                <Icon className="h-6 w-6" style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }} />
+              )}
               {item.badge && (
                 <span className="absolute top-1 right-1/2 transform translate-x-2 block h-2 w-2 rounded-full bg-red-500 shadow-lg"></span>
               )}
