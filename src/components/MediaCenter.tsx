@@ -67,16 +67,17 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
           video_url,
           request_details,
           allow_promotional_use,
-          users!orders_user_id_fkey (
-            full_name
-          )
+          recipient_name
         `)
         .eq('talent_id', talentId)
         .in('status', ['completed', 'delivered'])
         .not('video_url', 'is', null)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Error fetching orders:', error);
+        throw error;
+      }
 
       // Filter out only those explicitly marked as NOT shareable
       // allow_promotional_use defaults to true, so show unless explicitly false
@@ -87,7 +88,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         created_at: order.created_at,
         video_url: order.video_url,
         request_details: order.request_details,
-        user_name: order.users?.full_name || 'Customer'
+        user_name: order.recipient_name || 'Customer'
       }));
 
       logger.log('Shareable videos found:', formatted.length, 'out of', data?.length, 'total delivered');
