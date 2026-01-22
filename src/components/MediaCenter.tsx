@@ -222,7 +222,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
             </svg>
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Tag Us for Extra Reach!</h3>
+            <h3 className="text-base font-bold text-white">Tag or Collab with us for extra reach!</h3>
             <p className="text-xs text-gray-400">We will always promote your reels and posts!</p>
           </div>
         </div>
