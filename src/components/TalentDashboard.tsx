@@ -951,17 +951,20 @@ const TalentDashboard: React.FC = () => {
               { key: 'payouts', label: 'Payouts', count: null, icon: BanknotesIcon },
               { key: 'profile', label: 'Profile Settings', count: null },
               // Bio tab - only show for allowed users
-              ...(hasBioAccess ? [{ key: 'bio', label: 'ShoutOut Bio ✨', count: null, icon: LinkIcon }] : []),
-            ].map((tab) => (
+              ...(hasBioAccess ? [{ key: 'bio', label: 'Link In Bio', count: null, customIcon: '/whiteicon.png' }] : []),
+            ].map((tab: any) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-1.5 ${
                   activeTab === tab.key
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
+                {tab.customIcon && (
+                  <img src={tab.customIcon} alt="" className="h-4 w-4" />
+                )}
                 {tab.label}
                 {tab.count !== null && (
                   <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
@@ -2134,7 +2137,10 @@ const TalentDashboard: React.FC = () => {
                   <LinkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">ShoutOut Bio</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <img src="/whiteicon.png" alt="ShoutOut" className="h-5 w-5 sm:h-6 sm:w-6" />
+                    Link In Bio
+                  </h2>
                   <p className="text-xs sm:text-sm text-gray-400">shoutout.fans/{talentProfile?.username || 'yourname'}</p>
                 </div>
               </div>
