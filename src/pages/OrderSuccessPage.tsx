@@ -367,8 +367,8 @@ const OrderSuccessPage: React.FC = () => {
             <>
               {/* Success State */}
               {isExpressDelivery && (
-                <div className="mb-4 inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/50 rounded-full px-4 py-2">
-                  <span className="text-amber-400 font-semibold">⚡ 24hr Express Delivery</span>
+                <div className="mb-4 inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-400/50 rounded-full px-4 py-2">
+                  <span className="text-emerald-400 font-semibold">⚡ 24hr Express Delivery</span>
                 </div>
               )}
               <p className="text-gray-300 mb-4 text-center">

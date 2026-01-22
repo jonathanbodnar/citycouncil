@@ -1270,7 +1270,7 @@ const TalentProfilePage: React.FC = () => {
               <Link
                 to={user ? `/order/${talent.id}?express=true` : `/signup?returnTo=/order/${talent.id}?express=true`}
                 onClick={storePromoSourceOnClick}
-                className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 hover:border-amber-500/60 transition-all text-center"
+                className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-gradient-to-r from-emerald-500/20 to-green-500/20 hover:from-emerald-500/30 hover:to-green-500/30 border border-emerald-500/40 hover:border-emerald-500/60 transition-all text-center"
               >
                 ⚡ Get it faster - ${Math.round(talent.express_delivery_price)}
               </Link>

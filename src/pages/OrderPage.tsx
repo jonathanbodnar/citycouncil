@@ -1129,17 +1129,17 @@ const OrderPage: React.FC = () => {
 
             {/* Express Delivery Option */}
             {talent.express_delivery_enabled && talent.express_delivery_price && !isForBusiness && watchedOccasion !== 'corporate' && (
-              <div className="mb-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 rounded-xl">
+              <div className="mb-4 p-3 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-400/30 rounded-xl">
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={isExpressDelivery}
                     onChange={(e) => setIsExpressDelivery(e.target.checked)}
-                    className="w-4 h-4 text-amber-500 border-gray-300 rounded focus:ring-amber-500"
+                    className="w-4 h-4 text-emerald-500 border-gray-300 rounded focus:ring-emerald-500"
                   />
                   <div className="ml-3 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-amber-600">⚡ 24hr Express Delivery</span>
+                      <span className="text-sm font-semibold text-emerald-600">⚡ 24hr Express Delivery</span>
                     </div>
                     <p className="text-xs text-gray-600 mt-0.5">
                       Get your ShoutOut in 24 hours for ${talent.express_delivery_price.toFixed(0)} (instead of {talent.fulfillment_time_hours}h)
@@ -1160,7 +1160,7 @@ const OrderPage: React.FC = () => {
                     </span>
                   )}
                   {isExpressDelivery && (
-                    <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
+                    <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">
                       ⚡ Express
                     </span>
                   )}

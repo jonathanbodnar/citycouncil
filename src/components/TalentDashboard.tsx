@@ -898,11 +898,11 @@ const TalentDashboard: React.FC = () => {
 
       {/* 24hr Express Delivery Banner */}
       {showExpressBanner && talentProfile && !talentProfile.express_delivery_enabled && (
-        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-amber-500/20">
-                <ClockIcon className="h-6 w-6 text-amber-400" />
+              <div className="p-2 rounded-full bg-emerald-500/20">
+                <ClockIcon className="h-6 w-6 text-emerald-400" />
               </div>
               <div>
                 <h3 className="font-semibold text-white">Make 20% more per video with 24hr Express Delivery!</h3>
@@ -913,7 +913,7 @@ const TalentDashboard: React.FC = () => {
               <button
                 onClick={enableExpressDelivery}
                 disabled={enablingExpress}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {enablingExpress ? 'Enabling...' : 'Add 24hr Delivery'}
               </button>
@@ -1012,7 +1012,7 @@ const TalentDashboard: React.FC = () => {
                               </span>
                             )}
                             {order.is_express_delivery && (
-                              <span className="text-xs glass-strong text-amber-400 px-2 py-1 rounded-full border border-amber-500/30 font-semibold">
+                              <span className="text-xs glass-strong text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/30 font-semibold">
                                 ⚡ 24hr Delivery
                               </span>
                             )}
