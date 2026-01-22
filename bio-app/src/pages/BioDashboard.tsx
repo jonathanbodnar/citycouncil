@@ -143,6 +143,12 @@ interface ServiceOffering {
   is_active: boolean;
   display_order: number;
   total_followers?: number;
+  // Coupon and recurring payment fields
+  coupon_code?: string | null;
+  coupon_discount_amount?: number | null;
+  coupon_discount_type?: 'percentage' | 'fixed';
+  is_recurring?: boolean;
+  recurring_interval?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | null;
 }
 
 interface BioEvent {
@@ -5886,6 +5892,13 @@ const AddServiceModal: React.FC<{
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(
     service?.platforms || ['instagram']
   );
+  
+  // Coupon and Recurring fields (admin-controlled)
+  const [couponCode, setCouponCode] = useState(service?.coupon_code || '');
+  const [couponDiscountAmount, setCouponDiscountAmount] = useState(service?.coupon_discount_amount?.toString() || '');
+  const [couponDiscountType, setCouponDiscountType] = useState<'percentage' | 'fixed'>(service?.coupon_discount_type || 'percentage');
+  const [isRecurring, setIsRecurring] = useState(service?.is_recurring || false);
+  const [recurringInterval, setRecurringInterval] = useState<'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'>(service?.recurring_interval || 'monthly');
 
   const togglePlatform = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -5910,6 +5923,12 @@ const AddServiceModal: React.FC<{
       description,
       is_active: isActive,
       total_followers: parseInt(totalFollowers) || 0,
+      // Coupon and recurring fields
+      coupon_code: couponCode || null,
+      coupon_discount_amount: couponDiscountAmount ? parseFloat(couponDiscountAmount) : null,
+      coupon_discount_type: couponDiscountType,
+      is_recurring: isRecurring,
+      recurring_interval: isRecurring ? recurringInterval : null,
     });
   };
 
@@ -6150,6 +6169,141 @@ const AddServiceModal: React.FC<{
               className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 resize-none"
             />
           </div>
+
+          {/* Coupon Section - Collapsible */}
+          {serviceType !== 'sponsorship' && (
+            <div className="border border-white/10 rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setCouponCode(couponCode ? '' : ' ')} // Toggle visibility
+                className="w-full p-4 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span className="text-white font-medium">Coupon / Discount</span>
+                  {couponCode && couponCode.trim() && (
+                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Active</span>
+                  )}
+                </div>
+                <svg className={`w-5 h-5 text-gray-400 transition-transform ${couponCode ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {couponCode !== '' && (
+                <div className="p-4 space-y-4 border-t border-white/10">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Coupon Code</label>
+                    <input
+                      type="text"
+                      value={couponCode.trim()}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="e.g. SAVE20"
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 uppercase"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Discount Amount</label>
+                      <input
+                        type="number"
+                        value={couponDiscountAmount}
+                        onChange={(e) => setCouponDiscountAmount(e.target.value)}
+                        placeholder={couponDiscountType === 'percentage' ? '20' : '50'}
+                        min="0"
+                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Discount Type</label>
+                      <select
+                        value={couponDiscountType}
+                        onChange={(e) => setCouponDiscountType(e.target.value as 'percentage' | 'fixed')}
+                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500"
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed ($)</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {couponCode.trim() && couponDiscountAmount && (
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                      <p className="text-green-400 text-sm">
+                        💰 Customers using <span className="font-bold">{couponCode.trim()}</span> will get{' '}
+                        {couponDiscountType === 'percentage' 
+                          ? `${couponDiscountAmount}% off` 
+                          : `$${couponDiscountAmount} off`}
+                        {pricing && ` (${couponDiscountType === 'percentage' 
+                          ? `$${(parseFloat(pricing) * (1 - parseFloat(couponDiscountAmount) / 100)).toFixed(0)}` 
+                          : `$${Math.max(0, parseFloat(pricing) - parseFloat(couponDiscountAmount)).toFixed(0)}`} final price)`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Recurring Payment Toggle */}
+          {serviceType !== 'sponsorship' && (
+            <div className="border border-white/10 rounded-xl overflow-hidden">
+              <div className="p-4 flex items-center justify-between bg-white/5">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <div>
+                    <h4 className="font-medium text-white">Recurring Payment</h4>
+                    <p className="text-xs text-gray-400">Charge customers on a schedule</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                </label>
+              </div>
+              
+              {isRecurring && (
+                <div className="p-4 border-t border-white/10 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Billing Interval</label>
+                    <select
+                      value={recurringInterval}
+                      onChange={(e) => setRecurringInterval(e.target.value as any)}
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="weekly">Weekly</option>
+                      <option value="biweekly">Every 2 Weeks</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly (3 months)</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+                  
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                    <p className="text-blue-400 text-sm">
+                      🔄 Customers will be charged <span className="font-bold">${pricing || '0'}</span>{' '}
+                      {recurringInterval === 'weekly' && 'every week'}
+                      {recurringInterval === 'biweekly' && 'every 2 weeks'}
+                      {recurringInterval === 'monthly' && 'every month'}
+                      {recurringInterval === 'quarterly' && 'every 3 months'}
+                      {recurringInterval === 'yearly' && 'every year'}
+                      {' '}until cancelled.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Active Toggle */}
           <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">

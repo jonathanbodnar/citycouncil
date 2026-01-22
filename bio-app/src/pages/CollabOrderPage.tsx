@@ -37,6 +37,12 @@ interface ServiceOffering {
   benefits: string[];
   platforms: string[]; // Which platforms are included
   is_active: boolean;
+  // Coupon and recurring payment fields
+  coupon_code?: string | null;
+  coupon_discount_amount?: number | null;
+  coupon_discount_type?: 'percentage' | 'fixed';
+  is_recurring?: boolean;
+  recurring_interval?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | null;
 }
 
 // Platform info for display
@@ -122,6 +128,16 @@ const CollabOrderPage: React.FC = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountAmount: number;
+    discountType: 'percentage' | 'fixed';
+    finalPrice: number;
+  } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -329,31 +345,69 @@ const CollabOrderPage: React.FC = () => {
     }
   };
 
+  // Apply coupon code
+  const applyCoupon = () => {
+    if (!service || !couponInput.trim()) return;
+    
+    setCouponError(null);
+    
+    // Check if service has a coupon configured and if input matches
+    if (service.coupon_code && service.coupon_code.toUpperCase() === couponInput.trim().toUpperCase()) {
+      const discountAmount = service.coupon_discount_amount || 0;
+      const discountType = service.coupon_discount_type || 'percentage';
+      const originalPrice = service.pricing / 100;
+      
+      let finalPrice: number;
+      if (discountType === 'percentage') {
+        finalPrice = originalPrice * (1 - discountAmount / 100);
+      } else {
+        finalPrice = Math.max(0, originalPrice - discountAmount);
+      }
+      
+      setAppliedCoupon({
+        code: service.coupon_code,
+        discountAmount,
+        discountType,
+        finalPrice: Math.round(finalPrice * 100) / 100, // Round to 2 decimal places
+      });
+      toast.success(`Coupon applied! ${discountType === 'percentage' ? `${discountAmount}% off` : `$${discountAmount} off`}`);
+    } else {
+      setCouponError('Invalid coupon code');
+      setAppliedCoupon(null);
+    }
+  };
+
   const handleSubmitDetails = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !talent || !service) return;
     
+    // Calculate final price (with coupon if applied)
+    const finalPrice = appliedCoupon ? appliedCoupon.finalPrice : service.pricing / 100;
+    
     setStep('payment');
-    setTimeout(() => initializeFortis(service.pricing / 100), 100);
+    // Use ticket intention for recurring services, transaction intention for one-time
+    setTimeout(() => initializeFortis(finalPrice, service.is_recurring || false), 100);
   };
 
-  const initializeFortis = async (amount: number) => {
+  const initializeFortis = async (amount: number, isRecurring: boolean = false) => {
     try {
       const amountCents = Math.round(amount * 100);
-      console.log('🔄 Initializing Fortis with amount:', amount, 'cents:', amountCents);
+      console.log('🔄 Initializing Fortis with amount:', amount, 'cents:', amountCents, 'recurring:', isRecurring);
       
       let intentionData;
       let intentionError;
       
       try {
-        const response = await supabase.functions.invoke('fortis-intention', {
-          body: { amount_cents: amountCents },
-        });
+        // Use ticket intention for recurring payments, transaction intention for one-time
+        const functionName = isRecurring ? 'fortis-ticket-intention' : 'fortis-intention';
+        const body = isRecurring ? {} : { amount_cents: amountCents };
+        
+        const response = await supabase.functions.invoke(functionName, { body });
         intentionData = response.data;
         intentionError = response.error;
-        console.log('Fortis intention response:', { data: intentionData, error: intentionError });
+        console.log(`${functionName} response:`, { data: intentionData, error: intentionError });
       } catch (fetchError: any) {
-        console.error('Network error calling fortis-intention:', fetchError);
+        console.error('Network error calling fortis intention:', fetchError);
         throw new Error(`Network error: ${fetchError.message || 'Failed to connect to payment service'}`);
       }
 
@@ -366,7 +420,7 @@ const CollabOrderPage: React.FC = () => {
         throw new Error('No response from payment service');
       }
 
-      const { clientToken } = intentionData;
+      const { clientToken, intentionType } = intentionData;
       
       if (!clientToken) {
         console.error('No client token in response:', intentionData);
@@ -413,6 +467,10 @@ const CollabOrderPage: React.FC = () => {
         setIsProcessing(true);
 
         console.log('payment_success payload', payload);
+        
+        // For recurring (ticket) flow, we get a ticket_id, not a transaction
+        const isTicketFlow = intentionType === 'ticket' || isRecurring;
+        const ticketId = payload?.data?.id || payload?.id;
         const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
 
         try {
@@ -420,13 +478,43 @@ const CollabOrderPage: React.FC = () => {
             throw new Error('Missing required data');
           }
 
+          // Calculate final amount (with coupon if applied)
+          const finalAmountCents = appliedCoupon 
+            ? Math.round(appliedCoupon.finalPrice * 100) 
+            : service.pricing;
+
+          let transactionId = txId;
+          let tokenId: string | null = null;
+
+          // For recurring services, process the ticket to get payment and token
+          if (isTicketFlow) {
+            console.log('Processing ticket for recurring payment:', ticketId);
+            
+            const { data: ticketResult, error: ticketError } = await supabase.functions.invoke('fortis-process-ticket', {
+              body: {
+                ticket_id: ticketId,
+                amount_cents: finalAmountCents,
+                save_account: true, // Always save for recurring
+              },
+            });
+
+            if (ticketError || !ticketResult?.success) {
+              throw new Error(ticketResult?.error || ticketError?.message || 'Payment processing failed');
+            }
+
+            transactionId = ticketResult.transaction_id;
+            tokenId = ticketResult.token_id;
+            console.log('Ticket processed successfully:', { transactionId, tokenId });
+          }
+
           const adminFeePercent = talent.admin_fee_percentage ?? 15;
-          const adminFee = Math.round(service.pricing * (adminFeePercent / 100));
+          const adminFee = Math.round(finalAmountCents * (adminFeePercent / 100));
           
           const fulfillmentDeadline = new Date();
           const fulfillmentHours = talent.fulfillment_time_hours || 168;
           fulfillmentDeadline.setHours(fulfillmentDeadline.getHours() + fulfillmentHours);
 
+          // Create the order
           const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
@@ -434,7 +522,10 @@ const CollabOrderPage: React.FC = () => {
               talent_id: talent.id,
               service_offering_id: service.id,
               service_type: 'social_collab',
-              amount: service.pricing,
+              amount: finalAmountCents,
+              original_amount: service.pricing !== finalAmountCents ? service.pricing : null,
+              discount_amount: service.pricing !== finalAmountCents ? service.pricing - finalAmountCents : null,
+              coupon_code: appliedCoupon?.code || null,
               admin_fee: adminFee,
               status: 'pending',
               approval_status: 'approved',
@@ -448,7 +539,7 @@ const CollabOrderPage: React.FC = () => {
               request_details: orderDetails.additionalNotes || `Social Collab: ${service.title}`,
               details_submitted: true,
               fulfillment_deadline: fulfillmentDeadline.toISOString(),
-              payment_transaction_id: txId,
+              payment_transaction_id: transactionId,
               payment_transaction_payload: payload,
             })
             .select()
@@ -457,9 +548,61 @@ const CollabOrderPage: React.FC = () => {
           if (orderError) throw orderError;
 
           console.log('✅ Order created:', order.id);
+
+          // For recurring services, create the subscription
+          if (isRecurring && tokenId && service.recurring_interval) {
+            console.log('Creating subscription for recurring service');
+            
+            // Calculate next billing date based on interval
+            const nextBillingDate = new Date();
+            switch (service.recurring_interval) {
+              case 'weekly':
+                nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+                break;
+              case 'biweekly':
+                nextBillingDate.setDate(nextBillingDate.getDate() + 14);
+                break;
+              case 'monthly':
+                nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+                break;
+              case 'quarterly':
+                nextBillingDate.setMonth(nextBillingDate.getMonth() + 3);
+                break;
+              case 'yearly':
+                nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
+                break;
+            }
+
+            const { error: subError } = await supabase
+              .from('collab_subscriptions')
+              .insert({
+                user_id: user.id,
+                talent_id: talent.id,
+                service_offering_id: service.id,
+                fortis_token_id: tokenId,
+                status: 'active',
+                amount_cents: finalAmountCents,
+                recurring_interval: service.recurring_interval,
+                next_billing_date: nextBillingDate.toISOString(),
+                last_billing_date: new Date().toISOString(),
+                successful_payments: 1,
+                company_name: orderDetails.companyName,
+                suggested_script: orderDetails.suggestedScript,
+                target_audience: orderDetails.targetAudience,
+                customer_socials: orderDetails.customerSocials,
+              });
+
+            if (subError) {
+              console.error('Failed to create subscription:', subError);
+              // Don't fail the whole order, just log the error
+            } else {
+              console.log('✅ Subscription created');
+            }
+          }
+
           setCreatedOrderId(order.id);
           setStep('success');
-          toast.success('Order placed successfully!');
+          toast.success(isRecurring ? 'Subscription started successfully!' : 'Order placed successfully!');
           
         } catch (error) {
           console.error('Error creating order:', error);
@@ -888,22 +1031,118 @@ const CollabOrderPage: React.FC = () => {
               <div>
                 <h2 className="text-xl font-semibold text-white mb-4">Payment</h2>
                 
+                {/* Recurring Service Notice */}
+                {service.is_recurring && (
+                  <div 
+                    className="bg-blue-500/10 border border-blue-500/30 p-4 mb-4"
+                    style={{ borderRadius: getButtonRadius() }}
+                  >
+                    <div className="flex items-center gap-2 text-blue-400 mb-1">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      <span className="font-semibold">Recurring Subscription</span>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      You'll be charged ${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}{' '}
+                      {service.recurring_interval === 'weekly' && 'every week'}
+                      {service.recurring_interval === 'biweekly' && 'every 2 weeks'}
+                      {service.recurring_interval === 'monthly' && 'every month'}
+                      {service.recurring_interval === 'quarterly' && 'every 3 months'}
+                      {service.recurring_interval === 'yearly' && 'every year'}
+                      . Cancel anytime.
+                    </p>
+                  </div>
+                )}
+                
                 {/* Order Summary */}
                 <div 
-                  className="bg-white/5 p-4 mb-6"
+                  className="bg-white/5 p-4 mb-4"
                   style={{ borderRadius: getButtonRadius() }}
                 >
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-400">{service.title}</span>
-                    <span className="text-white">${price.toFixed(2)}</span>
+                    <span className={appliedCoupon ? 'text-gray-500 line-through' : 'text-white'}>${price.toFixed(2)}</span>
                   </div>
+                  
+                  {appliedCoupon && (
+                    <div className="flex justify-between mb-2 text-green-400">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>
+                        -{appliedCoupon.discountType === 'percentage' 
+                          ? `${appliedCoupon.discountAmount}%` 
+                          : `$${appliedCoupon.discountAmount.toFixed(2)}`}
+                      </span>
+                    </div>
+                  )}
+                  
                   <div className="border-t border-white/10 pt-2 mt-2">
                     <div className="flex justify-between">
-                      <span className="text-white font-semibold">Total</span>
-                      <span className="text-white font-semibold">${price.toFixed(2)}</span>
+                      <span className="text-white font-semibold">
+                        {service.is_recurring ? 'Amount Due Today' : 'Total'}
+                      </span>
+                      <span className="text-white font-semibold">
+                        ${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
+                
+                {/* Coupon Code Input - only show if service has a coupon configured */}
+                {service.coupon_code && !appliedCoupon && (
+                  <div className="mb-6">
+                    <label className="block text-sm text-gray-400 mb-2">Have a coupon code?</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => {
+                          setCouponInput(e.target.value.toUpperCase());
+                          setCouponError(null);
+                        }}
+                        placeholder="Enter code"
+                        className="flex-1 bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40 uppercase"
+                        style={{ borderRadius: getButtonRadius() }}
+                      />
+                      <button
+                        type="button"
+                        onClick={applyCoupon}
+                        className="px-4 py-3 bg-white/10 text-white font-medium hover:bg-white/20 transition-colors"
+                        style={{ borderRadius: getButtonRadius() }}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    {couponError && (
+                      <p className="text-red-400 text-sm mt-2">{couponError}</p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Applied Coupon Badge */}
+                {appliedCoupon && (
+                  <div 
+                    className="flex items-center justify-between bg-green-500/10 border border-green-500/30 p-3 mb-6"
+                    style={{ borderRadius: getButtonRadius() }}
+                  >
+                    <div className="flex items-center gap-2 text-green-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Coupon <strong>{appliedCoupon.code}</strong> applied</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAppliedCoupon(null);
+                        setCouponInput('');
+                      }}
+                      className="text-gray-400 hover:text-white text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
 
                 {/* Payment Form Container - clip top 100px to hide tabs */}
                 {/* Loading overlay positioned absolutely over the form */}
@@ -955,7 +1194,7 @@ const CollabOrderPage: React.FC = () => {
                         Processing...
                       </>
                     ) : (
-                      `Pay $${price.toFixed(2)}`
+                      `Pay $${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}${service.is_recurring ? '/mo' : ''}`
                     )}
                   </button>
                 )}
@@ -986,10 +1225,35 @@ const CollabOrderPage: React.FC = () => {
                   </svg>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-white mb-2">Order Placed!</h2>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {service.is_recurring ? 'Subscription Started!' : 'Order Placed!'}
+                </h2>
                 <p className="text-gray-400 mb-6">
                   {displayName} has been notified and will start working on your collab soon.
                 </p>
+
+                {service.is_recurring && (
+                  <div 
+                    className="bg-blue-500/10 border border-blue-500/30 p-4 mb-6 text-left"
+                    style={{ borderRadius: getButtonRadius() }}
+                  >
+                    <div className="flex items-center gap-2 text-blue-400 mb-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      <span className="font-semibold">Recurring Subscription</span>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      You'll be charged ${appliedCoupon ? appliedCoupon.finalPrice.toFixed(2) : price.toFixed(2)}{' '}
+                      {service.recurring_interval === 'weekly' && 'every week'}
+                      {service.recurring_interval === 'biweekly' && 'every 2 weeks'}
+                      {service.recurring_interval === 'monthly' && 'every month'}
+                      {service.recurring_interval === 'quarterly' && 'every 3 months'}
+                      {service.recurring_interval === 'yearly' && 'every year'}.
+                      You can cancel anytime from your dashboard.
+                    </p>
+                  </div>
+                )}
 
                 <div 
                   className="bg-white/5 p-4 mb-6 text-left"
@@ -1000,6 +1264,9 @@ const CollabOrderPage: React.FC = () => {
                     <li>• {displayName} will review your request</li>
                     <li>• You'll receive an email when your content is ready</li>
                     <li>• Track your order status in your dashboard</li>
+                    {service.is_recurring && (
+                      <li>• Manage your subscription from your dashboard</li>
+                    )}
                   </ul>
                 </div>
 
