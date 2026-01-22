@@ -114,9 +114,9 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     }
   };
 
-  // Handle video download - proper file download like other platforms
+  // Handle video download and share - like other video platforms
   const handleDownloadVideo = async (videoUrl: string, orderId: string) => {
-    const toastId = toast.loading('Downloading video...');
+    const toastId = toast.loading('Preparing video...');
     
     try {
       // Fetch the video as a blob
@@ -124,21 +124,36 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
       if (!response.ok) throw new Error('Download failed');
       
       const blob = await response.blob();
+      const file = new File([blob], `shoutout-${orderId.slice(0, 8)}.mp4`, { type: 'video/mp4' });
       
-      // Create a blob URL and trigger download
+      toast.dismiss(toastId);
+      
+      // Try native share with file (works on most mobile devices)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          toast.success('Shared!');
+          return;
+        } catch (shareError: any) {
+          // User cancelled or share failed - fall through to download
+          if (shareError.name === 'AbortError') {
+            return; // User cancelled, do nothing
+          }
+          logger.log('Native share failed, falling back to download:', shareError.message);
+        }
+      }
+      
+      // Fallback: trigger download if sharing not supported or failed
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `shoutout-${orderId.slice(0, 8)}.mp4`;
+      link.download = file.name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Clean up the blob URL
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       
-      toast.dismiss(toastId);
-      toast.success('Downloaded! Now share to Instagram Stories from your camera roll.', { duration: 4000 });
+      toast.success('Downloaded! Share from your camera roll.', { duration: 4000 });
     } catch (error) {
       toast.dismiss(toastId);
       logger.error('Download error:', error);
@@ -312,7 +327,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
                     className="w-full py-1.5 px-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-1 transition-all"
                   >
                     <ShareIcon className="h-3 w-3" />
-                    Download Video
+                    Share Video
                   </button>
                 </div>
               </div>
