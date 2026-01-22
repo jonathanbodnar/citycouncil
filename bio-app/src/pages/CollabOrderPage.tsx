@@ -78,9 +78,11 @@ interface User {
   id: string;
   email: string;
   full_name: string;
+  phone?: string;
 }
 
 type Step = 'register' | 'details' | 'payment' | 'success';
+type AuthStep = 'email' | 'phone' | 'otp'; // New auth flow steps
 
 interface OrderDetails {
   companyName: string;
@@ -103,10 +105,15 @@ const CollabOrderPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   
-  // Registration form
+  // Registration/Login form - email → phone → OTP flow
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [authStep, setAuthStep] = useState<AuthStep>('email');
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [phoneHint, setPhoneHint] = useState('');
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   // Order details form
   const [orderDetails, setOrderDetails] = useState<OrderDetails>({
@@ -124,11 +131,6 @@ const CollabOrderPage: React.FC = () => {
   const [isPaymentReady, setIsPaymentReady] = useState(false);
   const successHandledRef = useRef(false);
   
-  // Login mode
-  const [showLoginForm, setShowLoginForm] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  
   // Coupon state
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -142,6 +144,14 @@ const CollabOrderPage: React.FC = () => {
   // Recurring subscription state (user chooses frequency)
   const [wantsRecurring, setWantsRecurring] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'>('monthly');
+  
+  // OTP cooldown timer
+  useEffect(() => {
+    if (otpCooldown > 0) {
+      const timer = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCooldown]);
 
   useEffect(() => {
     fetchData();
@@ -227,18 +237,22 @@ const CollabOrderPage: React.FC = () => {
     // First check for Supabase session (logged in on shoutout.us)
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('Checking existing session:', session?.user?.id);
+      
       if (session?.user) {
         // User is logged in via Supabase, fetch their profile
-        const { data: existingUser } = await supabase
+        const { data: existingUser, error } = await supabase
           .from('users')
-          .select('*')
+          .select('id, email, full_name, phone, user_type')
           .eq('id', session.user.id)
           .single();
         
-        if (existingUser) {
+        if (existingUser && !error) {
+          console.log('Found logged-in user:', existingUser.email);
           setUser(existingUser);
           localStorage.setItem('collab_user', JSON.stringify(existingUser));
           setStep('details');
+          toast.success('Welcome back!');
           return;
         }
       }
@@ -246,104 +260,286 @@ const CollabOrderPage: React.FC = () => {
       console.log('No active session:', error);
     }
     
-    // Fallback to localStorage
+    // Fallback to localStorage (for users who registered via collab page before)
     const savedUser = localStorage.getItem('collab_user');
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        setUser(parsed);
-        setStep('details');
+        // Verify the saved user still exists in the database
+        const { data: verifiedUser, error } = await supabase
+          .from('users')
+          .select('id, email, full_name, phone, user_type')
+          .eq('id', parsed.id)
+          .single();
+        
+        if (verifiedUser && !error) {
+          setUser(verifiedUser);
+          setStep('details');
+          return;
+        } else {
+          // User no longer valid, clear localStorage
+          localStorage.removeItem('collab_user');
+        }
       } catch {
         localStorage.removeItem('collab_user');
       }
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  // Format phone number display
+  const formatPhoneDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(digits);
+  };
+
+  // Handle email submission - check if user exists with phone
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
     setSubmitting(true);
-
+    const normalizedEmail = email.toLowerCase().trim();
+    
     try {
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .single();
-
-      if (existingUser) {
-        setUser(existingUser);
-        localStorage.setItem('collab_user', JSON.stringify(existingUser));
-        setStep('details');
-        toast.success('Welcome back!');
-      } else {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: email.toLowerCase(),
-          password: crypto.randomUUID(),
-          options: {
-            data: { full_name: fullName },
+      // Check if user exists and has a phone on file
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
           },
-        });
-
-        if (authError) throw authError;
-
-        const { data: newUser, error: userError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user?.id,
-            email: email.toLowerCase(),
-            full_name: fullName,
-            phone: phone || null,
-            user_type: 'user',
-          })
-          .select()
-          .single();
-
-        if (userError) throw userError;
-
-        setUser(newUser);
-        localStorage.setItem('collab_user', JSON.stringify(newUser));
-        setStep('details');
-        toast.success('Account created!');
+          body: JSON.stringify({ 
+            email: normalizedEmail,
+            checkEmailOnly: true
+          }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.success && data.sentToExistingPhone) {
+        // User exists with phone - OTP was sent
+        console.log('Existing user with phone, OTP sent');
+        setPhone(data.phone || '');
+        setPhoneHint(data.phoneHint);
+        setAuthStep('otp');
+        setOtpCooldown(60);
+        toast.success('Welcome back! Code sent to your phone.');
+        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+        return;
       }
+      
+      if (data.rateLimited) {
+        toast.error(data.error || 'Please wait before requesting another code');
+        setOtpCooldown(60);
+        if (data.phoneHint) {
+          setPhoneHint(data.phoneHint);
+          setAuthStep('otp');
+        }
+        return;
+      }
+      
+      // No existing user with phone - need to collect phone
+      setAuthStep('phone');
+      
     } catch (error: any) {
-      console.error('Registration error:', error);
-      toast.error(error.message || 'Registration failed');
+      console.log('Email check error:', error.message);
+      // On error, proceed to phone step
+      setAuthStep('phone');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Handle phone submission - send OTP
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (phone.length < 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
     setSubmitting(true);
-
+    
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: loginEmail.toLowerCase(),
-        password: loginPassword,
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (existingUser) {
-          setUser(existingUser);
-          localStorage.setItem('collab_user', JSON.stringify(existingUser));
-          setStep('details');
-          toast.success('Welcome back!');
-        } else {
-          throw new Error('User profile not found');
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ phone, email: email.toLowerCase().trim() }),
         }
+      );
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        if (data.rateLimited) {
+          toast.error(data.error || 'Please wait before requesting another code');
+          setOtpCooldown(60);
+          return;
+        }
+        throw new Error(data.error);
+      }
+      
+      setPhoneHint(data.phoneHint);
+      setAuthStep('otp');
+      setOtpCooldown(60);
+      toast.success(data.isExistingUser ? 'Welcome back! Code sent.' : 'Verification code sent!');
+      setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+      
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send verification code');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle OTP input
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    
+    const newOtp = [...otpCode];
+    newOtp[index] = value.slice(-1);
+    setOtpCode(newOtp);
+    
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+    
+    // Auto-submit when complete
+    if (value && index === 5) {
+      const fullCode = newOtp.join('');
+      if (fullCode.length === 6) {
+        handleOtpSubmit(fullCode);
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pastedData.length === 6) {
+      const newOtp = pastedData.split('');
+      setOtpCode(newOtp);
+      handleOtpSubmit(pastedData);
+    }
+  };
+
+  // Verify OTP and login/register
+  const handleOtpSubmit = async (code?: string) => {
+    const otpCodeStr = code || otpCode.join('');
+    
+    if (otpCodeStr.length !== 6) {
+      toast.error('Please enter the 6-digit code');
+      return;
+    }
+    
+    setSubmitting(true);
+    
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ phone, code: otpCodeStr, email: email.toLowerCase().trim() }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      
+      // Set session if tokens provided
+      if (data.session?.access_token && data.session?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
+      
+      // Get user data
+      const userData: User = {
+        id: data.user?.id || data.userId,
+        email: data.user?.email || email.toLowerCase().trim(),
+        full_name: data.user?.full_name || email.split('@')[0],
+        phone: data.user?.phone || phone,
+      };
+      
+      setUser(userData);
+      localStorage.setItem('collab_user', JSON.stringify(userData));
+      setStep('details');
+      toast.success(data.isLogin ? 'Welcome back!' : 'Account created!');
+      
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to verify code');
+      setOtpCode(['', '', '', '', '', '']);
+      otpInputRefs.current[0]?.focus();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Resend OTP code
+  const handleResendOtp = async () => {
+    if (otpCooldown > 0) return;
+    
+    setSubmitting(true);
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ phone, email: email.toLowerCase().trim() }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success('New code sent!');
+        setOtpCooldown(60);
+        setOtpCode(['', '', '', '', '', '']);
+        otpInputRefs.current[0]?.focus();
+      } else {
+        toast.error(data.error || 'Failed to resend code');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error(error.message || 'Login failed. Check your email and password.');
+      toast.error(error.message || 'Failed to resend code');
     } finally {
       setSubmitting(false);
     }
@@ -789,37 +985,28 @@ const CollabOrderPage: React.FC = () => {
               borderRadius: getButtonRadius(),
             }}
           >
-            {/* Registration Step */}
+            {/* Registration Step - Email → Phone → OTP Flow */}
             {step === 'register' && (
               <div className="space-y-4">
-                {showLoginForm ? (
-                  /* Login Form */
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <h2 className="text-xl font-semibold text-white mb-4">Login to ShoutOut</h2>
+                {/* Email Step */}
+                {authStep === 'email' && (
+                  <form onSubmit={handleEmailSubmit} className="space-y-4">
+                    <h2 className="text-xl font-semibold text-white mb-4">Sign in or Create Account</h2>
+                    <p className="text-gray-400 text-sm mb-4">
+                      Enter your email to continue. If you have a ShoutOut account, we'll send a code to your phone.
+                    </p>
                     
                     <div>
                       <label className="block text-sm text-gray-400 mb-1">Email</label>
                       <input
                         type="email"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
+                        autoFocus
                         className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
                         style={{ borderRadius: getButtonRadius() }}
                         placeholder="you@email.com"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        required
-                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
-                        style={{ borderRadius: getButtonRadius() }}
-                        placeholder="••••••••"
                       />
                     </div>
 
@@ -829,54 +1016,43 @@ const CollabOrderPage: React.FC = () => {
                       className="w-full py-4 text-white font-semibold transition-all hover:opacity-90 disabled:opacity-50"
                       style={{ backgroundColor: buttonColor, borderRadius: getButtonRadius() }}
                     >
-                      {submitting ? 'Logging in...' : 'Login'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginForm(false)}
-                      className="w-full py-3 text-gray-400 hover:text-white transition-colors text-sm"
-                    >
-                      Don't have an account? Create one
+                      {submitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                          Checking...
+                        </span>
+                      ) : 'Continue'}
                     </button>
                   </form>
-                ) : (
-                  /* Registration Form */
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <h2 className="text-xl font-semibold text-white mb-4">Create Account</h2>
+                )}
+
+                {/* Phone Step - for new users */}
+                {authStep === 'phone' && (
+                  <form onSubmit={handlePhoneSubmit} className="space-y-4">
+                    <button
+                      type="button"
+                      onClick={() => setAuthStep('email')}
+                      className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm mb-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Back
+                    </button>
+                    
+                    <h2 className="text-xl font-semibold text-white mb-4">Enter Your Phone</h2>
+                    <p className="text-gray-400 text-sm mb-4">
+                      We'll send a verification code to confirm your number.
+                    </p>
                     
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-                      <input
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
-                        style={{ borderRadius: getButtonRadius() }}
-                        placeholder="Your name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
-                        style={{ borderRadius: getButtonRadius() }}
-                        placeholder="you@email.com"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Phone (optional)</label>
+                      <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
                       <input
                         type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        value={formatPhoneDisplay(phone)}
+                        onChange={handlePhoneChange}
+                        required
+                        autoFocus
                         className="w-full bg-white/5 border border-white/20 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
                         style={{ borderRadius: getButtonRadius() }}
                         placeholder="(555) 123-4567"
@@ -885,45 +1061,101 @@ const CollabOrderPage: React.FC = () => {
 
                     <button
                       type="submit"
-                      disabled={submitting}
+                      disabled={submitting || phone.length < 10}
                       className="w-full py-4 text-white font-semibold transition-all hover:opacity-90 disabled:opacity-50"
                       style={{ backgroundColor: buttonColor, borderRadius: getButtonRadius() }}
                     >
-                      {submitting ? 'Creating Account...' : 'Continue'}
-                    </button>
-
-                    {/* Divider */}
-                    <div className="relative my-6">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-white/20"></div>
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-4 text-gray-500" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>or</span>
-                      </div>
-                    </div>
-
-                    {/* Login with ShoutOut */}
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginForm(true)}
-                      className="w-full py-4 bg-gradient-to-r from-red-600 to-red-700 border border-red-500/30 text-white font-semibold transition-all hover:from-red-500 hover:to-red-600 flex items-center justify-center gap-3 shadow-lg"
-                      style={{ borderRadius: getButtonRadius() }}
-                    >
-                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2s2-.9 2-2V4c0-1.1-.9-2-2-2zm6.5 9c0 1.93-.63 3.71-1.68 5.15l1.42 1.42C19.45 15.84 20.5 13.52 20.5 11s-1.05-4.84-2.26-6.57l-1.42 1.42C18.37 7.29 18.5 9.07 18.5 11zm-2-5.15l-1.42 1.42C15.63 7.71 16 9.27 16 11s-.37 3.29-.92 3.73l1.42 1.42c.9-1.05 1.5-2.38 1.5-3.85s-.6-2.8-1.5-3.85zM3.5 9v6h3l3.5 2.5V6.5L6.5 9h-3z"/>
-                      </svg>
-                      Login with ShoutOut
+                      {submitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                          Sending Code...
+                        </span>
+                      ) : 'Send Code'}
                     </button>
                   </form>
+                )}
+
+                {/* OTP Step */}
+                {authStep === 'otp' && (
+                  <div className="space-y-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthStep(phone ? 'phone' : 'email');
+                        setOtpCode(['', '', '', '', '', '']);
+                      }}
+                      className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm mb-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Back
+                    </button>
+                    
+                    <h2 className="text-xl font-semibold text-white mb-4">Enter Verification Code</h2>
+                    <p className="text-gray-400 text-sm mb-4">
+                      We sent a 6-digit code to {phoneHint || formatPhoneDisplay(phone)}
+                    </p>
+                    
+                    {/* OTP Input */}
+                    <div className="flex justify-center gap-2 mb-6">
+                      {otpCode.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={(el) => (otpInputRefs.current[index] = el)}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                          onPaste={index === 0 ? handleOtpPaste : undefined}
+                          className="w-12 h-14 text-center text-2xl font-bold bg-white/5 border border-white/20 text-white focus:outline-none focus:border-pink-500 transition-colors"
+                          style={{ borderRadius: getButtonRadius() }}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOtpSubmit()}
+                      disabled={submitting || otpCode.join('').length !== 6}
+                      className="w-full py-4 text-white font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                      style={{ backgroundColor: buttonColor, borderRadius: getButtonRadius() }}
+                    >
+                      {submitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                          Verifying...
+                        </span>
+                      ) : 'Verify Code'}
+                    </button>
+
+                    {/* Resend */}
+                    <div className="text-center">
+                      {otpCooldown > 0 ? (
+                        <p className="text-gray-500 text-sm">
+                          Resend code in {otpCooldown}s
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={submitting}
+                          className="text-pink-400 hover:text-pink-300 text-sm font-medium transition-colors"
+                        >
+                          Didn't receive a code? Resend
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {/* ShoutOut Logo at bottom */}
                 <div className="pt-6 flex flex-col items-center">
                   <p className="text-gray-500 text-xs mb-2">Powered by</p>
                   <div className="flex items-center gap-2 opacity-60">
-                    <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2s2-.9 2-2V4c0-1.1-.9-2-2-2zm6.5 9c0 1.93-.63 3.71-1.68 5.15l1.42 1.42C19.45 15.84 20.5 13.52 20.5 11s-1.05-4.84-2.26-6.57l-1.42 1.42C18.37 7.29 18.5 9.07 18.5 11zm-2-5.15l-1.42 1.42C15.63 7.71 16 9.27 16 11s-.37 3.29-.92 3.73l1.42 1.42c.9-1.05 1.5-2.38 1.5-3.85s-.6-2.8-1.5-3.85zM3.5 9v6h3l3.5 2.5V6.5L6.5 9h-3z"/>
-                    </svg>
+                    <img src="/whiteicon.png" alt="ShoutOut" className="h-5 w-5" />
                     <span className="text-white font-semibold text-sm">ShoutOut</span>
                   </div>
                 </div>
