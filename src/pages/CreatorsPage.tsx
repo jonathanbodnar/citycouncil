@@ -74,10 +74,10 @@ export default function CreatorsPage() {
   }, []);
 
   const services = [
-    { icon: ShoppingBagIcon, title: 'Sell merch' },
-    { icon: TicketIcon, title: 'Sell tickets' },
-    { icon: UserGroupIcon, title: 'Sell social collaborations' },
-    { icon: VideoCameraIcon, title: 'Sell ShoutOut orders' },
+    { icon: ShoppingBagIcon, title: 'Sell merch', comingSoon: true },
+    { icon: TicketIcon, title: 'Sell tickets', comingSoon: true },
+    { icon: UserGroupIcon, title: 'Sell social collaborations', comingSoon: false },
+    { icon: VideoCameraIcon, title: 'Sell ShoutOut orders', comingSoon: false },
   ];
 
   return (
@@ -346,9 +346,6 @@ export default function CreatorsPage() {
                   growth
                 </span>
               </h2>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                Through simple, easy to use services already integrated into your ShoutOut profile.
-              </p>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -363,6 +360,9 @@ export default function CreatorsPage() {
                       <service.icon className="w-8 h-8 text-cyan-400" />
                     </div>
                     <h3 className="text-xl font-bold text-white">{service.title}</h3>
+                    {service.comingSoon && (
+                      <span className="mt-2 text-xs font-semibold text-amber-400 uppercase tracking-wider">Coming Soon</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -375,36 +375,12 @@ export default function CreatorsPage() {
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">zero effort</span>
                   <span className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full" />
                 </span>
-                .
+                {' '}and already integrated into your ShoutOut dashboard.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Final CTA Section */}
-        <section className="py-12 sm:py-16 relative">
-          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-emerald-900/20 to-transparent" />
-          
-          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 mb-6">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-gray-300 font-medium">Ready to own your audience?</span>
-            </div>
-            
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight">
-              Join the{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400">
-                uncancellable
-              </span>
-              {' '}creator economy.
-            </h2>
-            
-            <p className="text-xl sm:text-2xl text-gray-300 max-w-2xl mx-auto">
-              Your bio link is waiting. Start building your owned audience today—completely free.
-            </p>
-
-          </div>
-        </section>
       </div>
     </>
   );
