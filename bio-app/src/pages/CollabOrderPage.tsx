@@ -476,7 +476,7 @@ const CollabOrderPage: React.FC = () => {
         
         // For recurring (ticket) flow, we get a ticket_id, not a transaction
         // User must have chosen recurring AND talent must have enabled it
-        const userChoseRecurring = service.is_recurring && wantsRecurring;
+        const userChoseRecurring = service?.is_recurring && wantsRecurring;
         const isTicketFlow = intentionType === 'ticket' || userChoseRecurring;
         const ticketId = payload?.data?.id || payload?.id;
         const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
