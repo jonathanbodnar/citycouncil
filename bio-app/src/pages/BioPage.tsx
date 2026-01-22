@@ -66,6 +66,7 @@ interface TalentProfile {
   youtube_handle?: string;
   podcast_rss_url?: string;
   podcast_name?: string;
+  podcast_platform_links?: Record<string, string>;
   users?: {
     full_name?: string;
   };
@@ -731,7 +732,7 @@ const BioPage: React.FC = () => {
 
         // Fetch Podcast data if RSS feed is configured
         if (profile.podcast_rss_url) {
-          fetchPodcastData(profile.podcast_rss_url, profile.podcast_name || 'Podcast', profile.id);
+          fetchPodcastData(profile.podcast_rss_url, profile.podcast_name || 'Podcast', profile.id, profile.podcast_platform_links);
         }
 
       } catch (error) {
@@ -1212,13 +1213,13 @@ const BioPage: React.FC = () => {
   };
 
   // Fetch podcast data - with 12-hour caching
-  const fetchPodcastData = async (rssUrl: string, podcastName: string, talentId: string) => {
+  const fetchPodcastData = async (rssUrl: string, podcastName: string, talentId: string, manualPlatformLinks?: Record<string, string>) => {
     if (fetchingPodcast || podcastFetchedRef.current) {
       console.log('Podcast fetch already in progress or completed, skipping');
       return;
     }
     
-    console.log('Fetching podcast data for:', rssUrl);
+    console.log('Fetching podcast data for:', rssUrl, 'with manual links:', manualPlatformLinks);
     setFetchingPodcast(true);
     podcastFetchedRef.current = true;
     
@@ -1248,7 +1249,11 @@ const BioPage: React.FC = () => {
           views: undefined,
           podcastName: cachedData.podcast_name || podcastName,
           feedUrl: rssUrl,
-          listenLinks: cachedData.listen_links || undefined,
+          // Merge cached links with manual links (manual links take priority)
+          listenLinks: {
+            ...(cachedData.listen_links || {}),
+            ...(manualPlatformLinks || {}),
+          },
         };
         
         setPodcastData(cachedPodcastData);
@@ -1451,10 +1456,11 @@ const BioPage: React.FC = () => {
         
         if (!platformError && platformData?.platforms) {
           console.log('PodcastIndex platform links:', platformData.platforms);
-          // Merge with existing links (PodcastIndex takes priority)
+          // Merge with existing links (manual links take highest priority)
           enhancedLinks = {
             ...listenLinks,
             ...platformData.platforms,
+            ...(manualPlatformLinks || {}), // Manual links override all
           };
           
           if (Object.keys(enhancedLinks).length > 0) {
@@ -1464,6 +1470,17 @@ const BioPage: React.FC = () => {
             } : prev);
             console.log('Enhanced with platform links:', enhancedLinks);
           }
+        } else if (manualPlatformLinks && Object.keys(manualPlatformLinks).length > 0) {
+          // Even if API call failed, use manual links
+          enhancedLinks = {
+            ...listenLinks,
+            ...manualPlatformLinks,
+          };
+          setPodcastData(prev => prev ? {
+            ...prev,
+            listenLinks: enhancedLinks
+          } : prev);
+          console.log('Using manual platform links:', enhancedLinks);
         }
       } catch (platformError) {
         console.warn('PodcastIndex API call failed (non-blocking):', platformError);

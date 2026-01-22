@@ -49,6 +49,7 @@ interface TalentProfile {
   youtube_handle?: string;
   podcast_rss_url?: string;
   podcast_name?: string;
+  podcast_platform_links?: Record<string, string>;
 }
 
 interface SocialAccount {
@@ -3186,11 +3187,16 @@ const BioDashboard: React.FC = () => {
         <PodcastModal
           currentRssUrl={talentProfile?.podcast_rss_url}
           currentPodcastName={talentProfile?.podcast_name}
+          currentPlatformLinks={talentProfile?.podcast_platform_links}
           onClose={() => setShowPodcastModal(false)}
-          onSave={async (rssUrl, podcastName) => {
+          onSave={async (rssUrl, podcastName, platformLinks) => {
             await supabase
               .from('talent_profiles')
-              .update({ podcast_rss_url: rssUrl, podcast_name: podcastName })
+              .update({ 
+                podcast_rss_url: rssUrl, 
+                podcast_name: podcastName,
+                podcast_platform_links: platformLinks 
+              })
               .eq('id', talentProfile?.id);
             
             // Also enable the podcast card in bio_settings
@@ -3205,7 +3211,8 @@ const BioDashboard: React.FC = () => {
             setTalentProfile(prev => prev ? { 
               ...prev, 
               podcast_rss_url: rssUrl,
-              podcast_name: podcastName
+              podcast_name: podcastName,
+              podcast_platform_links: platformLinks
             } : prev);
             toast.success('Podcast settings saved');
             setTimeout(refreshPreview, 500);
@@ -3214,7 +3221,7 @@ const BioDashboard: React.FC = () => {
           onRemove={async () => {
             await supabase
               .from('talent_profiles')
-              .update({ podcast_rss_url: null, podcast_name: null })
+              .update({ podcast_rss_url: null, podcast_name: null, podcast_platform_links: null })
               .eq('id', talentProfile?.id);
             
             // Also disable the podcast card in bio_settings
@@ -3229,7 +3236,8 @@ const BioDashboard: React.FC = () => {
             setTalentProfile(prev => prev ? { 
               ...prev, 
               podcast_rss_url: undefined,
-              podcast_name: undefined
+              podcast_name: undefined,
+              podcast_platform_links: undefined
             } : prev);
             toast.success('Podcast removed');
             setTimeout(refreshPreview, 500);
@@ -5277,18 +5285,56 @@ const StreamChannelModal: React.FC<{
   );
 };
 
-// Podcast Modal - Configure podcast RSS feed
+// Available podcast platforms for manual link entry
+const PODCAST_PLATFORMS = [
+  { id: 'spotify', name: 'Spotify', icon: '🎵', color: 'from-green-500 to-green-600' },
+  { id: 'apple', name: 'Apple Podcasts', icon: '🎧', color: 'from-purple-500 to-pink-500' },
+  { id: 'youtube', name: 'YouTube', icon: '📺', color: 'from-red-500 to-red-600' },
+  { id: 'amazon', name: 'Amazon Music', icon: '🎶', color: 'from-blue-400 to-cyan-500' },
+  { id: 'iheart', name: 'iHeartRadio', icon: '❤️', color: 'from-red-400 to-pink-500' },
+  { id: 'google', name: 'Google Podcasts', icon: '🎙️', color: 'from-blue-500 to-green-500' },
+  { id: 'overcast', name: 'Overcast', icon: '☁️', color: 'from-orange-500 to-orange-600' },
+  { id: 'pocketcasts', name: 'Pocket Casts', icon: '📱', color: 'from-red-500 to-orange-500' },
+  { id: 'stitcher', name: 'Stitcher', icon: '🎛️', color: 'from-yellow-500 to-orange-500' },
+  { id: 'tunein', name: 'TuneIn', icon: '📻', color: 'from-cyan-500 to-blue-500' },
+];
+
+// Podcast Modal - Configure podcast RSS feed and manual platform links
 const PodcastModal: React.FC<{
   currentRssUrl?: string;
   currentPodcastName?: string;
+  currentPlatformLinks?: Record<string, string>;
   onClose: () => void;
-  onSave: (rssUrl: string, podcastName: string) => void;
+  onSave: (rssUrl: string, podcastName: string, platformLinks: Record<string, string>) => void;
   onRemove: () => void;
-}> = ({ currentRssUrl, currentPodcastName, onClose, onSave, onRemove }) => {
+}> = ({ currentRssUrl, currentPodcastName, currentPlatformLinks, onClose, onSave, onRemove }) => {
   const [rssUrl, setRssUrl] = useState(currentRssUrl || '');
   const [podcastName, setPodcastName] = useState(currentPodcastName || '');
+  const [platformLinks, setPlatformLinks] = useState<Record<string, string>>(currentPlatformLinks || {});
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState('');
+  const [showManualLinks, setShowManualLinks] = useState(Object.keys(currentPlatformLinks || {}).length > 0);
+  const [selectedPlatform, setSelectedPlatform] = useState('');
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+
+  const addPlatformLink = () => {
+    if (selectedPlatform && newLinkUrl.trim()) {
+      setPlatformLinks(prev => ({
+        ...prev,
+        [selectedPlatform]: newLinkUrl.trim()
+      }));
+      setSelectedPlatform('');
+      setNewLinkUrl('');
+    }
+  };
+
+  const removePlatformLink = (platformId: string) => {
+    setPlatformLinks(prev => {
+      const updated = { ...prev };
+      delete updated[platformId];
+      return updated;
+    });
+  };
 
   const validateAndSave = async () => {
     if (!rssUrl.trim()) {
@@ -5332,20 +5378,23 @@ const PodcastModal: React.FC<{
       }
 
       // Save even if validation/parsing had issues - the bio page will validate on display
-      onSave(rssUrl.trim(), finalName);
+      onSave(rssUrl.trim(), finalName, platformLinks);
     } catch (err: any) {
       console.error('RSS validation error:', err);
       // Be more lenient - allow saving even if validation fails
       const finalName = podcastName.trim() || 'My Podcast';
-      onSave(rssUrl.trim(), finalName);
+      onSave(rssUrl.trim(), finalName, platformLinks);
     } finally {
       setValidating(false);
     }
   };
 
+  // Get platforms that haven't been added yet
+  const availablePlatforms = PODCAST_PLATFORMS.filter(p => !platformLinks[p.id]);
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-md">
+      <div className="bg-[#1a1a1a] border border-white/20 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -5367,7 +5416,7 @@ const PodcastModal: React.FC<{
         </div>
 
         <p className="text-gray-400 text-sm mb-4">
-          Add your podcast RSS feed URL (XML or RSS format) to display your latest episode on your bio page.
+          Add your podcast RSS feed URL to display your latest episode. Platform links are auto-detected, but you can add them manually below.
         </p>
 
         <div className="space-y-4">
@@ -5394,6 +5443,81 @@ const PodcastModal: React.FC<{
               placeholder="Auto-detected from feed"
               className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
             />
+          </div>
+
+          {/* Manual Platform Links Section */}
+          <div className="border-t border-white/10 pt-4 mt-4">
+            <button
+              type="button"
+              onClick={() => setShowManualLinks(!showManualLinks)}
+              className="flex items-center gap-2 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              <svg className={`w-4 h-4 transition-transform ${showManualLinks ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              Add Platform Links Manually
+            </button>
+            <p className="text-xs text-gray-500 mt-1">
+              Links are auto-detected, but you can override or add missing platforms here.
+            </p>
+
+            {showManualLinks && (
+              <div className="mt-4 space-y-3">
+                {/* Current platform links */}
+                {Object.entries(platformLinks).length > 0 && (
+                  <div className="space-y-2">
+                    {Object.entries(platformLinks).map(([platformId, url]) => {
+                      const platform = PODCAST_PLATFORMS.find(p => p.id === platformId);
+                      return (
+                        <div key={platformId} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
+                          <span className="text-lg">{platform?.icon || '🎙️'}</span>
+                          <span className="text-sm text-white flex-1 truncate">{platform?.name || platformId}</span>
+                          <span className="text-xs text-gray-500 truncate max-w-[150px]">{url}</span>
+                          <button
+                            onClick={() => removePlatformLink(platformId)}
+                            className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-colors"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Add new platform link */}
+                {availablePlatforms.length > 0 && (
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedPlatform}
+                      onChange={(e) => setSelectedPlatform(e.target.value)}
+                      className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
+                    >
+                      <option value="">Select platform...</option>
+                      {availablePlatforms.map(platform => (
+                        <option key={platform.id} value={platform.id}>
+                          {platform.icon} {platform.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="url"
+                      value={newLinkUrl}
+                      onChange={(e) => setNewLinkUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                    />
+                    <button
+                      onClick={addPlatformLink}
+                      disabled={!selectedPlatform || !newLinkUrl.trim()}
+                      className="px-3 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <PlusIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {error && (
