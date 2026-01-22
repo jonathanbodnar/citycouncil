@@ -13,7 +13,16 @@ import {
   PlayIcon,
   CloudArrowUpIcon,
   BanknotesIcon,
-  LinkIcon
+  LinkIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  GlobeAltIcon,
+  MegaphoneIcon,
+  ArrowTopRightOnSquareIcon,
+  UserGroupIcon,
+  VideoCameraIcon,
+  ShoppingBagIcon,
+  TicketIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
@@ -2114,25 +2123,222 @@ const TalentDashboard: React.FC = () => {
 
       {/* Bio Tab - Only for allowed users */}
       {activeTab === 'bio' && hasBioAccess && (
-        <div className="space-y-6">
-          <div className="glass border border-white/20 rounded-2xl p-8 text-center">
-            <LinkIcon className="h-16 w-16 text-blue-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">ShoutOut Bio</h2>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Create your personalized link-in-bio page at shoutout.fans/{talentProfile?.username || 'yourname'}
+        <div className="space-y-4 sm:space-y-6">
+          {/* Header with Dashboard Link */}
+          <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+                  <LinkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">ShoutOut Bio</h2>
+                  <p className="text-xs sm:text-sm text-gray-400">shoutout.fans/{talentProfile?.username || 'yourname'}</p>
+                </div>
+              </div>
+              <a
+                href={`https://bio.shoutout.us/dashboard?token=${encodeURIComponent(user?.id || '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
+              >
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                Open Bio Dashboard
+              </a>
+            </div>
+          </div>
+
+          {/* Value Badges */}
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {[
+              { icon: ShieldCheckIcon, label: 'Security', color: 'emerald' },
+              { icon: SparklesIcon, label: 'Simplicity', color: 'cyan' },
+              { icon: GlobeAltIcon, label: 'Sovereignty', color: 'purple' },
+            ].map((badge, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full backdrop-blur-xl border transition-all duration-300
+                  ${badge.color === 'emerald' ? 'bg-emerald-500/10 border-emerald-500/30' : ''}
+                  ${badge.color === 'cyan' ? 'bg-cyan-500/10 border-cyan-500/30' : ''}
+                  ${badge.color === 'purple' ? 'bg-purple-500/10 border-purple-500/30' : ''}
+                `}
+              >
+                <badge.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                  badge.color === 'emerald' ? 'text-emerald-400' :
+                  badge.color === 'cyan' ? 'text-cyan-400' : 'text-purple-400'
+                }`} />
+                <span className="text-white font-medium text-sm">{badge.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Key Info Card */}
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
+            <p className="text-base sm:text-lg text-gray-200 leading-relaxed">
+              Your link in bio is one of the most powerful tools you have as a creator. <span className="text-white font-semibold">Use it wisely.</span>
+            </p>
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-emerald-300 font-semibold text-base flex items-center gap-2">
+                <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                Best part? We already built it for you.
+              </p>
+              <p className="text-gray-300 mt-2 text-sm sm:text-base">
+                As a creator on ShoutOut, you have <span className="text-cyan-400 font-bold">our bio link</span> setup and ready to monetize. No additional setup required.
+              </p>
+            </div>
+          </div>
+
+          {/* Own Your Audience Section */}
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
+              Own your{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400">
+                audience.
+              </span>
+            </h3>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6">
+              <div className="glass rounded-xl p-3 sm:p-4 border border-red-500/20 text-center bg-gradient-to-br from-red-500/5 to-transparent">
+                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
+                  ~2.6%
+                </div>
+                <p className="text-gray-400 text-xs leading-tight mt-1">of followers see your posts on social media</p>
+              </div>
+              <div className="glass rounded-xl p-3 sm:p-4 border border-emerald-500/40 text-center bg-gradient-to-br from-emerald-500/10 to-teal-500/5">
+                <div className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+                  ~6%
+                </div>
+                <p className="text-emerald-300 text-xs leading-tight mt-1">of views become reachable fans with our bio link</p>
+              </div>
+            </div>
+
+            {/* Key Points */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 mt-1.5 animate-pulse" />
+                <p className="text-gray-300 text-sm">
+                  Social platforms only show your posts to <span className="text-white font-bold">~2.6% of your followers</span>. Your hard earned audience is being stolen.
+                </p>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5" />
+                <p className="text-gray-300 text-sm">
+                  <span className="text-emerald-400 font-bold">Our bio link</span> turns followers into an owned audience—fast.
+                </p>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-purple-500 mt-1.5" />
+                <p className="text-gray-300 text-sm">
+                  Creators using shout.bio convert <span className="text-white font-bold">~6% of profile views</span> into instantly reachable fans, all on auto pilot.
+                </p>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />
+                <p className="text-gray-300 text-sm">
+                  Send updates directly from your dashboard—without clunky tools like Mailchimp.
+                </p>
+              </div>
+            </div>
+
+            {/* Special Badge */}
+            <div className="mt-4">
+              <div className="flex items-center gap-3 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                  <MegaphoneIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-amber-300 font-bold text-sm sm:text-base">We build your fan list FOR you!</p>
+                  <p className="text-amber-200/70 text-xs sm:text-sm">Driving users on ShoutOut to subscribe to your list.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Services Section */}
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
+            <div className="text-center mb-4">
+              <p className="text-cyan-400 font-semibold uppercase tracking-widest text-xs sm:text-sm mb-2">Services</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-white">
+                Fuel your platform's{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
+                  growth
+                </span>
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { icon: ShoppingBagIcon, title: 'Sell merch', comingSoon: true },
+                { icon: TicketIcon, title: 'Sell tickets', comingSoon: true },
+                { icon: UserGroupIcon, title: 'Social collaborations', comingSoon: false },
+                { icon: VideoCameraIcon, title: 'ShoutOut orders', comingSoon: false },
+              ].map((service, index) => (
+                <div key={index} className="glass rounded-xl p-3 sm:p-4 border border-white/10 flex flex-col items-center text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center mb-2">
+                    <service.icon className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white">{service.title}</h4>
+                  {service.comingSoon && (
+                    <span className="mt-1 text-[10px] sm:text-xs font-semibold text-amber-400 uppercase tracking-wider">Coming Soon</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-center text-sm sm:text-base text-gray-300 mt-4">
+              …all with{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 font-bold">zero effort</span>
+              {' '}and already integrated.
+            </p>
+          </div>
+
+          {/* Preview Images */}
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20">
+            <h3 className="text-lg font-bold text-white mb-4">How It Works</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-xl overflow-hidden border border-emerald-500/30">
+                <img 
+                  src="/creatorbios/stayconnected.png" 
+                  alt="Stay connected - How fans subscribe"
+                  className="w-full h-auto"
+                />
+                <div className="p-3 bg-emerald-500/10">
+                  <p className="text-emerald-300 font-semibold text-sm">Fans Subscribe</p>
+                  <p className="text-gray-400 text-xs">Fans opt-in through your bio link</p>
+                </div>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-purple-500/30">
+                <img 
+                  src="/creatorbios/sendupdate.png" 
+                  alt="Send update - How creators reach their audience"
+                  className="w-full h-auto"
+                />
+                <div className="p-3 bg-purple-500/10">
+                  <p className="text-purple-300 font-semibold text-sm">Send Updates</p>
+                  <p className="text-gray-400 text-xs">Reach them directly from your dashboard</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 text-center">
+            <p className="text-gray-300 mb-4 text-sm sm:text-base">
+              Ready to take control of your audience?
             </p>
             <a
               href={`https://bio.shoutout.us/dashboard?token=${encodeURIComponent(user?.id || '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
             >
-              <LinkIcon className="h-5 w-5" />
+              <ArrowTopRightOnSquareIcon className="h-5 w-5" />
               Open Bio Dashboard
             </a>
-            <p className="text-sm text-gray-500 mt-4">
-              Opens in a new tab at bio.shoutout.us
-            </p>
           </div>
         </div>
       )}
