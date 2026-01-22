@@ -114,38 +114,28 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     }
   };
 
-  // Handle sharing video to stories (native share)
-  const handleShareToStories = async (videoUrl: string, orderId: string) => {
+  // Handle downloading video (simple direct download)
+  const handleDownloadVideo = async (videoUrl: string, orderId: string) => {
     try {
-      // Check if native sharing is supported
-      if (!navigator.share) {
-        toast.error('Sharing not supported on this device. Please download and share manually.');
-        return;
-      }
-
-      toast.loading('Preparing video...', { id: 'share-video' });
+      toast.loading('Starting download...', { id: 'download-video' });
       
-      // Fetch the video as a blob
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `shoutout-${orderId.slice(0, 8)}.mp4`, { type: 'video/mp4' });
-
-      toast.dismiss('share-video');
-
-      // Use native share
-      await navigator.share({
-        files: [file],
-        title: 'ShoutOut Video',
-        text: 'Check out this ShoutOut! 🎬'
-      });
-
-      toast.success('Opening share sheet...');
+      // Create a temporary link to trigger download
+      const link = document.createElement('a');
+      link.href = videoUrl;
+      link.download = `shoutout-${orderId.slice(0, 8)}.mp4`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.dismiss('download-video');
+      toast.success('Download started! Save the video, then share to Instagram Stories.');
     } catch (error: any) {
-      toast.dismiss('share-video');
-      if (error.name !== 'AbortError') {
-        logger.error('Error sharing video:', error);
-        toast.error('Failed to share. Try downloading instead.');
-      }
+      toast.dismiss('download-video');
+      logger.error('Error downloading video:', error);
+      // Fallback: open in new tab
+      window.open(videoUrl, '_blank');
+      toast.success('Opening video - hold to save, then share to Stories!');
     }
   };
 
@@ -262,6 +252,9 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
             <VideoCameraIcon className="h-5 w-5 text-purple-400" />
           </div>
           <h3 className="text-base font-bold text-white">Shareable Videos</h3>
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full whitespace-nowrap">
+            ✓ Customer Approved
+          </span>
         </div>
         
         <p className="text-xs text-gray-400 mb-4 ml-[52px]">
@@ -308,11 +301,11 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
                     {new Date(video.created_at).toLocaleDateString()}
                   </p>
                   <button
-                    onClick={() => handleShareToStories(video.video_url, video.id)}
+                    onClick={() => handleDownloadVideo(video.video_url, video.id)}
                     className="w-full py-1.5 px-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-1 transition-all"
                   >
                     <ShareIcon className="h-3 w-3" />
-                    Share to Stories
+                    Download & Share
                   </button>
                 </div>
               </div>
