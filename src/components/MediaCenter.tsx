@@ -114,16 +114,36 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     }
   };
 
-  // Handle video download - saves to device for easy sharing
-  const handleDownloadVideo = (videoUrl: string, orderId: string) => {
-    // Open video in new tab - on mobile this allows saving to camera roll
-    // On iOS: long press > Save to Photos
-    // On Android: menu > Download
-    window.open(videoUrl, '_blank');
-    toast.success('Video opened! Save it to your camera roll, then share to Instagram Stories.', {
-      duration: 5000,
-      icon: '📱'
-    });
+  // Handle video download - proper file download like other platforms
+  const handleDownloadVideo = async (videoUrl: string, orderId: string) => {
+    const toastId = toast.loading('Downloading video...');
+    
+    try {
+      // Fetch the video as a blob
+      const response = await fetch(videoUrl);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      
+      // Create a blob URL and trigger download
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `shoutout-${orderId.slice(0, 8)}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      
+      toast.dismiss(toastId);
+      toast.success('Downloaded! Now share to Instagram Stories from your camera roll.', { duration: 4000 });
+    } catch (error) {
+      toast.dismiss(toastId);
+      logger.error('Download error:', error);
+      toast.error('Download failed. Please try again.');
+    }
   };
 
   // Compact social handles for the tag section (just 3)
@@ -292,7 +312,7 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
                     className="w-full py-1.5 px-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-1 transition-all"
                   >
                     <ShareIcon className="h-3 w-3" />
-                    Save & Share
+                    Download Video
                   </button>
                 </div>
               </div>
