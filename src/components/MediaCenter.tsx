@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  PhotoIcon, 
   VideoCameraIcon, 
   ClipboardDocumentIcon,
   CheckIcon,
-  ArrowDownTrayIcon,
-  ShareIcon,
-  ArrowPathIcon
+  ShareIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
-import { generatePromoGraphic } from '../services/promoGraphicGenerator';
 import toast from 'react-hot-toast';
 import { logger } from '../utils/logger';
 
 interface MediaCenterProps {
   talentId: string;
   talentUsername?: string;
-  talentFullName?: string;
-  avatarUrl?: string;
 }
 
 interface ShareableVideo {
@@ -30,11 +24,8 @@ interface ShareableVideo {
 
 const MediaCenter: React.FC<MediaCenterProps> = ({
   talentId,
-  talentUsername,
-  talentFullName,
-  avatarUrl
+  talentUsername
 }) => {
-  const [generatingGraphic, setGeneratingGraphic] = useState(false);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [shareableVideos, setShareableVideos] = useState<ShareableVideo[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
@@ -111,68 +102,6 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
     } catch (error) {
       logger.error('Failed to copy:', error);
       toast.error('Failed to copy to clipboard');
-    }
-  };
-
-  const handleGenerateGraphic = async () => {
-    if (!avatarUrl) {
-      toast.error('Avatar not found. Please upload a profile photo first.');
-      return;
-    }
-
-    if (!talentUsername) {
-      toast.error('Username not found.');
-      return;
-    }
-
-    if (!talentFullName) {
-      toast.error('Talent name not found.');
-      return;
-    }
-
-    setGeneratingGraphic(true);
-    try {
-      const profileUrl = `ShoutOut.us/${talentUsername}`;
-      const blob = await generatePromoGraphic({
-        avatarUrl,
-        talentName: talentFullName,
-        profileUrl
-      });
-      const filename = `${talentUsername}-promo.png`;
-      
-      // Try to use native share API on mobile (saves to camera roll)
-      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        try {
-          const file = new File([blob], filename, { type: 'image/png' });
-          await navigator.share({
-            files: [file],
-            title: 'ShoutOut Promo Graphic',
-            text: 'My ShoutOut promo graphic'
-          });
-          toast.success('Graphic saved!');
-          return;
-        } catch (shareError) {
-          // Fall through to download if share fails
-          logger.log('Share failed, falling back to download:', shareError);
-        }
-      }
-      
-      // Fallback: Traditional download for desktop
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast.success('Promo graphic downloaded!');
-    } catch (error) {
-      logger.error('Error generating promo graphic:', error);
-      toast.error('Failed to generate promo graphic');
-    } finally {
-      setGeneratingGraphic(false);
     }
   };
 
@@ -383,34 +312,6 @@ const MediaCenter: React.FC<MediaCenterProps> = ({
         )}
       </div>
 
-      {/* Promotional Materials (moved to bottom, simplified) */}
-      <div className="glass rounded-2xl p-4 border border-white/20">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
-            <PhotoIcon className="h-5 w-5 text-blue-400" />
-          </div>
-          <h3 className="text-base font-bold text-white">Promo Materials</h3>
-        </div>
-        
-        <button
-          onClick={handleGenerateGraphic}
-          disabled={generatingGraphic || !avatarUrl}
-          className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-            <PhotoIcon className="h-5 w-5 text-white" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-white font-medium text-sm">Promo Graphic</p>
-            <p className="text-gray-400 text-xs">1080x1350px Instagram post</p>
-          </div>
-          {generatingGraphic ? (
-            <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin" />
-          ) : (
-            <ArrowDownTrayIcon className="h-5 w-5 text-gray-400" />
-          )}
-        </button>
-      </div>
     </div>
   );
 };

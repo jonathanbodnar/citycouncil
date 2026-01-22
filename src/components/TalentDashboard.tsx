@@ -1834,8 +1834,6 @@ const TalentDashboard: React.FC = () => {
         <MediaCenter
           talentId={talentProfile.id}
           talentUsername={talentProfile.username}
-          talentFullName={talentProfile.full_name}
-          avatarUrl={user?.avatar_url}
         />
       )}
 
