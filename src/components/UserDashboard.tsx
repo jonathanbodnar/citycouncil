@@ -44,16 +44,46 @@ interface ReviewWithTalent extends Review {
   };
 }
 
+interface CollabSubscription {
+  id: string;
+  user_id: string;
+  talent_id: string;
+  service_offering_id: string;
+  status: 'active' | 'cancelled' | 'paused' | 'failed';
+  amount_cents: number;
+  recurring_interval: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+  next_billing_date: string;
+  last_billing_date: string;
+  successful_payments: number;
+  created_at: string;
+  company_name?: string;
+  talent_profiles?: {
+    username?: string;
+    full_name?: string;
+    temp_full_name?: string;
+    users?: {
+      full_name: string;
+      avatar_url?: string;
+    };
+  };
+  service_offerings?: {
+    title: string;
+    platforms: string[];
+  };
+}
+
 const UserDashboard: React.FC = () => {
   const { user, updateProfile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<OrderWithTalent[]>([]);
   const [reviews, setReviews] = useState<ReviewWithTalent[]>([]);
+  const [subscriptions, setSubscriptions] = useState<CollabSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editedMention1, setEditedMention1] = useState('');
   const [editedMention2, setEditedMention2] = useState('');
-  const [activeTab, setActiveTab] = useState<'orders' | 'reviews' | 'profile'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'subscriptions' | 'reviews' | 'profile'>('orders');
+  const [cancellingSubscriptionId, setCancellingSubscriptionId] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareOrderData, setShareOrderData] = useState<OrderWithTalent | null>(null);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
@@ -72,8 +102,8 @@ const UserDashboard: React.FC = () => {
   // Handle tab from URL parameter
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['orders', 'reviews', 'profile'].includes(tabParam)) {
-      setActiveTab(tabParam as 'orders' | 'reviews' | 'profile');
+    if (tabParam && ['orders', 'subscriptions', 'reviews', 'profile'].includes(tabParam)) {
+      setActiveTab(tabParam as 'orders' | 'subscriptions' | 'reviews' | 'profile');
     }
   }, [searchParams]);
 
@@ -131,13 +161,81 @@ const UserDashboard: React.FC = () => {
 
       if (reviewsError) throw reviewsError;
 
+      // Fetch user's collab subscriptions
+      const { data: subscriptionsData, error: subscriptionsError } = await supabase
+        .from('collab_subscriptions')
+        .select(`
+          *,
+          talent_profiles!collab_subscriptions_talent_id_fkey (
+            username,
+            full_name,
+            temp_full_name,
+            users!talent_profiles_user_id_fkey (
+              full_name,
+              avatar_url
+            )
+          ),
+          service_offerings!collab_subscriptions_service_offering_id_fkey (
+            title,
+            platforms
+          )
+        `)
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (subscriptionsError) {
+        console.error('Error fetching subscriptions:', subscriptionsError);
+      }
+
       setOrders(ordersData || []);
       setReviews(reviewsData || []);
+      setSubscriptions(subscriptionsData || []);
     } catch (error) {
       console.error('Error fetching user data:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Cancel a recurring subscription
+  const handleCancelSubscription = async (subscriptionId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this recurring subscription? You will not be charged again after this billing period.')) {
+      return;
+    }
+    
+    setCancellingSubscriptionId(subscriptionId);
+    try {
+      const { error } = await supabase
+        .from('collab_subscriptions')
+        .update({ 
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString()
+        })
+        .eq('id', subscriptionId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      toast.success('Subscription cancelled successfully');
+      fetchUserData(); // Refresh data
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      toast.error('Failed to cancel subscription');
+    } finally {
+      setCancellingSubscriptionId(null);
+    }
+  };
+
+  // Format interval for display
+  const formatInterval = (interval: string) => {
+    switch (interval) {
+      case 'weekly': return 'Weekly';
+      case 'biweekly': return 'Every 2 Weeks';
+      case 'monthly': return 'Monthly';
+      case 'quarterly': return 'Quarterly';
+      case 'yearly': return 'Yearly';
+      default: return interval;
     }
   };
 
@@ -470,9 +568,10 @@ const UserDashboard: React.FC = () => {
       {/* Tab Navigation */}
       <div className="mb-8">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto">
             {[
               { key: 'orders', label: 'My Orders', count: orders.length },
+              { key: 'subscriptions', label: 'Subscriptions', count: subscriptions.filter(s => s.status === 'active').length || null },
               { key: 'reviews', label: 'My Reviews', count: reviews.length },
               { key: 'profile', label: 'Profile Settings', count: null },
             ].map((tab) => (
@@ -782,6 +881,131 @@ const UserDashboard: React.FC = () => {
               >
                 Browse Talent
               </Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Subscriptions Tab */}
+      {activeTab === 'subscriptions' && (
+        <div className="space-y-6">
+          {subscriptions.length > 0 ? (
+            subscriptions.map((subscription) => {
+              const talentName = subscription.talent_profiles?.users?.full_name || 
+                                 subscription.talent_profiles?.full_name || 
+                                 subscription.talent_profiles?.temp_full_name || 
+                                 subscription.talent_profiles?.username || 'Creator';
+              const talentAvatar = subscription.talent_profiles?.users?.avatar_url;
+              const serviceName = subscription.service_offerings?.title || 'Collab Service';
+              const isActive = subscription.status === 'active';
+              
+              return (
+                <div key={subscription.id} className="glass rounded-2xl shadow-modern border border-white/20 overflow-hidden hover:glass-strong transition-all duration-300">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center">
+                          {talentAvatar ? (
+                            <img
+                              src={talentAvatar}
+                              alt={talentName}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xl font-bold text-primary-600">
+                              {talentName.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{talentName}</h3>
+                          <p className="text-sm text-gray-600">{serviceName}</p>
+                          <p className="text-xs text-gray-500">
+                            Started {new Date(subscription.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : subscription.status === 'cancelled'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Subscription Details */}
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500">Amount:</span>
+                          <span className="ml-2 font-semibold text-gray-900">
+                            ${(subscription.amount_cents / 100).toFixed(2)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Frequency:</span>
+                          <span className="ml-2 font-semibold text-gray-900">
+                            {formatInterval(subscription.recurring_interval)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Payments Made:</span>
+                          <span className="ml-2 font-semibold text-gray-900">
+                            {subscription.successful_payments || 0}
+                          </span>
+                        </div>
+                        {isActive && subscription.next_billing_date && (
+                          <div>
+                            <span className="text-gray-500">Next Billing:</span>
+                            <span className="ml-2 font-semibold text-gray-900">
+                              {new Date(subscription.next_billing_date).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {subscription.company_name && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <span className="text-gray-500 text-sm">Company:</span>
+                          <span className="ml-2 text-gray-900">{subscription.company_name}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    {isActive && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => handleCancelSubscription(subscription.id)}
+                          disabled={cancellingSubscriptionId === subscription.id}
+                          className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <XCircleIcon className="h-5 w-5" />
+                          <span>
+                            {cancellingSubscriptionId === subscription.id ? 'Cancelling...' : 'Cancel Subscription'}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    
+                    {subscription.status === 'cancelled' && (
+                      <p className="text-sm text-gray-500 text-center">
+                        This subscription has been cancelled and will not renew.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-12">
+              <CreditCardIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No subscriptions yet</h3>
+              <p className="text-gray-600">When you subscribe to a recurring collab, it will appear here.</p>
             </div>
           )}
         </div>
