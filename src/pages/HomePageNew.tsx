@@ -444,6 +444,19 @@ export default function HomePageNew() {
             ...sortedTalent.filter((t) => t.id !== priorityTalent.id),
           ];
         }
+      } else {
+        // Randomly shuffle the top 4 banner cards for each viewer
+        // This creates variety so different visitors see different orders
+        const top4 = sortedTalent.slice(0, 4);
+        const rest = sortedTalent.slice(4);
+        
+        // Fisher-Yates shuffle for true randomness (not seeded)
+        for (let i = top4.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [top4[i], top4[j]] = [top4[j], top4[i]];
+        }
+        
+        sortedTalent = [...top4, ...rest];
       }
 
       setTalentList(sortedTalent);
