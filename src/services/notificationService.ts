@@ -149,6 +149,8 @@ export const notificationService = {
       message = message.replace(/\{\{amount\}\}/g, variables.amount || '');
       message = message.replace(/\{\{talent_name\}\}/g, variables.talent_name || '');
       message = message.replace(/\{\{hours\}\}/g, variables.hours || '');
+      message = message.replace(/\{\{express_note\}\}/g, variables.express_note || '');
+      message = message.replace(/\{\{is_express\}\}/g, variables.is_express || '');
 
       // Determine recipient type based on notification type
       // talent_* notifications go to talent (217 number), user_* notifications go to users (659 number)
