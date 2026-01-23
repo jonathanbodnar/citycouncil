@@ -343,7 +343,13 @@ const HomePage: React.FC = () => {
   const getTalentsByCategory = () => {
     const categoryMap = new Map<string, TalentWithUser[]>();
     
-    // Add "Featured" category for featured talent
+    // When searching, show all results in a "Search Results" category first
+    if (searchQuery && filteredTalent.length > 0) {
+      categoryMap.set('Search Results', filteredTalent);
+      return categoryMap; // Just show search results, no categories
+    }
+    
+    // Add "Featured" category (only when not searching)
     if (featuredTalent.length > 0) {
       categoryMap.set('Featured', featuredTalent);
     }
@@ -378,10 +384,11 @@ const HomePage: React.FC = () => {
       categoryMap.set('Coming Soon', comingSoon);
     }
     
-    // Filter out categories with 2 or fewer people
+    // Filter out categories with 2 or fewer people (but not when searching)
     const filteredMap = new Map<string, TalentWithUser[]>();
     categoryMap.forEach((talents, category) => {
-      if (talents.length > 2) {
+      // When searching, show all categories with results; otherwise require 3+ people
+      if (searchQuery || talents.length > 2) {
         filteredMap.set(category, talents);
       }
     });
