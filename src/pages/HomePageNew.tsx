@@ -77,7 +77,8 @@ const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
 };
 
 // Dedicated category talent (by username)
-const COMEDIAN_TALENT = ['jpsears', 'mattiseman'];
+// Comedians includes those marked as Comedian or Impersonator
+const COMEDIAN_TALENT = ['jpsears', 'mattiseman', 'shawnfarash', 'elsakurt', 'esteepalti'];
 const ACTOR_TALENT = ['bradstine', 'nicksearcy', 'kevinsorbo', 'johnohurley'];
 
 // Rotating taglines for the header
