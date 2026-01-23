@@ -22,6 +22,7 @@ const POPUP_OCCASIONS = [
   { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
   { key: 'announcement', label: 'Make an Announcement', emoji: '📣' },
   { key: 'celebrate', label: 'Celebrate A Win', emoji: '🏆' },
+  { key: 'advice', label: 'Get Advice', emoji: '💡' },
 ];
 
 interface PrizeInfo {

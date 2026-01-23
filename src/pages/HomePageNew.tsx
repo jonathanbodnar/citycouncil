@@ -49,6 +49,7 @@ const OCCASIONS: OccasionType[] = [
   { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
   { key: 'announcement', label: 'Make an Announcement', emoji: '📣' },
   { key: 'celebrate', label: 'Celebrate A Win', emoji: '🏆' },
+  { key: 'advice', label: 'Get Advice', emoji: '💡' },
   { key: 'corporate', label: 'Corporate Event', emoji: '🏢' },
 ];
 
@@ -60,8 +61,24 @@ const OCCASION_PHRASES: Record<string, string> = {
   'debate': "End the debate with a ShoutOut.",
   'announcement': "Tell everyone in a way no one else can.",
   'celebrate': "Celebrate in the most unique way possible.",
+  'advice': "Get advice from people who've been there.",
   'corporate': "Make your event unforgettable.",
 };
+
+// Curated talent for each occasion (by username)
+const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
+  'roast': ['shawnfarash', 'hayleycaronia', 'joshfirestine', 'jpsears', 'thehodgetwins', 'bryancallen', 'nickdipaolo', 'elsakurt', 'esteepalti', 'pearldavis', 'lauraloomer', 'kaitlinbennett', 'mattiseman'],
+  'announcement': ['shawnfarash', 'hayleycaronia', 'lydiashaffer', 'bryancallen', 'basrutten', 'nicksearcy', 'markdavis', 'larryelder', 'mattiseman'],
+  'gift': ['shawnfarash', 'meloniemac', 'joshfirestine', 'lydiashaffer', 'thehodgetwins', 'elsakurt', 'jeremyhambly', 'kevinsorbo', 'kayleecampbell', 'jeremyherrell'],
+  'encouragement': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
+  'celebrate': ['joshfirestine', 'jpsears', 'jeremyhambly', 'basrutten', 'bradstine', 'gregonfire', 'chaelsonnen', 'lauraloomer', 'johnohurley', 'mattiseman'],
+  'debate': ['davidharrisjr', 'nickdipaolo', 'bradstine', 'kayleecampbell', 'chaelsonnen', 'lauraloomer', 'pearldavis', 'geraldmorgan', 'kaitlinbennett', 'chrissalcedo'],
+  'advice': ['meloniemac', 'thehodgetwins', 'davidharrisjr', 'nickdipaolo', 'bradstine', 'esteepalti', 'gregonfire', 'nicksearcy', 'chaelsonnen', 'markdavis', 'larryelder', 'pearldavis', 'geraldmorgan', 'kevinsorbo', 'kaitlinbennett', 'chrissalcedo', 'johnohurley'],
+};
+
+// Dedicated category talent (by username)
+const COMEDIAN_TALENT = ['jpsears', 'mattiseman'];
+const ACTOR_TALENT = ['bradstine', 'nicksearcy', 'kevinsorbo', 'johnohurley'];
 
 // Rotating taglines for the header
 const ROTATING_TAGLINES = [
@@ -576,30 +593,29 @@ export default function HomePageNew() {
               // For corporate events, only show talent with corporate pricing enabled
               const isCorporate = selectedOccasion === 'corporate';
               
-              const matchingTalent = allActiveTalent.filter(t => {
-                if (!t.users) return false;
-                
-                // Corporate requires corporate_pricing to be set
-                if (isCorporate) {
-                  return t.corporate_pricing && t.corporate_pricing > 0;
-                }
-                
-                // Other occasions filter by categories
-                return t.top_categories?.includes(selectedOccasion) ||
-                  t.featured_shoutout_types?.includes(selectedOccasion);
-              });
-              const shuffledMatching = seededShuffle(matchingTalent, `header-occasion-${selectedOccasion}`);
+              // Use curated talent mapping for occasions (except corporate)
+              let occasionTalentList: TalentWithDetails[] = [];
               
-              let occasionTalentList = shuffledMatching.slice(0, 4);
+              if (isCorporate) {
+                // Corporate: filter by corporate_pricing
+                const corporateTalent = allActiveTalent.filter(t => 
+                  t.users && t.corporate_pricing && t.corporate_pricing > 0
+                );
+                occasionTalentList = seededShuffle(corporateTalent, `header-occasion-${selectedOccasion}`).slice(0, 4);
+              } else {
+                // Use curated mapping
+                const curatedUsernames = OCCASION_TALENT_MAPPING[selectedOccasion] || [];
+                const curatedTalent = curatedUsernames
+                  .map(username => allActiveTalent.find(t => t.username?.toLowerCase() === username.toLowerCase()))
+                  .filter((t): t is TalentWithDetails => t !== undefined && t.users !== undefined);
+                occasionTalentList = curatedTalent.slice(0, 4);
+              }
+              
+              // If not enough curated talent, fill with random active talent
               if (occasionTalentList.length < 4) {
                 const usedIds = new Set(occasionTalentList.map(t => t.id));
-                // For corporate, only fill with other corporate-enabled talent
                 const fillerTalent = seededShuffle(
-                  allActiveTalent.filter(t => {
-                    if (!t.users || usedIds.has(t.id)) return false;
-                    if (isCorporate) return t.corporate_pricing && t.corporate_pricing > 0;
-                    return true;
-                  }),
+                  allActiveTalent.filter(t => t.users && !usedIds.has(t.id)),
                   `header-occasion-fill-${selectedOccasion}`
                 ).slice(0, 4 - occasionTalentList.length);
                 occasionTalentList = [...occasionTalentList, ...fillerTalent];
@@ -695,8 +711,70 @@ export default function HomePageNew() {
                   })()}
 
 
-                  {/* For index > 1: Show precomputed carousel (no duplicates in first 3 positions) */}
-                  {index > 1 && precomputedCarousels[index] && (() => {
+                  {/* After 2nd banner (index 1): Show Comedians carousel */}
+                  {index === 1 && (() => {
+                    const comedianTalent = COMEDIAN_TALENT
+                      .map(username => allActiveTalent.find(t => t.username?.toLowerCase() === username.toLowerCase()))
+                      .filter((t): t is TalentWithDetails => t !== undefined && t.users !== undefined);
+                    
+                    if (comedianTalent.length === 0) return null;
+                    
+                    return (
+                      <div className="space-y-2">
+                        <div className="inline-block">
+                          <span className="px-4 py-1.5 rounded-full text-sm font-bold glass-strong bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-white border border-white/20">
+                            🎭 Comedians
+                          </span>
+                        </div>
+                        <div className="relative group">
+                          <div 
+                            className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                          >
+                            {comedianTalent.map((t) => (
+                              <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                                <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* After 5th banner (index 4): Show Actors carousel */}
+                  {index === 4 && (() => {
+                    const actorTalent = ACTOR_TALENT
+                      .map(username => allActiveTalent.find(t => t.username?.toLowerCase() === username.toLowerCase()))
+                      .filter((t): t is TalentWithDetails => t !== undefined && t.users !== undefined);
+                    
+                    if (actorTalent.length === 0) return null;
+                    
+                    return (
+                      <div className="space-y-2">
+                        <div className="inline-block">
+                          <span className="px-4 py-1.5 rounded-full text-sm font-bold glass-strong bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-white border border-white/20">
+                            🎬 Actors
+                          </span>
+                        </div>
+                        <div className="relative group">
+                          <div 
+                            className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                          >
+                            {actorTalent.map((t) => (
+                              <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                                <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* For index > 1 (except 1 and 4 which have dedicated carousels): Show precomputed carousel */}
+                  {index > 1 && index !== 4 && precomputedCarousels[index] && (() => {
                     const carouselItems = precomputedCarousels[index];
                     
                     if (carouselItems.length === 0) return null;
