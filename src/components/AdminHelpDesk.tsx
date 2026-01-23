@@ -54,9 +54,10 @@ const AdminHelpDesk: React.FC = () => {
   }, [selectedConversation]);
 
   useEffect(() => {
-    fetchConversations();
+    fetchConversations(true); // Show loading on initial fetch only
     
     // Set up real-time subscription for new messages only
+    let refreshTimeout: NodeJS.Timeout | null = null;
     const subscription = supabase
       .channel('admin_help_messages')
       .on('postgres_changes', 
@@ -70,14 +71,18 @@ const AdminHelpDesk: React.FC = () => {
           
           // Only refresh if it's a new message from a user (not admin-initiated)
           if (newMsg && newMsg.message !== '[Admin initiated conversation]') {
-            // Update conversations list silently (no scroll)
-            fetchConversations();
-            
-            // If this message is for the currently selected conversation, refresh it
-            if (selectedConversationRef.current && newMsg.user_id === selectedConversationRef.current.user_id) {
-              shouldScrollRef.current = true;
-              refreshSelectedConversation();
-            }
+            // Debounce to prevent rapid refreshes
+            if (refreshTimeout) clearTimeout(refreshTimeout);
+            refreshTimeout = setTimeout(() => {
+              // Update conversations list silently (no scroll, no loading)
+              fetchConversations(false);
+              
+              // If this message is for the currently selected conversation, refresh it
+              if (selectedConversationRef.current && newMsg.user_id === selectedConversationRef.current.user_id) {
+                shouldScrollRef.current = true;
+                refreshSelectedConversation();
+              }
+            }, 500);
           }
         }
       )
@@ -85,6 +90,7 @@ const AdminHelpDesk: React.FC = () => {
 
     return () => {
       subscription.unsubscribe();
+      if (refreshTimeout) clearTimeout(refreshTimeout);
     };
   }, []);
 
@@ -114,15 +120,17 @@ const AdminHelpDesk: React.FC = () => {
   const handleSelectConversation = async (conversation: ConversationGroup) => {
     shouldScrollRef.current = true; // Scroll to bottom when selecting conversation
     setSelectedConversation(conversation);
-    // Mark all messages in this conversation as read
-    await markConversationAsRead(conversation.user_id);
-    // Refresh conversations to update unread count
-    fetchConversations();
+    // Mark all messages in this conversation as read (async, don't wait)
+    markConversationAsRead(conversation.user_id);
+    // Update unread count locally without full refresh
+    setConversations(prev => prev.map(c => 
+      c.user_id === conversation.user_id ? { ...c, unread_count: 0 } : c
+    ));
   };
 
-  const fetchConversations = async () => {
+  const fetchConversations = async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const { data, error } = await supabase
         .from('help_messages')
         .select(`
@@ -285,15 +293,45 @@ const AdminHelpDesk: React.FC = () => {
         // Don't fail the response if SMS fails
       }
 
+      const sentMessage = newMessage.trim();
       setNewMessage('');
       toast.success('Response sent!');
       
-      // Don't refresh everything, just the selected conversation
-      // Small delay to ensure database update is complete
-      shouldScrollRef.current = true;
+      // Update locally immediately for instant feedback
+      if (selectedConversation) {
+        const updatedMessages = selectedConversation.messages.map(m => {
+          if (m.id === unrespondedMessage?.id) {
+            return { ...m, response: sentMessage, updated_at: new Date().toISOString() };
+          }
+          return m;
+        });
+        
+        // If it was an admin-initiated message, add it to the list
+        if (!unrespondedMessage) {
+          updatedMessages.push({
+            id: `temp-${Date.now()}`,
+            user_id: selectedConversation.user_id,
+            message: '[Admin initiated conversation]',
+            response: sentMessage,
+            is_resolved: false,
+            is_human_takeover: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            is_read: true
+          } as any);
+        }
+        
+        setSelectedConversation({
+          ...selectedConversation,
+          messages: updatedMessages
+        });
+        shouldScrollRef.current = true;
+      }
+      
+      // Silently refresh in background to sync with server
       setTimeout(() => {
         refreshSelectedConversation();
-      }, 100);
+      }, 500);
 
     } catch (error) {
       console.error('Error sending response:', error);
@@ -313,7 +351,11 @@ const AdminHelpDesk: React.FC = () => {
       if (error) throw error;
 
       toast.success('Conversation marked as resolved');
-      fetchConversations();
+      
+      // Update locally without full refresh
+      setConversations(prev => prev.map(c => 
+        c.user_id === conversationUserId ? { ...c, is_resolved: true } : c
+      ));
       
       // Clear selected conversation if it was the resolved one
       if (selectedConversation?.user_id === conversationUserId) {
