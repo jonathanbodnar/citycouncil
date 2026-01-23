@@ -597,35 +597,27 @@ export default function HomePageNew() {
               let occasionTalentList: TalentWithDetails[] = [];
               
               if (isCorporate) {
-                // Corporate: filter by corporate_pricing
+                // Corporate: filter by corporate_pricing - show all
                 const corporateTalent = allActiveTalent.filter(t => 
                   t.users && t.corporate_pricing && t.corporate_pricing > 0
                 );
-                occasionTalentList = seededShuffle(corporateTalent, `header-occasion-${selectedOccasion}`).slice(0, 4);
+                occasionTalentList = corporateTalent;
               } else {
-                // Use curated mapping
+                // Use curated mapping - show ALL curated talent for the occasion
                 const curatedUsernames = OCCASION_TALENT_MAPPING[selectedOccasion] || [];
                 const curatedTalent = curatedUsernames
                   .map(username => allActiveTalent.find(t => t.username?.toLowerCase() === username.toLowerCase()))
                   .filter((t): t is TalentWithDetails => t !== undefined && t.users !== undefined);
-                occasionTalentList = curatedTalent.slice(0, 4);
+                occasionTalentList = curatedTalent; // Show all, not just 4
               }
               
-              // If not enough curated talent, fill with random active talent
-              if (occasionTalentList.length < 4) {
-                const usedIds = new Set(occasionTalentList.map(t => t.id));
-                const fillerTalent = seededShuffle(
-                  allActiveTalent.filter(t => t.users && !usedIds.has(t.id)),
-                  `header-occasion-fill-${selectedOccasion}`
-                ).slice(0, 4 - occasionTalentList.length);
-                occasionTalentList = [...occasionTalentList, ...fillerTalent];
-              }
+              const hasOverflow = occasionTalentList.length > 4;
               
               return occasionTalentList.length > 0 ? (
                 <div className="mt-4">
                   <div className="relative group">
                     <div 
-                      className="flex gap-3 justify-center overflow-x-auto pb-4 scrollbar-hide"
+                      className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"
                       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                       {occasionTalentList.map((t) => (
@@ -634,6 +626,15 @@ export default function HomePageNew() {
                         </div>
                       ))}
                     </div>
+                    {/* Right Fade Gradient - only show if overflow */}
+                    {hasOverflow && (
+                      <div 
+                        className="absolute top-0 right-0 bottom-4 w-16 pointer-events-none"
+                        style={{
+                          background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.9) 100%)'
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               ) : null;
