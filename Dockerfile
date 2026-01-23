@@ -39,7 +39,8 @@ ENV REACT_APP_WASABI_REGION=$REACT_APP_WASABI_REGION
 ENV REACT_APP_MAILGUN_API_KEY=$REACT_APP_MAILGUN_API_KEY
 ENV REACT_APP_MAILGUN_DOMAIN=$REACT_APP_MAILGUN_DOMAIN
 
-# Build the app
+# Build the app with increased memory limit
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Production stage
