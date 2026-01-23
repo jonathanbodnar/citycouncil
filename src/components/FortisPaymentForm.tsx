@@ -58,11 +58,25 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
       if (txId) {
         verifyFortisTransaction(txId)
           .then((verify) => {
+            // Check if transaction was actually approved (101 = approved, 100 = pending/approved)
+            // Status codes 200+ typically mean declined/error
+            const isApproved = verify.statusCode && verify.statusCode < 200;
+            if (!isApproved) {
+              const msg = `Payment declined (code: ${verify.statusCode})`;
+              console.error('Payment declined:', verify);
+              setError(msg);
+              setIsProcessing(false);
+              successHandledRef.current = false; // Allow retry
+              onPaymentError(msg);
+              return;
+            }
             setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
           })
           .catch((e) => {
             const msg = (e as any)?.message || 'Verification failed';
             setError(msg);
+            setIsProcessing(false);
+            successHandledRef.current = false; // Allow retry
             onPaymentError(msg);
           });
       }
@@ -116,9 +130,25 @@ const FortisPaymentForm: React.FC<FortisPaymentFormProps> = ({
           const txId = payload?.transaction?.id || payload?.data?.id || payload?.id;
           if (!txId) throw new Error('Missing transaction id');
           const verify = await verifyFortisTransaction(txId);
+          
+          // Check if transaction was actually approved (101 = approved, 100 = pending/approved)
+          // Status codes 200+ typically mean declined/error
+          const isApproved = verify.statusCode && verify.statusCode < 200;
+          if (!isApproved) {
+            const msg = `Payment declined (code: ${verify.statusCode})`;
+            console.error('Payment declined:', verify);
+            setError(msg);
+            setIsProcessing(false);
+            successHandledRef.current = false; // Allow retry
+            onPaymentError(msg);
+            return;
+          }
+          
           setTimeout(() => onPaymentSuccess({ id: txId, statusCode: verify.statusCode, payload }), 0);
         } catch (e: any) {
           setError(e.message || 'Verification failed');
+          setIsProcessing(false);
+          successHandledRef.current = false; // Allow retry
           onPaymentError(e.message || 'Verification failed');
         }
       };

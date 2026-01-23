@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { 
@@ -52,6 +52,10 @@ const OrderPage: React.FC = () => {
   const [talent, setTalent] = useState<TalentWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Ref to prevent duplicate order creation from multiple payment events
+  const paymentProcessedRef = useRef(false);
+  const processingTransactionRef = useRef<string | null>(null);
   const [ordersRemaining, setOrdersRemaining] = useState<number>(10);
   const [christmasModeEnabled, setChristmasModeEnabled] = useState(false);
 
@@ -378,6 +382,28 @@ const OrderPage: React.FC = () => {
   const handlePaymentSuccess = async (paymentResult: any) => {
     logger.log('handlePaymentSuccess called with', paymentResult);
     if (!talent || !user) return;
+    
+    // Get transaction ID for duplicate checking
+    const transactionId = paymentResult?.id || paymentResult?.transaction_id;
+    
+    // CRITICAL: Prevent duplicate order creation from multiple payment events
+    // Check if we've already processed this payment or any payment for this session
+    if (paymentProcessedRef.current) {
+      logger.warn('⚠️ Payment already processed, ignoring duplicate event');
+      return;
+    }
+    
+    // Check if we're already processing this specific transaction
+    if (transactionId && processingTransactionRef.current === transactionId) {
+      logger.warn('⚠️ Already processing transaction:', transactionId);
+      return;
+    }
+    
+    // Mark as processing immediately to prevent race conditions
+    paymentProcessedRef.current = true;
+    if (transactionId) {
+      processingTransactionRef.current = transactionId;
+    }
 
     setSubmitting(true);
     try {
@@ -791,6 +817,9 @@ const OrderPage: React.FC = () => {
     } catch (error) {
       logger.error('Error processing order:', error);
       toast.error('Failed to process order. Please contact support.');
+      // Reset the flags so user can retry
+      paymentProcessedRef.current = false;
+      processingTransactionRef.current = null;
     } finally {
       setSubmitting(false);
     }
