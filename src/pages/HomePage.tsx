@@ -324,9 +324,17 @@ const HomePage: React.FC = () => {
   };
 
   const filteredTalent = talent.filter(t => {
-    const matchesSearch = !searchQuery || 
-      t.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.bio.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const displayName = t.temp_full_name || t.users?.full_name || '';
+    const username = t.username || '';
+    const bio = t.bio || '';
+    
+    const matchesSearch = 
+      displayName.toLowerCase().includes(query) ||
+      username.toLowerCase().includes(query) ||
+      bio.toLowerCase().includes(query);
     
     return matchesSearch;
   });
