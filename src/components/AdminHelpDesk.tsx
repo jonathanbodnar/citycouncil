@@ -215,8 +215,22 @@ const AdminHelpDesk: React.FC = () => {
       return;
     }
 
-    const updatedConversation = { ...selectedConversation, messages: data || [] };
+    const messages = data || [];
+    const newUnreadCount = messages.filter(m => !m.response && !m.is_resolved).length;
+    
+    const updatedConversation = { 
+      ...selectedConversation, 
+      messages,
+      unread_count: newUnreadCount
+    };
     setSelectedConversation(updatedConversation);
+    
+    // Sync unread count to conversations list
+    setConversations(prev => prev.map(c => 
+      c.user_id === selectedConversation.user_id 
+        ? { ...c, unread_count: newUnreadCount }
+        : c
+    ));
   };
 
   const sendResponse = async () => {
@@ -321,16 +335,28 @@ const AdminHelpDesk: React.FC = () => {
           } as any);
         }
         
+        const newUnreadCount = updatedMessages.filter(m => !m.response && !m.is_resolved).length;
+        
         setSelectedConversation({
           ...selectedConversation,
-          messages: updatedMessages
+          messages: updatedMessages,
+          unread_count: newUnreadCount
         });
+        
+        // Also update the conversations list unread count
+        setConversations(prev => prev.map(c => 
+          c.user_id === selectedConversation.user_id 
+            ? { ...c, unread_count: newUnreadCount }
+            : c
+        ));
+        
         shouldScrollRef.current = true;
       }
       
       // Silently refresh in background to sync with server
       setTimeout(() => {
         refreshSelectedConversation();
+        fetchConversations(false); // Also refresh conversations list
       }, 500);
 
     } catch (error) {
