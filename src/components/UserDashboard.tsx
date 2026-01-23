@@ -90,6 +90,8 @@ const UserDashboard: React.FC = () => {
   const [downloadOrderId, setDownloadOrderId] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [updatingPhone, setUpdatingPhone] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [updatingName, setUpdatingName] = useState(false);
   
   // Fill in details modal state
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -111,6 +113,7 @@ const UserDashboard: React.FC = () => {
     if (user) {
       fetchUserData();
       setPhoneNumber(user.phone || '');
+      setFullName(user.full_name || '');
     }
   }, [user]);
 
@@ -353,6 +356,41 @@ const UserDashboard: React.FC = () => {
       toast.error(error.message || 'Failed to update phone number');
     } finally {
       setUpdatingPhone(false);
+    }
+  };
+
+  const handleNameUpdate = async () => {
+    if (!fullName.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+
+    setUpdatingName(true);
+    try {
+      // Update in public.users table
+      const { error: userError } = await supabase
+        .from('users')
+        .update({ full_name: fullName.trim() })
+        .eq('id', user?.id);
+
+      if (userError) throw userError;
+
+      // Update in auth.users metadata
+      const { error: metaError } = await supabase.auth.updateUser({
+        data: { full_name: fullName.trim() }
+      });
+
+      if (metaError) throw metaError;
+
+      toast.success('Name updated successfully!');
+      
+      // Refresh user data
+      await updateProfile({});
+    } catch (error: any) {
+      console.error('Error updating name:', error);
+      toast.error(error.message || 'Failed to update name');
+    } finally {
+      setUpdatingName(false);
     }
   };
 
@@ -1110,12 +1148,22 @@ const UserDashboard: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
                 </label>
-                <input
-                  type="text"
-                  value={user?.full_name || ''}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  readOnly
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleNameUpdate}
+                    disabled={updatingName || fullName === user?.full_name}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {updatingName ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1127,45 +1175,35 @@ const UserDashboard: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
                   readOnly
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Contact support to change your email
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="Enter your phone number"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={handlePhoneUpdate}
-                    disabled={updatingPhone || phoneNumber === user?.phone}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {updatingPhone ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Used for SMS notifications about your orders
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Account Type
-                </label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <div className="flex gap-2 max-w-md">
                 <input
-                  type="text"
-                  value="Customer"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-                  readOnly
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Enter your phone number"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
+                <button
+                  onClick={handlePhoneUpdate}
+                  disabled={updatingPhone || phoneNumber === user?.phone}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {updatingPhone ? 'Saving...' : 'Save'}
+                </button>
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Used for SMS notifications about your orders
+              </p>
             </div>
 
             {/* Payment Methods - Temporarily disabled */}
