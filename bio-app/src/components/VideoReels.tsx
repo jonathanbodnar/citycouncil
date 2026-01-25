@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 // Demo video data - using vertical/portrait video samples for reel-style display
+// Using Pexels videos with reliable CDN URLs
 const DEMO_TALENT_VIDEOS = [
   {
     id: 'demo-1',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-waving-on-a-video-call-43390-large.mp4',
-    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-waving-on-a-video-call-43390-0.jpg',
+    url: 'https://videos.pexels.com/video-files/4536530/4536530-uhd_1440_2560_30fps.mp4',
+    thumbnail: 'https://images.pexels.com/videos/4536530/free-video-4536530.jpg?auto=compress&cs=tinysrgb&w=400',
     title: 'Behind the Scenes',
     views: 12400,
     likes: 892,
@@ -13,8 +14,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-2',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-woman-dancing-happily-in-a-room-4437-large.mp4',
-    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-woman-dancing-happily-in-a-room-4437-0.jpg',
+    url: 'https://videos.pexels.com/video-files/5529609/5529609-uhd_1440_2560_25fps.mp4',
+    thumbnail: 'https://images.pexels.com/videos/5529609/pexels-photo-5529609.jpeg?auto=compress&cs=tinysrgb&w=400',
     title: 'Quick Update',
     views: 8700,
     likes: 654,
@@ -22,8 +23,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-3',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-man-doing-a-vlog-on-the-street-4770-large.mp4',
-    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-man-doing-a-vlog-on-the-street-4770-0.jpg',
+    url: 'https://videos.pexels.com/video-files/4499289/4499289-uhd_1440_2560_30fps.mp4',
+    thumbnail: 'https://images.pexels.com/videos/4499289/free-video-4499289.jpg?auto=compress&cs=tinysrgb&w=400',
     title: 'Weekend Vibes',
     views: 15200,
     likes: 1243,
@@ -31,8 +32,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-4',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-woman-talking-on-video-call-with-laptop-4782-large.mp4',
-    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-woman-talking-on-video-call-with-laptop-4782-0.jpg',
+    url: 'https://videos.pexels.com/video-files/4057411/4057411-uhd_1440_2560_25fps.mp4',
+    thumbnail: 'https://images.pexels.com/videos/4057411/free-video-4057411.jpg?auto=compress&cs=tinysrgb&w=400',
     title: 'New Announcement',
     views: 21000,
     likes: 1876,
@@ -40,8 +41,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-5',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4',
-    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-0.jpg',
+    url: 'https://videos.pexels.com/video-files/5377252/5377252-uhd_1440_2560_25fps.mp4',
+    thumbnail: 'https://images.pexels.com/videos/5377252/pexels-photo-5377252.jpeg?auto=compress&cs=tinysrgb&w=400',
     title: 'Story Time',
     views: 9300,
     likes: 721,
@@ -50,24 +51,25 @@ const DEMO_TALENT_VIDEOS = [
 ];
 
 // Demo reply videos - vertical format for reel-style display
+// Using Pexels videos with reliable CDN URLs
 const DEMO_REPLIES: Record<string, Reply[]> = {
   'demo-1': [
-    { id: 'reply-1-1', userId: 'user-1', username: 'Sarah M.', avatarUrl: 'https://i.pravatar.cc/150?img=1', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-in-a-pool-1259-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-in-a-pool-1259-0.jpg', upvotes: 45, hasUpvoted: false },
-    { id: 'reply-1-2', userId: 'user-2', username: 'Mike T.', avatarUrl: 'https://i.pravatar.cc/150?img=2', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-man-under-multicolored-lights-1237-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-man-under-multicolored-lights-1237-0.jpg', upvotes: 32, hasUpvoted: false },
-    { id: 'reply-1-3', userId: 'user-3', username: 'Emma L.', avatarUrl: 'https://i.pravatar.cc/150?img=3', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-a-woman-and-a-man-in-front-of-a-graffiti-wall-4820-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-a-woman-and-a-man-in-front-of-a-graffiti-wall-4820-0.jpg', upvotes: 28, hasUpvoted: false },
+    { id: 'reply-1-1', userId: 'user-1', username: 'Sarah M.', avatarUrl: 'https://i.pravatar.cc/150?img=1', videoUrl: 'https://videos.pexels.com/video-files/6010489/6010489-uhd_1440_2560_25fps.mp4', thumbnail: 'https://images.pexels.com/videos/6010489/pexels-photo-6010489.jpeg?auto=compress&cs=tinysrgb&w=400', upvotes: 45, hasUpvoted: false },
+    { id: 'reply-1-2', userId: 'user-2', username: 'Mike T.', avatarUrl: 'https://i.pravatar.cc/150?img=2', videoUrl: 'https://videos.pexels.com/video-files/4443002/4443002-uhd_1440_2560_24fps.mp4', thumbnail: 'https://images.pexels.com/videos/4443002/free-video-4443002.jpg?auto=compress&cs=tinysrgb&w=400', upvotes: 32, hasUpvoted: false },
+    { id: 'reply-1-3', userId: 'user-3', username: 'Emma L.', avatarUrl: 'https://i.pravatar.cc/150?img=3', videoUrl: 'https://videos.pexels.com/video-files/5377684/5377684-uhd_1440_2560_25fps.mp4', thumbnail: 'https://images.pexels.com/videos/5377684/pexels-photo-5377684.jpeg?auto=compress&cs=tinysrgb&w=400', upvotes: 28, hasUpvoted: false },
   ],
   'demo-2': [
-    { id: 'reply-2-1', userId: 'user-4', username: 'Alex K.', avatarUrl: 'https://i.pravatar.cc/150?img=4', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-excited-young-people-at-new-years-party-4640-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-excited-young-people-at-new-years-party-4640-0.jpg', upvotes: 67, hasUpvoted: false },
-    { id: 'reply-2-2', userId: 'user-5', username: 'Jordan P.', avatarUrl: 'https://i.pravatar.cc/150?img=5', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-curly-haired-woman-moving-her-head-to-the-741-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-curly-haired-woman-moving-her-head-to-the-741-0.jpg', upvotes: 41, hasUpvoted: false },
+    { id: 'reply-2-1', userId: 'user-4', username: 'Alex K.', avatarUrl: 'https://i.pravatar.cc/150?img=4', videoUrl: 'https://videos.pexels.com/video-files/4536429/4536429-uhd_1440_2560_30fps.mp4', thumbnail: 'https://images.pexels.com/videos/4536429/free-video-4536429.jpg?auto=compress&cs=tinysrgb&w=400', upvotes: 67, hasUpvoted: false },
+    { id: 'reply-2-2', userId: 'user-5', username: 'Jordan P.', avatarUrl: 'https://i.pravatar.cc/150?img=5', videoUrl: 'https://videos.pexels.com/video-files/5496838/5496838-uhd_1440_2560_30fps.mp4', thumbnail: 'https://images.pexels.com/videos/5496838/pexels-photo-5496838.jpeg?auto=compress&cs=tinysrgb&w=400', upvotes: 41, hasUpvoted: false },
   ],
   'demo-3': [
-    { id: 'reply-3-1', userId: 'user-6', username: 'Chris B.', avatarUrl: 'https://i.pravatar.cc/150?img=6', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-taking-a-selfie-in-a-pool-1227-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-taking-a-selfie-in-a-pool-1227-0.jpg', upvotes: 89, hasUpvoted: false },
-    { id: 'reply-3-2', userId: 'user-7', username: 'Taylor R.', avatarUrl: 'https://i.pravatar.cc/150?img=7', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-womans-feet-702-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-womans-feet-702-0.jpg', upvotes: 56, hasUpvoted: false },
-    { id: 'reply-3-3', userId: 'user-8', username: 'Morgan F.', avatarUrl: 'https://i.pravatar.cc/150?img=8', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-studio-with-a-red-background-40203-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-studio-with-a-red-background-40203-0.jpg', upvotes: 34, hasUpvoted: false },
-    { id: 'reply-3-4', userId: 'user-9', username: 'Riley S.', avatarUrl: 'https://i.pravatar.cc/150?img=9', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-to-the-camera-in-the-street-4585-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-to-the-camera-in-the-street-4585-0.jpg', upvotes: 23, hasUpvoted: false },
+    { id: 'reply-3-1', userId: 'user-6', username: 'Chris B.', avatarUrl: 'https://i.pravatar.cc/150?img=6', videoUrl: 'https://videos.pexels.com/video-files/4057359/4057359-uhd_1440_2560_25fps.mp4', thumbnail: 'https://images.pexels.com/videos/4057359/free-video-4057359.jpg?auto=compress&cs=tinysrgb&w=400', upvotes: 89, hasUpvoted: false },
+    { id: 'reply-3-2', userId: 'user-7', username: 'Taylor R.', avatarUrl: 'https://i.pravatar.cc/150?img=7', videoUrl: 'https://videos.pexels.com/video-files/4536418/4536418-uhd_1440_2560_30fps.mp4', thumbnail: 'https://images.pexels.com/videos/4536418/free-video-4536418.jpg?auto=compress&cs=tinysrgb&w=400', upvotes: 56, hasUpvoted: false },
+    { id: 'reply-3-3', userId: 'user-8', username: 'Morgan F.', avatarUrl: 'https://i.pravatar.cc/150?img=8', videoUrl: 'https://videos.pexels.com/video-files/4499631/4499631-uhd_1440_2560_30fps.mp4', thumbnail: 'https://images.pexels.com/videos/4499631/free-video-4499631.jpg?auto=compress&cs=tinysrgb&w=400', upvotes: 34, hasUpvoted: false },
+    { id: 'reply-3-4', userId: 'user-9', username: 'Riley S.', avatarUrl: 'https://i.pravatar.cc/150?img=9', videoUrl: 'https://videos.pexels.com/video-files/5377549/5377549-uhd_1440_2560_25fps.mp4', thumbnail: 'https://images.pexels.com/videos/5377549/pexels-photo-5377549.jpeg?auto=compress&cs=tinysrgb&w=400', upvotes: 23, hasUpvoted: false },
   ],
   'demo-4': [
-    { id: 'reply-4-1', userId: 'user-10', username: 'Jamie W.', avatarUrl: 'https://i.pravatar.cc/150?img=10', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-woman-doing-mountain-climber-exercise-726-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-woman-doing-mountain-climber-exercise-726-0.jpg', upvotes: 112, hasUpvoted: false },
+    { id: 'reply-4-1', userId: 'user-10', username: 'Jamie W.', avatarUrl: 'https://i.pravatar.cc/150?img=10', videoUrl: 'https://videos.pexels.com/video-files/4536391/4536391-uhd_1440_2560_30fps.mp4', thumbnail: 'https://images.pexels.com/videos/4536391/free-video-4536391.jpg?auto=compress&cs=tinysrgb&w=400', upvotes: 112, hasUpvoted: false },
   ],
   'demo-5': [],
 };
