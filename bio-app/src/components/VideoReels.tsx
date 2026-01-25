@@ -109,11 +109,15 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
+  const [showUpvoteAnimation, setShowUpvoteAnimation] = useState<string | null>(null);
   
   const carouselRef = useRef<HTMLDivElement>(null);
   const mainVideoRef = useRef<HTMLVideoElement>(null);
   const replyVideoRef = useRef<HTMLVideoElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTapTime = useRef(0);
   
   // Touch tracking
   const touchStartX = useRef(0);
@@ -304,7 +308,7 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
     }
   };
 
-  // Handle upvote
+  // Handle upvote for replies
   const handleUpvote = (videoId: string, replyId: string) => {
     setReplies(prev => ({
       ...prev,
@@ -314,6 +318,43 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
           : reply
       ).sort((a, b) => b.upvotes - a.upvotes) || []
     }));
+    // Show upvote animation
+    setShowUpvoteAnimation(replyId);
+    setTimeout(() => setShowUpvoteAnimation(null), 800);
+  };
+
+  // Toggle favorite for talent videos
+  const toggleFavorite = (videoId: string) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(videoId)) {
+        newFavorites.delete(videoId);
+      } else {
+        newFavorites.add(videoId);
+        // Show heart animation
+        setShowHeartAnimation(true);
+        setTimeout(() => setShowHeartAnimation(false), 800);
+      }
+      return newFavorites;
+    });
+  };
+
+  // Handle double tap on main video (favorite)
+  const handleMainVideoDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapTime.current < 300) {
+      toggleFavorite(currentVideo?.id || '');
+    }
+    lastTapTime.current = now;
+  };
+
+  // Handle double tap on reply video (upvote)
+  const handleReplyDoubleTap = (videoId: string, replyId: string) => {
+    const now = Date.now();
+    if (now - lastTapTime.current < 300) {
+      handleUpvote(videoId, replyId);
+    }
+    lastTapTime.current = now;
   };
 
   // Start recording
@@ -506,13 +547,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             ))}
           </div>
 
-          {/* Video counter */}
-          <div className="absolute top-20 left-4 z-50 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1">
-            <span className="text-white text-sm">
-              {fullScreenVideoIndex + 1} / {videos.length}
-            </span>
-          </div>
-
           {/* Horizontal slide container */}
           <div 
             className="relative h-full transition-transform duration-400 ease-out flex"
@@ -541,16 +575,21 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
                       (e.target as HTMLVideoElement).play();
                     }
                   }}
-                  onClick={() => {
-                    if (mainVideoRef.current) {
-                      if (mainVideoRef.current.paused) {
-                        mainVideoRef.current.play();
-                      } else {
-                        mainVideoRef.current.pause();
-                      }
-                    }
-                  }}
+                  onClick={handleMainVideoDoubleTap}
                 />
+
+                {/* Double-tap heart animation */}
+                {showHeartAnimation && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <svg 
+                      className="w-24 h-24 text-red-500 animate-ping" 
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                  </div>
+                )}
                 
                 {/* Video Info Overlay */}
                 <div className="absolute bottom-8 left-4 right-16">
@@ -560,11 +599,19 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
 
                 {/* Side actions */}
                 <div className="absolute right-4 bottom-8 flex flex-col gap-4">
-                  {/* Upvote button */}
-                  <button className="flex flex-col items-center gap-1">
+                  {/* Favorite/Heart button */}
+                  <button 
+                    className="flex flex-col items-center gap-1"
+                    onClick={() => toggleFavorite(currentVideo?.id || '')}
+                  >
                     <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      <svg 
+                        className={`w-6 h-6 transition-colors ${favorites.has(currentVideo?.id || '') ? 'text-red-500' : 'text-white'}`}
+                        fill={favorites.has(currentVideo?.id || '') ? 'currentColor' : 'none'} 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                     </div>
                     <span className="text-white text-xs">{formatViews(currentVideo?.likes || 0)}</span>
@@ -629,7 +676,22 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
                         (e.target as HTMLVideoElement).play();
                       }
                     }}
+                    onClick={() => handleReplyDoubleTap(currentVideo.id, reply.id)}
                   />
+
+                  {/* Double-tap upvote animation */}
+                  {showUpvoteAnimation === reply.id && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <svg 
+                        className="w-24 h-24 animate-ping" 
+                        style={{ color: buttonColor }}
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M5 15l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} stroke="currentColor" fill="none" />
+                      </svg>
+                    </div>
+                  )}
                   
                   {/* Reply user info */}
                   <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5">
@@ -644,30 +706,28 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
                     <span className="text-white/40 text-xs">replied</span>
                   </div>
 
-                  {/* Upvote button */}
-                  <div className="absolute right-4 bottom-8 flex flex-col gap-4">
-                    <button 
-                      className="flex flex-col items-center gap-1"
-                      onClick={() => handleUpvote(currentVideo.id, reply.id)}
+                  {/* Upvote count indicator */}
+                  <div className="absolute right-4 bottom-8">
+                    <div 
+                      className={`flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-sm transition-colors ${reply.hasUpvoted ? 'bg-white/20' : 'bg-black/40'}`}
                     >
-                      <div 
-                        className="w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors"
-                        style={{ 
-                          backgroundColor: reply.hasUpvoted ? buttonColor : 'rgba(255,255,255,0.1)',
-                        }}
+                      <svg 
+                        className="w-5 h-5" 
+                        style={{ color: reply.hasUpvoted ? buttonColor : 'white' }}
+                        fill={reply.hasUpvoted ? 'currentColor' : 'none'} 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
                       >
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      </div>
-                      <span className="text-white text-xs">{reply.upvotes}</span>
-                    </button>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                      <span className="text-white text-sm font-medium">{reply.upvotes}</span>
+                    </div>
                   </div>
 
-                  {/* Navigation hint */}
+                  {/* Double tap hint */}
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
                     <span className="text-white/60 text-xs">
-                      Reply {index + 1} of {currentReplies.length}
+                      Double tap to upvote
                     </span>
                   </div>
                 </div>
