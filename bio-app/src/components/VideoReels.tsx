@@ -536,9 +536,9 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, talentAvatarUrl, bu
               </button>
               {/* ShoutOut Logo */}
               <img
-                src={`${process.env.PUBLIC_URL}/shoutoutwhite.png`}
+                src={`${process.env.PUBLIC_URL}/whiteicon.png`}
                 alt="ShoutOut"
-                className="h-5 w-auto"
+                className="h-6 w-auto"
               />
             </div>
             
