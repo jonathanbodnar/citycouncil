@@ -100,22 +100,49 @@ interface VideoReelsProps {
 
 const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b82f6' }) => {
   const [videos] = useState<TalentVideo[]>(DEMO_TALENT_VIDEOS);
-  const [activeIndex, setActiveIndex] = useState(2); // Start in the middle
+  const [activeIndex, setActiveIndex] = useState(2); // Start in the middle for carousel
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [fullScreenVideoIndex, setFullScreenVideoIndex] = useState(0);
   const [replies, setReplies] = useState<Record<string, Reply[]>>(DEMO_REPLIES);
-  const [activeReplyIndex, setActiveReplyIndex] = useState(0);
-  const [isPlayingReply, setIsPlayingReply] = useState(false);
+  const [horizontalIndex, setHorizontalIndex] = useState(0); // 0 = main video, 1+ = replies, last = add reply
   const [showCameraUI, setShowCameraUI] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   const carouselRef = useRef<HTMLDivElement>(null);
-  const fullScreenRef = useRef<HTMLDivElement>(null);
-  const replyCarouselRef = useRef<HTMLDivElement>(null);
   const mainVideoRef = useRef<HTMLVideoElement>(null);
   const replyVideoRef = useRef<HTMLVideoElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Touch tracking
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchStartTime = useRef(0);
+
+  // Lock body scroll when fullscreen is open
+  useEffect(() => {
+    if (isFullScreen || showCameraUI) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    };
+  }, [isFullScreen, showCameraUI]);
 
   // Handle carousel scroll
   const handleCarouselScroll = useCallback(() => {
@@ -124,10 +151,9 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
     const container = carouselRef.current;
     const containerWidth = container.offsetWidth;
     const scrollLeft = container.scrollLeft;
-    const itemWidth = 140; // Width of each video item
+    const itemWidth = 140;
     const gap = 12;
     
-    // Calculate which item is closest to center
     const centerOffset = scrollLeft + containerWidth / 2;
     const newIndex = Math.round((centerOffset - containerWidth / 2) / (itemWidth + gap));
     
@@ -155,72 +181,121 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle full-screen vertical scroll
-  const handleFullScreenScroll = useCallback((e: React.WheelEvent | React.TouchEvent) => {
-    if (isPlayingReply) return;
-    
-    let deltaY = 0;
-    if ('deltaY' in e) {
-      deltaY = e.deltaY;
-    }
-    
-    if (deltaY > 50 && fullScreenVideoIndex < videos.length - 1) {
-      setFullScreenVideoIndex(prev => prev + 1);
-      setActiveReplyIndex(0);
-    } else if (deltaY < -50 && fullScreenVideoIndex > 0) {
-      setFullScreenVideoIndex(prev => prev - 1);
-      setActiveReplyIndex(0);
-    }
-  }, [fullScreenVideoIndex, videos.length, isPlayingReply]);
+  // Get current video and replies
+  const currentVideo = videos[fullScreenVideoIndex];
+  const currentReplies = replies[currentVideo?.id] || [];
+  const totalHorizontalSlides = currentReplies.length + 2; // main video + replies + add reply button
 
-  // Touch handling for mobile
-  const touchStartY = useRef(0);
+  // Navigate vertically (between talent videos)
+  const navigateVertical = useCallback((direction: 'up' | 'down') => {
+    if (isAnimating) return;
+    
+    setIsAnimating(true);
+    
+    if (direction === 'down' && fullScreenVideoIndex < videos.length - 1) {
+      setFullScreenVideoIndex(prev => prev + 1);
+      setHorizontalIndex(0); // Reset to main video
+    } else if (direction === 'up' && fullScreenVideoIndex > 0) {
+      setFullScreenVideoIndex(prev => prev - 1);
+      setHorizontalIndex(0); // Reset to main video
+    }
+    
+    setTimeout(() => setIsAnimating(false), 400);
+  }, [fullScreenVideoIndex, videos.length, isAnimating]);
+
+  // Navigate horizontally (between main video and replies)
+  const navigateHorizontal = useCallback((direction: 'left' | 'right') => {
+    if (isAnimating) return;
+    
+    const currentRepliesCount = (replies[videos[fullScreenVideoIndex]?.id] || []).length;
+    const maxIndex = currentRepliesCount + 1; // replies + add reply button
+    
+    setIsAnimating(true);
+    
+    if (direction === 'right' && horizontalIndex < maxIndex) {
+      const newIndex = horizontalIndex + 1;
+      setHorizontalIndex(newIndex);
+      // If navigating to add reply button (last position)
+      if (newIndex === maxIndex) {
+        setTimeout(() => setShowCameraUI(true), 300);
+      }
+    } else if (direction === 'left' && horizontalIndex > 0) {
+      setHorizontalIndex(prev => prev - 1);
+    }
+    
+    setTimeout(() => setIsAnimating(false), 400);
+  }, [horizontalIndex, fullScreenVideoIndex, videos, replies, isAnimating]);
+
+  // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
   };
-  
+
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (isPlayingReply) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const deltaTime = Date.now() - touchStartTime.current;
     
-    const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-    if (deltaY > 50 && fullScreenVideoIndex < videos.length - 1) {
-      setFullScreenVideoIndex(prev => prev + 1);
-      setActiveReplyIndex(0);
-    } else if (deltaY < -50 && fullScreenVideoIndex > 0) {
-      setFullScreenVideoIndex(prev => prev - 1);
-      setActiveReplyIndex(0);
+    // Require minimum swipe distance and speed
+    const minSwipeDistance = 50;
+    const maxSwipeTime = 300;
+    
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    
+    // Determine if swipe is primarily horizontal or vertical
+    if (absX > absY && absX > minSwipeDistance && deltaTime < maxSwipeTime) {
+      // Horizontal swipe
+      if (deltaX > 0) {
+        navigateHorizontal('left'); // Swipe right = go left
+      } else {
+        navigateHorizontal('right'); // Swipe left = go right
+      }
+    } else if (absY > absX && absY > minSwipeDistance && deltaTime < maxSwipeTime) {
+      // Vertical swipe
+      if (deltaY > 0) {
+        navigateVertical('up'); // Swipe down = go up
+      } else {
+        navigateVertical('down'); // Swipe up = go down
+      }
     }
   };
 
-  // Handle reply carousel scroll
-  const handleReplyScroll = useCallback(() => {
-    if (!replyCarouselRef.current) return;
+  // Wheel handler for desktop
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
     
-    const container = replyCarouselRef.current;
-    const scrollLeft = container.scrollLeft;
-    const itemWidth = 80;
-    const gap = 8;
+    const absX = Math.abs(e.deltaX);
+    const absY = Math.abs(e.deltaY);
     
-    const newIndex = Math.round(scrollLeft / (itemWidth + gap));
-    const currentReplies = replies[videos[fullScreenVideoIndex]?.id] || [];
-    
-    if (newIndex !== activeReplyIndex && newIndex >= 0 && newIndex <= currentReplies.length) {
-      setActiveReplyIndex(newIndex);
+    if (absY > absX && absY > 30) {
+      if (e.deltaY > 0) {
+        navigateVertical('down');
+      } else {
+        navigateVertical('up');
+      }
+    } else if (absX > absY && absX > 30) {
+      if (e.deltaX > 0) {
+        navigateHorizontal('right');
+      } else {
+        navigateHorizontal('left');
+      }
     }
-  }, [activeReplyIndex, replies, videos, fullScreenVideoIndex]);
+  }, [navigateVertical, navigateHorizontal]);
 
   // Open video in full screen mode
   const openFullScreen = (index: number) => {
     setFullScreenVideoIndex(index);
     setIsFullScreen(true);
-    setActiveReplyIndex(0);
-    setIsPlayingReply(false);
+    setHorizontalIndex(0);
   };
 
   // Close full screen
   const closeFullScreen = () => {
     setIsFullScreen(false);
-    setIsPlayingReply(false);
+    setHorizontalIndex(0);
     if (mainVideoRef.current) {
       mainVideoRef.current.pause();
     }
@@ -241,31 +316,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
     }));
   };
 
-  // Play reply video
-  const playReply = (replyIndex: number) => {
-    setActiveReplyIndex(replyIndex);
-    setIsPlayingReply(true);
-    if (mainVideoRef.current) {
-      mainVideoRef.current.pause();
-    }
-  };
-
-  // Back to main video from reply
-  const backToMainVideo = () => {
-    setIsPlayingReply(false);
-    if (replyVideoRef.current) {
-      replyVideoRef.current.pause();
-    }
-    if (mainVideoRef.current) {
-      mainVideoRef.current.play();
-    }
-  };
-
-  // Open camera UI
-  const openCamera = () => {
-    setShowCameraUI(true);
-  };
-
   // Start recording
   const startRecording = () => {
     setIsRecording(true);
@@ -281,7 +331,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
     }
-    // In a real app, this would save the video
     setShowCameraUI(false);
     setRecordingTime(0);
   };
@@ -322,9 +371,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
     return videos.length - Math.abs(index - activeIndex);
   };
 
-  const currentVideo = videos[fullScreenVideoIndex];
-  const currentReplies = replies[currentVideo?.id] || [];
-
   if (videos.length === 0) return null;
 
   return (
@@ -351,7 +397,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
           }}
           onScroll={handleCarouselScroll}
         >
-          {/* Spacer for centering */}
           <div className="flex-shrink-0" style={{ width: 'calc(50% - 70px)' }} />
           
           {videos.map((video, index) => (
@@ -365,7 +410,7 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
                 opacity: getOpacity(index),
                 transform: `scale(${getScale(index)})`,
                 zIndex: getZIndex(index),
-                marginLeft: index === 0 ? 0 : '-20px', // Overlap effect
+                marginLeft: index === 0 ? 0 : '-20px',
               }}
               onClick={() => {
                 if (index === activeIndex) {
@@ -382,7 +427,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
                   alt={video.title}
                   className="w-full h-full object-cover"
                 />
-                {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                   <div 
                     className="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm"
@@ -393,7 +437,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
                     </svg>
                   </div>
                 </div>
-                {/* Video info */}
                 {index === activeIndex && (
                   <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
                     <p className="text-white text-xs font-medium truncate">{video.title}</p>
@@ -404,7 +447,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             </div>
           ))}
           
-          {/* Spacer for centering */}
           <div className="flex-shrink-0" style={{ width: 'calc(50% - 70px)' }} />
         </div>
         
@@ -432,8 +474,11 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
       {/* Full Screen Video View */}
       {isFullScreen && (
         <div 
-          className="fixed inset-0 z-50 bg-black"
-          style={{ paddingTop: '60px' }} // Account for header
+          className="fixed inset-0 z-50 bg-black overflow-hidden touch-none"
+          style={{ paddingTop: '60px' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onWheel={handleWheel}
         >
           {/* Close button */}
           <button
@@ -445,216 +490,215 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             </svg>
           </button>
 
-          {/* Video container */}
-          <div
-            ref={fullScreenRef}
-            className="relative w-full h-full overflow-hidden"
-            onWheel={handleFullScreenScroll}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            {/* Main Video */}
-            <div 
-              className="absolute inset-0 transition-transform duration-500 ease-out"
-              style={{
-                transform: isPlayingReply ? 'scale(0.85) translateY(-10%)' : 'scale(1)',
-                opacity: isPlayingReply ? 0.3 : 1,
-              }}
-            >
-              <video
-                ref={mainVideoRef}
-                src={currentVideo?.url}
-                className="w-full h-full object-cover rounded-3xl"
-                autoPlay
-                loop
-                playsInline
-                muted={isPlayingReply}
-                onClick={() => {
-                  if (mainVideoRef.current) {
-                    if (mainVideoRef.current.paused) {
-                      mainVideoRef.current.play();
-                    } else {
-                      mainVideoRef.current.pause();
-                    }
-                  }
+          {/* Horizontal position indicator */}
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+            {Array.from({ length: totalHorizontalSlides }).map((_, i) => (
+              <div
+                key={i}
+                className="transition-all duration-300"
+                style={{
+                  width: i === horizontalIndex ? '20px' : '6px',
+                  height: '6px',
+                  borderRadius: '3px',
+                  backgroundColor: i === horizontalIndex ? buttonColor : 'rgba(255,255,255,0.3)',
                 }}
               />
-              
-              {/* Video Info Overlay */}
-              <div className="absolute bottom-32 left-4 right-4">
-                <h3 className="text-white text-xl font-bold mb-1">{currentVideo?.title}</h3>
-                <p className="text-white/60 text-sm">{formatViews(currentVideo?.views || 0)} views</p>
-              </div>
+            ))}
+          </div>
 
-              {/* Side actions */}
-              <div className="absolute right-4 bottom-40 flex flex-col gap-4">
-                <button className="flex flex-col items-center gap-1">
-                  <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          {/* Video counter */}
+          <div className="absolute top-20 left-4 z-50 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1">
+            <span className="text-white text-sm">
+              {fullScreenVideoIndex + 1} / {videos.length}
+            </span>
+          </div>
+
+          {/* Horizontal slide container */}
+          <div 
+            className="relative w-full h-full transition-transform duration-400 ease-out"
+            style={{
+              transform: `translateX(-${horizontalIndex * 100}%)`,
+            }}
+          >
+            {/* Main Talent Video (position 0) */}
+            <div 
+              className="absolute inset-0 flex items-center justify-center p-4"
+              style={{ left: '0%' }}
+            >
+              <div className="relative w-full h-full max-w-md mx-auto">
+                <video
+                  ref={mainVideoRef}
+                  src={currentVideo?.url}
+                  className="w-full h-full object-cover rounded-3xl"
+                  autoPlay={horizontalIndex === 0}
+                  loop
+                  playsInline
+                  muted={horizontalIndex !== 0}
+                  onClick={() => {
+                    if (mainVideoRef.current) {
+                      if (mainVideoRef.current.paused) {
+                        mainVideoRef.current.play();
+                      } else {
+                        mainVideoRef.current.pause();
+                      }
+                    }
+                  }}
+                />
+                
+                {/* Video Info Overlay */}
+                <div className="absolute bottom-8 left-4 right-16">
+                  <h3 className="text-white text-xl font-bold mb-1">{currentVideo?.title}</h3>
+                  <p className="text-white/60 text-sm">{formatViews(currentVideo?.views || 0)} views</p>
+                </div>
+
+                {/* Side actions */}
+                <div className="absolute right-4 bottom-8 flex flex-col gap-4">
+                  <button className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
+                    </div>
+                    <span className="text-white text-xs">{formatViews(currentVideo?.likes || 0)}</span>
+                  </button>
+                  <button 
+                    className="flex flex-col items-center gap-1"
+                    onClick={() => navigateHorizontal('right')}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <span className="text-white text-xs">{currentReplies.length}</span>
+                  </button>
+                  <button className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                    </div>
+                    <span className="text-white text-xs">Share</span>
+                  </button>
+                </div>
+
+                {/* Swipe hints */}
+                {currentReplies.length > 0 && horizontalIndex === 0 && (
+                  <div className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center gap-1 bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 animate-pulse">
+                    <span className="text-white/60 text-xs">Replies</span>
+                    <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <span className="text-white text-xs">{formatViews(currentVideo?.likes || 0)}</span>
-                </button>
-                <button className="flex flex-col items-center gap-1">
-                  <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                )}
+              </div>
+            </div>
+
+            {/* Reply Videos */}
+            {currentReplies.map((reply, index) => (
+              <div 
+                key={reply.id}
+                className="absolute inset-0 flex items-center justify-center p-4"
+                style={{ left: `${(index + 1) * 100}%` }}
+              >
+                <div className="relative w-full h-full max-w-md mx-auto">
+                  <video
+                    ref={index === horizontalIndex - 1 ? replyVideoRef : undefined}
+                    src={reply.videoUrl}
+                    className="w-full h-full object-cover rounded-3xl"
+                    autoPlay={horizontalIndex === index + 1}
+                    loop
+                    playsInline
+                    muted={horizontalIndex !== index + 1}
+                  />
+                  
+                  {/* Reply user info */}
+                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5">
+                    <img 
+                      src={reply.avatarUrl} 
+                      alt="" 
+                      className="w-6 h-6 rounded-full"
+                    />
+                    <span className="text-white text-sm font-medium">
+                      {reply.username}
+                    </span>
+                    <span className="text-white/40 text-xs">replied</span>
+                  </div>
+
+                  {/* Upvote button */}
+                  <div className="absolute right-4 bottom-8 flex flex-col gap-4">
+                    <button 
+                      className="flex flex-col items-center gap-1"
+                      onClick={() => handleUpvote(currentVideo.id, reply.id)}
+                    >
+                      <div 
+                        className="w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors"
+                        style={{ 
+                          backgroundColor: reply.hasUpvoted ? buttonColor : 'rgba(255,255,255,0.1)',
+                        }}
+                      >
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      </div>
+                      <span className="text-white text-xs">{reply.upvotes}</span>
+                    </button>
+                  </div>
+
+                  {/* Navigation hint */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
+                    <span className="text-white/60 text-xs">
+                      Reply {index + 1} of {currentReplies.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Add Reply Slide */}
+            <div 
+              className="absolute inset-0 flex items-center justify-center p-4"
+              style={{ left: `${(currentReplies.length + 1) * 100}%` }}
+            >
+              <div className="relative w-full h-full max-w-md mx-auto flex items-center justify-center">
+                <div 
+                  className="w-64 h-80 rounded-3xl flex flex-col items-center justify-center gap-4 border-2 border-dashed border-white/30"
+                  style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}
+                  onClick={() => setShowCameraUI(true)}
+                >
+                  <div 
+                    className="w-20 h-20 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: buttonColor }}
+                  >
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <span className="text-white text-xs">Share</span>
-                </button>
+                  <div className="text-center">
+                    <p className="text-white font-medium">Record a Reply</p>
+                    <p className="text-white/60 text-sm mt-1">Share your thoughts with {talentName}</p>
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
 
-              {/* Scroll indicator */}
-              <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce">
+          {/* Vertical scroll indicator */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-50">
+            {fullScreenVideoIndex < videos.length - 1 && (
+              <div className="animate-bounce">
                 <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
-                <span className="text-white/40 text-xs">Scroll for more</span>
-              </div>
-            </div>
-
-            {/* Reply Video (when playing) */}
-            {isPlayingReply && currentReplies[activeReplyIndex] && (
-              <div 
-                className="absolute inset-x-4 top-4 bottom-32 z-10"
-                onClick={backToMainVideo}
-              >
-                <video
-                  ref={replyVideoRef}
-                  src={currentReplies[activeReplyIndex].videoUrl}
-                  className="w-full h-full object-cover rounded-3xl"
-                  autoPlay
-                  loop
-                  playsInline
-                />
-                {/* Reply user info */}
-                <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5">
-                  <img 
-                    src={currentReplies[activeReplyIndex].avatarUrl} 
-                    alt="" 
-                    className="w-6 h-6 rounded-full"
-                  />
-                  <span className="text-white text-sm font-medium">
-                    {currentReplies[activeReplyIndex].username}
-                  </span>
-                </div>
-                {/* Back hint */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
-                  <span className="text-white/80 text-sm">Tap to go back</span>
-                </div>
               </div>
             )}
-
-            {/* Reply Carousel Overlay */}
-            <div 
-              className="absolute bottom-0 left-0 right-0 h-28 z-20"
-              style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)' }}
-            >
-              <div className="px-4 pt-2 pb-1">
-                <span className="text-white/60 text-xs font-medium">
-                  {currentReplies.length} Replies
-                </span>
-              </div>
-              <div
-                ref={replyCarouselRef}
-                className="flex gap-2 overflow-x-auto scrollbar-hide px-4 pb-4"
-                style={{ scrollSnapType: 'x mandatory' }}
-                onScroll={handleReplyScroll}
-              >
-                {currentReplies.map((reply, index) => (
-                  <div
-                    key={reply.id}
-                    className="flex-shrink-0 cursor-pointer transition-all duration-300"
-                    style={{
-                      width: index === activeReplyIndex ? '90px' : '80px',
-                      height: index === activeReplyIndex ? '90px' : '80px',
-                      scrollSnapAlign: 'center',
-                    }}
-                    onClick={() => playReply(index)}
-                  >
-                    <div className="relative w-full h-full rounded-xl overflow-hidden border-2 transition-all duration-300"
-                      style={{ 
-                        borderColor: index === activeReplyIndex ? buttonColor : 'rgba(255,255,255,0.2)',
-                      }}
-                    >
-                      <img
-                        src={reply.thumbnail}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                      {/* User avatar */}
-                      <div className="absolute bottom-1 left-1">
-                        <img 
-                          src={reply.avatarUrl} 
-                          alt="" 
-                          className="w-5 h-5 rounded-full border border-white"
-                        />
-                      </div>
-                      {/* Upvote count */}
-                      <button 
-                        className="absolute top-1 right-1 flex items-center gap-0.5 bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpvote(currentVideo.id, reply.id);
-                        }}
-                      >
-                        <svg 
-                          className="w-3 h-3" 
-                          fill={reply.hasUpvoted ? buttonColor : 'none'} 
-                          stroke={reply.hasUpvoted ? buttonColor : 'white'} 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                        <span className="text-white text-[10px]">{reply.upvotes}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Reply Button */}
-                <div
-                  className="flex-shrink-0 cursor-pointer"
-                  style={{ width: '80px', height: '80px' }}
-                  onClick={openCamera}
-                >
-                  <div 
-                    className="w-full h-full rounded-xl flex flex-col items-center justify-center gap-1 border border-white/20"
-                    style={{ 
-                      background: 'rgba(255,255,255,0.1)',
-                      backdropFilter: 'blur(10px)',
-                    }}
-                  >
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: buttonColor }}
-                    >
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                      </svg>
-                    </div>
-                    <span className="text-white/80 text-[10px] font-medium">Reply</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Video counter */}
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1">
-              <span className="text-white text-sm">
-                {fullScreenVideoIndex + 1} / {videos.length}
-              </span>
-            </div>
           </div>
         </div>
       )}
 
       {/* Camera UI */}
       {showCameraUI && (
-        <div className="fixed inset-0 z-[60] bg-black">
-          {/* Camera preview (simulated) */}
+        <div className="fixed inset-0 z-[60] bg-black touch-none">
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
             <div className="text-center">
               <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mb-4 mx-auto">
@@ -667,7 +711,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             </div>
           </div>
 
-          {/* Close button */}
           <button
             onClick={() => {
               setShowCameraUI(false);
@@ -683,7 +726,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             </svg>
           </button>
 
-          {/* Recording indicator */}
           {isRecording && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-red-500/80 backdrop-blur-sm rounded-full px-4 py-2">
               <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
@@ -691,16 +733,13 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             </div>
           )}
 
-          {/* Bottom controls */}
           <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-8">
-            {/* Flip camera */}
             <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
 
-            {/* Record button */}
             <button
               onClick={isRecording ? stopRecording : startRecording}
               className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300"
@@ -720,7 +759,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
               />
             </button>
 
-            {/* Effects */}
             <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -728,14 +766,12 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             </button>
           </div>
 
-          {/* Reply to indicator */}
           <div className="absolute bottom-32 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
             <span className="text-white/80 text-sm">Replying to {talentName}'s video</span>
           </div>
         </div>
       )}
 
-      {/* Custom scrollbar hide style */}
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
