@@ -43,7 +43,8 @@ interface OccasionType {
 }
 
 const OCCASIONS: OccasionType[] = [
-  { key: 'gift', label: 'Last Minute Gifts', emoji: '🎁' },
+  { key: 'birthday', label: 'Happy Birthday', emoji: '🎂' },
+  { key: 'express', label: '24hr Delivery', emoji: '⚡' },
   { key: 'roast', label: 'Friendly Roast', emoji: '🔥' },
   { key: 'encouragement', label: 'Encouragement', emoji: '💪' },
   { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
@@ -55,7 +56,8 @@ const OCCASIONS: OccasionType[] = [
 
 // Occasion-specific phrases for when selected from popup
 const OCCASION_PHRASES: Record<string, string> = {
-  'gift': "You're not too late, gift a memory that lasts forever.",
+  'birthday': "Say happy birthday better than a text.",
+  'express': "Need it fast? These talent deliver in 24 hours.",
   'roast': "Your group chat will never recover.",
   'encouragement': "Encouragement from people that have been there.",
   'debate': "End the debate with a ShoutOut.",
@@ -66,10 +68,11 @@ const OCCASION_PHRASES: Record<string, string> = {
 };
 
 // Curated talent for each occasion (by username)
+// Note: 'express' is handled dynamically by filtering express_delivery_enabled talent
 const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
+  'birthday': ['shawnfarash', 'meloniemac', 'joshfirestine', 'lydiashaffer', 'thehodgetwins', 'elsakurt', 'jeremyhambly', 'kevinsorbo', 'kayleecampbell', 'jeremyherrell'],
   'roast': ['shawnfarash', 'hayleycaronia', 'joshfirestine', 'jpsears', 'thehodgetwins', 'bryancallen', 'nickdipaolo', 'elsakurt', 'esteepalti', 'pearldavis', 'lauraloomer', 'kaitlinbennett', 'mattiseman'],
   'announcement': ['shawnfarash', 'hayleycaronia', 'lydiashaffer', 'bryancallen', 'basrutten', 'nicksearcy', 'markdavis', 'larryelder', 'mattiseman'],
-  'gift': ['shawnfarash', 'meloniemac', 'joshfirestine', 'lydiashaffer', 'thehodgetwins', 'elsakurt', 'jeremyhambly', 'kevinsorbo', 'kayleecampbell', 'jeremyherrell'],
   'encouragement': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
   'celebrate': ['joshfirestine', 'jpsears', 'jeremyhambly', 'basrutten', 'bradstine', 'gregonfire', 'chaelsonnen', 'lauraloomer', 'johnohurley', 'mattiseman'],
   'debate': ['davidharrisjr', 'nickdipaolo', 'bradstine', 'kayleecampbell', 'chaelsonnen', 'lauraloomer', 'pearldavis', 'geraldmorgan', 'kaitlinbennett', 'chrissalcedo'],
@@ -604,10 +607,11 @@ export default function HomePageNew() {
             
             {/* Carousel for selected occasion - only show if NOT selected from popup */}
             {selectedOccasion && !occasionFromPopup && (() => {
-              // For corporate events, only show talent with corporate pricing enabled
+              // Special handling for different occasion types
               const isCorporate = selectedOccasion === 'corporate';
+              const isExpress = selectedOccasion === 'express';
               
-              // Use curated talent mapping for occasions (except corporate)
+              // Use curated talent mapping for occasions (except corporate and express)
               let occasionTalentList: TalentWithDetails[] = [];
               
               if (isCorporate) {
@@ -616,6 +620,12 @@ export default function HomePageNew() {
                   t.users && t.corporate_pricing && t.corporate_pricing > 0
                 );
                 occasionTalentList = corporateTalent;
+              } else if (isExpress) {
+                // Express/24hr Delivery: filter by express_delivery_enabled
+                const expressTalent = allActiveTalent.filter(t => 
+                  t.users && t.express_delivery_enabled === true
+                );
+                occasionTalentList = expressTalent;
               } else {
                 // Use curated mapping - show ALL curated talent for the occasion
                 const curatedUsernames = OCCASION_TALENT_MAPPING[selectedOccasion] || [];
@@ -636,7 +646,7 @@ export default function HomePageNew() {
                     >
                       {occasionTalentList.map((t) => (
                         <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
-                          <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact />
+                          <TalentCard talent={t as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} compact showExpressBadge={t.express_delivery_enabled} />
                         </div>
                       ))}
                     </div>

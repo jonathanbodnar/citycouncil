@@ -568,36 +568,40 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
                     </div>
                     <span className="text-white text-xs">{formatViews(currentVideo?.likes || 0)}</span>
                   </button>
-                  {/* Reply button with counter badge */}
+                  {/* Reply button - goes directly to camera */}
                   <button 
-                    className="flex flex-col items-center gap-1 relative"
-                    onClick={() => navigateHorizontal('right')}
+                    className="flex flex-col items-center gap-1"
+                    onClick={() => setShowCameraUI(true)}
                   >
-                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center relative">
+                    <div 
+                      className="w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center"
+                      style={{ backgroundColor: buttonColor }}
+                    >
                       <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
-                      {currentReplies.length > 0 && (
-                        <div 
-                          className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full flex items-center justify-center px-1.5 text-[10px] font-bold text-white"
-                          style={{ backgroundColor: buttonColor }}
-                        >
-                          {currentReplies.length}
-                        </div>
-                      )}
                     </div>
-                    <span className="text-white text-xs">Replies</span>
+                    <span className="text-white text-xs">Reply</span>
                   </button>
                 </div>
 
-                {/* Swipe hints */}
+                {/* Swipe hint with reply counter */}
                 {currentReplies.length > 0 && horizontalIndex === 0 && (
-                  <div className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center gap-1 bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 animate-pulse">
-                    <span className="text-white/60 text-xs">Replies</span>
-                    <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button 
+                    className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full pl-3 pr-2 py-2 animate-pulse"
+                    onClick={() => navigateHorizontal('right')}
+                  >
+                    <div 
+                      className="min-w-[24px] h-6 rounded-full flex items-center justify-center px-2 text-xs font-bold text-white"
+                      style={{ backgroundColor: buttonColor }}
+                    >
+                      {currentReplies.length}
+                    </div>
+                    <span className="text-white text-sm font-medium">Replies</span>
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                  </div>
+                  </button>
                 )}
               </div>
             </div>

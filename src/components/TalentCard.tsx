@@ -47,9 +47,10 @@ interface TalentCardProps {
     };
   };
   compact?: boolean; // Netflix-style compact mode (2/3 size)
+  showExpressBadge?: boolean; // Show 24hr delivery badge
 }
 
-const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
+const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false, showExpressBadge = false }) => {
   const isComingSoon = talent.is_coming_soon === true;
   const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
   
@@ -194,6 +195,15 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false }) => {
           <div className={`absolute ${compact ? 'bottom-1.5 left-1.5 px-1.5 py-0.5' : 'bottom-2 left-2 sm:bottom-3 sm:left-3 px-1.5 py-0.5'} glass-strong rounded-lg backdrop-blur-md bg-purple-500/30`}>
             <span className={`${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} font-medium text-purple-200`}>
               New
+            </span>
+          </div>
+        )}
+
+        {/* 24hr Delivery Badge - Over image, bottom right */}
+        {(showExpressBadge || talent.express_delivery_enabled) && (
+          <div className={`absolute ${compact ? 'bottom-1.5 right-1.5 px-1.5 py-0.5' : 'bottom-2 right-2 sm:bottom-3 sm:right-3 px-2 py-1'} glass-strong rounded-lg flex items-center gap-1 backdrop-blur-md bg-emerald-500/30 border border-emerald-400/50`}>
+            <span className={`${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} font-bold text-emerald-300`}>
+              ⚡ 24hr
             </span>
           </div>
         )}

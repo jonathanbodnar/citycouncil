@@ -16,7 +16,8 @@ type Prize = 'FREE_SHOUTOUT' | '15_OFF' | '10_OFF' | '25_DOLLARS';
 
 // Occasions for the CTA section
 const POPUP_OCCASIONS = [
-  { key: 'gift', label: 'Last Minute Gifts', emoji: '🎁' },
+  { key: 'birthday', label: 'Happy Birthday', emoji: '🎂' },
+  { key: 'express', label: '24hr Delivery', emoji: '⚡' },
   { key: 'roast', label: 'Friendly Roast', emoji: '🔥' },
   { key: 'encouragement', label: 'Encouragement', emoji: '💪' },
   { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
