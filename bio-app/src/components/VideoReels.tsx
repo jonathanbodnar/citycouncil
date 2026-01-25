@@ -535,14 +535,11 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, talentAvatarUrl, bu
                 </svg>
               </button>
               {/* ShoutOut Logo */}
-              <div className="flex items-center gap-1.5">
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" fillOpacity="0.9"/>
-                  <path d="M2 17L12 22L22 17" stroke="white" strokeOpacity="0.9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 12L12 17L22 12" stroke="white" strokeOpacity="0.9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-white font-semibold text-sm">ShoutOut</span>
-              </div>
+              <img
+                src={`${process.env.PUBLIC_URL}/shoutoutwhite.png`}
+                alt="ShoutOut"
+                className="h-5 w-auto"
+              />
             </div>
             
             {/* Right: Talent name and avatar */}
