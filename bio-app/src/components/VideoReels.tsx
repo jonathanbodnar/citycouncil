@@ -95,10 +95,11 @@ interface Reply {
 
 interface VideoReelsProps {
   talentName: string;
+  talentAvatarUrl?: string;
   buttonColor?: string;
 }
 
-const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b82f6' }) => {
+const VideoReels: React.FC<VideoReelsProps> = ({ talentName, talentAvatarUrl, buttonColor = '#3b82f6' }) => {
   const [videos] = useState<TalentVideo[]>(DEMO_TALENT_VIDEOS);
   const [activeIndex, setActiveIndex] = useState(2); // Start in the middle for carousel
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -521,15 +522,47 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
           onTouchEnd={handleTouchEnd}
           onWheel={handleWheel}
         >
-          {/* Close button */}
-          <button
-            onClick={closeFullScreen}
-            className="absolute top-16 right-4 z-50 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center"
-          >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 h-[60px] bg-black/80 backdrop-blur-sm z-50 flex items-center justify-between px-4">
+            {/* Left: Logo and close button */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={closeFullScreen}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              {/* ShoutOut Logo */}
+              <div className="flex items-center gap-1.5">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" fillOpacity="0.9"/>
+                  <path d="M2 17L12 22L22 17" stroke="white" strokeOpacity="0.9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="white" strokeOpacity="0.9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-white font-semibold text-sm">ShoutOut</span>
+              </div>
+            </div>
+            
+            {/* Right: Talent name and avatar */}
+            <div className="flex items-center gap-2">
+              <span className="text-white/80 text-sm font-medium">{talentName}</span>
+              {talentAvatarUrl ? (
+                <img 
+                  src={talentAvatarUrl} 
+                  alt={talentName}
+                  className="w-8 h-8 rounded-full object-cover border border-white/20"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {talentName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Horizontal position indicator */}
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">

@@ -2154,6 +2154,7 @@ const BioPage: React.FC = () => {
           {/* Video Reels Section */}
           <VideoReels 
             talentName={displayName.split(' ')[0]} 
+            talentAvatarUrl={talentProfile?.temp_avatar_url || bioSettings?.profile_image_url}
             buttonColor={bioSettings?.button_color || '#3b82f6'}
           />
         </div>
