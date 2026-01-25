@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
-// Demo video data - using sample video URLs
+// Demo video data - using vertical/portrait video samples for reel-style display
 const DEMO_TALENT_VIDEOS = [
   {
     id: 'demo-1',
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-waving-on-a-video-call-43390-large.mp4',
+    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-waving-on-a-video-call-43390-0.jpg',
     title: 'Behind the Scenes',
     views: 12400,
     likes: 892,
@@ -13,8 +13,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-2',
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-woman-dancing-happily-in-a-room-4437-large.mp4',
+    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-woman-dancing-happily-in-a-room-4437-0.jpg',
     title: 'Quick Update',
     views: 8700,
     likes: 654,
@@ -22,8 +22,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-3',
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-man-doing-a-vlog-on-the-street-4770-large.mp4',
+    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-man-doing-a-vlog-on-the-street-4770-0.jpg',
     title: 'Weekend Vibes',
     views: 15200,
     likes: 1243,
@@ -31,8 +31,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-4',
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerJoyrides.jpg',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-woman-talking-on-video-call-with-laptop-4782-large.mp4',
+    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-woman-talking-on-video-call-with-laptop-4782-0.jpg',
     title: 'New Announcement',
     views: 21000,
     likes: 1876,
@@ -40,8 +40,8 @@ const DEMO_TALENT_VIDEOS = [
   },
   {
     id: 'demo-5',
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerMeltdowns.jpg',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4',
+    thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-0.jpg',
     title: 'Story Time',
     views: 9300,
     likes: 721,
@@ -49,25 +49,25 @@ const DEMO_TALENT_VIDEOS = [
   },
 ];
 
-// Demo reply videos
+// Demo reply videos - vertical format for reel-style display
 const DEMO_REPLIES: Record<string, Reply[]> = {
   'demo-1': [
-    { id: 'reply-1-1', userId: 'user-1', username: 'Sarah M.', avatarUrl: 'https://i.pravatar.cc/150?img=1', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/WeAreGoingOnBullrun.jpg', upvotes: 45, hasUpvoted: false },
-    { id: 'reply-1-2', userId: 'user-2', username: 'Mike T.', avatarUrl: 'https://i.pravatar.cc/150?img=2', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/VolkswagenGTIReview.jpg', upvotes: 32, hasUpvoted: false },
-    { id: 'reply-1-3', userId: 'user-3', username: 'Emma L.', avatarUrl: 'https://i.pravatar.cc/150?img=3', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/WhatCarCanYouGetForAGrand.jpg', upvotes: 28, hasUpvoted: false },
+    { id: 'reply-1-1', userId: 'user-1', username: 'Sarah M.', avatarUrl: 'https://i.pravatar.cc/150?img=1', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-in-a-pool-1259-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-in-a-pool-1259-0.jpg', upvotes: 45, hasUpvoted: false },
+    { id: 'reply-1-2', userId: 'user-2', username: 'Mike T.', avatarUrl: 'https://i.pravatar.cc/150?img=2', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-man-under-multicolored-lights-1237-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-man-under-multicolored-lights-1237-0.jpg', upvotes: 32, hasUpvoted: false },
+    { id: 'reply-1-3', userId: 'user-3', username: 'Emma L.', avatarUrl: 'https://i.pravatar.cc/150?img=3', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-a-woman-and-a-man-in-front-of-a-graffiti-wall-4820-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-a-woman-and-a-man-in-front-of-a-graffiti-wall-4820-0.jpg', upvotes: 28, hasUpvoted: false },
   ],
   'demo-2': [
-    { id: 'reply-2-1', userId: 'user-4', username: 'Alex K.', avatarUrl: 'https://i.pravatar.cc/150?img=4', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/SubaruOutbackOnStreetAndDirt.jpg', upvotes: 67, hasUpvoted: false },
-    { id: 'reply-2-2', userId: 'user-5', username: 'Jordan P.', avatarUrl: 'https://i.pravatar.cc/150?img=5', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg', upvotes: 41, hasUpvoted: false },
+    { id: 'reply-2-1', userId: 'user-4', username: 'Alex K.', avatarUrl: 'https://i.pravatar.cc/150?img=4', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-excited-young-people-at-new-years-party-4640-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-excited-young-people-at-new-years-party-4640-0.jpg', upvotes: 67, hasUpvoted: false },
+    { id: 'reply-2-2', userId: 'user-5', username: 'Jordan P.', avatarUrl: 'https://i.pravatar.cc/150?img=5', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-curly-haired-woman-moving-her-head-to-the-741-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-curly-haired-woman-moving-her-head-to-the-741-0.jpg', upvotes: 41, hasUpvoted: false },
   ],
   'demo-3': [
-    { id: 'reply-3-1', userId: 'user-6', username: 'Chris B.', avatarUrl: 'https://i.pravatar.cc/150?img=6', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg', upvotes: 89, hasUpvoted: false },
-    { id: 'reply-3-2', userId: 'user-7', username: 'Taylor R.', avatarUrl: 'https://i.pravatar.cc/150?img=7', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg', upvotes: 56, hasUpvoted: false },
-    { id: 'reply-3-3', userId: 'user-8', username: 'Morgan F.', avatarUrl: 'https://i.pravatar.cc/150?img=8', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg', upvotes: 34, hasUpvoted: false },
-    { id: 'reply-3-4', userId: 'user-9', username: 'Riley S.', avatarUrl: 'https://i.pravatar.cc/150?img=9', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg', upvotes: 23, hasUpvoted: false },
+    { id: 'reply-3-1', userId: 'user-6', username: 'Chris B.', avatarUrl: 'https://i.pravatar.cc/150?img=6', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-taking-a-selfie-in-a-pool-1227-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-taking-a-selfie-in-a-pool-1227-0.jpg', upvotes: 89, hasUpvoted: false },
+    { id: 'reply-3-2', userId: 'user-7', username: 'Taylor R.', avatarUrl: 'https://i.pravatar.cc/150?img=7', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-womans-feet-702-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-womans-feet-702-0.jpg', upvotes: 56, hasUpvoted: false },
+    { id: 'reply-3-3', userId: 'user-8', username: 'Morgan F.', avatarUrl: 'https://i.pravatar.cc/150?img=8', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-studio-with-a-red-background-40203-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-studio-with-a-red-background-40203-0.jpg', upvotes: 34, hasUpvoted: false },
+    { id: 'reply-3-4', userId: 'user-9', username: 'Riley S.', avatarUrl: 'https://i.pravatar.cc/150?img=9', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-to-the-camera-in-the-street-4585-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-to-the-camera-in-the-street-4585-0.jpg', upvotes: 23, hasUpvoted: false },
   ],
   'demo-4': [
-    { id: 'reply-4-1', userId: 'user-10', username: 'Jamie W.', avatarUrl: 'https://i.pravatar.cc/150?img=10', videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg', upvotes: 112, hasUpvoted: false },
+    { id: 'reply-4-1', userId: 'user-10', username: 'Jamie W.', avatarUrl: 'https://i.pravatar.cc/150?img=10', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-woman-doing-mountain-climber-exercise-726-large.mp4', thumbnail: 'https://assets.mixkit.co/videos/preview/mixkit-woman-doing-mountain-climber-exercise-726-0.jpg', upvotes: 112, hasUpvoted: false },
   ],
   'demo-5': [],
 };
