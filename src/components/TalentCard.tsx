@@ -52,7 +52,6 @@ interface TalentCardProps {
 
 const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false, showExpressBadge = false }) => {
   const isComingSoon = talent.is_coming_soon === true;
-  const demandLevel = talent.total_orders > 20 ? 'high' : talent.total_orders > 10 ? 'medium' : 'low';
   
   // Initialize coupon state from localStorage immediately
   const getInitialCoupon = () => {
@@ -117,18 +116,6 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false, showEx
   };
   const discountedPrice = getDiscountedPrice();
   const hasCoupon = activeCoupon && couponDetails && discountedPrice !== originalPrice;
-  
-  const demandColors = {
-    high: 'bg-red-500/20 text-red-400',
-    medium: 'bg-yellow-500/20 text-yellow-400',
-    low: 'bg-green-500/30 text-white',
-  };
-
-  const demandText = {
-    high: 'High Demand',
-    medium: 'Popular',
-    low: 'Available',
-  };
 
   const cardContent = (
     <div 
@@ -164,15 +151,10 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false, showEx
           </div>
         )}
         
-        {/* Coming Soon Badge */}
-        {isComingSoon ? (
+        {/* Coming Soon Badge - only show if coming soon */}
+        {isComingSoon && (
           <div className={`absolute ${compact ? 'top-1.5 left-1.5 px-2 py-0.5' : 'top-1.5 left-1.5 sm:top-3 sm:left-3 px-2 py-0.5 sm:px-3 sm:py-1'} rounded-full text-[10px] ${compact ? '' : 'sm:text-xs'} font-bold glass-strong bg-amber-500/30 text-amber-400 border border-amber-400/50 shadow-lg animate-pulse`}>
             COMING SOON
-          </div>
-        ) : (
-          /* Demand Indicator */
-          <div className={`absolute ${compact ? 'top-1.5 left-1.5 px-2 py-0.5' : 'top-1.5 left-1.5 sm:top-3 sm:left-3 px-2 py-0.5 sm:px-3 sm:py-1'} rounded-full text-[10px] ${compact ? '' : 'sm:text-xs'} font-medium glass-strong ${demandColors[demandLevel]} border border-white/30`}>
-            {demandText[demandLevel]}
           </div>
         )}
 
@@ -218,10 +200,17 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false, showEx
           )}
         </h3>
         
-        {/* One-line Bio - Always show, even in compact mode */}
+        {/* Two-line Bio - Always show, even in compact mode */}
         {talent.bio && (
           <p 
-            className={`${compact ? 'text-[9px] mb-1.5' : 'text-xs sm:text-sm mb-2'} text-gray-400 truncate`}
+            className={`${compact ? 'text-[9px] mb-1.5' : 'text-xs sm:text-sm mb-2'} text-gray-400`}
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
           >
             {talent.bio}
           </p>
@@ -300,21 +289,13 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false, showEx
           </div>
         )}
 
-        {/* Delivery time and Charity - Push to bottom */}
-        <div className={`flex items-center justify-between mt-auto ${compact ? 'text-[9px]' : ''}`}>
-          <span 
-            className={compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'}
-            style={{ color: 'rgba(147, 197, 253, 0.6)' }}
-          >
-            {talent.fulfillment_time_hours && talent.fulfillment_time_hours > 0 ? talent.fulfillment_time_hours : 48}h delivery
-          </span>
-          {(talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name) ? (
-            <div className={`flex items-center gap-0.5 ${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} text-red-400 font-medium`}>
-              <HeartIcon className={compact ? 'h-2 w-2' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'} />
-              {talent.charity_percentage}%
-            </div>
-          ) : null}
-        </div>
+        {/* Charity indicator - Push to bottom */}
+        {(talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name) && (
+          <div className={`flex items-center gap-0.5 mt-auto ${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} text-red-400 font-medium`}>
+            <HeartIcon className={compact ? 'h-2 w-2' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'} />
+            {talent.charity_percentage}% to charity
+          </div>
+        )}
       </div>
     </div>
   );
