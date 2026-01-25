@@ -112,7 +112,6 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
   
   const carouselRef = useRef<HTMLDivElement>(null);
   const fullScreenRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const replyCarouselRef = useRef<HTMLDivElement>(null);
   const mainVideoRef = useRef<HTMLVideoElement>(null);
   const replyVideoRef = useRef<HTMLVideoElement>(null);
@@ -153,6 +152,7 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
   // Initialize carousel position
   useEffect(() => {
     scrollToIndex(activeIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle full-screen vertical scroll
