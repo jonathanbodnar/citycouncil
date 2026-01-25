@@ -9,6 +9,7 @@ import {
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
+import VideoReels from '../components/VideoReels';
 
 // Helper to format phone number as user types
 const formatPhoneNumber = (value: string): string => {
@@ -2149,6 +2150,12 @@ const BioPage: React.FC = () => {
               )}
             </div>
           )}
+
+          {/* Video Reels Section */}
+          <VideoReels 
+            talentName={displayName.split(' ')[0]} 
+            buttonColor={bioSettings?.button_color || '#3b82f6'}
+          />
         </div>
 
         {/* Links */}
