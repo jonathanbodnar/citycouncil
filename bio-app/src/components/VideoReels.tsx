@@ -515,15 +515,16 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
 
           {/* Horizontal slide container */}
           <div 
-            className="relative w-full h-full transition-transform duration-400 ease-out"
+            className="relative h-full transition-transform duration-400 ease-out flex"
             style={{
-              transform: `translateX(-${horizontalIndex * 100}%)`,
+              width: `${totalHorizontalSlides * 100}%`,
+              transform: `translateX(-${(horizontalIndex * 100) / totalHorizontalSlides}%)`,
             }}
           >
             {/* Main Talent Video (position 0) */}
             <div 
-              className="absolute inset-0 flex items-center justify-center p-4"
-              style={{ left: '0%' }}
+              className="flex-shrink-0 flex items-center justify-center p-4"
+              style={{ width: `${100 / totalHorizontalSlides}%` }}
             >
               <div className="relative w-full h-full max-w-md mx-auto bg-black rounded-3xl overflow-hidden">
                 <video
@@ -610,8 +611,8 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
             {currentReplies.map((reply, index) => (
               <div 
                 key={reply.id}
-                className="absolute inset-0 flex items-center justify-center p-4"
-                style={{ left: `${(index + 1) * 100}%` }}
+                className="flex-shrink-0 flex items-center justify-center p-4"
+                style={{ width: `${100 / totalHorizontalSlides}%` }}
               >
                 <div className="relative w-full h-full max-w-md mx-auto bg-black rounded-3xl overflow-hidden">
                   <video
@@ -675,8 +676,8 @@ const VideoReels: React.FC<VideoReelsProps> = ({ talentName, buttonColor = '#3b8
 
             {/* Add Reply Slide */}
             <div 
-              className="absolute inset-0 flex items-center justify-center p-4"
-              style={{ left: `${(currentReplies.length + 1) * 100}%` }}
+              className="flex-shrink-0 flex items-center justify-center p-4"
+              style={{ width: `${100 / totalHorizontalSlides}%` }}
             >
               <div className="relative w-full h-full max-w-md mx-auto flex items-center justify-center">
                 <div 
