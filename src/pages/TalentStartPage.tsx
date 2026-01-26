@@ -163,6 +163,7 @@ const TalentStartPage: React.FC = () => {
         .single();
 
       // Create new talent profile
+      console.log('Creating talent profile for user:', authUserId);
       const { data: newProfile, error: profileError } = await supabase
         .from('talent_profiles')
         .insert({
@@ -185,9 +186,12 @@ const TalentStartPage: React.FC = () => {
 
       if (profileError) {
         console.error('Profile creation error:', profileError);
-        toast.error('Failed to create profile. Please try again.');
+        console.error('Profile error details:', JSON.stringify(profileError, null, 2));
+        toast.error(`Failed to create profile: ${profileError.message || 'RLS policy may be blocking. Contact support.'}`);
         return;
       }
+      
+      console.log('Talent profile created successfully:', newProfile?.id);
 
       setTalentProfileId(newProfile.id);
       if (userData?.full_name) {
@@ -373,10 +377,15 @@ const TalentStartPage: React.FC = () => {
       }
 
       // Update user to be a talent
-      await supabase.from('users').update({
+      const { error: userUpdateError } = await supabase.from('users').update({
         user_type: 'talent',
         phone: formattedPhone,
       }).eq('id', data.user.id);
+
+      if (userUpdateError) {
+        console.error('Failed to update user type:', userUpdateError);
+        // Don't throw - continue with profile creation attempt
+      }
 
       toast.success(data.isLogin ? 'Welcome back!' : 'Account verified!');
       
