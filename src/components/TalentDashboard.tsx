@@ -2701,51 +2701,30 @@ const TalentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right: Overlapping Images - Desktop only */}
-              <div className="relative hidden lg:block">
-                {/* Container for overlapping images with proper containment */}
-                <div className="relative h-[350px]">
-                  {/* Send Update - Background/larger image */}
-                  <div className="absolute top-12 right-0 w-[280px] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                    <img 
-                      src="/creatorbios/sendupdate.png" 
-                      alt="Send update - How creators reach their audience"
-                      className="w-full h-auto"
-                    />
-                  </div>
-
-                  {/* Stay Connected - Floating overlay top-left */}
-                  <div className="absolute top-0 left-0 w-[220px] rounded-xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
-                    <img 
-                      src="/creatorbios/stayconnected.png" 
-                      alt="Stay connected - How fans subscribe"
-                      className="w-full h-auto"
-                    />
+              {/* Right: Stacked Images */}
+              <div className="flex flex-col gap-4">
+                {/* Fans Subscribe - Top */}
+                <div className="rounded-xl overflow-hidden border border-emerald-500/30 shadow-xl max-w-[320px] mx-auto lg:mx-0">
+                  <img 
+                    src="/creatorbios/stayconnected.png" 
+                    alt="Stay connected - How fans subscribe"
+                    className="w-full h-auto"
+                  />
+                  <div className="p-2 bg-emerald-500/10">
+                    <p className="text-emerald-300 font-semibold text-xs">Fans Subscribe</p>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Mobile: Side by side images below content */}
-            <div className="grid grid-cols-2 gap-3 mt-4 lg:hidden">
-              <div className="rounded-lg overflow-hidden border border-emerald-500/30">
-                <img 
-                  src="/creatorbios/stayconnected.png" 
-                  alt="Stay connected - How fans subscribe"
-                  className="w-full h-auto"
-                />
-                <div className="p-2 bg-emerald-500/10">
-                  <p className="text-emerald-300 font-semibold text-[10px]">Fans Subscribe</p>
-                </div>
-              </div>
-              <div className="rounded-lg overflow-hidden border border-purple-500/30">
-                <img 
-                  src="/creatorbios/sendupdate.png" 
-                  alt="Send update - How creators reach their audience"
-                  className="w-full h-auto"
-                />
-                <div className="p-2 bg-purple-500/10">
-                  <p className="text-purple-300 font-semibold text-[10px]">Send Updates</p>
+                
+                {/* Send Updates - Bottom */}
+                <div className="rounded-xl overflow-hidden border border-purple-500/30 shadow-xl max-w-[320px] mx-auto lg:mx-0">
+                  <img 
+                    src="/creatorbios/sendupdate.png" 
+                    alt="Send update - How creators reach their audience"
+                    className="w-full h-auto"
+                  />
+                  <div className="p-2 bg-purple-500/10">
+                    <p className="text-purple-300 font-semibold text-xs">Send Updates</p>
+                  </div>
                 </div>
               </div>
             </div>
