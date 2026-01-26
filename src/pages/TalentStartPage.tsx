@@ -36,13 +36,14 @@ const TalentStartPage: React.FC = () => {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [defaultAdminFee, setDefaultAdminFee] = useState(25);
 
-  // Phone OTP Auth State
-  const [authStep, setAuthStep] = useState<'phone' | 'otp'>('phone');
+  // OTP Auth State (same flow as admin onboarding)
+  const [authStep, setAuthStep] = useState<'email' | 'phone' | 'otp'>('email');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [existingUserPhone, setExistingUserPhone] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
   const [talentProfileId, setTalentProfileId] = useState<string | null>(null);
@@ -228,201 +229,213 @@ const TalentStartPage: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [profileData.username, talentProfileId]);
 
-  // Format phone display
-  const formatPhoneDisplay = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  // Format phone number for display
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-    setPhone(digits);
-  };
-
-  // OTP Input handlers
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otpCode];
-    newOtp[index] = value.slice(-1);
-    setOtpCode(newOtp);
-    if (value && index < 5) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
+  // Handle email submission - check if user exists and has phone (same as admin onboarding)
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    const newOtp = [...otpCode];
-    for (let i = 0; i < pastedData.length; i++) {
-      newOtp[i] = pastedData[i];
-    }
-    setOtpCode(newOtp);
-    const lastIndex = Math.min(pastedData.length, 5);
-    otpInputRefs.current[lastIndex]?.focus();
-  };
-
-  // Send OTP code using registration endpoint (works for both new and existing users)
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (phone.length !== 10) {
-      toast.error('Please enter a valid 10-digit phone number');
+    
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
     setLoading(true);
     try {
-      // Store email for later profile creation
-      if (email) {
-        localStorage.setItem('talent_start_email', email);
-      }
-
-      // Use send-registration-otp which works for both new and existing users
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
       const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/send-registration-otp`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-          },
-          body: JSON.stringify({ phone, email }),
-        }
-      );
+      // Check if user exists with a phone number
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          checkEmailOnly: true,
+        }),
+      });
 
-      const result = await response.json();
-
-      if (result.rateLimited) {
-        toast.error(result.error || 'Please wait before requesting another code');
-        setOtpCooldown(60);
-      } else if (result.success) {
-        toast.success(result.isExistingUser ? 'Welcome back! Code sent.' : 'Verification code sent!');
+      const data = await response.json();
+      
+      if (data.sentToExistingPhone && data.phone) {
+        // User exists with phone - OTP already sent, skip to OTP step
+        setExistingUserPhone(data.phone);
+        setPhone(data.phone);
+        toast.success('We sent a code to your phone!');
         setAuthStep('otp');
         setOtpCooldown(60);
-        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+        setTimeout(() => otpInputRef.current?.focus(), 100);
       } else {
-        toast.error(result.error || 'Failed to send code');
+        // No existing user with phone - go to phone step
+        setAuthStep('phone');
       }
     } catch (error: any) {
-      console.error('Error sending OTP:', error);
+      console.error('Email check error:', error);
+      // On error, just proceed to phone step
+      setAuthStep('phone');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle phone submission - send OTP
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setLoading(true);
+    const formattedPhone = `+1${digits}`;
+    const normalizedEmail = email.toLowerCase().trim();
+
+    try {
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send verification code');
+      }
+
+      toast.success('Verification code sent!');
+      setAuthStep('otp');
+      setOtpCooldown(60);
+      setTimeout(() => otpInputRef.current?.focus(), 100);
+    } catch (error: any) {
+      console.error('Send OTP error:', error);
       toast.error(error.message || 'Failed to send verification code');
     } finally {
       setLoading(false);
     }
   };
 
-  // Verify OTP code using registration endpoint
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  // Handle OTP verification
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = otpCode.join('');
-    if (code.length !== 6) {
+    
+    if (otpCode.length !== 6) {
       toast.error('Please enter the 6-digit code');
       return;
     }
 
     setLoading(true);
+    const normalizedEmail = email.toLowerCase().trim();
+    const formattedPhone = existingUserPhone || `+1${phone.replace(/\D/g, '')}`;
+
     try {
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
       const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-      const storedEmail = localStorage.getItem('talent_start_email') || email;
 
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/verify-registration-otp`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-          },
-          body: JSON.stringify({ 
-            phone, 
-            code, 
-            email: storedEmail,
-          }),
-        }
-      );
+      const response = await fetch(`${supabaseUrl}/functions/v1/verify-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+          code: otpCode,
+        }),
+      });
 
-      const result = await response.json();
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid verification code');
+      }
 
-      if (result.success && result.session) {
-        // Set the session from the edge function response
+      // Set the session directly
+      if (data.session?.access_token && data.session?.refresh_token) {
         const { error: sessionError } = await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token,
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
         });
 
         if (sessionError) {
-          console.error('Error setting session:', sessionError);
-          toast.error('Login failed. Please try again.');
-          return;
+          console.error('Session error:', sessionError);
+          throw new Error('Failed to establish session');
         }
-
-        // Update user to be a talent
-        await supabase.from('users').update({
-          user_type: 'talent',
-          phone: `+1${phone}`,
-        }).eq('id', result.user.id);
-
-        localStorage.removeItem('talent_start_email');
-        
-        toast.success(result.isLogin ? 'Welcome back!' : 'Account verified!');
-        
-        // Continue to profile setup
-        await handleUserAuthenticated(result.user.id);
       } else {
-        toast.error(result.error || 'Invalid code');
-        setOtpCode(['', '', '', '', '', '']);
-        otpInputRefs.current[0]?.focus();
+        throw new Error('No session returned from verification');
       }
+
+      // Update user to be a talent
+      await supabase.from('users').update({
+        user_type: 'talent',
+        phone: formattedPhone,
+      }).eq('id', data.user.id);
+
+      toast.success(data.isLogin ? 'Welcome back!' : 'Account verified!');
+      
+      // Continue to profile setup
+      await handleUserAuthenticated(data.user.id);
     } catch (error: any) {
-      console.error('Error verifying OTP:', error);
-      toast.error(error.message || 'Failed to verify code');
+      console.error('OTP verification error:', error);
+      toast.error(error.message || 'Invalid verification code');
+      setOtpCode('');
     } finally {
       setLoading(false);
     }
   };
 
-  // Resend OTP
+  // Resend OTP code
   const handleResendOtp = async () => {
     if (otpCooldown > 0) return;
+    
     setLoading(true);
+    const normalizedEmail = email.toLowerCase().trim();
+    const formattedPhone = existingUserPhone || `+1${phone.replace(/\D/g, '')}`;
+
     try {
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
       const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/send-registration-otp`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-          },
-          body: JSON.stringify({ phone, email }),
-        }
-      );
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-registration-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+        }),
+      });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success('New code sent!');
-        setOtpCooldown(60);
-        setOtpCode(['', '', '', '', '', '']);
-        otpInputRefs.current[0]?.focus();
-      } else {
-        toast.error(result.error || 'Failed to resend code');
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend code');
       }
+
+      toast.success('New code sent!');
+      setOtpCooldown(60);
+      setOtpCode('');
     } catch (error: any) {
       toast.error(error.message || 'Failed to resend code');
     } finally {
@@ -590,20 +603,20 @@ const TalentStartPage: React.FC = () => {
 
           {/* Main Content */}
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Step 1: Phone OTP Auth */}
+            {/* Step 1: Email-first OTP Auth (same as admin onboarding) */}
             {currentStep === 1 && (
               <div className="p-6 sm:p-8 lg:p-10">
                 <div className="max-w-md mx-auto">
-                  {/* Phone Entry */}
-                  {authStep === 'phone' && (
-                    <form onSubmit={handleSendOtp} className="space-y-5">
+                  {/* Email Step */}
+                  {authStep === 'email' && (
+                    <form onSubmit={handleEmailSubmit} className="space-y-5">
                       <div className="text-center mb-6">
                         <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4">
                           <DevicePhoneMobileIcon className="w-8 h-8 text-white" />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900">Get Started</h2>
                         <p className="text-gray-600 text-sm mt-1">
-                          Enter your phone number to sign up or log in
+                          Enter your email to sign up or log in
                         </p>
                       </div>
 
@@ -613,105 +626,137 @@ const TalentStartPage: React.FC = () => {
                         </label>
                         <input
                           type="email"
+                          required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
-                          placeholder="john@example.com"
+                          placeholder="Enter your email"
+                          autoFocus
                         />
-                        <p className="text-xs text-gray-500 mt-1">For account notifications</p>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? 'Checking...' : 'Continue'}
+                        <ArrowRightIcon className="w-4 h-4" />
+                      </button>
+                    </form>
+                  )}
+
+                  {/* Phone Step */}
+                  {authStep === 'phone' && (
+                    <form onSubmit={handlePhoneSubmit} className="space-y-5">
+                      <div className="text-center mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">Add Your Phone</h2>
+                        <p className="text-gray-600 text-sm mt-1">
+                          We'll send a verification code to your phone
+                        </p>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-gray-600">
+                          Email: <span className="font-medium">{email}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAuthStep('email')}
+                            className="ml-2 text-emerald-600 hover:text-emerald-700 text-sm"
+                          >
+                            Change
+                          </button>
+                        </p>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Phone Number
                         </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="text-gray-500">+1</span>
-                          </div>
-                          <input
-                            type="tel"
-                            required
-                            autoComplete="tel"
-                            value={formatPhoneDisplay(phone)}
-                            onChange={handlePhoneChange}
-                            className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
-                            placeholder="(555) 555-5555"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">We'll send a 6-digit code to verify</p>
+                        <input
+                          type="tel"
+                          required
+                          value={phone}
+                          onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                          className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
+                          placeholder="(555) 123-4567"
+                          autoFocus
+                        />
+                        <p className="text-xs text-gray-500 mt-1">We'll send you a verification code</p>
                       </div>
 
                       <button
                         type="submit"
-                        disabled={loading || phone.length !== 10}
+                        disabled={loading}
                         className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         <DevicePhoneMobileIcon className="w-5 h-5" />
                         {loading ? 'Sending code...' : 'Send Verification Code'}
                       </button>
-
-                      <p className="text-center text-xs text-gray-500 mt-4">
-                        Already have an account? This will log you in automatically.
-                      </p>
                     </form>
                   )}
 
-                  {/* OTP Verification */}
+                  {/* OTP Step */}
                   {authStep === 'otp' && (
-                    <form onSubmit={handleVerifyOtp} className="space-y-5">
+                    <form onSubmit={handleOtpSubmit} className="space-y-5">
                       <div className="text-center mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">Enter Code</h2>
                         <p className="text-gray-600 text-sm mt-1">
                           We sent a 6-digit code to
                         </p>
-                        <p className="text-emerald-600 font-medium">{formatPhoneDisplay(phone)}</p>
+                        <p className="text-emerald-600 font-medium">
+                          {existingUserPhone 
+                            ? `***-***-${existingUserPhone.slice(-4)}`
+                            : phone
+                          }
+                        </p>
                       </div>
 
-                      <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
-                        {otpCode.map((digit, index) => (
-                          <input
-                            key={index}
-                            ref={(el) => { otpInputRefs.current[index] = el; }}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => handleOtpChange(index, e.target.value)}
-                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                            className="w-12 h-14 text-center text-2xl font-bold border border-gray-300 bg-white text-gray-900 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          />
-                        ))}
+                      <div>
+                        <input
+                          ref={otpInputRef}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          required
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-center text-2xl tracking-[0.5em] font-mono text-gray-900"
+                          placeholder="000000"
+                          autoComplete="one-time-code"
+                          autoFocus
+                        />
                       </div>
 
                       <button
                         type="submit"
-                        disabled={loading || otpCode.join('').length !== 6}
+                        disabled={loading || otpCode.length !== 6}
                         className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         {loading ? 'Verifying...' : 'Verify & Continue'}
                         <ArrowRightIcon className="w-4 h-4" />
                       </button>
 
-                      <div className="flex items-center justify-between text-sm">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAuthStep('phone');
-                            setOtpCode(['', '', '', '', '', '']);
-                          }}
-                          className="text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                        >
-                          <ArrowLeftIcon className="w-4 h-4" />
-                          Change number
-                        </button>
+                      <div className="text-center space-y-2">
                         <button
                           type="button"
                           onClick={handleResendOtp}
                           disabled={otpCooldown > 0 || loading}
-                          className="text-emerald-600 hover:text-emerald-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                          className="text-sm text-emerald-600 hover:text-emerald-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                         >
-                          {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Resend code'}
+                          {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Didn't receive the code? Resend"}
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthStep('phone');
+                            setOtpCode('');
+                            setExistingUserPhone(null);
+                          }}
+                          className="block w-full text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          Use a different phone number
                         </button>
                       </div>
                     </form>
