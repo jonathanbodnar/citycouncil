@@ -18,7 +18,7 @@ WHERE email ILIKE '%lloyd%' OR full_name ILIKE '%lloyd%';
 -- 3. Check coupon_usage table for WINNER100
 SELECT 
   cu.id,
-  cu.created_at,
+  cu.used_at,
   u.email,
   u.full_name,
   o.customer_name,
@@ -29,7 +29,7 @@ JOIN public.coupons c ON c.id = cu.coupon_id
 LEFT JOIN public.users u ON u.id = cu.user_id
 LEFT JOIN public.orders o ON o.id = cu.order_id
 WHERE c.code = 'WINNER100'
-ORDER BY cu.created_at DESC;
+ORDER BY cu.used_at DESC;
 
 -- 4. Check all orders that used WINNER100
 SELECT 
