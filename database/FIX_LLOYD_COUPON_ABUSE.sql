@@ -6,7 +6,8 @@ SELECT
   c.code,
   c.used_count,
   c.max_uses_per_user,
-  c.max_uses AS total_max_uses
+  c.max_uses AS total_max_uses,
+  c.is_active
 FROM public.coupons c
 WHERE c.code = 'WINNER100';
 
@@ -19,14 +20,13 @@ WHERE email ILIKE '%lloyd%' OR full_name ILIKE '%lloyd%';
 SELECT 
   cu.id,
   cu.used_at,
+  cu.user_id,
+  cu.order_id,
   u.email,
-  u.full_name,
-  o.id as order_id,
-  o.total_amount
+  u.full_name
 FROM public.coupon_usage cu
 JOIN public.coupons c ON c.id = cu.coupon_id
 LEFT JOIN public.users u ON u.id = cu.user_id
-LEFT JOIN public.orders o ON o.id = cu.order_id
 WHERE c.code = 'WINNER100'
 ORDER BY cu.used_at DESC;
 
@@ -36,7 +36,7 @@ SELECT
   o.created_at,
   o.coupon_code,
   o.discount_amount,
-  o.total_amount,
+  o.amount,
   o.status,
   u.email as user_email,
   u.full_name as user_name
@@ -76,10 +76,7 @@ BEGIN
 END $$;
 
 -- 7. MANUALLY ADD USAGE RECORD for lloydmorman to block future use
--- First, get the user_id and coupon_id
--- Then insert usage record
-
--- Get WINNER100 coupon id
+-- First, get the user_id and coupon_id, then insert usage record
 WITH coupon AS (
   SELECT id FROM public.coupons WHERE code = 'WINNER100'
 ),
