@@ -21,8 +21,7 @@ SELECT
   cu.used_at,
   u.email,
   u.full_name,
-  o.customer_name,
-  o.customer_email,
+  o.id as order_id,
   o.total_amount
 FROM public.coupon_usage cu
 JOIN public.coupons c ON c.id = cu.coupon_id
@@ -35,13 +34,14 @@ ORDER BY cu.used_at DESC;
 SELECT 
   o.id,
   o.created_at,
-  o.customer_name,
-  o.customer_email,
   o.coupon_code,
   o.discount_amount,
   o.total_amount,
-  o.status
+  o.status,
+  u.email as user_email,
+  u.full_name as user_name
 FROM public.orders o
+LEFT JOIN public.users u ON o.user_id = u.id
 WHERE o.coupon_code = 'WINNER100'
 ORDER BY o.created_at DESC;
 
