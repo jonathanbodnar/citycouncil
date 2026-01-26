@@ -56,6 +56,8 @@ interface ReviewWithUser extends Review {
 }
 
 // Feature flag: Bio tab controlled by admin via bio_enabled field
+// Also show on dev environment for testing
+const IS_DEV_ENVIRONMENT = window.location.hostname === 'dev.shoutout.us' || window.location.hostname === 'localhost';
 
 // Helper to get the display amount for an order
 // ALWAYS show the talent's video price (original_amount), not the discounted customer price
@@ -117,8 +119,9 @@ const TalentDashboard: React.FC = () => {
     fetchChristmasMode();
   }, []);
 
-  // Check if user has access to Bio feature (controlled by admin via bio_enabled field)
-  const hasBioAccess = talentProfile?.bio_enabled === true;
+  // Check if user has access to Bio feature
+  // Show if: bio_enabled is true in admin OR on dev environment for testing
+  const hasBioAccess = talentProfile?.bio_enabled === true || IS_DEV_ENVIRONMENT;
 
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
