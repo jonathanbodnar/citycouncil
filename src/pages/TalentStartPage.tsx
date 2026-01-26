@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { useAuth } from '../context/AuthContext';
 import {
   UserCircleIcon,
   VideoCameraIcon,
@@ -9,7 +10,7 @@ import {
   CheckIcon,
   ArrowRightIcon,
   DevicePhoneMobileIcon,
-  KeyIcon,
+  ArrowLeftIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
@@ -33,23 +34,21 @@ const STEPS = [
 
 const TalentStartPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, sendPhoneOtp, verifyPhoneOtp } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
-  const [loginMethod, setLoginMethod] = useState<'password' | 'phone'>('password');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [defaultAdminFee, setDefaultAdminFee] = useState(25);
 
-  // Account Data
-  const [accountData, setAccountData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  // Phone OTP Auth State
+  const [authStep, setAuthStep] = useState<'phone' | 'otp'>('phone');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const [userId, setUserId] = useState<string | null>(null);
   const [talentProfileId, setTalentProfileId] = useState<string | null>(null);
 
@@ -80,6 +79,21 @@ const TalentStartPage: React.FC = () => {
     loadSavedProgress();
   }, []);
 
+  // OTP Cooldown timer
+  useEffect(() => {
+    if (otpCooldown > 0) {
+      const timer = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCooldown]);
+
+  // Handle user auth state change
+  useEffect(() => {
+    if (user && currentStep === 1) {
+      handleUserAuthenticated(user.id);
+    }
+  }, [user]);
+
   const fetchPlatformSettings = async () => {
     try {
       const { data } = await supabase.from('app_settings').select('global_admin_fee_percentage').single();
@@ -94,12 +108,12 @@ const TalentStartPage: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.currentStep) setCurrentStep(parsed.currentStep);
+        if (parsed.currentStep && parsed.currentStep > 1) setCurrentStep(parsed.currentStep);
         if (parsed.userId) setUserId(parsed.userId);
         if (parsed.talentProfileId) setTalentProfileId(parsed.talentProfileId);
         if (parsed.profileData) setProfileData({ ...profileData, ...parsed.profileData });
         if (parsed.selectedShoutoutTypes) setSelectedShoutoutTypes(parsed.selectedShoutoutTypes);
-        toast.success('Progress restored!');
+        if (parsed.currentStep > 1) toast.success('Progress restored!');
       } catch (e) {
         console.error('Failed to parse saved progress:', e);
       }
@@ -114,6 +128,81 @@ const TalentStartPage: React.FC = () => {
       }));
     }
   }, [currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes]);
+
+  // Handle authenticated user - create/get talent profile
+  const handleUserAuthenticated = async (authUserId: string) => {
+    setUserId(authUserId);
+    setLoading(true);
+
+    try {
+      // Check for existing talent profile
+      const { data: existingProfile } = await supabase
+        .from('talent_profiles')
+        .select('id, onboarding_completed')
+        .eq('user_id', authUserId)
+        .maybeSingle();
+
+      if (existingProfile?.onboarding_completed) {
+        toast.success('Welcome back!');
+        navigate('/dashboard');
+        return;
+      }
+
+      if (existingProfile) {
+        setTalentProfileId(existingProfile.id);
+        toast.success('Continuing your setup...');
+        setCurrentStep(2);
+        return;
+      }
+
+      // Get user data
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name, email')
+        .eq('id', authUserId)
+        .single();
+
+      // Create new talent profile
+      const { data: newProfile, error: profileError } = await supabase
+        .from('talent_profiles')
+        .insert({
+          user_id: authUserId,
+          category: 'other',
+          bio: '',
+          pricing: 50,
+          fulfillment_time_hours: 72,
+          is_featured: false,
+          is_active: false,
+          total_orders: 0,
+          fulfilled_orders: 0,
+          average_rating: 0,
+          admin_fee_percentage: defaultAdminFee,
+          first_orders_promo_active: true,
+          onboarding_completed: false,
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        toast.error('Failed to create profile. Please try again.');
+        return;
+      }
+
+      setTalentProfileId(newProfile.id);
+      if (userData?.full_name) {
+        setProfileData(prev => ({ ...prev, fullName: userData.full_name || '' }));
+      }
+      
+      toast.success('Account verified! Let\'s set up your profile.');
+      setCurrentStep(2);
+    } catch (error: any) {
+      console.error('Error setting up profile:', error);
+      toast.error(error.message || 'Failed to set up profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Username check
   useEffect(() => {
@@ -140,133 +229,147 @@ const TalentStartPage: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [profileData.username, talentProfileId]);
 
-  // Handle Signup
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (accountData.password !== accountData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
+  // Format phone display
+  const formatPhoneDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(digits);
+  };
+
+  // OTP Input handlers
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newOtp = [...otpCode];
+    newOtp[index] = value.slice(-1);
+    setOtpCode(newOtp);
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
     }
-    if (accountData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const newOtp = [...otpCode];
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtpCode(newOtp);
+    const lastIndex = Math.min(pastedData.length, 5);
+    otpInputRefs.current[lastIndex]?.focus();
+  };
+
+  // Send OTP code
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phone.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
       return;
     }
 
     setLoading(true);
     try {
-      await supabase.auth.signOut();
-
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: accountData.email,
-        password: accountData.password,
-        options: { data: { full_name: accountData.fullName } },
-      });
-
-      if (authError) {
-        if (authError.message?.includes('User already registered')) {
-          toast.error('Email already registered. Please sign in.');
-          setAuthMode('login');
-          return;
-        }
-        throw authError;
+      // First, update or create user with email if provided
+      if (email) {
+        // Store email for later profile creation
+        localStorage.setItem('talent_start_email', email);
       }
 
-      if (!authData.user) throw new Error('Failed to create account');
-      setUserId(authData.user.id);
+      const result = await sendPhoneOtp(phone);
 
-      const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
-      await supabase.from('users').upsert({
-        id: authData.user.id,
-        email: authData.user.email,
-        user_type: 'talent',
-        phone: formattedPhone,
-        full_name: accountData.fullName,
-      }, { onConflict: 'id' });
-
-      const { data: talentData, error: talentError } = await supabase
-        .from('talent_profiles')
-        .insert({
-          user_id: authData.user.id,
-          category: 'other',
-          bio: '',
-          pricing: 50,
-          fulfillment_time_hours: 72,
-          is_featured: false,
-          is_active: false,
-          total_orders: 0,
-          fulfilled_orders: 0,
-          average_rating: 0,
-          admin_fee_percentage: defaultAdminFee,
-          first_orders_promo_active: true,
-          onboarding_completed: false,
-        })
-        .select()
-        .single();
-
-      if (talentError) throw talentError;
-      setTalentProfileId(talentData.id);
-      setProfileData(prev => ({ ...prev, fullName: accountData.fullName }));
-
-      toast.success('Account created!');
-      setCurrentStep(2);
+      if (result.rateLimited) {
+        toast.error(result.error || 'Please wait before requesting another code');
+        setOtpCooldown(60);
+      } else if (result.success) {
+        toast.success('Verification code sent!');
+        setAuthStep('otp');
+        setOtpCooldown(60);
+        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+      } else {
+        toast.error(result.error || 'Failed to send code');
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create account');
+      toast.error(error.message || 'Failed to send verification code');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle Login
-  const handleLogin = async (e: React.FormEvent) => {
+  // Verify OTP code
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    const code = otpCode.join('');
+    if (code.length !== 6) {
+      toast.error('Please enter the 6-digit code');
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginData.email,
-        password: loginData.password,
-      });
-      if (error) throw error;
-      if (!data.user) throw new Error('Failed to sign in');
+      const result = await verifyPhoneOtp(phone, code);
 
-      const { data: profile } = await supabase
-        .from('talent_profiles')
-        .select('id, onboarding_completed')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
+      if (result.success) {
+        // Update user with email and set as talent
+        const storedEmail = localStorage.getItem('talent_start_email');
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (authUser) {
+          // Update users table
+          await supabase.from('users').upsert({
+            id: authUser.id,
+            email: storedEmail || authUser.email,
+            phone: `+1${phone}`,
+            user_type: 'talent',
+          }, { onConflict: 'id' });
 
-      if (profile?.onboarding_completed) {
-        toast.success('Welcome back!');
-        navigate('/dashboard');
-        return;
-      }
-
-      setUserId(data.user.id);
-      if (profile) {
-        setTalentProfileId(profile.id);
-        toast.success('Continuing your setup...');
-        setCurrentStep(2);
+          localStorage.removeItem('talent_start_email');
+          
+          // handleUserAuthenticated will be triggered by the user state change
+          // But let's call it explicitly in case state doesn't change
+          if (!user) {
+            await handleUserAuthenticated(authUser.id);
+          }
+        }
       } else {
-        // Create profile for existing user
-        const { data: newProfile } = await supabase
-          .from('talent_profiles')
-          .insert({
-            user_id: data.user.id,
-            category: 'other',
-            bio: '',
-            pricing: 50,
-            fulfillment_time_hours: 72,
-            is_featured: false,
-            is_active: false,
-            admin_fee_percentage: defaultAdminFee,
-            onboarding_completed: false,
-          })
-          .select()
-          .single();
-        if (newProfile) setTalentProfileId(newProfile.id);
-        setCurrentStep(2);
+        toast.error(result.error || 'Invalid code');
+        setOtpCode(['', '', '', '', '', '']);
+        otpInputRefs.current[0]?.focus();
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
+      toast.error(error.message || 'Failed to verify code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResendOtp = async () => {
+    if (otpCooldown > 0) return;
+    setLoading(true);
+    try {
+      const result = await sendPhoneOtp(phone);
+      if (result.success) {
+        toast.success('New code sent!');
+        setOtpCooldown(60);
+        setOtpCode(['', '', '', '', '', '']);
+        otpInputRefs.current[0]?.focus();
+      } else {
+        toast.error(result.error || 'Failed to resend code');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to resend code');
     } finally {
       setLoading(false);
     }
@@ -379,13 +482,6 @@ const TalentStartPage: React.FC = () => {
     }
   };
 
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 10);
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#0f172a] to-slate-900">
       {/* Header */}
@@ -445,150 +541,130 @@ const TalentStartPage: React.FC = () => {
 
           {/* Main Content */}
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Step 1: Auth */}
+            {/* Step 1: Phone OTP Auth */}
             {currentStep === 1 && (
               <div className="p-6 sm:p-8 lg:p-10">
                 <div className="max-w-md mx-auto">
-                  {/* Toggle */}
-                  <div className="flex mb-6 p-1 bg-gray-100 rounded-xl">
-                    <button
-                      onClick={() => setAuthMode('signup')}
-                      className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
-                        authMode === 'signup' ? 'bg-white text-gray-900 shadow' : 'text-gray-500'
-                      }`}
-                    >
-                      Create Account
-                    </button>
-                    <button
-                      onClick={() => setAuthMode('login')}
-                      className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
-                        authMode === 'login' ? 'bg-white text-gray-900 shadow' : 'text-gray-500'
-                      }`}
-                    >
-                      Sign In
-                    </button>
-                  </div>
-
-                  {authMode === 'signup' ? (
-                    <form onSubmit={handleSignup} className="space-y-4">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
-                      <p className="text-gray-600 text-sm mb-6">Join thousands of creators earning on ShoutOut</p>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={accountData.fullName}
-                          onChange={(e) => setAccountData({ ...accountData, fullName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder="John Doe"
-                        />
+                  {/* Phone Entry */}
+                  {authStep === 'phone' && (
+                    <form onSubmit={handleSendOtp} className="space-y-5">
+                      <div className="text-center mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <DevicePhoneMobileIcon className="w-8 h-8 text-white" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900">Get Started</h2>
+                        <p className="text-gray-600 text-sm mt-1">
+                          Enter your phone number to sign up or log in
+                        </p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Email Address
+                        </label>
                         <input
                           type="email"
-                          required
-                          value={accountData.email}
-                          onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
                           placeholder="john@example.com"
                         />
+                        <p className="text-xs text-gray-500 mt-1">For account notifications</p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <input
-                          type="tel"
-                          required
-                          value={formatPhone(accountData.phone)}
-                          onChange={(e) => setAccountData({ ...accountData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder="(555) 123-4567"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">For account security & payouts</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <input
-                          type="password"
-                          required
-                          minLength={6}
-                          value={accountData.password}
-                          onChange={(e) => setAccountData({ ...accountData, password: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder="••••••••"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                        <input
-                          type="password"
-                          required
-                          minLength={6}
-                          value={accountData.confirmPassword}
-                          onChange={(e) => setAccountData({ ...accountData, confirmPassword: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder="••••••••"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Phone Number
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="text-gray-500">+1</span>
+                          </div>
+                          <input
+                            type="tel"
+                            required
+                            autoComplete="tel"
+                            value={formatPhoneDisplay(phone)}
+                            onChange={handlePhoneChange}
+                            className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
+                            placeholder="(555) 555-5555"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">We'll send a 6-digit code to verify</p>
                       </div>
 
                       <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        disabled={loading || phone.length !== 10}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
-                        {loading ? 'Creating...' : 'Create Account'}
-                        <ArrowRightIcon className="w-4 h-4" />
-                      </button>
-                    </form>
-                  ) : (
-                    <form onSubmit={handleLogin} className="space-y-4">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                      <p className="text-gray-600 text-sm mb-6">Continue setting up your profile</p>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                          type="email"
-                          required
-                          value={loginData.email}
-                          onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder="john@example.com"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <input
-                          type="password"
-                          required
-                          value={loginData.password}
-                          onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder="••••••••"
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {loading ? 'Signing in...' : 'Sign In & Continue'}
-                        <ArrowRightIcon className="w-4 h-4" />
+                        <DevicePhoneMobileIcon className="w-5 h-5" />
+                        {loading ? 'Sending code...' : 'Send Verification Code'}
                       </button>
 
-                      <p className="text-center text-sm text-gray-500 mt-4">
-                        <Link to="/login" className="text-emerald-600 hover:underline">
-                          Forgot password?
-                        </Link>
+                      <p className="text-center text-xs text-gray-500 mt-4">
+                        Already have an account? This will log you in automatically.
                       </p>
+                    </form>
+                  )}
+
+                  {/* OTP Verification */}
+                  {authStep === 'otp' && (
+                    <form onSubmit={handleVerifyOtp} className="space-y-5">
+                      <div className="text-center mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">Enter Code</h2>
+                        <p className="text-gray-600 text-sm mt-1">
+                          We sent a 6-digit code to
+                        </p>
+                        <p className="text-emerald-600 font-medium">{formatPhoneDisplay(phone)}</p>
+                      </div>
+
+                      <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
+                        {otpCode.map((digit, index) => (
+                          <input
+                            key={index}
+                            ref={(el) => { otpInputRefs.current[index] = el; }}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleOtpChange(index, e.target.value)}
+                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                            className="w-12 h-14 text-center text-2xl font-bold border border-gray-300 bg-white text-gray-900 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading || otpCode.join('').length !== 6}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? 'Verifying...' : 'Verify & Continue'}
+                        <ArrowRightIcon className="w-4 h-4" />
+                      </button>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthStep('phone');
+                            setOtpCode(['', '', '', '', '', '']);
+                          }}
+                          className="text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                        >
+                          <ArrowLeftIcon className="w-4 h-4" />
+                          Change number
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={otpCooldown > 0 || loading}
+                          className="text-emerald-600 hover:text-emerald-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Resend code'}
+                        </button>
+                      </div>
                     </form>
                   )}
                 </div>
