@@ -24,7 +24,11 @@ import {
   ShoppingBagIcon,
   TicketIcon,
   BellIcon,
-  ShareIcon
+  ShareIcon,
+  HomeIcon,
+  DocumentDuplicateIcon,
+  RocketLaunchIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../services/supabase';
@@ -79,7 +83,7 @@ const TalentDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [talentProfile, setTalentProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'profile' | 'payouts' | 'media' | 'bio'>('analytics');
+  const [activeTab, setActiveTab] = useState<'welcome' | 'orders' | 'analytics' | 'profile' | 'payouts' | 'media' | 'bio'>('welcome');
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -126,14 +130,14 @@ const TalentDashboard: React.FC = () => {
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
   useEffect(() => {
-    const validTabs = ['orders', 'analytics', 'profile', 'payouts', 'media'];
+    const validTabs = ['welcome', 'orders', 'analytics', 'profile', 'payouts', 'media'];
     if (hasBioAccess) validTabs.push('bio');
     
     if (tabParam && validTabs.includes(tabParam)) {
-      setActiveTab(tabParam as 'orders' | 'analytics' | 'profile' | 'payouts' | 'media' | 'bio');
+      setActiveTab(tabParam as 'welcome' | 'orders' | 'analytics' | 'profile' | 'payouts' | 'media' | 'bio');
     } else {
-      // Default to analytics (stats) when no tab parameter
-      setActiveTab('analytics');
+      // Default to welcome page when no tab parameter
+      setActiveTab('welcome');
     }
   }, [tabParam, hasBioAccess]); // Watch the actual tab value
 
@@ -969,44 +973,12 @@ const TalentDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* 24hr Express Delivery Banner */}
-      {showExpressBanner && talentProfile && !talentProfile.express_delivery_enabled && (
-        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-emerald-500/20">
-                <ClockIcon className="h-6 w-6 text-emerald-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white">Make 20% more per video with 24hr Express Delivery!</h3>
-                <p className="text-sm text-gray-300">Drive demand by adding a rush delivery option at ${talentProfile?.pricing ? Math.round(talentProfile.pricing * 1.2) : '---'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={enableExpressDelivery}
-                disabled={enablingExpress}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-              >
-                {enablingExpress ? 'Enabling...' : 'Add 24hr Delivery'}
-              </button>
-              <button
-                onClick={dismissExpressBanner}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
-                title="Dismiss"
-              >
-                <XCircleIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tab Navigation - Hidden on Mobile */}
       <div className="mb-8 hidden md:block">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {[
+              { key: 'welcome', label: 'Welcome', count: null, icon: HomeIcon },
               { key: 'orders', label: 'Orders', count: orders.length },
               { key: 'analytics', label: 'Analytics', count: null },
               { key: 'media', label: 'Promote', count: null },
@@ -1043,6 +1015,227 @@ const TalentDashboard: React.FC = () => {
         </div>
       </div>
 
+
+      {/* Welcome Tab */}
+      {activeTab === 'welcome' && talentProfile && (
+        <div className="space-y-4 sm:space-y-6">
+          {/* 24hr Express Delivery Banner - Inside Welcome Tab */}
+          {showExpressBanner && !talentProfile.express_delivery_enabled && (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-emerald-500/20">
+                    <ClockIcon className="h-6 w-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Make 20% more per video with 24hr Express Delivery!</h3>
+                    <p className="text-sm text-gray-300">Drive demand by adding a rush delivery option at ${talentProfile?.pricing ? Math.round(talentProfile.pricing * 1.2) : '---'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={enableExpressDelivery}
+                    disabled={enablingExpress}
+                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {enablingExpress ? 'Enabling...' : 'Add 24hr Delivery'}
+                  </button>
+                  <button
+                    onClick={dismissExpressBanner}
+                    className="p-2 text-gray-400 hover:text-white transition-colors"
+                    title="Dismiss"
+                  >
+                    <XCircleIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Welcome Header */}
+          <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                <RocketLaunchIcon className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-white">Welcome to ShoutOut</h2>
+                <p className="text-xs sm:text-sm text-gray-400">Transform your audience into a monetizable, uncancellable engine</p>
+              </div>
+            </div>
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+              How ShoutOut enables you to transform your audience into a monetizable,{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable</span>
+              {' '}engine that fuels your growth in a few simple steps.
+            </p>
+          </div>
+
+          {/* Section 1: Kickstart Monetization */}
+          <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+                <VideoCameraIcon className="h-5 w-5 text-emerald-400" />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-white">Kickstart monetization through personalized videos</h3>
+            </div>
+
+            {/* Copy Profile Link */}
+            <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <LinkIcon className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                  <span className="text-white font-medium text-sm truncate">
+                    shoutout.us/{talentProfile?.username || 'yourname'}?utm=1
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://shoutout.us/${talentProfile?.username || ''}?utm=1`);
+                    toast.success('Profile link copied!');
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <DocumentDuplicateIcon className="h-4 w-4" />
+                  Copy Link
+                </button>
+              </div>
+              <p className="text-xs text-emerald-300 mt-2">+10% earnings from orders with this link</p>
+            </div>
+
+            {/* Most Effective Promotion */}
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <ShareIcon className="h-4 w-4 text-pink-400" />
+                <span className="text-sm font-semibold text-white">Most Effective Promotion</span>
+              </div>
+              <div className="p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-orange-500/10 border border-pink-500/20 mb-3">
+                <p className="text-gray-200 text-sm leading-relaxed">
+                  Post a funny story or previously delivered ShoutOut on Instagram (as a reel or just a story) and{' '}
+                  <strong className="text-white">add your profile link on the story.</strong>
+                </p>
+              </div>
+              
+              {/* Case Studies */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    <span className="text-emerald-400 font-semibold">Melonie Mac</span> got{' '}
+                    <span className="text-yellow-400 font-bold bg-yellow-400/10 px-1 rounded">12 orders</span> in just{' '}
+                    <span className="text-emerald-400 font-bold bg-emerald-400/10 px-1 rounded">24 hours</span> by posting a quick reel and adding it to her stories with her profile link.
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    <span className="text-emerald-400 font-semibold">Kaitlin Bennett</span> posted a single story on Instagram with her profile link and got{' '}
+                    <span className="text-yellow-400 font-bold bg-yellow-400/10 px-1 rounded">10 orders</span> in the first{' '}
+                    <span className="text-emerald-400 font-bold bg-emerald-400/10 px-1 rounded">24 hours</span>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Replace Linktree */}
+          <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
+                  <img src="/whiteicon.png" alt="ShoutOut" className="h-5 w-5" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white">Replace your bio link</h3>
+              </div>
+              <a
+                href={`https://shoutout.fans/${talentProfile?.username || ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium"
+              >
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                Check it Out
+              </a>
+            </div>
+
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-4">
+              Replace linktree (and other bulky, low conversion bio links) on your social media for free, driving your massive audience into an{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable audience</span>.
+            </p>
+
+            {/* Bio Link Examples Carousel */}
+            <div className="relative -mx-4 sm:-mx-6 overflow-hidden mb-4">
+              <div className="absolute left-0 w-12 sm:w-16 bg-gradient-to-r from-[#1a1a2e] to-transparent z-10 pointer-events-none" style={{ top: 0, bottom: '16px' }} />
+              <div className="absolute right-0 w-12 sm:w-16 bg-gradient-to-l from-[#1a1a2e] to-transparent z-10 pointer-events-none" style={{ top: 0, bottom: '16px' }} />
+              
+              <div className="overflow-x-auto pb-4 px-4 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <div className="flex gap-3" style={{ width: 'max-content' }}>
+                  {bioCreatorBios.slice(0, 5).map((creator, index) => (
+                    <div key={index} className="flex-shrink-0 w-[120px]">
+                      <div className="relative rounded-xl overflow-hidden border border-white/10 bg-[#1a1a2e]" style={{ boxShadow: '0 15px 30px -8px rgba(0, 0, 0, 0.4)' }}>
+                        <div className="relative w-full h-[220px] overflow-hidden">
+                          <iframe
+                            src={`https://shoutout.fans/${creator.handle}`}
+                            title={`${creator.name}'s bio`}
+                            className="border-0 rounded-xl origin-top-left pointer-events-none"
+                            loading="lazy"
+                            scrolling="no"
+                            style={{
+                              width: '375px',
+                              height: '667px',
+                              transform: 'scale(0.32)',
+                              transformOrigin: 'top left',
+                            }}
+                          />
+                          <div className="absolute inset-0 cursor-default" />
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+                          <p className="font-medium text-[10px] text-white text-center">{creator.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Services List */}
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-white mb-3">Your ShoutOut Fans link includes exclusive ways to monetize:</p>
+              <div className="space-y-2">
+                {[
+                  { icon: UserGroupIcon, text: 'Sell social collaborations', subtext: 'make $100-$2000/video', available: true },
+                  { icon: BuildingOfficeIcon, text: 'Capture leads for corporate events and deals', subtext: null, available: true },
+                  { icon: ShoppingBagIcon, text: 'Sell Merch', subtext: 'coming soon', available: false },
+                  { icon: TicketIcon, text: 'Sell Event Tickets', subtext: 'coming soon', available: false },
+                ].map((service, i) => (
+                  <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${service.available ? 'bg-emerald-500/10' : 'bg-white/5'}`}>
+                    <service.icon className={`h-4 w-4 ${service.available ? 'text-emerald-400' : 'text-gray-500'}`} />
+                    <span className={`text-sm ${service.available ? 'text-white' : 'text-gray-400'}`}>
+                      {service.text}
+                      {service.subtext && (
+                        <span className={`ml-1 ${service.available ? 'text-emerald-400' : 'text-gray-500'} text-xs`}>
+                          ({service.subtext})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-gray-400 text-xs mt-3">All your services run through your ShoutOut profile with no additional setup required.</p>
+            </div>
+
+            {/* Value Badges */}
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs">
+                <SparklesIcon className="h-3.5 w-3.5 text-purple-400" />
+                <span className="text-gray-300">Capture followers into marketable list — no Mailchimp needed</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs">
+                <PlayIcon className="h-3.5 w-3.5 text-cyan-400" />
+                <span className="text-gray-300">Integrates your Rumble feed directly</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Orders Tab */}
       {activeTab === 'orders' && (
