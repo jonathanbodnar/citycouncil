@@ -1150,8 +1150,8 @@ const TalentDashboard: React.FC = () => {
 
           {/* Section 2: Replace Linktree */}
           <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
-            <div className="mb-4">
-              <p className="text-sm sm:text-base font-medium text-white leading-relaxed mb-3">
+            <div className="mb-6">
+              <p className="text-base sm:text-lg font-medium text-white leading-relaxed mb-4">
                 Replace linktree (and other bulky, low conversion bio links) on your social media for free, with your{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">ShoutOut Fans</span>
                 {' '}link driving your massive audience into an{' '}
@@ -1167,7 +1167,7 @@ const TalentDashboard: React.FC = () => {
             </div>
 
             {/* Bio Link Examples Carousel - Auto-scrolling */}
-            <div className="relative -mx-4 sm:-mx-6 overflow-hidden mb-4">
+            <div className="relative -mx-4 sm:-mx-6 overflow-hidden mb-6">
               <div className="absolute left-0 w-12 sm:w-16 bg-gradient-to-r from-[#1a1a2e] to-transparent z-10 pointer-events-none" style={{ top: 0, bottom: '16px' }} />
               <div className="absolute right-0 w-12 sm:w-16 bg-gradient-to-l from-[#1a1a2e] to-transparent z-10 pointer-events-none" style={{ top: 0, bottom: '16px' }} />
               
@@ -1209,16 +1209,16 @@ const TalentDashboard: React.FC = () => {
 
             {/* Services List */}
             <div>
-              <p className="text-sm font-semibold text-white mb-3">Your ShoutOut Fans link includes your ShoutOut profile and exclusive ways to monetize:</p>
-              <div className="space-y-2">
+              <p className="text-sm font-semibold text-white mb-4">Your ShoutOut Fans link includes your ShoutOut profile and exclusive ways to monetize:</p>
+              <div className="space-y-3">
                 {[
                   { icon: UserGroupIcon, text: 'Sell social collaborations', subtext: 'make $100-$2000/video', available: true },
                   { icon: BuildingOfficeIcon, text: 'Capture leads for corporate events and deals', subtext: null, available: true },
                   { icon: ShoppingBagIcon, text: 'Sell Merch', subtext: 'coming soon', available: false },
                   { icon: TicketIcon, text: 'Sell Event Tickets', subtext: 'coming soon', available: false },
                 ].map((service, i) => (
-                  <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${service.available ? 'bg-emerald-500/10' : 'bg-white/5'}`}>
-                    <service.icon className={`h-4 w-4 ${service.available ? 'text-emerald-400' : 'text-gray-500'}`} />
+                  <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${service.available ? 'bg-emerald-500/10' : 'bg-white/5'}`}>
+                    <service.icon className={`h-5 w-5 ${service.available ? 'text-emerald-400' : 'text-gray-500'}`} />
                     <span className={`text-sm ${service.available ? 'text-white' : 'text-gray-400'}`}>
                       {service.text}
                       {service.subtext && (
@@ -1230,7 +1230,7 @@ const TalentDashboard: React.FC = () => {
                   </div>
                 ))}
               </div>
-              <p className="text-gray-400 text-xs mt-3">All your services run through your ShoutOut profile with no additional setup required.</p>
+              <p className="text-gray-400 text-xs mt-4">All your services run through your ShoutOut profile with no additional setup required.</p>
             </div>
           </div>
         </div>
