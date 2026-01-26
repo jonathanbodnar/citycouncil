@@ -1052,31 +1052,26 @@ const TalentDashboard: React.FC = () => {
             </div>
           )}
 
-          {/* Welcome Header */}
-          <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                <RocketLaunchIcon className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-white">Welcome to ShoutOut</h2>
-                <p className="text-xs sm:text-sm text-gray-400">Transform your audience into a monetizable, uncancellable engine</p>
-              </div>
-            </div>
-            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-              How ShoutOut enables you to transform your audience into a monetizable,{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable</span>
-              {' '}engine that fuels your growth in a few simple steps.
-            </p>
+          {/* Welcome Header - Styled title like /creators */}
+          <div className="text-center mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight">
+              How ShoutOut enables you to transform your audience into a{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">monetizable</span>,{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400">uncancellable</span>
+              {' '}engine that fuels your growth.
+            </h1>
           </div>
 
           {/* Section 1: Kickstart Monetization */}
           <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
                 <VideoCameraIcon className="h-5 w-5 text-emerald-400" />
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-white">Kickstart monetization through personalized videos</h3>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white">Kickstart monetization through personalized videos</h3>
+                <p className="text-xs text-emerald-400 font-medium">+10% earnings from orders with your link</p>
+              </div>
             </div>
 
             {/* Copy Profile Link */}
@@ -1099,11 +1094,10 @@ const TalentDashboard: React.FC = () => {
                   Copy Link
                 </button>
               </div>
-              <p className="text-xs text-emerald-300 mt-2">+10% earnings from orders with this link</p>
             </div>
 
             {/* Most Effective Promotion */}
-            <div className="mb-4">
+            <div>
               <div className="flex items-center gap-2 mb-3">
                 <ShareIcon className="h-4 w-4 text-pink-400" />
                 <span className="text-sm font-semibold text-white">Most Effective Promotion</span>
@@ -1115,22 +1109,13 @@ const TalentDashboard: React.FC = () => {
                 </p>
               </div>
               
-              {/* Case Studies */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <p className="text-xs text-gray-300 leading-relaxed">
-                    <span className="text-emerald-400 font-semibold">Melonie Mac</span> got{' '}
-                    <span className="text-yellow-400 font-bold bg-yellow-400/10 px-1 rounded">12 orders</span> in just{' '}
-                    <span className="text-emerald-400 font-bold bg-emerald-400/10 px-1 rounded">24 hours</span> by posting a quick reel and adding it to her stories with her profile link.
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <p className="text-xs text-gray-300 leading-relaxed">
-                    <span className="text-emerald-400 font-semibold">Kaitlin Bennett</span> posted a single story on Instagram with her profile link and got{' '}
-                    <span className="text-yellow-400 font-bold bg-yellow-400/10 px-1 rounded">10 orders</span> in the first{' '}
-                    <span className="text-emerald-400 font-bold bg-emerald-400/10 px-1 rounded">24 hours</span>.
-                  </p>
-                </div>
+              {/* Case Study */}
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  <span className="text-emerald-400 font-semibold">Kaitlin Bennett</span> posted a single story on Instagram with her profile link and got{' '}
+                  <span className="text-yellow-400 font-bold bg-yellow-400/10 px-1 rounded">10 orders</span> in the first{' '}
+                  <span className="text-emerald-400 font-bold bg-emerald-400/10 px-1 rounded">24 hours</span>.
+                </p>
               </div>
             </div>
           </div>
@@ -1144,15 +1129,13 @@ const TalentDashboard: React.FC = () => {
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-white">Replace your bio link</h3>
               </div>
-              <a
-                href={`https://shoutout.fans/${talentProfile?.username || ''}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setActiveTab('bio')}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium"
               >
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                 Check it Out
-              </a>
+              </button>
             </div>
 
             <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-4">

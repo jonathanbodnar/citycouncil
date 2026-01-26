@@ -78,12 +78,6 @@ const MobileNavigation: React.FC = () => {
     customIcon?: string;
   }> = [
     {
-      name: 'Home',
-      href: '/dashboard?tab=welcome',
-      icon: HomeIcon,
-      iconSolid: HomeIconSolid,
-    },
-    {
       name: 'Orders',
       href: '/dashboard?tab=orders',
       icon: RectangleStackIcon,
