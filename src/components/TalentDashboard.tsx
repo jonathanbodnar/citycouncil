@@ -108,6 +108,7 @@ const TalentDashboard: React.FC = () => {
   
   // Bio carousel ref for auto-scrolling
   const bioCarouselRef = useRef<HTMLDivElement>(null);
+  const welcomeCarouselRef = useRef<HTMLDivElement>(null);
   const promoVideoInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch Christmas mode setting
@@ -168,6 +169,38 @@ const TalentDashboard: React.FC = () => {
       
       position -= speed;
       const cardWidth = 160 + 16; // card width + gap
+      if (Math.abs(position) >= cardWidth * bioCreatorBios.length) {
+        position = 0;
+      }
+      carousel.style.transform = `translateX(${position}px)`;
+      animationId = requestAnimationFrame(animate);
+    };
+
+    // Start animation immediately
+    animationId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [activeTab]);
+
+  // Auto-scroll animation for welcome tab carousel
+  useEffect(() => {
+    if (activeTab !== 'welcome') return;
+    
+    let animationId: number;
+    let position = 0;
+    const speed = 0.4;
+
+    const animate = () => {
+      const carousel = welcomeCarouselRef.current;
+      if (!carousel) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+      
+      position -= speed;
+      const cardWidth = 120 + 12; // card width + gap (smaller cards for welcome)
       if (Math.abs(position) >= cardWidth * bioCreatorBios.length) {
         position = 0;
       }
@@ -1053,8 +1086,8 @@ const TalentDashboard: React.FC = () => {
           )}
 
           {/* Welcome Header - Styled title like /creators */}
-          <div className="text-center mb-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight">
+          <div className="text-center py-4 sm:py-6">
+            <h1 className="text-lg sm:text-xl font-bold text-white leading-tight max-w-[600px] mx-auto">
               How ShoutOut enables you to transform your audience into a{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">monetizable</span>,{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400">uncancellable</span>
@@ -1075,32 +1108,27 @@ const TalentDashboard: React.FC = () => {
             </div>
 
             {/* Copy Profile Link */}
-            <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <LinkIcon className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span className="text-white font-medium text-sm truncate">
-                    shoutout.us/{talentProfile?.username || 'yourname'}?utm=1
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://shoutout.us/${talentProfile?.username || ''}?utm=1`);
-                    toast.success('Profile link copied!');
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg transition-colors text-sm font-medium"
-                >
-                  <DocumentDuplicateIcon className="h-4 w-4" />
-                  Copy Link
-                </button>
+            <div 
+              className="mt-4 mb-4 p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 cursor-pointer hover:border-emerald-400/40 transition-colors"
+              onClick={() => {
+                navigator.clipboard.writeText(`https://shoutout.us/${talentProfile?.username || ''}?utm=1`);
+                toast.success('Profile link copied!');
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <LinkIcon className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <span className="text-white font-medium text-sm">
+                  shoutout.us/{talentProfile?.username || 'yourname'}?utm=1
+                </span>
+                <DocumentDuplicateIcon className="h-4 w-4 text-emerald-400 ml-auto" />
               </div>
             </div>
 
-            {/* Most Effective Promotion */}
+            {/* Most Effective Way to Get Orders */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <ShareIcon className="h-4 w-4 text-pink-400" />
-                <span className="text-sm font-semibold text-white">Most Effective Promotion</span>
+                <span className="text-sm font-semibold text-white">Most effective way to get orders</span>
               </div>
               <div className="p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-orange-500/10 border border-pink-500/20 mb-3">
                 <p className="text-gray-200 text-sm leading-relaxed">
@@ -1123,34 +1151,39 @@ const TalentDashboard: React.FC = () => {
           {/* Section 2: Replace Linktree */}
           <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center flex-shrink-0">
                   <img src="/whiteicon.png" alt="ShoutOut" className="h-5 w-5" />
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-white">Replace your bio link</h3>
+                <p className="text-sm sm:text-base font-medium text-white leading-snug">
+                  Replace linktree (and other bulky, low conversion bio links) on your social media for free, with your{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">ShoutOut Fans</span>
+                  {' '}link driving your massive audience into an{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable audience</span>.
+                </p>
               </div>
               <button
                 onClick={() => setActiveTab('bio')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium flex-shrink-0"
               >
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                 Check it Out
               </button>
             </div>
 
-            <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-4">
-              Replace linktree (and other bulky, low conversion bio links) on your social media for free, driving your massive audience into an{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable audience</span>.
-            </p>
-
-            {/* Bio Link Examples Carousel */}
+            {/* Bio Link Examples Carousel - Auto-scrolling */}
             <div className="relative -mx-4 sm:-mx-6 overflow-hidden mb-4">
               <div className="absolute left-0 w-12 sm:w-16 bg-gradient-to-r from-[#1a1a2e] to-transparent z-10 pointer-events-none" style={{ top: 0, bottom: '16px' }} />
               <div className="absolute right-0 w-12 sm:w-16 bg-gradient-to-l from-[#1a1a2e] to-transparent z-10 pointer-events-none" style={{ top: 0, bottom: '16px' }} />
               
-              <div className="overflow-x-auto pb-4 px-4 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                <div className="flex gap-3" style={{ width: 'max-content' }}>
-                  {bioCreatorBios.slice(0, 5).map((creator, index) => (
+              <div className="overflow-x-clip overflow-y-visible pb-4">
+                <div 
+                  ref={welcomeCarouselRef}
+                  className="flex gap-3"
+                  style={{ width: 'max-content' }}
+                >
+                  {/* Duplicate for seamless loop */}
+                  {[...bioCreatorBios, ...bioCreatorBios, ...bioCreatorBios].map((creator, index) => (
                     <div key={index} className="flex-shrink-0 w-[120px]">
                       <div className="relative rounded-xl overflow-hidden border border-white/10 bg-[#1a1a2e]" style={{ boxShadow: '0 15px 30px -8px rgba(0, 0, 0, 0.4)' }}>
                         <div className="relative w-full h-[220px] overflow-hidden">
@@ -1180,8 +1213,8 @@ const TalentDashboard: React.FC = () => {
             </div>
 
             {/* Services List */}
-            <div className="mb-4">
-              <p className="text-sm font-semibold text-white mb-3">Your ShoutOut Fans link includes exclusive ways to monetize:</p>
+            <div>
+              <p className="text-sm font-semibold text-white mb-3">Your ShoutOut Fans link includes your ShoutOut profile and exclusive ways to monetize:</p>
               <div className="space-y-2">
                 {[
                   { icon: UserGroupIcon, text: 'Sell social collaborations', subtext: 'make $100-$2000/video', available: true },
@@ -1203,18 +1236,6 @@ const TalentDashboard: React.FC = () => {
                 ))}
               </div>
               <p className="text-gray-400 text-xs mt-3">All your services run through your ShoutOut profile with no additional setup required.</p>
-            </div>
-
-            {/* Value Badges */}
-            <div className="flex flex-wrap gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs">
-                <SparklesIcon className="h-3.5 w-3.5 text-purple-400" />
-                <span className="text-gray-300">Capture followers into marketable list — no Mailchimp needed</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs">
-                <PlayIcon className="h-3.5 w-3.5 text-cyan-400" />
-                <span className="text-gray-300">Integrates your Rumble feed directly</span>
-              </div>
             </div>
           </div>
         </div>
