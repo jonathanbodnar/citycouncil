@@ -6,7 +6,6 @@ import {
   UserCircleIcon,
   VideoCameraIcon,
   CurrencyDollarIcon,
-  ShieldCheckIcon,
   CheckIcon,
   ArrowRightIcon,
   DevicePhoneMobileIcon,
@@ -22,14 +21,12 @@ import PricingHelper from '../components/onboarding/PricingHelper';
 import { TalentCategory } from '../types';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
-import MFAEnrollmentDual from '../components/MFAEnrollmentDual';
 
 const STEPS = [
   { id: 1, name: 'Create Account', description: 'Sign up or login', icon: UserCircleIcon },
   { id: 2, name: 'Profile Info', description: 'Your public profile', icon: StarIcon },
   { id: 3, name: 'Charity', description: 'Optional donation', icon: CurrencyDollarIcon },
   { id: 4, name: 'Promo Video', description: 'Introduce yourself', icon: VideoCameraIcon },
-  { id: 5, name: 'Security', description: '2FA setup', icon: ShieldCheckIcon },
 ];
 
 const TalentStartPage: React.FC = () => {
@@ -436,7 +433,7 @@ const TalentStartPage: React.FC = () => {
     }
   };
 
-  // Step 4: Video
+  // Step 4: Video - Final step, completes onboarding
   const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoVideo) return toast.error('Please upload a video');
@@ -445,40 +442,34 @@ const TalentStartPage: React.FC = () => {
     setVideoUploading(true);
     try {
       const result = await uploadVideoToWasabi(promoVideo, talentProfileId);
+      
+      // Update video URL and mark onboarding as complete
       await supabase
         .from('talent_profiles')
-        .update({ promo_video_url: result.videoUrl })
+        .update({ 
+          promo_video_url: result.videoUrl,
+          onboarding_completed: true,
+          is_active: false // Admin must approve
+        })
         .eq('id', talentProfileId);
 
+      // Send admin notification
       try {
         await supabase.functions.invoke('onboarding-complete-notification', {
-          body: { talentId: talentProfileId, talentName: accountData.fullName, email: accountData.email },
+          body: { talentId: talentProfileId, talentName: profileData.fullName, email: email },
         });
       } catch (e) {}
 
-      toast.success('Video uploaded!');
-      setCurrentStep(5);
+      // Clear saved progress
+      localStorage.removeItem('talent_start_progress');
+      localStorage.removeItem('talent_start_email');
+
+      toast.success('🎉 Onboarding complete! Pending admin approval.');
+      setTimeout(() => navigate('/dashboard'), 2000);
     } catch (error: any) {
       toast.error(error.message || 'Upload failed');
     } finally {
       setVideoUploading(false);
-    }
-  };
-
-  // Step 5: Complete
-  const handleComplete = async () => {
-    if (!talentProfileId) return;
-    try {
-      await supabase
-        .from('talent_profiles')
-        .update({ onboarding_completed: true, is_active: false })
-        .eq('id', talentProfileId);
-
-      localStorage.removeItem('talent_start_progress');
-      toast.success('🎉 Onboarding complete! Pending admin approval.');
-      setTimeout(() => navigate('/dashboard'), 2000);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to complete');
     }
   };
 
@@ -902,26 +893,6 @@ const TalentStartPage: React.FC = () => {
               </div>
             )}
 
-            {/* Step 5: MFA */}
-            {currentStep === 5 && (
-              <div className="p-6 sm:p-8 lg:p-10">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Secure Your Account</h2>
-                <p className="text-gray-600 mb-6">Set up two-factor authentication (optional but recommended)</p>
-
-                <MFAEnrollmentDual
-                  onComplete={handleComplete}
-                  required={false}
-                  initialPhone={accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : undefined}
-                />
-
-                <button
-                  onClick={handleComplete}
-                  className="w-full mt-6 py-3.5 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-all"
-                >
-                  Skip for Now
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
