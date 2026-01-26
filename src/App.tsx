@@ -124,6 +124,7 @@ const ShortLinkRedirectPage = lazy(() => import('./pages/ShortLinkRedirectPage')
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const PayoutSetupPage = lazy(() => import('./pages/PayoutSetupPage'));
 const CreatorsPage = lazy(() => import('./pages/CreatorsPage'));
+const TalentStartPage = lazy(() => import('./pages/TalentStartPage'));
 
 // Redirect component for old /profile/ URLs
 const ProfileRedirect: React.FC = () => {
@@ -207,6 +208,7 @@ function App() {
             <Route path="/signup" element={<SignupRedirect />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/onboarding" element={<PublicTalentOnboardingPage />} />
+            <Route path="/start" element={<TalentStartPage />} />
             
             {/* Promo redirects - short name variations to talent profiles with UTM and auto-discount */}
             {/* Shawn variations -> shawnfarash profile with 15% off */}
