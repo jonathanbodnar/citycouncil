@@ -249,25 +249,22 @@ const TalentStartPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-      // Check if user exists with a phone number
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-registration-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({
+      // Check if user exists with a phone number using Supabase client
+      const { data, error } = await supabase.functions.invoke('send-registration-otp', {
+        body: {
           email: normalizedEmail,
           checkEmailOnly: true,
-        }),
+        },
       });
 
-      const data = await response.json();
+      if (error) {
+        console.error('Email check error:', error);
+        // On error, just proceed to phone step
+        setAuthStep('phone');
+        return;
+      }
       
-      if (data.sentToExistingPhone && data.phone) {
+      if (data?.sentToExistingPhone && data?.phone) {
         // User exists with phone - OTP already sent, skip to OTP step
         setExistingUserPhone(data.phone);
         setPhone(data.phone);
@@ -303,24 +300,19 @@ const TalentStartPage: React.FC = () => {
     const normalizedEmail = email.toLowerCase().trim();
 
     try {
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-registration-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('send-registration-otp', {
+        body: {
           email: normalizedEmail,
           phone: formattedPhone,
-        }),
+        },
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send verification code');
+      if (error) {
+        throw new Error(error.message || 'Failed to send verification code');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       toast.success('Verification code sent!');
@@ -349,29 +341,24 @@ const TalentStartPage: React.FC = () => {
     const formattedPhone = existingUserPhone || `+1${phone.replace(/\D/g, '')}`;
 
     try {
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/verify-registration-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('verify-registration-otp', {
+        body: {
           email: normalizedEmail,
           phone: formattedPhone,
           code: otpCode,
-        }),
+        },
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Invalid verification code');
+      if (error) {
+        throw new Error(error.message || 'Invalid verification code');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       // Set the session directly
-      if (data.session?.access_token && data.session?.refresh_token) {
+      if (data?.session?.access_token && data?.session?.refresh_token) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
@@ -413,24 +400,19 @@ const TalentStartPage: React.FC = () => {
     const formattedPhone = existingUserPhone || `+1${phone.replace(/\D/g, '')}`;
 
     try {
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-registration-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('send-registration-otp', {
+        body: {
           email: normalizedEmail,
           phone: formattedPhone,
-        }),
+        },
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to resend code');
+      if (error) {
+        throw new Error(error.message || 'Failed to resend code');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       toast.success('New code sent!');
