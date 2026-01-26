@@ -1150,23 +1150,18 @@ const TalentDashboard: React.FC = () => {
 
           {/* Section 2: Replace Linktree */}
           <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <img src="/whiteicon.png" alt="ShoutOut" className="h-5 w-5" />
-                </div>
-                <p className="text-sm sm:text-base font-medium text-white leading-snug">
-                  Replace linktree (and other bulky, low conversion bio links) on your social media for free, with your{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">ShoutOut Fans</span>
-                  {' '}link driving your massive audience into an{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable audience</span>.
-                </p>
-              </div>
+            <div className="mb-4">
+              <p className="text-sm sm:text-base font-medium text-white leading-relaxed mb-3">
+                Replace linktree (and other bulky, low conversion bio links) on your social media for free, with your{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">ShoutOut Fans</span>
+                {' '}link driving your massive audience into an{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable audience</span>.
+              </p>
               <button
                 onClick={() => setActiveTab('bio')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium flex-shrink-0"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium"
               >
-                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                <img src="/whiteicon.png" alt="ShoutOut" className="h-4 w-4" />
                 Check it Out
               </button>
             </div>
