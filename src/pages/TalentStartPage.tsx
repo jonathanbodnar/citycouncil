@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { useAuth } from '../context/AuthContext';
 import {
   UserCircleIcon,
   VideoCameraIcon,
@@ -31,7 +30,6 @@ const STEPS = [
 
 const TalentStartPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, sendPhoneOtp, verifyPhoneOtp } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -84,12 +82,16 @@ const TalentStartPage: React.FC = () => {
     }
   }, [otpCooldown]);
 
-  // Handle user auth state change
+  // Check for existing session on mount
   useEffect(() => {
-    if (user && currentStep === 1) {
-      handleUserAuthenticated(user.id);
-    }
-  }, [user]);
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user && currentStep === 1) {
+        handleUserAuthenticated(session.user.id);
+      }
+    };
+    checkExistingSession();
+  }, []);
 
   const fetchPlatformSettings = async () => {
     try {
@@ -268,7 +270,7 @@ const TalentStartPage: React.FC = () => {
     otpInputRefs.current[lastIndex]?.focus();
   };
 
-  // Send OTP code
+  // Send OTP code using registration endpoint (works for both new and existing users)
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length !== 10) {
@@ -278,19 +280,34 @@ const TalentStartPage: React.FC = () => {
 
     setLoading(true);
     try {
-      // First, update or create user with email if provided
+      // Store email for later profile creation
       if (email) {
-        // Store email for later profile creation
         localStorage.setItem('talent_start_email', email);
       }
 
-      const result = await sendPhoneOtp(phone);
+      // Use send-registration-otp which works for both new and existing users
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/send-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ phone, email }),
+        }
+      );
+
+      const result = await response.json();
 
       if (result.rateLimited) {
         toast.error(result.error || 'Please wait before requesting another code');
         setOtpCooldown(60);
       } else if (result.success) {
-        toast.success('Verification code sent!');
+        toast.success(result.isExistingUser ? 'Welcome back! Code sent.' : 'Verification code sent!');
         setAuthStep('otp');
         setOtpCooldown(60);
         setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
@@ -298,13 +315,14 @@ const TalentStartPage: React.FC = () => {
         toast.error(result.error || 'Failed to send code');
       }
     } catch (error: any) {
+      console.error('Error sending OTP:', error);
       toast.error(error.message || 'Failed to send verification code');
     } finally {
       setLoading(false);
     }
   };
 
-  // Verify OTP code
+  // Verify OTP code using registration endpoint
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otpCode.join('');
@@ -315,36 +333,60 @@ const TalentStartPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const result = await verifyPhoneOtp(phone, code);
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+      const storedEmail = localStorage.getItem('talent_start_email') || email;
 
-      if (result.success) {
-        // Update user with email and set as talent
-        const storedEmail = localStorage.getItem('talent_start_email');
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
-        if (authUser) {
-          // Update users table
-          await supabase.from('users').upsert({
-            id: authUser.id,
-            email: storedEmail || authUser.email,
-            phone: `+1${phone}`,
-            user_type: 'talent',
-          }, { onConflict: 'id' });
-
-          localStorage.removeItem('talent_start_email');
-          
-          // handleUserAuthenticated will be triggered by the user state change
-          // But let's call it explicitly in case state doesn't change
-          if (!user) {
-            await handleUserAuthenticated(authUser.id);
-          }
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/verify-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ 
+            phone, 
+            code, 
+            email: storedEmail,
+          }),
         }
+      );
+
+      const result = await response.json();
+
+      if (result.success && result.session) {
+        // Set the session from the edge function response
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+
+        if (sessionError) {
+          console.error('Error setting session:', sessionError);
+          toast.error('Login failed. Please try again.');
+          return;
+        }
+
+        // Update user to be a talent
+        await supabase.from('users').update({
+          user_type: 'talent',
+          phone: `+1${phone}`,
+        }).eq('id', result.user.id);
+
+        localStorage.removeItem('talent_start_email');
+        
+        toast.success(result.isLogin ? 'Welcome back!' : 'Account verified!');
+        
+        // Continue to profile setup
+        await handleUserAuthenticated(result.user.id);
       } else {
         toast.error(result.error || 'Invalid code');
         setOtpCode(['', '', '', '', '', '']);
         otpInputRefs.current[0]?.focus();
       }
     } catch (error: any) {
+      console.error('Error verifying OTP:', error);
       toast.error(error.message || 'Failed to verify code');
     } finally {
       setLoading(false);
@@ -356,7 +398,23 @@ const TalentStartPage: React.FC = () => {
     if (otpCooldown > 0) return;
     setLoading(true);
     try {
-      const result = await sendPhoneOtp(phone);
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/send-registration-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ phone, email }),
+        }
+      );
+
+      const result = await response.json();
+
       if (result.success) {
         toast.success('New code sent!');
         setOtpCooldown(60);
