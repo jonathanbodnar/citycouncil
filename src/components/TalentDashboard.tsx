@@ -2705,11 +2705,11 @@ const TalentDashboard: React.FC = () => {
               </div>
 
               {/* Right: Overlapping Images - Desktop only */}
-              <div className="relative min-h-[300px] hidden lg:flex items-center justify-center">
-                {/* Container for overlapping images */}
-                <div className="relative w-full h-full">
+              <div className="relative hidden lg:block">
+                {/* Container for overlapping images with proper containment */}
+                <div className="relative h-[350px]">
                   {/* Send Update - Background/larger image */}
-                  <div className="absolute top-8 right-0 w-[75%] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
+                  <div className="absolute top-12 right-0 w-[280px] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
                     <img 
                       src="/creatorbios/sendupdate.png" 
                       alt="Send update - How creators reach their audience"
@@ -2718,7 +2718,7 @@ const TalentDashboard: React.FC = () => {
                   </div>
 
                   {/* Stay Connected - Floating overlay top-left */}
-                  <div className="absolute top-0 left-0 w-[55%] rounded-xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
+                  <div className="absolute top-0 left-0 w-[220px] rounded-xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black/50 z-10">
                     <img 
                       src="/creatorbios/stayconnected.png" 
                       alt="Stay connected - How fans subscribe"
