@@ -142,27 +142,32 @@ export default function HomePageNew() {
   // Listen for header search events
   useEffect(() => {
     const handleHeaderSearch = (event: CustomEvent) => {
-      setSearchQuery(event.detail || '');
+      const query = event.detail || '';
+      setSearchQuery(query);
+      // Clear occasion selection when searching
+      if (query.trim()) {
+        setSelectedOccasion(null);
+        setOccasionFromPopup(null);
+      }
     };
     window.addEventListener('headerSearch', handleHeaderSearch as EventListener);
     return () => window.removeEventListener('headerSearch', handleHeaderSearch as EventListener);
   }, []);
 
-  // Apply search filter when searchQuery changes
+  // Apply search filter when searchQuery changes - search ALL active talent by NAME only
   useEffect(() => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      const filtered = talentList.filter(talent => {
+      // Search ALL active talent, not just banner cards
+      const filtered = allActiveTalent.filter(talent => {
         const name = (talent.temp_full_name || talent.users?.full_name || '').toLowerCase();
-        const bio = (talent.bio || '').toLowerCase();
-        const categories = (talent.categories || []).join(' ').toLowerCase();
-        return name.includes(query) || bio.includes(query) || categories.includes(query);
+        return name.includes(query);
       });
       setFilteredTalent(filtered);
     } else {
       setFilteredTalent(talentList);
     }
-  }, [searchQuery, talentList]);
+  }, [searchQuery, talentList, allActiveTalent]);
 
   // Check for UTM or live link
   const utmParam = searchParams.get('utm');
@@ -674,9 +679,38 @@ export default function HomePageNew() {
                 <div key={i} className="glass rounded-3xl h-64 animate-pulse"></div>
               ))}
             </div>
+          ) : searchQuery.trim() ? (
+            // Search Results - Show as grid of cards
+            <div>
+              <h2 className="text-xl font-bold text-white mb-4">
+                Search Results for "{searchQuery}" ({filteredTalent.length} found)
+              </h2>
+              {filteredTalent.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 text-lg">No talent found matching "{searchQuery}"</p>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="mt-4 px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                  >
+                    Clear Search
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                  {filteredTalent.map((talent) => (
+                    <TalentCard 
+                      key={talent.id} 
+                      talent={talent as TalentProfile & { users: { id: string; full_name: string; avatar_url?: string } }} 
+                      compact 
+                      showExpressBadge={talent.express_delivery_enabled}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : filteredTalent.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-white text-xl">No talent found for this occasion.</p>
+              <p className="text-white text-xl">No talent found.</p>
               <button
                 onClick={() => setSelectedOccasion(null)}
                 className="mt-4 px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
