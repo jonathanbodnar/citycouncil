@@ -126,8 +126,8 @@ const TalentDashboard: React.FC = () => {
   }, []);
 
   // Check if user has access to Bio feature
-  // Show if: bio_enabled is true in admin OR on dev environment for testing
-  const hasBioAccess = talentProfile?.bio_enabled === true || IS_DEV_ENVIRONMENT;
+  // Enabled for all talent
+  const hasBioAccess = true;
 
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
