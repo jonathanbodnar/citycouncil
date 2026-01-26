@@ -78,6 +78,8 @@ export interface TalentProfile {
   rumble_type?: 'c' | 'user'; // 'c' for channel, 'user' for user profile
   youtube_handle?: string;
   christmas_deadline?: string; // Last day to order for Christmas delivery (YYYY-MM-DD)
+  instagram_followers?: number; // Instagram follower count for pricing suggestions
+  selected_shoutout_types?: string[]; // Selected shoutout types during onboarding (max 3)
 }
 
 export type TalentCategory = 

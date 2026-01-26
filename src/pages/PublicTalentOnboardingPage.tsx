@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { 
-  UserCircleIcon, 
-  VideoCameraIcon, 
+import {
+  UserCircleIcon,
+  VideoCameraIcon,
   CurrencyDollarIcon,
-  CheckCircleIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import ImageUpload from '../components/ImageUpload';
 import Logo from '../components/Logo';
 import CategorySelector from '../components/CategorySelector';
+import ShoutoutTypeSelector from '../components/onboarding/ShoutoutTypeSelector';
+import PricingHelper from '../components/onboarding/PricingHelper';
 import { TalentCategory } from '../types';
 import { uploadVideoToWasabi } from '../services/videoUpload';
 import toast from 'react-hot-toast';
@@ -49,9 +50,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
     categories: [] as TalentCategory[],
     bio: '',
     pricing: 50,
+    instagramFollowers: 0,
     fulfillmentTime: 72,
     avatarUrl: ''
   });
+  const [selectedShoutoutTypes, setSelectedShoutoutTypes] = useState<string[]>([]);
 
   // Step 3: Charity (optional)
   const [donateToCharity, setDonateToCharity] = useState(false);
@@ -109,6 +112,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
         if (parsed.profileData) setProfileData({ ...profileData, ...parsed.profileData });
         if (parsed.charityData) setCharityData({ ...charityData, ...parsed.charityData });
         if (parsed.donateToCharity !== undefined) setDonateToCharity(parsed.donateToCharity);
+        if (parsed.selectedShoutoutTypes) setSelectedShoutoutTypes(parsed.selectedShoutoutTypes);
         toast.success('Progress restored! Continuing where you left off...');
       } catch (error) {
         console.error('Failed to parse saved progress:', error);
@@ -156,10 +160,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
         profileData,
         charityData,
         donateToCharity,
+        selectedShoutoutTypes,
       };
       localStorage.setItem('talent_onboarding_progress', JSON.stringify(dataToSave));
     }
-  }, [currentStep, userId, talentProfileId, profileData, charityData, donateToCharity]);
+  }, [currentStep, userId, talentProfileId, profileData, charityData, donateToCharity, selectedShoutoutTypes]);
 
   // Sign In Handler (for returning users)
   const handleSignIn = async (e: React.FormEvent) => {
@@ -176,14 +181,60 @@ const PublicTalentOnboardingPage: React.FC = () => {
       if (!signInResult.user) throw new Error('Failed to sign in');
 
       // Check for existing talent profile
-      const { data: existingProfile, error: profileCheckError } = await supabase
+      const { data: existingProfile } = await supabase
         .from('talent_profiles')
         .select('id, onboarding_completed')
         .eq('user_id', signInResult.user.id)
-        .single();
+        .maybeSingle();
 
       if (!existingProfile) {
-        toast.error('No talent profile found. Please create a new account.');
+        // User verified email and signed in, but profile wasn't created yet
+        // This can happen if email verification was required and DB inserts were skipped
+        setUserId(signInResult.user.id);
+
+        // Create user record
+        const { error: userError } = await supabase
+          .from('users')
+          .upsert({
+            id: signInResult.user.id,
+            email: signInResult.user.email,
+            user_type: 'talent',
+          }, { onConflict: 'id' });
+
+        if (userError) {
+          console.error('Failed to create user record:', userError);
+        }
+
+        // Create talent profile
+        const { data: newProfile, error: profileError } = await supabase
+          .from('talent_profiles')
+          .insert({
+            user_id: signInResult.user.id,
+            category: 'other',
+            bio: '',
+            pricing: 50,
+            fulfillment_time_hours: 72,
+            is_featured: false,
+            is_active: false,
+            total_orders: 0,
+            fulfilled_orders: 0,
+            average_rating: 0,
+            admin_fee_percentage: defaultAdminFee,
+            first_orders_promo_active: true,
+            onboarding_completed: false,
+          })
+          .select()
+          .single();
+
+        if (profileError) {
+          console.error('Failed to create profile:', profileError);
+          toast.error('Failed to create talent profile. Please try again.');
+          return;
+        }
+
+        setTalentProfileId(newProfile.id);
+        toast.success('Welcome! Let\'s continue setting up your profile...');
+        setCurrentStep(2);
         return;
       }
 
@@ -231,32 +282,8 @@ const PublicTalentOnboardingPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Check if user already exists and has a talent profile
-      const { data: existingSession } = await supabase.auth.getSession();
-      
-      if (existingSession?.session?.user) {
-        // User is already logged in, check for existing talent profile
-        const { data: existingProfile, error: profileCheckError } = await supabase
-          .from('talent_profiles')
-          .select('id, onboarding_completed')
-          .eq('user_id', existingSession.session.user.id)
-          .single();
-
-        if (existingProfile) {
-          setUserId(existingSession.session.user.id);
-          setTalentProfileId(existingProfile.id);
-          
-          if (existingProfile.onboarding_completed) {
-            toast.success('Welcome back! Redirecting to dashboard...');
-            navigate('/talent-dashboard');
-            return;
-          } else {
-            toast.success('Continuing onboarding...');
-            setCurrentStep(2);
-            return;
-          }
-        }
-      }
+      // Always sign out any existing session first - onboarding is for new accounts only
+      await supabase.auth.signOut();
 
       // Try to create new account
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -270,105 +297,22 @@ const PublicTalentOnboardingPage: React.FC = () => {
         },
       });
 
-      // Handle "User already registered" error
+      // Handle errors
       if (authError) {
         if (authError.message?.includes('User already registered')) {
-          // Try to sign in instead
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: accountData.email,
-            password: accountData.password,
-          });
-
-          if (signInError) {
-            toast.error('Account exists. Please use the correct password or reset it.');
-            return;
-          }
-
-          if (!signInData.user) throw new Error('Failed to sign in');
-
-          // Check for existing talent profile
-          const { data: existingProfile, error: profileCheckError } = await supabase
-            .from('talent_profiles')
-            .select('id, onboarding_completed')
-            .eq('user_id', signInData.user.id)
-            .single();
-
-          if (existingProfile) {
-            setUserId(signInData.user.id);
-            setTalentProfileId(existingProfile.id);
-            
-            if (existingProfile.onboarding_completed) {
-              toast.success('Welcome back! Redirecting to dashboard...');
-              navigate('/talent-dashboard');
-              return;
-            } else {
-              toast.success('Continuing onboarding...');
-              setCurrentStep(2);
-              return;
-            }
-          }
-
-          // If no talent profile exists, create one
-          setUserId(signInData.user.id);
-          
-          // Create/update user record to set user_type to 'talent'
-          const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
-          
-          // Use upsert to create or update user record
-          const { error: upsertError } = await supabase
-            .from('users')
-            .upsert({ 
-              id: signInData.user.id,
-              email: signInData.user.email,
-              user_type: 'talent',
-              phone: formattedPhone,
-              full_name: accountData.fullName,
-            }, {
-              onConflict: 'id'
-            });
-
-          if (upsertError) {
-            console.error('Failed to create/update user record:', upsertError);
-            throw new Error('Failed to set up user account. Please contact support.');
-          }
-
-          const { data: talentData, error: talentError } = await supabase
-            .from('talent_profiles')
-            .insert({
-              user_id: signInData.user.id,
-              category: 'other',
-              bio: '',
-              pricing: 50,
-              fulfillment_time_hours: 72,
-              is_featured: false,
-              is_active: false, // Admin must approve before going live
-              total_orders: 0,
-              fulfilled_orders: 0,
-              average_rating: 0,
-              admin_fee_percentage: defaultAdminFee, // Use platform settings
-              first_orders_promo_active: true,
-              onboarding_completed: false,
-            })
-            .select()
-            .single();
-
-          if (talentError) throw talentError;
-          setTalentProfileId(talentData.id);
-          toast.success('Continuing onboarding...');
-          setCurrentStep(2);
+          toast.error('This email is already registered. Please use "Sign in to continue" below.');
           return;
         }
-        
         throw authError;
       }
 
       if (!authData.user) throw new Error('Failed to create user account');
-      
+
       setUserId(authData.user.id);
 
       // Create user record in public.users table
       const formattedPhone = accountData.phone ? `+1${accountData.phone.replace(/\D/g, '')}` : null;
-      
+
       // Use upsert to create or update user record
       const { error: upsertError } = await supabase
         .from('users')
@@ -387,7 +331,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
         throw new Error('Failed to set up user account. Please contact support.');
       }
 
-      // Create talent profile (this will work even without active session)
+      // Create talent profile
       const { data: talentData, error: talentError } = await supabase
         .from('talent_profiles')
         .insert({
@@ -410,15 +354,6 @@ const PublicTalentOnboardingPage: React.FC = () => {
 
       if (talentError) throw talentError;
       setTalentProfileId(talentData.id);
-
-      // Check if email confirmation is required
-      if (authData.session === null && authData.user.email_confirmed_at === null) {
-        toast.success('Account created! Please verify your email, then sign in to continue.', {
-          duration: 8000,
-        });
-        setLoading(false);
-        return;
-      }
 
       toast.success('Account created successfully!');
       setCurrentStep(2);
@@ -459,6 +394,11 @@ const PublicTalentOnboardingPage: React.FC = () => {
       return;
     }
 
+    if (selectedShoutoutTypes.length === 0) {
+      toast.error('Please select at least one shoutout type');
+      return;
+    }
+
     if (!profileData.bio || profileData.bio.length < 50) {
       toast.error('Bio must be at least 50 characters');
       return;
@@ -491,8 +431,10 @@ const PublicTalentOnboardingPage: React.FC = () => {
           categories: profileData.categories, // All categories
           bio: profileData.bio,
           pricing: profileData.pricing,
+          instagram_followers: profileData.instagramFollowers || null,
           fulfillment_time_hours: profileData.fulfillmentTime,
-          temp_avatar_url: profileData.avatarUrl
+          temp_avatar_url: profileData.avatarUrl,
+          selected_shoutout_types: selectedShoutoutTypes
         })
         .eq('id', talentProfileId);
 
@@ -961,7 +903,20 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Position/Title */}
+                {/* Shoutout Types */}
+                <div>
+                  <label className="block text-xs font-medium text-white mb-1">
+                    Shoutout Types * (Select up to 3)
+                  </label>
+                  <ShoutoutTypeSelector
+                    selected={selectedShoutoutTypes}
+                    onChange={setSelectedShoutoutTypes}
+                    maxSelections={3}
+                    autoSave={true}
+                    startEditing={true}
+                    stayInEditMode={true}
+                  />
+                </div>
 
                 {/* Bio - Compact */}
                 <div>
@@ -982,22 +937,17 @@ const PublicTalentOnboardingPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Pricing */}
+                {/* Pricing with Instagram Followers */}
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">
-                    Price per Video ($) *
+                  <label className="block text-xs font-medium text-white mb-2">
+                    Set Your Pricing *
                   </label>
-                  <input
-                    type="number"
-                    required
-                    min="10"
-                    step="5"
-                    value={profileData.pricing}
-                    onChange={(e) => setProfileData({ ...profileData, pricing: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="50"
+                  <PricingHelper
+                    followers={profileData.instagramFollowers}
+                    onFollowersChange={(followers) => setProfileData(prev => ({ ...prev, instagramFollowers: followers }))}
+                    price={profileData.pricing}
+                    onPriceChange={(price) => setProfileData(prev => ({ ...prev, pricing: price }))}
                   />
-                  <p className="text-xs text-gray-400 mt-1">Recommended: $50-$200</p>
                 </div>
 
                 {/* Fulfillment Time */}

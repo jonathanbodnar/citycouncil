@@ -37,6 +37,7 @@ import { Order, Review, TalentProfile } from '../types';
 import ProfilePictureUpload from './ProfilePictureUpload';
 import SocialAccountsManager from './SocialAccountsManager';
 import CategorySelector from './CategorySelector';
+import ShoutoutTypeSelector from './onboarding/ShoutoutTypeSelector';
 import CharitySelector from './CharitySelector';
 import IntegratedPayoutsDashboard from './IntegratedPayoutsDashboard';
 import PhoneNumberPrompt from './PhoneNumberPrompt';
@@ -2326,6 +2327,34 @@ const TalentDashboard: React.FC = () => {
                     toast.error('Failed to update categories');
                   }
                 }}
+              />
+            </div>
+
+            {/* Shoutout Types Selector */}
+            <div className="pt-6 border-t border-gray-200">
+              <ShoutoutTypeSelector
+                selected={talentProfile.selected_shoutout_types || []}
+                theme="light"
+                onChange={async (selectedTypes) => {
+                  try {
+                    const { error } = await supabase
+                      .from('talent_profiles')
+                      .update({ selected_shoutout_types: selectedTypes })
+                      .eq('id', talentProfile.id);
+
+                    if (error) throw error;
+
+                    setTalentProfile(prev => prev ? {
+                      ...prev,
+                      selected_shoutout_types: selectedTypes
+                    } : null);
+                    toast.success('Shoutout types updated!');
+                  } catch (error) {
+                    console.error('Error updating shoutout types:', error);
+                    toast.error('Failed to update shoutout types');
+                  }
+                }}
+                maxSelections={3}
               />
             </div>
 

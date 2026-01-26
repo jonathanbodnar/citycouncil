@@ -37,7 +37,7 @@ const TalentManagement: React.FC = () => {
   const [talents, setTalents] = useState<TalentWithUser[]>([]);
   const [filteredTalents, setFilteredTalents] = useState<TalentWithUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'incomplete' | 'no-login'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'incomplete' | 'no-login' | 'pending-approval'>('all');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const talentsPerPage = 10;
@@ -146,14 +146,17 @@ const TalentManagement: React.FC = () => {
         
         switch (statusFilter) {
           case 'active':
-            // Has completed profile and logged in
-            return hasCompletedProfile && hasLoggedIn;
+            // Talent is active (live on site)
+            return talent.is_active === true;
           case 'incomplete':
             // Profile is incomplete
             return !hasCompletedProfile;
           case 'no-login':
             // Has never logged in or no login recorded
             return !hasLoggedIn;
+          case 'pending-approval':
+            // Completed onboarding but not yet activated
+            return talent.onboarding_completed === true && talent.is_active === false;
           default:
             return true;
         }
@@ -1392,11 +1395,7 @@ const TalentManagement: React.FC = () => {
           }`}
         >
           <CheckCircleIcon className="h-4 w-4 inline mr-1" />
-          Active ({talents.filter(t => {
-            const hasCompleteProfile = !!(t.username && t.bio && (t.temp_avatar_url || t.users?.avatar_url) && t.promo_video_url);
-            const hasLoggedIn = !!(t.users?.last_login);
-            return hasCompleteProfile && hasLoggedIn;
-          }).length})
+          Active ({talents.filter(t => t.is_active === true).length})
         </button>
         <button
           onClick={() => setStatusFilter('incomplete')}
@@ -1422,6 +1421,17 @@ const TalentManagement: React.FC = () => {
         >
           <XCircleIcon className="h-4 w-4 inline mr-1" />
           No Login ({talents.filter(t => !t.users?.last_login).length})
+        </button>
+        <button
+          onClick={() => setStatusFilter('pending-approval')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            statusFilter === 'pending-approval'
+              ? 'bg-purple-600 text-white'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <ClockIcon className="h-4 w-4 inline mr-1" />
+          Pending Approval ({talents.filter(t => t.onboarding_completed && !t.is_active).length})
         </button>
       </div>
 
@@ -2134,10 +2144,12 @@ const TalentManagement: React.FC = () => {
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
-                    { value: 'pep-talk', label: '💝 Surprise a Loved One' },
-                    { value: 'birthday', label: '🎂 Birthday Wishes' },
+                    { value: 'gift', label: '🎁 Last Minute Gifts' },
                     { value: 'roast', label: '🔥 Friendly Roast' },
-                    { value: 'advice', label: '💡 Get Advice' },
+                    { value: 'encouragement', label: '💪 Encouragement' },
+                    { value: 'debate', label: '⚔️ End a Debate' },
+                    { value: 'announcement', label: '📣 Make an Announcement' },
+                    { value: 'celebrate', label: '🏆 Celebrate A Win' },
                     { value: 'corporate', label: '🏢 Corporate Event' },
                   ].map((option) => (
                     <label

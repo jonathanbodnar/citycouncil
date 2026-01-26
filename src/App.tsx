@@ -206,7 +206,7 @@ function App() {
             <Route path="/login" element={<SignupPage />} />
             <Route path="/signup" element={<SignupRedirect />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route path="/onboard" element={<PublicTalentOnboardingPage />} />
+            <Route path="/onboarding" element={<PublicTalentOnboardingPage />} />
             
             {/* Promo redirects - short name variations to talent profiles with UTM and auto-discount */}
             {/* Shawn variations -> shawnfarash profile with 15% off */}

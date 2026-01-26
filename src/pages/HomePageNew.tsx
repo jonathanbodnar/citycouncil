@@ -57,13 +57,13 @@ const OCCASIONS: OccasionType[] = [
 // Occasion-specific phrases for when selected from popup
 const OCCASION_PHRASES: Record<string, string> = {
   'birthday': "Say happy birthday better than a text.",
-  'express': "Need it fast? These talent deliver in 24 hours.",
+'express': "Need it fast? These talent deliver in 24 hours.",
   'roast': "Your group chat will never recover.",
   'encouragement': "Encouragement from people that have been there.",
   'debate': "End the debate with a ShoutOut.",
   'announcement': "Tell everyone in a way no one else can.",
   'celebrate': "Celebrate in the most unique way possible.",
-  'advice': "Get advice from people who've been there.",
+'advice': "Get advice from people who've been there.",
   'corporate': "Make your event unforgettable.",
 };
 
@@ -616,18 +616,22 @@ export default function HomePageNew() {
               const isCorporate = selectedOccasion === 'corporate';
               const isExpress = selectedOccasion === 'express';
               
-              // Use curated talent mapping for occasions (except corporate and express)
+// Use curated talent mapping for occasions (except corporate and express)
               let occasionTalentList: TalentWithDetails[] = [];
-              
+
               if (isCorporate) {
-                // Corporate: filter by corporate_pricing - show all
-                const corporateTalent = allActiveTalent.filter(t => 
-                  t.users && t.corporate_pricing && t.corporate_pricing > 0
+                // Corporate: filter by corporate_pricing OR selected corporate shoutout type
+                const corporateTalent = allActiveTalent.filter(t =>
+                  t.users && (
+                    (t.corporate_pricing && t.corporate_pricing > 0) ||
+                    t.selected_shoutout_types?.includes('corporate') ||
+                    t.featured_shoutout_types?.includes('corporate')
+                  )
                 );
                 occasionTalentList = corporateTalent;
               } else if (isExpress) {
                 // Express/24hr Delivery: filter by express_delivery_enabled
-                const expressTalent = allActiveTalent.filter(t => 
+                const expressTalent = allActiveTalent.filter(t =>
                   t.users && t.express_delivery_enabled === true
                 );
                 occasionTalentList = expressTalent;
@@ -639,9 +643,9 @@ export default function HomePageNew() {
                   .filter((t): t is TalentWithDetails => t !== undefined && t.users !== undefined);
                 occasionTalentList = curatedTalent; // Show all, not just 4
               }
-              
+
               const hasOverflow = occasionTalentList.length > 4;
-              
+
               return occasionTalentList.length > 0 ? (
                 <div className="mt-4">
                   <div className="relative group">

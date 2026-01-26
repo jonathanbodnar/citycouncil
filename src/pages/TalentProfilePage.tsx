@@ -55,6 +55,17 @@ const getCouponDetailsFromStorage = (): { type: 'percentage' | 'fixed'; value: n
   return null;
 };
 
+// Shoutout type mapping - matches homepage OCCASIONS for filtering
+const SHOUTOUT_TYPE_MAP: Record<string, { label: string; emoji: string }> = {
+  'gift': { label: 'Last Minute Gift', emoji: '🎁' },
+  'roast': { label: 'Friendly Roast', emoji: '🔥' },
+  'encouragement': { label: 'Encouragement', emoji: '💪' },
+  'debate': { label: 'End a Debate', emoji: '⚔️' },
+  'announcement': { label: 'Announcement', emoji: '📣' },
+  'celebrate': { label: 'Celebrate A Win', emoji: '🏆' },
+  'corporate': { label: 'Corporate Event', emoji: '🏢' },
+};
+
 // Helper to get display name (first name, or last name if first name starts with "The")
 const getDisplayFirstName = (fullName: string): string => {
   if (!fullName) return '';
@@ -1229,43 +1240,70 @@ const TalentProfilePage: React.FC = () => {
         {/* Order Ideas - Click any to order */}
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-1.5">
-            <Link
-              to={user ? `/order/${talent.id}?occasion=pep-talk` : `/signup?returnTo=/order/${talent.id}?occasion=pep-talk`}
-              onClick={storePromoSourceOnClick}
-              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-            >
-              💝 Surprise a loved one
-            </Link>
-            <Link
-              to={user ? `/order/${talent.id}?occasion=birthday` : `/signup?returnTo=/order/${talent.id}?occasion=birthday`}
-              onClick={storePromoSourceOnClick}
-              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-            >
-              🎂 Happy Birthday
-            </Link>
-            <Link
-              to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
-              onClick={storePromoSourceOnClick}
-              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-            >
-              🔥 Friendly roast
-            </Link>
-            <Link
-              to={user ? `/order/${talent.id}?occasion=advice` : `/signup?returnTo=/order/${talent.id}?occasion=advice`}
-              onClick={storePromoSourceOnClick}
-              className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
-            >
-              💡 Get advice
-            </Link>
-            {talent.corporate_pricing && talent.corporate_pricing > 0 ? (
+            {/* Dynamic shoutout types based on talent's selected_shoutout_types */}
+            {talent.selected_shoutout_types && talent.selected_shoutout_types.length > 0 ? (
+              <>
+                {talent.selected_shoutout_types
+                  .filter(typeId => typeId !== 'corporate') // Corporate shown separately below
+                  .map(typeId => {
+                    const typeInfo = SHOUTOUT_TYPE_MAP[typeId];
+                    if (!typeInfo) return null;
+                    return (
+                      <Link
+                        key={typeId}
+                        to={user ? `/order/${talent.id}?occasion=${typeId}` : `/signup?returnTo=/order/${talent.id}?occasion=${typeId}`}
+                        onClick={storePromoSourceOnClick}
+                        className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                      >
+                        {typeInfo.emoji} {typeInfo.label}
+                      </Link>
+                    );
+                  })}
+              </>
+            ) : (
+              /* Fallback if no shoutout types selected - use homepage filter IDs */
+              <>
+                <Link
+                  to={user ? `/order/${talent.id}?occasion=gift` : `/signup?returnTo=/order/${talent.id}?occasion=gift`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🎁 Last Minute Gift
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}?occasion=roast` : `/signup?returnTo=/order/${talent.id}?occasion=roast`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🔥 Friendly Roast
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}?occasion=encouragement` : `/signup?returnTo=/order/${talent.id}?occasion=encouragement`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  💪 Encouragement
+                </Link>
+                <Link
+                  to={user ? `/order/${talent.id}?occasion=celebrate` : `/signup?returnTo=/order/${talent.id}?occasion=celebrate`}
+                  onClick={storePromoSourceOnClick}
+                  className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all text-center"
+                >
+                  🏆 Celebrate A Win
+                </Link>
+              </>
+            )}
+            {/* Corporate Event - show if talent has corporate pricing OR corporate in their selected types */}
+            {(talent.corporate_pricing && talent.corporate_pricing > 0) || talent.selected_shoutout_types?.includes('corporate') ? (
               <Link
                 to={user ? `/order/${talent.id}?occasion=corporate` : `/signup?returnTo=/order/${talent.id}?occasion=corporate`}
                 onClick={storePromoSourceOnClick}
                 className="px-2 py-2 rounded-lg text-xs font-medium text-white bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-500/30 hover:to-blue-500/30 border border-purple-500/40 hover:border-purple-500/60 transition-all text-center"
               >
-                🏢 Corporate Event - ${Math.round(talent.corporate_pricing)}
+                🏢 Corporate Event{talent.corporate_pricing && talent.corporate_pricing > 0 ? ` - $${Math.round(talent.corporate_pricing)}` : ''}
               </Link>
             ) : null}
+            {/* Express Delivery or Other option */}
             {talent.express_delivery_enabled && talent.express_delivery_price ? (
               <Link
                 to={user ? `/order/${talent.id}?express=true` : `/signup?returnTo=/order/${talent.id}?express=true`}
