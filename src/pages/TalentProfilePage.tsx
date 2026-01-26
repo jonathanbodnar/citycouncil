@@ -55,14 +55,17 @@ const getCouponDetailsFromStorage = (): { type: 'percentage' | 'fixed'; value: n
   return null;
 };
 
-// Shoutout type mapping - matches homepage OCCASIONS for filtering
+// Shoutout type mapping - matches ShoutoutTypeSelector options
 const SHOUTOUT_TYPE_MAP: Record<string, { label: string; emoji: string }> = {
+  'birthday': { label: 'Happy Birthday', emoji: '🎂' },
+  'express': { label: '24hr Delivery', emoji: '⚡' },
   'gift': { label: 'Last Minute Gift', emoji: '🎁' },
   'roast': { label: 'Friendly Roast', emoji: '🔥' },
   'encouragement': { label: 'Encouragement', emoji: '💪' },
   'debate': { label: 'End a Debate', emoji: '⚔️' },
   'announcement': { label: 'Announcement', emoji: '📣' },
   'celebrate': { label: 'Celebrate A Win', emoji: '🏆' },
+  'advice': { label: 'Get Advice', emoji: '💡' },
   'corporate': { label: 'Corporate Event', emoji: '🏢' },
 };
 

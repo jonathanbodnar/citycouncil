@@ -293,7 +293,7 @@ const PublicTalentOnboardingPage: React.FC = () => {
           data: {
             full_name: accountData.fullName,
           },
-          emailRedirectTo: `${window.location.origin}/onboard`,
+          emailRedirectTo: `${window.location.origin}/onboarding`,
         },
       });
 
