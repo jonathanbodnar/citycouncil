@@ -290,7 +290,7 @@ const TalentCard: React.FC<TalentCardProps> = ({ talent, compact = false, showEx
         )}
 
         {/* Charity indicator - Push to bottom */}
-        {(talent.charity_percentage && talent.charity_percentage > 0 && talent.charity_name) && (
+        {talent.charity_percentage > 0 && talent.charity_name && (
           <div className={`flex items-center gap-0.5 mt-auto ${compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'} text-red-400 font-medium`}>
             <HeartIcon className={compact ? 'h-2 w-2' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'} />
             {talent.charity_percentage}% to charity
