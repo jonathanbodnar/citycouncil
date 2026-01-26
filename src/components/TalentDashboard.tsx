@@ -55,9 +55,7 @@ interface ReviewWithUser extends Review {
   };
 }
 
-// Feature flag: Only show Bio tab for specific users on dev environment
-const BIO_FEATURE_ALLOWED_EMAILS = ['jb@apollo.inc'];
-const IS_DEV_ENVIRONMENT = window.location.hostname === 'dev.shoutout.us' || window.location.hostname === 'localhost';
+// Feature flag: Bio tab controlled by admin via bio_enabled field
 
 // Helper to get the display amount for an order
 // ALWAYS show the talent's video price (original_amount), not the discounted customer price
@@ -119,10 +117,8 @@ const TalentDashboard: React.FC = () => {
     fetchChristmasMode();
   }, []);
 
-  // Check if user has access to Bio feature
-  // Access if: (dev environment AND email in allowed list) OR talent has bio_enabled
-  const hasBioAccess = (IS_DEV_ENVIRONMENT && user?.email && BIO_FEATURE_ALLOWED_EMAILS.includes(user.email.toLowerCase())) 
-    || talentProfile?.bio_enabled === true;
+  // Check if user has access to Bio feature (controlled by admin via bio_enabled field)
+  const hasBioAccess = talentProfile?.bio_enabled === true;
 
   // Handle tab from URL parameter
   const tabParam = searchParams.get('tab');
