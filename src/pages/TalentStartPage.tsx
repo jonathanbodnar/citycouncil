@@ -376,15 +376,29 @@ const TalentStartPage: React.FC = () => {
         throw new Error('No session returned from verification');
       }
 
-      // Update user to be a talent
-      const { error: userUpdateError } = await supabase.from('users').update({
-        user_type: 'talent',
+      // Create or update user record to be a talent
+      // First try to insert (for new users)
+      const { error: userInsertError } = await supabase.from('users').insert({
+        id: data.user.id,
+        email: normalizedEmail,
         phone: formattedPhone,
-      }).eq('id', data.user.id);
+        user_type: 'talent',
+        created_at: new Date().toISOString(),
+      });
 
-      if (userUpdateError) {
-        console.error('Failed to update user type:', userUpdateError);
-        // Don't throw - continue with profile creation attempt
+      if (userInsertError) {
+        // If insert fails (user exists), try update instead
+        console.log('User insert failed (may already exist), trying update:', userInsertError.message);
+        const { error: userUpdateError } = await supabase.from('users').update({
+          user_type: 'talent',
+          phone: formattedPhone,
+        }).eq('id', data.user.id);
+
+        if (userUpdateError) {
+          console.error('Failed to update user type:', userUpdateError);
+        }
+      } else {
+        console.log('User record created successfully');
       }
 
       toast.success(data.isLogin ? 'Welcome back!' : 'Account verified!');
