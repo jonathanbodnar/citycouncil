@@ -1152,18 +1152,23 @@ const TalentDashboard: React.FC = () => {
           <div className="glass border border-white/20 rounded-2xl p-4 sm:p-6">
             <div className="mb-6">
               <p className="text-base sm:text-lg font-medium text-white leading-relaxed mb-4">
-                Replace linktree (and other bulky, low conversion bio links) on your social media for free, with your{' '}
+                Replace linktree (and other low conversion bio links) on your social media with your{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">ShoutOut Fans</span>
                 {' '}link driving your massive audience into an{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable audience</span>.
               </p>
-              <button
-                onClick={() => setActiveTab('bio')}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium"
-              >
-                <img src="/whiteicon.png" alt="ShoutOut" className="h-4 w-4" />
-                Check it Out
-              </button>
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={() => setActiveTab('bio')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <img src="/whiteicon.png" alt="ShoutOut" className="h-4 w-4" />
+                  Check it Out
+                </button>
+                <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
+                  Free For All ShoutOut Talent
+                </span>
+              </div>
             </div>
 
             {/* Bio Link Examples Carousel - Auto-scrolling */}
