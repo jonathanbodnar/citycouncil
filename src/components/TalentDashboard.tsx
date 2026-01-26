@@ -1154,7 +1154,7 @@ const TalentDashboard: React.FC = () => {
               <p className="text-base sm:text-lg font-medium text-white leading-relaxed mb-4">
                 Replace linktree (and other low conversion bio links) on your social media with your{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">ShoutOut Fans</span>
-                {' '}link driving your massive audience into an{' '}
+                {' '}link. Capturing an{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 font-semibold">uncancellable audience</span>.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
