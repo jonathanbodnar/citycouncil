@@ -2475,13 +2475,10 @@ const TalentDashboard: React.FC = () => {
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
                   <LinkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400" />
                 </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                    <img src="/whiteicon.png" alt="ShoutOut" className="h-5 w-5 sm:h-6 sm:w-6" />
-                    Link In Bio
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-400">shoutout.fans/{talentProfile?.username || 'yourname'}</p>
-                </div>
+                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                  <img src="/whiteicon.png" alt="ShoutOut" className="h-5 w-5 sm:h-6 sm:w-6" />
+                  ShoutOut Fans Link
+                </h2>
               </div>
               <a
                 href={`https://bio.shoutout.us/dashboard?token=${encodeURIComponent(user?.id || '')}`}
@@ -2490,7 +2487,7 @@ const TalentDashboard: React.FC = () => {
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
               >
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                Open Bio Dashboard
+                Customize My Link
               </a>
             </div>
           </div>
