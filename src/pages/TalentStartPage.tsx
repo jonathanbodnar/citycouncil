@@ -483,8 +483,8 @@ const TalentStartPage: React.FC = () => {
               <Logo size="sm" theme="dark" />
             </Link>
             <div className="text-right">
-              <h1 className="text-xl sm:text-2xl font-bold text-white">Become a ShoutOut Creator</h1>
-              <p className="text-xs sm:text-sm text-gray-400">Start earning with personalized videos</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">Get Started On ShoutOut</h1>
+              <p className="text-xs sm:text-sm text-gray-400">Start earning with personalized video ShoutOuts</p>
             </div>
           </div>
         </div>
