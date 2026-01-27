@@ -24,8 +24,9 @@ import toast from 'react-hot-toast';
 const STEPS = [
   { id: 1, name: 'Create Account', description: 'Sign up or login', icon: UserCircleIcon },
   { id: 2, name: 'Profile Info', description: 'Your public profile', icon: StarIcon },
-  { id: 3, name: 'Charity', description: 'Optional donation', icon: CurrencyDollarIcon },
-  { id: 4, name: 'Promo Video', description: 'Introduce yourself', icon: VideoCameraIcon },
+  { id: 3, name: 'Categories', description: 'Your niche & occasions', icon: SparklesIcon },
+  { id: 4, name: 'Charity', description: 'Optional donation', icon: CurrencyDollarIcon },
+  { id: 5, name: 'Promo Video', description: 'Introduce yourself', icon: VideoCameraIcon },
 ];
 
 const TalentStartPage: React.FC = () => {
@@ -455,8 +456,6 @@ const TalentStartPage: React.FC = () => {
     if (!profileData.fullName) return toast.error('Full name required');
     if (!profileData.username) return toast.error('Username required');
     if (usernameAvailable === false) return toast.error('Username taken');
-    if (profileData.categories.length === 0) return toast.error('Select a category');
-    if (selectedShoutoutTypes.length === 0) return toast.error('Select a shoutout type');
     if (!profileData.bio || profileData.bio.length < 50) return toast.error('Bio must be 50+ characters');
 
     setLoading(true);
@@ -466,14 +465,11 @@ const TalentStartPage: React.FC = () => {
         .update({
           full_name: profileData.fullName,
           username: profileData.username.toLowerCase(),
-          category: profileData.categories[0],
-          categories: profileData.categories,
           bio: profileData.bio,
           pricing: profileData.pricing,
           instagram_followers: profileData.instagramFollowers || null,
           fulfillment_time_hours: profileData.fulfillmentTime,
           temp_avatar_url: profileData.avatarUrl,
-          selected_shoutout_types: selectedShoutoutTypes
         })
         .eq('id', talentProfileId);
 
@@ -487,7 +483,35 @@ const TalentStartPage: React.FC = () => {
     }
   };
 
-  // Step 3: Charity
+  // Step 3: Categories & Occasion Match
+  const handleCategoriesSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!talentProfileId) return toast.error('Profile not found');
+    if (profileData.categories.length === 0) return toast.error('Select at least one category');
+    if (selectedShoutoutTypes.length === 0) return toast.error('Select at least one occasion');
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('talent_profiles')
+        .update({
+          category: profileData.categories[0],
+          categories: profileData.categories,
+          selected_shoutout_types: selectedShoutoutTypes
+        })
+        .eq('id', talentProfileId);
+
+      if (error) throw error;
+      toast.success('Categories saved!');
+      setCurrentStep(4);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save categories');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 4: Charity
   const handleCharitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!talentProfileId) return;
@@ -501,7 +525,7 @@ const TalentStartPage: React.FC = () => {
         })
         .eq('id', talentProfileId);
       toast.success('Settings saved!');
-      setCurrentStep(4);
+      setCurrentStep(5);
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
     } finally {
@@ -509,7 +533,7 @@ const TalentStartPage: React.FC = () => {
     }
   };
 
-  // Step 4: Video - Final step, completes onboarding
+  // Step 5: Video - Final step, completes onboarding
   const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoVideo) return toast.error('Please upload a video');
@@ -827,29 +851,6 @@ const TalentStartPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categories *</label>
-                    <CategorySelector
-                      selectedCategories={profileData.categories}
-                      onCategoryChange={(cats) => setProfileData({ ...profileData, categories: cats })}
-                      autoSave={true}
-                      startEditing={true}
-                      stayInEditMode={true}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shoutout Types * (up to 3)</label>
-                    <ShoutoutTypeSelector
-                      selected={selectedShoutoutTypes}
-                      onChange={setSelectedShoutoutTypes}
-                      maxSelections={3}
-                      autoSave={true}
-                      startEditing={true}
-                      stayInEditMode={true}
-                    />
-                  </div>
-
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Bio * (min 50 characters)</label>
                     <textarea
                       required
@@ -885,8 +886,55 @@ const TalentStartPage: React.FC = () => {
               </div>
             )}
 
-            {/* Step 3: Charity */}
+            {/* Step 3: Categories & Occasion Match */}
             {currentStep === 3 && (
+              <div className="p-6 sm:p-8 lg:p-10">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Categories & Occasions</h2>
+                <p className="text-gray-600 mb-6">Help customers find you</p>
+
+                <form onSubmit={handleCategoriesSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categories * (up to 3)</label>
+                    <p className="text-xs text-gray-500 mb-3">Select up to 3 categories that best describe you</p>
+                    <CategorySelector
+                      selectedCategories={profileData.categories}
+                      onCategoryChange={(cats) => setProfileData({ ...profileData, categories: cats.slice(0, 3) })}
+                      autoSave={true}
+                      startEditing={true}
+                      stayInEditMode={true}
+                      maxSelections={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Occasion Match * (up to 3)</label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Pick which 3 occasions match your personality. (Don't worry, users can order any type - this just helps us show your profile for different occasions.)
+                    </p>
+                    <ShoutoutTypeSelector
+                      selected={selectedShoutoutTypes}
+                      onChange={setSelectedShoutoutTypes}
+                      maxSelections={3}
+                      autoSave={true}
+                      startEditing={true}
+                      stayInEditMode={true}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading || profileData.categories.length === 0 || selectedShoutoutTypes.length === 0}
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {loading ? 'Saving...' : 'Continue'}
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Step 4: Charity */}
+            {currentStep === 4 && (
               <div className="p-6 sm:p-8 lg:p-10">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Donate to Charity (Optional)</h2>
                 <p className="text-gray-600 mb-6">Share a portion of your earnings with a cause you care about</p>
@@ -947,8 +995,8 @@ const TalentStartPage: React.FC = () => {
               </div>
             )}
 
-            {/* Step 4: Video */}
-            {currentStep === 4 && (
+            {/* Step 5: Video */}
+            {currentStep === 5 && (
               <div className="p-6 sm:p-8 lg:p-10">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Your Promo Video</h2>
                 <p className="text-gray-600 mb-6">Introduce yourself to potential customers (30-60 seconds)</p>

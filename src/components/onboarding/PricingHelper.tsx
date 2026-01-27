@@ -86,50 +86,9 @@ const PricingHelper: React.FC<PricingHelperProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Follower Count Input */}
+      {/* Price Input - shown first */}
       <div>
-        <label className="block text-xs font-medium text-white mb-1">
-          How many Instagram followers do you have?
-        </label>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={displayFollowers}
-          onChange={handleFollowersChange}
-          className="w-full px-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="e.g., 50,000"
-        />
-        {followers > 0 && (
-          <p className="text-xs text-gray-400 mt-1">
-            {getCurrentTierLabel(followers)}
-          </p>
-        )}
-      </div>
-
-      {/* Suggested Price Display */}
-      {followers > 0 && (
-        <div className="glass border border-white/20 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400">Suggested Price</p>
-              <p className="text-lg font-bold text-green-400">${suggestedPrice}</p>
-            </div>
-            {!isUsingSuggested && (
-              <button
-                type="button"
-                onClick={useSuggestedPrice}
-                className="text-xs text-blue-400 hover:text-blue-300 underline"
-              >
-                Use suggested
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Price Input */}
-      <div>
-        <label className="block text-xs font-medium text-white mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           Your Price per Video ($) *
         </label>
         <div className="relative">
@@ -141,33 +100,49 @@ const PricingHelper: React.FC<PricingHelperProps> = ({
             step="1"
             value={price || ''}
             onChange={handlePriceChange}
-            className="w-full pl-7 pr-3 py-2 text-sm glass border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="27"
+            className="w-full pl-7 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 text-gray-900"
+            placeholder="50"
           />
         </div>
-        {isUsingSuggested && followers > 0 && (
-          <p className="text-xs text-green-400 mt-1">
-            Using suggested price based on your followers
-          </p>
-        )}
-        {useCustomPrice && (
-          <p className="text-xs text-gray-400 mt-1">
-            Custom price set
-          </p>
-        )}
       </div>
 
-      {/* Pricing Tier Reference */}
-      <div className="glass border border-white/20 rounded-lg p-3">
-        <p className="text-xs font-medium text-white mb-2">Pricing Guide</p>
-        <div className="space-y-1">
-          {PRICING_TIERS.map((tier, index) => (
-            <div key={index} className="flex justify-between text-xs">
-              <span className="text-gray-400">{tier.label}</span>
-              <span className="text-white font-medium">${tier.suggestedPrice}</span>
+      {/* Follower Count Input - optional helper */}
+      <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+        <p className="text-sm text-gray-600 mb-3">
+          Need help knowing what to charge? Enter your total followers and we'll help you determine the appropriate pricing.
+        </p>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={displayFollowers}
+          onChange={handleFollowersChange}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="e.g., 50,000"
+        />
+        
+        {/* Suggested Price Display */}
+        {followers > 0 && (
+          <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-emerald-700">Suggested Price for {getCurrentTierLabel(followers)}</p>
+                <p className="text-lg font-bold text-emerald-600">${suggestedPrice}</p>
+              </div>
+              {!isUsingSuggested && (
+                <button
+                  type="button"
+                  onClick={useSuggestedPrice}
+                  className="text-xs text-emerald-600 hover:text-emerald-700 underline font-medium"
+                >
+                  Use this price
+                </button>
+              )}
             </div>
-          ))}
-        </div>
+            {isUsingSuggested && (
+              <p className="text-xs text-emerald-600 mt-1">✓ Using suggested price</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

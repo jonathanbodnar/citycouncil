@@ -13,6 +13,7 @@ interface CategorySelectorProps {
   autoSave?: boolean; // If true, saves immediately on category change
   startEditing?: boolean; // If true, starts in editing mode
   stayInEditMode?: boolean; // If true, doesn't exit editing mode after save
+  maxSelections?: number; // Maximum number of categories that can be selected
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({ 
@@ -21,10 +22,13 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   readonly = false,
   autoSave = false,
   startEditing = false,
-  stayInEditMode = false
+  stayInEditMode = false,
+  maxSelections
 }) => {
   const [editing, setEditing] = useState(startEditing);
   const [tempCategories, setTempCategories] = useState<TalentCategory[]>(selectedCategories);
+  
+  const isAtMax = maxSelections ? tempCategories.length >= maxSelections : false;
 
   const TALENT_CATEGORIES = [
     { value: 'politician', label: 'Politician', description: 'Current or former elected officials' },
@@ -48,9 +52,17 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   ];
 
   const handleCategoryToggle = (category: TalentCategory) => {
-    const newCategories = tempCategories.includes(category)
-      ? tempCategories.filter(c => c !== category)
-      : [...tempCategories, category];
+    let newCategories: TalentCategory[];
+    
+    if (tempCategories.includes(category)) {
+      // Always allow removing
+      newCategories = tempCategories.filter(c => c !== category);
+    } else if (maxSelections && tempCategories.length >= maxSelections) {
+      // At max, can't add more
+      return;
+    } else {
+      newCategories = [...tempCategories, category];
+    }
     
     setTempCategories(newCategories);
     
@@ -147,39 +159,46 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         )}
       </div>
       
-      <p className="text-xs sm:text-sm text-gray-400 mb-2 sm:mb-3">
-        Tap to select multiple categories
+      <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">
+        {maxSelections 
+          ? `Tap to select up to ${maxSelections} categories`
+          : 'Tap to select multiple categories'
+        }
       </p>
       
       <div className="grid grid-cols-1 gap-2 max-h-60 sm:max-h-80 overflow-y-auto pr-1">
         {TALENT_CATEGORIES.map((category) => {
           const isSelected = tempCategories.includes(category.value as TalentCategory);
+          const isDisabled = !isSelected && isAtMax;
           return (
             <button
               key={category.value}
               type="button"
               onClick={() => handleCategoryToggle(category.value as TalentCategory)}
+              disabled={isDisabled}
               className={`p-2 sm:p-3 border-2 rounded-lg text-left transition-all ${
                 isSelected
-                  ? 'border-primary-500 bg-primary-50/20 border-primary-400'
-                  : 'border-white/20 hover:border-white/40 bg-white/5'
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : isDisabled
+                  ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                  : 'border-gray-200 hover:border-emerald-300 bg-white'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <h4 className={`text-xs sm:text-sm font-medium mb-0.5 ${
-                    isSelected ? 'text-white' : 'text-gray-200'
+                    isSelected ? 'text-emerald-700' : 'text-gray-700'
                   }`}>
                     {category.label}
                   </h4>
                   <p className={`text-xs leading-tight ${
-                    isSelected ? 'text-gray-300' : 'text-gray-400'
+                    isSelected ? 'text-emerald-600' : 'text-gray-500'
                   }`}>
                     {category.description}
                   </p>
                 </div>
                 {isSelected && (
-                  <CheckIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-400 flex-shrink-0" />
+                  <CheckIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 flex-shrink-0" />
                 )}
               </div>
             </button>

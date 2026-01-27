@@ -59,7 +59,7 @@ const ShoutoutTypeSelector: React.FC<ShoutoutTypeSelectorProps> = ({
 
   const handleSave = () => {
     if (tempSelected.length === 0) {
-      toast.error('Please select at least one shoutout type');
+      toast.error('Please select at least one occasion');
       return;
     }
     onChange(tempSelected);
@@ -82,7 +82,7 @@ const ShoutoutTypeSelector: React.FC<ShoutoutTypeSelectorProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-white'}`}>
-            Shoutout Types ({selected.length}/{maxSelections})
+            Occasion Match ({selected.length}/{maxSelections})
           </label>
           {!readonly && (
             <button
@@ -118,7 +118,7 @@ const ShoutoutTypeSelector: React.FC<ShoutoutTypeSelectorProps> = ({
           })}
           {selected.length === 0 && (
             <div className={`p-4 border rounded-lg text-center ${isLight ? 'border-gray-200 bg-gray-50' : 'border-white/20 bg-white/5'}`}>
-              <p className={isLight ? 'text-gray-500' : 'text-gray-400'}>No shoutout types selected</p>
+              <p className={isLight ? 'text-gray-500' : 'text-gray-400'}>No occasions selected</p>
             </div>
           )}
         </div>
@@ -155,7 +155,7 @@ const ShoutoutTypeSelector: React.FC<ShoutoutTypeSelectorProps> = ({
       </div>
 
       <p className={`text-xs sm:text-sm mb-2 sm:mb-3 ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
-        Select up to {maxSelections} types of shoutouts you offer
+        Select up to {maxSelections} occasions that match your personality
       </p>
 
       <div className="grid grid-cols-1 gap-2 max-h-60 sm:max-h-80 overflow-y-auto pr-1">
