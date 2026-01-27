@@ -467,7 +467,6 @@ const TalentStartPage: React.FC = () => {
           username: profileData.username.toLowerCase(),
           bio: profileData.bio,
           pricing: profileData.pricing,
-          instagram_followers: profileData.instagramFollowers || null,
           fulfillment_time_hours: profileData.fulfillmentTime,
           temp_avatar_url: profileData.avatarUrl,
         })
@@ -801,18 +800,13 @@ const TalentStartPage: React.FC = () => {
                 <p className="text-gray-600 mb-6">This is how you'll appear to customers</p>
 
                 <form onSubmit={handleProfileSubmit} className="space-y-5">
-                  <div className="flex items-center gap-4">
-                    {profileData.avatarUrl && (
-                      <img src={profileData.avatarUrl} alt="Preview" className="w-20 h-20 rounded-full object-cover" />
-                    )}
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture *</label>
-                      <ImageUpload
-                        currentImageUrl={profileData.avatarUrl}
-                        onImageUploaded={(url) => setProfileData({ ...profileData, avatarUrl: url })}
-                        uploadPath="talent-avatars"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture *</label>
+                    <ImageUpload
+                      currentImageUrl={profileData.avatarUrl}
+                      onImageUploaded={(url) => setProfileData({ ...profileData, avatarUrl: url })}
+                      uploadPath="talent-avatars"
+                    />
                   </div>
 
                   <div>
@@ -864,15 +858,12 @@ const TalentStartPage: React.FC = () => {
                     <p className="text-xs text-gray-500 mt-1">{profileData.bio.length}/50 min</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Set Your Pricing</label>
-                    <PricingHelper
-                      followers={profileData.instagramFollowers}
-                      onFollowersChange={(f) => setProfileData({ ...profileData, instagramFollowers: f })}
-                      price={profileData.pricing}
-                      onPriceChange={(p) => setProfileData({ ...profileData, pricing: p })}
-                    />
-                  </div>
+                  <PricingHelper
+                    followers={profileData.instagramFollowers}
+                    onFollowersChange={(f) => setProfileData({ ...profileData, instagramFollowers: f })}
+                    price={profileData.pricing}
+                    onPriceChange={(p) => setProfileData({ ...profileData, pricing: p })}
+                  />
 
                   <button
                     type="submit"
