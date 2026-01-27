@@ -114,6 +114,8 @@ const TalentStartPage: React.FC = () => {
         if (parsed.talentProfileId) setTalentProfileId(parsed.talentProfileId);
         if (parsed.profileData) setProfileData({ ...profileData, ...parsed.profileData });
         if (parsed.selectedShoutoutTypes) setSelectedShoutoutTypes(parsed.selectedShoutoutTypes);
+        if (parsed.donateToCharity !== undefined) setDonateToCharity(parsed.donateToCharity);
+        if (parsed.charityData) setCharityData(parsed.charityData);
         if (parsed.currentStep > 1) toast.success('Progress restored!');
       } catch (e) {
         console.error('Failed to parse saved progress:', e);
@@ -125,10 +127,10 @@ const TalentStartPage: React.FC = () => {
   useEffect(() => {
     if (userId || currentStep > 1) {
       localStorage.setItem('talent_start_progress', JSON.stringify({
-        currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes
+        currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes, donateToCharity, charityData
       }));
     }
-  }, [currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes]);
+  }, [currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes, donateToCharity, charityData]);
 
   // Handle authenticated user - create/get talent profile
   const handleUserAuthenticated = async (authUserId: string) => {
@@ -151,6 +153,19 @@ const TalentStartPage: React.FC = () => {
 
       if (existingProfile) {
         setTalentProfileId(existingProfile.id);
+        // Check for saved progress and restore step
+        const saved = localStorage.getItem('talent_start_progress');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.currentStep && parsed.currentStep > 1) {
+              setCurrentStep(parsed.currentStep);
+              toast.success('Continuing your setup...');
+              return;
+            }
+          } catch (e) { /* ignore */ }
+        }
+        // Default to step 2 if no saved progress
         toast.success('Continuing your setup...');
         setCurrentStep(2);
         return;
@@ -946,19 +961,19 @@ const TalentStartPage: React.FC = () => {
                   </div>
 
                   {donateToCharity && (
-                    <div className="space-y-4 p-4 border border-emerald-200 rounded-xl bg-emerald-50">
+                    <div className="space-y-4 p-4 border border-emerald-300 rounded-xl bg-white">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Charity Name</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-1">Charity Name</label>
                         <input
                           type="text"
                           value={charityData.charityName}
                           onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900 placeholder-gray-400"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-gray-900 placeholder-gray-400"
                           placeholder="e.g., Red Cross"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Donation %</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-1">Donation %</label>
                         <div className="flex items-center gap-2">
                           <input
                             type="number"
@@ -966,9 +981,9 @@ const TalentStartPage: React.FC = () => {
                             max={100}
                             value={charityData.charityPercentage}
                             onChange={(e) => setCharityData({ ...charityData, charityPercentage: parseInt(e.target.value) || 5 })}
-                            className="w-24 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900"
+                            className="w-24 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-gray-900"
                           />
-                          <span className="text-gray-600">% per order</span>
+                          <span className="text-gray-700">% per order</span>
                         </div>
                       </div>
                     </div>
