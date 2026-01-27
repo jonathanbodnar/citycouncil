@@ -639,10 +639,34 @@ const TalentStartPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6 lg:py-8">
+        {/* Mobile Progress Bar - Compact horizontal version */}
+        <div className="lg:hidden mb-4">
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Step {currentStep} of {STEPS.length}</span>
+              <span className="text-xs text-emerald-400">{STEPS[currentStep - 1]?.name}</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              {STEPS.map((step) => {
+                const isCompleted = currentStep > step.id;
+                const isCurrent = currentStep === step.id;
+                return (
+                  <div
+                    key={step.id}
+                    className={`flex-1 h-1.5 rounded-full transition-all ${
+                      isCompleted ? 'bg-emerald-500' : isCurrent ? 'bg-gradient-to-r from-emerald-500 to-cyan-500' : 'bg-white/10'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-[280px,1fr] gap-6 lg:gap-8">
-          {/* Sidebar */}
-          <div className="lg:sticky lg:top-6 lg:self-start">
+          {/* Sidebar - Hidden on mobile, shown on desktop */}
+          <div className="hidden lg:block lg:sticky lg:top-6 lg:self-start">
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4 sm:p-6">
               <h3 className="text-base font-semibold text-white mb-4">Your Progress</h3>
               <nav className="space-y-1.5">
