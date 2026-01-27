@@ -698,7 +698,7 @@ const TalentProfilePage: React.FC = () => {
       if (!talentData.users || (Array.isArray(talentData.users) && talentData.users.length === 0)) {
         (talentData as any).users = {
           id: '',
-          full_name: talentData.temp_full_name || 'Unknown',
+          full_name: talentData.temp_full_name || talentData.full_name || 'Unknown',
           avatar_url: talentData.temp_avatar_url || null,
         };
       }

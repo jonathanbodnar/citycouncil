@@ -29,6 +29,19 @@ const STEPS = [
   { id: 5, name: 'Promo Video', description: 'Introduce yourself', icon: VideoCameraIcon },
 ];
 
+// Hardcoded charity list (same as admin > talent edit)
+const CHARITY_OPTIONS = [
+  'American Red Cross',
+  'St. Jude Children\'s Research Hospital',
+  'Wounded Warrior Project',
+  'Doctors Without Borders',
+  'Habitat for Humanity',
+  'Samaritan\'s Purse',
+  'Make-A-Wish Foundation',
+  'Salvation Army',
+  'Feeding America',
+];
+
 const TalentStartPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -66,7 +79,6 @@ const TalentStartPage: React.FC = () => {
   // Charity Data
   const [donateToCharity, setDonateToCharity] = useState(false);
   const [charityData, setCharityData] = useState({ charityName: '', charityPercentage: 5 });
-  const [charities, setCharities] = useState<{ id: string; name: string }[]>([]);
   const [showCustomCharity, setShowCustomCharity] = useState(false);
 
   // Video
@@ -75,7 +87,6 @@ const TalentStartPage: React.FC = () => {
 
   useEffect(() => {
     fetchPlatformSettings();
-    fetchCharities();
     loadSavedProgress();
   }, []);
 
@@ -107,18 +118,6 @@ const TalentStartPage: React.FC = () => {
     }
   };
 
-  const fetchCharities = async () => {
-    try {
-      const { data } = await supabase
-        .from('charities')
-        .select('id, name')
-        .eq('is_verified', true)
-        .order('name');
-      if (data) setCharities(data);
-    } catch (error) {
-      console.error('Error fetching charities:', error);
-    }
-  };
 
   const loadSavedProgress = () => {
     const saved = localStorage.getItem('talent_start_progress');
@@ -496,6 +495,7 @@ const TalentStartPage: React.FC = () => {
         .from('talent_profiles')
         .update({
           full_name: profileData.fullName,
+          temp_full_name: profileData.fullName, // Also save to temp_full_name for backwards compatibility
           username: profileData.username.toLowerCase(),
           bio: profileData.bio,
           pricing: profileData.pricing,
@@ -966,7 +966,7 @@ const TalentStartPage: React.FC = () => {
                 </p>
 
                 <form onSubmit={handleCharitySubmit} className="space-y-5">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl">
                     <div>
                       <p className="font-medium text-gray-900">Enable charity donation</p>
                       <p className="text-sm text-gray-500">Donate a % of each order</p>
@@ -974,9 +974,9 @@ const TalentStartPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setDonateToCharity(!donateToCharity)}
-                      className={`relative w-12 h-7 rounded-full transition-colors ${donateToCharity ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                      className={`relative w-14 h-8 rounded-full transition-colors border-2 ${donateToCharity ? 'bg-emerald-500 border-emerald-600' : 'bg-gray-200 border-gray-300'}`}
                     >
-                      <span className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${donateToCharity ? 'translate-x-6' : 'translate-x-1'}`} />
+                      <span className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${donateToCharity ? 'translate-x-6' : 'translate-x-0'}`} />
                     </button>
                   </div>
 
@@ -998,8 +998,8 @@ const TalentStartPage: React.FC = () => {
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-gray-900"
                         >
                           <option value="">Select a charity...</option>
-                          {charities.map((charity) => (
-                            <option key={charity.id} value={charity.name}>{charity.name}</option>
+                          {CHARITY_OPTIONS.map((charityName) => (
+                            <option key={charityName} value={charityName}>{charityName}</option>
                           ))}
                           <option value="custom">+ Add Custom Charity</option>
                         </select>
