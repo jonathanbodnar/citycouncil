@@ -851,7 +851,6 @@ const TalentStartPage: React.FC = () => {
 
                 <form onSubmit={handleProfileSubmit} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture *</label>
                     <ImageUpload
                       currentImageUrl={profileData.avatarUrl}
                       onImageUploaded={(url) => setProfileData({ ...profileData, avatarUrl: url })}
