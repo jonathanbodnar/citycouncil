@@ -593,16 +593,16 @@ export default function HomePageNew() {
                 </h1>
                 
                 {/* Occasion Buttons in Header - hide when occasion selected from popup */}
-                <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-4xl mx-auto">
                   {OCCASIONS.map((occasion) => (
                     <button
                       key={occasion.key}
                       onClick={() => handleOccasionClick(occasion.key)}
-                      className={`glass rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 hover:scale-105 transition-all text-center ${
+                      className={`glass rounded-lg px-2.5 py-1 sm:px-3 sm:py-1.5 hover:scale-105 transition-all text-center ${
                         selectedOccasion === occasion.key ? 'ring-2 ring-cyan-400' : ''
                       }`}
                     >
-                      <span className="text-sm sm:text-base mr-1">{occasion.emoji}</span>
+                      <span className="text-xs sm:text-sm mr-0.5">{occasion.emoji}</span>
                       <span className="text-white font-medium text-xs sm:text-sm">{occasion.label}</span>
                     </button>
                   ))}
