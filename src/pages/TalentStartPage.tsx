@@ -568,14 +568,22 @@ const TalentStartPage: React.FC = () => {
   const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoVideo) return toast.error('Please upload a video');
-    if (!talentProfileId) return;
+    if (!talentProfileId) return toast.error('Profile not found. Please refresh and try again.');
 
     setVideoUploading(true);
     try {
+      console.log('Uploading video for talent profile:', talentProfileId);
       const result = await uploadVideoToWasabi(promoVideo, talentProfileId);
       
+      // Check if upload was successful
+      if (!result.success || !result.videoUrl) {
+        throw new Error(result.error || 'Video upload failed');
+      }
+
+      console.log('Video uploaded successfully:', result.videoUrl);
+      
       // Update video URL and mark onboarding as complete
-      await supabase
+      const { error: updateError } = await supabase
         .from('talent_profiles')
         .update({ 
           promo_video_url: result.videoUrl,
@@ -584,12 +592,21 @@ const TalentStartPage: React.FC = () => {
         })
         .eq('id', talentProfileId);
 
+      if (updateError) {
+        console.error('Error updating talent profile:', updateError);
+        throw updateError;
+      }
+
+      console.log('Profile updated with video URL');
+
       // Send admin notification
       try {
         await supabase.functions.invoke('onboarding-complete-notification', {
           body: { talentId: talentProfileId, talentName: profileData.fullName, email: email },
         });
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Failed to send admin notification:', e);
+      }
 
       // Clear saved progress
       localStorage.removeItem('talent_start_progress');
@@ -598,6 +615,7 @@ const TalentStartPage: React.FC = () => {
       toast.success('🎉 Onboarding complete! Pending admin approval.');
       setTimeout(() => navigate('/dashboard'), 2000);
     } catch (error: any) {
+      console.error('Video upload error:', error);
       toast.error(error.message || 'Upload failed');
     } finally {
       setVideoUploading(false);
