@@ -953,7 +953,7 @@ const TalentStartPage: React.FC = () => {
                           type="text"
                           value={charityData.charityName}
                           onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900 placeholder-gray-400"
                           placeholder="e.g., Red Cross"
                         />
                       </div>
@@ -966,7 +966,7 @@ const TalentStartPage: React.FC = () => {
                             max={100}
                             value={charityData.charityPercentage}
                             onChange={(e) => setCharityData({ ...charityData, charityPercentage: parseInt(e.target.value) || 5 })}
-                            className="w-24 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500"
+                            className="w-24 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900"
                           />
                           <span className="text-gray-600">% per order</span>
                         </div>
