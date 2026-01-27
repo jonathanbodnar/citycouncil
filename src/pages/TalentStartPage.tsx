@@ -66,6 +66,8 @@ const TalentStartPage: React.FC = () => {
   // Charity Data
   const [donateToCharity, setDonateToCharity] = useState(false);
   const [charityData, setCharityData] = useState({ charityName: '', charityPercentage: 5 });
+  const [charities, setCharities] = useState<{ id: string; name: string }[]>([]);
+  const [showCustomCharity, setShowCustomCharity] = useState(false);
 
   // Video
   const [promoVideo, setPromoVideo] = useState<File | null>(null);
@@ -73,6 +75,7 @@ const TalentStartPage: React.FC = () => {
 
   useEffect(() => {
     fetchPlatformSettings();
+    fetchCharities();
     loadSavedProgress();
   }, []);
 
@@ -104,6 +107,19 @@ const TalentStartPage: React.FC = () => {
     }
   };
 
+  const fetchCharities = async () => {
+    try {
+      const { data } = await supabase
+        .from('charities')
+        .select('id, name')
+        .eq('is_verified', true)
+        .order('name');
+      if (data) setCharities(data);
+    } catch (error) {
+      console.error('Error fetching charities:', error);
+    }
+  };
+
   const loadSavedProgress = () => {
     const saved = localStorage.getItem('talent_start_progress');
     if (saved) {
@@ -116,6 +132,7 @@ const TalentStartPage: React.FC = () => {
         if (parsed.selectedShoutoutTypes) setSelectedShoutoutTypes(parsed.selectedShoutoutTypes);
         if (parsed.donateToCharity !== undefined) setDonateToCharity(parsed.donateToCharity);
         if (parsed.charityData) setCharityData(parsed.charityData);
+        if (parsed.showCustomCharity !== undefined) setShowCustomCharity(parsed.showCustomCharity);
         if (parsed.currentStep > 1) toast.success('Progress restored!');
       } catch (e) {
         console.error('Failed to parse saved progress:', e);
@@ -127,10 +144,10 @@ const TalentStartPage: React.FC = () => {
   useEffect(() => {
     if (userId || currentStep > 1) {
       localStorage.setItem('talent_start_progress', JSON.stringify({
-        currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes, donateToCharity, charityData
+        currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes, donateToCharity, charityData, showCustomCharity
       }));
     }
-  }, [currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes, donateToCharity, charityData]);
+  }, [currentStep, userId, talentProfileId, profileData, selectedShoutoutTypes, donateToCharity, charityData, showCustomCharity]);
 
   // Handle authenticated user - create/get talent profile
   const handleUserAuthenticated = async (authUserId: string) => {
@@ -943,7 +960,10 @@ const TalentStartPage: React.FC = () => {
             {currentStep === 4 && (
               <div className="p-6 sm:p-8 lg:p-10">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Donate to Charity (Optional)</h2>
-                <p className="text-gray-600 mb-6">Share a portion of your earnings with a cause you care about</p>
+                <p className="text-gray-600 mb-4">Share a portion of your earnings with a cause you care about.</p>
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+                  You'll need to handle the donation yourself after receiving your payout. We'll display your charity on your profile to show fans you're giving back.
+                </p>
 
                 <form onSubmit={handleCharitySubmit} className="space-y-5">
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
@@ -963,15 +983,41 @@ const TalentStartPage: React.FC = () => {
                   {donateToCharity && (
                     <div className="space-y-4 p-4 border border-emerald-300 rounded-xl bg-white">
                       <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-1">Charity Name</label>
-                        <input
-                          type="text"
-                          value={charityData.charityName}
-                          onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-gray-900 placeholder-gray-400"
-                          placeholder="e.g., Red Cross"
-                        />
+                        <label className="block text-sm font-medium text-gray-900 mb-1">Select Charity</label>
+                        <select
+                          value={showCustomCharity ? 'custom' : charityData.charityName}
+                          onChange={(e) => {
+                            if (e.target.value === 'custom') {
+                              setShowCustomCharity(true);
+                              setCharityData({ ...charityData, charityName: '' });
+                            } else {
+                              setShowCustomCharity(false);
+                              setCharityData({ ...charityData, charityName: e.target.value });
+                            }
+                          }}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-gray-900"
+                        >
+                          <option value="">Select a charity...</option>
+                          {charities.map((charity) => (
+                            <option key={charity.id} value={charity.name}>{charity.name}</option>
+                          ))}
+                          <option value="custom">+ Add Custom Charity</option>
+                        </select>
                       </div>
+
+                      {showCustomCharity && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 mb-1">Custom Charity Name</label>
+                          <input
+                            type="text"
+                            value={charityData.charityName}
+                            onChange={(e) => setCharityData({ ...charityData, charityName: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-gray-900 placeholder-gray-400"
+                            placeholder="Enter charity name"
+                          />
+                        </div>
+                      )}
+
                       <div>
                         <label className="block text-sm font-medium text-gray-900 mb-1">Donation %</label>
                         <div className="flex items-center gap-2">
