@@ -148,7 +148,7 @@ const HolidayPromoPopup: React.FC = () => {
     const pathname = window.location.pathname;
     
     // Don't show on onboarding pages
-    if (pathname.startsWith('/onboard')) {
+    if (pathname.startsWith('/onboard') || pathname === '/start') {
       return false;
     }
 
