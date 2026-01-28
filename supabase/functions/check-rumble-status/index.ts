@@ -254,18 +254,40 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Parse request body for optional talent_id (single talent mode)
+    let singleTalentId: string | null = null
+    let skipRecentMinutes = 10 // Skip talents checked within last 10 minutes
+    
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json()
+        singleTalentId = body.talent_id || null
+        if (body.skip_recent_minutes !== undefined) {
+          skipRecentMinutes = body.skip_recent_minutes
+        }
+      } catch {
+        // No body or invalid JSON, continue with all talents
+      }
+    }
+    
     // Initialize Supabase client with service role key
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // Get all talent profiles with rumble_handle (now also fetching rumble_title_filter)
-    const { data: talents, error: talentsError } = await supabase
+    // Build query - either single talent or all with rumble handles
+    let query = supabase
       .from('talent_profiles')
       .select('id, rumble_handle, rumble_type, rumble_title_filter')
       .not('rumble_handle', 'is', null)
       .neq('rumble_handle', '')
+    
+    if (singleTalentId) {
+      query = query.eq('id', singleTalentId)
+    }
+    
+    const { data: talents, error: talentsError } = await query
     
     if (talentsError) {
       throw new Error(`Failed to fetch talents: ${talentsError.message}`)
@@ -280,11 +302,27 @@ Deno.serve(async (req) => {
     
     console.log(`Checking Rumble status for ${talents.length} talents...`)
     
-    const results: { talent_id: string; handle: string; success: boolean; is_live?: boolean; title?: string; filter?: string }[] = []
+    // Get recent cache entries to skip (for talents with filters, preserve manual updates)
+    const skipCutoff = new Date(Date.now() - skipRecentMinutes * 60 * 1000).toISOString()
+    const { data: recentCache } = await supabase
+      .from('rumble_cache')
+      .select('talent_id, last_checked_at')
+      .gte('last_checked_at', skipCutoff)
+    
+    const recentTalentIds = new Set((recentCache || []).map(c => c.talent_id))
+    
+    const results: { talent_id: string; handle: string; success: boolean; is_live?: boolean; title?: string; filter?: string; skipped?: boolean }[] = []
     
     // Process each talent (with some delay to avoid rate limiting)
     for (const talent of talents) {
       try {
+        // Skip recently checked talents (unless in single talent mode)
+        if (!singleTalentId && recentTalentIds.has(talent.id)) {
+          console.log(`Skipping ${talent.rumble_handle} - recently checked`)
+          results.push({ talent_id: talent.id, handle: talent.rumble_handle, success: true, skipped: true })
+          continue
+        }
+        
         // Pass the title filter to the scraper
         const rumbleData = await scrapeRumbleChannel(
           talent.rumble_handle, 

@@ -498,11 +498,17 @@ const CommsCenterManagement: React.FC = () => {
 
   // Filter notifications based on search and type
   const filteredNotifications = notifications.filter(notif => {
+    const userFullName = (notif.users?.full_name || '').toLowerCase();
+    const userEmail = (notif.users?.email || '').toLowerCase();
+    const titleText = (notif.title || '').toLowerCase();
+    const messageText = (notif.message || '').toLowerCase();
+    const searchText = notificationSearch.toLowerCase();
+
     const matchesSearch = 
-      notif.users.full_name.toLowerCase().includes(notificationSearch.toLowerCase()) ||
-      notif.users.email.toLowerCase().includes(notificationSearch.toLowerCase()) ||
-      notif.title.toLowerCase().includes(notificationSearch.toLowerCase()) ||
-      notif.message.toLowerCase().includes(notificationSearch.toLowerCase());
+      userFullName.includes(searchText) ||
+      userEmail.includes(searchText) ||
+      titleText.includes(searchText) ||
+      messageText.includes(searchText);
     
     const matchesType = notificationTypeFilter === 'all' || notif.type === notificationTypeFilter;
     
@@ -510,7 +516,7 @@ const CommsCenterManagement: React.FC = () => {
   });
 
   // Get unique notification types for filter
-  const notificationTypes = ['all', ...Array.from(new Set(notifications.map(n => n.type)))];
+  const notificationTypes = ['all', ...Array.from(new Set(notifications.map(n => n.type).filter(Boolean)))];
 
   return (
     <div className="space-y-6">
@@ -774,7 +780,7 @@ const CommsCenterManagement: React.FC = () => {
                     <span className={`font-medium ${
                       selectedTalent?.id === talent.id ? 'text-white' : 'text-blue-600'
                     }`}>
-                      {(talent.temp_full_name || talent.full_name).charAt(0)}
+                      {(talent.temp_full_name || talent.full_name || talent.users?.full_name || 'T').charAt(0)}
                     </span>
                   )}
                 </div>
@@ -825,7 +831,9 @@ const CommsCenterManagement: React.FC = () => {
                       {selectedTalent.temp_full_name || selectedTalent.full_name}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {selectedTalent.users.phone.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')}
+                      {selectedTalent.users?.phone
+                        ? selectedTalent.users.phone.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')
+                        : 'No phone on file'}
                     </div>
                   </div>
                 </div>
@@ -1125,12 +1133,12 @@ const CommsCenterManagement: React.FC = () => {
                           {new Date(notif.created_at).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{notif.users.full_name}</div>
-                          <div className="text-sm text-gray-500">{notif.users.email}</div>
+                          <div className="text-sm font-medium text-gray-900">{notif.users?.full_name || 'Unknown Talent'}</div>
+                          <div className="text-sm text-gray-500">{notif.users?.email || 'Unknown Email'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                            {notif.type.replace(/_/g, ' ')}
+                            {(notif.type || 'unknown').replace(/_/g, ' ')}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
