@@ -91,36 +91,6 @@ const ShoutOutFansManagement: React.FC = () => {
       today.setUTCHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      // Helper function to fetch all pages of data (Supabase limits to 1000 per request)
-      const fetchAllPages = async (
-        query: () => ReturnType<typeof supabase.from>
-      ): Promise<any[]> => {
-        const pageSize = 1000;
-        let allData: any[] = [];
-        let page = 0;
-        let hasMore = true;
-
-        while (hasMore) {
-          const { data, error } = await (query() as any)
-            .range(page * pageSize, (page + 1) * pageSize - 1);
-          
-          if (error) {
-            console.error('Pagination error:', error);
-            break;
-          }
-          
-          if (data && data.length > 0) {
-            allData = [...allData, ...data];
-            page++;
-            hasMore = data.length === pageSize;
-          } else {
-            hasMore = false;
-          }
-        }
-        
-        return allData;
-      };
-
       // Fetch talent profiles first
       const { data: talentProfiles } = await supabase
         .from('talent_profiles')
@@ -136,10 +106,31 @@ const ShoutOutFansManagement: React.FC = () => {
         `)
         .eq('is_active', true);
 
-      // Fetch ALL views with pagination (for display and 10+ filter)
-      const allTimeViews = await fetchAllPages(() => 
-        supabase.from('bio_page_views').select('talent_id')
-      );
+      // Fetch ALL views with pagination (Supabase limits to 1000 per request)
+      const pageSize = 1000;
+      let allTimeViews: any[] = [];
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('bio_page_views')
+          .select('talent_id')
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        
+        if (error) {
+          console.error('Pagination error:', error);
+          break;
+        }
+        
+        if (data && data.length > 0) {
+          allTimeViews = [...allTimeViews, ...data];
+          page++;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
 
       // Fetch today's data in parallel
       const [todayViews, todayClicks, followers] = await Promise.all([
