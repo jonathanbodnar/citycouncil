@@ -403,6 +403,31 @@ serve(async (req) => {
         }
       }
 
+      // FINAL SAFETY: Ensure promo_source is preserved on the user record
+      // This runs after any trigger has completed
+      if (existingUser.promo_source) {
+        console.log('FINAL: Ensuring promo_source is preserved:', existingUser.promo_source);
+        const { error: finalPromoError } = await supabase.from('users')
+          .update({ 
+            promo_source: existingUser.promo_source,
+            phone: formattedPhone || existingUser.phone,
+          })
+          .eq('id', existingUser.id);
+        
+        if (finalPromoError) {
+          console.log('FINAL promo_source update error:', finalPromoError.message);
+        } else {
+          console.log('FINAL promo_source update SUCCESS');
+        }
+        
+        // Verify it was saved
+        const { data: verifyUser } = await supabase.from('users')
+          .select('id, promo_source, phone')
+          .eq('id', existingUser.id)
+          .single();
+        console.log('VERIFY user after final update:', verifyUser);
+      }
+
       // Generate a temporary password and sign in the user
       const tempPassword = generateRandomPassword();
       
@@ -439,6 +464,16 @@ serve(async (req) => {
       }
       
       console.log('Login successful for:', existingUser.email);
+
+      // ABSOLUTE FINAL: One more update to guarantee promo_source and phone are preserved
+      // This is the last thing we do before returning
+      if (existingUser.promo_source || existingUser.phone) {
+        console.log('ABSOLUTE FINAL update - promo_source:', existingUser.promo_source, 'phone:', existingUser.phone || formattedPhone);
+        await supabase.from('users').update({
+          promo_source: existingUser.promo_source,
+          phone: formattedPhone || existingUser.phone,
+        }).eq('id', existingUser.id);
+      }
 
       return new Response(
         JSON.stringify({
