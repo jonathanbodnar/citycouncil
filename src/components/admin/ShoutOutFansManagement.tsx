@@ -24,6 +24,7 @@ interface TalentBioStats {
   talent_name: string;
   avatar_url: string | null;
   slug: string | null;
+  username: string | null;
   page_views: number;
   total_clicks: number;
   link_clicks: number;
@@ -98,6 +99,7 @@ const ShoutOutFansManagement: React.FC = () => {
         .select(`
           id,
           slug,
+          username,
           temp_full_name,
           temp_avatar_url,
           users!talent_profiles_user_id_fkey (
@@ -264,6 +266,7 @@ const ShoutOutFansManagement: React.FC = () => {
           talent_name: name,
           avatar_url: avatar,
           slug: talent.slug,
+          username: talent.username,
           page_views: allTimeViews, // All time views for display
           total_clicks: clicks.total, // Today's clicks
           link_clicks: clicks.link,
@@ -567,17 +570,15 @@ const ShoutOutFansManagement: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900">{talent.talent_name}</div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          {talent.slug ? (
+                          {(talent.slug || talent.username) && (
                             <a 
-                              href={`https://shoutout.fans/${talent.slug}`}
+                              href={`https://shoutout.fans/${talent.slug || talent.username}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-xs text-blue-600 hover:underline"
                             >
-                              shoutout.fans/{talent.slug}
+                              shoutout.fans/{talent.slug || talent.username}
                             </a>
-                          ) : (
-                            <span className="text-xs text-gray-400">No slug set</span>
                           )}
                           <a
                             href={`https://bio.shoutout.us/dashboard?token=${talent.talent_id}`}
