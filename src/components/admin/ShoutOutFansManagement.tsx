@@ -189,7 +189,7 @@ const ShoutOutFansManagement: React.FC = () => {
       const stats: TalentBioStats[] = (talentProfiles || []).map((talent: any) => {
         const views = viewsByTalent.get(talent.id) || 0;
         const clicks = clicksByTalent.get(talent.id) || {
-          total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0
+          total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0, services: 0
         };
         const fans = fansByTalent.get(talent.id) || 0;
         
