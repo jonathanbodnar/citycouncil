@@ -24,12 +24,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!user) {
     // Redirect to appropriate login page
-    // Admin routes go to admin login, others go to regular login
+    // Admin routes go to admin login, others go to unified signup/login
     if (requiredUserType === 'admin') {
       return <Navigate to="/admin/login" replace />;
     }
+    // Use /signup which handles BOTH login (existing users) and registration (new users)
+    // in one unified flow - enter email, then phone OTP
     const returnTo = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
+    return <Navigate to={`/signup?returnTo=${returnTo}`} replace />;
   }
 
   if (requiredUserType && user.user_type !== requiredUserType) {
