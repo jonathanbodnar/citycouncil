@@ -14,7 +14,8 @@ import {
   HeartIcon,
   BuildingOfficeIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
@@ -563,18 +564,31 @@ const ShoutOutFansManagement: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900">{talent.talent_name}</div>
-                        {talent.slug && (
-                          <a 
-                            href={`https://shoutout.fans/${talent.slug}`}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {talent.slug ? (
+                            <a 
+                              href={`https://shoutout.fans/${talent.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              shoutout.fans/{talent.slug}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-400">No slug set</span>
+                          )}
+                          <a
+                            href={`https://bio.shoutout.us/dashboard?token=${talent.talent_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 bg-purple-50 px-2 py-0.5 rounded"
                           >
-                            shoutout.fans/{talent.slug}
+                            <Cog6ToothIcon className="h-3 w-3" />
+                            Dashboard
                           </a>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </td>
