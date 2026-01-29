@@ -108,7 +108,8 @@ const dispatchCountdownUpdate = () => {
 // Get UTM source from various locations
 const getUtmSource = (): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
-  const urlUtm = urlParams.get('utm');
+  // Check for common typo 'umt' as well
+  const urlUtm = urlParams.get('utm') || urlParams.get('umt');
   const fbUtmSource = urlParams.get('utm_source');
   const storedUtm = safeGetItem('promo_source_global');
   const storedPromoSource = safeGetItem('promo_source');
@@ -126,6 +127,12 @@ const getUtmSource = (): string | null => {
     const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
     const normalizedSource = fbUtmSource.toLowerCase();
     normalizedFbSource = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : fbUtmSource;
+  }
+  
+  // If URL has "winning", try to find a better stored source
+  if (urlUtm === 'winning') {
+    const betterSource = storedUtm || storedPromoSource || sessionUtm || sessionPromoSource;
+    if (betterSource && betterSource !== 'winning') return betterSource;
   }
   
   return urlUtm || normalizedFbSource || storedUtm || storedPromoSource || sessionUtm || sessionPromoSource || null;

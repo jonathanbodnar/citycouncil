@@ -185,7 +185,15 @@ const HomePage: React.FC = () => {
     }
     
     if (sourceToStore) {
-      localStorage.setItem('promo_source_global', sourceToStore);
+      // Don't let "winning" overwrite a more specific source
+      const existingSource = localStorage.getItem('promo_source_global');
+      const shouldStore = !existingSource || 
+        (existingSource === 'winning' && sourceToStore !== 'winning') ||
+        !existingSource;
+      
+      if (shouldStore || !existingSource) {
+        localStorage.setItem('promo_source_global', sourceToStore);
+      }
     }
   }, [searchParams]);
 

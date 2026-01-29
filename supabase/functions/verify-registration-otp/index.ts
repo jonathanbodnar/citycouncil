@@ -210,14 +210,14 @@ serve(async (req) => {
     // Check by email first
     const { data: userByEmail } = await supabase
       .from('users')
-      .select('id, email, phone, full_name, user_type')
+      .select('id, email, phone, full_name, user_type, promo_source, sms_subscribed, credits')
       .eq('email', normalizedEmail)
       .single();
 
     // Check by phone
     const { data: userByPhone } = await supabase
       .from('users')
-      .select('id, email, phone, full_name, user_type')
+      .select('id, email, phone, full_name, user_type, promo_source, sms_subscribed, credits')
       .eq('phone', formattedPhone)
       .single();
 
@@ -226,7 +226,7 @@ serve(async (req) => {
     if (otpData.user_id) {
       const { data } = await supabase
         .from('users')
-        .select('id, email, phone, full_name, user_type')
+        .select('id, email, phone, full_name, user_type, promo_source, sms_subscribed, credits')
         .eq('id', otpData.user_id)
         .single();
       userByOtp = data;
@@ -262,6 +262,11 @@ serve(async (req) => {
         if (!existingUser.email) {
           updates.email = normalizedEmail;
         }
+      }
+      // Only update promo_source if user doesn't have one yet
+      // This preserves their original attribution (e.g., "rumble") instead of overwriting with "winning"
+      if (!existingUser.promo_source && promoSource) {
+        updates.promo_source = promoSource;
       }
       updates.last_login = new Date().toISOString();
 

@@ -16,8 +16,18 @@ const SignupPage: React.FC = () => {
   
   // Capture UTM source from URL or localStorage
   const getPromoSource = (): string | null => {
-    const simpleUtm = searchParams.get('utm');
-    if (simpleUtm) return simpleUtm;
+    // Check for utm param (and common typo 'umt')
+    const simpleUtm = searchParams.get('utm') || searchParams.get('umt');
+    if (simpleUtm) {
+      // If "winning", try to find a better source
+      if (simpleUtm === 'winning') {
+        try {
+          const storedSource = localStorage.getItem('promo_source_global');
+          if (storedSource && storedSource !== 'winning') return storedSource;
+        } catch { /* ignore */ }
+      }
+      return simpleUtm;
+    }
     
     const utmSource = searchParams.get('utm_source');
     if (utmSource) {
@@ -34,6 +44,20 @@ const SignupPage: React.FC = () => {
   };
   
   const promoSource = getPromoSource();
+  
+  // Persist promo_source to localStorage if captured (ensures it survives page refreshes)
+  useEffect(() => {
+    if (!promoSource) return;
+    if (promoSource === '1') return; // Don't store self_promo globally
+    try {
+      const existing = localStorage.getItem('promo_source_global');
+      // Don't let "winning" overwrite a better source
+      const shouldStore = !existing || (existing === 'winning' && promoSource !== 'winning');
+      if (shouldStore) {
+        localStorage.setItem('promo_source_global', promoSource);
+      }
+    } catch { /* ignore */ }
+  }, [promoSource]);
   
   // Form state
   const [step, setStep] = useState<Step>('email');

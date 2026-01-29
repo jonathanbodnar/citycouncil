@@ -126,6 +126,35 @@ export default function HomePageNew() {
     return () => clearInterval(interval);
   }, []);
 
+  // Capture global UTM tracking (e.g., shoutout.us/?utm=rumble)
+  // Don't let "winning" overwrite more specific sources
+  useEffect(() => {
+    const utmParam = searchParams.get('utm') || searchParams.get('umt');
+    const utmSource = searchParams.get('utm_source');
+    
+    let sourceToStore: string | null = null;
+    
+    if (utmParam && utmParam !== '1') {
+      sourceToStore = utmParam;
+    } else if (utmSource) {
+      // Normalize Facebook sources to 'fb'
+      const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
+      const normalizedSource = utmSource.toLowerCase();
+      sourceToStore = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : utmSource;
+    }
+    
+    if (sourceToStore) {
+      const existingSource = localStorage.getItem('promo_source_global');
+      // Don't let "winning" overwrite a better source, but allow other sources to be stored
+      const shouldStore = !existingSource || 
+        (existingSource === 'winning' && sourceToStore !== 'winning');
+      
+      if (shouldStore) {
+        localStorage.setItem('promo_source_global', sourceToStore);
+      }
+    }
+  }, [searchParams]);
+
   // Listen for occasion selection from giveaway popup
   useEffect(() => {
     const handlePopupOccasion = (event: CustomEvent) => {

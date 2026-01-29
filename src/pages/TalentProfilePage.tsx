@@ -461,12 +461,21 @@ const TalentProfilePage: React.FC = () => {
     const utmSource = searchParams.get('utm_source');
     const talentIdentifier = username || id;
     
-    if (utmParam === '1' && talentIdentifier) {
+    // Also check for common typo 'umt'
+    const actualUtmParam = utmParam || searchParams.get('umt');
+    
+    if (actualUtmParam === '1' && talentIdentifier) {
       // Self-promo: store per-talent (only tracks if they order from THIS talent)
       localStorage.setItem(`promo_source_${talentIdentifier}`, 'self_promo');
-    } else if (utmParam && utmParam !== '1') {
+    } else if (actualUtmParam && actualUtmParam !== '1') {
       // Global UTM: store globally (tracks for ANY talent they order from)
-      localStorage.setItem('promo_source_global', utmParam);
+      // Don't let "winning" overwrite a better source
+      const existingSource = localStorage.getItem('promo_source_global');
+      const shouldStore = !existingSource || 
+        (existingSource === 'winning' && actualUtmParam !== 'winning');
+      if (shouldStore) {
+        localStorage.setItem('promo_source_global', actualUtmParam);
+      }
     } else if (utmSource) {
       // Facebook-style UTM - normalize Facebook sources to 'fb'
       const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];

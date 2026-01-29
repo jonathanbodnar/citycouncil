@@ -50,7 +50,7 @@ serve(async (req) => {
     if (normalizedEmail) {
       const { data } = await supabase
         .from('users')
-        .select('id, email, phone')
+        .select('id, email, phone, promo_source')
         .eq('email', normalizedEmail)
         .single();
       existingUser = data;
@@ -59,7 +59,7 @@ serve(async (req) => {
     if (!existingUser && formattedPhone) {
       const { data } = await supabase
         .from('users')
-        .select('id, email, phone')
+        .select('id, email, phone, promo_source')
         .eq('phone', formattedPhone)
         .single();
       existingUser = data;
@@ -73,6 +73,11 @@ serve(async (req) => {
       }
       if (formattedPhone && !existingUser.phone) {
         updates.phone = formattedPhone;
+      }
+      // Only update promo_source if user doesn't have one yet
+      // This preserves their original attribution
+      if (!existingUser.promo_source && (utm_source || source)) {
+        updates.promo_source = utm_source || source;
       }
 
       if (Object.keys(updates).length > 0) {

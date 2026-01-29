@@ -72,13 +72,20 @@ const OrderPage: React.FC = () => {
     fetchChristmasMode();
   }, []);
   
-  // Check for UTM tracking - check URL param first, then localStorage
+  // Check for UTM tracking - check URL param first, then localStorage, then user's DB promo_source
   // utm=1 = "self_promo" (talent-specific, only tracks for the talent they landed on)
   // Other UTMs (rumble, twitter, etc.) = global (tracks for ANY talent)
   const getPromoSource = (loadedTalent?: TalentWithUser | null): string | null => {
-    // First check URL param
-    const utmParam = searchParams.get('utm');
+    // First check URL param (also check for common typo 'umt')
+    const utmParam = searchParams.get('utm') || searchParams.get('umt');
     if (utmParam) {
+      // If it's "winning", check if we have a better source stored
+      if (utmParam === 'winning') {
+        const storedGlobal = localStorage.getItem('promo_source_global');
+        if (storedGlobal && storedGlobal !== 'winning') return storedGlobal;
+        // Fall through to check user's DB promo_source
+        if (user?.promo_source && user.promo_source !== 'winning') return user.promo_source;
+      }
       return utmParam === '1' ? 'self_promo' : utmParam;
     }
     
@@ -97,6 +104,13 @@ const OrderPage: React.FC = () => {
     // Check for global UTM (e.g., shoutout.us/?utm=rumble)
     // This applies to ANY talent they order from
     const globalPromo = localStorage.getItem('promo_source_global');
+    // If we have "winning" stored but user has a better source, use user's
+    if (globalPromo && globalPromo !== 'winning') return globalPromo;
+    
+    // Fallback to user's promo_source from database (preserves original attribution)
+    if (user?.promo_source) return user.promo_source;
+    
+    // Final fallback to whatever is in localStorage (even if it's "winning")
     if (globalPromo) return globalPromo;
     
     return null;
