@@ -339,8 +339,38 @@ serve(async (req) => {
         if (authUserId !== oldPublicUserId) {
           console.log('Migrating user data from', oldPublicUserId, 'to', authUserId);
           
-          // CRITICAL: Update all related tables to point to new user ID
-          // This preserves orders, reviews, etc.
+          // CRITICAL: First upsert the new user record WITH ALL DATA including promo_source
+          // Do this BEFORE deleting old record to beat any trigger that might create empty record
+          const userData = {
+            id: authUserId,
+            email: existingUser.email || normalizedEmail,
+            phone: formattedPhone || existingUser.phone,
+            full_name: existingUser.full_name || normalizedEmail.split('@')[0],
+            user_type: existingUser.user_type || 'user',
+            promo_source: existingUser.promo_source, // PRESERVE UTM!
+            sms_subscribed: existingUser.sms_subscribed ?? true,
+            credits: existingUser.credits || 0,
+            created_at: existingUser.created_at || new Date().toISOString(),
+          };
+          
+          console.log('Creating/updating new user record with:', userData);
+          
+          // Use upsert to either create or update - this beats the trigger
+          const { error: upsertError } = await supabase.from('users').upsert(userData);
+          
+          if (upsertError) {
+            console.log('Upsert error:', upsertError.message);
+            // Try update as fallback (if trigger already created the record)
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const { error: updateError } = await supabase.from('users')
+              .update(userData)
+              .eq('id', authUserId);
+            if (updateError) {
+              console.log('Update also failed:', updateError.message);
+            }
+          }
+          
+          // Now update related tables to point to new user ID
           const tablesToUpdate = [
             { table: 'orders', column: 'user_id' },
             { table: 'reviews', column: 'user_id' },
@@ -357,49 +387,15 @@ serve(async (req) => {
             
             if (updateError) {
               console.log(`Note: Could not update ${table}.${column}:`, updateError.message);
-              // Don't fail - table might not exist or have no matching rows
             } else {
               console.log(`Updated ${table}.${column}`);
             }
           }
           
-          // Delete the old public.users record (the new one will be created by trigger)
-          await supabase.from('users').delete().eq('id', oldPublicUserId);
-          
-          // Wait for trigger to create the new user record
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // Update the new record with the original user's data
-          // CRITICAL: Include ALL fields to preserve UTM and phone
-          const updateData = {
-            phone: formattedPhone || existingUser.phone,
-            full_name: existingUser.full_name || normalizedEmail.split('@')[0],
-            user_type: existingUser.user_type || 'user',
-            promo_source: existingUser.promo_source,
-            sms_subscribed: existingUser.sms_subscribed,
-            credits: existingUser.credits || 0,
-            email: existingUser.email || normalizedEmail, // Ensure email is set
-          };
-          
-          console.log('Updating new user record with:', updateData);
-          
-          const { error: finalUpdateError } = await supabase.from('users')
-            .update(updateData)
-            .eq('id', authUserId);
-          
-          if (finalUpdateError) {
-            console.log('Note: Could not update new user record:', finalUpdateError.message);
-            // Try upsert as fallback
-            const { error: upsertError } = await supabase.from('users')
-              .upsert({
-                id: authUserId,
-                ...updateData,
-              });
-            if (upsertError) {
-              console.log('Upsert also failed:', upsertError.message);
-            } else {
-              console.log('Upsert succeeded');
-            }
+          // Now delete the old public.users record
+          const { error: deleteError } = await supabase.from('users').delete().eq('id', oldPublicUserId);
+          if (deleteError) {
+            console.log('Note: Could not delete old user record:', deleteError.message);
           }
           
           // Update existingUser reference for the rest of the function
