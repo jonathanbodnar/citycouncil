@@ -390,14 +390,40 @@ const HolidayPromoPopup: React.FC = () => {
         setPhoneNumber(existingUser.phone);
         await revealPrize(normalizedEmail, existingUser.phone);
       } else {
-        // DON'T capture lead yet - wait until we have BOTH email and phone
-        // This ensures the user record has both fields for proper linking during registration
-        // The lead will be captured in revealPrize() with both email and phone
+        // Capture email + utm as lead - phone will be added later
+        // This ensures utm is tracked even if they don't complete giveaway
+        fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            source: 'holiday_popup',
+            utm_source: getUtmSource(),
+          }),
+        }).catch(err => console.log('Email capture note:', err.message));
+        
+        // Need phone - go to phone step
         setStep('phone');
       }
     } catch (error: any) {
       // No user found or error - go to phone step
-      // DON'T capture lead yet - wait until we have both email and phone
+      // Capture email + utm as lead first
+      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          source: 'holiday_popup',
+          utm_source: getUtmSource(),
+        }),
+      }).catch(err => console.log('Email capture note:', err.message));
+      
       setStep('phone');
     } finally {
       setLoading(false);

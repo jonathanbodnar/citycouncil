@@ -238,27 +238,27 @@ serve(async (req) => {
       userByOtp: userByOtp?.id
     });
 
-    // Determine the existing user (priority: OTP user_id > phone > email)
-    // IMPORTANT: Prefer phone over email because phone user likely has UTM from giveaway
+    // Determine the existing user (priority: OTP user_id > email > phone)
+    // IMPORTANT: Prefer email over phone because giveaway captures email first with UTM
     if (userByOtp) {
       existingUser = userByOtp;
-    } else if (userByPhone) {
-      // Prefer phone user - they likely came from giveaway and have promo_source
-      existingUser = userByPhone;
+    } else if (userByEmail) {
+      // Prefer email user - giveaway creates user with email+UTM first
+      existingUser = userByEmail;
       
-      // If there's also an email-only user, clean it up
-      if (userByEmail && userByEmail.id !== userByPhone.id && !userByEmail.phone) {
-        console.log('Found email-only placeholder user, will merge into phone user');
-        // Copy any useful data from email user before deleting
-        if (!userByPhone.email && userByEmail.email) {
-          await supabase.from('users').update({ email: userByEmail.email }).eq('id', userByPhone.id);
+      // If there's also a phone-only user, clean it up
+      if (userByPhone && userByPhone.id !== userByEmail.id && !userByPhone.email) {
+        console.log('Found phone-only placeholder user, will merge into email user');
+        // Copy any useful data from phone user before deleting
+        if (!userByEmail.phone && userByPhone.phone) {
+          await supabase.from('users').update({ phone: userByPhone.phone }).eq('id', userByEmail.id);
         }
         // Delete the placeholder
-        await supabase.from('users').delete().eq('id', userByEmail.id);
-        console.log('Deleted email-only placeholder user:', userByEmail.id);
+        await supabase.from('users').delete().eq('id', userByPhone.id);
+        console.log('Deleted phone-only placeholder user:', userByPhone.id);
       }
-    } else if (userByEmail) {
-      existingUser = userByEmail;
+    } else if (userByPhone) {
+      existingUser = userByPhone;
     }
 
     if (existingUser) {

@@ -204,18 +204,18 @@ serve(async (req) => {
         existingUser = userByEmail;
         isExistingUser = true;
       } else {
-        // Different users - PREFER the phone user (likely from giveaway with UTM)
-        // The email-only user was probably created as a placeholder
-        console.log('Two different users found - preferring phone user (likely has UTM from giveaway)');
-        existingUser = userByPhone;
+        // Different users - PREFER the EMAIL user (has UTM from giveaway)
+        // Giveaway captures email first with UTM, then adds phone
+        console.log('Two different users found - preferring email user (has UTM from giveaway)');
+        existingUser = userByEmail;
         isExistingUser = true;
-        needsEmailUpdate = true;
+        needsPhoneUpdate = true;
         
-        // Delete the email-only placeholder user to avoid duplicates
-        // Only if email user has no phone (it's just a placeholder)
-        if (!userByEmail.phone) {
-          console.log('Deleting email-only placeholder user:', userByEmail.id);
-          supabase.from('users').delete().eq('id', userByEmail.id).then(() => {
+        // Delete the phone-only user to avoid duplicates
+        // Only if phone user has no email (it's just a placeholder)
+        if (!userByPhone.email) {
+          console.log('Deleting phone-only placeholder user:', userByPhone.id);
+          supabase.from('users').delete().eq('id', userByPhone.id).then(() => {
             console.log('Placeholder user deleted');
           }).catch(() => {
             console.log('Could not delete placeholder user');
