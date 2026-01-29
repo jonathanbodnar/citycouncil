@@ -152,17 +152,10 @@ serve(async (req) => {
         );
       }
       
-      // User doesn't have phone - capture as lead and tell frontend to ask for phone
+      // User doesn't have phone - tell frontend to ask for phone
+      // DON'T create a new user here - wait until we have phone to potentially
+      // link to existing user from giveaway who has phone but no email
       console.log('User not found or no phone, needs phone input');
-      
-      // Capture email as lead (fire and forget)
-      supabase.from('users').upsert({
-        email: normalizedEmail,
-        full_name: normalizedEmail.split('@')[0],
-        user_type: 'user',
-      }, { onConflict: 'email', ignoreDuplicates: true }).then(() => {
-        console.log('Email captured as lead');
-      });
       
       return new Response(
         JSON.stringify({
@@ -207,12 +200,27 @@ serve(async (req) => {
 
     if (userByEmail && userByPhone) {
       if (userByEmail.id === userByPhone.id) {
+        // Same user has both email and phone - perfect
         existingUser = userByEmail;
         isExistingUser = true;
       } else {
-        existingUser = userByEmail;
+        // Different users - PREFER the phone user (likely from giveaway with UTM)
+        // The email-only user was probably created as a placeholder
+        console.log('Two different users found - preferring phone user (likely has UTM from giveaway)');
+        existingUser = userByPhone;
         isExistingUser = true;
-        needsPhoneUpdate = true;
+        needsEmailUpdate = true;
+        
+        // Delete the email-only placeholder user to avoid duplicates
+        // Only if email user has no phone (it's just a placeholder)
+        if (!userByEmail.phone) {
+          console.log('Deleting email-only placeholder user:', userByEmail.id);
+          supabase.from('users').delete().eq('id', userByEmail.id).then(() => {
+            console.log('Placeholder user deleted');
+          }).catch(() => {
+            console.log('Could not delete placeholder user');
+          });
+        }
       }
     } else if (userByEmail) {
       existingUser = userByEmail;

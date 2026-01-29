@@ -238,13 +238,27 @@ serve(async (req) => {
       userByOtp: userByOtp?.id
     });
 
-    // Determine the existing user (priority: OTP user_id > email > phone)
+    // Determine the existing user (priority: OTP user_id > phone > email)
+    // IMPORTANT: Prefer phone over email because phone user likely has UTM from giveaway
     if (userByOtp) {
       existingUser = userByOtp;
+    } else if (userByPhone) {
+      // Prefer phone user - they likely came from giveaway and have promo_source
+      existingUser = userByPhone;
+      
+      // If there's also an email-only user, clean it up
+      if (userByEmail && userByEmail.id !== userByPhone.id && !userByEmail.phone) {
+        console.log('Found email-only placeholder user, will merge into phone user');
+        // Copy any useful data from email user before deleting
+        if (!userByPhone.email && userByEmail.email) {
+          await supabase.from('users').update({ email: userByEmail.email }).eq('id', userByPhone.id);
+        }
+        // Delete the placeholder
+        await supabase.from('users').delete().eq('id', userByEmail.id);
+        console.log('Deleted email-only placeholder user:', userByEmail.id);
+      }
     } else if (userByEmail) {
       existingUser = userByEmail;
-    } else if (userByPhone) {
-      existingUser = userByPhone;
     }
 
     if (existingUser) {
