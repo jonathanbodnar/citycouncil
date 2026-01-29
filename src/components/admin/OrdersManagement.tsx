@@ -315,6 +315,46 @@ const OrdersManagement: React.FC = () => {
       .sort((a, b) => b[1].count - a[1].count);
   }, [orders]);
 
+  // Calculate UTM source stats - combining all DM variations into one category
+  const utmStats = React.useMemo(() => {
+    const stats: Record<string, { count: number; revenue: number }> = {};
+    const dmSources = ['dm', 'dma', 'dmb', 'dmc', 'dmd', 'dme', 'dmf', 'dmfn'];
+    
+    orders.forEach((order) => {
+      let source = (order.promo_source || 'direct').toLowerCase();
+      
+      // Combine all DM variations into "DM"
+      if (dmSources.includes(source) || source.startsWith('dm')) {
+        source = 'DM';
+      } else if (source === 'self_promo' || source === '1') {
+        source = 'Self Promo';
+      } else if (!order.promo_source) {
+        source = 'Direct';
+      } else {
+        // Capitalize first letter
+        source = order.promo_source.charAt(0).toUpperCase() + order.promo_source.slice(1);
+      }
+      
+      if (!stats[source]) {
+        stats[source] = { count: 0, revenue: 0 };
+      }
+      stats[source].count++;
+      stats[source].revenue += order.amount || 0;
+    });
+
+    const totalOrders = orders.length;
+    
+    // Sort by count descending and add percentage
+    return Object.entries(stats)
+      .map(([source, data]) => ({
+        source,
+        count: data.count,
+        revenue: data.revenue,
+        percentage: totalOrders > 0 ? ((data.count / totalOrders) * 100).toFixed(1) : '0'
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [orders]);
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; icon: any }> = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: ClockIcon },
@@ -354,6 +394,47 @@ const OrdersManagement: React.FC = () => {
         >
           Refresh
         </button>
+      </div>
+
+      {/* UTM Source Stats */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Orders by Source (UTM)</h3>
+        <div className="flex flex-wrap gap-2">
+          {utmStats.map(({ source, count, revenue, percentage }) => (
+            <div 
+              key={source} 
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                source === 'Direct' ? 'bg-gray-50 border-gray-200' :
+                source === 'DM' ? 'bg-purple-50 border-purple-200' :
+                source === 'Self Promo' ? 'bg-pink-50 border-pink-200' :
+                source === 'Winning' ? 'bg-yellow-50 border-yellow-200' :
+                'bg-blue-50 border-blue-200'
+              }`}
+            >
+              <span className={`text-sm font-medium ${
+                source === 'Direct' ? 'text-gray-700' :
+                source === 'DM' ? 'text-purple-700' :
+                source === 'Self Promo' ? 'text-pink-700' :
+                source === 'Winning' ? 'text-yellow-700' :
+                'text-blue-700'
+              }`}>
+                {source}
+              </span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                source === 'Direct' ? 'bg-gray-200 text-gray-800' :
+                source === 'DM' ? 'bg-purple-200 text-purple-800' :
+                source === 'Self Promo' ? 'bg-pink-200 text-pink-800' :
+                source === 'Winning' ? 'bg-yellow-200 text-yellow-800' :
+                'bg-blue-200 text-blue-800'
+              }`}>
+                {count} ({percentage}%)
+              </span>
+              <span className="text-xs text-gray-500">
+                ${(revenue / 100).toFixed(0)}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Occasion Stats */}
