@@ -6,6 +6,7 @@ export interface User {
   avatar_url?: string;
   phone?: string; // E.164 format (+1XXXXXXXXXX)
   phone_number?: string; // Alias for backwards compatibility
+  promo_source?: string; // UTM source attribution
   created_at: string;
   updated_at: string;
 }
