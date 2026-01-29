@@ -91,59 +91,96 @@ const ShoutOutFansManagement: React.FC = () => {
       today.setUTCHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      // Fetch all required data in parallel
-      // ALL TIME views for display and 10+ filter
-      // TODAY's views and clicks for CTR calculations (fresh baseline)
-      // Limit increased to capture all data (Supabase default is 1000)
-      const [
-        { data: talentProfiles },
-        { data: allTimeViews },
-        { data: todayViews },
-        { data: todayClicks },
-        { data: followers }
-      ] = await Promise.all([
-        supabase
-          .from('talent_profiles')
-          .select(`
-            id,
-            slug,
-            temp_full_name,
-            temp_avatar_url,
-            users!talent_profiles_user_id_fkey (
-              full_name,
-              avatar_url
-            )
-          `)
-          .eq('is_active', true),
-        // ALL TIME views for display
-        supabase
-          .from('bio_page_views')
-          .select('talent_id')
-          .limit(100000),
+      // Helper function to fetch all pages of data (Supabase limits to 1000 per request)
+      const fetchAllPages = async (
+        query: () => ReturnType<typeof supabase.from>
+      ): Promise<any[]> => {
+        const pageSize = 1000;
+        let allData: any[] = [];
+        let page = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data, error } = await (query() as any)
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+          
+          if (error) {
+            console.error('Pagination error:', error);
+            break;
+          }
+          
+          if (data && data.length > 0) {
+            allData = [...allData, ...data];
+            page++;
+            hasMore = data.length === pageSize;
+          } else {
+            hasMore = false;
+          }
+        }
+        
+        return allData;
+      };
+
+      // Fetch talent profiles first
+      const { data: talentProfiles } = await supabase
+        .from('talent_profiles')
+        .select(`
+          id,
+          slug,
+          temp_full_name,
+          temp_avatar_url,
+          users!talent_profiles_user_id_fkey (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('is_active', true);
+
+      // Fetch ALL views with pagination (for display and 10+ filter)
+      const allTimeViews = await fetchAllPages(() => 
+        supabase.from('bio_page_views').select('talent_id')
+      );
+
+      // Fetch today's data in parallel
+      const [todayViews, todayClicks, followers] = await Promise.all([
         // TODAY's views for CTR calculation
         supabase
           .from('bio_page_views')
           .select('talent_id')
           .gte('viewed_at', todayISO)
-          .limit(50000),
+          .limit(10000)
+          .then(r => r.data || []),
         // TODAY's clicks for CTR calculation
         supabase
           .from('bio_link_clicks')
           .select('talent_id, card_type')
           .gte('clicked_at', todayISO)
-          .limit(50000),
-        supabase.from('talent_followers').select('talent_id, user_id').limit(50000)
+          .limit(10000)
+          .then(r => r.data || []),
+        supabase
+          .from('talent_followers')
+          .select('talent_id, user_id')
+          .limit(50000)
+          .then(r => r.data || [])
       ]);
+
+      console.log('📊 Fetched data:', {
+        talentProfiles: talentProfiles?.length,
+        allTimeViews: allTimeViews.length,
+        todayViews: todayViews.length,
+        todayClicks: todayClicks.length,
+        followers: followers.length
+      });
 
       // Count ALL TIME views by talent (for display and 10+ filter)
       const allTimeViewsByTalent = new Map<string, number>();
-      (allTimeViews || []).forEach((view: any) => {
+      allTimeViews.forEach((view: any) => {
         allTimeViewsByTalent.set(view.talent_id, (allTimeViewsByTalent.get(view.talent_id) || 0) + 1);
       });
 
       // Count TODAY's views by talent (for CTR calculation)
       const todayViewsByTalent = new Map<string, number>();
-      (todayViews || []).forEach((view: any) => {
+      todayViews.forEach((view: any) => {
         todayViewsByTalent.set(view.talent_id, (todayViewsByTalent.get(view.talent_id) || 0) + 1);
       });
 
@@ -166,7 +203,7 @@ const ShoutOutFansManagement: React.FC = () => {
       let totalTodayViews = 0;
       let totalOverallClicks = 0;
 
-      (todayClicks || []).forEach((click: any) => {
+      todayClicks.forEach((click: any) => {
         const current = clicksByTalent.get(click.talent_id) || {
           total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0, services: 0
         };
@@ -213,7 +250,7 @@ const ShoutOutFansManagement: React.FC = () => {
       // Count fans by talent
       const fansByTalent = new Map<string, number>();
       let totalFans = 0;
-      (followers || []).forEach((follower: any) => {
+      followers.forEach((follower: any) => {
         fansByTalent.set(follower.talent_id, (fansByTalent.get(follower.talent_id) || 0) + 1);
         totalFans++;
       });
