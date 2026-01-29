@@ -365,22 +365,44 @@ serve(async (req) => {
           // Delete the old public.users record (the new one will be created by trigger)
           await supabase.from('users').delete().eq('id', oldPublicUserId);
           
-          // Wait for trigger to create the new user record
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Wait for trigger to create the new user record - increased wait time
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Update the new record with the original user's data
-          const { error: finalUpdateError } = await supabase.from('users').update({
+          // CRITICAL: Include ALL fields to preserve UTM and phone
+          const updateData = {
             phone: formattedPhone || existingUser.phone,
             full_name: existingUser.full_name || normalizedEmail.split('@')[0],
             user_type: existingUser.user_type || 'user',
             promo_source: existingUser.promo_source,
             sms_subscribed: existingUser.sms_subscribed,
             credits: existingUser.credits || 0,
-          }).eq('id', authUserId);
+            email: existingUser.email || normalizedEmail, // Ensure email is set
+          };
+          
+          console.log('Updating new user record with:', updateData);
+          
+          const { error: finalUpdateError } = await supabase.from('users')
+            .update(updateData)
+            .eq('id', authUserId);
           
           if (finalUpdateError) {
             console.log('Note: Could not update new user record:', finalUpdateError.message);
+            // Try upsert as fallback
+            const { error: upsertError } = await supabase.from('users')
+              .upsert({
+                id: authUserId,
+                ...updateData,
+              });
+            if (upsertError) {
+              console.log('Upsert also failed:', upsertError.message);
+            } else {
+              console.log('Upsert succeeded');
+            }
           }
+          
+          // Wait a bit more to ensure the update is committed before client fetches
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           // Update existingUser reference for the rest of the function
           existingUser.id = authUserId;

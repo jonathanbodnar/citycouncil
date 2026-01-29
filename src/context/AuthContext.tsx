@@ -103,11 +103,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
 
           if (existingUser) {
-            // User exists, just use it (don't overwrite user_type!)
+            // User exists, just use it (don't overwrite user_type, phone, promo_source!)
             console.log('User already exists, using existing profile:', existingUser);
             setUser(existingUser);
           } else if (checkError?.code === 'PGRST116') {
             // User truly doesn't exist, try to create
+            // IMPORTANT: Preserve phone and promo_source from auth metadata if available
             console.log('User does not exist, creating new profile...');
             const { data: createdUser, error: createError } = await supabase
               .from('users')
@@ -117,6 +118,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   email: authUser.email || '',
                   full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
                   user_type: authUser.user_metadata?.user_type || 'user',
+                  phone: authUser.user_metadata?.phone || authUser.phone || null,
+                  promo_source: authUser.user_metadata?.promo_source || null,
                 },
               ])
               .select()
@@ -125,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (createError) {
               console.error('Error creating user profile:', createError);
               // FALLBACK: Create a minimal user object from auth data so user isn't logged out
+              // IMPORTANT: Preserve phone and promo_source from metadata
               console.log('Using fallback user object from auth data');
               setUser({
                 id: authUser.id,
@@ -132,7 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
                 user_type: authUser.user_metadata?.user_type || 'user',
                 avatar_url: authUser.user_metadata?.avatar_url || null,
-                phone: authUser.phone || null,
+                phone: authUser.user_metadata?.phone || authUser.phone || null,
+                promo_source: authUser.user_metadata?.promo_source || null,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               } as User);
@@ -142,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } else {
             // Some other error (likely RLS) - use fallback user object
+            // IMPORTANT: Preserve phone and promo_source from metadata
             console.log('RLS or other error, using fallback user object. Error:', checkError);
             setUser({
               id: authUser.id,
@@ -149,7 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
               user_type: authUser.user_metadata?.user_type || 'user',
               avatar_url: authUser.user_metadata?.avatar_url || null,
-              phone: authUser.phone || null,
+              phone: authUser.user_metadata?.phone || authUser.phone || null,
+              promo_source: authUser.user_metadata?.promo_source || null,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             } as User);
@@ -166,6 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error fetching/creating user profile:', error);
       // FALLBACK: Try to get auth user and create minimal profile
+      // IMPORTANT: Preserve phone and promo_source from metadata
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
@@ -176,7 +184,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
             user_type: authUser.user_metadata?.user_type || 'user',
             avatar_url: authUser.user_metadata?.avatar_url || null,
-            phone: authUser.phone || null,
+            phone: authUser.user_metadata?.phone || authUser.phone || null,
+            promo_source: authUser.user_metadata?.promo_source || null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           } as User);
