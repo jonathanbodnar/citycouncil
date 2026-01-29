@@ -32,6 +32,7 @@ interface TalentBioStats {
   shoutout_clicks: number;
   collab_clicks: number;
   sponsorship_clicks: number;
+  services_clicks: number;
   fan_count: number;
   overall_ctr: number;
   view_to_fan_rate: number;
@@ -60,13 +61,14 @@ const CARD_TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType;
   rumble: { label: 'Rumble', icon: PlayIcon, color: 'text-green-600 bg-green-100' },
   podcast: { label: 'Podcast', icon: MicrophoneIcon, color: 'text-purple-600 bg-purple-100' },
   link: { label: 'Links', icon: LinkIcon, color: 'text-blue-600 bg-blue-100' },
-  shoutout: { label: 'ShoutOut', icon: MegaphoneIcon, color: 'text-pink-600 bg-pink-100' },
+  shoutout: { label: 'ShoutOut Card', icon: MegaphoneIcon, color: 'text-pink-600 bg-pink-100' },
   collab: { label: 'Collab', icon: HeartIcon, color: 'text-orange-600 bg-orange-100' },
   sponsorship: { label: 'Sponsorship', icon: BuildingOfficeIcon, color: 'text-indigo-600 bg-indigo-100' },
+  services: { label: 'Services', icon: CursorArrowRaysIcon, color: 'text-teal-600 bg-teal-100' },
 };
 
-// Special card types that should be excluded from "Links" count
-const SPECIAL_CARD_TYPES = ['youtube', 'rumble', 'podcast', 'shoutout', 'collab', 'sponsorship', 'services'];
+// Special card types that should NOT be counted as generic "Links"
+const SPECIAL_CARD_TYPES = ['youtube', 'rumble', 'podcast', 'shoutout', 'collab', 'sponsorship', 'services', 'newsletter'];
 
 const ShoutOutFansManagement: React.FC = () => {
   const [talentStats, setTalentStats] = useState<TalentBioStats[]>([]);
@@ -85,12 +87,12 @@ const ShoutOutFansManagement: React.FC = () => {
       setLoading(true);
 
       // Fetch all required data in parallel
+      // NOTE: We do NOT filter by analytics_start_at for admin view - that's for individual talent CTR resets
       const [
         { data: talentProfiles },
         { data: bioViews },
         { data: bioClicks },
-        { data: followers },
-        { data: bioSettings }
+        { data: followers }
       ] = await Promise.all([
         supabase
           .from('talent_profiles')
@@ -105,30 +107,18 @@ const ShoutOutFansManagement: React.FC = () => {
             )
           `)
           .eq('is_active', true),
-        supabase.from('bio_page_views').select('talent_id, viewed_at'),
-        supabase.from('bio_link_clicks').select('talent_id, card_type, clicked_at'),
-        supabase.from('talent_followers').select('talent_id, user_id'),
-        supabase.from('bio_settings').select('talent_id, analytics_start_at')
+        supabase.from('bio_page_views').select('talent_id'),
+        supabase.from('bio_link_clicks').select('talent_id, card_type'),
+        supabase.from('talent_followers').select('talent_id, user_id')
       ]);
 
-      // Create a map for analytics_start_at dates
-      const analyticsStartMap = new Map<string, Date>();
-      (bioSettings || []).forEach((setting: any) => {
-        if (setting.analytics_start_at) {
-          analyticsStartMap.set(setting.talent_id, new Date(setting.analytics_start_at));
-        }
-      });
-
-      // Count views by talent (respecting analytics_start_at)
+      // Count views by talent (ALL views for admin - no analytics_start_at filter)
       const viewsByTalent = new Map<string, number>();
       (bioViews || []).forEach((view: any) => {
-        const startAt = analyticsStartMap.get(view.talent_id);
-        if (!startAt || new Date(view.viewed_at) >= startAt) {
-          viewsByTalent.set(view.talent_id, (viewsByTalent.get(view.talent_id) || 0) + 1);
-        }
+        viewsByTalent.set(view.talent_id, (viewsByTalent.get(view.talent_id) || 0) + 1);
       });
 
-      // Count clicks by talent and card type (respecting analytics_start_at)
+      // Count clicks by talent and card type (ALL clicks for admin)
       const clicksByTalent = new Map<string, {
         total: number;
         link: number;
@@ -138,6 +128,7 @@ const ShoutOutFansManagement: React.FC = () => {
         shoutout: number;
         collab: number;
         sponsorship: number;
+        services: number;
       }>();
 
       // Also track overall clicks by card type
@@ -146,43 +137,39 @@ const ShoutOutFansManagement: React.FC = () => {
       let totalOverallClicks = 0;
 
       (bioClicks || []).forEach((click: any) => {
-        const startAt = analyticsStartMap.get(click.talent_id);
-        if (!startAt || new Date(click.clicked_at) >= startAt) {
-          const current = clicksByTalent.get(click.talent_id) || {
-            total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0
-          };
+        const current = clicksByTalent.get(click.talent_id) || {
+          total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0, services: 0
+        };
 
-          current.total++;
-          totalOverallClicks++;
+        current.total++;
+        totalOverallClicks++;
 
-          const cardType = (click.card_type || '').toLowerCase();
-          
-          if (cardType === 'youtube') {
-            current.youtube++;
-            overallClicksByType.set('youtube', (overallClicksByType.get('youtube') || 0) + 1);
-          } else if (cardType === 'rumble') {
-            current.rumble++;
-            overallClicksByType.set('rumble', (overallClicksByType.get('rumble') || 0) + 1);
-          } else if (cardType === 'podcast') {
-            current.podcast++;
-            overallClicksByType.set('podcast', (overallClicksByType.get('podcast') || 0) + 1);
-          } else if (cardType === 'shoutout') {
-            current.shoutout++;
-            overallClicksByType.set('shoutout', (overallClicksByType.get('shoutout') || 0) + 1);
-          } else if (cardType === 'collab') {
-            current.collab++;
-            overallClicksByType.set('collab', (overallClicksByType.get('collab') || 0) + 1);
-          } else if (cardType === 'sponsorship') {
-            current.sponsorship++;
-            overallClicksByType.set('sponsorship', (overallClicksByType.get('sponsorship') || 0) + 1);
-          } else if (!SPECIAL_CARD_TYPES.includes(cardType)) {
-            // Count as generic link if not a special type
-            current.link++;
-            overallClicksByType.set('link', (overallClicksByType.get('link') || 0) + 1);
-          }
-
-          clicksByTalent.set(click.talent_id, current);
+        const cardType = (click.card_type || '').toLowerCase();
+        
+        // Track in overall clicks by type (for all types)
+        overallClicksByType.set(cardType || 'link', (overallClicksByType.get(cardType || 'link') || 0) + 1);
+        
+        // Also track per-talent breakdown
+        if (cardType === 'youtube') {
+          current.youtube++;
+        } else if (cardType === 'rumble') {
+          current.rumble++;
+        } else if (cardType === 'podcast') {
+          current.podcast++;
+        } else if (cardType === 'shoutout') {
+          current.shoutout++;
+        } else if (cardType === 'collab') {
+          current.collab++;
+        } else if (cardType === 'sponsorship') {
+          current.sponsorship++;
+        } else if (cardType === 'services') {
+          current.services++;
+        } else if (!SPECIAL_CARD_TYPES.includes(cardType)) {
+          // Count as generic link if not a special type
+          current.link++;
         }
+
+        clicksByTalent.set(click.talent_id, current);
       });
 
       // Calculate total overall views
@@ -223,6 +210,7 @@ const ShoutOutFansManagement: React.FC = () => {
           shoutout_clicks: clicks.shoutout,
           collab_clicks: clicks.collab,
           sponsorship_clicks: clicks.sponsorship,
+          services_clicks: clicks.services,
           fan_count: fans,
           overall_ctr: views > 0 ? (clicks.total / views) * 100 : 0,
           view_to_fan_rate: views > 0 ? (fans / views) * 100 : 0,
@@ -231,15 +219,34 @@ const ShoutOutFansManagement: React.FC = () => {
 
       setTalentStats(stats);
 
-      // Build overall stats
-      const ctrByType = Object.entries(CARD_TYPE_CONFIG).map(([type, config]) => ({
-        type,
-        clicks: overallClicksByType.get(type) || 0,
-        ctr: totalOverallViews > 0 ? ((overallClicksByType.get(type) || 0) / totalOverallViews) * 100 : 0,
-        label: config.label,
-        icon: config.icon,
-        color: config.color,
-      })).filter(item => item.clicks > 0).sort((a, b) => b.clicks - a.clicks);
+      // Build overall stats - include ALL card types found in data
+      const ctrByType: {
+        type: string;
+        clicks: number;
+        ctr: number;
+        label: string;
+        icon: React.ElementType;
+        color: string;
+      }[] = [];
+
+      overallClicksByType.forEach((clicks, type) => {
+        const config = CARD_TYPE_CONFIG[type] || {
+          label: type.charAt(0).toUpperCase() + type.slice(1),
+          icon: CursorArrowRaysIcon,
+          color: 'text-gray-600 bg-gray-100'
+        };
+        ctrByType.push({
+          type,
+          clicks,
+          ctr: totalOverallViews > 0 ? (clicks / totalOverallViews) * 100 : 0,
+          label: config.label,
+          icon: config.icon,
+          color: config.color,
+        });
+      });
+
+      // Sort by clicks descending
+      ctrByType.sort((a, b) => b.clicks - a.clicks);
 
       setOverallStats({
         total_views: totalOverallViews,
@@ -560,6 +567,11 @@ const ShoutOutFansManagement: React.FC = () => {
                       {talent.sponsorship_clicks > 0 && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
                           Spon: {talent.sponsorship_clicks}
+                        </span>
+                      )}
+                      {talent.services_clicks > 0 && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">
+                          Svc: {talent.services_clicks}
                         </span>
                       )}
                       {talent.total_clicks === 0 && (
