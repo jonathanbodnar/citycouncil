@@ -310,8 +310,9 @@ serve(async (req) => {
           email_confirm: true,
           user_metadata: {
             full_name: existingUser.full_name || normalizedEmail.split('@')[0],
-            phone: formattedPhone,
+            phone: formattedPhone || existingUser.phone,
             user_type: existingUser.user_type || 'user',
+            promo_source: existingUser.promo_source, // IMPORTANT: Preserve UTM
           },
         });
         
@@ -365,8 +366,8 @@ serve(async (req) => {
           // Delete the old public.users record (the new one will be created by trigger)
           await supabase.from('users').delete().eq('id', oldPublicUserId);
           
-          // Wait for trigger to create the new user record - increased wait time
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Wait for trigger to create the new user record
+          await new Promise(resolve => setTimeout(resolve, 300));
           
           // Update the new record with the original user's data
           // CRITICAL: Include ALL fields to preserve UTM and phone
@@ -400,9 +401,6 @@ serve(async (req) => {
               console.log('Upsert succeeded');
             }
           }
-          
-          // Wait a bit more to ensure the update is committed before client fetches
-          await new Promise(resolve => setTimeout(resolve, 500));
           
           // Update existingUser reference for the rest of the function
           existingUser.id = authUserId;
