@@ -18,7 +18,8 @@ import {
   BellIcon,
   TagIcon,
   DocumentTextIcon,
-  GiftIcon
+  GiftIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline';
 import Logo from './Logo';
 
@@ -35,6 +36,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: 'analytics', label: 'Analytics', icon: ChartBarIcon },
   { key: 'advanced-analytics', label: 'Advanced Stats', icon: ChartBarIcon },
+  { key: 'shoutout-fans', label: 'ShoutOut Fans', icon: HeartIcon },
   { key: 'orders', label: 'Orders', icon: ShoppingCartIcon },
   { key: 'users', label: 'Users', icon: UsersIcon },
   { key: 'giveaway', label: 'Giveaway', icon: GiftIcon },
