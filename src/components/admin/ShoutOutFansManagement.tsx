@@ -269,10 +269,14 @@ const ShoutOutFansManagement: React.FC = () => {
 
       // Count clicks since launch by talent (for CTR calculation only)
       const ctrClicksByTalent = new Map<string, number>();
+      const ctrClicksByType = new Map<string, number>();
       let totalCtrClicks = 0;
       ctrClicks.forEach((click: any) => {
         ctrClicksByTalent.set(click.talent_id, (ctrClicksByTalent.get(click.talent_id) || 0) + 1);
         totalCtrClicks++;
+        // Also track by card type for CTR calculation
+        const cardType = (click.card_type || '').toLowerCase();
+        ctrClicksByType.set(cardType || 'link', (ctrClicksByType.get(cardType || 'link') || 0) + 1);
       });
 
       // Count fans by talent
@@ -331,7 +335,8 @@ const ShoutOutFansManagement: React.FC = () => {
         color: string;
       }[] = [];
 
-      overallClicksByType.forEach((clicks, type) => {
+      // Use clicks since launch for CTR by card type
+      ctrClicksByType.forEach((clicks, type) => {
         const config = CARD_TYPE_CONFIG[type] || {
           label: type.charAt(0).toUpperCase() + type.slice(1),
           icon: CursorArrowRaysIcon,
@@ -340,7 +345,7 @@ const ShoutOutFansManagement: React.FC = () => {
         ctrByType.push({
           type,
           clicks,
-          // CTR based on views since launch
+          // CTR based on views/clicks since launch (Jan 29, 2026)
           ctr: totalCtrViews > 0 ? (clicks / totalCtrViews) * 100 : 0,
           label: config.label,
           icon: config.icon,
