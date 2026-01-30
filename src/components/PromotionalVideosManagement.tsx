@@ -205,6 +205,25 @@ const PromotionalVideosManagement: React.FC = () => {
     }
   };
 
+  // Fast download without watermark
+  const handleQuickDownload = async (videoUrl: string, talentName: string, orderId: string) => {
+    setDownloadingVideo(orderId);
+    try {
+      const { downloadVideo } = await import('../utils/mobileDownload');
+      const filename = `shoutout-${talentName.replace(/\s+/g, '-')}-${orderId.slice(0, 8)}.mp4`;
+      await downloadVideo({
+        url: videoUrl,
+        filename,
+        onSuccess: () => toast.success('Download started!')
+      });
+    } catch (error) {
+      console.error('Quick download error:', error);
+      toast.error('Download failed');
+    } finally {
+      setDownloadingVideo(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -297,6 +316,19 @@ const PromotionalVideosManagement: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => handleQuickDownload(
+                            video.video_url,
+                            talentName || 'talent',
+                            video.id
+                          )}
+                          disabled={downloadingVideo === video.id}
+                          className="flex items-center gap-1 glass-strong px-3 py-1.5 rounded-lg hover:glass transition-all duration-200 text-green-400 border border-green-500/30 disabled:opacity-50"
+                          title="Fast download without watermark"
+                        >
+                          <ArrowDownTrayIcon className="h-4 w-4" />
+                          {downloadingVideo === video.id ? '...' : 'Quick'}
+                        </button>
+                        <button
                           onClick={() => handleDownloadWithWatermark(
                             video.video_url,
                             talentName || 'talent',
@@ -304,15 +336,16 @@ const PromotionalVideosManagement: React.FC = () => {
                           )}
                           disabled={downloadingVideo === video.id}
                           className="flex items-center gap-1 glass-strong px-3 py-1.5 rounded-lg hover:glass transition-all duration-200 text-blue-400 border border-blue-500/30 disabled:opacity-50"
+                          title="Download with watermark (slower)"
                         >
                           <ArrowDownTrayIcon className="h-4 w-4" />
-                          {downloadingVideo === video.id ? 'Downloading...' : 'Download'}
+                          {downloadingVideo === video.id ? '...' : '+ Watermark'}
                         </button>
                         <a
                           href={video.video_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 glass-strong px-3 py-1.5 rounded-lg hover:glass transition-all duration-200 text-green-400 border border-green-500/30"
+                          className="flex items-center gap-1 glass-strong px-3 py-1.5 rounded-lg hover:glass transition-all duration-200 text-purple-400 border border-purple-500/30"
                         >
                           <VideoCameraIcon className="h-4 w-4" />
                           Preview

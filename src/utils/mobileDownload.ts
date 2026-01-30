@@ -11,9 +11,9 @@ interface DownloadOptions {
 }
 
 /**
- * Downloads a video file with mobile Safari support
- * For iOS: Opens video directly in new tab (fetching large files on mobile is unreliable)
- * For Desktop/Android: Uses blob download
+ * Downloads a video file - optimized for speed
+ * Uses direct browser download when possible (much faster than blob)
+ * Falls back to blob download only when necessary
  */
 export const downloadVideo = async ({ url, filename, onSuccess, onError }: DownloadOptions): Promise<boolean> => {
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -22,7 +22,6 @@ export const downloadVideo = async ({ url, filename, onSuccess, onError }: Downl
   console.log('📥 Download attempt:', { url, filename, isIOS, isMobile });
 
   // iOS/iPad: Don't try to fetch - just open the video directly
-  // Fetching large videos on mobile Safari is unreliable and slow
   if (isIOS) {
     console.log('📱 iOS detected - opening video directly');
     openVideoInNewTab(url);
@@ -31,59 +30,74 @@ export const downloadVideo = async ({ url, filename, onSuccess, onError }: Downl
     return true;
   }
 
-  // Android/Desktop: Try blob download with timeout
+  // Desktop/Android: Try fast direct download first
   try {
-    toast.loading('Preparing download...', { id: 'download-progress' });
-    
-    // Add a 30 second timeout for the fetch
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    
-    const response = await fetch(url, { 
-      mode: 'cors',
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status}`);
-    }
-    
-    const blob = await response.blob();
-    console.log('📦 Blob created:', { size: blob.size, type: blob.type });
-    
-    // Standard blob download
-    const blobUrl = URL.createObjectURL(blob);
+    // Method 1: Direct link download (fastest - browser handles natively)
+    // This works for same-origin or CORS-enabled URLs
     const link = document.createElement('a');
-    link.href = blobUrl;
+    link.href = url;
     link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    }, 100);
-
-    toast.success('Video downloaded!', { id: 'download-progress' });
+    toast.success('Download started!');
     onSuccess?.();
     return true;
 
   } catch (error: any) {
-    console.error('Download error:', error);
-    toast.dismiss('download-progress');
+    console.error('Direct download failed, trying blob method:', error);
     
-    // If fetch failed or timed out, fall back to opening in new tab
-    if (error.name === 'AbortError') {
-      toast.error('Download timed out. Opening video instead...', { duration: 3000 });
+    // Method 2: Blob download (slower but works cross-origin)
+    try {
+      toast.loading('Preparing download...', { id: 'download-progress' });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      
+      const response = await fetch(url, { 
+        mode: 'cors',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      console.log('📦 Blob created:', { size: blob.size, type: blob.type });
+      
+      const blobUrl = URL.createObjectURL(blob);
+      const blobLink = document.createElement('a');
+      blobLink.href = blobUrl;
+      blobLink.download = filename;
+      blobLink.style.display = 'none';
+      document.body.appendChild(blobLink);
+      blobLink.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(blobLink);
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+
+      toast.success('Video downloaded!', { id: 'download-progress' });
+      onSuccess?.();
+      return true;
+
+    } catch (blobError: any) {
+      console.error('Blob download error:', blobError);
+      toast.dismiss('download-progress');
+      
+      // Final fallback: Open in new tab
+      openVideoInNewTab(url);
+      toast.success('Video opened! Right-click to save.', { duration: 5000 });
+      onSuccess?.();
+      return true;
     }
-    
-    openVideoInNewTab(url);
-    toast.success('Video opened! Right-click or long-press to save.', { duration: 5000 });
-    onSuccess?.();
-    return true;
   }
 };
 
