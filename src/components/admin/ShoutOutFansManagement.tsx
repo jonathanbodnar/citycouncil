@@ -88,10 +88,9 @@ const ShoutOutFansManagement: React.FC = () => {
     try {
       setLoading(true);
 
-      // Get today's date at midnight UTC for CTR calculation baseline
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
-      const todayISO = today.toISOString();
+      // Get yesterday's date at midnight UTC for CTR calculation baseline (launch date: Jan 29, 2026)
+      const ctrBaseline = new Date('2026-01-29T00:00:00Z');
+      const ctrBaselineISO = ctrBaseline.toISOString();
 
       // Fetch talent profiles first
       const { data: talentProfiles } = await supabase
@@ -160,21 +159,21 @@ const ShoutOutFansManagement: React.FC = () => {
         }
       }
 
-      // Fetch today's data for CTR and followers
-      const [todayViews, todayClicks, followers] = await Promise.all([
-        // TODAY's views for CTR calculation
+      // Fetch data since launch for CTR and followers
+      const [ctrViews, ctrClicks, followers] = await Promise.all([
+        // Views since launch for CTR calculation
         supabase
           .from('bio_page_views')
           .select('talent_id')
-          .gte('viewed_at', todayISO)
-          .limit(10000)
+          .gte('viewed_at', ctrBaselineISO)
+          .limit(50000)
           .then(r => r.data || []),
-        // TODAY's clicks for CTR calculation
+        // Clicks since launch for CTR calculation
         supabase
           .from('bio_link_clicks')
           .select('talent_id, card_type')
-          .gte('clicked_at', todayISO)
-          .limit(10000)
+          .gte('clicked_at', ctrBaselineISO)
+          .limit(50000)
           .then(r => r.data || []),
         supabase
           .from('talent_followers')
@@ -187,8 +186,8 @@ const ShoutOutFansManagement: React.FC = () => {
         talentProfiles: talentProfiles?.length,
         allTimeViews: allTimeViews.length,
         allTimeClicks: allTimeClicks.length,
-        todayViews: todayViews.length,
-        todayClicks: todayClicks.length,
+        ctrViews: ctrViews.length,
+        ctrClicks: ctrClicks.length,
         followers: followers.length
       });
 
@@ -198,10 +197,10 @@ const ShoutOutFansManagement: React.FC = () => {
         allTimeViewsByTalent.set(view.talent_id, (allTimeViewsByTalent.get(view.talent_id) || 0) + 1);
       });
 
-      // Count TODAY's views by talent (for CTR calculation)
-      const todayViewsByTalent = new Map<string, number>();
-      todayViews.forEach((view: any) => {
-        todayViewsByTalent.set(view.talent_id, (todayViewsByTalent.get(view.talent_id) || 0) + 1);
+      // Count views since launch by talent (for CTR calculation)
+      const ctrViewsByTalent = new Map<string, number>();
+      ctrViews.forEach((view: any) => {
+        ctrViewsByTalent.set(view.talent_id, (ctrViewsByTalent.get(view.talent_id) || 0) + 1);
       });
 
       // Count ALL TIME clicks by talent and card type (for display)
@@ -220,7 +219,7 @@ const ShoutOutFansManagement: React.FC = () => {
       // Also track overall clicks by card type (ALL TIME for display)
       const overallClicksByType = new Map<string, number>();
       let totalOverallViews = 0;
-      let totalTodayViews = 0;
+      let totalCtrViews = 0;
       let totalOverallClicks = 0;
 
       // Count ALL TIME clicks for display
@@ -264,16 +263,16 @@ const ShoutOutFansManagement: React.FC = () => {
       allTimeViewsByTalent.forEach((count) => {
         totalOverallViews += count;
       });
-      todayViewsByTalent.forEach((count) => {
-        totalTodayViews += count;
+      ctrViewsByTalent.forEach((count) => {
+        totalCtrViews += count;
       });
 
-      // Count TODAY's clicks by talent (for CTR calculation only)
-      const todayClicksByTalent = new Map<string, number>();
-      let totalTodayClicks = 0;
-      todayClicks.forEach((click: any) => {
-        todayClicksByTalent.set(click.talent_id, (todayClicksByTalent.get(click.talent_id) || 0) + 1);
-        totalTodayClicks++;
+      // Count clicks since launch by talent (for CTR calculation only)
+      const ctrClicksByTalent = new Map<string, number>();
+      let totalCtrClicks = 0;
+      ctrClicks.forEach((click: any) => {
+        ctrClicksByTalent.set(click.talent_id, (ctrClicksByTalent.get(click.talent_id) || 0) + 1);
+        totalCtrClicks++;
       });
 
       // Count fans by talent
@@ -287,8 +286,8 @@ const ShoutOutFansManagement: React.FC = () => {
       // Build talent stats
       const stats: TalentBioStats[] = (talentProfiles || []).map((talent: any) => {
         const allTimeViews = allTimeViewsByTalent.get(talent.id) || 0;
-        const viewsForCTR = todayViewsByTalent.get(talent.id) || 0;
-        const clicksForCTR = todayClicksByTalent.get(talent.id) || 0;
+        const viewsForCTR = ctrViewsByTalent.get(talent.id) || 0;
+        const clicksForCTR = ctrClicksByTalent.get(talent.id) || 0;
         const clicks = clicksByTalent.get(talent.id) || {
           total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0, services: 0
         };
@@ -314,7 +313,7 @@ const ShoutOutFansManagement: React.FC = () => {
           sponsorship_clicks: clicks.sponsorship,
           services_clicks: clicks.services,
           fan_count: fans,
-          // CTR based on TODAY's views and clicks only
+          // CTR based on views/clicks since launch (Jan 29, 2026)
           overall_ctr: viewsForCTR > 0 ? (clicksForCTR / viewsForCTR) * 100 : 0,
           view_to_fan_rate: allTimeViews > 0 ? (fans / allTimeViews) * 100 : 0,
         };
@@ -341,8 +340,8 @@ const ShoutOutFansManagement: React.FC = () => {
         ctrByType.push({
           type,
           clicks,
-          // CTR based on TODAY's views only
-          ctr: totalTodayViews > 0 ? (clicks / totalTodayViews) * 100 : 0,
+          // CTR based on views since launch
+          ctr: totalCtrViews > 0 ? (clicks / totalCtrViews) * 100 : 0,
           label: config.label,
           icon: config.icon,
           color: config.color,
@@ -356,8 +355,8 @@ const ShoutOutFansManagement: React.FC = () => {
         total_views: totalOverallViews, // All time views
         total_clicks: totalOverallClicks, // All time clicks for display
         total_fans: totalFans,
-        // CTR based on TODAY's views and clicks only
-        overall_ctr: totalTodayViews > 0 ? (totalTodayClicks / totalTodayViews) * 100 : 0,
+        // CTR based on views/clicks since launch (Jan 29, 2026)
+        overall_ctr: totalCtrViews > 0 ? (totalCtrClicks / totalCtrViews) * 100 : 0,
         ctr_by_card_type: ctrByType,
       });
 
@@ -454,7 +453,7 @@ const ShoutOutFansManagement: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">📊 ShoutOut Fans Analytics</h2>
-          <p className="text-gray-600">Bio page performance from today forward (10+ views only)</p>
+          <p className="text-gray-600">Bio page performance (CTR since Jan 29 launch, 10+ views only)</p>
         </div>
         <button
           onClick={exportToCSV}
