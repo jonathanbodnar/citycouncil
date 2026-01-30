@@ -135,7 +135,32 @@ const ShoutOutFansManagement: React.FC = () => {
         }
       }
 
-      // Fetch today's data in parallel
+      // Fetch ALL TIME clicks with pagination (same as views)
+      let allTimeClicks: any[] = [];
+      let clickPage = 0;
+      let hasMoreClicks = true;
+
+      while (hasMoreClicks) {
+        const { data, error } = await supabase
+          .from('bio_link_clicks')
+          .select('talent_id, card_type')
+          .range(clickPage * pageSize, (clickPage + 1) * pageSize - 1);
+        
+        if (error) {
+          console.error('Click pagination error:', error);
+          break;
+        }
+        
+        if (data && data.length > 0) {
+          allTimeClicks = [...allTimeClicks, ...data];
+          clickPage++;
+          hasMoreClicks = data.length === pageSize;
+        } else {
+          hasMoreClicks = false;
+        }
+      }
+
+      // Fetch today's data for CTR and followers
       const [todayViews, todayClicks, followers] = await Promise.all([
         // TODAY's views for CTR calculation
         supabase
@@ -161,6 +186,7 @@ const ShoutOutFansManagement: React.FC = () => {
       console.log('📊 Fetched data:', {
         talentProfiles: talentProfiles?.length,
         allTimeViews: allTimeViews.length,
+        allTimeClicks: allTimeClicks.length,
         todayViews: todayViews.length,
         todayClicks: todayClicks.length,
         followers: followers.length
@@ -178,7 +204,7 @@ const ShoutOutFansManagement: React.FC = () => {
         todayViewsByTalent.set(view.talent_id, (todayViewsByTalent.get(view.talent_id) || 0) + 1);
       });
 
-      // Count TODAY's clicks by talent and card type (for CTR calculation)
+      // Count ALL TIME clicks by talent and card type (for display)
       const clicksByTalent = new Map<string, {
         total: number;
         link: number;
@@ -191,13 +217,14 @@ const ShoutOutFansManagement: React.FC = () => {
         services: number;
       }>();
 
-      // Also track overall clicks by card type (today only)
+      // Also track overall clicks by card type (ALL TIME for display)
       const overallClicksByType = new Map<string, number>();
       let totalOverallViews = 0;
       let totalTodayViews = 0;
       let totalOverallClicks = 0;
 
-      todayClicks.forEach((click: any) => {
+      // Count ALL TIME clicks for display
+      allTimeClicks.forEach((click: any) => {
         const current = clicksByTalent.get(click.talent_id) || {
           total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0, services: 0
         };
@@ -241,6 +268,14 @@ const ShoutOutFansManagement: React.FC = () => {
         totalTodayViews += count;
       });
 
+      // Count TODAY's clicks by talent (for CTR calculation only)
+      const todayClicksByTalent = new Map<string, number>();
+      let totalTodayClicks = 0;
+      todayClicks.forEach((click: any) => {
+        todayClicksByTalent.set(click.talent_id, (todayClicksByTalent.get(click.talent_id) || 0) + 1);
+        totalTodayClicks++;
+      });
+
       // Count fans by talent
       const fansByTalent = new Map<string, number>();
       let totalFans = 0;
@@ -253,6 +288,7 @@ const ShoutOutFansManagement: React.FC = () => {
       const stats: TalentBioStats[] = (talentProfiles || []).map((talent: any) => {
         const allTimeViews = allTimeViewsByTalent.get(talent.id) || 0;
         const viewsForCTR = todayViewsByTalent.get(talent.id) || 0;
+        const clicksForCTR = todayClicksByTalent.get(talent.id) || 0;
         const clicks = clicksByTalent.get(talent.id) || {
           total: 0, link: 0, youtube: 0, rumble: 0, podcast: 0, shoutout: 0, collab: 0, sponsorship: 0, services: 0
         };
@@ -268,7 +304,7 @@ const ShoutOutFansManagement: React.FC = () => {
           slug: talent.slug,
           username: talent.username,
           page_views: allTimeViews, // All time views for display
-          total_clicks: clicks.total, // Today's clicks
+          total_clicks: clicks.total, // All time clicks for display
           link_clicks: clicks.link,
           youtube_clicks: clicks.youtube,
           rumble_clicks: clicks.rumble,
@@ -278,8 +314,8 @@ const ShoutOutFansManagement: React.FC = () => {
           sponsorship_clicks: clicks.sponsorship,
           services_clicks: clicks.services,
           fan_count: fans,
-          // CTR based on TODAY's views only
-          overall_ctr: viewsForCTR > 0 ? (clicks.total / viewsForCTR) * 100 : 0,
+          // CTR based on TODAY's views and clicks only
+          overall_ctr: viewsForCTR > 0 ? (clicksForCTR / viewsForCTR) * 100 : 0,
           view_to_fan_rate: allTimeViews > 0 ? (fans / allTimeViews) * 100 : 0,
         };
       });
@@ -318,10 +354,10 @@ const ShoutOutFansManagement: React.FC = () => {
 
       setOverallStats({
         total_views: totalOverallViews, // All time views
-        total_clicks: totalOverallClicks, // Today's clicks
+        total_clicks: totalOverallClicks, // All time clicks for display
         total_fans: totalFans,
-        // CTR based on TODAY's views only
-        overall_ctr: totalTodayViews > 0 ? (totalOverallClicks / totalTodayViews) * 100 : 0,
+        // CTR based on TODAY's views and clicks only
+        overall_ctr: totalTodayViews > 0 ? (totalTodayClicks / totalTodayViews) * 100 : 0,
         ctr_by_card_type: ctrByType,
       });
 
