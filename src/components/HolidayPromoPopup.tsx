@@ -66,9 +66,15 @@ type Step = 'email' | 'phone' | 'spinning' | 'winner';
 // Popup delay based on traffic source
 const getPopupDelay = (): number => {
   const urlParams = new URLSearchParams(window.location.search);
-  const utmSource = urlParams.get('utm') || urlParams.get('utm_source') || '';
+  const utmSource = urlParams.get('utm') || urlParams.get('umt') || urlParams.get('utm_source') || '';
   const storedSource = safeGetItem('promo_source_global') || '';
-  const source = (utmSource || storedSource).trim().toLowerCase();
+  // Also check cookie as fallback
+  let cookieSource = '';
+  try {
+    const match = document.cookie.match(/(?:^|; )promo_source=([^;]*)/);
+    cookieSource = match ? decodeURIComponent(match[1]) : '';
+  } catch {}
+  const source = (utmSource || storedSource || cookieSource).trim().toLowerCase();
   
   // 3 second delay for: SMS, giveaway, DM variations, and talent promo links
   const quickPopupSources = [
@@ -105,6 +111,16 @@ const dispatchCountdownUpdate = () => {
   window.dispatchEvent(new Event('giveawayCountdownUpdate'));
 };
 
+// Get UTM from cookie (backup for localStorage)
+const getUtmCookie = (): string | null => {
+  try {
+    const match = document.cookie.match(/(?:^|; )promo_source=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
+  }
+};
+
 // Get UTM source from various locations
 const getUtmSource = (): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -113,6 +129,7 @@ const getUtmSource = (): string | null => {
   const fbUtmSource = urlParams.get('utm_source');
   const storedUtm = safeGetItem('promo_source_global');
   const storedPromoSource = safeGetItem('promo_source');
+  const cookieUtm = getUtmCookie();
   
   let sessionUtm: string | null = null;
   let sessionPromoSource: string | null = null;
@@ -131,11 +148,11 @@ const getUtmSource = (): string | null => {
   
   // If URL has "winning", try to find a better stored source
   if (urlUtm === 'winning') {
-    const betterSource = storedUtm || storedPromoSource || sessionUtm || sessionPromoSource;
+    const betterSource = storedUtm || storedPromoSource || sessionUtm || sessionPromoSource || cookieUtm;
     if (betterSource && betterSource !== 'winning') return betterSource;
   }
   
-  return urlUtm || normalizedFbSource || storedUtm || storedPromoSource || sessionUtm || sessionPromoSource || null;
+  return urlUtm || normalizedFbSource || storedUtm || storedPromoSource || sessionUtm || sessionPromoSource || cookieUtm || null;
 };
 
 const HolidayPromoPopup: React.FC = () => {
