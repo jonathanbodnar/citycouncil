@@ -1,0 +1,78 @@
+UTM Source Analysis Summary
+Generated: 2026-01-30
+
+=== USERS BY UTM SOURCE (All Time) ===
+Source,Count
+dmF,166
+holiday_popup,43
+bio,34
+1,15
+Shout.bio,13
+dmFN,12
+dmB,10
+dmA,9
+dmC,8
+fb,7
+shawnlive,6
+winning,5
+dmD,5
+rumble,4
+dmE,4
+talent_profile_meloniemac,4
+jeremylive,3
+followup,2
+chrislive,2
+melonielive,2
+fans,2
+thread,2
+talent_profile_kristinsokoloff,1
+talent_profile_meghanelinor,1
+sms?coupon=SAVE15,1
+talent_profile_nicksearcy,1
+email,1
+talent_profile_kayleecampbell,1
+
+=== GIVEAWAY ENTRIES BY UTM SOURCE (All Time) ===
+Source,Count
+dmF,129
+bio,31
+dmB,15
+rumble,12
+dmFN,10
+1,9
+dmA,8
+shawnlive,6
+jeremylive,5
+thread,4
+dm,4
+dmE,4
+dmC,4
+fb,3
+dmD,3
+fans,3
+melonielive,2
+chrislive,2
+followup,1
+giveaway,1
+
+=== ORDERS BY UTM SOURCE (Last 3 Months) ===
+Source,Count
+self_promo,6
+winning,5
+bio,4
+dmF,3
+1,1
+rumble,1
+sms,1
+sms?coupon=SAVE15,1
+thread,1
+followup,1
+dmC,1
+email,1
+fb,1
+
+=== DM SOURCES COMBINED ===
+DM Category (dmA + dmB + dmC + dmD + dmE + dmF + dmFN),Users: 214,Giveaway: 177
+
+=== LIVE SOURCES COMBINED ===
+Live Events (shawnlive + jeremylive + chrislive + melonielive),Users: 13,Giveaway: 15

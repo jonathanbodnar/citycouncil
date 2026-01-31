@@ -72,7 +72,17 @@ const OrderPage: React.FC = () => {
     fetchChristmasMode();
   }, []);
   
-  // Check for UTM tracking - check URL param first, then localStorage, then user's DB promo_source
+  // Get UTM from cookie (backup for localStorage)
+  const getUtmCookie = (): string | null => {
+    try {
+      const match = document.cookie.match(/(?:^|; )promo_source=([^;]*)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    } catch {
+      return null;
+    }
+  };
+  
+  // Check for UTM tracking - check URL param first, then localStorage/cookie, then user's DB promo_source
   // utm=1 = "self_promo" (talent-specific, only tracks for the talent they landed on)
   // Other UTMs (rumble, twitter, etc.) = global (tracks for ANY talent)
   const getPromoSource = (loadedTalent?: TalentWithUser | null): string | null => {
@@ -81,7 +91,9 @@ const OrderPage: React.FC = () => {
     if (utmParam) {
       // If it's "winning", check if we have a better source stored
       if (utmParam === 'winning') {
-        const storedGlobal = localStorage.getItem('promo_source_global');
+        const storedGlobal = localStorage.getItem('promo_source_global') || 
+                            sessionStorage.getItem('promo_source_global') || 
+                            getUtmCookie();
         if (storedGlobal && storedGlobal !== 'winning') return storedGlobal;
         // Fall through to check user's DB promo_source
         if (user?.promo_source && user.promo_source !== 'winning') return user.promo_source;
@@ -101,16 +113,18 @@ const OrderPage: React.FC = () => {
       if (storedByUsername === 'self_promo') return 'self_promo';
     }
     
-    // Check for global UTM (e.g., shoutout.us/?utm=rumble)
+    // Check for global UTM (e.g., shoutout.us/?utm=rumble) from all storage mechanisms
     // This applies to ANY talent they order from
-    const globalPromo = localStorage.getItem('promo_source_global');
+    const globalPromo = localStorage.getItem('promo_source_global') || 
+                       sessionStorage.getItem('promo_source_global') || 
+                       getUtmCookie();
     // If we have "winning" stored but user has a better source, use user's
     if (globalPromo && globalPromo !== 'winning') return globalPromo;
     
-    // Fallback to user's promo_source from database (preserves original attribution)
+    // Fallback to user's promo_source from database (most recent attribution)
     if (user?.promo_source) return user.promo_source;
     
-    // Final fallback to whatever is in localStorage (even if it's "winning")
+    // Final fallback to whatever is in storage (even if it's "winning")
     if (globalPromo) return globalPromo;
     
     return null;

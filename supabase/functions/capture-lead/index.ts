@@ -50,7 +50,7 @@ serve(async (req) => {
     if (normalizedEmail) {
       const { data } = await supabase
         .from('users')
-        .select('id, email, phone, promo_source')
+        .select('id, email, phone, promo_source, utm_sources')
         .eq('email', normalizedEmail)
         .single();
       existingUser = data;
@@ -59,7 +59,7 @@ serve(async (req) => {
     if (!existingUser && formattedPhone) {
       const { data } = await supabase
         .from('users')
-        .select('id, email, phone, promo_source')
+        .select('id, email, phone, promo_source, utm_sources')
         .eq('phone', formattedPhone)
         .single();
       existingUser = data;
@@ -74,10 +74,25 @@ serve(async (req) => {
       if (formattedPhone && !existingUser.phone) {
         updates.phone = formattedPhone;
       }
-      // Only update promo_source if user doesn't have one yet
-      // This preserves their original attribution
-      if (!existingUser.promo_source && (utm_source || source)) {
-        updates.promo_source = utm_source || source;
+      // Always update promo_source to most recent UTM (for order attribution)
+      // Also append to utm_sources array to track all sources
+      const newUtm = utm_source || source;
+      if (newUtm) {
+        updates.promo_source = newUtm;
+        
+        // Append to utm_sources array if not already present
+        const existingUtms = existingUser.utm_sources || [];
+        if (!existingUtms.includes(newUtm)) {
+          // Use RPC function to append to array
+          await supabase.rpc('append_utm_source', { 
+            user_id_param: existingUser.id, 
+            utm_param: newUtm 
+          }).catch(() => {
+            // Fallback: set array directly
+            updates.utm_sources = [...existingUtms, newUtm];
+          });
+          console.log('Appended UTM to utm_sources:', newUtm);
+        }
       }
 
       if (Object.keys(updates).length > 0) {
@@ -138,6 +153,7 @@ serve(async (req) => {
     // Generate a placeholder UUID for the user
     const placeholderId = crypto.randomUUID();
     
+    const initialUtm = utm_source || source || null;
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert({
@@ -146,7 +162,8 @@ serve(async (req) => {
         phone: formattedPhone,
         full_name: normalizedEmail ? normalizedEmail.split('@')[0] : null,
         user_type: 'user',
-        promo_source: utm_source || source || null,
+        promo_source: initialUtm,
+        utm_sources: initialUtm ? [initialUtm] : [],
         sms_subscribed: !!formattedPhone, // Subscribe to SMS if they gave phone
         created_at: new Date().toISOString(),
       })

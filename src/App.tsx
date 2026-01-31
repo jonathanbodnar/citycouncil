@@ -20,6 +20,87 @@ const captureRumbleClickId = () => {
   }
 };
 
+// Set first-party cookie for UTM (backup for localStorage)
+const setUtmCookie = (utm: string) => {
+  try {
+    // Set cookie that expires in 30 days
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `promo_source=${encodeURIComponent(utm)}; expires=${expires}; path=/; SameSite=Lax`;
+    console.log('🍪 UTM cookie set:', utm);
+  } catch (e) {
+    console.error('Error setting UTM cookie:', e);
+  }
+};
+
+// Get UTM from cookie
+const getUtmCookie = (): string | null => {
+  try {
+    const match = document.cookie.match(/(?:^|; )promo_source=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Infer UTM source from referrer
+const inferUtmFromReferrer = (): string | null => {
+  try {
+    const referrer = document.referrer.toLowerCase();
+    if (!referrer) return null;
+    
+    // Map common referrers to UTM sources
+    const referrerMap: Record<string, string> = {
+      'facebook.com': 'fb',
+      'fb.com': 'fb',
+      'instagram.com': 'ig',
+      'twitter.com': 'twitter',
+      'x.com': 'twitter',
+      't.co': 'twitter',
+      'youtube.com': 'youtube',
+      'youtu.be': 'youtube',
+      'rumble.com': 'rumble',
+      'tiktok.com': 'tiktok',
+      'linkedin.com': 'linkedin',
+      'reddit.com': 'reddit',
+      'threads.net': 'threads',
+      'truthsocial.com': 'truth',
+      'gettr.com': 'gettr',
+      'parler.com': 'parler',
+      'gab.com': 'gab',
+      'google.com': 'google',
+      'bing.com': 'bing',
+      'duckduckgo.com': 'ddg',
+    };
+    
+    for (const [domain, utm] of Object.entries(referrerMap)) {
+      if (referrer.includes(domain)) {
+        console.log('🔍 UTM inferred from referrer:', utm, 'from', referrer);
+        return `ref_${utm}`;
+      }
+    }
+    
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Store UTM in all storage mechanisms
+const storeUtm = (utm: string) => {
+  // localStorage
+  localStorage.setItem('promo_source_global', utm);
+  localStorage.setItem('promo_source', utm);
+  
+  // sessionStorage
+  try { 
+    sessionStorage.setItem('promo_source_global', utm);
+    sessionStorage.setItem('promo_source', utm);
+  } catch (e) {}
+  
+  // First-party cookie
+  setUtmCookie(utm);
+};
+
 // Capture UTM parameters globally on app load
 // This ensures UTM is captured no matter what page they land on
 const captureGlobalUtm = () => {
@@ -27,8 +108,8 @@ const captureGlobalUtm = () => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       
-      // Check for simple utm= param first
-      const utmParam = urlParams.get('utm');
+      // Check for simple utm= param first (also check typo 'umt')
+      const utmParam = urlParams.get('utm') || urlParams.get('umt');
       // Then check for Facebook-style utm_source=
       const utmSource = urlParams.get('utm_source');
       
@@ -37,26 +118,14 @@ const captureGlobalUtm = () => {
       
       if (utmParam) {
         // Simple UTM - store it (including utm=1 for self-promo)
-        localStorage.setItem('promo_source_global', utmParam);
-        localStorage.setItem('promo_source', utmParam);
-        // Also store in sessionStorage as backup
-        try { 
-          sessionStorage.setItem('promo_source_global', utmParam);
-          sessionStorage.setItem('promo_source', utmParam);
-        } catch (e) {}
+        storeUtm(utmParam);
         console.log('🎯 Global UTM captured from utm=:', utmParam);
       } else if (utmSource) {
         // Facebook-style UTM - normalize Facebook sources to 'fb'
         const fbSources = ['fb', 'facebook', 'ig', 'instagram', 'meta', 'audience_network', 'messenger', 'an'];
         const normalizedSource = utmSource.toLowerCase();
         const sourceToStore = fbSources.some(s => normalizedSource.includes(s)) ? 'fb' : utmSource;
-        localStorage.setItem('promo_source_global', sourceToStore);
-        localStorage.setItem('promo_source', sourceToStore);
-        // Also store in sessionStorage as backup
-        try { 
-          sessionStorage.setItem('promo_source_global', sourceToStore);
-          sessionStorage.setItem('promo_source', sourceToStore);
-        } catch (e) {}
+        storeUtm(sourceToStore);
         console.log('🎯 Global UTM captured from utm_source=:', sourceToStore);
         
         // Also store full UTM details
@@ -71,10 +140,20 @@ const captureGlobalUtm = () => {
         };
         localStorage.setItem('utm_details', JSON.stringify(utmDetails));
         console.log('🎯 UTM details captured:', utmDetails);
+      } else {
+        // No UTM in URL - try to infer from referrer if we don't already have one
+        const existingUtm = localStorage.getItem('promo_source_global') || getUtmCookie();
+        if (!existingUtm) {
+          const inferredUtm = inferUtmFromReferrer();
+          if (inferredUtm) {
+            storeUtm(inferredUtm);
+            console.log('🎯 UTM inferred from referrer:', inferredUtm);
+          }
+        }
       }
       
       // Log current UTM state for debugging
-      const currentUtm = localStorage.getItem('promo_source_global');
+      const currentUtm = localStorage.getItem('promo_source_global') || getUtmCookie();
       console.log('🎯 Current stored UTM:', currentUtm || 'none');
     } catch (e) {
       console.error('Error capturing UTM:', e);

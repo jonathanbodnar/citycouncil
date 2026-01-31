@@ -210,14 +210,14 @@ serve(async (req) => {
     // Check by email first
     const { data: userByEmail } = await supabase
       .from('users')
-      .select('id, email, phone, full_name, user_type, promo_source, sms_subscribed, credits')
+      .select('id, email, phone, full_name, user_type, promo_source, utm_sources, sms_subscribed, credits')
       .eq('email', normalizedEmail)
       .single();
 
     // Check by phone
     const { data: userByPhone } = await supabase
       .from('users')
-      .select('id, email, phone, full_name, user_type, promo_source, sms_subscribed, credits')
+      .select('id, email, phone, full_name, user_type, promo_source, utm_sources, sms_subscribed, credits')
       .eq('phone', formattedPhone)
       .single();
 
@@ -226,7 +226,7 @@ serve(async (req) => {
     if (otpData.user_id) {
       const { data } = await supabase
         .from('users')
-        .select('id, email, phone, full_name, user_type, promo_source, sms_subscribed, credits')
+        .select('id, email, phone, full_name, user_type, promo_source, utm_sources, sms_subscribed, credits')
         .eq('id', otpData.user_id)
         .single();
       userByOtp = data;
@@ -277,10 +277,24 @@ serve(async (req) => {
           updates.email = normalizedEmail;
         }
       }
-      // Only update promo_source if user doesn't have one yet
-      // This preserves their original attribution (e.g., "rumble") instead of overwriting with "winning"
-      if (!existingUser.promo_source && promoSource) {
+      // Always update promo_source to most recent UTM (for order attribution)
+      // Also append to utm_sources array to track all sources
+      if (promoSource) {
         updates.promo_source = promoSource;
+        
+        // Append to utm_sources array if not already present
+        const existingUtms = existingUser.utm_sources || [];
+        if (!existingUtms.includes(promoSource)) {
+          // Use raw SQL to append to array since Supabase JS doesn't support array_append
+          await supabase.rpc('append_utm_source', { 
+            user_id_param: existingUser.id, 
+            utm_param: promoSource 
+          }).catch(() => {
+            // Fallback: just set the array if RPC doesn't exist
+            updates.utm_sources = [...existingUtms, promoSource];
+          });
+          console.log('Appended UTM to utm_sources:', promoSource);
+        }
       }
       updates.last_login = new Date().toISOString();
 
@@ -572,6 +586,7 @@ serve(async (req) => {
         .update({ 
           phone: formattedPhone,
           promo_source: promoSource || null,
+          utm_sources: promoSource ? [promoSource] : [],
         })
         .eq('id', authData.user.id);
 

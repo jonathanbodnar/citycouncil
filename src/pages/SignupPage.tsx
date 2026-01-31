@@ -14,7 +14,17 @@ const SignupPage: React.FC = () => {
   const navigate = useNavigate();
   const returnTo = searchParams.get('returnTo') || '/';
   
-  // Capture UTM source from URL or localStorage
+  // Get UTM from cookie (backup for localStorage)
+  const getUtmCookie = (): string | null => {
+    try {
+      const match = document.cookie.match(/(?:^|; )promo_source=([^;]*)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    } catch {
+      return null;
+    }
+  };
+  
+  // Capture UTM source from URL, localStorage, or cookie
   const getPromoSource = (): string | null => {
     // Check for utm param (and common typo 'umt')
     const simpleUtm = searchParams.get('utm') || searchParams.get('umt');
@@ -22,7 +32,7 @@ const SignupPage: React.FC = () => {
       // If "winning", try to find a better source
       if (simpleUtm === 'winning') {
         try {
-          const storedSource = localStorage.getItem('promo_source_global');
+          const storedSource = localStorage.getItem('promo_source_global') || getUtmCookie();
           if (storedSource && storedSource !== 'winning') return storedSource;
         } catch { /* ignore */ }
       }
@@ -37,9 +47,14 @@ const SignupPage: React.FC = () => {
     }
     
     try {
-      return localStorage.getItem('promo_source_global') || localStorage.getItem('promo_source') || null;
+      // Try localStorage first, then sessionStorage, then cookie
+      return localStorage.getItem('promo_source_global') || 
+             localStorage.getItem('promo_source') || 
+             sessionStorage.getItem('promo_source_global') ||
+             getUtmCookie() ||
+             null;
     } catch {
-      return null;
+      return getUtmCookie();
     }
   };
   

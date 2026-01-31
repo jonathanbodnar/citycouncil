@@ -2,6 +2,27 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Get UTM from all possible sources
+const getCurrentUtm = (): string | null => {
+  try {
+    // Try localStorage first
+    const localUtm = localStorage.getItem('promo_source_global');
+    if (localUtm) return localUtm;
+    
+    // Try sessionStorage
+    const sessionUtm = sessionStorage.getItem('promo_source_global');
+    if (sessionUtm) return sessionUtm;
+    
+    // Try cookie
+    const match = document.cookie.match(/(?:^|; )promo_source=([^;]*)/);
+    if (match) return decodeURIComponent(match[1]);
+    
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredUserType?: 'user' | 'talent' | 'admin';
@@ -30,7 +51,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return <Navigate to="/admin/login" replace />;
     }
     const returnTo = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
+    
+    // Include UTM in redirect URL so it survives the redirect
+    const utm = getCurrentUtm();
+    const utmParam = utm ? `&utm=${encodeURIComponent(utm)}` : '';
+    return <Navigate to={`/login?returnTo=${returnTo}${utmParam}`} replace />;
   }
 
   if (requiredUserType && user.user_type !== requiredUserType) {
