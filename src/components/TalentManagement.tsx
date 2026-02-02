@@ -1544,6 +1544,25 @@ const TalentManagement: React.FC = () => {
                           {talent.bio.length > 100 ? `${talent.bio.substring(0, 100)}...` : talent.bio}
                         </p>
                       )}
+                      
+                      {/* Missing Items Indicator */}
+                      {(() => {
+                        const missing: string[] = [];
+                        if (!talent.username) missing.push('Username');
+                        if (!talent.bio) missing.push('Bio');
+                        if (!talent.temp_avatar_url && !talent.users?.avatar_url) missing.push('Photo');
+                        if (!talent.promo_video_url) missing.push('Video');
+                        
+                        return missing.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {missing.map((item) => (
+                              <span key={item} className="px-2 py-0.5 text-xs rounded-full bg-red-50 text-red-600 border border-red-200">
+                                Missing: {item}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   
