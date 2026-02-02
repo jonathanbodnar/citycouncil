@@ -88,10 +88,170 @@ serve(async (req) => {
 
     console.log('✅ Admin status confirmed for:', adminData.email)
 
-    // Get target user ID from request
-    const { userId } = await req.json()
-    console.log('🎯 Target user ID:', userId)
+    // Get target user ID and action from request
+    const { userId, phone, email, action } = await req.json()
+    console.log('🎯 Request:', { userId, phone, email, action })
 
+    // Handle fix-auth action - lookup by phone or email
+    if (action === 'fix-auth') {
+      console.log('🔧 Fix auth action requested')
+      
+      // Find user in public.users
+      let publicUser: any = null
+      
+      if (email) {
+        const { data } = await supabaseAdmin
+          .from('users')
+          .select('*')
+          .eq('email', email.toLowerCase().trim())
+          .single()
+        publicUser = data
+      }
+      
+      if (!publicUser && phone) {
+        // Format phone
+        const digits = phone.replace(/\D/g, '')
+        const formattedPhone = digits.length === 10 ? `+1${digits}` : 
+          (digits.length === 11 && digits.startsWith('1')) ? `+${digits}` : 
+          phone.startsWith('+') ? phone : `+${digits}`
+        
+        const { data } = await supabaseAdmin
+          .from('users')
+          .select('*')
+          .eq('phone', formattedPhone)
+          .single()
+        publicUser = data
+      }
+      
+      if (!publicUser) {
+        return new Response(
+          JSON.stringify({ error: 'User not found in database', searchedFor: { phone, email } }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      console.log('✅ Found public user:', publicUser.id, publicUser.email)
+      
+      // Check if user exists in auth.users
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(publicUser.id)
+      
+      // Also check by email
+      let authUserByEmail: any = null
+      if (publicUser.email) {
+        const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers()
+        authUserByEmail = authUsers?.users?.find((u: any) => u.email === publicUser.email)
+      }
+      
+      console.log('Auth check:', { byId: !!authUser?.user, byEmail: authUserByEmail?.id })
+      
+      // Generate random password
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+      let tempPassword = ''
+      for (let i = 0; i < 32; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      
+      let result: any = { publicUser: { id: publicUser.id, email: publicUser.email, phone: publicUser.phone } }
+      
+      // Case 1: Auth user exists with same ID
+      if (authUser?.user) {
+        console.log('Resetting password for existing auth user')
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          authUser.user.id,
+          { password: tempPassword, email_confirm: true }
+        )
+        
+        if (updateError) {
+          result.error = `Failed to reset password: ${updateError.message}`
+        } else {
+          result.fixed = true
+          result.method = 'password_reset'
+        }
+      }
+      // Case 2: Auth user exists by email with different ID
+      else if (authUserByEmail && authUserByEmail.id !== publicUser.id) {
+        console.log('Syncing IDs - auth has different ID than public')
+        const oldId = publicUser.id
+        const newId = authUserByEmail.id
+        
+        // Update public.users
+        await supabaseAdmin.from('users').upsert({
+          id: newId,
+          email: publicUser.email,
+          phone: publicUser.phone,
+          full_name: publicUser.full_name,
+          user_type: publicUser.user_type,
+          promo_source: publicUser.promo_source,
+        })
+        
+        // Update related tables
+        for (const table of ['orders', 'talent_profiles', 'reviews', 'talent_followers']) {
+          await supabaseAdmin.from(table).update({ user_id: newId }).eq('user_id', oldId)
+        }
+        
+        // Delete old record
+        await supabaseAdmin.from('users').delete().eq('id', oldId)
+        
+        // Reset password
+        await supabaseAdmin.auth.admin.updateUserById(newId, { password: tempPassword, email_confirm: true })
+        
+        result.fixed = true
+        result.method = 'id_sync'
+        result.oldId = oldId
+        result.newId = newId
+      }
+      // Case 3: No auth user - create one
+      else {
+        console.log('Creating new auth user')
+        const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: publicUser.email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            full_name: publicUser.full_name,
+            phone: publicUser.phone,
+            user_type: publicUser.user_type,
+          }
+        })
+        
+        if (createError) {
+          result.error = `Failed to create auth user: ${createError.message}`
+        } else if (newAuthUser?.user) {
+          // Sync IDs if different
+          if (newAuthUser.user.id !== publicUser.id) {
+            const oldId = publicUser.id
+            const newId = newAuthUser.user.id
+            
+            await supabaseAdmin.from('users').upsert({
+              id: newId,
+              email: publicUser.email,
+              phone: publicUser.phone,
+              full_name: publicUser.full_name,
+              user_type: publicUser.user_type,
+              promo_source: publicUser.promo_source,
+            })
+            
+            for (const table of ['orders', 'talent_profiles', 'reviews', 'talent_followers']) {
+              await supabaseAdmin.from(table).update({ user_id: newId }).eq('user_id', oldId)
+            }
+            
+            await supabaseAdmin.from('users').delete().eq('id', oldId)
+            
+            result.oldId = oldId
+            result.newId = newId
+          }
+          result.fixed = true
+          result.method = 'created_auth'
+        }
+      }
+      
+      return new Response(
+        JSON.stringify({ success: true, ...result }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Standard impersonate flow
     if (!userId) {
       console.error('❌ Missing userId parameter')
       return new Response(

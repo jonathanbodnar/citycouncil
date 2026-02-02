@@ -52,6 +52,7 @@ const UsersManagement: React.FC = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'talent' | 'user' | 'admin'>('all');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [fixingAuthUserId, setFixingAuthUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
@@ -394,6 +395,51 @@ const UsersManagement: React.FC = () => {
     }
   };
 
+  const handleFixAuth = async (user: User) => {
+    const confirmed = window.confirm(
+      `Fix authentication for "${user.full_name || user.email}"?\n\nThis will reset their auth account so they can log in again.`
+    );
+    
+    if (!confirmed) return;
+
+    setFixingAuthUserId(user.id);
+    
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/admin-impersonate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+          body: JSON.stringify({ 
+            email: user.email,
+            phone: user.phone,
+            action: 'fix-auth'
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Failed to fix auth');
+      }
+
+      if (result.fixed) {
+        toast.success(`Auth fixed for "${user.full_name || user.email}" (${result.method}). They can now request a new OTP.`);
+      } else {
+        toast.error('Could not fix auth - unknown issue');
+      }
+    } catch (error: any) {
+      console.error('Error fixing auth:', error);
+      toast.error(error.message || 'Failed to fix auth');
+    } finally {
+      setFixingAuthUserId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -647,6 +693,15 @@ const UsersManagement: React.FC = () => {
               {/* Delete Button */}
               <div className="pt-2 border-t border-gray-200 mt-2">
                 <button
+                  onClick={() => handleFixAuth(user)}
+                  disabled={fixingAuthUserId === user.id}
+                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                  title="Fix authentication issues"
+                >
+                  <ShieldCheckIcon className="h-4 w-4" />
+                  {fixingAuthUserId === user.id ? 'Fixing...' : 'Fix Auth'}
+                </button>
+                <button
                   onClick={() => handleDeleteUser(user)}
                   disabled={deletingUserId === user.id || user.user_type === 'admin'}
                   className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -814,15 +869,26 @@ const UsersManagement: React.FC = () => {
 
                   {/* Actions Column */}
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleDeleteUser(user)}
-                      disabled={deletingUserId === user.id || user.user_type === 'admin'}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={user.user_type === 'admin' ? 'Cannot delete admin users' : 'Delete user'}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                      {deletingUserId === user.id ? 'Deleting...' : 'Delete'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleFixAuth(user)}
+                        disabled={fixingAuthUserId === user.id}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                        title="Fix authentication issues"
+                      >
+                        <ShieldCheckIcon className="h-4 w-4" />
+                        {fixingAuthUserId === user.id ? 'Fixing...' : 'Fix Auth'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={deletingUserId === user.id || user.user_type === 'admin'}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={user.user_type === 'admin' ? 'Cannot delete admin users' : 'Delete user'}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        {deletingUserId === user.id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
