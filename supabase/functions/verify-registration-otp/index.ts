@@ -286,13 +286,15 @@ serve(async (req) => {
         const existingUtms = existingUser.utm_sources || [];
         if (!existingUtms.includes(promoSource)) {
           // Use raw SQL to append to array since Supabase JS doesn't support array_append
-          await supabase.rpc('append_utm_source', { 
+          const { error: rpcError } = await supabase.rpc('append_utm_source', { 
             user_id_param: existingUser.id, 
             utm_param: promoSource 
-          }).catch(() => {
-            // Fallback: just set the array if RPC doesn't exist
-            updates.utm_sources = [...existingUtms, promoSource];
           });
+          if (rpcError) {
+            // Fallback: just set the array if RPC doesn't exist
+            console.log('RPC failed, using fallback:', rpcError.message);
+            updates.utm_sources = [...existingUtms, promoSource];
+          }
           console.log('Appended UTM to utm_sources:', promoSource);
         }
       }

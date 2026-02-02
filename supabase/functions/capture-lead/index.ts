@@ -84,13 +84,15 @@ serve(async (req) => {
         const existingUtms = existingUser.utm_sources || [];
         if (!existingUtms.includes(newUtm)) {
           // Use RPC function to append to array
-          await supabase.rpc('append_utm_source', { 
+          const { error: rpcError } = await supabase.rpc('append_utm_source', { 
             user_id_param: existingUser.id, 
             utm_param: newUtm 
-          }).catch(() => {
-            // Fallback: set array directly
-            updates.utm_sources = [...existingUtms, newUtm];
           });
+          if (rpcError) {
+            // Fallback: set array directly
+            console.log('RPC failed, using fallback:', rpcError.message);
+            updates.utm_sources = [...existingUtms, newUtm];
+          }
           console.log('Appended UTM to utm_sources:', newUtm);
         }
       }
