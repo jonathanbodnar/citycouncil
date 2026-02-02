@@ -453,7 +453,43 @@ serve(async (req) => {
       
       if (updateError) {
         console.error('Error updating user password:', updateError);
-        throw new Error("Failed to authenticate user");
+        console.error('Update error details:', JSON.stringify(updateError));
+        
+        // Try to recover by checking if user exists in auth
+        const { data: authCheck } = await supabase.auth.admin.getUserById(existingUser.id);
+        if (!authCheck?.user) {
+          // User doesn't exist in auth - try to create them
+          console.log('User not in auth.users, attempting to create...');
+          const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+            email: existingUser.email || normalizedEmail,
+            password: tempPassword,
+            email_confirm: true,
+            user_metadata: {
+              full_name: existingUser.full_name,
+              phone: formattedPhone || existingUser.phone,
+            }
+          });
+          
+          if (createError) {
+            console.error('Failed to create auth user:', createError);
+            throw new Error(`Failed to authenticate user: ${updateError.message}`);
+          }
+          
+          // Update existingUser.id to new auth user id if different
+          if (newUser?.user && newUser.user.id !== existingUser.id) {
+            console.log('Created new auth user, migrating data...');
+            await supabase.from('users').upsert({
+              id: newUser.user.id,
+              email: existingUser.email || normalizedEmail,
+              phone: formattedPhone || existingUser.phone,
+              full_name: existingUser.full_name,
+              promo_source: existingUser.promo_source,
+            });
+            existingUser.id = newUser.user.id;
+          }
+        } else {
+          throw new Error(`Failed to authenticate user: ${updateError.message}`);
+        }
       }
       
       // Create a fresh client with anon key for signing in (not service role)
@@ -474,7 +510,9 @@ serve(async (req) => {
       
       if (signInError || !signInData.session) {
         console.error('Error signing in user:', signInError);
-        throw new Error("Failed to authenticate user");
+        console.error('Sign-in error details:', JSON.stringify(signInError));
+        console.error('Attempted sign-in with email:', existingUser.email || normalizedEmail);
+        throw new Error(`Failed to authenticate user: ${signInError?.message || 'No session returned'}`);
       }
       
       console.log('Login successful for:', existingUser.email);
