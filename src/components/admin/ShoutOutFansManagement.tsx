@@ -389,10 +389,10 @@ const ShoutOutFansManagement: React.FC = () => {
       <ArrowDownIcon className="h-4 w-4 inline ml-1" />;
   };
 
-  // Filter and sort - only show talent with 10+ views
+  // Filter and sort - show talent with 10+ views OR any fans
   const filteredAndSortedStats = talentStats
     .filter(talent => 
-      talent.page_views >= 10 && (
+      (talent.page_views >= 10 || talent.fan_count > 0) && (
         talent.talent_name.toLowerCase().includes(search.toLowerCase()) ||
         (talent.slug && talent.slug.toLowerCase().includes(search.toLowerCase()))
       )
