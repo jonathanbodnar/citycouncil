@@ -695,7 +695,8 @@ const OrdersManagement: React.FC = () => {
                         </button>
                       )}
                       
-                      {order.status === 'completed' && !order.refund_id && (
+                      {/* Refund button for any non-refunded order */}
+                      {!order.refund_id && order.status !== 'denied' && order.status !== 'refunded' && order.status !== 'pending' && order.status !== 'in_progress' && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -708,7 +709,7 @@ const OrdersManagement: React.FC = () => {
                         </button>
                       )}
                       
-                      {(order.status === 'denied' || order.refund_id) && (
+                      {(order.status === 'denied' || order.status === 'refunded' || order.refund_id) && (
                         <div className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm">
                           <CheckCircleIcon className="h-4 w-4 mr-1" />
                           Refunded
@@ -951,8 +952,8 @@ const OrdersManagement: React.FC = () => {
                                   </button>
                                 )}
                                 
-                                {/* Refund Completed */}
-                                {order.status === 'completed' && !order.refund_id && (
+                                {/* Refund button for any non-refunded order (except pending/in_progress which use Deny & Refund) */}
+                                {!order.refund_id && order.status !== 'denied' && order.status !== 'refunded' && order.status !== 'pending' && order.status !== 'in_progress' && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -966,7 +967,7 @@ const OrdersManagement: React.FC = () => {
                                 )}
                                 
                                 {/* Refunded Badge */}
-                                {(order.status === 'denied' || order.refund_id) && (
+                                {(order.status === 'denied' || order.status === 'refunded' || order.refund_id) && (
                                   <div className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
                                     <CheckCircleIcon className="h-4 w-4 mr-2" />
                                     Refunded

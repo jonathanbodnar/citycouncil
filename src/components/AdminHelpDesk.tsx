@@ -7,11 +7,17 @@ import {
   CheckIcon,
   ArchiveBoxIcon,
   ClockIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  CurrencyDollarIcon,
+  GiftIcon,
+  XCircleIcon,
+  XMarkIcon,
+  ShoppingBagIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { HelpMessage } from '../types';
+import { refundService } from '../services/refundService';
 import toast from 'react-hot-toast';
 
 interface ConversationWithUser extends HelpMessage {
@@ -34,6 +40,24 @@ interface ConversationGroup {
   is_resolved: boolean;
 }
 
+interface UserOrder {
+  id: string;
+  created_at: string;
+  amount: number;
+  status: string;
+  payment_transaction_id: string;
+  request_details: string;
+  recipient_name?: string;
+  refund_id?: string;
+  discount_amount?: number;
+  original_amount?: number;
+  talent_profiles: {
+    users: {
+      full_name: string;
+    };
+  } | null;
+}
+
 const AdminHelpDesk: React.FC = () => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<ConversationGroup[]>([]);
@@ -47,6 +71,21 @@ const AdminHelpDesk: React.FC = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef<boolean>(false);
   const selectedConversationRef = useRef<ConversationGroup | null>(null);
+  
+  // Credits modal state
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const [creditAmount, setCreditAmount] = useState('');
+  const [creditReason, setCreditReason] = useState('');
+  const [processingCredits, setProcessingCredits] = useState(false);
+  
+  // Orders modal state
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [userOrders, setUserOrders] = useState<UserOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
+  const [processingRefund, setProcessingRefund] = useState(false);
 
   // Keep ref in sync with state for use in subscription callback
   useEffect(() => {
@@ -402,6 +441,175 @@ const AdminHelpDesk: React.FC = () => {
     }
   };
 
+  // Issue credits to user
+  const handleIssueCredits = async () => {
+    if (!selectedConversation || !creditAmount || !creditReason.trim()) {
+      toast.error('Please enter amount and reason');
+      return;
+    }
+
+    const amount = parseInt(creditAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid credit amount');
+      return;
+    }
+
+    setProcessingCredits(true);
+    try {
+      // Get current user credits
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('credits')
+        .eq('id', selectedConversation.user_id)
+        .single();
+
+      if (userError) throw userError;
+
+      const currentCredits = parseInt(userData?.credits || '0');
+      const newCredits = currentCredits + (amount * 100); // Store in cents
+
+      // Update user credits
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ credits: newCredits.toString() })
+        .eq('id', selectedConversation.user_id);
+
+      if (updateError) throw updateError;
+
+      // Log the credit transaction
+      await supabase.from('credit_transactions').insert({
+        user_id: selectedConversation.user_id,
+        amount: amount * 100,
+        type: 'admin_grant',
+        description: creditReason,
+        created_at: new Date().toISOString()
+      });
+
+      toast.success(`$${amount} credits issued to ${selectedConversation.user_name}`);
+      setShowCreditsModal(false);
+      setCreditAmount('');
+      setCreditReason('');
+    } catch (error: any) {
+      console.error('Error issuing credits:', error);
+      toast.error(error.message || 'Failed to issue credits');
+    } finally {
+      setProcessingCredits(false);
+    }
+  };
+
+  // Fetch user's orders
+  const fetchUserOrders = async (userId: string) => {
+    setLoadingOrders(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          created_at,
+          amount,
+          status,
+          payment_transaction_id,
+          request_details,
+          recipient_name,
+          refund_id,
+          discount_amount,
+          original_amount,
+          talent_profiles!orders_talent_id_fkey (
+            users!talent_profiles_user_id_fkey (
+              full_name
+            )
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserOrders((data || []) as unknown as UserOrder[]);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to load orders');
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const openOrdersModal = () => {
+    if (selectedConversation) {
+      fetchUserOrders(selectedConversation.user_id);
+      setShowOrdersModal(true);
+    }
+  };
+
+  const handleRefundOrder = async () => {
+    if (!selectedOrder || !refundReason.trim()) {
+      toast.error('Please provide a reason for the refund');
+      return;
+    }
+
+    setProcessingRefund(true);
+    try {
+      // Check if this is a free/coupon order (no payment to refund)
+      const discountAmount = selectedOrder.discount_amount || 0;
+      const originalAmount = selectedOrder.original_amount || 0;
+      const isFreeOrder = !selectedOrder.payment_transaction_id || 
+        (discountAmount > 0 && originalAmount > 0 && discountAmount >= originalAmount);
+
+      if (isFreeOrder) {
+        // Just update the order status without processing a refund
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            status: 'refunded',
+            denial_reason: refundReason,
+            denied_by: 'admin',
+            denied_at: new Date().toISOString(),
+          })
+          .eq('id', selectedOrder.id);
+
+        if (error) throw error;
+        toast.success('Order cancelled (no refund needed - free/coupon order)');
+      } else {
+        // Process actual refund
+        const result = await refundService.processRefund({
+          orderId: selectedOrder.id,
+          transactionId: selectedOrder.payment_transaction_id,
+          reason: refundReason,
+          deniedBy: 'admin',
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to process refund');
+        }
+        toast.success('Refund processed successfully');
+      }
+
+      setShowRefundModal(false);
+      setSelectedOrder(null);
+      setRefundReason('');
+      
+      // Refresh orders
+      if (selectedConversation) {
+        fetchUserOrders(selectedConversation.user_id);
+      }
+    } catch (error: any) {
+      console.error('Error processing refund:', error);
+      toast.error(error.message || 'Failed to process refund');
+    } finally {
+      setProcessingRefund(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-700';
+      case 'pending': return 'bg-yellow-100 text-yellow-700';
+      case 'in_progress': return 'bg-blue-100 text-blue-700';
+      case 'denied':
+      case 'refunded': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   const filteredConversations = conversations.filter(conv => {
     const matchesSearch = !searchQuery || 
       conv.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -565,15 +773,38 @@ const AdminHelpDesk: React.FC = () => {
                   </div>
                 </div>
                 
-                {!selectedConversation.is_resolved && (
+                <div className="flex items-center gap-2">
+                  {/* Issue Credits Button */}
                   <button
-                    onClick={() => markAsResolved(selectedConversation.user_id)}
-                    className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                    onClick={() => setShowCreditsModal(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                    title="Issue Credits"
                   >
-                    <CheckIcon className="w-4 h-4" />
-                    Mark Resolved
+                    <GiftIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Credits</span>
                   </button>
-                )}
+                  
+                  {/* View Orders Button */}
+                  <button
+                    onClick={openOrdersModal}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    title="View Orders"
+                  >
+                    <ShoppingBagIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Orders</span>
+                  </button>
+                  
+                  {/* Mark Resolved Button */}
+                  {!selectedConversation.is_resolved && (
+                    <button
+                      onClick={() => markAsResolved(selectedConversation.user_id)}
+                      className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                    >
+                      <CheckIcon className="w-4 h-4" />
+                      <span className="hidden sm:inline">Resolved</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -686,6 +917,257 @@ const AdminHelpDesk: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Issue Credits Modal */}
+      {showCreditsModal && selectedConversation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <GiftIcon className="h-6 w-6 text-purple-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Issue Credits</h3>
+              </div>
+              <button onClick={() => setShowCreditsModal(false)} className="text-gray-400 hover:text-gray-600">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-4">
+                <strong>User:</strong> {selectedConversation.user_name}
+              </p>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Credit Amount ($) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={creditAmount}
+                onChange={(e) => setCreditAmount(e.target.value)}
+                placeholder="Enter amount (e.g., 25)"
+                min="1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4"
+                disabled={processingCredits}
+              />
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={creditReason}
+                onChange={(e) => setCreditReason(e.target.value)}
+                placeholder="Why are you issuing these credits?"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={processingCredits}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCreditsModal(false)}
+                disabled={processingCredits}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleIssueCredits}
+                disabled={processingCredits || !creditAmount || !creditReason.trim()}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {processingCredits ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <>
+                    <CurrencyDollarIcon className="h-4 w-4 mr-2" />
+                    Issue Credits
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Orders Modal */}
+      {showOrdersModal && selectedConversation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center">
+                <ShoppingBagIcon className="h-6 w-6 text-blue-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Orders for {selectedConversation.user_name}
+                </h3>
+              </div>
+              <button onClick={() => setShowOrdersModal(false)} className="text-gray-400 hover:text-gray-600">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingOrders ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : userOrders.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No orders found for this user
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {userOrders.map((order) => (
+                    <div key={order.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                              {order.status}
+                            </span>
+                            <span className="text-sm font-medium text-gray-900">
+                              ${(order.amount / 100).toFixed(2)}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(order.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            <strong>Talent:</strong> {order.talent_profiles?.users?.full_name || 'Unknown'}
+                          </p>
+                          {order.recipient_name && (
+                            <p className="text-sm text-gray-600">
+                              <strong>For:</strong> {order.recipient_name}
+                            </p>
+                          )}
+                          {order.request_details && (
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                              {order.request_details}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2 ml-4">
+                          {/* Cancel & Refund for pending orders */}
+                          {(order.status === 'pending' || order.status === 'in_progress') && !order.refund_id && (
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setShowRefundModal(true);
+                              }}
+                              className="px-3 py-1.5 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50 transition-colors"
+                            >
+                              Cancel & Refund
+                            </button>
+                          )}
+                          {/* Refund for any non-refunded order */}
+                          {!order.refund_id && order.status !== 'denied' && order.status !== 'refunded' && order.status !== 'pending' && order.status !== 'in_progress' && (
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setShowRefundModal(true);
+                              }}
+                              className="px-3 py-1.5 text-xs border border-orange-300 text-orange-700 rounded hover:bg-orange-50 transition-colors"
+                            >
+                              Refund
+                            </button>
+                          )}
+                          {/* Refunded badge */}
+                          {(order.refund_id || order.status === 'denied' || order.status === 'refunded') && (
+                            <span className="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded">
+                              Refunded
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t">
+              <button
+                onClick={() => setShowOrdersModal(false)}
+                className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Order Modal */}
+      {showRefundModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <CurrencyDollarIcon className="h-6 w-6 text-orange-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {selectedOrder.status === 'pending' || selectedOrder.status === 'in_progress' 
+                    ? 'Cancel & Refund Order' 
+                    : 'Refund Order'}
+                </h3>
+              </div>
+              <button onClick={() => { setShowRefundModal(false); setSelectedOrder(null); }} className="text-gray-400 hover:text-gray-600">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Talent:</strong> {selectedOrder.talent_profiles?.users?.full_name || 'Unknown'}
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Amount:</strong> ${(selectedOrder.amount / 100).toFixed(2)}
+              </p>
+              <p className="text-sm text-gray-600 mb-4">
+                <strong>Status:</strong> {selectedOrder.status}
+              </p>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="Why are you refunding this order?"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                disabled={processingRefund}
+              />
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className="text-xs text-yellow-800">
+                <strong>Warning:</strong> This will process a refund through the payment processor and notify the customer.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowRefundModal(false); setSelectedOrder(null); setRefundReason(''); }}
+                disabled={processingRefund}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRefundOrder}
+                disabled={processingRefund || !refundReason.trim()}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {processingRefund ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  'Process Refund'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
