@@ -406,12 +406,12 @@ const UsersManagement: React.FC = () => {
     
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/admin-impersonate`,
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/delete-user`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({ 
             email: user.email,
