@@ -247,6 +247,16 @@ const dailyShuffle = <T,>(arr: T[], baseSeed: string): T[] => {
   return seededShuffle(arr, `${baseSeed}-${today}`);
 };
 
+// Random shuffle - true randomness for video examples
+const randomShuffle = <T,>(arr: T[]): T[] => {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 // Horizontal scroll carousel component
 const TalentCarousel: React.FC<{
   talent: TalentWithDetails[];
@@ -632,9 +642,13 @@ export default function OccasionLandingPage() {
         const allVideosWithReviews: { video_url: string; review: any; talent_id: string; talent_username?: string; talent_name?: string; order_id: string }[] = [];
         const usedOrderIds = new Set<string>();
         
+        console.log(`[OccasionPage] Found ${occasionOrders?.length || 0} ${config.key} orders with videos`);
+        console.log(`[OccasionPage] Found ${allReviews?.length || 0} total 5-star reviews`);
+        
         // Only use occasion-specific orders (birthday orders for /birthday page)
         occasionOrders?.forEach(order => {
           if (order.video_url && !usedOrderIds.has(order.id)) {
+            // Try to find a review for this specific order first, then any review for this talent
             const review = allReviews?.find(r => r.order_id === order.id) || 
                           allReviews?.find(r => r.talent_id === order.talent_id);
             if (review && review.comment) {
@@ -652,8 +666,10 @@ export default function OccasionLandingPage() {
           }
         });
         
-        // Shuffle all videos daily
-        const shuffledVideos = dailyShuffle(allVideosWithReviews, `videos-${config.key}`);
+        console.log(`[OccasionPage] Built pool of ${allVideosWithReviews.length} ${config.key} videos with reviews`);
+        
+        // Randomly shuffle videos (different on each page load)
+        const shuffledVideos = randomShuffle(allVideosWithReviews);
         
         // Pick 3 videos ensuring no 2 are from the same talent
         const displayVideos: typeof allVideosWithReviews = [];
