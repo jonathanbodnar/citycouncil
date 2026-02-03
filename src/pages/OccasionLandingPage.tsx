@@ -449,6 +449,9 @@ export default function OccasionLandingPage() {
   const [exampleVideos, setExampleVideos] = useState<{ video_url: string; review: any; talent_username?: string; talent_name?: string }[]>([]);
   const [currentPainPointIndex, setCurrentPainPointIndex] = useState(0);
   
+  // Ref for scrolling to banner cards
+  const bannerCardsRef = useRef<HTMLElement>(null);
+  
   const config = OCCASION_CONFIGS[occasion || 'birthday'] || OCCASION_CONFIGS.birthday;
   
   // Mouse tracking for gradient effect
@@ -667,7 +670,10 @@ export default function OccasionLandingPage() {
   }, [config.key]);
 
   const handleCTAClick = () => {
-    navigate(`/?occasion=${config.key}`);
+    // Scroll to banner cards section
+    if (bannerCardsRef.current) {
+      bannerCardsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   if (loading) {
@@ -770,7 +776,7 @@ export default function OccasionLandingPage() {
         
         {/* Featured Talent Section */}
         {featuredTalent.length > 0 && (
-          <section className="relative py-12 md:py-16">
+          <section ref={bannerCardsRef} className="relative py-12 md:py-16 scroll-mt-4">
             <div className="max-w-7xl mx-auto px-4 md:px-8">
               <div className="text-center mb-12">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
