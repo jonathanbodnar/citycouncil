@@ -628,32 +628,12 @@ export default function OccasionLandingPage() {
           setComedianTalent([]);
         }
         
-        // Example videos with reviews - collect ALL valid ones (not just one per talent)
+        // Example videos with reviews - ONLY from this occasion (e.g., birthday orders only)
         const allVideosWithReviews: { video_url: string; review: any; talent_id: string; talent_username?: string; talent_name?: string; order_id: string }[] = [];
         const usedOrderIds = new Set<string>();
         
-        // First try occasion-specific orders (birthday orders)
+        // Only use occasion-specific orders (birthday orders for /birthday page)
         occasionOrders?.forEach(order => {
-          if (order.video_url && !usedOrderIds.has(order.id)) {
-            const review = allReviews?.find(r => r.order_id === order.id) || 
-                          allReviews?.find(r => r.talent_id === order.talent_id);
-            if (review && review.comment) {
-              const talent = talentLookup.get(order.talent_id);
-              allVideosWithReviews.push({
-                video_url: order.video_url,
-                review: { rating: review.rating, comment: review.comment },
-                talent_id: order.talent_id,
-                talent_username: talent?.username,
-                talent_name: talent?.temp_full_name || talent?.users?.full_name,
-                order_id: order.id,
-              });
-              usedOrderIds.add(order.id);
-            }
-          }
-        });
-        
-        // Then add from any occasion (if we need more variety)
-        allOrders?.forEach(order => {
           if (order.video_url && !usedOrderIds.has(order.id)) {
             const review = allReviews?.find(r => r.order_id === order.id) || 
                           allReviews?.find(r => r.talent_id === order.talent_id);
