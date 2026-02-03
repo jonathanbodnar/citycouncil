@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
 import TalentCard from '../components/TalentCard';
 import TalentBannerCard from '../components/TalentBannerCard';
 import SEOHelmet from '../components/SEOHelmet';
-import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, PauseIcon, StarIcon, BoltIcon, GiftIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/solid';
+import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, PauseIcon, StarIcon, BoltIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { GiftIcon, ClockIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 interface TalentWithDetails extends TalentProfile {
   users?: { id: string; full_name: string; avatar_url?: string };
@@ -25,9 +26,11 @@ interface OccasionConfig {
   expressHeadline: string;
   seoTitle: string;
   seoDescription: string;
+  gradientFrom: string;
+  gradientTo: string;
 }
 
-// Configuration for each occasion
+// Configuration for each occasion with custom gradients
 const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
   birthday: {
     key: 'birthday',
@@ -45,6 +48,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Birthday tomorrow? We got you.",
     seoTitle: "Birthday ShoutOut | Personalized Video Birthday Messages",
     seoDescription: "Send an unforgettable birthday gift. Get a personalized video message from your favorite personalities. The gift they'll replay for years.",
+    gradientFrom: 'from-pink-600/30',
+    gradientTo: 'to-purple-600/20',
   },
   roast: {
     key: 'roast',
@@ -62,6 +67,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Need to roast someone by tomorrow?",
     seoTitle: "Friendly Roast ShoutOut | Personalized Roast Videos",
     seoDescription: "Order a hilarious personalized roast video. The perfect way to roast your friends with help from your favorite personalities.",
+    gradientFrom: 'from-orange-600/30',
+    gradientTo: 'to-red-600/20',
   },
   encouragement: {
     key: 'encouragement',
@@ -79,6 +86,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Big moment tomorrow? Get a pep talk today.",
     seoTitle: "Encouragement ShoutOut | Personalized Pep Talk Videos",
     seoDescription: "Send an inspiring personalized pep talk video. Help someone you love with encouragement from personalities they admire.",
+    gradientFrom: 'from-emerald-600/30',
+    gradientTo: 'to-teal-600/20',
   },
   advice: {
     key: 'advice',
@@ -96,6 +105,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Need guidance fast?",
     seoTitle: "Get Advice ShoutOut | Personalized Advice Videos",
     seoDescription: "Get personalized advice from experts and personalities you trust. Real wisdom from real experience, delivered just for you.",
+    gradientFrom: 'from-amber-600/30',
+    gradientTo: 'to-yellow-600/20',
   },
   celebrate: {
     key: 'celebrate',
@@ -113,6 +124,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Celebrate their win today.",
     seoTitle: "Celebration ShoutOut | Personalized Congratulations Videos",
     seoDescription: "Send an unforgettable congratulations video. Celebrate achievements with personalized messages from amazing personalities.",
+    gradientFrom: 'from-yellow-600/30',
+    gradientTo: 'to-amber-600/20',
   },
   announcement: {
     key: 'announcement',
@@ -130,6 +143,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Big reveal coming up?",
     seoTitle: "Announcement ShoutOut | Personalized Announcement Videos",
     seoDescription: "Make your big announcement unforgettable with a personalized video message. Perfect for reveals, proposals, and life updates.",
+    gradientFrom: 'from-blue-600/30',
+    gradientTo: 'to-cyan-600/20',
   },
   debate: {
     key: 'debate',
@@ -147,6 +162,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Need to win this argument today?",
     seoTitle: "Settle a Debate ShoutOut | End Arguments with Authority",
     seoDescription: "End debates and settle arguments with personalized videos from authoritative voices. Prove your point once and for all.",
+    gradientFrom: 'from-red-600/30',
+    gradientTo: 'to-rose-600/20',
   },
   corporate: {
     key: 'corporate',
@@ -164,6 +181,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     expressHeadline: "Event coming up fast?",
     seoTitle: "Corporate Event ShoutOut | Business Video Messages",
     seoDescription: "Elevate your corporate event with personalized video messages. Perfect for team building, awards, and company celebrations.",
+    gradientFrom: 'from-slate-600/30',
+    gradientTo: 'to-gray-600/20',
   },
 };
 
@@ -236,46 +255,60 @@ const TalentCarousel: React.FC<{
   if (talent.length === 0) return null;
 
   return (
-    <div className="mb-12">
-      <div className="flex items-center justify-between mb-4 px-4 md:px-8">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold text-white">{title}</h2>
-          {subtitle && <p className="text-gray-400 text-sm mt-1">{subtitle}</p>}
-        </div>
-        <div className="hidden md:flex gap-2">
-          <button
-            onClick={() => scroll('left')}
-            className={`p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors ${!showLeftArrow ? 'opacity-30 cursor-not-allowed' : ''}`}
-            disabled={!showLeftArrow}
-          >
-            <ChevronLeftIcon className="w-5 h-5 text-white" />
-          </button>
-          <button
-            onClick={() => scroll('right')}
-            className={`p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors ${!showRightArrow ? 'opacity-30 cursor-not-allowed' : ''}`}
-            disabled={!showRightArrow}
-          >
-            <ChevronRightIcon className="w-5 h-5 text-white" />
-          </button>
-        </div>
-      </div>
-      
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4 md:px-8"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {talent.map((t) => (
-          <div key={t.id} className="flex-shrink-0 w-[160px] md:w-[200px]">
-            <TalentCard talent={t as any} compact showExpressBadge={t.express_delivery_enabled} />
+    <div className="mb-8">
+      {title && (
+        <div className="flex items-center justify-between mb-6 px-4 md:px-8">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">{title}</h2>
+            {subtitle && <p className="text-gray-400 mt-1">{subtitle}</p>}
           </div>
-        ))}
+          <div className="hidden md:flex gap-2">
+            <button
+              onClick={() => scroll('left')}
+              className={`p-2.5 rounded-full glass border border-white/10 hover:border-white/20 transition-all ${!showLeftArrow ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}`}
+              disabled={!showLeftArrow}
+            >
+              <ChevronLeftIcon className="w-5 h-5 text-white" />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className={`p-2.5 rounded-full glass border border-white/10 hover:border-white/20 transition-all ${!showRightArrow ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}`}
+              disabled={!showRightArrow}
+            >
+              <ChevronRightIcon className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <div className="relative">
+        {/* Left fade */}
+        {showLeftArrow && (
+          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-gray-900 to-transparent z-10 pointer-events-none" />
+        )}
+        
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4 md:px-8 pb-4"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {talent.map((t) => (
+            <div key={t.id} className="flex-shrink-0 w-[160px] md:w-[200px]">
+              <TalentCard talent={t as any} compact showExpressBadge={t.express_delivery_enabled} />
+            </div>
+          ))}
+        </div>
+        
+        {/* Right fade */}
+        {showRightArrow && (
+          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-gray-900 to-transparent z-10 pointer-events-none" />
+        )}
       </div>
     </div>
   );
 };
 
-// Video example with review component
+// Video example with review component - updated styling
 const VideoExampleCard: React.FC<{
   videoUrl: string;
   review: { rating: number; comment: string; reviewer_name?: string };
@@ -296,47 +329,54 @@ const VideoExampleCard: React.FC<{
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl overflow-hidden border border-gray-700/50 shadow-xl">
-      {/* Video */}
-      <div className="relative aspect-[9/16] max-h-[400px]">
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          className="w-full h-full object-cover"
-          playsInline
-          muted={!isPlaying}
-          loop
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-        />
-        <button
-          onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors group"
-        >
-          <div className={`w-16 h-16 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110 ${isPlaying ? 'opacity-0 group-hover:opacity-100' : ''}`}>
-            {isPlaying ? (
-              <PauseIcon className="w-8 h-8 text-gray-900" />
-            ) : (
-              <PlayIcon className="w-8 h-8 text-gray-900 ml-1" />
-            )}
-          </div>
-        </button>
-        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full text-sm">
-          <span>{occasionEmoji} Real ShoutOut</span>
-        </div>
-      </div>
+    <div className="group relative">
+      {/* Glow effect on hover */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-red-500/30 to-orange-500/30 rounded-3xl blur-lg opacity-0 group-hover:opacity-50 transition duration-500" />
       
-      {/* Review */}
-      <div className="p-4">
-        <div className="flex items-center gap-1 mb-2">
-          {[...Array(5)].map((_, i) => (
-            <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-600'}`} />
-          ))}
+      <div className="relative glass rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300">
+        {/* Video */}
+        <div className="relative aspect-[9/16] max-h-[400px]">
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="w-full h-full object-cover"
+            playsInline
+            muted={!isPlaying}
+            loop
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+          <button
+            onClick={togglePlay}
+            className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-colors"
+          >
+            <div className={`w-16 h-16 rounded-full bg-white/95 flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xl ${isPlaying ? 'opacity-0 group-hover:opacity-100' : ''}`}>
+              {isPlaying ? (
+                <PauseIcon className="w-7 h-7 text-gray-900" />
+              ) : (
+                <PlayIcon className="w-7 h-7 text-gray-900 ml-1" />
+              )}
+            </div>
+          </button>
+          
+          {/* Badge */}
+          <div className="absolute top-4 left-4 glass px-3 py-1.5 rounded-full border border-white/20">
+            <span className="text-sm font-medium">{occasionEmoji} Real ShoutOut</span>
+          </div>
         </div>
-        <p className="text-gray-300 text-sm line-clamp-3">"{review.comment}"</p>
-        {review.reviewer_name && (
-          <p className="text-gray-500 text-xs mt-2">— {review.reviewer_name}</p>
-        )}
+        
+        {/* Review */}
+        <div className="p-5 bg-gradient-to-t from-black/50 to-transparent">
+          <div className="flex items-center gap-1 mb-3">
+            {[...Array(5)].map((_, i) => (
+              <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-600'}`} />
+            ))}
+          </div>
+          <p className="text-gray-200 text-sm leading-relaxed line-clamp-3">"{review.comment}"</p>
+          {review.reviewer_name && (
+            <p className="text-gray-500 text-xs mt-3">— {review.reviewer_name}</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -347,6 +387,7 @@ export default function OccasionLandingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   
   // Extract occasion from URL path (e.g., /birthday -> birthday)
   const occasion = location.pathname.replace('/', '').split('/')[0] || 'birthday';
@@ -359,6 +400,15 @@ export default function OccasionLandingPage() {
   const [currentPainPointIndex, setCurrentPainPointIndex] = useState(0);
   
   const config = OCCASION_CONFIGS[occasion || 'birthday'] || OCCASION_CONFIGS.birthday;
+  
+  // Mouse tracking for gradient effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
   
   // Capture UTM from URL
   useEffect(() => {
@@ -482,7 +532,6 @@ export default function OccasionLandingPage() {
         const videosWithReviews: { video_url: string; review: any }[] = [];
         occasionOrders?.forEach(order => {
           if (order.video_url && videosWithReviews.length < 3) {
-            // Find a review for this order or talent
             const review = allReviews?.find(r => r.order_id === order.id) || 
                           allReviews?.find(r => r.talent_id === order.talent_id);
             if (review && review.comment) {
@@ -526,13 +575,12 @@ export default function OccasionLandingPage() {
   }, [config.key]);
 
   const handleCTAClick = () => {
-    // Scroll to featured talent or navigate to home with occasion filter
     navigate(`/?occasion=${config.key}`);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
       </div>
     );
@@ -545,68 +593,90 @@ export default function OccasionLandingPage() {
         description={config.seoDescription}
       />
       
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen overflow-hidden relative">
+        {/* Dynamic cursor gradient */}
+        <div 
+          className="fixed inset-0 pointer-events-none z-0 opacity-30"
+          style={{
+            background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(239, 68, 68, 0.15), transparent 40%)`
+          }}
+        />
+
         {/* Hero Section */}
-        <section className="relative pt-8 pb-16 md:pt-16 md:pb-24 overflow-hidden">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 via-gray-900 to-gray-900 pointer-events-none" />
+        <section className="relative pt-8 pb-12 sm:pt-12 sm:pb-16">
+          {/* Animated gradient mesh */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className={`absolute top-0 -left-40 w-[500px] h-[500px] bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo} rounded-full blur-[120px] animate-pulse`} />
+            <div className="absolute top-40 -right-40 w-[600px] h-[600px] bg-gradient-to-r from-red-600/20 to-orange-600/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+            <div className="absolute -bottom-40 left-1/3 w-[500px] h-[500px] bg-gradient-to-r from-purple-600/15 to-pink-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+          </div>
           
-          <div className="relative max-w-6xl mx-auto px-4 md:px-8 text-center">
+          <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             {/* Occasion badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 glass px-5 py-2.5 rounded-full border border-white/20 mb-8 hover:scale-105 transition-transform">
               <span className="text-2xl">{config.emoji}</span>
-              <span className="text-sm font-medium text-gray-200">{config.label} ShoutOut</span>
+              <span className="font-semibold text-white">{config.label} ShoutOut</span>
             </div>
             
             {/* Main headline */}
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight">
               {config.headline}
             </h1>
             
             {/* Rotating pain points */}
-            <div className="h-8 md:h-10 mb-8 overflow-hidden">
-              <p className="text-lg md:text-xl text-gray-300 transition-all duration-500">
+            <div className="h-8 md:h-10 mb-10 overflow-hidden">
+              <p 
+                key={currentPainPointIndex}
+                className="text-lg md:text-xl text-gray-300 animate-fade-in"
+              >
                 {config.painPoints[currentPainPointIndex]}
               </p>
             </div>
             
             {/* CTA Button */}
-            <button
-              onClick={handleCTAClick}
-              className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all transform hover:scale-105 shadow-lg shadow-red-600/30"
-            >
-              <GiftIcon className="w-6 h-6" />
-              {config.ctaText}
-            </button>
+            <div className="relative inline-block group mb-10">
+              <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
+              <button
+                onClick={handleCTAClick}
+                className="relative inline-flex items-center gap-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all transform hover:scale-105"
+              >
+                <GiftIcon className="w-6 h-6" />
+                {config.ctaText}
+              </button>
+            </div>
             
             {/* Trust indicators */}
-            <div className="flex items-center justify-center gap-6 mt-8 text-sm text-gray-400">
-              <div className="flex items-center gap-2">
-                <StarIcon className="w-5 h-5 text-yellow-400" />
-                <span>4.9 avg rating</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ClockIcon className="w-5 h-5 text-blue-400" />
-                <span>24hr delivery available</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <SparklesIcon className="w-5 h-5 text-purple-400" />
-                <span>1000+ delivered</span>
-              </div>
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+              {[
+                { icon: StarIcon, label: '4.9 avg rating', color: 'text-yellow-400' },
+                { icon: ClockIcon, label: '24hr delivery', color: 'text-cyan-400' },
+                { icon: ShieldCheckIcon, label: 'Satisfaction guaranteed', color: 'text-emerald-400' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
+                  <item.icon className={`w-5 h-5 ${item.color}`} />
+                  <span>{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </section>
         
         {/* Featured Talent Section */}
         {featuredTalent.length > 0 && (
-          <section className="py-12 md:py-16">
+          <section className="relative py-12 md:py-16">
             <div className="max-w-7xl mx-auto px-4 md:px-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
-                Perfect for {config.label} ShoutOuts
-              </h2>
-              <p className="text-gray-400 text-center mb-10">
-                These creators have delivered amazing {config.label.toLowerCase()} messages
-              </p>
+              <div className="text-center mb-12">
+                <p className="text-red-400 font-semibold uppercase tracking-widest mb-3">Featured Creators</p>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+                  Perfect for{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
+                    {config.label}
+                  </span>
+                </h2>
+                <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                  These creators have delivered amazing {config.label.toLowerCase()} messages
+                </p>
+              </div>
               
               <div className="space-y-8">
                 {featuredTalent.map((talent, index) => (
@@ -624,25 +694,36 @@ export default function OccasionLandingPage() {
         
         {/* More Talent Carousel */}
         {moreTalent.length > 0 && (
-          <section className="py-12 bg-gray-900/50">
-            <TalentCarousel
-              talent={moreTalent}
-              title={`More ${config.label} Talent`}
-              subtitle="Explore more amazing creators"
-            />
+          <section className="py-12 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-transparent" />
+            <div className="relative">
+              <TalentCarousel
+                talent={moreTalent}
+                title={`More ${config.label} Talent`}
+                subtitle="Explore more amazing creators"
+              />
+            </div>
           </section>
         )}
         
         {/* Example Videos Section */}
         {exampleVideos.length > 0 && (
-          <section className="py-16 md:py-20">
-            <div className="max-w-6xl mx-auto px-4 md:px-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
-                See Real {config.label} ShoutOuts
-              </h2>
-              <p className="text-gray-400 text-center mb-10">
-                Watch what others received and what they said
-              </p>
+          <section className="py-16 md:py-20 relative">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-red-500/10 via-orange-500/5 to-yellow-500/10 rounded-full blur-[100px]" />
+            
+            <div className="relative max-w-6xl mx-auto px-4 md:px-8">
+              <div className="text-center mb-12">
+                <p className="text-orange-400 font-semibold uppercase tracking-widest mb-3">Real Examples</p>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+                  See Real{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400">
+                    {config.label} ShoutOuts
+                  </span>
+                </h2>
+                <p className="text-gray-400 text-lg">
+                  Watch what others received and what they said
+                </p>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {exampleVideos.map((item, index) => (
@@ -660,17 +741,19 @@ export default function OccasionLandingPage() {
         
         {/* 24-Hour Express Section */}
         {expressTalent.length > 0 && (
-          <section className="py-16 md:py-20 bg-gradient-to-r from-yellow-900/20 via-orange-900/20 to-red-900/20">
-            <div className="max-w-6xl mx-auto px-4 md:px-8">
+          <section className="py-16 md:py-20 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-900/10 via-orange-900/20 to-red-900/10" />
+            
+            <div className="relative max-w-7xl mx-auto px-4 md:px-8">
               <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-2 bg-yellow-500/20 px-4 py-2 rounded-full mb-4">
+                <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full border border-yellow-500/30 mb-6">
                   <BoltIcon className="w-5 h-5 text-yellow-400" />
-                  <span className="text-sm font-medium text-yellow-300">Express Delivery</span>
+                  <span className="font-semibold text-yellow-300">Express Delivery</span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-2">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
                   {config.expressHeadline}
                 </h2>
-                <p className="text-gray-400">
+                <p className="text-gray-400 text-lg">
                   These creators deliver within 24 hours
                 </p>
               </div>
@@ -684,24 +767,46 @@ export default function OccasionLandingPage() {
         )}
         
         {/* Final CTA Section */}
-        <section className="py-20 md:py-28">
-          <div className="max-w-4xl mx-auto px-4 md:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              {config.subheadline}
-            </h2>
-            <p className="text-xl text-gray-400 mb-8">
-              {config.painPoints[0]}
-            </p>
+        <section className="py-20 md:py-28 relative">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-red-600/20 to-orange-600/20 rounded-full blur-[120px]" />
+          </div>
+          
+          <div className="relative max-w-4xl mx-auto px-4 md:px-8 text-center">
+            {/* Info box */}
+            <div className="relative group mb-12">
+              <div className="absolute -inset-1 bg-gradient-to-r from-red-500/50 via-orange-500/50 to-yellow-500/50 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition duration-500" />
+              <div className="relative glass rounded-2xl p-8 border border-white/20">
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                  {config.subheadline}
+                </h2>
+                <p className="text-xl text-gray-300 mb-6">
+                  {config.painPoints[0]}
+                </p>
+                
+                <div className="flex flex-wrap justify-center gap-3 mb-8">
+                  {['Personalized', 'Authentic', 'Memorable'].map((tag) => (
+                    <span key={tag} className="flex items-center gap-1.5 text-emerald-400 text-sm">
+                      <CheckCircleIcon className="w-4 h-4" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="relative inline-block group/btn">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl blur-lg opacity-50 group-hover/btn:opacity-75 transition duration-300" />
+                  <button
+                    onClick={handleCTAClick}
+                    className="relative inline-flex items-center gap-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold px-10 py-5 rounded-xl text-xl transition-all transform hover:scale-105"
+                  >
+                    <GiftIcon className="w-7 h-7" />
+                    {config.ctaText}
+                  </button>
+                </div>
+              </div>
+            </div>
             
-            <button
-              onClick={handleCTAClick}
-              className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-10 py-5 rounded-xl text-xl transition-all transform hover:scale-105 shadow-lg shadow-red-600/30"
-            >
-              <GiftIcon className="w-7 h-7" />
-              {config.ctaText}
-            </button>
-            
-            <p className="text-gray-500 text-sm mt-6">
+            <p className="text-gray-500 text-sm">
               Satisfaction guaranteed • Secure payment • Fast delivery
             </p>
           </div>
