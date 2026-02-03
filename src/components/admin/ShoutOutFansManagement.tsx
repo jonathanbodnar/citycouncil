@@ -159,28 +159,63 @@ const ShoutOutFansManagement: React.FC = () => {
         }
       }
 
-      // Fetch data since launch for CTR and followers
-      const [ctrViews, ctrClicks, followers] = await Promise.all([
-        // Views since launch for CTR calculation
-        supabase
+      // Fetch views since launch with pagination (for CTR calculation)
+      let ctrViews: any[] = [];
+      let ctrViewsPage = 0;
+      let hasMoreCtrViews = true;
+
+      while (hasMoreCtrViews) {
+        const { data, error } = await supabase
           .from('bio_page_views')
           .select('talent_id')
           .gte('viewed_at', ctrBaselineISO)
-          .limit(50000)
-          .then(r => r.data || []),
-        // Clicks since launch for CTR calculation
-        supabase
+          .range(ctrViewsPage * pageSize, (ctrViewsPage + 1) * pageSize - 1);
+        
+        if (error) {
+          console.error('CTR views pagination error:', error);
+          break;
+        }
+        
+        if (data && data.length > 0) {
+          ctrViews = [...ctrViews, ...data];
+          ctrViewsPage++;
+          hasMoreCtrViews = data.length === pageSize;
+        } else {
+          hasMoreCtrViews = false;
+        }
+      }
+
+      // Fetch clicks since launch with pagination (for CTR calculation)
+      let ctrClicks: any[] = [];
+      let ctrClicksPage = 0;
+      let hasMoreCtrClicks = true;
+
+      while (hasMoreCtrClicks) {
+        const { data, error } = await supabase
           .from('bio_link_clicks')
           .select('talent_id, card_type')
           .gte('clicked_at', ctrBaselineISO)
-          .limit(50000)
-          .then(r => r.data || []),
-        supabase
-          .from('talent_followers')
-          .select('talent_id, user_id')
-          .limit(50000)
-          .then(r => r.data || [])
-      ]);
+          .range(ctrClicksPage * pageSize, (ctrClicksPage + 1) * pageSize - 1);
+        
+        if (error) {
+          console.error('CTR clicks pagination error:', error);
+          break;
+        }
+        
+        if (data && data.length > 0) {
+          ctrClicks = [...ctrClicks, ...data];
+          ctrClicksPage++;
+          hasMoreCtrClicks = data.length === pageSize;
+        } else {
+          hasMoreCtrClicks = false;
+        }
+      }
+
+      // Fetch followers
+      const { data: followers } = await supabase
+        .from('talent_followers')
+        .select('talent_id, user_id')
+        .limit(50000);
 
       console.log('📊 Fetched data:', {
         talentProfiles: talentProfiles?.length,
@@ -188,7 +223,7 @@ const ShoutOutFansManagement: React.FC = () => {
         allTimeClicks: allTimeClicks.length,
         ctrViews: ctrViews.length,
         ctrClicks: ctrClicks.length,
-        followers: followers.length
+        followers: followers?.length || 0
       });
 
       // Count ALL TIME views by talent (for display and 10+ filter)
@@ -282,7 +317,7 @@ const ShoutOutFansManagement: React.FC = () => {
       // Count fans by talent
       const fansByTalent = new Map<string, number>();
       let totalFans = 0;
-      followers.forEach((follower: any) => {
+      (followers || []).forEach((follower: any) => {
         fansByTalent.set(follower.talent_id, (fansByTalent.get(follower.talent_id) || 0) + 1);
         totalFans++;
       });
