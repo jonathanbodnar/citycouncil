@@ -109,6 +109,14 @@ serve(async (req) => {
         // Replace review link placeholder
         const reviewLink = `https://shoutout.us/review?phone=${encodeURIComponent(userStatus.phone)}`;
         messageText = messageText.replace(/\{\{review_link\}\}/g, reviewLink);
+        
+        // Replace occasion link placeholder (with coupon if available)
+        if (userStatus.metadata?.link) {
+          const occasionLink = userStatus.coupon_code 
+            ? `${userStatus.metadata.link}?utm=occasion_reminder&coupon=${userStatus.coupon_code}`
+            : userStatus.metadata.link;
+          messageText = messageText.replace(/\{\{occasion_link\}\}/g, occasionLink);
+        }
 
         // Add coupon code if needed
         if (nextMessage.include_coupon && userStatus.coupon_code) {
@@ -257,12 +265,13 @@ async function processNewGiveawayEntries(supabase: any) {
   console.log("🎁 Checking for new giveaway entries...");
 
   // Get giveaway entries from last 24 hours that aren't in the welcome flow yet
+  // EXCLUDE occasion signups (source starts with 'occasion_') - they have their own flow
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
 
   const { data: newEntries, error } = await supabase
     .from("beta_signups")
-    .select("phone_number, prize_won")
+    .select("phone_number, prize_won, source")
     .gte("created_at", yesterday.toISOString())
     .not("phone_number", "is", null);
 
@@ -275,6 +284,12 @@ async function processNewGiveawayEntries(supabase: any) {
   const followupFlowId = "22222222-2222-2222-2222-222222222222";
 
   for (const entry of newEntries || []) {
+    // Skip occasion signups - they have their own flow (occasion_followup)
+    if (entry.source?.startsWith('occasion_')) {
+      console.log(`⏭️ Skipping ${entry.phone_number} - occasion signup, has own flow`);
+      continue;
+    }
+    
     // Check if already in flow
     const { data: existing } = await supabase
       .from("user_sms_flow_status")
@@ -317,7 +332,7 @@ async function processNewGiveawayEntries(supabase: any) {
       console.log(`➕ Added ${entry.phone_number} to welcome flow`);
     }
 
-    // Also schedule for 72-hour followup
+    // Also schedule for 72-hour followup (only for giveaway signups, NOT occasion signups)
     const followupTime = new Date();
     followupTime.setHours(followupTime.getHours() + 72);
 

@@ -478,11 +478,41 @@ export default function OccasionLandingPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [discountCountdown, setDiscountCountdown] = useState<{ hours: number; minutes: number } | null>(null);
   
   // Ref for scrolling to banner cards
   const bannerCardsRef = useRef<HTMLElement>(null);
   
   const config = OCCASION_CONFIGS[occasion || 'birthday'] || OCCASION_CONFIGS.birthday;
+  
+  // Countdown timer for discount expiry
+  useEffect(() => {
+    const updateCountdown = () => {
+      const expiry = localStorage.getItem('occasion_discount_expiry');
+      if (!expiry) {
+        setDiscountCountdown(null);
+        return;
+      }
+      
+      const expiryTime = parseInt(expiry, 10);
+      const now = Date.now();
+      const diff = expiryTime - now;
+      
+      if (diff <= 0) {
+        setDiscountCountdown(null);
+        localStorage.removeItem('occasion_discount_expiry');
+        return;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setDiscountCountdown({ hours, minutes });
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [discountApplied]);
   
   // Check if discount already applied (from previous visit or giveaway popup)
   useEffect(() => {
@@ -841,6 +871,8 @@ export default function OccasionLandingPage() {
   const applyDiscount = async (normalizedEmail: string, formattedPhone: string) => {
     try {
       const utmSource = getUtmSource();
+      const now = new Date();
+      const couponCode = 'SAVE15';
       
       // Capture as a user (with both email and phone)
       await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
@@ -857,13 +889,13 @@ export default function OccasionLandingPage() {
         }),
       });
 
-      // Save to beta_signups
+      // Save to beta_signups with occasion source
       await supabase.from('beta_signups').upsert({
         phone_number: formattedPhone,
         source: `occasion_${occasion}`,
         utm_source: utmSource,
-        subscribed_at: new Date().toISOString(),
-        prize_won: '10_OFF'
+        subscribed_at: now.toISOString(),
+        prize_won: '15_OFF'
       }, { onConflict: 'phone_number', ignoreDuplicates: false });
 
       // Send discount SMS
@@ -871,7 +903,7 @@ export default function OccasionLandingPage() {
         await supabase.functions.invoke('send-sms', {
           body: {
             to: formattedPhone,
-            message: `🎁 Here's your 10% off! Use code SAVE10 at checkout: https://shoutout.us/${occasion}?utm=sms&coupon=SAVE10`,
+            message: `🎁 Here's your 15% off! Use code ${couponCode} at checkout. Valid for 12 hours: https://shoutout.us/${occasion}?utm=sms&coupon=${couponCode}`,
             useUserNumber: true
           }
         });
@@ -879,15 +911,50 @@ export default function OccasionLandingPage() {
         console.error('Error sending SMS:', smsError);
       }
 
-      // Apply discount locally
-      localStorage.setItem('auto_apply_coupon', 'SAVE10');
+      // Enroll in occasion-specific 10-hour follow-up flow (NOT the giveaway 72-hour "joe biden" flow)
+      try {
+        const tenHoursLater = new Date(now.getTime() + (10 * 60 * 60 * 1000));
+        
+        await supabase.from('user_sms_flow_status').upsert({
+          phone: formattedPhone,
+          flow_id: '44444444-4444-4444-4444-444444444444', // occasion_followup flow ID
+          current_message_order: 0,
+          next_message_scheduled_at: tenHoursLater.toISOString(),
+          flow_started_at: now.toISOString(),
+          coupon_code: couponCode,
+          coupon_used: false,
+          is_paused: false,
+          metadata: JSON.stringify({ occasion, link: `https://shoutout.us/${occasion}` }),
+        }, { onConflict: 'phone,flow_id' });
+
+        // Also enroll in ongoing thread (giveaway_ongoing) but NOT the 72-hour "joe biden" followup
+        const ongoingStart = new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000)); // 2 weeks later
+        await supabase.from('user_sms_flow_status').upsert({
+          phone: formattedPhone,
+          flow_id: '33333333-3333-3333-3333-333333333333', // giveaway_ongoing flow ID
+          current_message_order: 0,
+          next_message_scheduled_at: ongoingStart.toISOString(),
+          flow_started_at: now.toISOString(),
+          coupon_code: couponCode,
+          coupon_used: false,
+          is_paused: false,
+        }, { onConflict: 'phone,flow_id' });
+
+        console.log('User enrolled in occasion SMS flows');
+      } catch (flowError) {
+        console.error('Error enrolling in SMS flows:', flowError);
+      }
+
+      // Store discount expiry (12 hours from now)
+      const discountExpiry = now.getTime() + (12 * 60 * 60 * 1000);
+      localStorage.setItem('auto_apply_coupon', couponCode);
+      localStorage.setItem('occasion_discount_expiry', discountExpiry.toString());
       localStorage.setItem('holiday_promo_submitted', 'true');
       
       // Dispatch events to update prices
       window.dispatchEvent(new Event('couponApplied'));
       window.dispatchEvent(new Event('storage'));
 
-      toast.success('10% discount applied! Check your phone for the code.');
       setDiscountApplied(true);
       setCaptureStep('complete');
       
@@ -999,7 +1066,7 @@ export default function OccasionLandingPage() {
                       disabled={submitting}
                       className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-6 py-4 rounded-xl text-base transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     >
-                      {submitting ? 'Checking...' : 'Get 10% Off Today'}
+                      {submitting ? 'Checking...' : 'Get 15% Off Today'}
                     </button>
                   </div>
                 </form>
@@ -1030,7 +1097,7 @@ export default function OccasionLandingPage() {
                         disabled={submitting}
                         className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-6 py-4 rounded-xl text-base transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                       >
-                        {submitting ? 'Applying...' : 'Unlock Your 10% Now'}
+                        {submitting ? 'Applying...' : 'Unlock Your 15% Now'}
                       </button>
                     </div>
                   </div>
@@ -1050,10 +1117,17 @@ export default function OccasionLandingPage() {
                     </button>
                   </div>
                   {discountApplied && (
-                    <p className="text-emerald-400 font-semibold mt-3 flex items-center justify-center gap-2">
-                      <CheckCircleIcon className="w-5 h-5" />
-                      10% Off Applied!
-                    </p>
+                    <div className="mt-3 text-center">
+                      <p className="text-emerald-400 font-semibold flex items-center justify-center gap-2">
+                        <CheckCircleIcon className="w-5 h-5" />
+                        You've unlocked 15% off!
+                      </p>
+                      {discountCountdown && (
+                        <p className="text-gray-400 text-sm mt-1">
+                          Valid for {discountCountdown.hours}h {discountCountdown.minutes}m
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -1248,10 +1322,17 @@ export default function OccasionLandingPage() {
                   </button>
                 </div>
                 {discountApplied && (
-                  <p className="text-emerald-400 font-semibold mt-3 flex items-center justify-center gap-2">
-                    <CheckCircleIcon className="w-5 h-5" />
-                    10% Off Applied!
-                  </p>
+                  <div className="mt-3 text-center">
+                    <p className="text-emerald-400 font-semibold flex items-center justify-center gap-2">
+                      <CheckCircleIcon className="w-5 h-5" />
+                      You've unlocked 15% off!
+                    </p>
+                    {discountCountdown && (
+                      <p className="text-gray-400 text-sm mt-1">
+                        Valid for {discountCountdown.hours}h {discountCountdown.minutes}m
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
