@@ -204,6 +204,7 @@ const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const PayoutSetupPage = lazy(() => import('./pages/PayoutSetupPage'));
 const CreatorsPage = lazy(() => import('./pages/CreatorsPage'));
 const TalentStartPage = lazy(() => import('./pages/TalentStartPage'));
+const OccasionLandingPage = lazy(() => import('./pages/OccasionLandingPage'));
 
 // Redirect component for old /profile/ URLs
 const ProfileRedirect: React.FC = () => {
@@ -335,6 +336,17 @@ function App() {
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/creators" element={<CreatorsPage />} />
+              
+              {/* Occasion landing pages - must be before /:username catch-all */}
+              <Route path="/birthday" element={<OccasionLandingPage />} />
+              <Route path="/roast" element={<OccasionLandingPage />} />
+              <Route path="/encouragement" element={<OccasionLandingPage />} />
+              <Route path="/advice" element={<OccasionLandingPage />} />
+              <Route path="/celebrate" element={<OccasionLandingPage />} />
+              <Route path="/announcement" element={<OccasionLandingPage />} />
+              <Route path="/debate" element={<OccasionLandingPage />} />
+              <Route path="/corporate" element={<OccasionLandingPage />} />
+              
               <Route path="/:username" element={<TalentProfilePage />} />
               <Route path="/talent/:id" element={<TalentProfilePage />} />
               <Route path="/order/:talentId" element={

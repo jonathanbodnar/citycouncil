@@ -42,6 +42,251 @@ serve(async (req) => {
     const body = await req.json();
     const { user_id, action, phone, email } = body;
 
+    // ========== RESET-TALENT ACTION ==========
+    if (action === 'reset-talent') {
+      const { onboarding_token, talent_phone, talent_email } = body;
+      console.log('Reset talent action:', { onboarding_token, talent_phone, talent_email });
+      
+      if (!onboarding_token && !talent_phone && !talent_email) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'onboarding_token, talent_phone, or talent_email is required' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+      
+      // Find talent profile by token, phone, or email
+      let talentProfile: any = null;
+      let talentError: any = null;
+      
+      if (onboarding_token) {
+        const result = await supabaseAdmin
+          .from('talent_profiles')
+          .select('id, user_id, temp_full_name, temp_email, username, onboarding_token')
+          .eq('onboarding_token', onboarding_token)
+          .single();
+        talentProfile = result.data;
+        talentError = result.error;
+      }
+      
+      if (!talentProfile && talent_phone) {
+        const formattedPhone = formatPhone(talent_phone);
+        // Find user by phone, then get their talent profile
+        const { data: user } = await supabaseAdmin
+          .from('users')
+          .select('id')
+          .eq('phone', formattedPhone)
+          .single();
+        
+        if (user) {
+          const result = await supabaseAdmin
+            .from('talent_profiles')
+            .select('id, user_id, temp_full_name, temp_email, username, onboarding_token')
+            .eq('user_id', user.id)
+            .single();
+          talentProfile = result.data;
+          talentError = result.error;
+        }
+      }
+      
+      if (!talentProfile && talent_email) {
+        // Find by temp_email or user email
+        let result = await supabaseAdmin
+          .from('talent_profiles')
+          .select('id, user_id, temp_full_name, temp_email, username, onboarding_token')
+          .eq('temp_email', talent_email.toLowerCase().trim())
+          .single();
+        
+        if (!result.data) {
+          // Try finding user by email
+          const { data: user } = await supabaseAdmin
+            .from('users')
+            .select('id')
+            .eq('email', talent_email.toLowerCase().trim())
+            .single();
+          
+          if (user) {
+            result = await supabaseAdmin
+              .from('talent_profiles')
+              .select('id, user_id, temp_full_name, temp_email, username, onboarding_token')
+              .eq('user_id', user.id)
+              .single();
+          }
+        }
+        talentProfile = result.data;
+        talentError = result.error;
+      }
+      
+      // Debug: List talent profiles and users if none found
+      if (!talentProfile) {
+        console.log('Could not find talent profile with provided criteria');
+        
+        // Search for user with this phone
+        const formattedPhone = talent_phone ? formatPhone(talent_phone) : null;
+        const { data: userWithPhone } = formattedPhone ? await supabaseAdmin
+          .from('users')
+          .select('id, email, phone, full_name, user_type')
+          .eq('phone', formattedPhone)
+          .single() : { data: null };
+        
+        // If we found the user, search talent_profiles by their user_id
+        let talentByUserId = null;
+        if (userWithPhone) {
+          const { data } = await supabaseAdmin
+            .from('talent_profiles')
+            .select('id, temp_full_name, temp_email, username, onboarding_token, user_id')
+            .eq('user_id', userWithPhone.id)
+            .single();
+          talentByUserId = data;
+          
+          // If found, use this talent profile
+          if (talentByUserId) {
+            talentProfile = talentByUserId;
+          }
+        }
+        
+        if (!talentProfile) {
+          // Search broader - by name, email, or any profile with "chick" in various fields
+          const { data: allTalents } = await supabaseAdmin
+            .from('talent_profiles')
+            .select('id, temp_full_name, temp_email, username, slug, onboarding_token, user_id, bio, is_active')
+            .or(`temp_full_name.ilike.%chick%,username.ilike.%chick%,temp_email.ilike.%amy%,temp_email.ilike.%chick%`)
+            .limit(20);
+          
+          // Also get user's full record to help debug
+          let userAuthRecord = null;
+          if (userWithPhone) {
+            const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userWithPhone.id);
+            userAuthRecord = authUser?.user ? { id: authUser.user.id, email: authUser.user.email } : null;
+            
+            // EMAIL MISMATCH FIX - if emails don't match, fix auth.users email
+            if (userAuthRecord && userWithPhone.email && userAuthRecord.email !== userWithPhone.email) {
+              console.log('EMAIL MISMATCH DETECTED! Fixing auth.users email...');
+              console.log('public.users email:', userWithPhone.email);
+              console.log('auth.users email:', userAuthRecord.email);
+              
+              const { error: fixError } = await supabaseAdmin.auth.admin.updateUserById(
+                userWithPhone.id,
+                { email: userWithPhone.email, email_confirm: true }
+              );
+              
+              if (fixError) {
+                console.error('Failed to fix email:', fixError);
+              } else {
+                console.log('Fixed auth.users email to match public.users');
+                
+                // Now try to find talent profile again
+                const { data: tp } = await supabaseAdmin
+                  .from('talent_profiles')
+                  .select('id, temp_full_name, temp_email, username, slug, onboarding_token, user_id')
+                  .eq('user_id', userWithPhone.id)
+                  .single();
+                
+                return new Response(
+                  JSON.stringify({ 
+                    success: true, 
+                    fixed: true,
+                    method: 'email_mismatch_fix',
+                    message: 'Fixed email mismatch between auth and public users. User can now try logging in again.',
+                    oldAuthEmail: userAuthRecord.email,
+                    newAuthEmail: userWithPhone.email,
+                    talentProfile: tp
+                  }),
+                  { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+                );
+              }
+            }
+          }
+          
+          // Search specifically for chicksonright
+          const { data: chicksProfile } = await supabaseAdmin
+            .from('talent_profiles')
+            .select('*')
+            .eq('username', 'chicksonright')
+            .single();
+          
+          // Get recent talent profiles for manual lookup
+          const { data: recentTalents } = await supabaseAdmin
+            .from('talent_profiles')
+            .select('id, temp_full_name, username, slug, user_id, is_active')
+            .order('created_at', { ascending: false })
+            .limit(30);
+          
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Talent profile not found - broader search results below',
+              searchedWith: { onboarding_token, talent_phone, talent_email, formattedPhone },
+              userWithPhone: userWithPhone,
+              userAuthRecord: userAuthRecord,
+              talentByUserId: talentByUserId,
+              chicksOnRightProfile: chicksProfile,
+              matchingTalents: allTalents || [],
+              recentTalents: recentTalents || [],
+              hint: 'If you see the talent profile below, provide its username or id'
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+          );
+        }
+      }
+      
+      if (talentError || !talentProfile) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Talent profile not found with this token' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+        );
+      }
+      
+      console.log('Found talent:', talentProfile.temp_full_name, 'user_id:', talentProfile.user_id);
+      
+      // Delete user if exists
+      if (talentProfile.user_id) {
+        // Delete from public.users
+        await supabaseAdmin.from('users').delete().eq('id', talentProfile.user_id);
+        console.log('Deleted from public.users');
+        
+        // Delete from auth.users
+        await supabaseAdmin.auth.admin.deleteUser(talentProfile.user_id);
+        console.log('Deleted from auth.users');
+      }
+      
+      // Reset talent profile for re-onboarding
+      const newExpiry = new Date();
+      newExpiry.setDate(newExpiry.getDate() + 30); // 30 days from now
+      
+      const { error: updateError } = await supabaseAdmin
+        .from('talent_profiles')
+        .update({
+          user_id: null,
+          onboarding_completed: false,
+          onboarding_expires_at: newExpiry.toISOString(),
+          current_onboarding_step: 1,
+        })
+        .eq('id', talentProfile.id);
+      
+      if (updateError) {
+        console.error('Error updating talent profile:', updateError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to reset talent profile' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
+      }
+      
+      console.log('Talent profile reset successfully');
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Talent reset successfully. They can now re-register.',
+          talent: {
+            name: talentProfile.temp_full_name,
+            username: talentProfile.username,
+          },
+          onboarding_link: `https://shoutout.us/onboard/${onboarding_token}`,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     // ========== FIX-AUTH ACTION ==========
     if (action === 'fix-auth') {
       console.log('Fix auth action for:', { phone, email });
