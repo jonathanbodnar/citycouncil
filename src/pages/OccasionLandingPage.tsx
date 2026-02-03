@@ -281,54 +281,38 @@ const TalentCarousel: React.FC<{
 
   if (talent.length === 0) return null;
 
+  const hasOverflow = talent.length > 5;
+
   return (
-    <div className="mb-8">
+    <div className="space-y-2">
       {title && (
-        <div className="flex items-center justify-between mb-6 px-4 md:px-8">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{title}</h2>
-            {subtitle && <p className="text-gray-400 mt-1">{subtitle}</p>}
-          </div>
-          <div className="hidden md:flex gap-2">
-            <button
-              onClick={() => scroll('left')}
-              className={`p-2.5 rounded-full glass border border-white/10 hover:border-white/20 transition-all ${!showLeftArrow ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}`}
-              disabled={!showLeftArrow}
-            >
-              <ChevronLeftIcon className="w-5 h-5 text-white" />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              className={`p-2.5 rounded-full glass border border-white/10 hover:border-white/20 transition-all ${!showRightArrow ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}`}
-              disabled={!showRightArrow}
-            >
-              <ChevronRightIcon className="w-5 h-5 text-white" />
-            </button>
-          </div>
+        <div className="px-4 md:px-8 mb-2">
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          {subtitle && <p className="text-gray-400 text-sm mt-1">{subtitle}</p>}
         </div>
       )}
       
-      <div className="relative">
-        {/* Left fade */}
-        {showLeftArrow && (
-          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-gray-900 to-transparent z-10 pointer-events-none" />
-        )}
-        
+      <div className="relative group">
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4 md:px-8 pb-4"
+          className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide px-4 md:px-8"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {talent.map((t) => (
-            <div key={t.id} className="flex-shrink-0 w-[160px] md:w-[200px]">
+            <div key={t.id} className="flex-shrink-0" style={{ width: '140px' }}>
               <TalentCard talent={t as any} compact showExpressBadge={t.express_delivery_enabled} />
             </div>
           ))}
         </div>
         
-        {/* Right fade */}
-        {showRightArrow && (
-          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-gray-900 to-transparent z-10 pointer-events-none" />
+        {/* Right fade gradient - matches home page */}
+        {hasOverflow && (
+          <div 
+            className="absolute top-0 right-0 bottom-4 w-24 pointer-events-none"
+            style={{
+              background: 'linear-gradient(to right, transparent 0%, rgba(15, 15, 26, 0.8) 70%, rgb(15, 15, 26) 100%)'
+            }}
+          />
         )}
       </div>
     </div>
@@ -443,6 +427,7 @@ export default function OccasionLandingPage() {
   
   const [loading, setLoading] = useState(true);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithDetails[]>([]);
+  const [middleBannerTalent, setMiddleBannerTalent] = useState<TalentWithDetails | null>(null);
   const [comedianTalent, setComedianTalent] = useState<TalentWithDetails[]>([]);
   const [moreTalent, setMoreTalent] = useState<TalentWithDetails[]>([]);
   const [expressTalent, setExpressTalent] = useState<TalentWithDetails[]>([]);
@@ -571,8 +556,13 @@ export default function OccasionLandingPage() {
         const featured = talentWithReviews.slice(0, 3);
         setFeaturedTalent(featured);
         
-        // Get talent IDs used in featured
+        // Middle banner: 4th talent with reviews (shows between comedians and unforgettable carousel)
+        const middleBanner = talentWithReviews[3] || null;
+        setMiddleBannerTalent(middleBanner);
+        
+        // Get talent IDs used in featured and middle banner
         const featuredIds = new Set(featured.map(t => t.id));
+        if (middleBanner) featuredIds.add(middleBanner.id);
         
         // Build comedian list (only show comedians section for birthday)
         const comedians = COMEDIAN_TALENT
@@ -812,6 +802,19 @@ export default function OccasionLandingPage() {
               <TalentCarousel
                 talent={comedianTalent}
                 title="Say happy birthday with a laugh from free-speech comedians."
+              />
+            </div>
+          </section>
+        )}
+        
+        {/* Middle Banner Card - Between comedians and unforgettable carousel */}
+        {middleBannerTalent && (
+          <section className="py-12 relative">
+            <div className="max-w-7xl mx-auto px-4 md:px-8">
+              <TalentBannerCard
+                talent={middleBannerTalent as any}
+                videoOnRight={true}
+                topCategories={middleBannerTalent.top_categories}
               />
             </div>
           </section>
