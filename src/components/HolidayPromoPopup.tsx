@@ -656,6 +656,7 @@ const HolidayPromoPopup: React.FC = () => {
       safeSetItem('holiday_popup_submitted', 'true');
       
       // Store email for auto-login passthrough (when they click to order)
+      console.log('[HolidayPromoPopup revealPrize] Storing giveaway_email:', normalizedEmail);
       safeSetItem('giveaway_email', normalizedEmail);
       
       // Dispatch events

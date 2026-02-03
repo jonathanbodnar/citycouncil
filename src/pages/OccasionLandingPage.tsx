@@ -957,6 +957,7 @@ export default function OccasionLandingPage() {
       localStorage.setItem('holiday_promo_submitted', 'true');
       
       // Store email for auto-login passthrough (when they click to order)
+      console.log('[OccasionLandingPage applyDiscount] Storing giveaway_email:', normalizedEmail);
       localStorage.setItem('giveaway_email', normalizedEmail);
       
       // Dispatch events to update prices
