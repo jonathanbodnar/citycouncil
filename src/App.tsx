@@ -205,6 +205,7 @@ const PayoutSetupPage = lazy(() => import('./pages/PayoutSetupPage'));
 const CreatorsPage = lazy(() => import('./pages/CreatorsPage'));
 const TalentStartPage = lazy(() => import('./pages/TalentStartPage'));
 const OccasionLandingPage = lazy(() => import('./pages/OccasionLandingPage'));
+const ChangePhonePage = lazy(() => import('./pages/ChangePhonePage'));
 
 // Redirect component for old /profile/ URLs
 const ProfileRedirect: React.FC = () => {
@@ -287,6 +288,7 @@ function App() {
             <Route path="/login" element={<SignupPage />} />
             <Route path="/signup" element={<SignupRedirect />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/change-phone/:token" element={<ChangePhonePage />} />
             <Route path="/onboarding" element={<PublicTalentOnboardingPage />} />
             <Route path="/start" element={<TalentStartPage />} />
             

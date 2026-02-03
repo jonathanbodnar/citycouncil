@@ -952,6 +952,9 @@ export default function OccasionLandingPage() {
       localStorage.setItem('occasion_discount_expiry', discountExpiry.toString());
       localStorage.setItem('holiday_promo_submitted', 'true');
       
+      // Store email for auto-login passthrough (when they click to order)
+      localStorage.setItem('giveaway_email', normalizedEmail);
+      
       // Dispatch events to update prices
       window.dispatchEvent(new Event('couponApplied'));
       window.dispatchEvent(new Event('storage'));

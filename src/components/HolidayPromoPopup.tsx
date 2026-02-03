@@ -651,6 +651,9 @@ const HolidayPromoPopup: React.FC = () => {
       safeSetItem('auto_apply_coupon', prizeInfo.code);
       safeSetItem('holiday_popup_submitted', 'true');
       
+      // Store email for auto-login passthrough (when they click to order)
+      safeSetItem('giveaway_email', normalizedEmail);
+      
       // Dispatch events
       window.dispatchEvent(new Event('couponApplied'));
       dispatchCountdownUpdate();
