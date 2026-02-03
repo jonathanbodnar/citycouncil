@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
 import TalentCard from '../components/TalentCard';
 import TalentBannerCard from '../components/TalentBannerCard';
 import SEOHelmet from '../components/SEOHelmet';
 import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, PauseIcon, StarIcon, BoltIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
-import { GiftIcon, ClockIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { GiftIcon, ClockIcon, SparklesIcon, ShieldCheckIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface TalentWithDetails extends TalentProfile {
   users?: { id: string; full_name: string; avatar_url?: string };
@@ -20,6 +20,7 @@ interface OccasionConfig {
   label: string;
   emoji: string;
   headline: string;
+  highlightedWord: string;
   subheadline: string;
   painPoints: string[];
   ctaText: string;
@@ -28,6 +29,7 @@ interface OccasionConfig {
   seoDescription: string;
   gradientFrom: string;
   gradientTo: string;
+  highlightGradient: string;
 }
 
 // Configuration for each occasion with custom gradients
@@ -36,7 +38,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     key: 'birthday',
     label: 'Birthday',
     emoji: '🎂',
-    headline: "They won't remember a text. They will remember this.",
+    headline: "They won't remember a text.",
+    highlightedWord: "They will remember this.",
     subheadline: "The birthday gift that gets replayed for years.",
     painPoints: [
       "When a 'Happy Birthday' text just isn't enough.",
@@ -44,18 +47,20 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "You'll never top last year's gift — unless you do this.",
       "The birthday gift that gets replayed for years.",
     ],
-    ctaText: "Send a Birthday ShoutOut",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Birthday tomorrow? We got you.",
     seoTitle: "Birthday ShoutOut | Personalized Video Birthday Messages",
     seoDescription: "Send an unforgettable birthday gift. Get a personalized video message from your favorite personalities. The gift they'll replay for years.",
     gradientFrom: 'from-pink-600/30',
     gradientTo: 'to-purple-600/20',
+    highlightGradient: 'from-pink-400 via-rose-400 to-red-400',
   },
   roast: {
     key: 'roast',
     label: 'Friendly Roast',
     emoji: '🔥',
-    headline: "Your group chat will never recover from this.",
+    headline: "Your group chat will never",
+    highlightedWord: "recover from this.",
     subheadline: "A roast so good, they'll frame it.",
     painPoints: [
       "Your friend deserves to be absolutely destroyed.",
@@ -63,18 +68,20 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "Some burns are too good for regular people to deliver.",
       "When you want to destroy them, but with love.",
     ],
-    ctaText: "Order a Roast",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Need to roast someone by tomorrow?",
     seoTitle: "Friendly Roast ShoutOut | Personalized Roast Videos",
     seoDescription: "Order a hilarious personalized roast video. The perfect way to roast your friends with help from your favorite personalities.",
     gradientFrom: 'from-orange-600/30',
     gradientTo: 'to-red-600/20',
+    highlightGradient: 'from-orange-400 via-red-400 to-rose-400',
   },
   encouragement: {
     key: 'encouragement',
     label: 'Encouragement',
     emoji: '💪',
-    headline: "Sometimes they need to hear it from someone else.",
+    headline: "Sometimes they need to hear it",
+    highlightedWord: "from someone else.",
     subheadline: "A pep talk that actually sticks.",
     painPoints: [
       "When your words aren't getting through.",
@@ -82,18 +89,20 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "A message that could change everything.",
       "Sometimes the right words need the right voice.",
     ],
-    ctaText: "Send Encouragement",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Big moment tomorrow? Get a pep talk today.",
     seoTitle: "Encouragement ShoutOut | Personalized Pep Talk Videos",
     seoDescription: "Send an inspiring personalized pep talk video. Help someone you love with encouragement from personalities they admire.",
     gradientFrom: 'from-emerald-600/30',
     gradientTo: 'to-teal-600/20',
+    highlightGradient: 'from-emerald-400 via-teal-400 to-cyan-400',
   },
   advice: {
     key: 'advice',
     label: 'Get Advice',
     emoji: '💡',
-    headline: "Get advice from people who've actually been there.",
+    headline: "Get advice from people who've",
+    highlightedWord: "actually been there.",
     subheadline: "Real wisdom from real experience.",
     painPoints: [
       "When you need more than a Google search.",
@@ -101,18 +110,20 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "The guidance that could change your trajectory.",
       "Sometimes you need to hear it from the pros.",
     ],
-    ctaText: "Get Advice",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Need guidance fast?",
     seoTitle: "Get Advice ShoutOut | Personalized Advice Videos",
     seoDescription: "Get personalized advice from experts and personalities you trust. Real wisdom from real experience, delivered just for you.",
     gradientFrom: 'from-amber-600/30',
     gradientTo: 'to-yellow-600/20',
+    highlightGradient: 'from-amber-400 via-yellow-400 to-orange-400',
   },
   celebrate: {
     key: 'celebrate',
     label: 'Celebrate a Win',
     emoji: '🏆',
-    headline: "Make their win feel even bigger.",
+    headline: "Make their win feel",
+    highlightedWord: "even bigger.",
     subheadline: "The celebration they'll never forget.",
     painPoints: [
       "They achieved something huge. Celebrate it huge.",
@@ -120,18 +131,20 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "Turn their win into an unforgettable memory.",
       "Some victories deserve more than a 'congrats' text.",
     ],
-    ctaText: "Send a Celebration",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Celebrate their win today.",
     seoTitle: "Celebration ShoutOut | Personalized Congratulations Videos",
     seoDescription: "Send an unforgettable congratulations video. Celebrate achievements with personalized messages from amazing personalities.",
     gradientFrom: 'from-yellow-600/30',
     gradientTo: 'to-amber-600/20',
+    highlightGradient: 'from-yellow-400 via-amber-400 to-orange-400',
   },
   announcement: {
     key: 'announcement',
     label: 'Announcement',
     emoji: '📣',
-    headline: "Make your announcement unforgettable.",
+    headline: "Make your announcement",
+    highlightedWord: "unforgettable.",
     subheadline: "Big news deserves a big delivery.",
     painPoints: [
       "Some announcements need to be legendary.",
@@ -139,18 +152,20 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "When the news is too big for a text.",
       "Make it a moment they'll replay forever.",
     ],
-    ctaText: "Make an Announcement",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Big reveal coming up?",
     seoTitle: "Announcement ShoutOut | Personalized Announcement Videos",
     seoDescription: "Make your big announcement unforgettable with a personalized video message. Perfect for reveals, proposals, and life updates.",
     gradientFrom: 'from-blue-600/30',
     gradientTo: 'to-cyan-600/20',
+    highlightGradient: 'from-blue-400 via-cyan-400 to-teal-400',
   },
   debate: {
     key: 'debate',
     label: 'End a Debate',
     emoji: '⚔️',
-    headline: "End the debate. Permanently.",
+    headline: "End the debate.",
+    highlightedWord: "Permanently.",
     subheadline: "Settle it with authority.",
     painPoints: [
       "When you need to prove you were right all along.",
@@ -158,18 +173,20 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "They won't argue with this authority.",
       "Settle it once and for all.",
     ],
-    ctaText: "End the Debate",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Need to win this argument today?",
     seoTitle: "Settle a Debate ShoutOut | End Arguments with Authority",
     seoDescription: "End debates and settle arguments with personalized videos from authoritative voices. Prove your point once and for all.",
     gradientFrom: 'from-red-600/30',
     gradientTo: 'to-rose-600/20',
+    highlightGradient: 'from-red-400 via-rose-400 to-pink-400',
   },
   corporate: {
     key: 'corporate',
     label: 'Corporate Event',
     emoji: '🏢',
-    headline: "Make your event the one they talk about.",
+    headline: "Make your event the one",
+    highlightedWord: "they talk about.",
     subheadline: "Corporate entertainment that actually impresses.",
     painPoints: [
       "Boring events make boring impressions.",
@@ -177,18 +194,19 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
       "Make your corporate event actually memorable.",
       "When PowerPoints just won't cut it.",
     ],
-    ctaText: "Book for Your Event",
+    ctaText: "Get a Personalized Video ShoutOut",
     expressHeadline: "Event coming up fast?",
     seoTitle: "Corporate Event ShoutOut | Business Video Messages",
     seoDescription: "Elevate your corporate event with personalized video messages. Perfect for team building, awards, and company celebrations.",
     gradientFrom: 'from-slate-600/30',
     gradientTo: 'to-gray-600/20',
+    highlightGradient: 'from-slate-400 via-gray-400 to-zinc-400',
   },
 };
 
-// Curated talent for each occasion (by username)
+// Curated talent for each occasion (by username) - removed jeremyherrell from birthday
 const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
-  'birthday': ['shawnfarash', 'meloniemac', 'joshfirestine', 'lydiashaffer', 'thehodgetwins', 'elsakurt', 'jeremyhambly', 'kevinsorbo', 'kayleecampbell', 'jeremyherrell'],
+  'birthday': ['shawnfarash', 'meloniemac', 'joshfirestine', 'lydiashaffer', 'thehodgetwins', 'elsakurt', 'jeremyhambly', 'kevinsorbo', 'kayleecampbell'],
   'roast': ['shawnfarash', 'hayleycaronia', 'joshfirestine', 'jpsears', 'thehodgetwins', 'bryancallen', 'nickdipaolo', 'elsakurt', 'esteepalti', 'pearldavis', 'lauraloomer', 'kaitlinbennett', 'mattiseman'],
   'announcement': ['shawnfarash', 'hayleycaronia', 'lydiashaffer', 'bryancallen', 'basrutten', 'nicksearcy', 'markdavis', 'larryelder', 'mattiseman'],
   'encouragement': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
@@ -213,6 +231,12 @@ const seededShuffle = <T,>(arr: T[], seed: string): T[] => {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+};
+
+// Daily shuffle - changes based on current date
+const dailyShuffle = <T,>(arr: T[], baseSeed: string): T[] => {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  return seededShuffle(arr, `${baseSeed}-${today}`);
 };
 
 // Horizontal scroll carousel component
@@ -259,7 +283,7 @@ const TalentCarousel: React.FC<{
       {title && (
         <div className="flex items-center justify-between mb-6 px-4 md:px-8">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white">{title}</h2>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{title}</h2>
             {subtitle && <p className="text-gray-400 mt-1">{subtitle}</p>}
           </div>
           <div className="hidden md:flex gap-2">
@@ -308,12 +332,14 @@ const TalentCarousel: React.FC<{
   );
 };
 
-// Video example with review component - updated styling
+// Video example with review component - horizontal layout for mobile
 const VideoExampleCard: React.FC<{
   videoUrl: string;
   review: { rating: number; comment: string; reviewer_name?: string };
   occasionEmoji: string;
-}> = ({ videoUrl, review, occasionEmoji }) => {
+  talentUsername?: string;
+  talentName?: string;
+}> = ({ videoUrl, review, occasionEmoji, talentUsername, talentName }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -331,51 +357,71 @@ const VideoExampleCard: React.FC<{
   return (
     <div className="group relative">
       {/* Glow effect on hover */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-red-500/30 to-orange-500/30 rounded-3xl blur-lg opacity-0 group-hover:opacity-50 transition duration-500" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition duration-500" />
       
-      <div className="relative glass rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300">
-        {/* Video */}
-        <div className="relative aspect-[9/16] max-h-[400px]">
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            className="w-full h-full object-cover"
-            playsInline
-            muted={!isPlaying}
-            loop
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
-          <button
-            onClick={togglePlay}
-            className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-colors"
-          >
-            <div className={`w-16 h-16 rounded-full bg-white/95 flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xl ${isPlaying ? 'opacity-0 group-hover:opacity-100' : ''}`}>
-              {isPlaying ? (
-                <PauseIcon className="w-7 h-7 text-gray-900" />
-              ) : (
-                <PlayIcon className="w-7 h-7 text-gray-900 ml-1" />
-              )}
+      <div className="relative glass rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300">
+        {/* Horizontal layout: video on left, content on right */}
+        <div className="flex flex-row">
+          {/* Video - smaller on mobile */}
+          <div className="relative w-[120px] sm:w-[140px] flex-shrink-0">
+            <div className="aspect-[9/16] h-full">
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                className="w-full h-full object-cover"
+                playsInline
+                muted={!isPlaying}
+                loop
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+              <button
+                onClick={togglePlay}
+                className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-colors"
+              >
+                <div className={`w-10 h-10 rounded-full bg-white/95 flex items-center justify-center transition-all duration-300 shadow-lg ${isPlaying ? 'opacity-0 group-hover:opacity-100' : ''}`}>
+                  {isPlaying ? (
+                    <PauseIcon className="w-5 h-5 text-gray-900" />
+                  ) : (
+                    <PlayIcon className="w-5 h-5 text-gray-900 ml-0.5" />
+                  )}
+                </div>
+              </button>
             </div>
-          </button>
+          </div>
           
-          {/* Badge */}
-          <div className="absolute top-4 left-4 glass px-3 py-1.5 rounded-full border border-white/20">
-            <span className="text-sm font-medium">{occasionEmoji} Real ShoutOut</span>
+          {/* Content - review and CTA */}
+          <div className="flex-1 p-4 flex flex-col justify-between min-h-[200px]">
+            {/* Badge */}
+            <div className="mb-2">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-400">
+                {occasionEmoji} Real ShoutOut
+              </span>
+            </div>
+            
+            {/* Stars */}
+            <div className="flex items-center gap-0.5 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <StarIcon key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-600'}`} />
+              ))}
+            </div>
+            
+            {/* Review */}
+            <p className="text-gray-200 text-sm leading-relaxed line-clamp-3 flex-1 mb-3">
+              "{review.comment}"
+            </p>
+            
+            {/* CTA Button */}
+            {talentUsername && (
+              <Link
+                to={`/${talentUsername}`}
+                className="inline-flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-all hover:scale-105"
+              >
+                <span>Order from {talentName || 'this personality'}</span>
+                <ArrowRightIcon className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
-        </div>
-        
-        {/* Review */}
-        <div className="p-5 bg-gradient-to-t from-black/50 to-transparent">
-          <div className="flex items-center gap-1 mb-3">
-            {[...Array(5)].map((_, i) => (
-              <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-600'}`} />
-            ))}
-          </div>
-          <p className="text-gray-200 text-sm leading-relaxed line-clamp-3">"{review.comment}"</p>
-          {review.reviewer_name && (
-            <p className="text-gray-500 text-xs mt-3">— {review.reviewer_name}</p>
-          )}
         </div>
       </div>
     </div>
@@ -396,7 +442,7 @@ export default function OccasionLandingPage() {
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithDetails[]>([]);
   const [moreTalent, setMoreTalent] = useState<TalentWithDetails[]>([]);
   const [expressTalent, setExpressTalent] = useState<TalentWithDetails[]>([]);
-  const [exampleVideos, setExampleVideos] = useState<{ video_url: string; review: any }[]>([]);
+  const [exampleVideos, setExampleVideos] = useState<{ video_url: string; review: any; talent_username?: string; talent_name?: string }[]>([]);
   const [currentPainPointIndex, setCurrentPainPointIndex] = useState(0);
   
   const config = OCCASION_CONFIGS[occasion || 'birthday'] || OCCASION_CONFIGS.birthday;
@@ -491,6 +537,9 @@ export default function OccasionLandingPage() {
           }
         });
         
+        // Create talent lookup map
+        const talentLookup = new Map(talentData.map(t => [t.id, t]));
+        
         // Enhance talent with video and review data
         const enhancedTalent: TalentWithDetails[] = talentData.map(t => ({
           ...t,
@@ -507,62 +556,85 @@ export default function OccasionLandingPage() {
           .map(username => enhancedTalent.find(t => t.username?.toLowerCase() === username.toLowerCase()))
           .filter(Boolean) as TalentWithDetails[];
         
-        // Talent with orders for this specific occasion (priority)
-        const talentWithOccasionOrders = new Set(occasionOrders?.map(o => o.talent_id) || []);
-        const priorityTalent = curatedTalent.filter(t => talentWithOccasionOrders.has(t.id));
-        const otherCurated = curatedTalent.filter(t => !talentWithOccasionOrders.has(t.id));
+        // Shuffle curated talent daily for featured section
+        const shuffledCurated = dailyShuffle(curatedTalent, `featured-${config.key}`);
         
-        // Featured: First 3 talent with occasion orders, then fill with curated
-        const featured = [...priorityTalent.slice(0, 3), ...otherCurated.slice(0, 3 - priorityTalent.length)];
-        setFeaturedTalent(featured.slice(0, 3));
+        // Featured: First 3 from shuffled curated
+        const featured = shuffledCurated.slice(0, 3);
+        setFeaturedTalent(featured);
         
-        // More talent: Rest of curated + shuffled others
-        const remaining = curatedTalent.filter(t => !featured.includes(t));
-        const shuffledOthers = seededShuffle(
-          enhancedTalent.filter(t => !curatedTalent.includes(t) && t.recent_video_url),
-          config.key
-        ).slice(0, 10);
-        setMoreTalent([...remaining, ...shuffledOthers]);
+        // Get talent IDs used in featured
+        const featuredIds = new Set(featured.map(t => t.id));
         
-        // Express talent
-        const express = enhancedTalent.filter(t => t.express_delivery_enabled);
-        setExpressTalent(seededShuffle(express, config.key + '-express'));
+        // Example videos with reviews - collect all valid ones first
+        const allVideosWithReviews: { video_url: string; review: any; talent_id: string; talent_username?: string; talent_name?: string }[] = [];
+        const usedTalentIds = new Set<string>();
         
-        // Example videos with reviews (from this occasion)
-        const videosWithReviews: { video_url: string; review: any }[] = [];
+        // First try occasion-specific orders
         occasionOrders?.forEach(order => {
-          if (order.video_url && videosWithReviews.length < 3) {
+          if (order.video_url && !usedTalentIds.has(order.talent_id)) {
             const review = allReviews?.find(r => r.order_id === order.id) || 
                           allReviews?.find(r => r.talent_id === order.talent_id);
             if (review && review.comment) {
-              videosWithReviews.push({
+              const talent = talentLookup.get(order.talent_id);
+              allVideosWithReviews.push({
                 video_url: order.video_url,
                 review: { rating: review.rating, comment: review.comment },
+                talent_id: order.talent_id,
+                talent_username: talent?.username,
+                talent_name: talent?.temp_full_name || talent?.users?.full_name,
               });
+              usedTalentIds.add(order.talent_id);
             }
           }
         });
         
-        // If not enough from this occasion, add from any occasion
-        if (videosWithReviews.length < 3) {
-          allOrders?.forEach(order => {
-            if (order.video_url && videosWithReviews.length < 3) {
-              const existing = videosWithReviews.find(v => v.video_url === order.video_url);
-              if (!existing) {
-                const review = allReviews?.find(r => r.order_id === order.id) || 
-                              allReviews?.find(r => r.talent_id === order.talent_id);
-                if (review && review.comment) {
-                  videosWithReviews.push({
-                    video_url: order.video_url,
-                    review: { rating: review.rating, comment: review.comment },
-                  });
-                }
-              }
+        // Then add from any occasion
+        allOrders?.forEach(order => {
+          if (order.video_url && !usedTalentIds.has(order.talent_id)) {
+            const review = allReviews?.find(r => r.order_id === order.id) || 
+                          allReviews?.find(r => r.talent_id === order.talent_id);
+            if (review && review.comment) {
+              const talent = talentLookup.get(order.talent_id);
+              allVideosWithReviews.push({
+                video_url: order.video_url,
+                review: { rating: review.rating, comment: review.comment },
+                talent_id: order.talent_id,
+                talent_username: talent?.username,
+                talent_name: talent?.temp_full_name || talent?.users?.full_name,
+              });
+              usedTalentIds.add(order.talent_id);
             }
-          });
-        }
+          }
+        });
         
-        setExampleVideos(videosWithReviews);
+        // Shuffle and pick 3 for display (cycling daily)
+        const shuffledVideos = dailyShuffle(allVideosWithReviews, `videos-${config.key}`);
+        const displayVideos = shuffledVideos.slice(0, 3);
+        setExampleVideos(displayVideos);
+        
+        // Get IDs used in videos
+        const videoTalentIds = new Set(displayVideos.map(v => v.talent_id));
+        
+        // More talent: Everyone in occasion not in featured or videos, shuffled
+        const moreTalentList = shuffledCurated.filter(t => 
+          !featuredIds.has(t.id) && !videoTalentIds.has(t.id)
+        );
+        // Add more from all active talent if needed
+        const additionalTalent = dailyShuffle(
+          enhancedTalent.filter(t => 
+            !featuredIds.has(t.id) && 
+            !videoTalentIds.has(t.id) && 
+            !moreTalentList.find(m => m.id === t.id) &&
+            t.recent_video_url
+          ),
+          `more-${config.key}`
+        ).slice(0, 8);
+        setMoreTalent([...moreTalentList, ...additionalTalent]);
+        
+        // Express talent
+        const express = enhancedTalent.filter(t => t.express_delivery_enabled);
+        setExpressTalent(dailyShuffle(express, `express-${config.key}`));
         
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -618,9 +690,24 @@ export default function OccasionLandingPage() {
               <span className="font-semibold text-white">{config.label} ShoutOut</span>
             </div>
             
-            {/* Main headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight">
-              {config.headline}
+            {/* Main headline - matching /creators style */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight">
+              {config.headline}{' '}
+              <span className="relative inline-block">
+                <span className={`text-transparent bg-clip-text bg-gradient-to-r ${config.highlightGradient}`}>
+                  {config.highlightedWord}
+                </span>
+                <svg className="absolute -bottom-1 sm:-bottom-2 left-0 w-full" viewBox="0 0 200 8" fill="none">
+                  <path d="M2 6C50 2 150 2 198 6" stroke="url(#underline-gradient)" strokeWidth="3" strokeLinecap="round"/>
+                  <defs>
+                    <linearGradient id="underline-gradient" x1="0" y1="0" x2="200" y2="0">
+                      <stop stopColor="#f87171"/>
+                      <stop offset="0.5" stopColor="#fb923c"/>
+                      <stop offset="1" stopColor="#fbbf24"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </span>
             </h1>
             
             {/* Rotating pain points */}
@@ -666,15 +753,14 @@ export default function OccasionLandingPage() {
           <section className="relative py-12 md:py-16">
             <div className="max-w-7xl mx-auto px-4 md:px-8">
               <div className="text-center mb-12">
-                <p className="text-red-400 font-semibold uppercase tracking-widest mb-3">Featured Creators</p>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-                  Perfect for{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
-                    {config.label}
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+                  Personalities For The Perfect{' '}
+                  <span className={`text-transparent bg-clip-text bg-gradient-to-r ${config.highlightGradient}`}>
+                    {config.label} Gift
                   </span>
                 </h2>
                 <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                  These creators have delivered amazing {config.label.toLowerCase()} messages
+                  These personalities have 5 star reviews from people like you!
                 </p>
               </div>
               
@@ -699,8 +785,7 @@ export default function OccasionLandingPage() {
             <div className="relative">
               <TalentCarousel
                 talent={moreTalent}
-                title={`More ${config.label} Talent`}
-                subtitle="Explore more amazing creators"
+                title="Unforgettable personalities for an unforgettable gift."
               />
             </div>
           </section>
@@ -708,30 +793,28 @@ export default function OccasionLandingPage() {
         
         {/* Example Videos Section */}
         {exampleVideos.length > 0 && (
-          <section className="py-16 md:py-20 relative">
+          <section className="py-12 md:py-16 relative">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-red-500/10 via-orange-500/5 to-yellow-500/10 rounded-full blur-[100px]" />
             
             <div className="relative max-w-6xl mx-auto px-4 md:px-8">
-              <div className="text-center mb-12">
-                <p className="text-orange-400 font-semibold uppercase tracking-widest mb-3">Real Examples</p>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-                  See Real{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400">
-                    {config.label} ShoutOuts
-                  </span>
+              <div className="text-center mb-10">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+                  See What Others Received
                 </h2>
                 <p className="text-gray-400 text-lg">
-                  Watch what others received and what they said
+                  Real ShoutOuts from real personalities
                 </p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {exampleVideos.map((item, index) => (
                   <VideoExampleCard
                     key={index}
                     videoUrl={item.video_url}
                     review={item.review}
                     occasionEmoji={config.emoji}
+                    talentUsername={item.talent_username}
+                    talentName={item.talent_name}
                   />
                 ))}
               </div>
@@ -750,11 +833,11 @@ export default function OccasionLandingPage() {
                   <BoltIcon className="w-5 h-5 text-yellow-400" />
                   <span className="font-semibold text-yellow-300">Express Delivery</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
                   {config.expressHeadline}
                 </h2>
                 <p className="text-gray-400 text-lg">
-                  These creators deliver within 24 hours
+                  These personalities deliver within 24 hours
                 </p>
               </div>
               
@@ -767,7 +850,7 @@ export default function OccasionLandingPage() {
         )}
         
         {/* Final CTA Section */}
-        <section className="py-20 md:py-28 relative">
+        <section className="py-16 md:py-24 relative">
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-red-600/20 to-orange-600/20 rounded-full blur-[120px]" />
           </div>
@@ -777,10 +860,10 @@ export default function OccasionLandingPage() {
             <div className="relative group mb-12">
               <div className="absolute -inset-1 bg-gradient-to-r from-red-500/50 via-orange-500/50 to-yellow-500/50 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition duration-500" />
               <div className="relative glass rounded-2xl p-8 border border-white/20">
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
                   {config.subheadline}
                 </h2>
-                <p className="text-xl text-gray-300 mb-6">
+                <p className="text-lg text-gray-300 mb-6">
                   {config.painPoints[0]}
                 </p>
                 
