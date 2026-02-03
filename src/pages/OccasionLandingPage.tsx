@@ -216,6 +216,9 @@ const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
   'corporate': ['shawnfarash', 'meloniemac', 'bryancallen', 'basrutten', 'nicksearcy', 'kevinsorbo', 'johnohurley'],
 };
 
+// Comedians (includes those marked as Comedian or Impersonator)
+const COMEDIAN_TALENT = ['jpsears', 'mattiseman', 'shawnfarash', 'elsakurt', 'esteepalti', 'joshfirestine', 'thehodgetwins', 'bryancallen', 'nickdipaolo'];
+
 // Seeded random shuffle for consistent ordering
 const seededShuffle = <T,>(arr: T[], seed: string): T[] => {
   const shuffled = [...arr];
@@ -440,6 +443,7 @@ export default function OccasionLandingPage() {
   
   const [loading, setLoading] = useState(true);
   const [featuredTalent, setFeaturedTalent] = useState<TalentWithDetails[]>([]);
+  const [comedianTalent, setComedianTalent] = useState<TalentWithDetails[]>([]);
   const [moreTalent, setMoreTalent] = useState<TalentWithDetails[]>([]);
   const [expressTalent, setExpressTalent] = useState<TalentWithDetails[]>([]);
   const [exampleVideos, setExampleVideos] = useState<{ video_url: string; review: any; talent_username?: string; talent_name?: string }[]>([]);
@@ -566,6 +570,19 @@ export default function OccasionLandingPage() {
         // Get talent IDs used in featured
         const featuredIds = new Set(featured.map(t => t.id));
         
+        // Build comedian list (only show comedians section for birthday)
+        const comedians = COMEDIAN_TALENT
+          .map(username => enhancedTalent.find(t => t.username?.toLowerCase() === username.toLowerCase()))
+          .filter((t): t is TalentWithDetails => t !== undefined && t.users !== undefined);
+        const comedianIds = new Set(comedians.map(t => t.id));
+        
+        // Only set comedians for birthday page
+        if (config.key === 'birthday') {
+          setComedianTalent(dailyShuffle(comedians, `comedians-${config.key}`));
+        } else {
+          setComedianTalent([]);
+        }
+        
         // Example videos with reviews - collect all valid ones first
         const allVideosWithReviews: { video_url: string; review: any; talent_id: string; talent_username?: string; talent_name?: string }[] = [];
         const usedTalentIds = new Set<string>();
@@ -616,21 +633,23 @@ export default function OccasionLandingPage() {
         // Get IDs used in videos
         const videoTalentIds = new Set(displayVideos.map(v => v.talent_id));
         
-        // More talent: Everyone in occasion not in featured or videos, shuffled
-        const moreTalentList = shuffledCurated.filter(t => 
-          !featuredIds.has(t.id) && !videoTalentIds.has(t.id)
-        );
-        // Add more from all active talent if needed
-        const additionalTalent = dailyShuffle(
+        // Track all talent that are already shown somewhere
+        const shownTalentIds = new Set([
+          ...Array.from(featuredIds),
+          ...Array.from(videoTalentIds),
+          ...(config.key === 'birthday' ? Array.from(comedianIds) : [])
+        ]);
+        
+        // More talent: ALL active talent not already shown in featured, videos, or comedians
+        // This ensures everyone is accounted for somewhere on the page
+        const moreTalentList = dailyShuffle(
           enhancedTalent.filter(t => 
-            !featuredIds.has(t.id) && 
-            !videoTalentIds.has(t.id) && 
-            !moreTalentList.find(m => m.id === t.id) &&
-            t.recent_video_url
+            t.users && 
+            !shownTalentIds.has(t.id)
           ),
           `more-${config.key}`
-        ).slice(0, 8);
-        setMoreTalent([...moreTalentList, ...additionalTalent]);
+        );
+        setMoreTalent(moreTalentList);
         
         // Express talent
         const express = enhancedTalent.filter(t => t.express_delivery_enabled);
@@ -774,6 +793,19 @@ export default function OccasionLandingPage() {
                   />
                 ))}
               </div>
+            </div>
+          </section>
+        )}
+        
+        {/* Comedians Carousel - Only show on birthday page */}
+        {comedianTalent.length > 0 && (
+          <section className="py-12 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent" />
+            <div className="relative">
+              <TalentCarousel
+                talent={comedianTalent}
+                title="Say happy birthday with a laugh from free-speech comedians."
+              />
             </div>
           </section>
         )}
