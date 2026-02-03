@@ -561,6 +561,19 @@ const LoginPage: React.FC = () => {
               <EnvelopeIcon className="h-5 w-5 mr-2" />
               {loading ? 'Looking up account...' : 'Continue'}
             </button>
+            
+            {/* Change phone number link - show after email is entered */}
+            {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowChangePhoneModal(true)}
+                  className="text-xs text-gray-500 hover:text-gray-400 underline"
+                >
+                  Changed your phone number?
+                </button>
+              </div>
+            )}
 
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">

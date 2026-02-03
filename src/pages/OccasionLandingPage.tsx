@@ -795,6 +795,9 @@ export default function OccasionLandingPage() {
     setSubmitting(true);
     const normalizedEmail = email.toLowerCase().trim();
     
+    // Store email immediately for login passthrough (even if they don't complete phone step)
+    localStorage.setItem('giveaway_email', normalizedEmail);
+    
     try {
       // Check if user exists with phone on file
       const { data: existingUser } = await supabase
