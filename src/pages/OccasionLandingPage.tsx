@@ -563,8 +563,9 @@ export default function OccasionLandingPage() {
         // Shuffle curated talent daily for featured section
         const shuffledCurated = dailyShuffle(curatedTalent, `featured-${config.key}`);
         
-        // Featured: First 3 from shuffled curated
-        const featured = shuffledCurated.slice(0, 3);
+        // Featured: First 3 from shuffled curated WHO HAVE REVIEWS (same as home page)
+        const talentWithReviews = shuffledCurated.filter(t => t.recent_review);
+        const featured = talentWithReviews.slice(0, 3);
         setFeaturedTalent(featured);
         
         // Get talent IDs used in featured
