@@ -192,9 +192,9 @@ const HolidayPromoPopup: React.FC = () => {
       return false;
     }
     
-    // Also check sessionStorage flag from occasion pages
+    // Don't show popup for users who visited an occasion page (persists across navigation)
     try {
-      if (sessionStorage.getItem('occasion_popup_suppressed') === 'true') {
+      if (localStorage.getItem('occasion_page_visited') === 'true') {
         return false;
       }
     } catch (e) {}

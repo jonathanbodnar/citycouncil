@@ -8,9 +8,10 @@ import SEOHelmet from '../components/SEOHelmet';
 import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, PauseIcon, StarIcon, BoltIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { GiftIcon, ClockIcon, SparklesIcon, ShieldCheckIcon, ArrowRightIcon, EnvelopeIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import FOMONotification from '../components/FOMONotification';
 
-// Suppress giveaway popup on occasion pages
-const OCCASION_POPUP_SUPPRESSED_KEY = 'occasion_popup_suppressed';
+// Suppress giveaway popup on occasion pages - use localStorage to persist across navigation
+const OCCASION_POPUP_SUPPRESSED_KEY = 'occasion_page_visited';
 
 interface TalentWithDetails extends TalentProfile {
   users?: { id: string; full_name: string; avatar_url?: string };
@@ -249,7 +250,7 @@ const dailyShuffle = <T,>(arr: T[], baseSeed: string): T[] => {
 // Horizontal scroll carousel component
 const TalentCarousel: React.FC<{
   talent: TalentWithDetails[];
-  title: string;
+  title: React.ReactNode;
   subtitle?: string;
 }> = ({ talent, title, subtitle }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -333,6 +334,19 @@ const VideoExampleCard: React.FC<{
 }> = ({ videoUrl, review, occasionEmoji, talentUsername, talentName }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+
+  // Autoplay on hover like banner cards
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isHovering) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    }
+  }, [isHovering]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -345,10 +359,20 @@ const VideoExampleCard: React.FC<{
     }
   };
 
+  const handleNavigate = () => {
+    if (talentUsername) {
+      window.location.href = `/${talentUsername}`;
+    }
+  };
+
   return (
-    <div className="group relative">
+    <div 
+      className="group relative"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
       {/* Glow effect on hover */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition duration-500" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-teal-500/20 to-cyan-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition duration-500" />
       
       <div className="relative glass rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300">
         {/* Horizontal layout: video on left, content on right */}
@@ -361,7 +385,7 @@ const VideoExampleCard: React.FC<{
                 src={videoUrl}
                 className="w-full h-full object-cover"
                 playsInline
-                muted={!isPlaying}
+                muted
                 loop
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
@@ -402,15 +426,15 @@ const VideoExampleCard: React.FC<{
               "{review.comment}"
             </p>
             
-            {/* CTA Button */}
+            {/* CTA Button - Glass teal style */}
             {talentUsername && (
-              <Link
-                to={`/${talentUsername}`}
-                className="inline-flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-all hover:scale-105"
+              <button
+                onClick={handleNavigate}
+                className="inline-flex items-center justify-center gap-1.5 glass border border-teal-500/30 hover:border-teal-400/50 text-white text-sm font-medium px-3 py-2 rounded-lg transition-all hover:scale-105 hover:bg-teal-500/10"
               >
                 <span>Order from {talentName || 'this personality'}</span>
                 <ArrowRightIcon className="w-3.5 h-3.5" />
-              </Link>
+              </button>
             )}
           </div>
         </div>
@@ -460,13 +484,10 @@ export default function OccasionLandingPage() {
     }
   }, []);
   
-  // Suppress giveaway popup on occasion pages
+  // Suppress giveaway popup for users who came from occasion pages (persists across navigation)
   useEffect(() => {
-    // Mark that popup should be suppressed while on this page
-    sessionStorage.setItem(OCCASION_POPUP_SUPPRESSED_KEY, 'true');
-    return () => {
-      sessionStorage.removeItem(OCCASION_POPUP_SUPPRESSED_KEY);
-    };
+    // Mark that popup should be suppressed - this persists even after leaving the page
+    localStorage.setItem(OCCASION_POPUP_SUPPRESSED_KEY, 'true');
   }, []);
   
   // Mouse tracking for gradient effect
@@ -912,7 +933,7 @@ export default function OccasionLandingPage() {
             {/* Occasion badge */}
             <div className="inline-flex items-center gap-2 glass px-5 py-2.5 rounded-full border border-white/20 mb-8 hover:scale-105 transition-transform">
               <span className="text-2xl">{config.emoji}</span>
-              <span className="font-semibold text-white">{config.label} ShoutOut</span>
+              <span className="font-semibold text-white">Personalized {config.label} Video ShoutOuts</span>
             </div>
             
             {/* Main headline - matching /creators style */}
@@ -986,10 +1007,10 @@ export default function OccasionLandingPage() {
                           type="tel"
                           value={phoneNumber}
                           onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                          placeholder="(555) 555-5555"
+                          placeholder="Enter your phone number"
                           autoComplete="tel"
                           autoFocus
-                          className="w-full pl-12 pr-4 py-4 rounded-xl text-base font-medium focus:ring-2 focus:ring-emerald-400 focus:outline-none bg-white/95 text-gray-900"
+                          className="w-full pl-12 pr-4 py-4 rounded-xl text-base font-medium focus:ring-2 focus:ring-emerald-400 focus:outline-none bg-white/95 text-gray-900 placeholder-gray-500"
                           maxLength={14}
                           required
                         />
@@ -999,7 +1020,7 @@ export default function OccasionLandingPage() {
                         disabled={submitting}
                         className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-6 py-4 rounded-xl text-base transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                       >
-                        {submitting ? 'Applying...' : 'Get My 10% Off'}
+                        {submitting ? 'Applying...' : 'Unlock Your 10% Now'}
                       </button>
                     </div>
                   </div>
@@ -1007,15 +1028,23 @@ export default function OccasionLandingPage() {
               )}
               
               {captureStep === 'complete' && (
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
-                  <button
-                    onClick={handleCTAClick}
-                    className="relative w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-8 py-4 rounded-xl text-lg transition-all transform hover:scale-105"
-                  >
-                    <GiftIcon className="w-6 h-6" />
-                    {discountApplied ? 'Find Your Perfect ShoutOut (10% Off Applied!)' : config.ctaText}
-                  </button>
+                <div className="text-center">
+                  <div className="relative inline-block group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
+                    <button
+                      onClick={handleCTAClick}
+                      className="relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-8 py-4 rounded-xl text-lg transition-all transform hover:scale-105"
+                    >
+                      <GiftIcon className="w-6 h-6" />
+                      Find Your Perfect ShoutOut
+                    </button>
+                  </div>
+                  {discountApplied && (
+                    <p className="text-emerald-400 font-semibold mt-3 flex items-center justify-center gap-2">
+                      <CheckCircleIcon className="w-5 h-5" />
+                      10% Off Applied!
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -1024,7 +1053,7 @@ export default function OccasionLandingPage() {
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
               {[
                 { icon: StarIcon, label: '4.9 avg rating', color: 'text-yellow-400' },
-                { icon: ClockIcon, label: '24hr delivery', color: 'text-cyan-400' },
+                { icon: ClockIcon, label: '24hr delivery available', color: 'text-cyan-400' },
                 { icon: ShieldCheckIcon, label: 'Satisfaction guaranteed', color: 'text-emerald-400' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
@@ -1073,7 +1102,11 @@ export default function OccasionLandingPage() {
             <div className="relative">
               <TalentCarousel
                 talent={comedianTalent}
-                title="Say happy birthday with a laugh from free-speech comedians."
+                title={
+                  <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                    Say happy birthday with a laugh from free-speech comedians.
+                  </span>
+                }
               />
             </div>
           </section>
@@ -1099,7 +1132,11 @@ export default function OccasionLandingPage() {
             <div className="relative">
               <TalentCarousel
                 talent={moreTalent}
-                title="Unforgettable personalities for an unforgettable gift."
+                title={
+                  <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400">
+                    Unforgettable personalities for an unforgettable gift.
+                  </span>
+                }
               />
             </div>
           </section>
@@ -1113,7 +1150,7 @@ export default function OccasionLandingPage() {
             <div className="relative max-w-6xl mx-auto px-4 md:px-8">
               <div className="text-center mb-10">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
-                  See What Others Received
+                  See Other {config.label} Orders
                 </h2>
                 <p className="text-gray-400 text-lg">
                   Real ShoutOuts from real personalities
@@ -1197,9 +1234,15 @@ export default function OccasionLandingPage() {
                     className="relative inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-10 py-5 rounded-xl text-xl transition-all transform hover:scale-105"
                   >
                     <GiftIcon className="w-7 h-7" />
-                    {discountApplied ? 'Find Your Perfect ShoutOut (10% Off!)' : config.ctaText}
+                    Find Your Perfect ShoutOut
                   </button>
                 </div>
+                {discountApplied && (
+                  <p className="text-emerald-400 font-semibold mt-3 flex items-center justify-center gap-2">
+                    <CheckCircleIcon className="w-5 h-5" />
+                    10% Off Applied!
+                  </p>
+                )}
               </div>
             </div>
             
@@ -1208,6 +1251,9 @@ export default function OccasionLandingPage() {
             </p>
           </div>
         </section>
+        
+        {/* FOMO Review Notification */}
+        <FOMONotification interval={8000} />
       </div>
     </>
   );
