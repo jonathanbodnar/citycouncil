@@ -47,7 +47,6 @@ const OCCASIONS: OccasionType[] = [
   { key: 'express', label: '24hr Delivery', emoji: '⚡' },
   { key: 'roast', label: 'Friendly Roast', emoji: '🔥' },
   { key: 'encouragement', label: 'Encouragement', emoji: '💪' },
-  { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
   { key: 'announcement', label: 'Make an Announcement', emoji: '📣' },
   { key: 'celebrate', label: 'Celebrate A Win', emoji: '🏆' },
   { key: 'advice', label: 'Get Advice', emoji: '💡' },
@@ -60,7 +59,6 @@ const OCCASION_PHRASES: Record<string, string> = {
 'express': "Need it fast? These talent deliver in 24 hours.",
   'roast': "Your group chat will never recover.",
   'encouragement': "Encouragement from people that have been there.",
-  'debate': "End the debate with a ShoutOut.",
   'announcement': "Tell everyone in a way no one else can.",
   'celebrate': "Celebrate in the most unique way possible.",
 'advice': "Get advice from people who've been there.",
@@ -75,7 +73,6 @@ const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
   'announcement': ['shawnfarash', 'hayleycaronia', 'lydiashaffer', 'bryancallen', 'basrutten', 'nicksearcy', 'markdavis', 'larryelder', 'mattiseman'],
   'encouragement': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
   'celebrate': ['joshfirestine', 'jpsears', 'jeremyhambly', 'basrutten', 'bradstine', 'gregonfire', 'chaelsonnen', 'lauraloomer', 'johnohurley', 'mattiseman'],
-  'debate': ['davidharrisjr', 'nickdipaolo', 'bradstine', 'kayleecampbell', 'chaelsonnen', 'lauraloomer', 'pearldavis', 'geraldmorgan', 'kaitlinbennett', 'chrissalcedo'],
   'advice': ['meloniemac', 'thehodgetwins', 'davidharrisjr', 'nickdipaolo', 'bradstine', 'esteepalti', 'gregonfire', 'nicksearcy', 'chaelsonnen', 'markdavis', 'larryelder', 'pearldavis', 'geraldmorgan', 'kevinsorbo', 'kaitlinbennett', 'chrissalcedo', 'johnohurley'],
 };
 
