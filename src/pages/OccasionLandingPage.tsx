@@ -796,6 +796,7 @@ export default function OccasionLandingPage() {
     const normalizedEmail = email.toLowerCase().trim();
     
     // Store email immediately for login passthrough (even if they don't complete phone step)
+    console.log('[OccasionLandingPage] Storing giveaway_email:', normalizedEmail);
     localStorage.setItem('giveaway_email', normalizedEmail);
     
     try {

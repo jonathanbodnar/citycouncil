@@ -45,7 +45,9 @@ const LoginPage: React.FC = () => {
   // Check for stored giveaway email on mount
   useEffect(() => {
     const storedEmail = localStorage.getItem('giveaway_email');
+    console.log('[LoginPage] Checking for giveaway_email:', storedEmail);
     if (storedEmail) {
+      console.log('[LoginPage] Found giveaway_email, setting and looking up:', storedEmail);
       setEmail(storedEmail);
       // Auto-submit to look up their phone
       handleEmailLookup(storedEmail);

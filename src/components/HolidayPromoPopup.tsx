@@ -408,6 +408,7 @@ const HolidayPromoPopup: React.FC = () => {
     const normalizedEmail = email.toLowerCase().trim();
     
     // Store email immediately for login passthrough (even if they don't complete phone step)
+    console.log('[HolidayPromoPopup] Storing giveaway_email:', normalizedEmail);
     safeSetItem('giveaway_email', normalizedEmail);
     
     try {
