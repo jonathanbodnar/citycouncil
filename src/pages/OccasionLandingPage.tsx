@@ -478,7 +478,7 @@ export default function OccasionLandingPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [discountCountdown, setDiscountCountdown] = useState<{ hours: number; minutes: number } | null>(null);
+  const [discountCountdown, setDiscountCountdown] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
   
   // Ref for scrolling to banner cards
   const bannerCardsRef = useRef<HTMLElement>(null);
@@ -506,11 +506,12 @@ export default function OccasionLandingPage() {
       
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setDiscountCountdown({ hours, minutes });
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setDiscountCountdown({ hours, minutes, seconds });
     };
     
     updateCountdown();
-    const interval = setInterval(updateCountdown, 60000); // Update every minute
+    const interval = setInterval(updateCountdown, 1000); // Update every second
     return () => clearInterval(interval);
   }, [discountApplied]);
   
@@ -954,16 +955,14 @@ export default function OccasionLandingPage() {
       // Dispatch events to update prices
       window.dispatchEvent(new Event('couponApplied'));
       window.dispatchEvent(new Event('storage'));
+      
+      // Dispatch event to update header countdown
+      window.dispatchEvent(new Event('occasionCountdownUpdate'));
 
       setDiscountApplied(true);
       setCaptureStep('complete');
       
-      // Scroll to banner cards after short delay
-      setTimeout(() => {
-        if (bannerCardsRef.current) {
-          bannerCardsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 500);
+      // Don't auto-scroll - let user see the countdown confirmation
 
     } catch (error) {
       console.error('Error:', error);
@@ -1117,15 +1116,18 @@ export default function OccasionLandingPage() {
                     </button>
                   </div>
                   {discountApplied && (
-                    <div className="mt-3 text-center">
-                      <p className="text-emerald-400 font-semibold flex items-center justify-center gap-2">
-                        <CheckCircleIcon className="w-5 h-5" />
+                    <div className="mt-4 text-center">
+                      <p className="text-emerald-400 font-semibold flex items-center justify-center gap-2 text-lg">
+                        <CheckCircleIcon className="w-6 h-6" />
                         You've unlocked 15% off!
                       </p>
                       {discountCountdown && (
-                        <p className="text-gray-400 text-sm mt-1">
-                          Valid for {discountCountdown.hours}h {discountCountdown.minutes}m
-                        </p>
+                        <div className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+                          <span className="text-white/80 text-sm">Valid for</span>
+                          <span className="font-mono font-bold text-lg text-white">
+                            {String(discountCountdown.hours).padStart(2, '0')}:{String(discountCountdown.minutes).padStart(2, '0')}:{String(discountCountdown.seconds).padStart(2, '0')}
+                          </span>
+                        </div>
                       )}
                     </div>
                   )}
@@ -1322,15 +1324,18 @@ export default function OccasionLandingPage() {
                   </button>
                 </div>
                 {discountApplied && (
-                  <div className="mt-3 text-center">
-                    <p className="text-emerald-400 font-semibold flex items-center justify-center gap-2">
-                      <CheckCircleIcon className="w-5 h-5" />
+                  <div className="mt-4 text-center">
+                    <p className="text-emerald-400 font-semibold flex items-center justify-center gap-2 text-lg">
+                      <CheckCircleIcon className="w-6 h-6" />
                       You've unlocked 15% off!
                     </p>
                     {discountCountdown && (
-                      <p className="text-gray-400 text-sm mt-1">
-                        Valid for {discountCountdown.hours}h {discountCountdown.minutes}m
-                      </p>
+                      <div className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+                        <span className="text-white/80 text-sm">Valid for</span>
+                        <span className="font-mono font-bold text-lg text-white">
+                          {String(discountCountdown.hours).padStart(2, '0')}:{String(discountCountdown.minutes).padStart(2, '0')}:{String(discountCountdown.seconds).padStart(2, '0')}
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}

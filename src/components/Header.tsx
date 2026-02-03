@@ -39,6 +39,7 @@ const Header: React.FC = () => {
   const [searchResults, setSearchResults] = useState<TalentSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [prizeCountdown, setPrizeCountdown] = useState<{ prize: string; code: string; hours: number; minutes: number; seconds: number } | null>(null);
+  const [occasionCountdown, setOccasionCountdown] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
@@ -46,7 +47,7 @@ const Header: React.FC = () => {
   const searchRef = React.useRef<HTMLDivElement>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Prize countdown timer
+  // Prize countdown timer (from giveaway popup)
   useEffect(() => {
     const updatePrizeCountdown = () => {
       const activePrize = getActivePrizeCountdown();
@@ -81,6 +82,49 @@ const Header: React.FC = () => {
     return () => {
       clearInterval(interval);
       window.removeEventListener('giveawayCountdownUpdate', handleGiveawayUpdate);
+    };
+  }, []);
+
+  // Occasion discount countdown timer (from occasion landing pages)
+  useEffect(() => {
+    const updateOccasionCountdown = () => {
+      try {
+        const expiry = localStorage.getItem('occasion_discount_expiry');
+        if (!expiry) {
+          setOccasionCountdown(null);
+          return;
+        }
+        
+        const expiryTime = parseInt(expiry, 10);
+        const diff = expiryTime - Date.now();
+        
+        if (diff <= 0) {
+          setOccasionCountdown(null);
+          localStorage.removeItem('occasion_discount_expiry');
+          return;
+        }
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setOccasionCountdown({ hours, minutes, seconds });
+      } catch (e) {
+        setOccasionCountdown(null);
+      }
+    };
+
+    updateOccasionCountdown();
+    const interval = setInterval(updateOccasionCountdown, 1000);
+
+    // Listen for occasion discount updates
+    const handleOccasionUpdate = () => updateOccasionCountdown();
+    window.addEventListener('occasionCountdownUpdate', handleOccasionUpdate);
+    window.addEventListener('storage', handleOccasionUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('occasionCountdownUpdate', handleOccasionUpdate);
+      window.removeEventListener('storage', handleOccasionUpdate);
     };
   }, []);
 
@@ -366,8 +410,8 @@ const Header: React.FC = () => {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {/* Prize Countdown Banner */}
-            {prizeCountdown && (
+            {/* Prize Countdown Banner (from giveaway) */}
+            {prizeCountdown && !occasionCountdown && (
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium animate-pulse" style={{
                 background: 'linear-gradient(90deg, #10b981 0%, #3b82f6 100%)'
               }}>
@@ -375,6 +419,19 @@ const Header: React.FC = () => {
                 <span>{prizeCountdown.prize}</span>
                 <span className="font-mono font-bold">
                   {String(prizeCountdown.hours).padStart(2, '0')}:{String(prizeCountdown.minutes).padStart(2, '0')}:{String(prizeCountdown.seconds).padStart(2, '0')}
+                </span>
+              </div>
+            )}
+            
+            {/* Occasion Discount Countdown Banner */}
+            {occasionCountdown && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium" style={{
+                background: 'linear-gradient(90deg, #10b981 0%, #14b8a6 100%)'
+              }}>
+                <GiftIcon className="h-4 w-4" />
+                <span>15% Off</span>
+                <span className="font-mono font-bold">
+                  {String(occasionCountdown.hours).padStart(2, '0')}:{String(occasionCountdown.minutes).padStart(2, '0')}:{String(occasionCountdown.seconds).padStart(2, '0')}
                 </span>
               </div>
             )}
