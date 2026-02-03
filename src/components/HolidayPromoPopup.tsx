@@ -185,6 +185,19 @@ const HolidayPromoPopup: React.FC = () => {
     if (pathname === '/login' || pathname === '/signup') {
       return false;
     }
+    
+    // Don't show on occasion landing pages (they have their own capture form)
+    const occasionPages = ['/birthday', '/roast', '/encouragement', '/advice', '/celebrate', '/announcement', '/debate', '/corporate'];
+    if (occasionPages.includes(pathname)) {
+      return false;
+    }
+    
+    // Also check sessionStorage flag from occasion pages
+    try {
+      if (sessionStorage.getItem('occasion_popup_suppressed') === 'true') {
+        return false;
+      }
+    } catch (e) {}
 
     // Don't show for SMS followup traffic (they already have a coupon)
     const urlParams = new URLSearchParams(window.location.search);

@@ -6,7 +6,11 @@ import TalentCard from '../components/TalentCard';
 import TalentBannerCard from '../components/TalentBannerCard';
 import SEOHelmet from '../components/SEOHelmet';
 import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, PauseIcon, StarIcon, BoltIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
-import { GiftIcon, ClockIcon, SparklesIcon, ShieldCheckIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { GiftIcon, ClockIcon, SparklesIcon, ShieldCheckIcon, ArrowRightIcon, EnvelopeIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
+
+// Suppress giveaway popup on occasion pages
+const OCCASION_POPUP_SUPPRESSED_KEY = 'occasion_popup_suppressed';
 
 interface TalentWithDetails extends TalentProfile {
   users?: { id: string; full_name: string; avatar_url?: string };
@@ -434,10 +438,36 @@ export default function OccasionLandingPage() {
   const [exampleVideos, setExampleVideos] = useState<{ video_url: string; review: any; talent_username?: string; talent_name?: string }[]>([]);
   const [currentPainPointIndex, setCurrentPainPointIndex] = useState(0);
   
+  // Email/Phone capture state
+  const [captureStep, setCaptureStep] = useState<'email' | 'phone' | 'complete'>('email');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [discountApplied, setDiscountApplied] = useState(false);
+  
   // Ref for scrolling to banner cards
   const bannerCardsRef = useRef<HTMLElement>(null);
   
   const config = OCCASION_CONFIGS[occasion || 'birthday'] || OCCASION_CONFIGS.birthday;
+  
+  // Check if discount already applied (from previous visit or giveaway popup)
+  useEffect(() => {
+    const existingCoupon = localStorage.getItem('auto_apply_coupon');
+    const submitted = localStorage.getItem('holiday_promo_submitted');
+    if (existingCoupon || submitted === 'true') {
+      setDiscountApplied(true);
+      setCaptureStep('complete');
+    }
+  }, []);
+  
+  // Suppress giveaway popup on occasion pages
+  useEffect(() => {
+    // Mark that popup should be suppressed while on this page
+    sessionStorage.setItem(OCCASION_POPUP_SUPPRESSED_KEY, 'true');
+    return () => {
+      sessionStorage.removeItem(OCCASION_POPUP_SUPPRESSED_KEY);
+    };
+  }, []);
   
   // Mouse tracking for gradient effect
   useEffect(() => {
@@ -666,6 +696,185 @@ export default function OccasionLandingPage() {
     }
   };
 
+  // Email validation
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  // Phone number formatting
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) {
+      return digits;
+    } else if (digits.length <= 6) {
+      return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    } else {
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+    }
+  };
+
+  // Get UTM source
+  const getUtmSource = (): string | null => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlUtm = urlParams.get('utm') || urlParams.get('umt');
+    const storedUtm = localStorage.getItem('promo_source_global');
+    return urlUtm || storedUtm || null;
+  };
+
+  // Handle email submission
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!isValidEmail(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    setSubmitting(true);
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    try {
+      // Check if user exists with phone on file
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('email', normalizedEmail)
+        .single();
+      
+      if (existingUser?.phone) {
+        // User has phone on file - apply discount and complete!
+        setPhoneNumber(existingUser.phone);
+        await applyDiscount(normalizedEmail, existingUser.phone);
+      } else {
+        // Capture email + utm as lead
+        fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            source: `occasion_${occasion}`,
+            utm_source: getUtmSource(),
+          }),
+        }).catch(err => console.log('Email capture note:', err.message));
+        
+        // Need phone - go to phone step
+        setCaptureStep('phone');
+      }
+    } catch {
+      // No user found or error - go to phone step
+      fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          source: `occasion_${occasion}`,
+          utm_source: getUtmSource(),
+        }),
+      }).catch(err => console.log('Email capture note:', err.message));
+      
+      setCaptureStep('phone');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle phone submission
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const digits = phoneNumber.replace(/\D/g, '');
+    let cleanDigits = digits;
+    if (digits.length === 11 && digits.startsWith('1')) {
+      cleanDigits = digits.slice(1);
+    }
+    
+    if (cleanDigits.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    
+    setSubmitting(true);
+    const formattedPhone = `+1${cleanDigits}`;
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    await applyDiscount(normalizedEmail, formattedPhone);
+  };
+
+  // Apply discount after email/phone capture
+  const applyDiscount = async (normalizedEmail: string, formattedPhone: string) => {
+    try {
+      const utmSource = getUtmSource();
+      
+      // Capture as a user (with both email and phone)
+      await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/capture-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: formattedPhone,
+          source: `occasion_${occasion}`,
+          utm_source: utmSource,
+        }),
+      });
+
+      // Save to beta_signups
+      await supabase.from('beta_signups').upsert({
+        phone_number: formattedPhone,
+        source: `occasion_${occasion}`,
+        utm_source: utmSource,
+        subscribed_at: new Date().toISOString(),
+        prize_won: '10_OFF'
+      }, { onConflict: 'phone_number', ignoreDuplicates: false });
+
+      // Send discount SMS
+      try {
+        await supabase.functions.invoke('send-sms', {
+          body: {
+            to: formattedPhone,
+            message: `🎁 Here's your 10% off! Use code SAVE10 at checkout: https://shoutout.us/${occasion}?utm=sms&coupon=SAVE10`,
+            useUserNumber: true
+          }
+        });
+      } catch (smsError) {
+        console.error('Error sending SMS:', smsError);
+      }
+
+      // Apply discount locally
+      localStorage.setItem('auto_apply_coupon', 'SAVE10');
+      localStorage.setItem('holiday_promo_submitted', 'true');
+      
+      // Dispatch events to update prices
+      window.dispatchEvent(new Event('couponApplied'));
+      window.dispatchEvent(new Event('storage'));
+
+      toast.success('10% discount applied! Check your phone for the code.');
+      setDiscountApplied(true);
+      setCaptureStep('complete');
+      
+      // Scroll to banner cards after short delay
+      setTimeout(() => {
+        if (bannerCardsRef.current) {
+          bannerCardsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -727,7 +936,7 @@ export default function OccasionLandingPage() {
             </h1>
             
             {/* Rotating pain points */}
-            <div className="h-8 md:h-10 mb-10 overflow-hidden">
+            <div className="h-8 md:h-10 mb-8 overflow-hidden">
               <p 
                 key={currentPainPointIndex}
                 className="text-lg md:text-xl text-gray-300 animate-fade-in"
@@ -736,16 +945,79 @@ export default function OccasionLandingPage() {
               </p>
             </div>
             
-            {/* CTA Button */}
-            <div className="relative inline-block group mb-10">
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
-              <button
-                onClick={handleCTAClick}
-                className="relative inline-flex items-center gap-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all transform hover:scale-105"
-              >
-                <GiftIcon className="w-6 h-6" />
-                {config.ctaText}
-              </button>
+            {/* Email/Phone Capture Form or CTA Button */}
+            <div className="max-w-md mx-auto mb-8">
+              {captureStep === 'email' && (
+                <form onSubmit={handleEmailSubmit} className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition duration-300" />
+                  <div className="relative flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                      <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        autoComplete="email"
+                        className="w-full pl-12 pr-4 py-4 rounded-xl text-base font-medium focus:ring-2 focus:ring-emerald-400 focus:outline-none bg-white/95 text-gray-900"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-6 py-4 rounded-xl text-base transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                      {submitting ? 'Checking...' : 'Get 10% Off Today'}
+                    </button>
+                  </div>
+                </form>
+              )}
+              
+              {captureStep === 'phone' && (
+                <form onSubmit={handlePhoneSubmit} className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-40" />
+                  <div className="relative">
+                    <p className="text-white/80 text-sm mb-3">One last step - where should we send your code?</p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="relative flex-1">
+                        <DevicePhoneMobileIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="tel"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                          placeholder="(555) 555-5555"
+                          autoComplete="tel"
+                          autoFocus
+                          className="w-full pl-12 pr-4 py-4 rounded-xl text-base font-medium focus:ring-2 focus:ring-emerald-400 focus:outline-none bg-white/95 text-gray-900"
+                          maxLength={14}
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-6 py-4 rounded-xl text-base transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {submitting ? 'Applying...' : 'Get My 10% Off'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+              
+              {captureStep === 'complete' && (
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
+                  <button
+                    onClick={handleCTAClick}
+                    className="relative w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-8 py-4 rounded-xl text-lg transition-all transform hover:scale-105"
+                  >
+                    <GiftIcon className="w-6 h-6" />
+                    {discountApplied ? 'Find Your Perfect ShoutOut (10% Off Applied!)' : config.ctaText}
+                  </button>
+                </div>
+              )}
             </div>
             
             {/* Trust indicators */}
@@ -766,9 +1038,9 @@ export default function OccasionLandingPage() {
         
         {/* Featured Talent Section */}
         {featuredTalent.length > 0 && (
-          <section ref={bannerCardsRef} className="relative py-12 md:py-16 scroll-mt-4">
+          <section ref={bannerCardsRef} className="relative py-8 md:py-12 scroll-mt-4">
             <div className="max-w-7xl mx-auto px-4 md:px-8">
-              <div className="text-center mb-12">
+              <div className="text-center mb-8">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
                   Personalities For The Perfect{' '}
                   <span className={`text-transparent bg-clip-text bg-gradient-to-r ${config.highlightGradient}`}>
@@ -796,7 +1068,7 @@ export default function OccasionLandingPage() {
         
         {/* Comedians Carousel - Only show on birthday page */}
         {comedianTalent.length > 0 && (
-          <section className="py-12 relative">
+          <section className="py-6 relative">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent" />
             <div className="relative">
               <TalentCarousel
@@ -809,7 +1081,7 @@ export default function OccasionLandingPage() {
         
         {/* Middle Banner Card - Between comedians and unforgettable carousel */}
         {middleBannerTalent && (
-          <section className="py-12 relative">
+          <section className="py-6 relative">
             <div className="max-w-7xl mx-auto px-4 md:px-8">
               <TalentBannerCard
                 talent={middleBannerTalent as any}
@@ -822,7 +1094,7 @@ export default function OccasionLandingPage() {
         
         {/* More Talent Carousel */}
         {moreTalent.length > 0 && (
-          <section className="py-12 relative">
+          <section className="py-6 relative">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-transparent" />
             <div className="relative">
               <TalentCarousel
@@ -835,7 +1107,7 @@ export default function OccasionLandingPage() {
         
         {/* Example Videos Section */}
         {exampleVideos.length > 0 && (
-          <section className="py-12 md:py-16 relative">
+          <section className="py-8 md:py-12 relative">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-red-500/10 via-orange-500/5 to-yellow-500/10 rounded-full blur-[100px]" />
             
             <div className="relative max-w-6xl mx-auto px-4 md:px-8">
@@ -866,7 +1138,7 @@ export default function OccasionLandingPage() {
         
         {/* 24-Hour Express Section */}
         {expressTalent.length > 0 && (
-          <section className="py-16 md:py-20 relative">
+          <section className="py-10 md:py-12 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-amber-900/10 via-orange-900/20 to-red-900/10" />
             
             <div className="relative max-w-7xl mx-auto px-4 md:px-8">
@@ -892,15 +1164,15 @@ export default function OccasionLandingPage() {
         )}
         
         {/* Final CTA Section */}
-        <section className="py-16 md:py-24 relative">
+        <section className="py-10 md:py-16 relative">
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-red-600/20 to-orange-600/20 rounded-full blur-[120px]" />
+            <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-emerald-600/20 to-teal-600/20 rounded-full blur-[120px]" />
           </div>
           
           <div className="relative max-w-4xl mx-auto px-4 md:px-8 text-center">
             {/* Info box */}
-            <div className="relative group mb-12">
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-500/50 via-orange-500/50 to-yellow-500/50 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition duration-500" />
+            <div className="relative group mb-8">
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/50 via-teal-500/50 to-cyan-500/50 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition duration-500" />
               <div className="relative glass rounded-2xl p-8 border border-white/20">
                 <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
                   {config.subheadline}
@@ -919,13 +1191,13 @@ export default function OccasionLandingPage() {
                 </div>
                 
                 <div className="relative inline-block group/btn">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl blur-lg opacity-50 group-hover/btn:opacity-75 transition duration-300" />
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-50 group-hover/btn:opacity-75 transition duration-300" />
                   <button
                     onClick={handleCTAClick}
-                    className="relative inline-flex items-center gap-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold px-10 py-5 rounded-xl text-xl transition-all transform hover:scale-105"
+                    className="relative inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-10 py-5 rounded-xl text-xl transition-all transform hover:scale-105"
                   >
                     <GiftIcon className="w-7 h-7" />
-                    {config.ctaText}
+                    {discountApplied ? 'Find Your Perfect ShoutOut (10% Off!)' : config.ctaText}
                   </button>
                 </div>
               </div>
