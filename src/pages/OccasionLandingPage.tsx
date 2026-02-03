@@ -628,13 +628,13 @@ export default function OccasionLandingPage() {
           setComedianTalent([]);
         }
         
-        // Example videos with reviews - collect all valid ones first
-        const allVideosWithReviews: { video_url: string; review: any; talent_id: string; talent_username?: string; talent_name?: string }[] = [];
-        const usedTalentIds = new Set<string>();
+        // Example videos with reviews - collect ALL valid ones (not just one per talent)
+        const allVideosWithReviews: { video_url: string; review: any; talent_id: string; talent_username?: string; talent_name?: string; order_id: string }[] = [];
+        const usedOrderIds = new Set<string>();
         
-        // First try occasion-specific orders
+        // First try occasion-specific orders (birthday orders)
         occasionOrders?.forEach(order => {
-          if (order.video_url && !usedTalentIds.has(order.talent_id)) {
+          if (order.video_url && !usedOrderIds.has(order.id)) {
             const review = allReviews?.find(r => r.order_id === order.id) || 
                           allReviews?.find(r => r.talent_id === order.talent_id);
             if (review && review.comment) {
@@ -645,15 +645,16 @@ export default function OccasionLandingPage() {
                 talent_id: order.talent_id,
                 talent_username: talent?.username,
                 talent_name: talent?.temp_full_name || talent?.users?.full_name,
+                order_id: order.id,
               });
-              usedTalentIds.add(order.talent_id);
+              usedOrderIds.add(order.id);
             }
           }
         });
         
-        // Then add from any occasion
+        // Then add from any occasion (if we need more variety)
         allOrders?.forEach(order => {
-          if (order.video_url && !usedTalentIds.has(order.talent_id)) {
+          if (order.video_url && !usedOrderIds.has(order.id)) {
             const review = allReviews?.find(r => r.order_id === order.id) || 
                           allReviews?.find(r => r.talent_id === order.talent_id);
             if (review && review.comment) {
@@ -664,15 +665,28 @@ export default function OccasionLandingPage() {
                 talent_id: order.talent_id,
                 talent_username: talent?.username,
                 talent_name: talent?.temp_full_name || talent?.users?.full_name,
+                order_id: order.id,
               });
-              usedTalentIds.add(order.talent_id);
+              usedOrderIds.add(order.id);
             }
           }
         });
         
-        // Shuffle and pick 3 for display (cycling daily)
+        // Shuffle all videos daily
         const shuffledVideos = dailyShuffle(allVideosWithReviews, `videos-${config.key}`);
-        const displayVideos = shuffledVideos.slice(0, 3);
+        
+        // Pick 3 videos ensuring no 2 are from the same talent
+        const displayVideos: typeof allVideosWithReviews = [];
+        const displayTalentIds = new Set<string>();
+        
+        for (const video of shuffledVideos) {
+          if (displayVideos.length >= 3) break;
+          if (!displayTalentIds.has(video.talent_id)) {
+            displayVideos.push(video);
+            displayTalentIds.add(video.talent_id);
+          }
+        }
+        
         setExampleVideos(displayVideos);
         
         // Get IDs used in videos
