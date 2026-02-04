@@ -1202,6 +1202,19 @@ export default function OccasionLandingPage() {
           </section>
         )}
         
+        {/* Middle Banner Card - Between the two carousels */}
+        {middleBannerTalent && (
+          <section className="py-6 relative">
+            <div className="max-w-7xl mx-auto px-4 md:px-8">
+              <TalentBannerCard
+                talent={middleBannerTalent as any}
+                videoOnRight={true}
+                topCategories={middleBannerTalent.top_categories}
+              />
+            </div>
+          </section>
+        )}
+        
         {/* Comedians Carousel - SECOND carousel, shows on all pages */}
         {comedianTalent.length > 0 && (
           <section className="py-6 relative">
@@ -1214,19 +1227,6 @@ export default function OccasionLandingPage() {
                     Say it with a laugh from free-speech comedians.
                   </span>
                 }
-              />
-            </div>
-          </section>
-        )}
-        
-        {/* Middle Banner Card */}
-        {middleBannerTalent && (
-          <section className="py-6 relative">
-            <div className="max-w-7xl mx-auto px-4 md:px-8">
-              <TalentBannerCard
-                talent={middleBannerTalent as any}
-                videoOnRight={true}
-                topCategories={middleBannerTalent.top_categories}
               />
             </div>
           </section>
