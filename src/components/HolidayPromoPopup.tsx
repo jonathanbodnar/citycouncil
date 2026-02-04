@@ -185,6 +185,11 @@ const HolidayPromoPopup: React.FC = () => {
     if (pathname === '/login' || pathname === '/signup' || pathname.startsWith('/change-phone')) {
       return false;
     }
+
+    // Don't show on order pages (user is already converting)
+    if (pathname.startsWith('/order')) {
+      return false;
+    }
     
     // Don't show on occasion landing pages (they have their own capture form)
     const occasionPages = ['/birthday', '/roast', '/encouragement', '/advice', '/celebrate', '/announcement', '/debate', '/corporate'];
