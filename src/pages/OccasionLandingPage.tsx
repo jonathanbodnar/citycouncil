@@ -1163,7 +1163,7 @@ export default function OccasionLandingPage() {
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
                   Personalities For The Perfect{' '}
                   <span className={`text-transparent bg-clip-text bg-gradient-to-r ${config.highlightGradient}`}>
-                    {config.key === 'birthday' ? `${config.label} Gift` : config.label}
+                    {config.key === 'birthday' ? `${config.label} Gift` : config.key === 'advice' ? 'Advice' : config.label}
                   </span>
                 </h2>
                 <p className="text-gray-400 text-lg max-w-2xl mx-auto">
@@ -1240,7 +1240,7 @@ export default function OccasionLandingPage() {
             <div className="relative max-w-6xl mx-auto px-4 md:px-8">
               <div className="text-center mb-10">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
-                  See Other {config.label} Orders
+                  See Other {config.key === 'advice' ? 'Advice' : config.label} Orders
                 </h2>
                 <p className="text-gray-400 text-lg">
                   Real ShoutOuts from real personalities
