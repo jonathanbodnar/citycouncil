@@ -85,7 +85,7 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     key: 'encouragement',
     label: 'Encouragement',
     emoji: '💪',
-    headline: "Sometimes they need to hear it",
+    headline: "Sometimes you just need to hear it",
     highlightedWord: "from someone else.",
     subheadline: "A pep talk that actually sticks.",
     painPoints: [
