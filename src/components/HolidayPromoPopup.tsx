@@ -181,8 +181,8 @@ const HolidayPromoPopup: React.FC = () => {
       return false;
     }
 
-    // Don't show on login/signup pages
-    if (pathname === '/login' || pathname === '/signup') {
+    // Don't show on login/signup/change-phone pages
+    if (pathname === '/login' || pathname === '/signup' || pathname.startsWith('/change-phone')) {
       return false;
     }
     
