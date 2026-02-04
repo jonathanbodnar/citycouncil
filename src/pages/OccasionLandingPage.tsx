@@ -1013,7 +1013,7 @@ export default function OccasionLandingPage() {
             {/* Occasion badge */}
             <div className="inline-flex items-center gap-2 glass px-5 py-2.5 rounded-full border border-white/20 mb-8 hover:scale-105 transition-transform">
               <span className="text-2xl">{config.emoji}</span>
-              <span className="font-semibold text-white">Personalized {config.label} Video ShoutOuts</span>
+              <span className="font-semibold text-white">Personalized {config.key === 'advice' ? 'Advice' : config.label} Video ShoutOuts</span>
             </div>
             
             {/* Main headline - matching /creators style */}
