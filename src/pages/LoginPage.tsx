@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import toast from 'react-hot-toast';
@@ -12,13 +12,18 @@ type LoginMode = 'email' | 'phone' | 'password' | 'otp';
 const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const returnTo = searchParams.get('returnTo') || '/';
   
   // Login mode state - default to email if we have a giveaway email stored
   const [loginMode, setLoginMode] = useState<LoginMode>('email');
   
-  // Email-first state
-  const [email, setEmail] = useState('');
+  // Email-first state - initialize from localStorage if available
+  const [email, setEmail] = useState(() => {
+    const stored = localStorage.getItem('giveaway_email');
+    console.log('[LoginPage] Initial email from localStorage:', stored);
+    return stored || '';
+  });
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [showChangePhoneModal, setShowChangePhoneModal] = useState(false);
   const [changePhoneLoading, setChangePhoneLoading] = useState(false);
@@ -42,17 +47,20 @@ const LoginPage: React.FC = () => {
   const [mfaFactorId, setMfaFactorId] = useState('');
   const { user, signIn, sendPhoneOtp, verifyPhoneOtp } = useAuth();
   
-  // Check for stored giveaway email on mount
+  // Check for stored giveaway email on mount and on navigation
   useEffect(() => {
     const storedEmail = localStorage.getItem('giveaway_email');
-    console.log('[LoginPage] Checking for giveaway_email:', storedEmail);
-    if (storedEmail) {
+    console.log('[LoginPage] Checking for giveaway_email on navigation:', storedEmail);
+    if (storedEmail && !email) {
       console.log('[LoginPage] Found giveaway_email, setting and looking up:', storedEmail);
       setEmail(storedEmail);
-      // Auto-submit to look up their phone
+      handleEmailLookup(storedEmail);
+    } else if (storedEmail && email === storedEmail && loginMode === 'email') {
+      // Email already set from initial state, just do the lookup
+      console.log('[LoginPage] Email already set, doing lookup:', storedEmail);
       handleEmailLookup(storedEmail);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.key]); // eslint-disable-line react-hooks/exhaustive-deps
   
   // Look up user's phone by email and auto-send OTP
   const handleEmailLookup = async (emailToLookup: string) => {
