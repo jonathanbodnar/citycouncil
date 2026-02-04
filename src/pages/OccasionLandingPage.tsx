@@ -1163,7 +1163,7 @@ export default function OccasionLandingPage() {
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
                   Personalities For The Perfect{' '}
                   <span className={`text-transparent bg-clip-text bg-gradient-to-r ${config.highlightGradient}`}>
-                    {config.label} Gift
+                    {config.key === 'birthday' ? `${config.label} Gift` : config.label}
                   </span>
                 </h2>
                 <p className="text-gray-400 text-lg max-w-2xl mx-auto">
