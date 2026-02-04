@@ -202,7 +202,7 @@ const ChangePhonePage: React.FC = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ phone: formattedPhone, code }),
+          body: JSON.stringify({ phone: formattedPhone, code, email: userEmail }),
         }
       );
 
