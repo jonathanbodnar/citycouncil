@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { TalentProfile } from '../types';
 import TalentCard from '../components/TalentCard';
@@ -46,7 +46,7 @@ const OCCASIONS: OccasionType[] = [
   { key: 'birthday', label: 'Happy Birthday', emoji: '🎂' },
   { key: 'express', label: '24hr Delivery', emoji: '⚡' },
   { key: 'roast', label: 'Friendly Roast', emoji: '🔥' },
-  { key: 'encouragement', label: 'Encouragement', emoji: '💪' },
+  { key: 'encourage', label: 'Encouragement', emoji: '💪' },
   { key: 'announcement', label: 'Make an Announcement', emoji: '📣' },
   { key: 'celebrate', label: 'Celebrate A Win', emoji: '🏆' },
   { key: 'advice', label: 'Get Advice', emoji: '💡' },
@@ -58,7 +58,7 @@ const OCCASION_PHRASES: Record<string, string> = {
   'birthday': "Say happy birthday better than a text.",
 'express': "Need it fast? These talent deliver in 24 hours.",
   'roast': "Your group chat will never recover.",
-  'encouragement': "Encouragement from people that have been there.",
+  'encourage': "Encouragement from people that have been there.",
   'announcement': "Tell everyone in a way no one else can.",
   'celebrate': "Celebrate in the most unique way possible.",
 'advice': "Get advice from people who've been there.",
@@ -71,7 +71,7 @@ const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
   'birthday': ['shawnfarash', 'meloniemac', 'joshfirestine', 'lydiashaffer', 'thehodgetwins', 'elsakurt', 'jeremyhambly', 'kevinsorbo', 'kayleecampbell'],
   'roast': ['shawnfarash', 'hayleycaronia', 'joshfirestine', 'jpsears', 'thehodgetwins', 'bryancallen', 'nickdipaolo', 'elsakurt', 'esteepalti', 'pearldavis', 'lauraloomer', 'kaitlinbennett', 'mattiseman'],
   'announcement': ['shawnfarash', 'hayleycaronia', 'lydiashaffer', 'bryancallen', 'basrutten', 'nicksearcy', 'markdavis', 'larryelder', 'mattiseman'],
-  'encouragement': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
+  'encourage': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
   'celebrate': ['joshfirestine', 'jpsears', 'jeremyhambly', 'basrutten', 'bradstine', 'gregonfire', 'chaelsonnen', 'lauraloomer', 'johnohurley', 'mattiseman'],
   'advice': ['meloniemac', 'thehodgetwins', 'davidharrisjr', 'nickdipaolo', 'bradstine', 'esteepalti', 'gregonfire', 'nicksearcy', 'chaelsonnen', 'markdavis', 'larryelder', 'pearldavis', 'geraldmorgan', 'kevinsorbo', 'kaitlinbennett', 'chrissalcedo', 'johnohurley'],
 };
@@ -96,6 +96,7 @@ const ROTATING_TAGLINES = [
 
 export default function HomePageNew() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [talentList, setTalentList] = useState<TalentWithDetails[]>([]);
   const [filteredTalent, setFilteredTalent] = useState<TalentWithDetails[]>([]);
@@ -623,7 +624,14 @@ export default function HomePageNew() {
                   {OCCASIONS.map((occasion) => (
                     <button
                       key={occasion.key}
-                      onClick={() => handleOccasionClick(occasion.key)}
+                      onClick={() => {
+                        // Navigate to occasion page for most occasions, except express and corporate which stay on homepage
+                        if (occasion.key === 'express' || occasion.key === 'corporate') {
+                          handleOccasionClick(occasion.key);
+                        } else {
+                          navigate(`/${occasion.key}`);
+                        }
+                      }}
                       className={`glass rounded-lg px-2.5 py-1 sm:px-3 sm:py-1.5 hover:scale-105 transition-all text-center ${
                         selectedOccasion === occasion.key ? 'ring-2 ring-cyan-400' : ''
                       }`}
