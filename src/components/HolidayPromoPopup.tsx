@@ -20,7 +20,6 @@ const POPUP_OCCASIONS = [
   { key: 'express', label: '24hr Delivery', emoji: '⚡' },
   { key: 'roast', label: 'Friendly Roast', emoji: '🔥' },
   { key: 'encouragement', label: 'Encouragement', emoji: '💪' },
-  { key: 'debate', label: 'End a Debate', emoji: '⚔️' },
   { key: 'announcement', label: 'Make an Announcement', emoji: '📣' },
   { key: 'celebrate', label: 'Celebrate A Win', emoji: '🏆' },
   { key: 'advice', label: 'Get Advice', emoji: '💡' },
@@ -865,14 +864,6 @@ const HolidayPromoPopup: React.FC = () => {
               <div className="flex justify-center gap-2 mb-4">
                 <div className={`w-2 h-2 rounded-full transition-colors ${step === 'email' ? 'bg-yellow-400' : 'bg-white/40'}`} />
                 <div className={`w-2 h-2 rounded-full transition-colors ${step === 'phone' ? 'bg-yellow-400' : 'bg-white/40'}`} />
-              </div>
-
-              {/* Giveaway Countdown */}
-              <div className="mb-4 text-white/90 text-sm font-medium">
-                Giveaway ends in{' '}
-                <span className="font-mono font-bold text-yellow-300">
-                  {String(giveawayTimeLeft.minutes).padStart(2, '0')}:{String(giveawayTimeLeft.seconds).padStart(2, '0')}
-                </span>
               </div>
 
               {/* Step 1: Email */}

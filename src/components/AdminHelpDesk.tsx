@@ -462,13 +462,13 @@ const AdminHelpDesk: React.FC = () => {
 
       if (userError) throw userError;
 
-      const currentCredits = parseInt(userData?.credits || '0');
-      const newCredits = currentCredits + (amount * 100); // Store in cents
+      const currentCredits = parseFloat(userData?.credits || '0');
+      const newCredits = currentCredits + amount; // Credits are stored as dollars
 
       // Update user credits
       const { error: updateError } = await supabase
         .from('users')
-        .update({ credits: newCredits.toString() })
+        .update({ credits: newCredits })
         .eq('id', selectedConversation.user_id);
 
       if (updateError) throw updateError;
@@ -476,9 +476,11 @@ const AdminHelpDesk: React.FC = () => {
       // Log the credit transaction
       await supabase.from('credit_transactions').insert({
         user_id: selectedConversation.user_id,
-        amount: amount * 100,
-        type: 'admin_grant',
-        description: creditReason,
+        amount: amount,
+        balance_after: newCredits,
+        transaction_type: 'admin_grant',
+        admin_id: (await supabase.auth.getUser()).data.user?.id,
+        notes: creditReason,
         created_at: new Date().toISOString()
       });
 
