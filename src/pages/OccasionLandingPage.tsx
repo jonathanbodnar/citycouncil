@@ -662,12 +662,8 @@ export default function OccasionLandingPage() {
           .filter((t): t is TalentWithDetails => t !== undefined && t.users !== undefined);
         const comedianIds = new Set(comedians.map(t => t.id));
         
-        // Only set comedians for birthday page
-        if (config.key === 'birthday') {
-          setComedianTalent(dailyShuffle(comedians, `comedians-${config.key}`));
-        } else {
-          setComedianTalent([]);
-        }
+        // Show comedians on all occasion pages
+        setComedianTalent(dailyShuffle(comedians, `comedians-${config.key}`));
         
         // Example videos with reviews - ONLY from this occasion (e.g., birthday orders only)
         const allVideosWithReviews: { video_url: string; review: any; talent_id: string; talent_username?: string; talent_name?: string; order_id: string }[] = [];
@@ -723,7 +719,7 @@ export default function OccasionLandingPage() {
         const shownTalentIds = new Set([
           ...Array.from(featuredIds),
           ...Array.from(videoTalentIds),
-          ...(config.key === 'birthday' ? Array.from(comedianIds) : [])
+          ...Array.from(comedianIds)
         ]);
         
         // More talent: ALL active talent not already shown in featured, videos, or comedians
@@ -1189,37 +1185,7 @@ export default function OccasionLandingPage() {
           </section>
         )}
         
-        {/* Comedians Carousel - Only show on birthday page */}
-        {comedianTalent.length > 0 && (
-          <section className="py-6 relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent" />
-            <div className="relative">
-              <TalentCarousel
-                talent={comedianTalent}
-                title={
-                  <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
-                    Say happy birthday with a laugh from free-speech comedians.
-                  </span>
-                }
-              />
-            </div>
-          </section>
-        )}
-        
-        {/* Middle Banner Card - Between comedians and unforgettable carousel */}
-        {middleBannerTalent && (
-          <section className="py-6 relative">
-            <div className="max-w-7xl mx-auto px-4 md:px-8">
-              <TalentBannerCard
-                talent={middleBannerTalent as any}
-                videoOnRight={true}
-                topCategories={middleBannerTalent.top_categories}
-              />
-            </div>
-          </section>
-        )}
-        
-        {/* More Talent Carousel */}
+        {/* More Talent Carousel - FIRST carousel */}
         {moreTalent.length > 0 && (
           <section className="py-6 relative">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-transparent" />
@@ -1228,9 +1194,39 @@ export default function OccasionLandingPage() {
                 talent={moreTalent}
                 title={
                   <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400">
-                    Unforgettable personalities for an unforgettable gift.
+                    Unforgettable personalities for an unforgettable {config.key === 'birthday' ? 'gift' : config.key === 'roast' ? 'roast' : config.key === 'announcement' ? 'announcement' : config.key === 'celebrate' ? 'celebration' : config.key === 'encouragement' ? 'message' : config.key === 'advice' ? 'advice' : config.key === 'debate' ? 'debate' : config.key === 'corporate' ? 'event' : 'gift'}.
                   </span>
                 }
+              />
+            </div>
+          </section>
+        )}
+        
+        {/* Comedians Carousel - SECOND carousel, shows on all pages */}
+        {comedianTalent.length > 0 && (
+          <section className="py-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent" />
+            <div className="relative">
+              <TalentCarousel
+                talent={comedianTalent}
+                title={
+                  <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                    Say it with a laugh from free-speech comedians.
+                  </span>
+                }
+              />
+            </div>
+          </section>
+        )}
+        
+        {/* Middle Banner Card */}
+        {middleBannerTalent && (
+          <section className="py-6 relative">
+            <div className="max-w-7xl mx-auto px-4 md:px-8">
+              <TalentBannerCard
+                talent={middleBannerTalent as any}
+                videoOnRight={true}
+                topCategories={middleBannerTalent.top_categories}
               />
             </div>
           </section>
