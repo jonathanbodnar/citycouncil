@@ -342,7 +342,7 @@ function App() {
               {/* Occasion landing pages - must be before /:username catch-all */}
               <Route path="/birthday" element={<OccasionLandingPage />} />
               <Route path="/roast" element={<OccasionLandingPage />} />
-              <Route path="/encouragement" element={<OccasionLandingPage />} />
+              <Route path="/encourage" element={<OccasionLandingPage />} />
               <Route path="/advice" element={<OccasionLandingPage />} />
               <Route path="/celebrate" element={<OccasionLandingPage />} />
               <Route path="/announcement" element={<OccasionLandingPage />} />

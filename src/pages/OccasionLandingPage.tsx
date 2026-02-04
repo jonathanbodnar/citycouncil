@@ -81,8 +81,8 @@ const OCCASION_CONFIGS: Record<string, OccasionConfig> = {
     gradientTo: 'to-red-600/20',
     highlightGradient: 'from-orange-400 via-red-400 to-rose-400',
   },
-  encouragement: {
-    key: 'encouragement',
+  encourage: {
+    key: 'encourage',
     label: 'Encouragement',
     emoji: '💪',
     headline: "Sometimes you just need to hear it",
@@ -214,7 +214,7 @@ const OCCASION_TALENT_MAPPING: Record<string, string[]> = {
   'birthday': ['shawnfarash', 'meloniemac', 'joshfirestine', 'lydiashaffer', 'thehodgetwins', 'elsakurt', 'jeremyhambly', 'kevinsorbo', 'kayleecampbell'],
   'roast': ['shawnfarash', 'hayleycaronia', 'joshfirestine', 'jpsears', 'thehodgetwins', 'bryancallen', 'nickdipaolo', 'elsakurt', 'esteepalti', 'pearldavis', 'lauraloomer', 'kaitlinbennett', 'mattiseman'],
   'announcement': ['shawnfarash', 'hayleycaronia', 'lydiashaffer', 'bryancallen', 'basrutten', 'nicksearcy', 'markdavis', 'larryelder', 'mattiseman'],
-  'encouragement': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
+  'encourage': ['meloniemac', 'hayleycaronia', 'jpsears', 'lydiashaffer', 'davidharrisjr', 'bryancallen', 'elsakurt', 'basrutten', 'gregonfire', 'nicksearcy', 'markdavis', 'larryelder', 'geraldmorgan', 'kevinsorbo', 'johnohurley'],
   'celebrate': ['joshfirestine', 'jpsears', 'jeremyhambly', 'basrutten', 'bradstine', 'gregonfire', 'chaelsonnen', 'lauraloomer', 'johnohurley', 'mattiseman'],
   'debate': ['davidharrisjr', 'nickdipaolo', 'bradstine', 'kayleecampbell', 'chaelsonnen', 'lauraloomer', 'pearldavis', 'geraldmorgan', 'kaitlinbennett', 'chrissalcedo'],
   'advice': ['meloniemac', 'thehodgetwins', 'davidharrisjr', 'nickdipaolo', 'bradstine', 'esteepalti', 'gregonfire', 'nicksearcy', 'chaelsonnen', 'markdavis', 'larryelder', 'pearldavis', 'geraldmorgan', 'kevinsorbo', 'kaitlinbennett', 'chrissalcedo', 'johnohurley'],
@@ -1194,7 +1194,7 @@ export default function OccasionLandingPage() {
                 talent={moreTalent}
                 title={
                   <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400">
-                    Unforgettable personalities for an unforgettable {config.key === 'birthday' ? 'gift' : config.key === 'roast' ? 'roast' : config.key === 'announcement' ? 'announcement' : config.key === 'celebrate' ? 'celebration' : config.key === 'encouragement' ? 'message' : config.key === 'advice' ? 'advice' : config.key === 'debate' ? 'debate' : config.key === 'corporate' ? 'event' : 'gift'}.
+                    Unforgettable personalities for an unforgettable {config.key === 'birthday' ? 'gift' : config.key === 'roast' ? 'roast' : config.key === 'announcement' ? 'announcement' : config.key === 'celebrate' ? 'celebration' : config.key === 'encourage' ? 'message' : config.key === 'advice' ? 'advice' : config.key === 'debate' ? 'debate' : config.key === 'corporate' ? 'event' : 'gift'}.
                   </span>
                 }
               />

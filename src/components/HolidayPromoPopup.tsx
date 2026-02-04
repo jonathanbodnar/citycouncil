@@ -191,7 +191,7 @@ const HolidayPromoPopup: React.FC = () => {
     }
     
     // Don't show on occasion landing pages (they have their own capture form)
-    const occasionPages = ['/birthday', '/roast', '/encouragement', '/advice', '/celebrate', '/announcement', '/debate', '/corporate'];
+    const occasionPages = ['/birthday', '/roast', '/encourage', '/advice', '/celebrate', '/announcement', '/debate', '/corporate'];
     if (occasionPages.includes(pathname)) {
       return false;
     }
