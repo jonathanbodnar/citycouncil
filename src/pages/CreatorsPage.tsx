@@ -19,6 +19,7 @@ const creatorBios = [
   { name: 'Shawn Farash', handle: 'shawnfarash', url: 'https://shoutout.fans/shawnfarash' },
   { name: 'Melonie Mac', handle: 'meloniemac', url: 'https://shoutout.fans/meloniemac' },
   { name: 'Nick Di Paolo', handle: 'nickdipaolo', url: 'https://shoutout.fans/nickdipaolo' },
+  { name: 'Hayley Caronia', handle: 'hayleycaronia', url: 'https://shoutout.fans/hayleycaronia' },
   { name: 'Lydia Shaffer', handle: 'lydiashaffer', url: 'https://shoutout.fans/lydiashaffer' },
   { name: 'Kristin Sokoloff', handle: 'kristinsokoloff', url: 'https://shoutout.fans/kristinsokoloff' },
 ];

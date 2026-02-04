@@ -150,6 +150,7 @@ const TalentDashboard: React.FC = () => {
     { name: 'Shawn Farash', handle: 'shawnfarash' },
     { name: 'Melonie Mac', handle: 'meloniemac' },
     { name: 'Nick Di Paolo', handle: 'nickdipaolo' },
+    { name: 'Hayley Caronia', handle: 'hayleycaronia' },
     { name: 'Lydia Shaffer', handle: 'lydiashaffer' },
     { name: 'Kristin Sokoloff', handle: 'kristinsokoloff' },
   ];
