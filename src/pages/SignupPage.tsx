@@ -76,8 +76,19 @@ const SignupPage: React.FC = () => {
   
   // Form state
   const [step, setStep] = useState<Step>('email');
-  const [email, setEmail] = useState('');
+  // Initialize email from localStorage (giveaway passthrough)
+  const [email, setEmail] = useState(() => {
+    try {
+      const stored = localStorage.getItem('giveaway_email');
+      console.log('[SignupPage] Initial email from localStorage:', stored);
+      return stored || '';
+    } catch {
+      return '';
+    }
+  });
   const [phone, setPhone] = useState('');
+  const [showChangePhoneModal, setShowChangePhoneModal] = useState(false);
+  const [changePhoneLoading, setChangePhoneLoading] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [phoneHint, setPhoneHint] = useState('');
@@ -107,6 +118,42 @@ const SignupPage: React.FC = () => {
   const isValidPhone = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
     return digits.length >= 10;
+  };
+
+  // Handle change phone number request
+  const handleChangePhoneRequest = async () => {
+    if (!email) {
+      toast.error('Please enter your email first');
+      return;
+    }
+    
+    setChangePhoneLoading(true);
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-change-phone-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email: email.toLowerCase().trim() }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast.success('Check your email for a link to update your phone number');
+        setShowChangePhoneModal(false);
+      } else {
+        toast.error(data.error || 'Failed to send email');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Something went wrong');
+    } finally {
+      setChangePhoneLoading(false);
+    }
   };
 
   // Handle email submission - check if user exists with phone, skip to OTP if so
@@ -491,6 +538,19 @@ const SignupPage: React.FC = () => {
                 {loading ? 'Checking...' : 'Continue'}
                 {!loading && <ArrowRightIcon className="h-4 w-4" />}
               </button>
+              
+              {/* Change phone number link - show after email is entered */}
+              {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowChangePhoneModal(true)}
+                    className="text-xs text-gray-500 hover:text-gray-400 underline"
+                  >
+                    Changed your phone number?
+                  </button>
+                </div>
+              )}
             </form>
           )}
 
@@ -632,6 +692,36 @@ const SignupPage: React.FC = () => {
           </Link>
         </p>
       </div>
+      
+      {/* Change Phone Number Modal */}
+      {showChangePhoneModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="glass-strong rounded-2xl p-8 max-w-md w-full border border-white/30 shadow-modern-xl">
+            <h3 className="text-2xl font-bold text-white mb-2">Update Phone Number</h3>
+            <p className="text-gray-300 mb-6">
+              We'll send a secure link to <span className="font-medium text-white">{email}</span> where you can update your phone number.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowChangePhoneModal(false)}
+                className="flex-1 px-4 py-3 glass border border-white/30 rounded-xl text-white font-medium hover:glass-strong transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleChangePhoneRequest}
+                disabled={changePhoneLoading}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-modern"
+              >
+                {changePhoneLoading ? 'Sending...' : 'Send Link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
