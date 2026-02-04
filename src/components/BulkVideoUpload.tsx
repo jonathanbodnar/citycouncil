@@ -3,12 +3,10 @@ import {
   CloudArrowUpIcon, 
   CheckCircleIcon,
   XCircleIcon,
-  VideoCameraIcon,
-  UserGroupIcon
+  VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import { uploadVideoToWasabi } from '../services/videoUpload';
-import { TalentProfile } from '../types';
 import toast from 'react-hot-toast';
 
 interface VideoUploadItem {
@@ -112,7 +110,7 @@ const BulkVideoUpload: React.FC = () => {
       updateVideoItem(item.id, { progress: 60 });
 
       // Create a "historical" order entry
-      const { data: orderData, error: orderError } = await supabase
+      const { error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: (await supabase.auth.getUser()).data.user?.id, // Admin user

@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   UsersIcon,
-  Cog6ToothIcon,
-  ChatBubbleLeftRightIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
   StarIcon,
   ClockIcon,
-  VideoCameraIcon,
-  HashtagIcon,
-  TagIcon,
-  GiftIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
@@ -68,7 +62,7 @@ interface AdminManagementTabsProps {
 
 const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: activeTabProp }) => {
   const activeTab = activeTabProp as 'analytics' | 'advanced-analytics' | 'shoutout-fans' | 'orders' | 'users' | 'talent' | 'payouts' | 'w9s' | 'settings' | 'helpdesk' | 'promo-videos' | 'landing-videos' | 'bulk-upload' | 'comms' | 'notifications' | 'coupons' | 'credits' | 'giveaway' | 'sms-flows' | 'email-flows';
-  const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([]);
+  const [, setHelpMessages] = useState<HelpMessage[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [topTalent, setTopTalent] = useState<any[]>([]);
@@ -110,7 +104,6 @@ const AdminManagementTabs: React.FC<AdminManagementTabsProps> = ({ activeTab: ac
         const totalOrders = orders?.length || 0;
         const completedOrders = orders?.filter(o => o.status === 'completed') || [];
         const pendingOrders = orders?.filter(o => o.status === 'pending') || [];
-        const inProgressOrders = orders?.filter(o => o.status === 'in_progress') || [];
         const corporateOrders = orders?.filter(o => o.is_corporate_order) || [];
         const pendingApprovalOrders = orders?.filter(o => o.approval_status === 'pending') || [];
         

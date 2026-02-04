@@ -6,11 +6,8 @@ import {
   MagnifyingGlassIcon,
   CheckIcon,
   ArchiveBoxIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
   CurrencyDollarIcon,
   GiftIcon,
-  XCircleIcon,
   XMarkIcon,
   ShoppingBagIcon
 } from '@heroicons/react/24/outline';
@@ -296,7 +293,7 @@ const AdminHelpDesk: React.FC = () => {
         if (error) throw error;
       } else {
         // Create a placeholder user message and immediately respond to it
-        const { data: newUserMessage, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from('help_messages')
           .insert([
             {

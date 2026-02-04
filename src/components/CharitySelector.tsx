@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  PlusIcon,
   HeartIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';

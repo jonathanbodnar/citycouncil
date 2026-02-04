@@ -9,8 +9,7 @@ import {
   BellIcon,
   MagnifyingGlassIcon,
   PhoneIcon,
-  PhotoIcon,
-  PlayIcon
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../services/supabase';
 import toast from 'react-hot-toast';
@@ -318,7 +317,7 @@ const CommsCenterManagement: React.FC = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `sms-media/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('platform-assets')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -421,7 +420,7 @@ const CommsCenterManagement: React.FC = () => {
 
       // Call Twilio Edge Function to send SMS/MMS
       // The Edge Function handles database logging
-      const { data, error } = await supabase.functions.invoke('send-sms', {
+      const { error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: selectedTalent.users.phone,
           message: messageText || (mediaUrl ? '📎 Media message' : ''),
