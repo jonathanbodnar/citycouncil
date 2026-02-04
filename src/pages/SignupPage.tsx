@@ -538,19 +538,6 @@ const SignupPage: React.FC = () => {
                 {loading ? 'Checking...' : 'Continue'}
                 {!loading && <ArrowRightIcon className="h-4 w-4" />}
               </button>
-              
-              {/* Change phone number link - show after email is entered */}
-              {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
-                <div className="text-center mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowChangePhoneModal(true)}
-                    className="text-xs text-gray-500 hover:text-gray-400 underline"
-                  >
-                    Changed your phone number?
-                  </button>
-                </div>
-              )}
             </form>
           )}
 
@@ -674,6 +661,17 @@ const SignupPage: React.FC = () => {
                   {resendCooldown > 0
                     ? `Resend code in ${resendCooldown}s`
                     : "Didn't receive a code? Resend"}
+                </button>
+              </div>
+              
+              {/* Change phone number link */}
+              <div className="text-center mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowChangePhoneModal(true)}
+                  className="text-xs text-gray-500 hover:text-gray-400 underline"
+                >
+                  Changed your phone number?
                 </button>
               </div>
             </div>
