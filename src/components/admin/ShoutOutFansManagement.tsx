@@ -545,14 +545,26 @@ const ShoutOutFansManagement: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
               {overallStats.ctr_by_card_type.map(item => {
                 const Icon = item.icon;
+                // Get darker text color based on the card type
+                const textColorMap: Record<string, string> = {
+                  youtube: 'text-red-800',
+                  rumble: 'text-green-800',
+                  podcast: 'text-purple-800',
+                  link: 'text-blue-800',
+                  shoutout: 'text-pink-800',
+                  collab: 'text-orange-800',
+                  sponsorship: 'text-indigo-800',
+                  services: 'text-teal-800',
+                };
+                const textColor = textColorMap[item.type] || 'text-gray-800';
                 return (
-                  <div key={item.type} className={`rounded-lg p-3 ${item.color.split(' ')[1]}`}>
+                  <div key={item.type} className={`rounded-lg p-3 ${item.color.split(' ')[1]} border border-gray-200`}>
                     <div className="flex items-center gap-2 mb-1">
                       <Icon className={`h-4 w-4 ${item.color.split(' ')[0]}`} />
-                      <span className="text-xs font-medium text-gray-700">{item.label}</span>
+                      <span className={`text-xs font-medium ${textColor}`}>{item.label}</span>
                     </div>
-                    <div className="text-lg font-bold text-gray-900">{item.clicks.toLocaleString()}</div>
-                    <div className="text-xs text-gray-600">{item.ctr.toFixed(2)}% CTR</div>
+                    <div className={`text-lg font-bold ${textColor}`}>{item.clicks.toLocaleString()}</div>
+                    <div className={`text-xs ${textColor} opacity-80`}>{item.ctr.toFixed(2)}% CTR</div>
                   </div>
                 );
               })}
@@ -659,10 +671,10 @@ const ShoutOutFansManagement: React.FC = () => {
                             href={`https://bio.shoutout.us/dashboard?token=${talent.talent_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 bg-purple-50 px-2 py-0.5 rounded"
+                            className="inline-flex items-center gap-1 text-xs text-white bg-purple-600 hover:bg-purple-700 px-2 py-0.5 rounded font-medium"
                           >
                             <Cog6ToothIcon className="h-3 w-3" />
-                            Dashboard
+                            Bio Dash
                           </a>
                         </div>
                       </div>
