@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Postmark API key
-const POSTMARK_API_KEY = Deno.env.get("POSTMARK_API_KEY");
+// SendGrid API key (same as used by process-email-flows)
+const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const FROM_EMAIL = "noreply@shoutout.us";
 
 // Generate a secure random token
@@ -77,8 +77,6 @@ serve(async (req) => {
       // Table might not exist, create it
       if (insertError.code === '42P01') {
         console.log('Creating phone_change_tokens table...');
-        // Table doesn't exist - this shouldn't happen in production
-        // but we'll handle it gracefully
         throw new Error("Database not configured. Please contact support.");
       }
       console.error('Error storing token:', insertError);
@@ -89,62 +87,52 @@ serve(async (req) => {
     const baseUrl = Deno.env.get("SITE_URL") || "https://shoutout.us";
     const changePhoneUrl = `${baseUrl}/change-phone/${token}`;
 
-    // Send email via Postmark
-    if (!POSTMARK_API_KEY) {
-      console.error('Postmark API key not configured');
+    // Send email via SendGrid
+    if (!SENDGRID_API_KEY) {
+      console.error('SendGrid API key not configured');
       throw new Error("Email service not configured");
     }
 
-    const emailResponse = await fetch("https://api.postmarkapp.com/email", {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "X-Postmark-Server-Token": POSTMARK_API_KEY,
-      },
-      body: JSON.stringify({
-        From: FROM_EMAIL,
-        To: normalizedEmail,
-        Subject: "Update Your Phone Number - ShoutOut",
-        HtmlBody: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <img src="https://shoutout.us/whiteicon.png" alt="ShoutOut" style="height: 60px;" />
-            </div>
-            
-            <h1 style="color: #1f2937; font-size: 24px; margin-bottom: 16px;">Update Your Phone Number</h1>
-            
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-              Hi${userData.full_name ? ` ${userData.full_name}` : ''},
-            </p>
-            
-            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-              You requested to update the phone number associated with your ShoutOut account. Click the button below to set a new phone number:
-            </p>
-            
-            <div style="text-align: center; margin: 32px 0;">
-              <a href="${changePhoneUrl}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px;">
-                Update Phone Number
-              </a>
-            </div>
-            
-            <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
-              This link expires in 1 hour. If you didn't request this change, you can safely ignore this email.
-            </p>
-            
-            <p style="color: #6b7280; font-size: 14px;">
-              If the button doesn't work, copy and paste this link into your browser:<br/>
-              <a href="${changePhoneUrl}" style="color: #3b82f6; word-break: break-all;">${changePhoneUrl}</a>
-            </p>
-            
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />
-            
-            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} ShoutOut. All rights reserved.
-            </p>
-          </div>
-        `,
-        TextBody: `
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <img src="https://shoutout.us/whiteicon.png" alt="ShoutOut" style="height: 60px;" />
+        </div>
+        
+        <h1 style="color: #1f2937; font-size: 24px; margin-bottom: 16px;">Update Your Phone Number</h1>
+        
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+          Hi${userData.full_name ? ` ${userData.full_name}` : ''},
+        </p>
+        
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+          You requested to update the phone number associated with your ShoutOut account. Click the button below to set a new phone number:
+        </p>
+        
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${changePhoneUrl}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px;">
+            Update Phone Number
+          </a>
+        </div>
+        
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+          This link expires in 1 hour. If you didn't request this change, you can safely ignore this email.
+        </p>
+        
+        <p style="color: #6b7280; font-size: 14px;">
+          If the button doesn't work, copy and paste this link into your browser:<br/>
+          <a href="${changePhoneUrl}" style="color: #3b82f6; word-break: break-all;">${changePhoneUrl}</a>
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />
+        
+        <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+          © ${new Date().getFullYear()} ShoutOut. All rights reserved.
+        </p>
+      </div>
+    `;
+
+    const textContent = `
 Hi${userData.full_name ? ` ${userData.full_name}` : ''},
 
 You requested to update the phone number associated with your ShoutOut account.
@@ -154,14 +142,28 @@ Click here to update your phone number: ${changePhoneUrl}
 This link expires in 1 hour. If you didn't request this change, you can safely ignore this email.
 
 © ${new Date().getFullYear()} ShoutOut. All rights reserved.
-        `,
-        MessageStream: "outbound",
+    `;
+
+    const emailResponse = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${SENDGRID_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: normalizedEmail }] }],
+        from: { email: FROM_EMAIL, name: "ShoutOut" },
+        subject: "Update Your Phone Number - ShoutOut",
+        content: [
+          { type: "text/plain", value: textContent },
+          { type: "text/html", value: htmlContent },
+        ],
       }),
     });
 
     if (!emailResponse.ok) {
-      const errorData = await emailResponse.json();
-      console.error('Postmark API error:', errorData);
+      const errorText = await emailResponse.text();
+      console.error('SendGrid API error:', errorText);
       throw new Error("Failed to send email");
     }
 
