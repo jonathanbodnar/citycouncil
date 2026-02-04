@@ -158,6 +158,13 @@ This link expires in 1 hour. If you didn't request this change, you can safely i
           { type: "text/plain", value: textContent },
           { type: "text/html", value: htmlContent },
         ],
+        // Disable click tracking so links go directly to shoutout.us
+        tracking_settings: {
+          click_tracking: {
+            enable: false,
+            enable_text: false,
+          },
+        },
       }),
     });
 
