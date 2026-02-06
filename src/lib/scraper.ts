@@ -1,12 +1,26 @@
 // RSS Feed Scraper with database caching
-// Scrapes once per day, serves from database
+// Falls back to direct scraping if database unavailable
 
-import prisma from './prisma';
 import { NORTH_TEXAS_CITIES } from './cities';
 import { Meeting, MeetingType, MeetingStatus } from './types';
 
 // Cache duration: 24 hours
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000;
+
+// Lazy load prisma to handle connection errors gracefully
+let prismaClient: any = null;
+async function getPrisma() {
+  if (prismaClient) return prismaClient;
+  try {
+    const { PrismaClient } = await import('@prisma/client');
+    prismaClient = new PrismaClient();
+    await prismaClient.$connect();
+    return prismaClient;
+  } catch (error) {
+    console.error('Failed to connect to database:', error);
+    return null;
+  }
+}
 
 interface DbMeeting {
   externalId: string;
@@ -107,8 +121,8 @@ function parseRSSFeed(xml: string, cityId: string, cityName: string, defaultLoca
   return meetings;
 }
 
-// Scrape RSS feed for a city
-async function scrapeCity(cityId: string): Promise<DbMeeting[]> {
+// Scrape RSS feed for a city (direct, no caching)
+async function scrapeCity(cityId: string): Promise<Meeting[]> {
   const cityConfig = NORTH_TEXAS_CITIES.find(c => c.slug === cityId);
   if (!cityConfig) return [];
 
@@ -128,83 +142,113 @@ async function scrapeCity(cityId: string): Promise<DbMeeting[]> {
     const xml = await response.text();
     if (!xml || xml.length < 100) return [];
 
-    return parseRSSFeed(
+    const dbMeetings = parseRSSFeed(
       xml, 
       cityId, 
       cityConfig.name, 
       cityConfig.location || `${cityConfig.name} City Hall`
     );
+    
+    // Convert to Meeting type and filter upcoming
+    const now = new Date();
+    return dbMeetings
+      .filter(m => new Date(m.date) >= now)
+      .map((m, i) => ({
+        id: `${cityId}-${i}`,
+        ...m,
+        meetingType: m.meetingType as MeetingType,
+        status: m.status as MeetingStatus
+      }));
   } catch (error) {
     console.error(`Error scraping ${cityId}:`, error);
     return [];
   }
 }
 
-// Check if city cache is stale (older than 24 hours)
-async function isCacheStale(cityId: string): Promise<boolean> {
-  const cache = await prisma.cityCache.findUnique({
-    where: { cityId }
-  });
+// Try to get from cache, fall back to scraping
+async function getMeetingsWithCache(cityId: string): Promise<Meeting[]> {
+  const prisma = await getPrisma();
   
-  if (!cache) return true;
-  
-  const age = Date.now() - cache.lastScraped.getTime();
-  return age > CACHE_DURATION_MS;
-}
-
-// Refresh cache for a city - scrape and save to database
-async function refreshCityCache(cityId: string): Promise<void> {
-  console.log(`Refreshing cache for ${cityId}...`);
-  
-  const meetings = await scrapeCity(cityId);
-  
-  if (meetings.length === 0) {
-    console.log(`No meetings found for ${cityId}`);
-    return;
+  if (!prisma) {
+    // No database, scrape directly
+    console.log(`No DB connection, scraping ${cityId} directly`);
+    return scrapeCity(cityId);
   }
 
-  // Delete old meetings for this city
-  await prisma.meeting.deleteMany({
-    where: { cityId }
-  });
+  try {
+    // Check cache
+    const cache = await prisma.cityCache.findUnique({
+      where: { cityId }
+    });
+    
+    const now = new Date();
+    const cacheValid = cache && (Date.now() - cache.lastScraped.getTime()) < CACHE_DURATION_MS;
 
-  // Insert new meetings
-  await prisma.meeting.createMany({
-    data: meetings
-  });
+    if (cacheValid) {
+      // Return from database
+      const meetings = await prisma.meeting.findMany({
+        where: {
+          cityId,
+          status: 'UPCOMING',
+          date: { gte: now }
+        },
+        orderBy: { date: 'asc' }
+      });
 
-  // Update cache timestamp
-  await prisma.cityCache.upsert({
-    where: { cityId },
-    update: { lastScraped: new Date() },
-    create: { cityId, lastScraped: new Date() }
-  });
+      if (meetings.length > 0) {
+        return meetings.map((m: any) => ({
+          ...m,
+          meetingType: m.meetingType as MeetingType,
+          status: m.status as MeetingStatus
+        }));
+      }
+    }
 
-  console.log(`Cached ${meetings.length} meetings for ${cityId}`);
+    // Cache stale or empty, scrape fresh
+    console.log(`Refreshing cache for ${cityId}...`);
+    const freshMeetings = await scrapeCity(cityId);
+    
+    if (freshMeetings.length > 0) {
+      // Save to database
+      try {
+        await prisma.meeting.deleteMany({ where: { cityId } });
+        await prisma.meeting.createMany({
+          data: freshMeetings.map(m => ({
+            externalId: m.externalId || `${cityId}-${m.id}`,
+            cityId: m.cityId,
+            cityName: m.cityName || cityId,
+            title: m.title,
+            description: m.description,
+            date: m.date,
+            time: m.time,
+            location: m.location,
+            address: m.address,
+            agendaUrl: m.agendaUrl,
+            liveStreamUrl: m.liveStreamUrl,
+            meetingType: m.meetingType,
+            status: m.status
+          }))
+        });
+        await prisma.cityCache.upsert({
+          where: { cityId },
+          update: { lastScraped: now },
+          create: { cityId, lastScraped: now }
+        });
+      } catch (dbError) {
+        console.error('Failed to cache meetings:', dbError);
+      }
+    }
+
+    return freshMeetings;
+  } catch (error) {
+    console.error(`Database error for ${cityId}, falling back to scraping:`, error);
+    return scrapeCity(cityId);
+  }
 }
 
-// Get meetings for a city - from cache, refreshing if stale
+// Get meetings for a city
 export async function getMeetingsForCity(cityId: string): Promise<Meeting[]> {
-  // Check if we need to refresh
-  if (await isCacheStale(cityId)) {
-    await refreshCityCache(cityId);
-  }
-
-  // Return from database
-  const meetings = await prisma.meeting.findMany({
-    where: {
-      cityId,
-      status: 'UPCOMING',
-      date: { gte: new Date() }
-    },
-    orderBy: { date: 'asc' }
-  });
-
-  return meetings.map(m => ({
-    ...m,
-    meetingType: m.meetingType as MeetingType,
-    status: m.status as MeetingStatus
-  }));
+  return getMeetingsWithCache(cityId);
 }
 
 // Get meetings for multiple cities
@@ -222,11 +266,4 @@ export async function fetchMeetingsForCities(citySlugs: string[]): Promise<Meeti
 export async function fetchAllMeetings(): Promise<Meeting[]> {
   const allSlugs = NORTH_TEXAS_CITIES.map(c => c.slug);
   return fetchMeetingsForCities(allSlugs);
-}
-
-// Force refresh all cities (can be called by a cron job)
-export async function refreshAllCities(): Promise<void> {
-  for (const city of NORTH_TEXAS_CITIES) {
-    await refreshCityCache(city.slug);
-  }
 }
