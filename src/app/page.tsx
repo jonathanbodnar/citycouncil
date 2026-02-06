@@ -88,7 +88,7 @@ export default function Home() {
     setSearchedZip('');
   };
 
-  const getCityForMeeting = (meeting: Meeting): City | undefined => {
+  const getCityForMeeting = (meeting: Meeting) => {
     return matchedCities.find(c => c.slug === meeting.cityId || c.name === meeting.cityName);
   };
 

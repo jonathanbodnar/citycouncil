@@ -1,11 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Meeting, City } from '@/lib/types';
+import { Meeting } from '@/lib/types';
+
+interface CityInfo {
+  name: string;
+  websiteUrl: string;
+  meetingSchedule?: string | null;
+}
 
 interface MeetingDetailProps {
   meeting: Meeting;
-  city?: City;
+  city?: CityInfo;
   onClose: () => void;
 }
 
