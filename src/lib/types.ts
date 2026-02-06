@@ -16,17 +16,17 @@ export interface City {
 
 export interface Meeting {
   id: string;
-  externalId?: string;
+  externalId?: string | null;
   cityId: string;
-  cityName?: string;
+  cityName?: string | null;
   title: string;
-  description?: string;
+  description?: string | null;
   date: Date;
   time: string;
   location: string;
-  address?: string;
-  agendaUrl?: string;
-  liveStreamUrl?: string;
+  address?: string | null;
+  agendaUrl?: string | null;
+  liveStreamUrl?: string | null;
   meetingType: MeetingType;
   status: MeetingStatus;
 }
