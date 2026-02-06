@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Meeting, City } from '@/lib/types';
 import { NORTH_TEXAS_CITIES } from '@/lib/cities';
 import MeetingCard from '@/components/MeetingCard';
@@ -16,6 +16,13 @@ export default function Home() {
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [searchedZip, setSearchedZip] = useState('');
   const [isNearby, setIsNearby] = useState(false);
+  const [selectedCityFilter, setSelectedCityFilter] = useState<string | null>(null);
+
+  // Filter meetings by selected city
+  const filteredMeetings = useMemo(() => {
+    if (!selectedCityFilter) return meetings;
+    return meetings.filter(meeting => meeting.cityId === selectedCityFilter);
+  }, [meetings, selectedCityFilter]);
 
   const handleSearch = useCallback(async () => {
     const cleanZip = zipCode.trim();
@@ -26,6 +33,7 @@ export default function Home() {
 
     setSearchState('loading');
     setSearchedZip(cleanZip);
+    setSelectedCityFilter(null);
 
     try {
       const response = await fetch(`/api/meetings?zip=${cleanZip}`);
@@ -60,6 +68,7 @@ export default function Home() {
   const handleBrowseAll = async () => {
     setSearchState('loading');
     setSearchedZip('');
+    setSelectedCityFilter(null);
     
     try {
       const response = await fetch('/api/meetings?all=true');
@@ -86,6 +95,32 @@ export default function Home() {
     setMeetings([]);
     setMatchedCities([]);
     setSearchedZip('');
+    setSelectedCityFilter(null);
+  };
+
+  // Handle clicking a city in "currently covering" section
+  const handleCityClick = async (city: typeof NORTH_TEXAS_CITIES[0]) => {
+    setSearchState('loading');
+    setSearchedZip('');
+    setMatchedCities([city]);
+    setIsNearby(false);
+    setSelectedCityFilter(null);
+    
+    try {
+      const response = await fetch(`/api/meetings?cities=${city.slug}`);
+      const data = await response.json();
+
+      if (data.error) {
+        setSearchState('error');
+        return;
+      }
+
+      setMeetings(data.meetings || []);
+      setSearchState(data.meetings?.length > 0 ? 'results' : 'no-results');
+    } catch (error) {
+      console.error('City click error:', error);
+      setSearchState('error');
+    }
   };
 
   const getCityForMeeting = (meeting: Meeting) => {
@@ -93,14 +128,17 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button onClick={handleReset} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3L2 9l10 6 10-6-10-6z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 10v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 21v-6h6v6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3" />
               </svg>
             </div>
             <div>
@@ -135,14 +173,22 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8 flex-grow">
         {/* Idle State */}
         {searchState === 'idle' && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] -mt-8">
+            {/* Logo - Government/Civic Building */}
             <div className="mb-8">
               <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/25">
                 <svg className="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  {/* Capitol dome/roof */}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2L3 8h18L12 2z" />
+                  {/* Building base/pediment */}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8v2h16V8" />
+                  {/* Columns */}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 10v9M10 10v9M14 10v9M18 10v9" />
+                  {/* Base/foundation */}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 19h18v2H3z" />
                 </svg>
               </div>
             </div>
@@ -193,12 +239,13 @@ export default function Home() {
               <p className="text-sm text-gray-500 mb-4">Currently covering</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {NORTH_TEXAS_CITIES.map(city => (
-                  <span
+                  <button
                     key={city.slug}
-                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors cursor-default"
+                    onClick={() => handleCityClick(city)}
+                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                   >
                     {city.name}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -224,8 +271,19 @@ export default function Home() {
                   </h2>
                   <p className="text-gray-600">
                     {isNearby && "Your zip code isn't directly covered, but here are nearby cities. "}
-                    Showing {meetings.length} upcoming meeting{meetings.length !== 1 ? 's' : ''} in{' '}
-                    {matchedCities.map(c => c.name).join(', ')}
+                    Showing {filteredMeetings.length} upcoming meeting{filteredMeetings.length !== 1 ? 's' : ''} in{' '}
+                    {selectedCityFilter 
+                      ? matchedCities.find(c => c.slug === selectedCityFilter)?.name
+                      : matchedCities.map(c => c.name).join(', ')}
+                  </p>
+                </>
+              ) : matchedCities.length === 1 ? (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    Meetings in {matchedCities[0].name}
+                  </h2>
+                  <p className="text-gray-600">
+                    Showing {filteredMeetings.length} upcoming meeting{filteredMeetings.length !== 1 ? 's' : ''}
                   </p>
                 </>
               ) : (
@@ -234,7 +292,10 @@ export default function Home() {
                     All Upcoming Meetings
                   </h2>
                   <p className="text-gray-600">
-                    Showing {meetings.length} upcoming meeting{meetings.length !== 1 ? 's' : ''} across all North Texas cities
+                    Showing {filteredMeetings.length} upcoming meeting{filteredMeetings.length !== 1 ? 's' : ''}{' '}
+                    {selectedCityFilter 
+                      ? `in ${matchedCities.find(c => c.slug === selectedCityFilter)?.name}`
+                      : 'across all North Texas cities'}
                   </p>
                 </>
               )}
@@ -243,13 +304,25 @@ export default function Home() {
             {matchedCities.length > 1 && (
               <div className="flex flex-wrap gap-2 mb-6">
                 <span className="text-sm text-gray-500 py-1">Filter:</span>
-                <button className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-medium">
+                <button 
+                  onClick={() => setSelectedCityFilter(null)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    selectedCityFilter === null 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
                   All Cities
                 </button>
                 {matchedCities.map(city => (
                   <button
                     key={city.slug}
-                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors"
+                    onClick={() => setSelectedCityFilter(city.slug)}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      selectedCityFilter === city.slug
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
                   >
                     {city.name}
                   </button>
@@ -258,7 +331,7 @@ export default function Home() {
             )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {meetings.map(meeting => (
+              {filteredMeetings.map(meeting => (
                 <MeetingCard
                   key={meeting.id}
                   meeting={meeting}
