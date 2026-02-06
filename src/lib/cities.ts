@@ -40,10 +40,10 @@ export const NORTH_TEXAS_CITIES = [
     state: 'TX',
     zipCodes: ['75023', '75024', '75025', '75026', '75074', '75075', '75082', '75093', '75094'],
     rssUrl: 'https://plano.novusagenda.com/agendapublic/rss.ashx',
-    calendarUrl: 'https://plano.novusagenda.com/agendapublic/',
+    calendarUrl: 'https://plano.novusagenda.com/agendapublic/MeetingsGeneral.aspx',
     websiteUrl: 'https://www.plano.gov',
     meetingSchedule: '2nd and 4th Monday at 7:00 PM',
-    location: 'Plano Municipal Center, 1520 K Ave'
+    location: 'Plano Municipal Center, 1520 K Avenue'
   },
   {
     slug: 'aubrey',
@@ -88,6 +88,17 @@ export const NORTH_TEXAS_CITIES = [
     websiteUrl: 'https://www.murphytx.org',
     meetingSchedule: '1st and 3rd Tuesday at 6:00 PM',
     location: 'Murphy City Hall, 206 N. Murphy Rd'
+  },
+  {
+    slug: 'mckinney',
+    name: 'McKinney',
+    state: 'TX',
+    zipCodes: ['75069', '75070', '75071', '75072'],
+    rssUrl: 'https://www.mckinneytexas.org/RSSFeed.aspx?ModID=58&CID=Public-Meetings-13',
+    calendarUrl: 'https://www.mckinneytexas.org/Calendar.aspx',
+    websiteUrl: 'https://www.mckinneytexas.org',
+    meetingSchedule: '1st and 3rd Tuesday at 6:00 PM',
+    location: 'McKinney City Hall, 222 N. Tennessee St'
   }
 ];
 
