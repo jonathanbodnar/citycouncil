@@ -316,3 +316,57 @@ export async function refreshCityCache(citySlug: string): Promise<void> {
 export async function refreshAllCaches(): Promise<void> {
   await prisma.cacheMetadata.deleteMany();
 }
+
+// Generate mock meetings without database (for fallback when DB not available)
+export function generateMockMeetingsForCity(cityConfig: typeof NORTH_TEXAS_CITIES[0]): Meeting[] {
+  const meetings: Meeting[] = [];
+  const now = new Date();
+  
+  const schedule = cityConfig.meetingSchedule || '1st and 3rd Tuesday';
+  const timeMatch = schedule.match(/(\d{1,2}:\d{2}\s*(AM|PM)?)/i);
+  const defaultTime = timeMatch ? timeMatch[0] : '6:00 PM';
+  
+  for (let i = 0; i < 4; i++) {
+    const meetingDate = new Date(now);
+    meetingDate.setDate(now.getDate() + (7 * (i + 1)) + Math.floor(Math.random() * 7));
+    meetingDate.setHours(18, 0, 0, 0);
+    
+    const isWorkSession = i % 2 === 1;
+    
+    meetings.push({
+      id: `${cityConfig.slug}-mock-${i}`,
+      externalId: `mock-${i}`,
+      cityId: cityConfig.slug,
+      cityName: cityConfig.name,
+      title: isWorkSession 
+        ? `${cityConfig.name} City Council Work Session`
+        : `${cityConfig.name} City Council Regular Meeting`,
+      description: isWorkSession
+        ? `Work session to discuss upcoming agenda items and city business for ${cityConfig.name}.`
+        : `Regular city council meeting for the City of ${cityConfig.name}. Public comment period available.`,
+      date: meetingDate,
+      time: isWorkSession ? '5:00 PM' : defaultTime,
+      location: cityConfig.location || `${cityConfig.name} City Hall`,
+      address: cityConfig.location || null,
+      agendaUrl: cityConfig.websiteUrl,
+      liveStreamUrl: cityConfig.websiteUrl,
+      meetingType: isWorkSession ? 'WORK_SESSION' : 'REGULAR',
+      status: 'UPCOMING'
+    });
+  }
+  
+  return meetings;
+}
+
+// Get mock meetings for multiple cities (fallback mode)
+export function getMockMeetingsForCities(citySlugs: string[]): Meeting[] {
+  const cities = NORTH_TEXAS_CITIES.filter(c => citySlugs.includes(c.slug));
+  return cities.flatMap(city => generateMockMeetingsForCity(city))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+}
+
+// Get all mock meetings (fallback mode)
+export function getAllMockMeetings(): Meeting[] {
+  return NORTH_TEXAS_CITIES.flatMap(city => generateMockMeetingsForCity(city))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+}

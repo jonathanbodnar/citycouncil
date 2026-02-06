@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchAllMeetings, fetchMeetingsForCities } from '@/lib/scraper';
+import { fetchAllMeetings, fetchMeetingsForCities, getAllMockMeetings, getMockMeetingsForCities } from '@/lib/scraper';
 import { getCitySlugsByZipCode, getNearbyCitySlugs, NORTH_TEXAS_CITIES } from '@/lib/cities';
 
 export const dynamic = 'force-dynamic';
@@ -10,18 +10,31 @@ export async function GET(request: Request) {
   const citySlugs = searchParams.get('cities')?.split(',');
   const all = searchParams.get('all') === 'true';
 
-  try {
-    let meetings;
-    let matchedCities: typeof NORTH_TEXAS_CITIES = [];
-    let isNearby = false;
+  let meetings;
+  let matchedCities: typeof NORTH_TEXAS_CITIES = [];
+  let isNearby = false;
+  let usingMockData = false;
 
+  try {
     if (all) {
       // Fetch all meetings
-      meetings = await fetchAllMeetings();
+      try {
+        meetings = await fetchAllMeetings();
+      } catch {
+        console.log('Database unavailable, using mock data');
+        meetings = getAllMockMeetings();
+        usingMockData = true;
+      }
       matchedCities = NORTH_TEXAS_CITIES;
     } else if (citySlugs && citySlugs.length > 0) {
       // Fetch specific cities
-      meetings = await fetchMeetingsForCities(citySlugs);
+      try {
+        meetings = await fetchMeetingsForCities(citySlugs);
+      } catch {
+        console.log('Database unavailable, using mock data');
+        meetings = getMockMeetingsForCities(citySlugs);
+        usingMockData = true;
+      }
       matchedCities = NORTH_TEXAS_CITIES.filter(c => citySlugs.includes(c.slug));
     } else if (zipCode) {
       // Fetch by zip code
@@ -42,7 +55,13 @@ export async function GET(request: Request) {
         });
       }
 
-      meetings = await fetchMeetingsForCities(slugs);
+      try {
+        meetings = await fetchMeetingsForCities(slugs);
+      } catch {
+        console.log('Database unavailable, using mock data');
+        meetings = getMockMeetingsForCities(slugs);
+        usingMockData = true;
+      }
       matchedCities = NORTH_TEXAS_CITIES.filter(c => slugs.includes(c.slug));
     } else {
       return NextResponse.json({
@@ -54,14 +73,19 @@ export async function GET(request: Request) {
       meetings,
       cities: matchedCities,
       isNearby,
-      count: meetings.length
+      count: meetings.length,
+      usingMockData
     });
 
   } catch (error) {
     console.error('Error fetching meetings:', error);
+    // Final fallback - return mock data for all cities
     return NextResponse.json({
-      error: 'Failed to fetch meetings',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+      meetings: getAllMockMeetings(),
+      cities: NORTH_TEXAS_CITIES,
+      isNearby: false,
+      count: NORTH_TEXAS_CITIES.length * 4,
+      usingMockData: true
+    });
   }
 }
