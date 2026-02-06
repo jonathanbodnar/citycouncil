@@ -749,9 +749,9 @@ function dbToMeeting(db: DbMeeting): Meeting {
 }
 
 async function getMeetingsWithCache(cityId: string): Promise<Meeting[]> {
-  // If no admin client (no service role key), scrape directly
-  if (!supabaseAdmin) {
-    console.log(`⚠️ No service role key, scraping ${cityId} directly`);
+  // If no admin client (no service role key) or no supabase client, scrape directly
+  if (!supabaseAdmin || !supabase) {
+    console.log(`⚠️ No Supabase connection, scraping ${cityId} directly`);
     return scrapeCity(cityId);
   }
 
