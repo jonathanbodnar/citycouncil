@@ -206,6 +206,7 @@ const CreatorsPage = lazy(() => import('./pages/CreatorsPage'));
 const TalentStartPage = lazy(() => import('./pages/TalentStartPage'));
 const OccasionLandingPage = lazy(() => import('./pages/OccasionLandingPage'));
 const ChangePhonePage = lazy(() => import('./pages/ChangePhonePage'));
+const CityCouncilFinder = lazy(() => import('./components/CityCouncil/CityCouncilFinder'));
 
 // Redirect component for old /profile/ URLs
 const ProfileRedirect: React.FC = () => {
@@ -283,6 +284,9 @@ function App() {
             <Routes>
             {/* Demo page - standalone without header/footer */}
             <Route path="/demo" element={<DemoPage />} />
+            
+            {/* City Council Finder - standalone app */}
+            <Route path="/council" element={<CityCouncilFinder />} />
             
             {/* Unified login/register - both routes use same component */}
             <Route path="/login" element={<SignupPage />} />
