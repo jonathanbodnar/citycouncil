@@ -128,7 +128,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col overflow-x-hidden">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -262,7 +262,7 @@ export default function Home() {
 
         {/* Results State */}
         {searchState === 'results' && (
-          <div>
+          <div className="overflow-hidden">
             <div className="mb-8">
               {searchedZip ? (
                 <>
@@ -302,31 +302,33 @@ export default function Home() {
             </div>
 
             {matchedCities.length > 1 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span className="text-sm text-gray-500 py-1">Filter:</span>
-                <button 
-                  onClick={() => setSelectedCityFilter(null)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    selectedCityFilter === null 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  All Cities
-                </button>
-                {matchedCities.map(city => (
-                  <button
-                    key={city.slug}
-                    onClick={() => setSelectedCityFilter(city.slug)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      selectedCityFilter === city.slug
-                        ? 'bg-blue-600 text-white'
+              <div className="mb-6 -mx-4 px-4">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  <span className="text-sm text-gray-500 py-1 flex-shrink-0">Filter:</span>
+                  <button 
+                    onClick={() => setSelectedCityFilter(null)}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors flex-shrink-0 ${
+                      selectedCityFilter === null 
+                        ? 'bg-blue-600 text-white' 
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    {city.name}
+                    All Cities
                   </button>
-                ))}
+                  {matchedCities.map(city => (
+                    <button
+                      key={city.slug}
+                      onClick={() => setSelectedCityFilter(city.slug)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors flex-shrink-0 ${
+                        selectedCityFilter === city.slug
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {city.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
