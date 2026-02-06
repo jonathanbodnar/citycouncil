@@ -3,7 +3,7 @@
 
 import prisma from './prisma';
 import { NORTH_TEXAS_CITIES } from './cities';
-import { Meeting, MeetingType } from './types';
+import { Meeting, MeetingType, MeetingStatus } from './types';
 
 // Cache duration: 24 hours
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000;
@@ -202,7 +202,8 @@ export async function getMeetingsForCity(cityId: string): Promise<Meeting[]> {
 
   return meetings.map(m => ({
     ...m,
-    meetingType: m.meetingType as MeetingType
+    meetingType: m.meetingType as MeetingType,
+    status: m.status as MeetingStatus
   }));
 }
 
