@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchAllMeetings, fetchMeetingsForCities, getAllMockMeetings, getMockMeetingsForCities } from '@/lib/scraper';
+import { fetchAllMeetings, fetchMeetingsForCities } from '@/lib/scraper';
 import { getCitySlugsByZipCode, getNearbyCitySlugs, NORTH_TEXAS_CITIES } from '@/lib/cities';
 
 export const dynamic = 'force-dynamic';
@@ -10,31 +10,18 @@ export async function GET(request: Request) {
   const citySlugs = searchParams.get('cities')?.split(',');
   const all = searchParams.get('all') === 'true';
 
-  let meetings;
-  let matchedCities: typeof NORTH_TEXAS_CITIES = [];
-  let isNearby = false;
-  let usingMockData = false;
-
   try {
+    let meetings;
+    let matchedCities: typeof NORTH_TEXAS_CITIES = [];
+    let isNearby = false;
+
     if (all) {
-      // Fetch all meetings
-      try {
-        meetings = await fetchAllMeetings();
-      } catch {
-        console.log('Database unavailable, using mock data');
-        meetings = getAllMockMeetings();
-        usingMockData = true;
-      }
+      // Fetch all meetings from RSS feeds
+      meetings = await fetchAllMeetings();
       matchedCities = NORTH_TEXAS_CITIES;
     } else if (citySlugs && citySlugs.length > 0) {
       // Fetch specific cities
-      try {
-        meetings = await fetchMeetingsForCities(citySlugs);
-      } catch {
-        console.log('Database unavailable, using mock data');
-        meetings = getMockMeetingsForCities(citySlugs);
-        usingMockData = true;
-      }
+      meetings = await fetchMeetingsForCities(citySlugs);
       matchedCities = NORTH_TEXAS_CITIES.filter(c => citySlugs.includes(c.slug));
     } else if (zipCode) {
       // Fetch by zip code
@@ -55,13 +42,7 @@ export async function GET(request: Request) {
         });
       }
 
-      try {
-        meetings = await fetchMeetingsForCities(slugs);
-      } catch {
-        console.log('Database unavailable, using mock data');
-        meetings = getMockMeetingsForCities(slugs);
-        usingMockData = true;
-      }
+      meetings = await fetchMeetingsForCities(slugs);
       matchedCities = NORTH_TEXAS_CITIES.filter(c => slugs.includes(c.slug));
     } else {
       return NextResponse.json({
@@ -73,19 +54,14 @@ export async function GET(request: Request) {
       meetings,
       cities: matchedCities,
       isNearby,
-      count: meetings.length,
-      usingMockData
+      count: meetings.length
     });
 
   } catch (error) {
     console.error('Error fetching meetings:', error);
-    // Final fallback - return mock data for all cities
     return NextResponse.json({
-      meetings: getAllMockMeetings(),
-      cities: NORTH_TEXAS_CITIES,
-      isNearby: false,
-      count: NORTH_TEXAS_CITIES.length * 4,
-      usingMockData: true
-    });
+      error: 'Failed to fetch meetings',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
