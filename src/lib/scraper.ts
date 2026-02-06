@@ -749,8 +749,11 @@ function dbToMeeting(db: DbMeeting): Meeting {
 }
 
 async function getMeetingsWithCache(cityId: string): Promise<Meeting[]> {
-  // If no admin client (no service role key) or no supabase client, scrape directly
-  if (!supabaseAdmin || !supabase) {
+  // Use admin client if available, otherwise use regular client (RLS allows writes)
+  const writeClient = supabaseAdmin || supabase;
+  
+  // If no supabase client at all, scrape directly
+  if (!supabase) {
     console.log(`⚠️ No Supabase connection, scraping ${cityId} directly`);
     return scrapeCity(cityId);
   }
@@ -786,16 +789,16 @@ async function getMeetingsWithCache(cityId: string): Promise<Meeting[]> {
     console.log(`🔄 Refreshing cache for ${cityId}...`);
     const freshMeetings = await scrapeCity(cityId);
     
-    if (freshMeetings.length > 0) {
+    if (freshMeetings.length > 0 && writeClient) {
       try {
         // Delete old meetings for this city
-        await supabaseAdmin
+        await writeClient
           .from('meetings')
           .delete()
           .eq('city_id', cityId);
 
         // Insert new meetings
-        const { error: insertError } = await supabaseAdmin
+        const { error: insertError } = await writeClient
           .from('meetings')
           .insert(freshMeetings.map(m => ({
             id: m.id,
@@ -820,7 +823,7 @@ async function getMeetingsWithCache(cityId: string): Promise<Meeting[]> {
         }
 
         // Update cache timestamp
-        await supabaseAdmin
+        await writeClient
           .from('city_cache')
           .upsert({
             city_id: cityId,
@@ -865,9 +868,10 @@ export async function fetchAllMeetings(): Promise<Meeting[]> {
 
 // Force refresh (bypasses cache)
 export async function refreshMeetingsForCity(cityId: string): Promise<Meeting[]> {
-  if (supabaseAdmin) {
-    await supabaseAdmin.from('city_cache').delete().eq('city_id', cityId);
-    await supabaseAdmin.from('meetings').delete().eq('city_id', cityId);
+  const writeClient = supabaseAdmin || supabase;
+  if (writeClient) {
+    await writeClient.from('city_cache').delete().eq('city_id', cityId);
+    await writeClient.from('meetings').delete().eq('city_id', cityId);
   }
   return getMeetingsForCity(cityId);
 }
