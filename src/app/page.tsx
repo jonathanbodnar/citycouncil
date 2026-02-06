@@ -173,7 +173,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8 flex-grow">
+      <main className="max-w-6xl mx-auto px-4 py-8 flex-grow w-full box-border">
         {/* Idle State */}
         {searchState === 'idle' && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] -mt-8">
@@ -262,7 +262,7 @@ export default function Home() {
 
         {/* Results State */}
         {searchState === 'results' && (
-          <div className="overflow-hidden">
+          <div className="overflow-hidden w-full max-w-full">
             <div className="mb-8">
               {searchedZip ? (
                 <>
@@ -332,7 +332,7 @@ export default function Home() {
               </div>
             )}
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
               {filteredMeetings.map(meeting => (
                 <MeetingCard
                   key={meeting.id}

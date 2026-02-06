@@ -44,18 +44,18 @@ export default function MeetingCard({ meeting, cityName, onClick }: MeetingCardP
   return (
     <button
       onClick={() => onClick(meeting)}
-      className="w-full text-left group"
+      className="w-full text-left group min-w-0"
     >
       <div 
-        className="rounded-2xl border border-gray-200 p-6 transition-all duration-200 hover:shadow-lg hover:border-gray-300 hover:-translate-y-0.5"
+        className="rounded-2xl border border-gray-200 p-4 sm:p-6 transition-all duration-200 hover:shadow-lg hover:border-gray-300 hover:-translate-y-0.5 overflow-hidden"
         style={{ backgroundColor: '#ffffff' }}
       >
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-start justify-between gap-2 sm:gap-4 mb-4">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-sm font-medium" style={{ color: '#6b7280' }}>{cityName}, TX</span>
               <span 
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
                 style={{ backgroundColor: typeStyle.bg, color: typeStyle.color }}
               >
                 {typeStyle.label}
@@ -63,7 +63,7 @@ export default function MeetingCard({ meeting, cityName, onClick }: MeetingCardP
             </div>
             
             <h3 
-              className="text-lg font-semibold group-hover:text-blue-600 transition-colors truncate"
+              className="text-base sm:text-lg font-semibold group-hover:text-blue-600 transition-colors truncate"
               style={{ color: '#111827' }}
             >
               {meeting.title}
@@ -72,12 +72,12 @@ export default function MeetingCard({ meeting, cityName, onClick }: MeetingCardP
           
           <div className="flex-shrink-0 text-right">
             <div 
-              className="text-sm font-semibold"
+              className="text-sm font-semibold whitespace-nowrap"
               style={{ color: isToday ? '#dc2626' : isTomorrow ? '#2563eb' : '#4b5563' }}
             >
               {relativeDate}
             </div>
-            <div className="text-xs" style={{ color: '#6b7280' }}>
+            <div className="text-xs whitespace-nowrap" style={{ color: '#6b7280' }}>
               {meetingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </div>
           </div>
