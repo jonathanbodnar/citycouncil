@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Council Finder - North Texas City Meetings",
+  title: "Show Up Now - North Texas City Meetings",
   description: "Find upcoming city council meetings in North Texas. Search by zip code to discover local government meetings in Frisco, Plano, McKinney, Denton, and more.",
 };
 

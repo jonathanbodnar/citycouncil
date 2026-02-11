@@ -142,7 +142,7 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Council Finder</h1>
+              <h1 className="text-xl font-bold text-gray-900">Show Up Now</h1>
               <p className="text-xs text-gray-500">North Texas City Meetings</p>
             </div>
           </button>
@@ -194,7 +194,7 @@ export default function Home() {
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center">
-              Council Finder
+              Show Up Now
             </h1>
             <p className="text-xl text-gray-600 mb-10 text-center max-w-md">
               Find upcoming city council meetings in North Texas
@@ -400,7 +400,7 @@ export default function Home() {
       <footer className="border-t border-gray-200 bg-gray-50 mt-auto">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-            <p>Council Finder - Your guide to local government in North Texas</p>
+            <p>Show Up Now - Your guide to local government in North Texas</p>
             <div className="flex items-center gap-4">
               <span>Data sourced from official city websites</span>
             </div>
