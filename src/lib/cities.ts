@@ -90,6 +90,17 @@ export const NORTH_TEXAS_CITIES = [
     location: 'Murphy City Hall, 206 N. Murphy Rd'
   },
   {
+    slug: 'mansfield',
+    name: 'Mansfield',
+    state: 'TX',
+    zipCodes: ['76063'],
+    rssUrl: 'https://www.mansfieldtexas.gov/RSSFeed.aspx?ModID=58&CID=Public-Meetings-24',
+    calendarUrl: 'https://www.mansfieldtexas.gov/Calendar.aspx',
+    websiteUrl: 'https://www.mansfieldtexas.gov',
+    meetingSchedule: '2nd and 4th Monday at 6:00 PM',
+    location: 'Mansfield City Hall, 1200 E. Broad St'
+  },
+  {
     slug: 'mckinney',
     name: 'McKinney',
     state: 'TX',

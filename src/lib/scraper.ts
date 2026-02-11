@@ -131,20 +131,27 @@ function convertTo24Hour(time12h: string): string {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
 }
 
-function filterCouncilMeetings(events: ScrapedEvent[]): ScrapedEvent[] {
-  const councilKeywords = [
+function filterRelevantMeetings(events: ScrapedEvent[]): ScrapedEvent[] {
+  const relevantKeywords = [
     'city council',
     'town council',
     'council meeting',
     'council work session',
     'council regular',
     'council special',
-    'public hearing'
+    'public hearing',
+    'planning and zoning',
+    'planning & zoning',
+    'planning commission',
+    'zoning commission',
+    'zoning board',
+    'p&z',
+    'p & z'
   ];
   
   return events.filter(event => {
     const lowerName = event.name.toLowerCase();
-    return councilKeywords.some(keyword => lowerName.includes(keyword));
+    return relevantKeywords.some(keyword => lowerName.includes(keyword));
   });
 }
 
@@ -195,9 +202,9 @@ async function scrapeCivicPlus(
     }
 
     const allEvents = parseCivicPlusHTML(html);
-    const councilEvents = filterCouncilMeetings(allEvents);
+    const councilEvents = filterRelevantMeetings(allEvents);
     
-    console.log(`Found ${councilEvents.length} council meetings for ${cityName}`);
+    console.log(`Found ${councilEvents.length} meetings for ${cityName}`);
 
     const now = new Date();
     const meetings: Meeting[] = [];
@@ -211,7 +218,8 @@ async function scrapeCivicPlus(
       // Determine meeting type
       const lowerName = event.name.toLowerCase();
       let meetingType: MeetingType = 'REGULAR';
-      if (lowerName.includes('work session')) meetingType = 'WORK_SESSION';
+      if (lowerName.includes('planning') || lowerName.includes('zoning') || lowerName.includes('p&z') || lowerName.includes('p & z')) meetingType = 'PLANNING_ZONING';
+      else if (lowerName.includes('work session')) meetingType = 'WORK_SESSION';
       else if (lowerName.includes('special')) meetingType = 'SPECIAL';
       else if (lowerName.includes('public hearing')) meetingType = 'PUBLIC_HEARING';
 
@@ -286,8 +294,12 @@ async function scrapeLegistar(
     while ((match = rowRegex.exec(html)) !== null) {
       const row = match[1];
       
-      // Check if this is a City Council meeting
-      if (!row.toLowerCase().includes('city council')) continue;
+      const rowLower = row.toLowerCase();
+      
+      // Check if this is a relevant meeting (council or P&Z)
+      const isCouncil = rowLower.includes('city council');
+      const isPZ = rowLower.includes('planning') || rowLower.includes('zoning') || rowLower.includes('p&z') || rowLower.includes('p & z');
+      if (!isCouncil && !isPZ) continue;
       
       // Extract date - Legistar format varies
       const dateMatch = row.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
@@ -301,30 +313,37 @@ async function scrapeLegistar(
       const time = timeMatch ? timeMatch[0] : '6:00 PM';
       
       // Extract location from row
-      const locationMatch = row.match(/City Council[^<]*<[^>]*>[^<]*<[^>]*>([^<]+)/i);
-      const location = locationMatch ? locationMatch[1].trim() : defaultLocation;
+      const locationMatch = row.match(/(City Council|Planning)[^<]*<[^>]*>[^<]*<[^>]*>([^<]+)/i);
+      const location = locationMatch ? locationMatch[2].trim() : defaultLocation;
+      
+      // Determine meeting type
+      let meetingType: MeetingType = 'REGULAR';
+      if (isPZ) meetingType = 'PLANNING_ZONING';
       
       const meetingId = `${cityId}-${index++}`;
+      const title = isPZ 
+        ? `${cityName} Planning & Zoning Meeting`
+        : `${cityName} City Council Meeting`;
       
       meetings.push({
         id: meetingId,
         externalId: meetingId,
         cityId,
         cityName,
-        title: `${cityName} City Council Meeting`,
-        description: `City Council meeting for ${cityName}`,
+        title,
+        description: `${title} for ${cityName}`,
         date: meetingDate,
         time,
         location: location || defaultLocation,
         address: defaultLocation,
         agendaUrl: calendarUrl,
         liveStreamUrl: null,
-        meetingType: 'REGULAR' as MeetingType,
+        meetingType,
         status: 'UPCOMING' as MeetingStatus
       });
     }
 
-    console.log(`Found ${meetings.length} council meetings for ${cityName} via Legistar`);
+    console.log(`Found ${meetings.length} meetings for ${cityName} via Legistar`);
     return meetings;
   } catch (error) {
     console.error(`Error scraping Legistar for ${cityName}:`, error);
@@ -362,9 +381,11 @@ async function scrapeNovusAgenda(
     while ((match = rowRegex.exec(html)) !== null) {
       const [, dateStr, meetingType, location] = match;
       
-      // Only include City Council meetings
+      // Only include City Council and P&Z meetings
       const lowerType = meetingType.toLowerCase();
-      if (!lowerType.includes('city council')) continue;
+      const isCouncil = lowerType.includes('city council');
+      const isPZ = lowerType.includes('planning') || lowerType.includes('zoning') || lowerType.includes('p&z');
+      if (!isCouncil && !isPZ) continue;
       
       // Skip cancellations
       if (location.toLowerCase().includes('cancellation')) continue;
@@ -387,7 +408,9 @@ async function scrapeNovusAgenda(
       
       // Determine meeting type
       let type: MeetingType = 'REGULAR';
-      if (lowerType.includes('pom') || lowerType.includes('work session')) {
+      if (isPZ) {
+        type = 'PLANNING_ZONING';
+      } else if (lowerType.includes('pom') || lowerType.includes('work session')) {
         type = 'WORK_SESSION';
       } else if (lowerType.includes('special')) {
         type = 'SPECIAL';
@@ -413,7 +436,7 @@ async function scrapeNovusAgenda(
       });
     }
 
-    console.log(`Found ${meetings.length} council meetings for ${cityName} via NovusAgenda`);
+    console.log(`Found ${meetings.length} meetings for ${cityName} via NovusAgenda`);
     return meetings.sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
@@ -489,8 +512,10 @@ function parseAgendaLinkData(
     const title = agenda.title || agenda.name || '';
     const lowerTitle = title.toLowerCase();
     
-    // Only include City Council meetings
-    if (!lowerTitle.includes('city council') && !lowerTitle.includes('council meeting')) {
+    // Only include City Council and P&Z meetings
+    const isCouncil = lowerTitle.includes('city council') || lowerTitle.includes('council meeting');
+    const isPZ = lowerTitle.includes('planning') || lowerTitle.includes('zoning') || lowerTitle.includes('p&z');
+    if (!isCouncil && !isPZ) {
       continue;
     }
     
@@ -500,7 +525,9 @@ function parseAgendaLinkData(
     const meetingId = agenda.id || agenda._id || `${meetingDate.toISOString().split('T')[0]}`;
     
     let meetingType: MeetingType = 'REGULAR';
-    if (lowerTitle.includes('workshop') || lowerTitle.includes('work session')) {
+    if (isPZ) {
+      meetingType = 'PLANNING_ZONING';
+    } else if (lowerTitle.includes('workshop') || lowerTitle.includes('work session')) {
       meetingType = 'WORK_SESSION';
     } else if (lowerTitle.includes('special')) {
       meetingType = 'SPECIAL';
@@ -532,7 +559,7 @@ function parseAgendaLinkData(
     });
   }
 
-  console.log(`Found ${meetings.length} council meetings for ${cityName} via AgendaLink`);
+  console.log(`Found ${meetings.length} meetings for ${cityName} via AgendaLink`);
   return meetings.sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
@@ -648,6 +675,7 @@ const CITY_SCRAPER_CONFIG: Record<string, ScraperType> = {
   'allen': 'agendalink',
   'murphy': 'civicplus',
   'mckinney': 'civicplus',
+  'mansfield': 'civicplus',
   'denton': 'legistar',
   'plano': 'novusagenda'
 };

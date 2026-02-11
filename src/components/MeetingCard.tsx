@@ -13,6 +13,7 @@ const meetingTypeStyles: Record<string, { bg: string; color: string; label: stri
   WORK_SESSION: { bg: '#faf5ff', color: '#7e22ce', label: 'Work Session' },
   SPECIAL: { bg: '#fffbeb', color: '#b45309', label: 'Special Meeting' },
   PUBLIC_HEARING: { bg: '#f0fdf4', color: '#15803d', label: 'Public Hearing' },
+  PLANNING_ZONING: { bg: '#fff7ed', color: '#c2410c', label: 'Planning & Zoning' },
   OTHER: { bg: '#f9fafb', color: '#374151', label: 'Meeting' }
 };
 

@@ -20,6 +20,7 @@ const meetingTypeLabels: Record<string, string> = {
   WORK_SESSION: 'Work Session',
   SPECIAL: 'Special Called Meeting',
   PUBLIC_HEARING: 'Public Hearing',
+  PLANNING_ZONING: 'Planning & Zoning',
   OTHER: 'City Meeting'
 };
 

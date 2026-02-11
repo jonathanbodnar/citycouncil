@@ -31,7 +31,7 @@ export interface Meeting {
   status: MeetingStatus;
 }
 
-export type MeetingType = 'REGULAR' | 'WORK_SESSION' | 'SPECIAL' | 'PUBLIC_HEARING' | 'OTHER';
+export type MeetingType = 'REGULAR' | 'WORK_SESSION' | 'SPECIAL' | 'PUBLIC_HEARING' | 'PLANNING_ZONING' | 'OTHER';
 export type MeetingStatus = 'UPCOMING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export interface MeetingCardProps {
