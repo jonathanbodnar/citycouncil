@@ -147,8 +147,8 @@ export default function Home() {
             </div>
           </button>
           
-          {searchState !== 'idle' && (
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {searchState !== 'idle' && (
               <div className="relative">
                 <input
                   type="text"
@@ -167,8 +167,17 @@ export default function Home() {
                   </svg>
                 </button>
               </div>
-            </div>
-          )}
+            )}
+            <a
+              href="https://shoutout.us/?utm=ShowUp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-0.5 hover:opacity-80 transition-opacity"
+            >
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400">Powered by</span>
+              <img src="/blue.png" alt="Shoutout" className="h-5 w-auto" />
+            </a>
+          </div>
         </div>
       </header>
 
