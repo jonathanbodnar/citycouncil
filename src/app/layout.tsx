@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Show Up Now - North Texas City Meetings",
   description: "Find upcoming city council meetings in North Texas. Search by zip code to discover local government meetings in Frisco, Plano, McKinney, Denton, and more.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

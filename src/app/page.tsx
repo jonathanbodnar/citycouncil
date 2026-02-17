@@ -133,14 +133,7 @@ export default function Home() {
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button onClick={handleReset} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3L2 9l10 6 10-6-10-6z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 10v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 21v-6h6v6" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3" />
-              </svg>
-            </div>
+            <img src="/icon.png" alt="Show Up Now" className="w-10 h-10 rounded-xl" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">Show Up Now</h1>
               <p className="text-xs text-gray-500">North Texas City Meetings</p>
@@ -186,20 +179,9 @@ export default function Home() {
         {/* Idle State */}
         {searchState === 'idle' && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] -mt-8">
-            {/* Logo - Government/Civic Building */}
+            {/* Logo */}
             <div className="mb-8">
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-                <svg className="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {/* Capitol dome/roof */}
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2L3 8h18L12 2z" />
-                  {/* Building base/pediment */}
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8v2h16V8" />
-                  {/* Columns */}
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 10v9M10 10v9M14 10v9M18 10v9" />
-                  {/* Base/foundation */}
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 19h18v2H3z" />
-                </svg>
-              </div>
+              <img src="/icon.png" alt="Show Up Now" className="w-24 h-24 rounded-3xl shadow-lg" />
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center">
