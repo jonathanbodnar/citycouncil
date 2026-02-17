@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Meeting, City } from '@/lib/types';
 import { NORTH_TEXAS_CITIES } from '@/lib/cities';
 import MeetingCard from '@/components/MeetingCard';
@@ -53,6 +53,24 @@ export default function Home() {
       setSearchState('error');
     }
   }, [zipCode]);
+
+  // Auto-search if ?zip= is in the URL
+  const hasAutoSearched = useRef(false);
+  useEffect(() => {
+    if (hasAutoSearched.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const urlZip = params.get('zip');
+    if (urlZip && /^\d{5}$/.test(urlZip.trim())) {
+      hasAutoSearched.current = true;
+      setZipCode(urlZip.trim());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasAutoSearched.current && zipCode.length === 5 && searchState === 'idle') {
+      handleSearch();
+    }
+  }, [zipCode, searchState, handleSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -181,7 +199,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center min-h-[60vh] -mt-8">
             {/* Logo */}
             <div className="mb-8">
-              <img src="/icon.png" alt="Show Up Now" className="w-24 h-24 rounded-3xl shadow-lg" />
+              <img src="/icon.png" alt="Show Up Now" className="w-24 h-24 rounded-3xl" />
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center">
