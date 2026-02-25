@@ -101,6 +101,17 @@ export const NORTH_TEXAS_CITIES = [
     location: 'Mansfield City Hall, 1200 E. Broad St'
   },
   {
+    slug: 'waxahachie',
+    name: 'Waxahachie',
+    state: 'TX',
+    zipCodes: ['75165', '75167', '75168'],
+    rssUrl: '',
+    calendarUrl: 'https://www.waxahachie.com/government/city_council/agendas_and_minutes.php',
+    websiteUrl: 'https://www.waxahachie.com',
+    meetingSchedule: '1st and 3rd Monday at 7:00 PM',
+    location: 'Council Chambers, 401 S. Rogers St'
+  },
+  {
     slug: 'mckinney',
     name: 'McKinney',
     state: 'TX',
